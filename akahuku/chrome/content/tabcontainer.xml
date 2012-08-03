@@ -1,0 +1,278 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE bindings [
+          <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+          %globalDTD;
+          ]>
+
+<bindings id="akahukutabcontainerBindings"
+          xmlns="http://www.mozilla.org/xbl"
+          xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+          xmlns:xbl="http://www.mozilla.org/xbl">
+  
+  <binding id="akahukutabcontainer"
+           extends="chrome://global/content/bindings/general.xml#basecontrol">
+    <resources>
+      <stylesheet src="chrome://akahuku/content/tabcontainer.css" />
+    </resources>
+    <content>
+      <xul:scrollbox flex="1" xbl:inherits="orient" anonid="scrollbox">
+        <children />
+      </xul:scrollbox>
+      <xul:button class="scrollbutton"
+                  anonid="scrollbutton-up"
+                  collapsed="true"
+                  label=""
+                  oncommand="scrollByIndex (-1); event.stopPropagation ();" />
+      <xul:button class="scrollbutton"
+                  anonid="scrollbutton-down"
+                  label=""
+                  collapsed="true"
+                  oncommand="scrollByIndex (1); event.stopPropagation ();" />
+      <xul:button class="menubutton"
+                  anonid="menubutton"
+                  label=""
+                  collapsed="true"
+                  oncommand="openMenu (); event.stopPropagation ();">
+      </xul:button>
+      <xul:popup anonid="menupopup" position="after_end">
+      </xul:popup>
+    </content>
+    
+    <implementation>
+      <field name="_scrollbox"><![CDATA[
+          document.getAnonymousElementByAttribute
+            (this, "anonid", "scrollbox");
+      ]]></field>
+      <field name="_scrollButtonUp"><![CDATA[
+          document.getAnonymousElementByAttribute
+            (this, "anonid", "scrollbutton-up");
+      ]]></field>
+      <field name="_scrollButtonDown"><![CDATA[
+          document.getAnonymousElementByAttribute
+            (this, "anonid", "scrollbutton-down");
+      ]]></field>
+      <field name="_menuButton"><![CDATA[
+          document.getAnonymousElementByAttribute
+            (this, "anonid", "menubutton");
+      ]]></field>
+      <field name="_menuPopup"><![CDATA[
+          document.getAnonymousElementByAttribute
+            (this, "anonid", "menupopup");
+      ]]></field>
+      
+      <field name="_scrollBoxObject"><![CDATA[
+          null
+      ]]></field>
+      <property name="scrollBoxObject" readonly="true">
+        <getter><![CDATA[
+            if (!this._scrollBoxObject) {
+                this._scrollBoxObject = this._scrollbox.boxObject
+                    .QueryInterface (Components.interfaces.nsIScrollBoxObject);
+            }
+            return this._scrollBoxObject;
+        ]]></getter>
+      </property>
+      
+      <field name="_menuEventListener" readonly="true"><![CDATA[
+          null
+      ]]></field>
+      <property name="menuEventListener">
+        <getter><![CDATA[
+            return this._menuEventListener;
+        ]]></getter>
+        <setter><![CDATA[
+            this._menuEventListener = val;
+            return val;
+        ]]></setter>
+      </property>
+
+      <field name="_enableMenuButton" readonly="true"><![CDATA[
+          false
+      ]]></field>
+      <property name="enableMenuButton">
+        <getter><![CDATA[
+            return this._enableMenuButton;
+        ]]></getter>
+        <setter><![CDATA[
+            this._enableMenuButton = val;
+            if (this._enableMenuButton) {
+                if (this.orient == "horizontal") {
+                    this._menuButton.label = "v"
+                }
+                else {
+                    this._menuButton.label = ">"
+                }
+                this._menuButton.collapsed = false;
+            }
+            else {
+                this._menuButton.collapsed = true;
+            }
+            return val;
+        ]]></setter>
+      </property>
+      
+      <method name="ensureElementIsVisible">
+        <parameter name="child" />
+        <body><![CDATA[
+            this.scrollBoxObject.ensureElementIsVisible (child);
+        ]]></body>
+      </method>
+      
+      <method name="openMenu">
+        <body><![CDATA[
+            while (this._menuPopup.firstChild) {
+                this._menuPopup.removeChild
+                    (this._menuPopup.firstChild);
+            }
+            
+            var node = this.firstChild;
+            while (node) {
+                var label = node.getAttribute ("__item_label");
+                var value = node.getAttribute ("__item_value");
+                var i = 0;
+                if (label && value) {
+                    var item = document.createElementNS ("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "xul:menuitem");
+                    item.setAttribute ("label", label);
+                    item.setAttribute ("__item_value", value);
+                    item.id = this.id + "_item_" + i; i ++;
+                    item.setAttribute ("hidden", "false");
+                    item.addEventListener (
+                        "command",
+                        function () {
+                            var event = arguments [0];
+                            var target = event.explicitOriginalTarget;
+                            var value = target.getAttribute ("__item_value");
+                            var container;
+                            var node = target;
+                            while (node) {
+                                if (node.nodeName.toLowerCase ()
+                                    == "akahukutabcontainer") {
+                                    container = node;
+                                    break;
+                                }
+                                node = node.parentNode;
+                            }
+                            container.onSelectItem (value);
+                        }, false);
+                    this._menuPopup.appendChild (item);
+                }
+                node = node.nextSibling;
+            }
+            
+            if (this.orient == "horizontal") {
+                this._menuPopup.showPopup
+                    (this._menuButton, -1, -1, "popup",
+                     "bottomright", "topright");
+            }
+            else {
+                this._menuPopup.showPopup
+                    (this._menuButton, -1, -1, "popup",
+                     "bottomright", "bottomleft");
+            }
+        ]]></body>
+      </method>
+      
+      <method name="onSelectItem">
+        <parameter name="value" />
+        <body><![CDATA[
+            if (this._menuEventListener) {
+                for (var tab = this.firstChild; tab; tab = tab.nextSibling) {
+                    if (tab.getAttribute ("__item_value") == value) {
+                        this._menuEventListener.onSelectItem (tab);
+                        this.ensureElementIsVisible (tab);
+                        this._updateScrollButtonsDisabledState ();
+                        break;
+                    }
+                }
+            }
+        ]]></body>
+      </method>
+      
+      <method name="scrollByIndex">
+        <parameter name="dindexes" />
+        <body><![CDATA[
+            this.scrollBoxObject.scrollByIndex (dindexes);
+        ]]></body>
+      </method>
+      
+      <method name="_updateScrollButtonsDisabledState">
+        <body><![CDATA[
+            var disableUpButton = false;
+            var disableDownButton = false;
+            
+            var width = {};
+            try {
+                this.scrollBoxObject.getScrolledSize (width, {});
+            }
+            catch (e) {
+                var childNodes = document.getAnonymousNodes (this._scrollbox);
+                if (childNodes && childNodes.length) {
+                    var childNode = childNodes [childNodes.length - 1];
+                    width.value = childNode.boxObject.x
+                        + childNode.boxObject.width;
+                }
+            }
+            var xPos = {}
+            this.scrollBoxObject.getPosition (xPos, {});
+            if (xPos.value == 0) {
+                disableUpButton = true;
+            }
+            else if (this._scrollbox.boxObject.width + xPos.value
+                     == width.value) {
+                disableDownButton = true;
+            }
+            
+            this._scrollButtonUp.setAttribute ("disabled", disableUpButton);
+            this._scrollButtonDown.setAttribute ("disabled", disableDownButton);
+        ]]></body>
+      </method>
+    </implementation>    
+    
+    <handlers>
+      <handler event="DOMMouseScroll"><![CDATA[
+          if (event.detail < 0) {
+              this.scrollByIndex (-1);
+          }
+          else {
+              this.scrollByIndex (1);
+          }
+          event.stopPropagation ();
+      ]]></handler>
+      
+      <handler event="underflow"><![CDATA[
+          this._scrollButtonUp.collapsed = true;
+          this._scrollButtonDown.collapsed = true;
+          var childNodes = document.getAnonymousNodes (this._scrollbox);
+          if (childNodes && childNodes.length) {
+              this.ensureElementIsVisible (childNodes [0]);
+              if (childNodes.length > 1) {
+                this.ensureElementIsVisible (childNodes [childNodes.length
+                                                         - 1]);
+              }
+          }
+          event.stopPropagation ();
+      ]]></handler>
+      
+      <handler event="overflow"><![CDATA[
+          this._scrollButtonUp.collapsed = false;
+          this._scrollButtonDown.collapsed = false;
+          if (this.getAttribute ("orient") == "horizontal") {
+            this._scrollButtonUp.label = "<";
+            this._scrollButtonDown.label = ">";
+          }
+          else {
+            this._scrollButtonUp.label = "^";
+            this._scrollButtonUp.label = "v";
+          }
+          this._updateScrollButtonsDisabledState ();
+          event.stopPropagation ();
+      ]]></handler>
+      
+      <handler event="scroll"><![CDATA[
+          this._updateScrollButtonsDisabledState ();
+      ]]></handler>
+    </handlers>
+  </binding>
+  
+</bindings>

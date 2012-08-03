@@ -1,0 +1,201 @@
+/* ステータスバー */
+
+#akahuku-statusbarpanel-preferences {
+  list-style-image: url("chrome://akahuku/content/images/icon_small.png");
+}
+#akahuku-statusbarpanel-preferences[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/icon_small_disabled.png") !important;
+}
+#akahuku-statusbarpanel-preferences:hover {
+  list-style-image: url("chrome://akahuku/content/images/icon_small_hover.png");
+}
+#akahuku-statusbarpanel-preferences:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/icon_small_click.png");
+}
+
+#akahuku-statusbarpanel-p2p {
+  padding: 0px 4px 0px 4px;
+  background: inherit !important;
+}
+#akahuku-statusbarpanel-p2p-node,
+#akahuku-statusbarpanel-p2p-sep0,
+#akahuku-statusbarpanel-p2p-send,
+#akahuku-statusbarpanel-p2p-sep1,
+#akahuku-statusbarpanel-p2p-recv,
+#akahuku-statusbarpanel-p2p-sep2,
+#akahuku-statusbarpanel-p2p-relay,
+#akahuku-statusbarpanel-p2p-sep3,
+#akahuku-statusbarpanel-p2p-futaba {
+  margin: 0;
+  padding: 0;
+}
+
+/* ツールバー (大きいアイコン) */
+
+#akahuku-toolbarbutton-preferences {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle.png");
+}
+#akahuku-toolbarbutton-preferences[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_disabled.png") !important;
+}
+#akahuku-toolbarbutton-preferences:hover {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_hover.png");
+}
+#akahuku-toolbarbutton-preferences:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_click.png");
+}
+
+#akahuku-toolbarbutton-sidebar {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle.png");
+}
+#akahuku-toolbarbutton-sidebar[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle_disabled.png") !important;
+}
+#akahuku-toolbarbutton-sidebar:hover {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle_hover.png");
+}
+#akahuku-toolbarbutton-sidebar:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle_click.png");
+}
+
+#akahuku-toolbarbutton-p2psidebar {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle.png");
+}
+#akahuku-toolbarbutton-p2psidebar[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_disabled.png") !important;
+}
+#akahuku-toolbarbutton-p2psidebar:hover {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_hover.png");
+}
+#akahuku-toolbarbutton-p2psidebar:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_click.png");
+}
+
+#akahuku-toolbarpanel-p2p {
+  padding: 0px 4px 0px 4px;
+  background: inherit !important;
+}
+#akahuku-toolbarpanel-p2p-node,
+#akahuku-toolbarpanel-p2p-sep0,
+#akahuku-toolbarpanel-p2p-send,
+#akahuku-toolbarpanel-p2p-sep1,
+#akahuku-toolbarpanel-p2p-recv,
+#akahuku-toolbarpanel-p2p-sep2,
+#akahuku-toolbarpanel-p2p-relay,
+#akahuku-toolbarpanel-p2p-sep3,
+#akahuku-toolbarpanel-p2p-futaba {
+  margin: 0;
+  padding: 0;
+}
+
+/* ツールバー (小さいアイコン) */
+
+toolbox[iconsize="small"] #akahuku-toolbarbutton-preferences,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-preferences {
+  list-style-image: url("chrome://akahuku/content/images/icon_small.png");
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-preferences[status="disabled"],
+toolbar[iconsize="small"] #akahuku-toolbarbutton-preferences[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/icon_small_disabled.png") !important;
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-preferences:hover,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-preferences:hover {
+  list-style-image: url("chrome://akahuku/content/images/icon_small_hover.png");
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-preferences:hover:active,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-preferences:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/icon_small_click.png");
+}
+
+toolbox[iconsize="small"] #akahuku-toolbarbutton-sidebar,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-sidebar {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_small.png");
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-sidebar[status="disabled"],
+toolbar[iconsize="small"] #akahuku-toolbarbutton-sidebar[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_small_disabled.png") !important;
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-sidebar:hover,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-sidebar:hover {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_small_hover.png");
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-sidebar:hover:active,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-sidebar:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_small_click.png");
+}
+
+toolbox[iconsize="small"] #akahuku-toolbarbutton-p2psidebar,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-p2psidebar {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_small.png");
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-p2psidebar[status="disabled"],
+toolbar[iconsize="small"] #akahuku-toolbarbutton-p2psidebar[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_small_disabled.png") !important;
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-p2psidebar:hover,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-p2psidebar:hover {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_small_hover.png");
+}
+toolbox[iconsize="small"] #akahuku-toolbarbutton-p2psidebar:hover:active,
+toolbar[iconsize="small"] #akahuku-toolbarbutton-p2psidebar:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_small_click.png");
+}
+
+/* ツールバー (大きいアイコン : カスタマイズ直後) */
+
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-preferences {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle.png");
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-preferences[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_disabled.png") !important;
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-preferences:hover {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_hover.png");
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-preferences:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_click.png");
+}
+
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-sidebar {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle.png");
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-sidebar[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle_disabled.png") !important;
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-sidebar:hover {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle_hover.png");
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-sidebar:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/sidebar_middle_click.png");
+}
+
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-p2psidebar {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle.png");
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-p2psidebar[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_disabled.png") !important;
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-p2psidebar:hover {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_hover.png");
+}
+toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-p2psidebar:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_click.png");
+}
+
+/* 古いツールバー */
+
+#akahuku-toolbarbutton-preferences-image {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle.png");
+}
+#akahuku-toolbarbutton-preferences-image[status="disabled"] {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_disabled.png") !important;
+}
+#akahuku-toolbarbutton-preferences-image:hover {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_hover.png");
+}
+#akahuku-toolbarbutton-preferences-image:hover:active {
+  list-style-image: url("chrome://akahuku/content/images/icon_middle_click.png");
+}
+#akahuku-toolbarbutton-preferences-text {
+  list-style-image: none;
+}

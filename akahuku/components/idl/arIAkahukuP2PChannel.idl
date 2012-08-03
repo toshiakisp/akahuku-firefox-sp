@@ -1,0 +1,7 @@
+#include "nsISupports.idl"
+#include "nsIChannel.idl"
+
+[scriptable, uuid (6f220dbc-d883-43e7-a3aa-7336153dd076)]
+interface arIAkahukuP2PChannel : nsIChannel {
+  nsIChannel init (in AString uri);
+};

@@ -1,0 +1,65 @@
+#base {
+  color: #800000;
+  background-color: #ffffee;
+}
+
+.node {
+  border: 2px solid #eeaa88;
+  -moz-border-radius: 8px;
+  color: #800000;
+  background-color: #ffffee;
+  margin: 0.2em;
+  padding: 0.2em;
+}
+
+.selfnode {
+  border: 2px solid #eeaa88;
+  -moz-border-radius: 8px;
+  background-color: #ffffee;
+  margin: 0.2em;
+  padding: 0.2em;
+}
+
+.plain {
+  text-align: center;
+  color: inherit;
+  background-color: inherit;
+  border: 1px none red;
+}
+
+.addbox {
+  border: 2px solid #eeaa88;
+  -moz-border-radius: 8px;
+  color: #800000;
+  background-color: #ffffee;
+  margin: 0.2em;
+  padding: 0.2em;
+}
+
+button {
+  -moz-appearance: none;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #800000;
+  background-color: #f8e7d7;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+button:active {
+  -moz-appearance: none;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #800000;
+  background-color: #f0d0c0;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+#nodelist {
+  overflow: auto;
+}

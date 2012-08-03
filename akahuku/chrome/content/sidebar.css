@@ -1,0 +1,110 @@
+akahukutabcontainer {
+  -moz-binding: url("chrome://akahuku/content/tabcontainer.xml#akahukutabcontainer");
+}
+
+.tabspace {
+  color: #800000;
+  background-color: #ccccbb;
+  border-width: 0px 0px 1px 0px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+.tabs {
+  color: #800000;
+  background-color: #ffffee;
+  width: 100%;
+}
+
+.tab > label {
+  -moz-appearance: none;
+  margin: 0px;
+  padding: 0px 0px 0px 0px;
+}
+
+akahukutabcontainer[orient="horizontal"] > .tab {
+  -moz-appearance: none;
+  margin: 0px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #bb8080;
+  background-color: #eeeedd;
+  border-width: 1px 1px 0px 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+akahukutabcontainer[orient="horizontal"] > .tab[selected] {
+  color: #800000;
+  background-color: #ffffee;
+}
+
+akahukutabcontainer[orient="vertical"] > .tab {
+  -moz-appearance: none;
+  margin: 0px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #bb8080;
+  background-color: #eeeedd;
+  border-width: 1px 0px 1px 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+akahukutabcontainer[orient="vertical"] > .tab[selected] {
+  color: #800000;
+  background-color: #ffffee;
+}
+
+.buttons {
+  color: #800000;
+  background-color: #ffffee;
+}
+
+.refresh {
+  -moz-appearance: none;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #800000;
+  background-color: #f8e7d7;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+.refresh:active {
+  -moz-appearance: none;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #800000;
+  background-color: #f0d0c0;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+.refresh[disabled] {
+  -moz-appearance: none;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #bb8080;
+  background-color: #eeeedd;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}
+
+.refresh[disabled]:active {
+  -moz-appearance: none;
+  margin: 0px 2px 0px 2px;
+  padding: 2px 4px 2px 4px;
+  min-width: 1em;
+  color: #bb8080;
+  background-color: #eeeedd;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #eeaa88;
+}

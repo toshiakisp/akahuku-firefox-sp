@@ -1,0 +1,54 @@
+#include "nsISupports.idl"
+#include "nsILocalFile.idl"
+#include "./idl/arIAkahukuP2PServantListener.idl"
+
+[scriptable, uuid (e2470698-e238-40f5-8b09-c3e617aae84c)]
+interface arIAkahukuP2PServant2 : nsISupports {
+  boolean start (in boolean noaccept);
+  
+  void stop ();
+  
+  AString encodeNodeName (in AString address, in PRUint32 port);
+
+  void getFile (in AString path,
+                in arIAkahukuP2PServantListener listener);
+  
+  void createHashFile (in nsILocalFile targetFile,
+                       in AString leafName,
+                       in AString hash);
+  
+  void visitBoard (in AString board);
+  
+  void addNode (in AString nodeName, in boolean prev,
+                in PRUint32 addTime, in AString boardList);
+  
+  void setAddress (in AString address);
+  void setPort (in PRUint32 port);
+  void setDynamic (in boolean dynamic);
+  void setTransferLimit (in PRUint32 limit);
+  void setNoCat (in boolean nocat);
+  void setAcceptSlot (in PRUint32 acceptSlot);
+  
+  void setAkahukuVersion (in AString akahukuVersion);
+  
+  void setCacheCheckInterval (in PRUint32 interval);
+  void setCacheSrcLimit (in PRUint32 srcLimit);
+  void setCacheThumbLimit (in PRUint32 thumbLimit);
+  void setCacheCatLimit (in PRUint32 catLimit);
+  void setCacheBase (in AString dir, in AString sep);
+  
+  void setTreatAsSame (in boolean treatAsSame);
+
+  boolean getTreatAsSame ();
+  
+  void prefetchFile (in AString path);
+  
+  boolean forceClearCache ();
+  boolean getClearCacheState ();
+  
+  AString getCacheBase ();
+  
+  AString getStatus (in boolean self);
+  
+  AString getNodeList ();
+};

@@ -1,0 +1,2129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://akahuku/content/options.css" type="text/css"?>
+
+<dialog class="dialog"
+        id="akahuku_preferences_dialog"
+        title="赤福 設定"
+        persist="screenX screenY"
+        buttons="accept,cancel,extra1"
+        buttonlabelextra1="適用"
+        onload="AkahukuOptions.init ();"
+        ondialogaccept="return AkahukuOptions.term ()"
+        orient="vertical"
+        flex="1"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/version.js" />
+  
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuLocationInfo.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuConverter.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuFile.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuFileName.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuJSON.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuServerName.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuTitle.js" />
+  
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/options.js" />
+  
+  <box orient="horizontal" align="center">
+    <checkbox id="all" checked="false" label="全機能" />
+    <spacer flex="1" />
+    <label id="link" class="text-link" value="赤福:非公式 Firefox 版"
+           onclick="AkahukuOptions.openWebsite ();" />
+    <label id="version" value="Ver." />
+  </box>
+  
+  <box orient="horizontal" flex="1">
+    <listbox id="category" style="width: 12em;">
+      <listitem id="anchor_title" label="タイトル" />
+      <listitem id="anchor_scroll" label="スクロール" />
+      <listitem id="anchor_banner" label="広告" />
+      <listitem id="anchor_wheel" label="ホイール" />
+      <listitem id="anchor_tab" label="タブ" />
+      <listitem id="anchor_menu" label="メニュー/引用" />
+      <listitem id="anchor_savemht" label="MHT で保存" />
+      <listitem id="anchor_filename_convert" label="ファイル名変換" />
+      <listitem id="anchor_saveimage1" label="画像を保存1" />
+      <listitem id="anchor_saveimage2" label="画像を保存2" />
+      <listitem id="anchor_mail_comment" label="メール／コメント欄" />
+      <listitem id="anchor_form" label="フォーム" />
+      <listitem id="anchor_reload" label="続きを読む" />
+      <listitem id="anchor_throp" label="スレ操作パネル" />
+      <listitem id="anchor_link" label="リンク" />
+      <listitem id="anchor_thread" label="スレ" />
+      <listitem id="anchor_popupquote" label="引用のポップアップ" />
+      <listitem id="anchor_hidetroll" label="芝刈り" />
+      <listitem id="anchor_res" label="レス一般" />
+      <listitem id="anchor_autolink" label="オートリンク" />
+      <listitem id="anchor_p2p" label="P2P" />
+      <listitem id="anchor_catalog1" label="カタログ1" />
+      <listitem id="anchor_catalog2" label="カタログ2" />
+      <listitem id="anchor_sidebar" label="サイドバー" />
+      <listitem id="anchor_board" label="板" />
+      <listitem id="anchor_external" label="外部の板" />
+      <listitem id="anchor_bloomer" label="ブルマ女将" />
+      <listitem id="anchor_sound" label="音" />
+      <listitem id="anchor_other" label="その他" />
+      <listitem id="anchor_format" label="フォーマット" />
+    </listbox>
+    
+    <deck id="tabbox" flex="1">
+      <box flex="1" id="tab_title" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="title" checked="false" label="タイトルを修正"
+                      oncommand="AkahukuOptions.checkTitle ();" />
+          </caption>
+          <radiogroup id="title_type" orient="horizontal"
+                      align="center"
+                      oncommand="AkahukuOptions.checkTitleType ();">
+            <radio value="simple" label="簡易設定" />
+            <radio value="expert" label="詳細設定" />
+            <spacer flex="1" />
+            <button id="title_format_init" label="初期化"
+                    oncommand="AkahukuOptions.initTitleFormat ();" />
+          </radiogroup>
+          <deck id="title_type_deck">
+            <box id="title_type_deck_simple" orient="vertical" flex="1">
+              <checkbox id="title_comment" checked="false"
+                        label="スレ本文の先頭" />
+              <checkbox id="title_mode" checked="false"
+                        label="[ページ n]、[返信] 等" />
+              <checkbox id="title_thread_info" checked="false"
+                        label="スレの消滅情報" />
+            </box>
+            <box id="title_type_deck_expert" orient="vertical" flex="1">
+              <textbox id="title_format" multiline="true" rows="3"
+                       oninput="AkahukuOptions.changeFormat ('title_format');" />
+              <textbox id="title_format_sample" value="" disabled="true" />
+            </box>
+          </deck>
+          <box orient="horizontal" align="center">
+            <label id="title_comment_length_label1"
+                   control="title_comment_length"
+                   value="スレ本文の長さ" />
+            <textbox id="title_comment_length" size="6" />
+            <label id="title_comment_length_label2"
+                   control="title_comment_length"
+                   value="文字まで" />
+          </box>
+        </groupbox>
+        <checkbox id="comment_fixup" checked="false"
+                  label="本文なしを適当に修正する" />
+        <checkbox id="subtitle" checked="false"
+                  label="レスの一部をサブタイトルにする" />
+      </box>
+      <box flex="1" id="tab_scroll" orient="vertical">
+        <checkbox id="scroll_lock" checked="false"
+                  label="リロード時に位置のズレを直す"
+                  oncommand="AkahukuOptions.checkScrollLock ();" />
+        <box class="sub" orient="vertical">
+          <checkbox id="scroll_lock_reply" checked="false"
+                    label="レス送信モードのみ" />
+        </box>
+        <checkbox id="scroll_gotop" checked="false"
+                  label="0〜10 ページのリロード時に先頭へ" />
+        <checkbox id="scroll_gocurrent_reload" checked="false"
+                  label="レス送信モードでリロード時に最新位置へ"
+                  oncommand="AkahukuOptions.checkScrollGoCurrent ();" />
+        <box class="sub" orient="vertical">
+          <checkbox id="scroll_gocurrent_rule" checked="false"
+                    label="区切り"
+                    oncommand="AkahukuOptions.checkScrollGoCurrentRule ();" />
+          <box class="sub" orient="vertical">
+            <checkbox id="scroll_gocurrent_rule_zeroheight"
+                      checked="false"
+                      label="ズレないようにする" />
+            <checkbox id="scroll_gocurrent_rule_random" checked="false"
+                      label="ランダム" />
+          </box>
+        </box>
+      </box>
+      <box flex="1" id="tab_banner" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="delbanner" checked="false"
+                      label="広告を隠す"
+                      oncommand="AkahukuOptions.checkDelbanner ();" />
+          </caption>
+          <checkbox id="delbanner_image" checked="false"
+                    label="バナー広告" />
+          <checkbox id="delbanner_image_404" checked="false"
+                    label="404 ページの広告" />
+          <checkbox id="delbanner_flash" checked="false"
+                    label="二次の Flash 広告" />
+          <checkbox id="delbanner_text" checked="false"
+                    label="テキスト広告" />
+          <checkbox id="delbanner_movetailad" checked="false"
+                    label="末尾の広告を横に置く (ある程度の横幅が必要です)" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_wheel" orient="vertical">
+        <groupbox orient="vertical">
+          <caption orient="horizontal" align="center">
+            <checkbox id="wheel_reload" checked="false"
+                      label="ページ末尾のホイール"
+                      oncommand="AkahukuOptions.checkWheelReload ();" />
+            <textbox id="wheel_reload_threshold" size="6" />
+            <label id="wheel_reload_threshold_label"
+                   control="wheel_reload_threshold"
+                   value="回操作でリロード" />
+          </caption>
+          
+          <checkbox id="wheel_reload_0" checked="false"
+                    label="通常モード 0 ページ" />
+          <checkbox id="wheel_reload_1" checked="false"
+                    label="通常モード 1 ページ〜 " />
+          <checkbox id="wheel_reload_loop" checked="false"
+                    label="通常モードの上下でループする" />
+          
+          <checkbox id="wheel_reload_reply" checked="false"
+                    label="レス送信モード" />
+          <box class="sub" orient="vertical">
+            <checkbox id="wheel_reload_reply_sync" checked="false"
+                      label="同期する" />
+          </box>
+          <checkbox id="wheel_reload_catalog" checked="false"
+                    label="カタログモード" />
+          <checkbox id="wheel_reload_all" checked="false"
+                    label="全てのページ" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_tab" orient="vertical">
+        <groupbox orient="horizontal">
+          <caption>
+            <checkbox id="tab_sort" checked="false" label="ソート"
+                      oncommand="AkahukuOptions.checkTabSort ();" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <checkbox id="tab_sort_thread" checked="false" label="スレをソート"
+                      oncommand="AkahukuOptions.checkTabSortChild ();"  />
+            <checkbox id="tab_sort_all" checked="false" label="全てソート"
+                      oncommand="AkahukuOptions.checkTabSortChild ();"  />
+            <box class="sub" orient="vertical">
+              <box orient="horizontal" align="center">
+                <label id="tab_sort_order_1_label"
+                       control="tab_sort_order_1"
+                       value="1: " />
+                <menulist id="tab_sort_order_1"
+                          oncommand="AkahukuOptions.onChangeTabSortOrder (1);">
+                  <menupopup id="tab_sort_order_1_menu">
+                    <menuitem label="通常モード" value="normal" />
+                    <menuitem label="レス送信モード" value="reply" />
+                    <menuitem label="カタログモード" value="catalog" />
+                    <menuitem label="その他" value="other" />
+                  </menupopup>
+                </menulist>
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="tab_sort_order_2_label"
+                       control="tab_sort_order_2"
+                       value="2: " />
+                <menulist id="tab_sort_order_2"
+                          oncommand="AkahukuOptions.onChangeTabSortOrder (2);">
+                  <menupopup id="tab_sort_order_2_menu">
+                    <menuitem label="通常モード" value="normal" />
+                    <menuitem label="レス送信モード" value="reply" />
+                    <menuitem label="カタログモード" value="catalog" />
+                    <menuitem label="その他" value="other" />
+                  </menupopup>
+                </menulist>
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="tab_sort_order_3_label"
+                       control="tab_sort_order_3"
+                       value="3: " />
+                <menulist id="tab_sort_order_3"
+                          oncommand="AkahukuOptions.onChangeTabSortOrder (3);">
+                  <menupopup id="tab_sort_order_3_menu">
+                    <menuitem label="通常モード" value="normal" />
+                    <menuitem label="レス送信モード" value="reply" />
+                    <menuitem label="カタログモード" value="catalog" />
+                    <menuitem label="その他" value="other" />
+                  </menupopup>
+                </menulist>
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="tab_sort_order_4_label"
+                       control="tab_sort_order_4"
+                       value="4: " />
+                <menulist id="tab_sort_order_4"
+                          oncommand="AkahukuOptions.onChangeTabSortOrder (4);">
+                  <menupopup id="tab_sort_order_4_menu">
+                    <menuitem label="通常モード" value="normal" />
+                    <menuitem label="レス送信モード" value="reply" />
+                    <menuitem label="カタログモード" value="catalog" />
+                    <menuitem label="その他" value="other" />
+                  </menupopup>
+                </menulist>
+              </box>
+              <checkbox id="tab_sort_invert_thread" checked="false"
+                        label="スレの並びを反転" />
+            </box>
+          </box>
+          <box orient="vertical" flex="1">
+            <label id="tab_sort_board_order_label" value="板の順番" />
+            <box orient="horizontal" flex="1">
+              <listbox id="tab_sort_board_order_list" flex="1"
+                       rows="6" seltype="multiple">
+              </listbox>
+              <box orient="vertical">
+                <button id="tab_sort_board_order_moveup" label="上に"
+                        oncommand="AkahukuOptions.onMoveupList ('tab_sort_board_order_list');" />
+                <button id="tab_sort_board_order_movedown" label="下に"
+                        oncommand="AkahukuOptions.onMovedownList ('tab_sort_board_order_list');" />
+              </box>
+            </box>
+          </box>
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="tabicon" checked="false"
+                      label="アイコンを変更する"
+                      oncommand="AkahukuOptions.checkTabIcon ();" />
+          </caption>
+          <box orient="horizonaral" align="center">
+            <checkbox id="tabicon_size" checked="false"
+                      label="サイズを"
+                      oncommand="AkahukuOptions.checkTabIconSize ();"/>
+            <textbox id="tabicon_size_max" size="6" />
+            <label id="tabicon_size_max_label"
+                   control="tabicon_size_max" value="px にする" />
+          </box>
+        </groupbox>
+      </box>
+      
+      <box flex="1" id="tab_menu" orient="vertical">
+        <groupbox orient="horizontal">
+          <caption>
+            <checkbox id="quickquote" checked="false" label="引用/コンテキストメニュー"
+                      oncommand="AkahukuOptions.checkQuickQuote ();" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <checkbox id="quickquote_menu" label="メニュー"
+                      oncommand="AkahukuOptions.checkQuickQuoteMenu ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="quickquote_menu_quote" checked="false"
+                        label="引用" />
+              <checkbox id="quickquote_menu_mail" checked="false"
+                        label="メール欄へ" />
+              <checkbox id="quickquote_menu_name" checked="false"
+                        label="名前欄へ" />
+              <checkbox id="quickquote_menu_comment" checked="false"
+                        label="コメント欄へ" />
+              <checkbox id="quickquote_menu_separator" checked="false"
+                        label="区切り" />
+              <checkbox id="quickquote_menu_copy" checked="false"
+                        label="引用付きコピー" />
+              <checkbox id="quickquote_menu_cont" checked="false"
+                        label="- 連続" />
+              <checkbox id="quickquote_menu_google_image" checked="false"
+                        label="イメぐぐる" />
+              <checkbox id="quickquote_menu_wikipedia" checked="false"
+                        label="ウィキペドる" />
+            </box>
+          </box>
+          <box orient="vertical" flex="1">
+            <checkbox id="quickquote_number" checked="false"
+                      label="番号をクリックで引用"
+                      oncommand="AkahukuOptions.checkQuickQuoteNumber ();" />
+            <box class="sub" orient="vertical">
+              <menulist id="quickquote_number_type">
+                <menupopup id="quickquote_number_type_menu">
+                  <menuitem value="0" label="番号" />
+                  <menuitem value="1" label="No. + 番号" />
+                  <menuitem value="2" label="メッセージ" />
+                  <menuitem value="3" label="メッセージ (非引用部分のみ)" />
+                </menupopup>
+              </menulist>
+              
+              <checkbox id="quickquote_number_clear" checked="false"
+                        label="番号で引用する時にコメント欄をクリア" />
+              <checkbox id="quickquote_number_nocomment" checked="false"
+                        label="本文なしの場合に番号にする" />
+            </box>
+            <checkbox id="quickquote_clear" checked="false"
+                      label="メニューから引用する時にコメント欄をクリア" />
+            <checkbox id="quickquote_untroll" checked="false"
+                      label="引用時に芝刈りを解除する" />
+            <checkbox id="quickquote_focus" checked="false"
+                      label="検索したタブを選択する" />
+          </box>
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="jpeg_thumbnail" checked="false"
+                      label="JPEG のサムネを見る"
+                      oncommand="AkahukuOptions.checkJPEGThumbnail ();" />
+          </caption>
+          <checkbox id="jpeg_thumbnail_error" checked="false"
+                    label="見付からなかった場合にエラーを表示する" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_savemht" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="savemht" checked="false" label="[MHT で保存] ボタン"
+                      oncommand="AkahukuOptions.checkSaveMHT ();" />
+          </caption>
+          <label value="UnMHT の mht で保存とは全く別のものです" class="warning" />
+          <box orient="horizontal" align="center">
+            <label id="savemht_base_label" control="savemht_base"
+                   value="保存先のディレクトリ" />
+            <textbox id="savemht_base" flex="1" />
+            <button id="savemht_base_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('savemht_base', false, '保存先のディレクトリを選んでください');" />
+          </box>
+          <radiogroup id="savemht_default_type" orient="horizontal"
+                      align="center"
+                      oncommand="AkahukuOptions.checkSaveMHTDefaultType ();">
+            <label id="savemht_default_label" control="savemht_default_type"
+                   value="デフォルトのファイル名: " />
+            <radio value="simple" label="簡易設定" />
+            <radio value="expert" label="詳細設定" />
+            <spacer flex="1" />
+            <button id="savemht_default_format_init" label="初期化"
+                    oncommand="AkahukuOptions.initSaveMHTDefaultFormat ();" />
+          </radiogroup>
+          <deck id="savemht_default_type_deck">
+            <box id="savemht_default_type_deck_simple" orient="vertical"
+                 flex="1">
+              <checkbox id="savemht_default_server" checked="false"
+                        label="サーバ名" />
+              <checkbox id="savemht_default_dir" checked="false"
+                        label="ディレクトリ名" />
+              <checkbox id="savemht_default_thread" checked="false"
+                        label="スレの番号" />
+              <checkbox id="savemht_default_title" checked="false"
+                        label="タイトル" />
+            </box>
+            <box id="savemht_default_type_deck_expert" orient="vertical"
+                 flex="1">
+              <textbox id="savemht_default_format" multiline="true" rows="3"
+                       oninput="AkahukuOptions.changeFormat ('savemht_default_format');" />
+              <textbox id="savemht_default_format_sample" value=""
+                       disabled="true" />
+            </box>
+          </deck>
+          <box orient="horizontal">
+            <box orient="vertical" flex="1">
+              <checkbox id="savemht_auto" checked="false"
+                        label="ファイル選択を省く"
+                        oncommand="AkahukuOptions.checkSaveMHTAuto ();" />
+              <box class="sub" orient="vertical">
+                <checkbox id="savemht_auto_unique" checked="false"
+                          label="上書きしない" />
+                <checkbox id="savemht_auto_saveas" checked="false"
+                          label="別名で保存ボタン" />
+              </box>
+              <box orient="horizontal" align="center">
+                <checkbox id="savemht_nolimit" checked="false"
+                          label="保存中はスクリプトの制限時間を" />
+                <textbox id="savemht_nolimit_time" value="" size="6" />
+                <label id="savemht_nolimit_label" value="秒にする" />
+              </box>
+              <checkbox id="savemht_close_nocachelist" checked="false"
+                        label="キャッシュに無かったファイルのリストを閉じる" />
+              <checkbox id="savemht_usenetwork" checked="false"
+                        label="ネットワークからも取得する (元画像以外)" />
+              <checkbox id="savemht_shortcut" checked="false"
+                        label="ショートカットキー"
+                        oncommand="AkahukuOptions.checkSaveMHTShortcut ();" />
+              <box class="sub" orient="vertical">
+                <box orient="horizontal" align="top">
+                  <textbox id="savemht_shortcut_input" value="ここで入力"
+                           onkeydown="AkahukuOptions.onSaveMHTShortcutKeyDown (arguments [0])"
+                           onkeypress="AkahukuOptions.onSaveMHTShortcutKeyDown (arguments [0])"
+                           onkeyup="this.value = 'ここで入力';" />
+                  <menulist id="savemht_shortcut_keycode">
+                    <menupopup id="savemht_shortcut_keycode_menu">
+                    </menupopup>
+                  </menulist>
+                </box>
+                <box orient="horizontal" align="top">
+                  <checkbox id="savemht_shortcut_modifiers_alt" checked="false"
+                            label="Alt" />
+                  <checkbox id="savemht_shortcut_modifiers_ctrl" checked="false"
+                            label="Ctrl" />
+                  <checkbox id="savemht_shortcut_modifiers_meta" checked="false"
+                            label="Meta" />
+                  <checkbox id="savemht_shortcut_modifiers_shift" checked="false"
+                            label="Shift" />
+                </box>
+              </box>
+            </box>
+            <box orient="vertical" flex="1">
+              <checkbox id="savemht_use8bit" checked="false"
+                        label="HTML 部分を 8bit で保存する" />
+              <checkbox id="savemht_imagelink" checked="false"
+                        label="サムネ表示の場合に元画像も保存する"
+                        oncommand="AkahukuOptions.checkSaveMHTImagelink ();" />
+              <box class="sub" orient="vertical">
+                <checkbox id="savemht_imagelink_thread" checked="false"
+                          label="スレ画像のみ" />
+                <checkbox id="savemht_imagelink_perthread" checked="false"
+                          label="スレごとに設定" />
+              </box>
+              <checkbox id="savemht_preview" checked="false"
+                        label="プレビューで表示中の画像も保存する"
+                        oncommand="AkahukuOptions.checkSaveMHTPreview ();" />
+              <box class="sub" orient="vertical">
+                <checkbox id="savemht_preview_count" checked="false"
+                          label="保存した数と総数を表示する" />
+              </box>
+              <checkbox id="savemht_aima_hide_entire_res" checked="false"
+                        label="合間合間に で消したレスを無かった事にする"
+                        oncommand="AkahukuOptions.checkSaveMHTAima ('savemht_aima_hide_entire_res');" />
+              <checkbox id="savemht_aima_show_res" checked="false"
+                        label="合間合間に で消したレスを復活させる"
+                        oncommand="AkahukuOptions.checkSaveMHTAima ('savemht_aima_show_res');" />
+            </box>
+          </box>
+        </groupbox>
+        <box orient="horizontal" align="center">
+          <checkbox id="cleanup" checked="false" label="[保存用に整形] ボタン" />
+          <label value="[mht で保存] を使用する場合には不要です" class="warning" />
+        </box>
+      </box>
+      <box flex="1" id="tab_saveimage1" orient="vertical">
+        <groupbox orient="vertical" flex="1">
+          <caption>
+            <checkbox id="saveimage" checked="false" label="画像を保存ボタン"
+                      oncommand="AkahukuOptions.checkSaveImage ();" />
+          </caption>
+          <checkbox id="saveimage_autolink_preview" checked="false"
+                    label="オートリンクのプレビューにも付ける" />
+          <checkbox id="saveimage_linkmenu" checked="false"
+                    label="リンクのコンテキストメニューから保存" />
+          <box orient="horizonaral" align="center">
+            <checkbox id="saveimage_limit" checked="false"
+                      label="最大サイズ指定" />
+            <textbox id="saveimage_limit_width" size="6" />
+            <label id="saveimage_limit_label"
+                   control="saveimage_limit_width" value="x" />
+            <textbox id="saveimage_limit_height" size="6" />
+          </box>
+          <box orient="horizonaral" align="center">
+            <label id="saveimage_buttonsize_label"
+                   control="saveimage_buttonsize"
+                   value="ボタンサイズ指定" />
+            <textbox id="saveimage_buttonsize" size="6" />
+          </box>
+          <checkbox id="saveimage_buttons" checked="false"
+                    label="メニューの代わりにボタンを表示する" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_saveimage2" orient="vertical">
+        <groupbox orient="vertical" flex="1">
+          <caption>
+            <label id="saveimage_base_label" value="保存先のディレクトリ" />
+          </caption>
+          <box orient="horizontal">
+            <box orient="vertical" flex="1">
+              <box orient="horizontal" align="center">
+                <label id="saveimage_base_name_label"
+                       control="saveimage_base_name"
+                       value="表示名" />
+                <textbox id="saveimage_base_name" flex="1" />
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="saveimage_base_dir_label"
+                       control="saveimage_base_dir"
+                       value="ディレクトリ" />
+                <textbox id="saveimage_base_dir" flex="1" />
+                <button id="saveimage_base_dir_select" label="変更"
+                        oncommand="AkahukuOptions.selectFile ('saveimage_base_dir', false, '保存先のディレクトリを選んでください');" />
+              </box>
+              <radiogroup id="saveimage_base_subdir"
+                          orient="horizontal"
+                          align="center"
+                          oncommand="AkahukuOptions.checkSaveImageBaseSubdir ();">
+                <label id="saveimage_base_subdir_label"
+                       control="saveimage_base_subdir"
+                       value="サブディレクトリ: " />
+                <radio value="simple" label="簡易設定" />
+                <radio value="expert" label="詳細設定" />
+              </radiogroup>
+              <deck id="saveimage_base_subdir_deck">
+                <box id="saveimage_base_subdir_deck_simple" orient="horizontal" flex="1" align="top">
+                  <checkbox id="saveimage_base_subdir_url" checked="false"
+                            label="URL" />
+                  <checkbox id="saveimage_base_subdir_board" checked="false"
+                            label="板名" />
+                  <checkbox id="saveimage_base_subdir_server" checked="false"
+                            label="サーバ" />
+                  <checkbox id="saveimage_base_subdir_dir" checked="false"
+                            label="ディレクトリ" />
+                  <checkbox id="saveimage_base_subdir_thread" checked="false"
+                            label="スレ番号" />
+                </box>
+                <box id="saveimage_base_subdir_deck_expert" orient="vertical" flex="1">
+                  <textbox id="saveimage_base_subdir_format" multiline="true" rows="3"
+                           oninput="AkahukuOptions.changeFormat ('saveimage_base_subdir_format', true);" />
+                  <textbox id="saveimage_base_subdir_format_sample" value="" disabled="true" />
+                </box>
+              </deck>
+              <box orient="horizontal">
+                <box orient="vertical">
+                  <checkbox id="saveimage_base_dialog" checked="false"
+                            label="ダイアログを表示する"
+                            oncommand="AkahukuOptions.checkSaveImageBaseDialog ();" />
+                  <box class="sub" orient="vertical">
+                    <checkbox id="saveimage_base_dialog_keep" checked="false"
+                              label="前回使用したディレクトリを保持する" />
+                  </box>
+                  <box orient="horizontal" align="center">
+                    <label id="saveimage_base_key_label"
+                           control="saveimage_base_key"
+                           value="アクセスキー" />
+                    <textbox id="saveimage_base_key" size="6" />
+                  </box>
+                </box>
+                <box orient="vertical">
+                  <checkbox id="saveimage_instantsrc" checked="false"
+                            label="保存すると元画像を表示する"
+                            oncommand="AkahukuOptions.checkSaveImageInstantSrc ();" />
+                  <box class="sub" orient="vertical">
+                    <checkbox id="saveimage_instantsrc_always" checked="false"
+                              label="元画像があればロード時に表示する" />
+                  </box>
+                </box>
+              </box>
+              <label id="saveimage_base_illegal" value="" class="warning" />
+            </box>
+            <box orient="vertical">
+              <button id="saveimage_base_add" label="追加" />
+              <button id="saveimage_base_modify" label="修正" />
+              <button id="saveimage_base_moveup" label="上に" />
+              <button id="saveimage_base_movedown" label="下に" />
+              <button id="saveimage_base_delete" label="削除" />
+            </box>
+          </box>
+          <listbox id="saveimage_base_list" flex="1"
+                   rows="6" seltype="multiple">
+            <listhead>
+              <listheader label="表示名" />
+              <listheader label="ディレクトリ" />
+              <listheader label="サブ" />
+              <listheader label="ダイアログ" />
+              <listheader label="保持" />
+              <listheader label="キー" />
+              <listheader label="元" />
+              <listheader label="ロ" />
+              <listheader label="" />
+            </listhead>
+            <listcols>
+              <listcol style="min-width: 6em;" flex="1" />
+              <listcol style="min-width: 6em;" flex="1" />
+              <listcol style="min-width: 6em;" />
+              <listcol style="min-width: 4em;" />
+              <listcol style="min-width: 4em;" />
+              <listcol style="min-width: 4em;" />
+              <listcol />
+            </listcols>
+          </listbox>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_mail_comment" orient="vertical">
+        <box orient="horizontal">
+          <groupbox orient="vertical" flex="1">
+            <caption label="メール欄" />
+            <checkbox id="mailbox_sagebutton" checked="false"
+                      label="sage ボタン"
+                      oncommand="AkahukuOptions.checkSageButton ();" />
+            <checkbox id="mailbox_sagebutton_key" checked="false"
+                      label="ショートカットキー"
+                      oncommand="AkahukuOptions.checkSageButtonKey ();" />
+            <box class="sub" orient="vertical">
+              <box orient="horizontal" align="center">
+                <textbox id="mailbox_sagebutton_key_input" value="ここで入力"
+                         size="8"
+                         onkeydown="AkahukuOptions.onMailboxSageButtonKeyDown (arguments [0])"
+                         onkeypress="AkahukuOptions.onMailboxSageButtonKeyDown (arguments [0])"
+                         onkeyup="this.value = 'ここで入力';" />
+                <menulist id="mailbox_sagebutton_key_keycode">
+                  <menupopup id="mailbox_sagebutton_key_keycode_menu">
+                  </menupopup>
+                </menulist>
+              </box>
+              <box orient="horizontal" align="top">
+                <checkbox id="mailbox_sagebutton_key_modifiers_alt"
+                          checked="false"
+                          label="Alt" />
+                <checkbox id="mailbox_sagebutton_key_modifiers_ctrl"
+                          checked="false"
+                          label="Ctrl" />
+                <checkbox id="mailbox_sagebutton_key_modifiers_meta"
+                          checked="false"
+                          label="Meta" />
+                <checkbox id="mailbox_sagebutton_key_modifiers_shift"
+                          checked="false"
+                          label="Shift" />
+              </box>
+            </box>
+            <checkbox id="mailbox_extend" checked="false"
+                      label="メール欄の幅を1.5倍" />
+            <checkbox id="mailbox_memory" checked="false"
+                      label="通常の送信で内容を保持する" />
+            <checkbox id="mailbox_clear" checked="false"
+                      label="連携の送信で内容を消す" />
+            <box class="sub" orient="vertical">
+              <checkbox id="mailbox_clear_sage" checked="false"
+                        label="sage は残す" />
+            </box>
+          </groupbox>
+          <groupbox orient="vertical" flex="1">
+            <caption label="コメント欄" />
+            <checkbox id="commentbox_status" checked="false"
+                      label="コメントの行数監視"
+                      oncommand="AkahukuOptions.checkCommentboxStatus ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="commentbox_status_bytes" checked="false"
+                        label="バイト数も監視する" />
+              <checkbox id="commentbox_status_limit" checked="false"
+                        label="オーバーしたら送信しない" />
+              <checkbox id="commentbox_status_size" checked="false"
+                        label="スクロールバーが出ないように拡張する" />
+            </box>
+            <box orient="horizonaral" align="center">
+              <checkbox id="commentbox_setrows" checked="false"
+                        label="コメント欄の行数を指定する" />
+              <textbox id="commentbox_setrows_count" size="6" />
+              <label id="commentbox_setrows_label"
+                     value="行" />
+            </box>
+            <checkbox id="commentbox_scroll" checked="false"
+                      label="コメント欄内からスクロールする" />
+            <checkbox id="commentbox_ime" checked="false"
+                      label="IME をオンにする" />
+            <checkbox id="commentbox_bg" checked="false"
+                      label="背景画像を表示する"
+                      oncommand="AkahukuOptions.checkCommentboxBG ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="commentbox_bg_frame" checked="false"
+                        label="文字の影を白くする (Fx3.1以降)" />
+              <box orient="horizontal" align="center">
+                <label id="commentbox_bg_custom_label" value="カスタム画像" />
+
+                <menulist id="commentbox_bg_custom">
+                  <menupopup id="commentbox_bg_custom_menu">
+                    <menuitem value="no" label="使用しない" />
+                    <menuitem value="mix" label="既存 + カスタム" />
+                    <menuitem value="only" label="カスタムのみ" />
+                  </menupopup>
+                </menulist>
+              </box>
+              <label id="commentbox_bg_custom_label2"
+                     value="カスタムは使い方参照" />
+            </box>
+            <checkbox id="commentbox_preview" checked="false"
+                      label="画像をプレビュー" />
+            <box class="sub" orient="horizonaral" align="center">
+              <label id="commentbox_preview_size_label1"
+                     control="commentbox_preview_size" value="サイズ: " />
+              <textbox id="commentbox_preview_size" size="6" />
+              <label id="commentbox_preview_size_label2"
+                     control="commentbox_preview_size" value="px" />
+            </box>
+            <checkbox id="commentbox_shortcut" checked="false"
+                      label="ショートカット"
+                      oncommand="AkahukuOptions.checkCommentboxShortcut ();" />
+            <box class="sub" orient="vertical">
+              <box orient="horizontal" align="center">
+                <textbox id="commentbox_shortcut_input" value="ここで入力"
+                         size="8"
+                         onkeydown="AkahukuOptions.onCommentboxShortcutKeyDown (arguments [0])"
+                         onkeypress="AkahukuOptions.onCommentboxShortcutKeyDown (arguments [0])"
+                         onkeyup="this.value = 'ここで入力';" />
+                <menulist id="commentbox_shortcut_keycode">
+                  <menupopup id="commentbox_shortcut_keycode_menu">
+                  </menupopup>
+                </menulist>
+              </box>
+              <box orient="horizontal" align="top">
+                <checkbox id="commentbox_shortcut_modifiers_alt"
+                          checked="false"
+                          label="Alt" />
+                <checkbox id="commentbox_shortcut_modifiers_ctrl"
+                          checked="false"
+                          label="Ctrl" />
+                <checkbox id="commentbox_shortcut_modifiers_meta"
+                          checked="false"
+                          label="Meta" />
+                <checkbox id="commentbox_shortcut_modifiers_shift"
+                          checked="false"
+                          label="Shift" />
+              </box>
+            </box>
+          </groupbox>
+        </box>
+      </box>
+      <box flex="1" id="tab_form" orient="vertical">
+        <box orient="horizontal">
+          <groupbox orient="vertical" flex="1">
+            <caption label="0〜10 ページ" />
+            <checkbox id="postform_normal_hide" checked="false"
+                      label="フォームをデフォルトで閉じる" />
+            <checkbox id="postform_normal_purge_history" checked="false"
+                      label="スレを立てたら戻れなくする" />
+            <checkbox id="postform_normal_newtab" checked="false"
+                      label="スレを新しいウィンドウに表示" />
+          </groupbox>
+          <groupbox orient="vertical" flex="1">
+            <caption label="レス送信モード" />
+            <checkbox id="postform_reply_hide" checked="false"
+                      label="フォームをデフォルトで閉じる" />
+            <checkbox id="postform_reply_sendclose" checked="false"
+                      label="送信すると閉じる" />
+            <checkbox id="postform_reply_thread" checked="false"
+                      label="スレを立てられるようにする" />
+          </groupbox>
+        </box>
+        <box orient="horizontal">
+          <groupbox orient="vertical" flex="1">
+            <caption>
+              <checkbox id="floatpostform" checked="false"
+                        label="フォームを固定"
+                        oncommand="AkahukuOptions.checkFloatPostForm ();" />
+            </caption>
+            <box orient="horizontal" align="center" flex="1">
+              <radiogroup id="floatpostform_position" orient="vertical">
+                <box orient="horizontal">
+                  <radio value="topleft" label="左上" />
+                  <radio value="topright" label="右上" />
+                </box>
+                <box orient="horizontal">
+                  <radio value="bottomleft" label="左下" />
+                  <radio value="bottomright" label="右下" />
+                </box>
+              </radiogroup>
+              <label id="floatpostform_position_label" value="から" />
+              <box orient="vertical">
+                <box orient="horizonaral" align="center">
+                  <label id="floatpostform_position_x_label1"
+                         control="floatpostform_position_x" value="x" />
+                  <textbox id="floatpostform_position_x" size="6" />
+                  <label id="floatpostform_position_x_label2"
+                         control="floatpostform_position_x" value="px" />
+                </box>
+                <box orient="horizonaral" align="center">
+                  <label id="floatpostform_position_y_label1"
+                         control="floatpostform_position_y" value="y" />
+                  <textbox id="floatpostform_position_y" size="6" />
+                  <label id="floatpostform_position_y_label2"
+                         control="floatpostform_position_y" value="px" />
+                </box>
+              </box>
+            </box>
+            <box orient="horizontal" align="center">
+              <label id="floatpostform_width_label"
+                     control="floatpostform_width" value="幅" />
+              <textbox id="floatpostform_width" size="10" />
+            </box>
+            <checkbox id="floatpostform_clickopen" checked="false"
+                      label="クリックで開閉"
+                      oncommand="AkahukuOptions.checkClickOpen ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="floatpostform_clickclose" checked="false"
+                        label="外をクリックで閉じる" />
+            </box>
+            <checkbox id="floatpostform_hidebutton" checked="false"
+                      label="[消す] ボタン" />
+            <checkbox id="floatpostform_minimize" checked="false"
+                      label="アイコン化" />
+            <checkbox id="floatpostform_alpha" checked="false"
+                      label="半透明" />
+          </groupbox>
+          <groupbox orient="vertical" flex="1">
+            <caption label="その他" />
+            <checkbox id="postform_preview" checked="false"
+                      label="添付ファイルをプレビュー"
+                      oncommand="AkahukuOptions.checkPostFormPreview ();" />
+            <box class="sub" orient="horizontal" align="center">
+              <label id="postform_preview_size_label"
+                     control="postform_preview_size"
+                     value="サイズ" />
+              <textbox id="postform_preview_size" size="6" />
+              <label id="postform_preview_size_label2"
+                     control="postform_preview_size"
+                     value="px" />
+            </box>
+            <checkbox id="postform_save_attachment" checked="false"
+                      label="添付ファイルを再起動時に保持" />
+            <checkbox id="postform_delform_hide" checked="false"
+                      label="削除フォームを消す" />
+            <checkbox id="postform_delform_left" checked="false"
+                      label="削除フォームを左に" />
+            <checkbox id="postform_shimonkin" checked="false"
+                      label="送信ボタンを変える" />
+            <box class="sub" orient="vertical">
+              <menulist id="postform_shimonkin_type">
+                <menupopup id="postform_shimonkin_type_menu">
+                  <menuitem value="shimon" label="しもんきん" />
+                  <menuitem value="shimon2" label="しもんきん2" />
+                  <menuitem value="aka" label="赤ふ子さん" />
+                  <menuitem value="sage" label="sage れたん" />
+                  <menuitem value="all" label="全部" />
+                  <menuitem value="custom" label="カスタム" />
+                </menupopup>
+              </menulist>
+              <label id="postform_shimonkin_type_menu_label"
+                     value="カスタムは使い方参照" />
+            </box>
+            <checkbox id="postform_bottom" checked="false"
+                      label="ページ末尾に置く"
+                      oncommand="AkahukuOptions.checkPostFormBottom ();" />
+          </groupbox>
+        </box>
+      </box>
+      <box flex="1" id="tab_reload" orient="vertical">
+        <groupbox orient="horizontal">
+          <caption>
+            <checkbox id="reload" checked="false" label="続きを読む"
+                      oncommand="AkahukuOptions.checkReload ();" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <checkbox id="reload_range_syncbutton" checked="false"
+                      label="[同期] ボタン"
+                      oncommand="AkahukuOptions.checkReloadRangeSyncButton ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="reload_range_syncbutton_nodelete"
+                        checked="false" label="削除されたレスを残す" />
+            </box>
+            <checkbox id="reload_rule" checked="false" label="区切り"
+                      oncommand="AkahukuOptions.checkReloadRule ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="reload_rule_zeroheight" checked="false"
+                        label="ズレないようにする" />
+              <checkbox id="reload_rule_random" checked="false"
+                        label="ランダム" />
+            </box>
+            <checkbox id="reload_reply" checked="false"
+                      label="レス送信と連携" />
+            <box class="sub" orient="vertical">
+              <checkbox id="reload_reply_scroll" checked="false"
+                        label="最新位置にスクロール" />
+            </box>
+            <checkbox id="reload_hook" checked="false"
+                      label="リロードの代わりに続きを読む"
+                      oncommand="AkahukuOptions.checkReloadHook ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="reload_hook_sync" checked="false"
+                        label="同期する" />
+            </box>
+            <checkbox id="reload_status_random" checked="false"
+                      label="スレが消えたときのメッセージをランダムに" />
+            
+            <box orient="horizontal" align="center">
+              <checkbox id="reload_partial_on" checked="false"
+                        label="デフォルトで最新"
+                        oncommand="AkahukuOptions.checkPartial ();" />
+              <textbox id="reload_partial_count" size="6" />
+              <label id="reload_partial_count_label"
+                     control="reload_partial_count"
+                     value="件表示" />
+            </box>
+            <box class="sub" orient="vertical">
+              <label value="スレが消えた後に全件表示するには" class="warning" />
+              <label value="[スレが消えても表示できるようにする]" class="warning" />
+              <label value="が必要です" class="warning" />
+              
+              <box orient="horizontal" align="center">
+                <label id="reload_partial_up_label"
+                       control="reload_partial_up"
+                       value="前に" />
+                <textbox id="reload_partial_up" size="6" />
+                <label id="reload_partial_up_label2"
+                       control="reload_partial_up"
+                       value="件ずつ戻る" />
+              </box>
+            </box>
+          </box>
+          <box orient="vertical" flex="1">
+            <checkbox id="reload_status_hold" checked="false"
+                      label="ステータスを消さない" />
+            <checkbox id="reload_timestamp" checked="false"
+                      label="更新時刻を表示する" />
+            <box orient="horizontal" align="center">
+              <checkbox id="reload_nolimit" checked="false"
+                        label="更新中はスクリプトの制限時間を" />
+              <textbox id="reload_nolimit_time" value="" size="6" />
+              <label id="reload_nolimit_label" value="秒にする" />
+            </box>
+            <checkbox id="reload_status_no_count" checked="false"
+                      label="ステータスにレス数を表示しない" />
+            <checkbox id="reload_extcache" checked="false"
+                      label="スレが消えても表示できるようにする"
+                      oncommand="AkahukuOptions.checkReloadExtCache ();" />
+            <box class="sub" orient="vertical">
+              <label value="(画像の表示には P2P 必須)" class="warning" />
+              <checkbox id="reload_extcache_file" checked="false"
+                        label="スレをファイルに保存する"
+                        oncommand="AkahukuOptions.checkReloadExtCacheFile ();" />
+              <box class="sub" orient="horizontal" align="center">
+                <textbox id="reload_extcache_file_base" flex="1" />
+                <button id="reload_extcache_file_base_select" label="変更"
+                        oncommand="AkahukuOptions.selectFile ('reload_extcache_file_base', false, '保存先のディレクトリを選んでください');" />
+              </box>
+              <label value="ファイルに保存した場合古くなっても削除されません" class="warning" />
+            </box>
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_throp" orient="vertical">
+        <groupbox orient="horizontal">
+          <caption>
+            <checkbox id="thread_operator" checked="false"
+                      label="スレ操作パネル"
+                      oncommand="AkahukuOptions.checkThreadOperator ();" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <label id="thread_operator_show_label"
+                   value="表示するもの" />
+            <box class="sub" orient="vertical">
+              <checkbox id="thread_operator_show_move" checked="false"
+                        label="移動" />
+              <checkbox id="thread_operator_show_thumbnail" checked="false"
+                        label="サムネ固定のチェックボックス" />
+              <checkbox id="thread_operator_show_reload" checked="false"
+                        label="続きを読む" />
+              <checkbox id="thread_operator_show_savemht" checked="false"
+                        label="MHT で保存" />
+            </box>
+            <label id="thread_operator_position_label"
+                   value="表示位置" />
+            <box class="sub" orient="vertical">
+              <box orient="horizonaral" align="center">
+                <label id="thread_operator_position_x_label1"
+                       control="thread_operator_position_x" value="x" />
+                <textbox id="thread_operator_position_x" size="6" />
+                <label id="thread_operator_position_x_label2"
+                       control="thread_operator_position_x" value="px " />
+              </box>
+              <box orient="horizonaral" align="center">
+                <label id="thread_operator_position_y_label1"
+                       control="thread_operator_position_y" value="y" />
+                <textbox id="thread_operator_position_y" size="6" />
+                <label id="thread_operator_position_y_label2"
+                       control="thread_operator_position_y" value="px" />
+              </box>
+            </box>
+            <checkbox id="thread_operator_clickopen" checked="false"
+                      label="クリックで開閉"
+                      oncommand="AkahukuOptions.checkThreadOperatorClickOpen ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="thread_operator_clickclose" checked="false"
+                        label="外をクリックで閉じる" />
+              <checkbox id="thread_operator_hide" checked="false"
+                        label="デフォルトで閉じる" />
+            </box>
+          </box>
+          <box orient="vertical" flex="1">
+            <checkbox id="thread_operator_threadtime" checked="false"
+                      label="スレの立った時刻を表示" />
+            <checkbox id="thread_operator_expire_diff" checked="false"
+                      label="残り時間、番号を表示する" />
+            <checkbox id="thread_operator_thumbnail" checked="false"
+                      label="サムネも固定する"
+                      oncommand="AkahukuOptions.checkThreadOperatorThumbnail ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="thread_operator_thumbnail_only" checked="false"
+                        label="サムネだけ" />
+              <checkbox id="thread_operator_thumbnail_alpha" checked="false"
+                        label="半透明" />
+              <checkbox id="thread_operator_thumbnail_roll" checked="false"
+                        label="巻き上げ" />
+              <label id="thread_operator_thumbnail_size_label"
+                     control="thread_operator_thumbnail_size"
+                     value="表示サイズ" />
+              <box class="sub" orient="vertical">
+                <radiogroup id="thread_operator_thumbnail_size"
+                            orient="vertical"
+                            oncommand="AkahukuOptions.checkThreadOperatorThumbnailSize ();">
+                  <radio value="0" label="フルサイズ" />
+                  <radio value="1" label="ハーフ" />
+                  <box class="sub" orient="vertical">
+                    <checkbox id="thread_operator_thumbnail_size_zoom"
+                              checked="false" label="ズーム" />
+                  </box>
+                </radiogroup>
+              </box>
+            </box>
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_link" orient="vertical">
+        <groupbox orient="vertical">
+          <caption label="リンクを新しいタブで開く" />
+          <checkbox id="thread_newtab" checked="false"
+                    label="返信" />
+          <checkbox id="thread_back_new" checked="false"
+                    label="掲示板に戻る" />
+          <checkbox id="thread_catalog_new" checked="false"
+                    label="カタログ" />
+          <checkbox id="del_newtab" checked="false"
+                    label="del" />
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption label="ページ末尾に追加" />
+          <checkbox id="thread_back_on_bottom" checked="false"
+                    label="[掲示板に戻る]" />
+          <checkbox id="thread_catalog_on_bottom" checked="false"
+                    label="[カタログ]" />
+          <checkbox id="reload_on_bottom" checked="false"
+                    label="リロードボタン (通常モード)" />
+        </groupbox>
+        
+        <checkbox id="thread_move_button" checked="false"
+                  label="前後に移動ボタン" />
+        <checkbox id="del_inline" checked="false"
+                  label="del フォームをインラインで開く" />
+      </box>
+      <box flex="1" id="tab_thread" orient="vertical">
+        <box orient="horizontal" align="center">
+          <checkbox id="thread_numbering" checked="false"
+                    label="レス番号を"
+                    oncommand="AkahukuOptions.checkNumbering ();" />
+          <textbox id="thread_numbering_max" size="6" />
+          <label id="thread_numbering_max_label"
+                 control="thread_max_numbering" value="まで振る" />
+        </box>
+        <checkbox id="thread_bottom_status" checked="false"
+                  label="末尾にステータス表示"
+                  oncommand="AkahukuOptions.checkThreadBottomStatus ();" />
+        <box class="sub" orient="vertical">
+          <checkbox id="thread_bottom_status_diff" checked="false"
+                    label="スレが消えるまでの時間を表示" />
+          <checkbox id="thread_bottom_status_hidden" checked="false"
+                    label="非表示になったレス数を表示" />
+          <checkbox id="thread_bottom_status_num" checked="false"
+                    oncommand="AkahukuOptions.checkThreadBottomStatusNum ();"
+                    label="スレ番号 + 保持数 - 最終レス番号 を表示" />
+          <box class="sub" orient="vertical">
+            <checkbox id="thread_bottom_status_num_random" checked="false"
+                      label="ランダム" />
+            <checkbox id="thread_bottom_status_num_short" checked="false"
+                      label="短いのだけ" />
+            <checkbox id="thread_bottom_status_num_entire" checked="false"
+                      label="板全体の最新レスを反映する" />
+          </box>
+        </box>
+      </box>
+      <box flex="1" id="tab_popupquote" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="popupquote" checked="false"
+                      label="引用のポップアップ"
+                      oncommand="AkahukuOptions.checkPopupQuote ();" />
+          </caption>
+          <box orient="horizontal" align="center">
+            <label id="popupquote_delay_label1" control="popupquote_delay"
+                   value="表示まで" />
+            <textbox id="popupquote_delay" size="6" />
+            <label id="popupquote_delay_label2" control="popupquote_delay"
+                   value="[ms]" />
+          </box>
+          <checkbox id="popupquote_clickhide" checked="false"
+                    label="ポップアップ以外をクリックで即非表示" />
+          <checkbox id="popupquote_image" checked="false"
+                    label="画像も含める"
+                    oncommand="AkahukuOptions.checkPopupQuoteImage ();" />
+          <box class="sub" orient="vertical">
+            <menulist id="popupquote_image_size">
+              <menupopup id="popupquote_image_size_menu">
+                <menuitem value="0" label="フルサイズ" />
+                <menuitem value="1" label="ハーフ" />
+                <menuitem value="2" label="クオーター" />
+              </menupopup>
+            </menulist>
+          </box>
+          <checkbox id="popupquote_nearest" checked="false"
+                    label="現在のレスから近い方を表示" />
+          <checkbox id="popupquote_bottomup" checked="false"
+                    label="ポップアップを上に延ばす" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_hidetroll" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="hidetrolls" checked="false" label="芝刈り"
+                      oncommand="AkahukuOptions.checkHidetrolls ();" />
+          </caption>
+          <radiogroup id="hidetrolls_mode" orient="vertical" align="start">
+            <radio value="normal" label="......" />
+            <radio value="hide" label="隠す" />
+            <radio value="user" label="指定" />
+            <box class="sub" orient="vertical">
+              <textbox id="hidetrolls_user" flex="1" />
+              <checkbox id="hidetrolls_random" checked="false"
+                        label="ランダムで切り替える" />
+              <box class="sub" orient="vertical">
+                <label id="hidetrolls_random_label"
+                       control="hidetrolls_random"
+                       value="カンマで区切って複数並べてください" />
+              </box>
+            </box>
+          </radiogroup>
+          <checkbox id="hidetrolls_red" checked="false" label="色を変える" />
+          <box class="sub" orient="vertical">
+            <box orient="horizontal" align="center">
+              <label id="hidetrolls_red_color_label"
+                     control="hidetrolls_red_color"
+                     value="通常" />
+              <textbox id="hidetrolls_red_color" size="8" />
+            </box>
+            <box orient="horizontal" align="center">
+              <label id="hidetrolls_red_color_quote_label"
+                     control="hidetrolls_red_color_quote"
+                     value="引用" />
+              <textbox id="hidetrolls_red_color_quote" size="8" />
+            </box>
+          </box>
+          <checkbox id="hidetrolls_nocat" checked="false"
+                    label="カタログでは刈らない" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_res" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="cutefont" checked="false"
+                      label="フォント変更"
+                      oncommand="AkahukuOptions.checkCuteFont ();" />
+          </caption>
+          <label id="cutefont_family_example" value="" />
+          <box orient="horizontal">
+            <textbox id="cutefont_family" flex="1" />
+            <button id="cutefont_family_init" label="初期化"
+                    oncommand="AkahukuOptions.initCuteFont ();" />
+          </box>
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="style_ignore_default" checked="false"
+                      label="デフォルトのスタイルを無視する"
+                      oncommand="AkahukuOptions.checkStyleIgnoreDefault ();" />
+          </caption>
+          <box orient="horizontal" align="center">
+            <checkbox id="style_ignore_default_font" checked="false"
+                      label="文字のサイズを"
+                      oncommand="AkahukuOptions.checkStyleIgnoreDefaultFont ();" />
+            <textbox id="style_ignore_default_font_size" size="6" />
+            <label id="style_ignore_default_font_size_label"
+                   control="style_ignore_default_font_size"
+                   value="pt にする (8-24)" />
+          </box>
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption label="その他" />
+          <checkbox id="showmail" checked="false" label="メール欄表示" />
+          <checkbox id="showmail_popup" checked="false" label="メール欄ポップアップ" />
+          <checkbox id="reply_limitwidth" checked="false"
+                    label="横長のレスを途中で消す" />
+          <checkbox id="reply_avoidwrap" checked="false"
+                    label="Firefox 3 で不要な折り返しを回避する" />
+          <checkbox id="reply_marginbottom" checked="false"
+                    label="レスの下にマージンをとる" />
+          <checkbox id="reply_nomargintop" checked="false"
+                    label="レスの上のマージンを消す" />
+          <checkbox id="reply_nomarginbottom" checked="false"
+                    label="レスの下のマージンを消す" />
+          <checkbox id="alertgif" checked="false" label="GIF 画像を赤字で表示" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_autolink" orient="vertical">
+        <groupbox orient="horizontal">
+          <caption>
+            <checkbox id="autolink" checked="false" label="オートリンク"
+                      oncommand="AkahukuOptions.checkAutoLink ();" />
+          </caption>
+          <box orient="vertical">
+            <checkbox id="autolink_focus" checked="false"
+                      label="開いたタブを選択する" />
+            <checkbox id="autolink_user" checked="false"
+                      label="ユーザ指定文字列"
+                      oncommand="AkahukuOptions.checkAutoLinkUser ();"  />
+            <checkbox id="autolink_as" checked="false"
+                      label="板以外で選択範囲をオートリンクとして開く" />
+            <checkbox id="autolink_subject_name" checked="false"
+                      label="題名と名前も対象にする" />
+          </box>
+          <box orient="vertical">
+            <checkbox id="autolink_preview" checked="false"
+                      label="プレビュー"
+                      oncommand="AkahukuOptions.checkAutoLinkPreview ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="autolink_preview_multi" checked="false"
+                        label="複数表示する" />
+              <box orient="horizontal" align="center">
+                <label id="autolink_preview_swf_label"
+                       control="autolink_preview_swf_width"
+                       value="swf のサイズ" />
+                <textbox id="autolink_preview_swf_width" size="6" />
+                <label id="autolink_preview_swf_label2"
+                       control="autolink_preview_swf_width"
+                       value="px x " />
+                <textbox id="autolink_preview_swf_height" size="6" />
+                <label id="autolink_preview_swf_label3"
+                       control="autolink_preview_swf_height"
+                       value="px" />
+              </box>
+              <checkbox id="autolink_preview_autoopen" checked="false"
+                        label="P2P のキャッシュにある場合自動で開く" />
+              <box orient="vertical" class="sub">
+                <checkbox id="autolink_preview_autoopen_noquote" checked="false"
+                          label="引用では開かない" />
+              </box>
+            </box>
+          </box>
+        </groupbox>
+        <groupbox orient="horizontal" flex="1">
+          <caption>
+            <label id="autolink_user_label" value="ユーザ指定文字列" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <box orient="horizontal" align="center">
+              <label id="autolink_user_pattern_label"
+                     control="autolink_user_pattern" value="パターン" />
+              <textbox id="autolink_user_pattern" flex="1" />
+              <checkbox id="autolink_user_regexp" checked="false"
+                        label="正規表現" />
+            </box>
+            <box orient="horizontal" align="center">
+              <label id="autolink_user_url_label" control="autolink_user_url"
+                     value="リンク先" />
+              <textbox id="autolink_user_url" flex="1" />
+            </box>
+            <label id="autolink_user_illegal" value="" class="warning" />
+            <listbox id="autolink_user_list" flex="1"
+                     rows="6" seltype="multiple">
+              <listhead>
+                <listheader label="パターン" />
+                <listheader label="正規表現" />
+                <listheader label="リンク先" />
+                <listheader label="" />
+              </listhead>
+              <listcols>
+                <listcol style="min-width: 8em;" flex="1" />
+                <listcol style="min-width: 6em;" />
+                <listcol style="min-width: 8em;" flex="1" />
+                <listcol />
+              </listcols>
+            </listbox>
+          </box>
+          <box orient="vertical">
+            <button id="autolink_user_add" label="追加" />
+            <button id="autolink_user_modify" label="修正" />
+            <button id="autolink_user_moveup" label="上に" />
+            <button id="autolink_user_movedown" label="下に" />
+            <button id="autolink_user_delete" label="削除" />
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_p2p" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="p2p" checked="false"
+                      label="画像を P2P 経由で取得する"
+                      oncommand="AkahukuOptions.checkP2P ();" />
+          </caption>
+          <label value="この機能はテスト段階です" class="warning" />
+          <groupbox orient="vertical">
+            <radiogroup id="p2p_connection_type" orient="horizontal"
+                        align="center"
+                        oncommand="AkahukuOptions.checkP2PConnectionType ();">
+              <label value="動作モード: " />
+              <radio value="accept"
+                     label="誘い可" />
+              <radio value="noaccept"
+                     label="襲い専" />
+            </radiogroup>
+            <box orient="vertical" class="sub">
+              <box orient="horizontal" align="center">
+                <label id="p2p_address_label" control="p2p_address"
+                       value="自分のアドレス" />
+                <radiogroup id="p2p_address_type" orient="vertical" flex="1"
+                            oncommand="AkahukuOptions.checkP2PAddressType ();">
+                  <box orient="horizontal" align="center">
+                    <radio value="static" label="固定／(D)DNS" />
+                    <textbox id="p2p_address" flex="1"
+                             oninput="AkahukuOptions.changeAddress ('p2p_address');" />
+                  </box>
+                  <radio value="dynamic" label="可変 (自動更新)" />
+                </radiogroup>
+              </box>
+              <label id="p2p_address_warning" value="" class="warning" />
+              <box orient="horizontal" align="center">
+                <label id="p2p_port_label" control="p2p_port"
+                       value="ポート番号" />
+                <textbox id="p2p_port" size="8" />
+                <button id="p2p_port_init" label="初期化"
+                        oncommand="AkahukuOptions.initP2PPort ();" />
+              </box>
+            </box>
+          </groupbox>
+          <box orient="horizontal">
+            <box orient="vertical">
+              <box orient="horizontal" align="center">
+                <label id="p2p_cache_check_interval_label" control="p2p_cache_check_interval"
+                       value="キャッシュチェックの間隔" />
+                <textbox id="p2p_cache_check_interval" size="6" />
+                <label id="p2p_cache_check_interval_label2" control="p2p_cache_check_interval"
+                       value="分" />
+              </box>
+              <box class="sub" orient="vertical">
+                <label id="p2p_cache_check_interval_label3" control="p2p_cache_check_interval"
+                       value="(最低 30 分, 0 で手動のみ)" />
+              </box>
+              <label id="p2p_cache_limit_label"
+                     value="キャッシュの最大個数" />
+              <box class="sub" orient="vertical">
+                <box orient="horizontal" align="center">
+                  <label id="p2p_cache_src_limit_label" control="p2p_cache_src_limit"
+                         value="src" />
+                  <textbox id="p2p_cache_src_limit" size="6" />
+                  <label id="p2p_cache_src_limit_label2" control="p2p_cache_src_limit"
+                         value="個" />
+                </box>
+                <box orient="horizontal" align="center">
+                  <label id="p2p_cache_thumb_limit_label" control="p2p_cache_thumb_limit"
+                         value="thumb" />
+                  <textbox id="p2p_cache_thumb_limit" size="6" />
+                  <label id="p2p_cache_thumb_limit_label2" control="p2p_cache_thumb_limit"
+                         value="個" />
+                </box>
+                <box orient="horizontal" align="center">
+                  <label id="p2p_cache_cat_limit_label" control="p2p_cache_cat_limit"
+                         value="cat" />
+                  <textbox id="p2p_cache_cat_limit" size="6" />
+                  <label id="p2p_cache_cat_limit_label2" control="p2p_cache_cat_limit"
+                         value="個" />
+                </box>
+                <label id="p2p_cache_limit_label2"
+                       value="(最低 200 個, 0 で無制限)" />
+              </box>
+              <label id="p2p_cache_base_label" control="p2p_cache_base"
+                   value="キャッシュのディレクトリ" />
+              <box class="sub" orient="horizontal" align="center">
+                <textbox id="p2p_cache_base" flex="1" />
+                <button id="p2p_cache_base_select" label="変更"
+                        oncommand="AkahukuOptions.selectFile ('p2p_cache_base', false, 'キャッシュのディレクトリを選んでください');" />
+              </box>
+              <checkbox id="p2p_treat_as_same" checked="false"
+                        label="別サーバのキャッシュをまとめる" />
+            </box>
+            <box orient="vertical">
+              <box orient="horizontal" align="center">
+                <label id="p2p_accept_slot_label"
+                       control="p2p_accept_slot"
+                       value="最大誘い人数 (3 〜 29)" />
+                <textbox id="p2p_accept_slot" size="6" />
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="p2p_transfer_limit_label"
+                       control="p2p_transfer_limit"
+                       value="送信帯域制限" />
+                <textbox id="p2p_transfer_limit" size="6" />
+                <label id="p2p_transfer_limit_label2"
+                       control="p2p_transfer_limit"
+                       value=" [KBytes/s] (10 〜)" />
+              </box>
+              <checkbox id="p2p_statusbar" checked="false"
+                        label="ステータスバーに状況を表示する" />
+              <checkbox id="p2p_nocat" checked="false"
+                        label="カタログ画像は P2P を経由しない" />
+              <checkbox id="p2p_prefetch_src" checked="false"
+                        label="src 画像を P2P からプリフェッチする" />
+              <checkbox id="p2p_tatelog" checked="false"
+                        label="タテログのふつーモードでも有効にする" />
+              <label value="「見たスレ」が正しく動作しなくなります" class="warning" />
+              <checkbox id="savemht_usep2p" checked="false"
+                        label="[元画像を P2P から取得する] ボタン" />
+              <box class="sub" orient="vertical">
+                <label id="savemht_usep2p_label"
+                       control="savemht_usep2p"
+                       value="[MHT で保存] の横に表示されます" />
+              </box>
+              <checkbox id="p2p_sidebar_shortcut" checked="false"
+                        label="サイドバーのショートカットキー"
+                        oncommand="AkahukuOptions.checkP2PSidebarShortcut ();" />
+              <box class="sub" orient="vertical">
+                <box orient="horizontal" align="top">
+                  <textbox id="p2p_sidebar_shortcut_input" value="ここで入力"
+                           onkeydown="AkahukuOptions.onP2PSidebarShortcutKeyDown (arguments [0])"
+                           onkeypress="AkahukuOptions.onP2PSidebarShortcutKeyDown (arguments [0])"
+                           onkeyup="this.value = 'ここで入力';" />
+                  <menulist id="p2p_sidebar_shortcut_keycode">
+                    <menupopup id="p2p_sidebar_shortcut_keycode_menu">
+                    </menupopup>
+                  </menulist>
+                </box>
+                <box orient="horizonaral" align="top">
+                  <checkbox id="p2p_sidebar_shortcut_modifiers_alt" checked="false"
+                            label="Alt" />
+                  <checkbox id="p2p_sidebar_shortcut_modifiers_ctrl" checked="false"
+                            label="Ctrl" />
+                  <checkbox id="p2p_sidebar_shortcut_modifiers_meta" checked="false"
+                            label="Meta" />
+                  <checkbox id="p2p_sidebar_shortcut_modifiers_shift" checked="false"
+                            label="Shift" />
+                </box>
+              </box>
+            </box>
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_catalog1" orient="vertical">
+        <box orient="horizontal">
+          <groupbox orient="vertical" flex="1">
+            <caption>
+              <checkbox id="catalog_reorder" checked="false" label="ソート"
+                        oncommand="AkahukuOptions.checkCatalogReorder ();" />
+            </caption>
+            <box orient="horizonaral" align="center">
+              <label id="catalog_reorder_width_label"
+                     control="catalog_reorder_width" value="指定幅" />
+              <textbox id="catalog_reorder_width" size="6" />
+              <label id="catalog_reorder_width_label2"
+                     control="catalog_reorder_width" value=" (0 で板のデフォルト)" />
+            </box>
+            <checkbox id="catalog_reorder_save" checked="false" label="状態を記憶する" oncommand="AkahukuOptions.checkCatalogReorderSave ();" />
+            <box class="sub" orient="vertical">
+              <menulist id="catalog_reorder_save_type">
+                <menupopup id="catalog_reorder_save_type_menu">
+                  <menuitem value="0" label="通常" />
+                  <menuitem value="1" label="ページごと" />
+                  <menuitem value="2" label="更新順に指定幅ずつ" />
+                  <menuitem value="-1" label="スレの立った順に指定幅ずつ" />
+                </menupopup>
+              </menulist>
+            </box>
+            <checkbox id="catalog_reorder_visited" checked="false"
+                      label="未読と既読で分ける" />
+            <checkbox id="catalog_reorder_new" checked="false"
+                      label="最新に更新で新規を分ける" />
+            <checkbox id="catalog_reorder_fill" checked="false"
+                      label="合間合間に で消した分を詰める" />
+            <box class="sub" orient="vertical">
+              <label value="指定幅のみ" class="warning" />
+            </box>
+          </groupbox>
+          <groupbox orient="vertical" flex="1">
+            <caption>
+              <checkbox id="catalog_zoom" checked="false" label="ズーム"
+                        oncommand="AkahukuOptions.checkCatalogZoom ();" />
+            </caption>
+            <checkbox id="catalog_zoom_click" checked="false"
+                      label="クリックで開く" />
+            <checkbox id="catalog_zoom_noanim" checked="false"
+                      label="アニメーションしない" />
+            <box orient="horizontal" align="center">
+              <label id="catalog_zoom_delay_label1"
+                     control="catalog_zoom_delay" value="表示まで" />
+              <textbox id="catalog_zoom_delay" size="6" />
+              <label id="catalog_zoom_delay_label2"
+                     control="catalog_zoom_delay" value="[ms]" />
+            </box>
+            <box orient="horizontal" align="center">
+              <label id="catalog_zoom_size_label1"
+                     control="catalog_zoom_size" value="サイズ" />
+              <textbox id="catalog_zoom_size" size="6" />
+              <label id="catalog_zoom_size_label2"
+                     control="catalog_zoom_size" value="px (50 〜 250)" />
+            </box>
+            <box orient="horizontal" align="center">
+              <label id="catalog_zoom_cache_count_label1"
+                     control="catalog_zoom_size" value="キャッシュ" />
+              <textbox id="catalog_zoom_cache_count" size="6" />
+              <label id="catalog_zoom_cache_count_label2"
+                     control="catalog_zoom_size" value="個" />
+            </box>
+            <checkbox id="catalog_zoom_comment" checked="false"
+                      label="コメントを全文表示" />
+            <label value="サイドバー必須" class="warning" />
+            <box class="sub" orient="horizontal" align="center">
+              <label id="catalog_zoom_comment_delay_label1"
+                     control="catalog_zoom_comment_delay" value="表示まで" />
+              <textbox id="catalog_zoom_comment_delay" size="6" />
+              <label id="catalog_zoom_comment_delay_label2"
+                     control="catalog_zoom_comment_delay" value="[ms]" />
+            </box>
+          </groupbox>
+        </box>
+      </box>
+      <box flex="1" id="tab_catalog2" orient="vertical">
+        <box orient="horizontal">
+          <groupbox orient="vertical" flex="1">
+            <caption>
+              <checkbox id="catalog_reload" checked="false" label="最新に更新"
+                        oncommand="AkahukuOptions.checkCatalogReload ();" />
+            </caption>
+            <checkbox id="catalog_reload_reply_number_delta" checked="false"
+                      label="レスの増加数を表示" />
+            <checkbox id="catalog_reload_status_hold" checked="false"
+                      label="ステータスを消さない" />
+            <checkbox id="catalog_reload_update_cache" checked="false"
+                      label="キャッシュに反映させる" />
+            <checkbox id="catalog_reload_hook" checked="false"
+                      label="リロードの代わりに最新に更新" />
+            <checkbox id="catalog_reload_timestamp" checked="false"
+                      label="更新時刻を表示する" />
+            <checkbox id="catalog_reload_left_before" checked="false"
+                      label="合間合間に で消した分だけ更新前を残す"
+                      oncommand="AkahukuOptions.checkCatalogReloadLeftBefore ();" />
+            <box class="sub" orient="vertical">
+              <label value="更新順に指定幅のみ" class="warning" />
+              <label value="未読と既読や新規を分けると不可" class="warning" />
+              <box orient="horizontal" align="center">
+                <checkbox id="catalog_reload_left_before_more" checked="false"
+                          label="多めに残す" />
+                <textbox id="catalog_reload_left_before_more_num" size="6" />
+                <label id="catalog_reload_left_before_more_num_label"
+                       control="catalog_reload_left_before_more_num"
+                       value=" (2→2個、2L→2行)" />
+              </box>
+              <checkbox id="catalog_reload_left_before_save" checked="false"
+                        label="状態を保存する" />
+            </box>
+          </groupbox>
+          <box orient="vertical" flex="1">
+            <groupbox orient="vertical">
+              <caption>
+                <checkbox id="catalog_sidebar" checked="false"
+                          label="サイドバーと連携"
+                          oncommand="AkahukuOptions.checkCatalogSidebar ();" />
+              </caption>
+              <checkbox id="catalog_sidebar_comment" checked="false"
+                        label="本文を長めに表示"
+                        oncommand="AkahukuOptions.checkCatalogSidebarComment ();" />
+              <box class="sub" orient="horizontal" align="center">
+                <label id="catalog_sidebar_comment_length_label1"
+                       control="catalog_sidebar_comment_length" value="最大" />
+                <textbox id="catalog_sidebar_comment_length" size="6" />
+                <label id="catalog_sidebar_comment_length_label2"
+                       control="catalog_sidebar_comment_length" value="文字" />
+              </box>
+            </groupbox>
+            <checkbox id="catalog_clickable" checked="false"
+                      label="空白の本文を強制リンク" />
+            <checkbox id="catalog_visited" checked="false"
+                      label="一度見たスレをマーク" />
+            <checkbox id="catalog_red" checked="false"
+                      label="古いスレを赤くする" />
+            <checkbox id="catalog_left" checked="false"
+                      label="カタログを左寄せ" />
+          </box>
+        </box>
+      </box>
+      <box flex="1" id="tab_sidebar" orient="vertical">
+        <groupbox orient="vertical" flex="1">
+          <caption>
+            <checkbox id="sidebar" checked="false"
+                      label="サイドバーを使用する"
+                      oncommand="AkahukuOptions.checkSidebar ();" />
+          </caption>
+          
+          <box orient="horizontal">
+            <box orient="vertical" flex="1">
+              <checkbox id="sidebar_background" checked="false"
+                        label="非表示の間も反映させる" />
+              <checkbox id="sidebar_check_catalog" checked="false"
+                        label="カタログをチェックする" />
+              <checkbox id="sidebar_tab_vertical" checked="false"
+                        label="タブを縦に表示する" />
+              <checkbox id="sidebar_tab_hidden" checked="false"
+                        label="タブを表示しない" />
+              <checkbox id="sidebar_tab_menu" checked="false"
+                        label="タブメニューを表示する" />
+              <checkbox id="sidebar_sort_visited" checked="false"
+                        label="既読のスレを上に持ってくる" />
+              <checkbox id="sidebar_sort_marked" checked="false"
+                        label="マークしたスレを上に持ってくる" />
+              <checkbox id="sidebar_sort_invert" checked="false"
+                        label="ソートを反転" />
+              <checkbox id="sidebar_markedtab" checked="false"
+                        label="マークされたスレを別タブに表示" />
+              <checkbox id="sidebar_save" checked="false"
+                        label="サイドバーの内容を保存する" />
+            </box>
+            <box orient="vertical" flex="1">
+              <box orient="horizontal" align="center">
+                <label id="sidebar_sort_type_label" control="sidebar_sort_type"
+                       value="表示順" />
+                <menulist id="sidebar_sort_type">
+                  <menupopup id="sidebar_sort_type_menu">
+                    <menuitem value="0" label="スレの立った順" />
+                    <menuitem value="1" label="最終レス番号順" />
+                  </menupopup>
+                </menulist>
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="sidebar_max_view_label"
+                       control="sidebar_max_view" value="表示する数" />
+                <textbox id="sidebar_max_view" size="6" />
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="sidebar_max_cache_label"
+                       control="sidebar_max_cache" value="内部で保持する数" />
+                <textbox id="sidebar_max_cache" size="6" />
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="sidebar_thumbnail_size_label"
+                       control="sidebar_thumbnail_size"
+                       value="サムネのサイズ" />
+                <textbox id="sidebar_thumbnail_size" size="6" />
+              </box>
+              <checkbox id="sidebar_shortcut" checked="false"
+                        label="ショートカットキー"
+                        oncommand="AkahukuOptions.checkSidebarShortcut ();" />
+              <box class="sub" orient="vertical">
+                <box orient="horizontal" align="top">
+                  <textbox id="sidebar_shortcut_input" value="ここで入力"
+                           onkeydown="AkahukuOptions.onSidebarShortcutKeyDown (arguments [0])"
+                           onkeypress="AkahukuOptions.onSidebarShortcutKeyDown (arguments [0])"
+                           onkeyup="this.value = 'ここで入力';" />
+                  <menulist id="sidebar_shortcut_keycode">
+                    <menupopup id="sidebar_shortcut_keycode_menu">
+                    </menupopup>
+                  </menulist>
+                </box>
+                <box orient="horizontal" align="top">
+                  <checkbox id="sidebar_shortcut_modifiers_alt" checked="false"
+                            label="Alt" />
+                  <checkbox id="sidebar_shortcut_modifiers_ctrl" checked="false"
+                            label="Ctrl" />
+                  <checkbox id="sidebar_shortcut_modifiers_meta" checked="false"
+                            label="Meta" />
+                  <checkbox id="sidebar_shortcut_modifiers_shift" checked="false"
+                            label="Shift" />
+                </box>
+              </box>
+            </box>
+          </box>
+          
+          <groupbox orient="horizontal" flex="1">
+            <caption label="表示する板" />
+            <box orient="vertical" flex="1">
+              <label id="sidebar_board_select_in_label" value="表示する" />
+              <listbox id="sidebar_board_select_in_list" flex="1"
+                       rows="6" seltype="multiple">
+              </listbox>
+            </box>
+            <box orient="horizontal" align="center">
+              <box orient="vertical">
+                <button id="sidebar_board_select_add" label="←"
+                        oncommand="AkahukuOptions.onBoardSelectAdd ('sidebar_');" />
+                <button id="sidebar_board_select_delete" label="→"
+                        oncommand="AkahukuOptions.onBoardSelectDelete ('sidebar_');" />
+                <button id="sidebar_board_moveup" label="上に"
+                        oncommand="AkahukuOptions.onMoveupList ('sidebar_board_select_in_list');" />
+                <button id="sidebar_board_movedown" label="下に"
+                        oncommand="AkahukuOptions.onMovedownList ('sidebar_board_select_in_list');" />
+              </box>
+            </box>
+            <box orient="vertical" flex="1">
+              <label id="sidebar_board_select_ex_label" value="表示しない" />
+              <listbox id="sidebar_board_select_ex_list" flex="1"
+                       rows="6" seltype="multiple">
+              </listbox>
+            </box>
+          </groupbox>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_board" orient="vertical">
+        <groupbox orient="horizontal" flex="1">
+          <caption>
+            <checkbox id="board_select" checked="false"
+                      label="動作する板を指定する"
+                      oncommand="AkahukuOptions.checkBoardSelect ();" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <label id="board_select_in_label" value="動作する" />
+            <listbox id="board_select_in_list" flex="1"
+                     rows="6" seltype="multiple">
+              <listhead>
+                <listheader label="板" />
+                <listheader label="" />
+              </listhead>
+              <listcols>
+                <listcol flex="1" />
+                <listcol />
+              </listcols>
+            </listbox>
+          </box>
+          <box orient="horizontal" align="center">
+            <box orient="vertical">
+              <button id="board_select_add" label="←"
+                      oncommand="AkahukuOptions.onBoardSelectAdd ('');" />
+              <button id="board_select_delete" label="→"
+                      oncommand="AkahukuOptions.onBoardSelectDelete ('');" />
+            </box>
+          </box>
+          <box orient="vertical" flex="1">
+            <label id="board_select_ex_label" value="動作しない" />
+            <listbox id="board_select_ex_list" flex="1"
+                     rows="6" seltype="multiple">
+              <listhead>
+                <listheader label="板" />
+                <listheader label="" />
+              </listhead>
+              <listcols>
+                <listcol flex="1" />
+                <listcol />
+              </listcols>
+            </listbox>
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_external" orient="vertical">
+        <groupbox orient="horizontal" flex="1">
+          <caption>
+            <checkbox id="board_external" checked="false"
+                      label="外部の板でも動作させる"
+                      oncommand="AkahukuOptions.checkBoardExternal ();" />
+          </caption>
+          <box orient="vertical" flex="1">
+            <box orient="horizontal" align="center">
+              <label id="board_external_pattern_label"
+                     control="board_external_pattern"
+                     value="パターン" />
+              <textbox id="board_external_pattern" flex="1" />
+            </box>
+            <box orient="horizontal" align="center">
+              <checkbox id="board_external_monaca" checked="false"
+                        label="monaca.php" />
+              <checkbox id="board_external_prefix" checked="false"
+                        label="前方一致" />
+            </box>
+            <label id="board_external_sample1"
+                   value="前方一致でないパターンは" />
+            <label id="board_external_sample2"
+                   value="$1: サーバ名、 $2: ディレクトリ名、 $3: パス" />
+            <label id="board_external_sample3"
+                   value="となるようにしてください" />
+            <label id="board_external_sample4"
+                   value="例: ^http://([^\.]+)\.2chan\.net/([^/]+)/(.*)$" />
+            <label id="board_external_illegal" value="" class="warning" />
+            <listbox id="board_external_list" flex="1"
+                     rows="4" seltype="multiple">
+              <listhead>
+                <listheader label="パターン/プレフィックス" />
+                <listheader label="monaca.php" />
+                <listheader label="前方一致" />
+                <listheader label="" />
+              </listhead>
+              <listcols>
+                <listcol style="min-width: 8em;" flex="1" />
+                <listcol style="min-width: 8em;" />
+                <listcol style="min-width: 8em;" />
+                <listcol />
+              </listcols>
+            </listbox>
+          </box>
+          <box orient="vertical">
+            <button id="board_external_add" label="追加" />
+            <button id="board_external_modify" label="修正" />
+            <button id="board_external_moveup" label="上に" />
+            <button id="board_external_movedown" label="下に" />
+            <button id="board_external_delete" label="削除" />
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_bloomer" orient="vertical">
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="bloomer" checked="false" label="ブルマ女将"
+                      oncommand="AkahukuOptions.checkBloomer ();" />
+          </caption>
+          <label id="bloomer_input_label" value="ショートカットキー" />
+          <box class="sub" orient="vertical">
+            <box orient="horizontal" align="top">
+              <textbox id="bloomer_input" value="ここで入力"
+                       onkeydown="AkahukuOptions.onBloomerKeyDown (arguments [0])"
+                       onkeypress="AkahukuOptions.onBloomerKeyDown (arguments [0])"
+                       onkeyup="this.value = 'ここで入力';" />
+              <menulist id="bloomer_keycode">
+                <menupopup id="bloomer_keycode_menu">
+                </menupopup>
+              </menulist>
+            </box>
+            <box orient="horizontal" align="top">
+              <checkbox id="bloomer_modifiers_alt" checked="false"
+                        label="Alt" />
+              <checkbox id="bloomer_modifiers_ctrl" checked="false"
+                        label="Ctrl" />
+              <checkbox id="bloomer_modifiers_meta" checked="false"
+                        label="Meta" />
+              <checkbox id="bloomer_modifiers_shift" checked="false"
+                        label="Shift" />
+            </box>
+          </box>
+          <box orient="horizontal" align="center">
+            <label id="bloomer_file_label" control="bloomer_file"
+                   value="ブルマ女将の場所" />
+            <textbox id="bloomer_file" flex="1" />
+            <button id="bloomer_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('bloomer_file', true, 'ブルマ女将の場所を選んでください');" />
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_sound" orient="vertical">
+        <groupbox orient="vertical">
+          <caption label="動作の完了時に音を鳴らす" />
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_reload_normal" checked="false"
+                      label="リロード (通常モード)" />
+            <textbox id="sound_reload_normal_file" flex="1" />
+            <button id="sound_reload_normal_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_reload_normal_file', true, 'サウンドを選んでください');" />
+            <button id="sound_reload_normal_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_reload_normal_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_reload_reply" checked="false"
+                      label="リロード (レス送信モード)" />
+            <textbox id="sound_reload_reply_file" flex="1" />
+            <button id="sound_reload_reply_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_reload_reply_file', true, 'サウンドを選んでください');" />
+            <button id="sound_reload_reply_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_reload_reply_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_new_reply" checked="false"
+                      label="新着あり (レス送信モード)" />
+            <textbox id="sound_new_reply_file" flex="1" />
+            <button id="sound_new_reply_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_new_reply_file', true, 'サウンドを選んでください');" />
+            <button id="sound_new_reply_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_new_reply_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_reload_catalog" checked="false"
+                      label="リロード (カタログモード)" />
+            <textbox id="sound_reload_catalog_file" flex="1" />
+            <button id="sound_reload_catalog_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_reload_catalog_file', true, 'サウンドを選んでください');" />
+            <button id="sound_reload_catalog_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_reload_catalog_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_expire" checked="false"
+                      label="消滅警告 (続きを読む 時)" />
+            <textbox id="sound_expire_file" flex="1" />
+            <button id="sound_expire_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_expire_file', true, 'サウンドを選んでください');" />
+            <button id="sound_expire_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_expire_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_makethread" checked="false"
+                      label="スレ立て" />
+            <textbox id="sound_makethread_file" flex="1" />
+            <button id="sound_makethread_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_makethread_file', true, 'サウンドを選んでください');" />
+            <button id="sound_makethread_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_makethread_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_reply" checked="false"
+                      label="レス送信" />
+            <textbox id="sound_reply_file" flex="1" />
+            <button id="sound_reply_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_reply_file', true, 'サウンドを選んでください');" />
+            <button id="sound_reply_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_reply_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_reply_fail" checked="false"
+                      label="レス送信失敗 (連携時)" />
+            <textbox id="sound_reply_fail_file" flex="1" />
+            <button id="sound_reply_fail_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_reply_fail_file', true, 'サウンドを選んでください');" />
+            <button id="sound_reply_fail_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_reply_fail_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_savemht" checked="false"
+                      label="mht で保存" />
+            <textbox id="sound_savemht_file" flex="1" />
+            <button id="sound_savemht_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_savemht_file', true, 'サウンドを選んでください');" />
+            <button id="sound_savemht_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_savemht_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_savemht_error" checked="false"
+                      label="mht で保存失敗" />
+            <textbox id="sound_savemht_error_file" flex="1" />
+            <button id="sound_savemht_error_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_savemht_error_file', true, 'サウンドを選んでください');" />
+            <button id="sound_savemht_error_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_savemht_error_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_saveimage" checked="false"
+                      label="画像を保存" />
+            <textbox id="sound_saveimage_file" flex="1" />
+            <button id="sound_saveimage_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_saveimage_file', true, 'サウンドを選んでください');" />
+            <button id="sound_saveimage_file_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_saveimage_file')" />
+          </box>
+          <box orient="horizontal" align="center">
+            <checkbox id="sound_saveimage_error" checked="false"
+                      label="画像を保存失敗" />
+            <textbox id="sound_saveimage_error_file" flex="1" />
+            <button id="sound_saveimage_error_file_select" label="変更"
+                    oncommand="AkahukuOptions.selectFile ('sound_saveimage_error_file', true, 'サウンドを選んでください');" />
+            <button id="sound_saveimage_file_error_play" label="再生"
+                    oncommand="AkahukuOptions.playFile ('sound_saveimage_error_file')" />
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_other" orient="vertical">
+        <groupbox orient="vertical">
+          <caption label="高速化" />
+          <checkbox id="add_checkbox_id" checked="false"
+                    label="チェックボックスに id を付ける" />
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption label="ステータスバー" />
+          <checkbox id="statusbar_preferences" checked="false"
+                    label="設定ダイアログのアイコンを表示する" />
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption label="ツールバー" />
+          <label control="toolbar_preferences"
+                 value="Firefox では、ツールバーのカスタマイズから追加してください" class="warning" />
+          <checkbox id="toolbar_preferences" checked="false"
+                    label="設定ダイアログのアイコンを表示する" />
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption>
+            <checkbox id="statusbar_order" checked="false"
+                      label="ステータスバーのアイコンの並べ替え"
+                      oncommand="AkahukuOptions.checkStatusbarOrder ();" />
+          </caption>
+          <box orient="horizontal">
+            <listbox id="statusbar_order_list" flex="1"
+                     rows="6" seltype="multiple">
+            </listbox>
+            <box orient="vertical">
+              <button id="statusbar_order_moveup" label="上に"
+                      oncommand="AkahukuOptions.onMoveupList ('statusbar_order_list');" />
+              <button id="statusbar_order_movedown" label="下に"
+                      oncommand="AkahukuOptions.onMovedownList ('statusbar_order_list');" />
+            </box>
+          </box>
+        </groupbox>
+        <groupbox orient="vertical">
+          <caption label="設定のインポート／エクスポート／初期化" />
+          <box orient="horizontal" flex="1">
+            <button id="import" label="インポート"
+                    oncommand="AkahukuOptions.importPrefs ();" />
+            <button id="export" label="エクスポート"
+                    oncommand="AkahukuOptions.exportPrefs (false);" />
+            <button id="export2" label="エクスポート [個人情報削除]"
+                    oncommand="AkahukuOptions.exportPrefs (true);" />
+            <button id="init" label="初期化"
+                    oncommand="AkahukuOptions.initPrefs ();" />
+          </box>
+          <label control="export"
+                 value="mht で保存、画像を保存、P2P、ブルマ女将、音の設定は個人情報に繋がる可能性があります" class="warning" />
+          <label control="export"
+                 value="他人に公開する場合は [個人情報削除] の方でエクスポートしてください" class="warning" />
+          <label id="import_export_message" value="" />
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_filename_convert" orient="vertical">
+        <groupbox orient="horizontal" flex="1">
+          <caption label="ファイル名変換" />
+          <box orient="vertical" flex="1">
+            <box orient="horizontal" align="center">
+              <textbox id="filename_convert_from" flex="1" />
+              <label id="filename_convert_label" control="filename_convert_to"
+                     value="→" />
+              <textbox id="filename_convert_to" flex="1" />
+            </box>
+            <label id="filename_convert_illegal" value="" class="warning" />
+            <listbox id="filename_convert_list" flex="1"
+                     rows="6" seltype="multiple">
+              <listhead>
+                <listheader label="変換元" />
+                <listheader label="変換先" />
+                <listheader label="" />
+              </listhead>
+              <listcols>
+                <listcol style="min-width: 8em;" flex="1" />
+                <listcol style="min-width: 8em;" flex="1" />
+                <listcol />
+              </listcols>
+            </listbox>
+          </box>
+          <box orient="vertical">
+            <button id="filename_convert_add" label="追加" />
+            <button id="filename_convert_modify" label="修正" />
+            <button id="filename_convert_moveup" label="上に" />
+            <button id="filename_convert_movedown" label="下に" />
+            <button id="filename_convert_delete" label="削除" />
+            <button id="filename_convert_init" label="初期化"
+                    oncommand="AkahukuOptions.initFilenameConvert ();" />
+          </box>
+        </groupbox>
+      </box>
+      <box flex="1" id="tab_format" orient="vertical">
+        <groupbox orient="vertical">
+          <caption label="詳細設定のフォーマット中で使える実体参照" />
+          <grid>
+            <columns>
+              <column flex="1">
+                <label value="&amp;YY; 年" />
+                <label value="&amp;MM; 月" />
+                <label value="&amp;DD; 日" />
+                <label value="&amp;DDD; 曜日" />
+                <label value="&amp;hh; 時" />
+                <label value="&amp;mm; 分" />
+                <label value="&amp;ss; 秒" />
+                <label value="&amp;board; 板名" />
+                <label value="&amp;board2; サーバ名無しの板名" />
+                <label value="&amp;board3; 本来の板名" />
+                <label value="&amp;server; サーバ名" />
+                <label value="&amp;dir; ディレクトリ名" />
+                <label value="&amp;page; ページ番号" />
+                <label value="&amp;thread; スレの番号" />
+                <label value="&amp;replycount; レス数" />
+                <label value="&amp;url; URL ([画像を保存] のみ)" />
+              </column>
+              <column flex="1">
+                <label value="&amp;message; 本文の最初" />
+                <label value="&amp;message2; 本来の本文の最初" />
+                <label value="&amp;entiremessage; 本文全体" />
+                <label value="&amp;name; 名前" />
+                <label value="&amp;mail; メル欄" />
+                <label value="&amp;subject; 題" />
+                <label value="&amp;ip; IP アドレス" />
+                <label value="&amp;id; ID" />
+                <label value="&amp;viewer; 見ている人数" />
+                <label value="&amp;expire; 消滅時刻" />
+                <label value="&amp;warning; 消滅情報" />
+                <label value="&amp;separator; ディレクトリの区切り" />
+                <label value="&amp;amp; 「&amp;」" />
+                <label value="&amp;lt; 「&lt;」" />
+                <label value="&amp;gt; 「&gt;」" />
+              </column>
+            </columns>
+          </grid>
+        </groupbox>
+      </box>
+    </deck>
+  </box>
+</dialog>

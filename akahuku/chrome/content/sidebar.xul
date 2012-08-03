@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://akahuku/content/sidebar.css" type="text/css"?>
+
+<page id="akahuku_sidebar"
+      orient="vertical"
+      onload="AkahukuSidebar.init ();"
+      context="akahuku-sidebar-popup"
+      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/sidebar.js" />
+  
+  <akahukutabcontainer id="akahuku_sidebar_tabcontainer"
+                       orient="horizontal" style="min-width: 1px;">
+  </akahukutabcontainer>
+  <deck id="akahuku_sidebar_deck" class="tabs" flex="1">
+  </deck>
+  
+  <popupset>
+    <menupopup id="akahuku-sidebar-popup">
+      <menuitem id="akahuku-sidebar-popup-sort-mark" label="マークする" />
+      <menuitem id="akahuku-sidebar-popup-sort-unmark" label="マークを外す" />
+      <menuseparator id="akahuku-sidebar-popup-separator1" />
+      <menuitem type="radio" autocheck="false"
+                id="akahuku-sidebar-popup-sort-num"
+                label="スレの立った順にソート" />
+      <menuitem type="radio" autocheck="false"
+                id="akahuku-sidebar-popup-sort-lastnum"
+                label="最終レス番号順にソート" />
+      <menuseparator id="akahuku-sidebar-popup-separator2" />
+      <menuitem type="checkbox" autocheck="false"
+                id="akahuku-sidebar-popup-sort-visited"
+                label="既読のスレを上に持ってくる" />
+      <menuitem type="checkbox" autocheck="false"
+                id="akahuku-sidebar-popup-sort-marked"
+                label="マークしたスレを上に持ってくる" />
+      <menuitem type="checkbox" autocheck="false"
+                id="akahuku-sidebar-popup-sort-invert"
+                label="ソートを反転" />
+    </menupopup>
+  </popupset>
+</page>

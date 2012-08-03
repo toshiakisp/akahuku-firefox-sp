@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>{591c2cf0-0a6e-11da-8cd6-0800200c9a66}</em:id>
+    <em:version>5.2.90</em:version>
+    <em:type>2</em:type>
+    
+    <em:targetApplication>
+      <!-- Firefox -->
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>1.0</em:minVersion>
+        <em:maxVersion>5.0.*</em:maxVersion>
+      </Description>
+      
+      <!-- Mozilla Suite -->
+      <Description>
+        <em:id>{86c18b42-e466-45a9-ae7a-9b95ba6f5640}</em:id>
+        <em:minVersion>1.2</em:minVersion>
+        <em:maxVersion>1.8</em:maxVersion>
+      </Description>
+      
+      <!-- SeaMonkey -->
+      <Description>
+        <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
+        <em:minVersion>1.0</em:minVersion>
+        <em:maxVersion>2.0.*</em:maxVersion>
+      </Description>
+      
+      <!-- Flock -->
+      <Description>
+        <em:id>{a463f10c-3994-11da-9945-000d60ca027b}</em:id>
+        <em:minVersion>1.0</em:minVersion>
+        <em:maxVersion>1.1.*</em:maxVersion>
+      </Description>
+      
+      <!-- Netscape Browser -->
+      <Description>
+        <em:id>{3db10fab-e461-4c80-8b97-957ad5f8ea47}</em:id>
+        <em:minVersion>8.0</em:minVersion>
+        <em:maxVersion>9.0.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+    
+    <em:name>赤福:非公式 Firefox 版</em:name>
+    <em:description>虹裏ライフを甘美にする 赤福:非公式 Firefox 版</em:description>
+    <em:creator>arai</em:creator>
+    <em:homepageURL>http://www.unmht.org/akahuku/</em:homepageURL>
+    
+    <em:updateURL>http://www.unmht.org/akahuku/update.rdf</em:updateURL>
+    <em:updateKey>MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCganJOtLPYi/fEBBtyDZeAL/T60GUNZewj0gmTbO/6XULYuyzbxEX3ZnBnBeLq8e/Qfi/uhghWWWJmKqOgK4yX4XNdQMGPnZvEXBgvTdxIRDe+7CFKB0Cq5L/DYPzrZRzb6cgdmEmkIRbztSYn6XFTRpMOQL+3XXY9npi2hAPxjwIDAQAB</em:updateKey>
+    
+    <em:optionsURL>chrome://akahuku/content/options.xul</em:optionsURL>
+    <em:iconURL>chrome://akahuku/content/images/icon.png</em:iconURL>
+    
+    <!-- Firefox 1.0 以前互換用 -->
+    <em:file>
+      <Description about="urn:mozilla:extension:file:akahuku.jar">
+        <em:package>content/</em:package>
+      </Description>
+    </em:file>
+  </Description>
+  
+</RDF>

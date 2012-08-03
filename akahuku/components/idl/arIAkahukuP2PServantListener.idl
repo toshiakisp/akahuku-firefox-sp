@@ -1,0 +1,8 @@
+#include "nsISupports.idl"
+
+[scriptable, uuid (c6a11110-bcad-43b4-88c6-d201188118d5)]
+interface arIAkahukuP2PServantListener : nsISupports {
+  void onP2PSave ();
+  
+  void onP2PFail ();
+};
