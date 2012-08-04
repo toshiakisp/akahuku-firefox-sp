@@ -1436,7 +1436,7 @@ var arAkahukuThread = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.respanel_param = null;
@@ -1465,7 +1465,7 @@ var arAkahukuThread = {
         try {
           src = arAkahukuP2P.deP2P (src);
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
         
         if (info.isMht) {
@@ -1490,7 +1490,7 @@ var arAkahukuThread = {
               src = uri.spec;
             }
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }
         
@@ -1579,7 +1579,7 @@ var arAkahukuThread = {
                 tabIcon.style.MozMarginStart = s;
                 tabIcon.style.MozMarginEnd = e;
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
               }
             }
             try {
@@ -1869,6 +1869,24 @@ var arAkahukuThread = {
                   };
                 })(nodes [i]), 10);
           }
+        }
+      }
+      
+      /* 画像ロード失敗時に再チャレンジ */
+      nodes = targetNode.getElementsByTagName ("img");
+      for (var i = 0; i < nodes.length; i ++) {
+        var uinfo = arAkahukuImageURL.parse (nodes [i].src);
+        if (uinfo && uinfo.isImage && !uinfo.isAd) {
+          nodes [i].addEventListener
+          ("error",
+           function () {
+             setTimeout
+               (function (node) {
+                 node.src = node.src;
+               }, 100, this);
+             Akahuku.debug.warn ("Reloading a corrupt image "+this.src);
+             this.removeEventListener ("error", arguments.callee, false);
+          }, false);
         }
       }
       
@@ -2734,7 +2752,7 @@ var arAkahukuThread = {
               try {
                 href = unescape (href);
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
               }
                             
               if (href.match (/^(\/[^\/]+\/)?res\/([0-9]+)\.html?$/)

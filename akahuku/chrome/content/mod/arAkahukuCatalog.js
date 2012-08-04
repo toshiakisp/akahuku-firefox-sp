@@ -156,7 +156,7 @@ arAkahukuCatalogPopupData.prototype =  {
             try {
               file.initWithPath (targetFileName);
             }
-            catch (e) {
+            catch (e) { Akahuku.debug.exception (e);
             }
                     
             if (file.exists ()) {
@@ -1209,7 +1209,7 @@ arAkahukuCatalogParam.prototype = {
         this.reloadChannel.cancel (0x80020006);
         /* NS_BINDING_ABORTED */
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
       this.reloadChannel = null;
     }
@@ -1335,7 +1335,7 @@ arAkahukuCatalogParam.prototype = {
           anchor.parentNode.removeChild (anchor);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       this.targetDocument.defaultView
@@ -1404,7 +1404,7 @@ arAkahukuCatalogParam.prototype = {
         + httpChannel.getResponseHeader ("Server") + "\r\n"
         + "Content-Type: text/html; charset=Shift_JIS\r\n";
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     /* 避難所 patch */
@@ -1418,7 +1418,7 @@ arAkahukuCatalogParam.prototype = {
                                   "charset=EUC-JP");
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     if (this.reloadChannel == null) {
@@ -2157,7 +2157,7 @@ var arAkahukuCatalog = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       td.setAttribute ("__original_index", mergedItems [i].index);
@@ -2730,6 +2730,24 @@ var arAkahukuCatalog = {
           }, true);
         }
       }
+            
+      /* 画像ロード失敗時に一度だけリロード */
+      var image = anchor.getElementsByTagName ("img"); 
+      if (image.length > 0) {
+        var uinfo = arAkahukuImageURL.parse (image [0].src);
+        if (uinfo && uinfo.isImage && !uinfo.isAd) {
+          image [0].addEventListener
+          ("error",
+           function () {
+             setTimeout
+               (function (node) {
+                 node.src = node.src;
+               }, 100, this);
+             Akahuku.debug.warn ("Reloading a corrupt image "+this.src);
+             this.removeEventListener ("error", arguments.callee, false);
+          }, false);
+        }
+      }
     }
         
     if (arAkahukuCatalog.enableVisited) {
@@ -2750,7 +2768,7 @@ var arAkahukuCatalog = {
               node.style.fontWeight = "normal";
             }
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }
       }
@@ -3331,7 +3349,7 @@ var arAkahukuCatalog = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -3669,7 +3687,7 @@ var arAkahukuCatalog = {
             }, 100, nodes [i]);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -3726,7 +3744,7 @@ var arAkahukuCatalog = {
         param.reloadChannel.cancel (0x80020006);
         /* NS_BINDING_ABORTED */
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
       param.reloadChannel = null;
       arAkahukuCatalog.setStatus
@@ -4069,7 +4087,7 @@ var arAkahukuCatalog = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.catalog_param = null;
@@ -4079,7 +4097,7 @@ var arAkahukuCatalog = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.catalogpopup_param = null;
