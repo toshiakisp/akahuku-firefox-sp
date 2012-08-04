@@ -155,7 +155,13 @@ var arAkahukuDOM = {
       if (p != -1) {
         name = name.substr (0, p) + name.substr (p + className.length);
       }
-      node.setAttribute ("class", name);
+      if (name) {
+        node.setAttribute ("class", name);
+      } else {
+        node.removeAttribute ("class");
+      }
+    } else if (node.hasAttribute ("class")) {
+      node.removeAttribute ("class");
     }
     
     name = node.getAttribute ("__class");
