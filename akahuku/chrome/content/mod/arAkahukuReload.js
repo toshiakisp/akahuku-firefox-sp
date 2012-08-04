@@ -169,7 +169,7 @@ arAkahukuReloadCacheWriter.prototype = {
         
       fstream.close ();
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -260,7 +260,7 @@ arAkahukuReloadParam.prototype = {
         this.reloadChannel.cancel (0x80020006);
         /* NS_BINDING_ABORTED */
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
       this.reloadChannel = null;
       if (arAkahukuReload.enableNolimit) {
@@ -359,12 +359,12 @@ arAkahukuReloadParam.prototype = {
                                         .ACCESS_WRITE,
                                         self.writer);
                 }
-                catch (e) {
+                catch (e) { Akahuku.debug.exception (e);
                 }
               }
             }
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         };
         
@@ -383,7 +383,7 @@ arAkahukuReloadParam.prototype = {
           cont (this, bindata);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception(e);
         /* 既に閉じられている場合など */
       }
     }
@@ -475,7 +475,7 @@ arAkahukuReloadParam.prototype = {
             anchor.parentNode.removeChild (anchor);
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
                 
         try {
@@ -557,7 +557,7 @@ arAkahukuReloadParam.prototype = {
         + httpChannel.getResponseHeader ("Server") + "\r\n"
         + "Content-Type: text/html; charset=Shift_JIS\r\n";
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     /* 避難所 patch */
@@ -573,7 +573,7 @@ arAkahukuReloadParam.prototype = {
                                   "charset=EUC-JP");
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     if (this.reloadChannel == null) {
@@ -650,7 +650,7 @@ arAkahukuReloadParam.prototype = {
                   }
                 }
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
               }
             }
                         
@@ -743,7 +743,7 @@ arAkahukuReloadParam.prototype = {
               }
             }
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }
         break;
@@ -2240,6 +2240,12 @@ var arAkahukuReload = {
                     }
                     var bs2 = bqs2 [0].getElementsByTagName ("b");
                     for (var i = 0; i < bs2.length; i ++) {
+                      if (bs2 [i].parentNode.nodeName.toLowerCase () == "font") {
+                        c = bs2 [i].parentNode.getAttribute ("color");
+                        if (c == "#f00000" || c == "#ff0000") {
+                          continue;
+                        }
+                      }
                       reds2.push (bs2 [i]);
                     }
                     
@@ -2849,7 +2855,7 @@ var arAkahukuReload = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -2905,7 +2911,7 @@ var arAkahukuReload = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -2980,6 +2986,9 @@ var arAkahukuReload = {
           = Components.interfaces.imgIRequest.STATUS_ERROR
           | Components.interfaces.imgIRequest.STATUS_LOAD_PARTIAL;
                 
+        if (!request) {
+          continue;
+        }
         if (request.imageStatus & errorStatus) {
           nodes [i].src = nodes [i].src;
         }
@@ -2990,7 +2999,7 @@ var arAkahukuReload = {
             }, 100, nodes [i]);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -3000,7 +3009,7 @@ var arAkahukuReload = {
         param.reloadChannel.cancel (0x80020006);
         /* NS_BINDING_ABORTED */
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
       param.reloadChannel = null;
       arAkahukuReload.setStatus
@@ -3124,7 +3133,7 @@ var arAkahukuReload = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.reload_param = null;
@@ -3252,7 +3261,7 @@ var arAkahukuReload = {
           .getInterface (Components.interfaces.nsIWebNavigation)
           .sessionHistory.addSHistoryListener (param);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
         /* フレーム内の可能性あり */
       }
             
