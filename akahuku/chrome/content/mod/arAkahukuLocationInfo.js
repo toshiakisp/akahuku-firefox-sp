@@ -308,7 +308,7 @@ arAkahukuLocationInfo.prototype = {
       try {
         path = unescape (path);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     this.path = path;
@@ -331,7 +331,7 @@ arAkahukuLocationInfo.prototype = {
             this.isTsumanne = true;
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
       }
     }

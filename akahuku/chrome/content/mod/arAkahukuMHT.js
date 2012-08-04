@@ -511,7 +511,7 @@ arAkahukuMHTFileData.prototype = {
         return;
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
     
     if (this.type == arAkahukuMHT.FILE_TYPE_IMG) {
@@ -637,7 +637,7 @@ arAkahukuMHTFileData.prototype = {
           (Components.interfaces.nsIHttpChannel)
           .responseStatus;
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
       
       if (httpStatus >= 400) {
@@ -707,7 +707,7 @@ arAkahukuMHTParam.prototype = {
       try {
         this.files [i].destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     this.files = null;
@@ -2089,7 +2089,7 @@ var arAkahukuMHT = {
       try {
         head = descriptor.getMetaDataElement ("response-head");
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       if (head.match (/content-encoding[ \r\n\t]*:[ \r\n\t]*(compress|deflate|gzip|x-compress|x-gzip)/i)) {
@@ -2118,7 +2118,7 @@ var arAkahukuMHT = {
                     
           return;
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
           fileData.originalContent = "";
           fileData.content = "";
           fileData.onGetFileData ();
@@ -3235,11 +3235,11 @@ var arAkahukuMHT = {
             param.files [i].content = "";
             param.files [i].originalContent = "";
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       param.isBusy = false;
@@ -3394,7 +3394,7 @@ var arAkahukuMHT = {
               try {
                 file2.remove (false);
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
                 /* 何故か存在しない事がある */
               }
             }
@@ -3605,7 +3605,7 @@ var arAkahukuMHT = {
           try {
             node.setAttribute (name, value);
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }
       }
@@ -3923,7 +3923,7 @@ var arAkahukuMHT = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.mht_param = null;
@@ -3971,7 +3971,7 @@ var arAkahukuMHT = {
            Components.interfaces.nsICache.ACCESS_WRITE,
            writer);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
