@@ -63,6 +63,51 @@ var Akahuku = {
   enablePartial : false,         /* Boolean  デフォルトで最新 n 件表示 */
   partialCount : 100,            /* Number  n 件 */
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
+
+  /**
+   * デバッグ用
+   */
+  debug : {
+    enabled : true,
+    prefix : "Akahuku debug:",
+    _consoleService : Components.classes ["@mozilla.org/consoleservice;1"]
+      .getService (Components.interfaces.nsIConsoleService),
+
+    log : function (message) {
+      if (!this.enabled) return;
+      this._consoleService.logStringMessage (this.prefix + message);
+    },
+    warn : function (message) {
+      if (!this.enabled) return;
+      var stack = Components.stack.caller;
+      var scriptError
+        = Components.classes ["@mozilla.org/scripterror;1"]
+        .createInstance (Components.interfaces.nsIScriptError);
+      scriptError.init
+        (this.prefix + message,
+         stack.filename, null, stack.lineNumber, null,
+         Components.interfaces.nsIScriptError.warningFlag,
+         null);
+      this._consoleService.logMessage (scriptError);
+    },
+    error : function (message) {
+      if (!this.enabled) return;
+      var stack = Components.stack.caller;
+      var scriptError
+        = Components.classes ["@mozilla.org/scripterror;1"]
+        .createInstance (Components.interfaces.nsIScriptError);
+      scriptError.init
+        (this.prefix + message,
+         stack.filename, null, stack.lineNumber, null,
+         Components.interfaces.nsIScriptError.errorFlag,
+         null);
+      this._consoleService.logMessage (scriptError);
+    },
+    exception : function (error) {
+      if (!this.enabled) return;
+      Components.utils.reportError (error);
+    },
+  },
     
   /**
    * ドキュメントごとの情報を追加する
@@ -141,6 +186,9 @@ var Akahuku = {
     Akahuku.partialUp
     = arAkahukuConfig
     .initPref ("int",  "akahuku.reload.partial.up", 100);
+    Akahuku.debug.enabled
+    = arAkahukuConfig
+    .initPref ("bool",  "akahuku.debug", false);
   },
     
   /**
@@ -170,7 +218,7 @@ var Akahuku = {
         Akahuku.isFx36 = true;
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
     
     /* ScrapBook で akahuku の保存を有効にする
@@ -185,7 +233,7 @@ var Akahuku = {
                           "|| aURL.schemeIs(\"ftp\") || aURL.schemeIs(\"akahuku\")"));
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     /* QuickDrag で akahuku の保存を有効にする
@@ -200,7 +248,7 @@ var Akahuku = {
                           "https?|ftp|chrome|file|akahuku"));
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
     
     /* 各種サービスの初期化 */
@@ -245,7 +293,7 @@ var Akahuku = {
              false);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -270,11 +318,12 @@ var Akahuku = {
              false);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
             
     Akahuku.initialized = true;
+    Akahuku.debug.log ("initialized");
   },
     
   /**

@@ -281,7 +281,7 @@ arAkahukuLinkExtListener.prototype = {
                                this.extNode);
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     newChannel.cancel (0x80020006);
@@ -331,7 +331,7 @@ arAkahukuLinkExtListener.prototype = {
                                this.targetDocument, this.targetNode,
                                this.extNode);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -615,7 +615,7 @@ var arAkahukuLink = {
             query2 = query2 + "#" + query3 + query4;
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
                  
         var font = targetDocument.createElement ("font");
@@ -646,7 +646,7 @@ var arAkahukuLink = {
         
     arAkahukuLink.urlPattern
     = new arAkahukuMatchPattern
-    (/(file|ftp|mms|rtsp|akahuku|h?t?t?p?s?)(:\/\/([^ \u3000\xa0\/]+\/[\!#$%&\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]*|[\!#$%&\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]+))/,
+    (/(file|ftp|mms|rtsp|akahuku|h?t?t?p?s?)(:\/\/([^ \u0000-\u002C\u003A-\u0060\u3000-\u3004\uFF01-\uFFBE\xa0\/]+\/[\!#$%&\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]*|[\!#$%&\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]+))/,
      /* $1: http 等のプロトコル
       * $2: 残りの URL */
      function (parens) {
@@ -719,7 +719,7 @@ var arAkahukuLink = {
             host = unescape (host);
             host = idn.convertUTF8toACE (host);
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
           url = protocol2 + "://" + host + "/" + path;
         }
@@ -760,7 +760,7 @@ var arAkahukuLink = {
             try {
               word = decodeURIComponent (word);
             }
-            catch (e) {
+            catch (e) { Akahuku.debug.exception (e);
             }
                      
             if (1 || !ie.match (/UTF-8/i)) {
@@ -795,7 +795,7 @@ var arAkahukuLink = {
                                (/\u2329/g, "&amp;lang")));
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
         anchor.appendChild (targetDocument.createTextNode
                             (parens [2].replace
                              (/\u2329/g, "&amp;lang")));
@@ -1700,7 +1700,7 @@ var arAkahukuLink = {
       try {
         listener.channel.asyncOpen (listener, null);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
       return;
     }
@@ -2325,7 +2325,7 @@ var arAkahukuLink = {
           href = uri.spec;
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         
@@ -2972,7 +2972,7 @@ var arAkahukuLink = {
         statusText = RegExp.$2;
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     if (!image.parentNode.hasAttribute

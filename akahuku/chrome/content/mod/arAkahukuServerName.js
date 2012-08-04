@@ -35,7 +35,7 @@ var arAkahukuServerData = {
     "\u306D\u3053",
     2000, true
     ],
-  "up:d" : [ /* どうぶつ */
+  "dat:d" : [ /* どうぶつ */
     "\u3069\u3046\u3076\u3064",
     "\u3069\u3046\u3076\u3064",
     "\u3069\u3046\u3076\u3064",
@@ -48,7 +48,7 @@ var arAkahukuServerData = {
     1000, true
     ],
     
-  "up:w" : [ /* 虫 */
+  "dat:w" : [ /* 虫 */
     "\u866B",
     "\u866B",
     "\u866B",
@@ -60,7 +60,7 @@ var arAkahukuServerData = {
     "\u30A2\u30AF\u30A2\u30EA\u30A6\u30E0",
     2000, true
     ],
-  "up:t" : [ /* 料理 */
+  "dat:t" : [ /* 料理 */
     "\u6599\u7406",
     "\u6599\u7406",
     "\u6599\u7406",
@@ -78,13 +78,13 @@ var arAkahukuServerData = {
     "\u30E9\u30FC\u30E1\u30F3",
     2000, true
     ],
-  "up:e" : [ /* のりもの */
+  "dat:e" : [ /* のりもの */
     "\u306E\u308A\u3082\u306E",
     "\u306E\u308A\u3082\u306E",
     "\u306E\u308A\u3082\u306E",
     2000, true
     ],
-  "up:j" : [ /* 二輪 */
+  "dat:j" : [ /* 二輪 */
     "\u4E8C\u8F2A",
     "\u4E8C\u8F2A",
     "\u4E8C\u8F2A",
@@ -94,7 +94,7 @@ var arAkahukuServerData = {
     "\u81EA\u8EE2\u8ECA",
     "\u81EA\u8EE2\u8ECA",
     "\u81EA\u8EE2\u8ECA",
-    1500, true,
+    2000, true,
     ],
     
   "dat:45" : [ /* カメラ */
@@ -109,13 +109,13 @@ var arAkahukuServerData = {
     "\u5BB6\u96FB",
     2000, true
     ],
-  "up:r" : [ /* 鉄道 */
+  "dat:r" : [ /* 鉄道 */
     "\u9244\u9053",
     "\u9244\u9053",
     "\u9244\u9053",
     2000, true
     ],
-  "tmp:img2" : [ /* 二次元 */
+  "dat:img2" : [ /* 二次元 */
     "\u4E8C\u6B21\u5143",
     "\u4E8C\u6B21\u5143",
     "\u4E8C\u6B21\u5143\u753B\u50CF\u63B2\u793A\u677F",
@@ -137,13 +137,13 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF may",
     "\u8679\u88CF may",
     "\u4E8C\u6B21\u5143\u88CF",
-    20000, true
+    32000, true
     ],
   "img:b" : [ /* 二次元裏 img */
     "\u4E8C\u6B21\u5143\u88CF img",
     "\u8679\u88CF img",
     "\u4E8C\u6B21\u5143\u88CF",
-    6000, true
+    8000, true
     ],
   "dat:b" : [ /* 二次元裏 dat */
     "\u4E8C\u6B21\u5143\u88CF dat",
@@ -180,7 +180,7 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u5B9F\u6CC1",
     "\u5B9F\u6CC1",
     "\u4E8C\u6B21\u5143\u5B9F\u6CC1",
-    20000, true
+    30000, true
     ],
   "dat:16" : [ /* 二次元ネタ */
     "\u4E8C\u6B21\u5143\u30CD\u30BF",
@@ -241,7 +241,7 @@ var arAkahukuServerData = {
     "\u3070\u3089",
     "\u3070\u3089",
     "\u3070\u3089",
-    1000, true
+    300, true
     ],
   "zip:7" : [ /* ゆり */
     "\u3086\u308A",
@@ -298,7 +298,7 @@ var arAkahukuServerData = {
     "\u304A\u3082\u3061\u3083",
     4000, true
     ],
-  "up:v" : [ /* 模型 */
+  "dat:v" : [ /* 模型 */
     "\u6A21\u578B",
     "\u6A21\u578B",
     "\u6A21\u578B",
@@ -322,7 +322,7 @@ var arAkahukuServerData = {
     "\u4EBA\u5F62\u30FB\u30C9\u30FC\u30EB",
     3000, true
     ],
-  "up:x" : [ /* 3DCG */
+  "dat:x" : [ /* 3DCG */
     "3DCG",
     "3DCG",
     "\u4E09\u6B21\u5143\uFF23\uFF27",
@@ -436,7 +436,7 @@ var arAkahukuServerData = {
     "\u6E96\u5099",
     "\u6E96\u5099",
     "\u6E96\u5099",
-    500, false
+    300, false
     ],
 
   "may:layout" : [ /* レイアウト */
@@ -444,7 +444,20 @@ var arAkahukuServerData = {
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
     2000, true
-    ]
+    ],
+
+  "dec:52" : [ /* 東日本大震災 */
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    10000, true
+    ],
+  "dec:53" : [ /* 発電 */
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    10000, true
+    ],
 };
 
 var arAkahukuServerName = new Object ();

@@ -13,6 +13,9 @@ var arAkahukuWindow = {
    *         見付からなければ null
    */
   getBrowserForWindow : function (targetWindow) {
+    while (targetWindow.frameElement) {
+      targetWindow = targetWindow.frameElement.ownerDocument.defaultView;
+    }
     var tabbrowser = document.getElementById ("content");
     if (tabbrowser.mTabContainer) {
       for (var i = 0; i < tabbrowser.mTabContainer.childNodes.length; i ++) {
