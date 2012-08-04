@@ -141,7 +141,7 @@ arAkahukuPostFormParam.prototype = {
             (iframe, this.targetDocument, true);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
         /* 閉じている場合 */
       }
     }
@@ -964,7 +964,7 @@ var arAkahukuPostForm = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -1423,7 +1423,7 @@ var arAkahukuPostForm = {
             backCommand.setAttribute ("disabled", "true");
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
       }, 1000, targetDocument);
         
@@ -2548,7 +2548,7 @@ var arAkahukuPostForm = {
         event.stopPropagation ();
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -2589,7 +2589,7 @@ var arAkahukuPostForm = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -2642,7 +2642,7 @@ var arAkahukuPostForm = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -2951,7 +2951,7 @@ var arAkahukuPostForm = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -2999,7 +2999,7 @@ var arAkahukuPostForm = {
         param.clickInForm = false;
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -3072,7 +3072,7 @@ var arAkahukuPostForm = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -3142,7 +3142,7 @@ var arAkahukuPostForm = {
             
         arAkahukuPostForm.saveTextData (panel, target);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
   },
@@ -3215,7 +3215,7 @@ var arAkahukuPostForm = {
             }
         param.upfile = filename;
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       var mimeType = "";
@@ -3257,7 +3257,18 @@ var arAkahukuPostForm = {
             .createInstance (Components.interfaces
                              .nsILocalFile);
           file.initWithPath (filename);
+        }
+        catch (e) {
+		  /* ファイル名が不正 (含クリア) */
+          container.style.display = "none";
+		  preview.setAttribute ("__size", 0);
+		  arAkahukuDOM.setText (bytes, 0);
+		  preview.style.display = "none";
+		  preview.src = "";
+		  return;
+        }
                     
+        try {
           if (file.exists ()) {
             var readableSize
               = arAkahukuPostForm.getReadableSize (file.fileSize);
@@ -3281,7 +3292,7 @@ var arAkahukuPostForm = {
                 = Akahuku.protocolHandler.enAkahukuURI
                 ("preview",
                  arAkahukuFile.getURLSpecFromFilename
-                 (filename));
+                 (filename).replace (/^file:\/\/\//,"file://akahuku/"));
             }
             else {
               width.style.display = "none";
@@ -3295,7 +3306,7 @@ var arAkahukuPostForm = {
             return;
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
         container.style.display = "none";
       }
@@ -3379,7 +3390,7 @@ var arAkahukuPostForm = {
             
       arAkahukuPostForm.checkCommentbox (targetDocument, true);
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -3426,7 +3437,7 @@ var arAkahukuPostForm = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.postform_param = null;
@@ -3610,7 +3621,7 @@ var arAkahukuPostForm = {
             }
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
       }
     }
@@ -3698,7 +3709,7 @@ var arAkahukuPostForm = {
                   backCommand.setAttribute ("disabled", "true");
                 }
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
               }
             }, 1000, targetDocument);
         }
@@ -3854,6 +3865,13 @@ var arAkahukuPostForm = {
           if (nodes2 [i].innerHTML.match
               (/\u3053\u306E\u677F\u306E\u4FDD\u5B58\u6570\u306F([0-9]+)\u4EF6\u3067\u3059/)) {
             var name = info.server + ":" + info.dir;
+            if (arAkahukuMaxNum [name] != RegExp.$1) {
+              Akahuku.debug.log
+				(arAkahukuServerName [name]
+				 + "(" + name + ")"
+				 + "\u306E\u4FDD\u5B58\u6570 "
+				 + arAkahukuMaxNum [name] + " => " + RegExp.$1);
+            }
             arAkahukuMaxNum [name] = parseInt (RegExp.$1);
             break;
           }
@@ -3900,7 +3918,7 @@ var arAkahukuPostForm = {
                   }
                 }
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
               }
               floatPostFormAppendix.push (nodes2 [i]);
             }
@@ -4092,7 +4110,7 @@ var arAkahukuPostForm = {
             try {
               commentbox.style.textShadow = "#ffffff 1px 1px 0px";
             }
-            catch (e) {
+            catch (e) { Akahuku.debug.exception (e);
             }
           }
         }
@@ -4101,7 +4119,7 @@ var arAkahukuPostForm = {
           try {
             commentbox.style.imeMode = "active";
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
             /* imeMode がサポートされていない */
           }
         }
