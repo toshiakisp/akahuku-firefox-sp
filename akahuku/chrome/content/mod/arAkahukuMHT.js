@@ -4180,7 +4180,7 @@ var arAkahukuMHT = {
                 
         targetDocument.body.appendChild (container);
                 
-        status = targetDocument.createElement ("div");
+        var status = targetDocument.createElement ("div");
         status.id = "akahuku_savemht_status";
         targetDocument.body.appendChild (status);
       }
