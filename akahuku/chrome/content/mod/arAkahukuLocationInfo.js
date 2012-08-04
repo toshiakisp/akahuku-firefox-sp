@@ -100,6 +100,17 @@ arAkahukuLocationInfo.prototype = {
         || targetDocument.getElementById ("errorPageContainer") != null) {
       /* 「ファイルが無いよ」か、もしくはサーバに繋がらなかった場合 */
       this.isNotFound = true;
+      /* form の有無で再チェック */
+      nodes = targetDocument.getElementsByTagName("form");
+      for (var i = 0; i < nodes.length; i ++) {
+        if (nodes [i].action.match (/\.php(\?.+)?$/)
+            && nodes [i].method.toLowerCase () == "post"
+            && nodes [i].enctype.toLowerCase ()
+            == "multipart/form-data") {
+          this.isNotFound = false;
+          break;
+        }
+      }
     }
         
     nodes = targetDocument.getElementsByTagName ("b");
