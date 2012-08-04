@@ -177,7 +177,7 @@ var arAkahukuPopupQuote = {
         param.targetDocument.body.removeChild (node);
         param.popups.splice (i, 1);
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       i --;
@@ -207,7 +207,7 @@ var arAkahukuPopupQuote = {
         arAkahukuPopupQuote.removePopup (param);
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -256,7 +256,7 @@ var arAkahukuPopupQuote = {
                     arAkahukuPopupQuote.delayShow,
                     param);
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -296,7 +296,7 @@ var arAkahukuPopupQuote = {
       = Akahuku.getDocumentParam (targetDocument).popupquote_param;
       param.isDragMode = false;
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
   
@@ -353,14 +353,14 @@ var arAkahukuPopupQuote = {
               target.style.backgroundColor = "transparent";
               target.style.color = "";
             }
-            catch (e) {
+            catch (e) { Akahuku.debug.exception (e);
               /* ドキュメントが閉じられた場合など */
             }
           }, 2000,
             target);
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -749,7 +749,13 @@ var arAkahukuPopupQuote = {
             return original;
           }
                     
-          return null;
+          /* 引用内をテキストと見なしてNo.等を再探索 */
+		  quoted.normalize ();
+          var original
+          = getQuoteOriginal (quoted.firstChild,
+                              currentBlockQuote,
+                              currentTd, 2, info);
+          return original;
         }
                 
         var quotedIP = "";
@@ -997,7 +1003,7 @@ var arAkahukuPopupQuote = {
       /* ポップアップの外に居る時は全部消す */
       arAkahukuPopupQuote.removePopup (param, null);
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },
@@ -1019,7 +1025,7 @@ var arAkahukuPopupQuote = {
       try {
         param.destruct ();
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
     documentParam.popupquote_param = null;
