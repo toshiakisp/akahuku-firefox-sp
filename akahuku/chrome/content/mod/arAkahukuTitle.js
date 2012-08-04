@@ -41,6 +41,7 @@ var arAkahukuTitle = {
         style
         .addRule ("#akahuku_subtitle_container",
                   "font-size: 12pt;"
+                  + "text-align: center;"
                   + "margin-bottom: 0;");
       }
     }
@@ -323,7 +324,7 @@ var arAkahukuTitle = {
         var pos = null;
                 
         var nodes2 = targetDocument.getElementsByTagName ("p");
-        if (nodes2.length >= 2) {
+        if (nodes2.length >= 2 && nodes2[1].align == "center") {
           var nodes3 = nodes2 [1].getElementsByTagName ("font");
           if (nodes3.length >= 1) {
             pos = nodes3 [0];
@@ -337,6 +338,13 @@ var arAkahukuTitle = {
           nodes2 = targetDocument.getElementsByTagName ("h1");
           if (nodes2.length >= 1) {
             pos = nodes2 [0];
+          }
+        }
+        /* hr基準のタイトル要素検索 */
+        if (!pos) {
+          nodes2 = targetDocument.getElementsByTagName ("hr");
+          if (nodes2.length >= 1) {
+            pos = nodes2 [0].previousSibling;
           }
         }
                 
