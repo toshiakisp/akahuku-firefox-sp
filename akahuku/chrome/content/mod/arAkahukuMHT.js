@@ -698,9 +698,9 @@ arAkahukuMHTParam.prototype = {
    * データを開放する
    */
   destruct : function () {
-    if (this.timerID != null) {
-      clearInterval (this.timerID);
-      this.timerID = null;
+    if (this.checkTimerID != null) {
+      clearInterval (this.checkTimerID);
+      this.checkTimerID = null;
     }
         
     for (var i = 0; i < this.files.length; i ++) {
