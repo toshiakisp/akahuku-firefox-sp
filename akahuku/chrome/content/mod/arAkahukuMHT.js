@@ -698,9 +698,9 @@ arAkahukuMHTParam.prototype = {
    * データを開放する
    */
   destruct : function () {
-    if (this.timerID != null) {
-      clearInterval (this.timerID);
-      this.timerID = null;
+    if (this.checkTimerID != null) {
+      clearInterval (this.checkTimerID);
+      this.checkTimerID = null;
     }
         
     for (var i = 0; i < this.files.length; i ++) {
@@ -4180,7 +4180,7 @@ var arAkahukuMHT = {
                 
         targetDocument.body.appendChild (container);
                 
-        status = targetDocument.createElement ("div");
+        var status = targetDocument.createElement ("div");
         status.id = "akahuku_savemht_status";
         targetDocument.body.appendChild (status);
       }

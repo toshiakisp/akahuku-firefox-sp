@@ -279,6 +279,7 @@ var arAkahukuPopupQuote = {
       param.currentPopup = popup;
       param.dragX = event.pageX;
       param.dragY = event.pageY;
+      event.preventDefault ();
     }
   },
     
