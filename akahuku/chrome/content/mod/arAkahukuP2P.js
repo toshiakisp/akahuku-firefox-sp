@@ -668,7 +668,7 @@ var arAkahukuP2P = {
       servant.setCacheThumbLimit (arAkahukuP2P.cacheThumbLimit);
       servant.setCacheCatLimit (arAkahukuP2P.cacheCatLimit);
       servant.setNoCat (arAkahukuP2P.enableNoCat);
-      servant.setAkahukuVersion (AkahukuVersion);
+      servant.setAkahukuVersion (AkahukuVersion.split (".").splice (0,3).join ("."));
       servant.setTransferLimit (arAkahukuP2P.transferLimit);
       servant.setAcceptSlot (arAkahukuP2P.acceptSlot);
             
@@ -751,10 +751,12 @@ var arAkahukuP2P = {
             return "";
           });
       }
+      /* 公式初期ノード
       if (!added) {
         servant.addNode ("=AKA/0.9:tYg3NOGKlmSPQaUxOKV4=",
                          false, 0, "");
       }
+      */
     }
     else {
       arAkahukuP2P.saveNodeList ();
