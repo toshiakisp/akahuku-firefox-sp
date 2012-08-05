@@ -65,11 +65,14 @@ var arAkahukuPopupQuote = {
   enableClickHide : false, /* Boolean  ポップアップ以外をクリックで
                             *   即非表示 */
   enableImage : false,     /* Boolean  画像も含める */
+  enablePreview : false,   /* Boolean  オートリンクプレビューを含める */
+  enablePreviewAll : false,/* Boolean  画像以外も */
   imageSize : 2,           /* Number  サイズ
                             *   0: フルサイズ
                             *   1: ハーフ
                             *   2: クオーター */
   enableNearest : false,   /* Boolean  現在のレスから近い方を表示 */
+  enableMatchBOL : false,  /* Boolean  行単位で合うレスを優先して検索 */
   enableBottomUp : false,  /* Boolean  ポップアップを上に延ばす */
     
   /**
@@ -148,12 +151,25 @@ var arAkahukuPopupQuote = {
       arAkahukuPopupQuote.imageSize
         = arAkahukuConfig
         .initPref ("int",  "akahuku.popupquote.image.size", 2);
+      if (arAkahukuPopupQuote.enableImage) {
+        arAkahukuPopupQuote.enablePreview
+          = arAkahukuConfig
+          .initPref ("bool", "akahuku.popupquote.image.preview", true);
+        if (arAkahukuPopupQuote.enablePreview) {
+          arAkahukuPopupQuote.enablePreviewAll
+            = arAkahukuConfig
+            .initPref ("bool", "akahuku.popupquote.image.preview.all", true);
+        }
+      }
       arAkahukuPopupQuote.enableNearest
         = arAkahukuConfig
         .initPref ("bool", "akahuku.popupquote.nearest", false);
       arAkahukuPopupQuote.enableBottomUp
         = arAkahukuConfig
         .initPref ("bool", "akahuku.popupquote.bottomup", false);
+      arAkahukuPopupQuote.enableMatchBOL
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.popupquote.matchbol", false);
     }
   },
     
@@ -399,13 +415,14 @@ var arAkahukuPopupQuote = {
         var lastText = "";
         var result = "";
         for (var node = blockquote; node; node = node.previousSibling) {
+          var nodeName = node.nodeName.toLowerCase ();
           if (arAkahukuPopupQuote.enableImage) {
-            if (node.nodeName.toLowerCase () == "hr") {
+            if (nodeName == "hr") {
               break;
             }
           }
           else {
-            if (node.nodeName.toLowerCase () == "input"
+            if (nodeName == "input"
                 && node.type == "checkbox") {
               break;
             }
@@ -424,7 +441,7 @@ var arAkahukuPopupQuote = {
               }
             }
           }
-          else if (node.nodeName.toLowerCase () == "a"
+          else if (nodeName == "a"
                    && node.firstChild
                    && node.firstChild.nodeName.toLowerCase ()
                    == "img") {
@@ -444,24 +461,63 @@ var arAkahukuPopupQuote = {
               continue;
             }
           }
-          else if (node.nodeName.toLowerCase () == "small") {
+          else if (nodeName == "small") {
             if (node.innerHTML.match
                 (/[0-9]+:[0-9]+\u9803\u6D88\u3048\u307E\u3059/)) {
               /* 消滅時刻 */
               continue;
             }
           }
-          else if (node.nodeName.toLowerCase () == "input") {
+          else if (nodeName == "input") {
             continue;
           }
-          else if (node.nodeName.toLowerCase () == "span") {
+          else if (nodeName == "span") {
             continue;
+          }
+          else if (nodeName == "div"
+                   && arAkahukuDOM.hasClassName
+                   (node, "akahuku_preview_container")) {
+            if (arAkahukuPopupQuote.enableImage
+                && arAkahukuPopupQuote.enablePreview) {
+              /* プレビュー画像 */
+              newNode = node.cloneNode (true);
+              var s = Math.pow (2, arAkahukuPopupQuote.imageSize);
+              var nextSibling;
+              for (var pv = newNode.firstChild;
+                   pv; pv = nextSibling) {
+                nextSibling = pv.nextSibling;
+                if (pv.nodeName.toLowerCase () == "a") {
+                  var imgs = pv.getElementsByTagName ("img");
+                  for (var i = 0; i < imgs.length; i ++) {
+                    imgs [i].width = parseInt (imgs [i].width / s);
+                    imgs [i].height = parseInt (imgs [i].height / s);
+                    imgs [i].style.margin = "0px 4px";
+                  }
+                }
+                else if (arAkahukuPopupQuote.enablePreviewAll
+                         && arAkahukuDOM.hasClassName
+                              (pv, "akahuku_preview")) {
+                  pv.width = parseInt (pv.width / s);
+                  pv.height = parseInt (pv.height / s);
+                  pv.style.margin = "0px 4px";
+                }
+                else {
+                  newNode.removeChild (pv);
+                }
+              }
+              if (newNode.childNodes.length == 0) {
+                continue;
+              }
+            }
+            else {
+              continue;
+            }
           }
           else {
             newNode = node.cloneNode (true);
           }
                     
-          if (node.nodeName.toLowerCase () == "#text") {
+          if (nodeName == "#text") {
             if ((node.nodeValue + lastText).match
                 (/No\.([0-9]+)/)) {
               while (td.firstChild
@@ -500,7 +556,7 @@ var arAkahukuPopupQuote = {
               lastText = node.nodeValue + lastText;
             }
           }
-          else if (node.nodeName.toLowerCase () != "wbr") {
+          else if (nodeName != "wbr") {
             lastText = "";
           }
           
@@ -540,7 +596,19 @@ var arAkahukuPopupQuote = {
         var nodes;
         var targetIndex;
         
-        nodes = Akahuku.getMessageBQ (targetDocument);
+        function ensureCurrentIndexAndBQNodes () {
+          if (!nodes) {
+            nodes = Akahuku.getMessageBQ (targetDocument);
+            if (index != 0) return;
+            /* 長いレスでの負荷を減らすために後ろから探索 */
+            for (var i = nodes.length - 1; i >= 0; i --) {
+              if (nodes [i] == currentBlockQuote) {
+                index = i;
+                break;
+              }
+            }
+          }
+        }
         
         var div = arAkahukuDOM.findParentNodeByClassName
         (currentBlockQuote, "akahuku_reply_popup");
@@ -552,22 +620,24 @@ var arAkahukuPopupQuote = {
         }
         else if (currentTd) {
           /* レス */
-          for (var i = 0; i < nodes.length; i ++) {
-            if (nodes [i] == currentBlockQuote) {
-              index = i;
-              break;
-            }
-          }
+          index = 0;
+          /* index 探索は実際に必要になってから */
         }
         else {
           /* スレ本文 */
-          index = 0;
+          return null; /* 本文からは検索するわけがない */
         }
                 
         if (index == -1) {
           return null;
         }
                 
+        var isQuotedInsideBQ = true;
+        if ("compareDocumentPosition" in quoted) {
+          isQuotedInsideBQ
+            = (quoted.compareDocumentPosition (currentBlockQuote)
+                & quoted.DOCUMENT_POSITION_CONTAINS) > 0;
+        }
         var quotedNo = -1;
         var i;
                 
@@ -583,6 +653,35 @@ var arAkahukuPopupQuote = {
             }
             break;
           case 2:
+            if (!isQuotedInsideBQ) {
+              /* 本文以外のテキストに対して余計な解析をしない */
+              break;
+            }
+            if (quoted.nodeType == quoted.TEXT_NODE
+                && "createRange" in targetDocument) {
+              var range = targetDocument.createRange ();
+              if ("getBoundingClientRect" in range) {
+                /* Firefox4/Gecko2.0 : カーソル下の数字を非破壊で拾う */
+                var pattern = /(?:No\.)?(\d+)(?:\.(jpg|png|gif))?/g;
+                var cX = param.pageX - targetDocument.defaultView.scrollX;
+                var cY = param.pageY - targetDocument.defaultView.scrollY;
+                var match;
+                while ((match = pattern.exec (quoted.nodeValue))) {
+                  range.setStart (quoted, match.index);
+                  range.setEnd (quoted, match.index + match [0].length);
+                  var rect = range.getBoundingClientRect();
+                  if (rect.top <= cY && cY <= rect.bottom
+                      && rect.left <= cX && cX <= rect.right) {
+                    quotedNo = parseInt (match [1]);
+                    break;
+                  }
+                }
+                range.detach ();
+                break; /* for switch */
+              }
+              range.detach ();
+            }
+            /* 古いコード */
             if (innerText.match
                 (/(No\.)?([0-9]+)(.*)(No\.)?([0-9]+)/)) {
               if (RegExp.$3 || RegExp.$4) {
@@ -632,9 +731,10 @@ var arAkahukuPopupQuote = {
           /* レス番号の引用 */
                     
           /* 引用元を探す */
+          ensureCurrentIndexAndBQNodes ();
           targetIndex = -1;
           for (var i = index - 1; i >= 0; i --) {
-            if (nodes [i].parentNode.style.display != "none") {
+            if (nodes [i].offsetHeight) {
               var num = Akahuku.getMessageNum (nodes [i]);
               if (num == quotedNo) {
                 /* 対象を発見 */
@@ -672,6 +772,7 @@ var arAkahukuPopupQuote = {
           var lines
           = arAkahukuDOM.getInnerText2 (currentBlockQuote)
           .split ("\n");
+          var quotedLineNum = 1;
           for (var i = 0; i < lines.length; i ++) {
             if (lines [i].replace (/[ \t\u3000\xa0]*$/, "")
                 == originalQuotedText) {
@@ -682,15 +783,41 @@ var arAkahukuPopupQuote = {
                   = lines [j]
                   .replace (/^(>|&gt;)/, "")
                   + "\n" + quotedText;
+                quotedLineNum ++;
               }
               break;
             }
           }
                     
           /* 引用全体にマッチする引用元を探す */
+          ensureCurrentIndexAndBQNodes ();
           targetIndex = -1;
+          var candidateIndex = -1;
           for (var i = index - 1; i >= 0; i --) {
-            if (nodes [i].parentNode.style.display != "none") {
+            if (nodes [i].offsetHeight) {
+              if (arAkahukuPopupQuote.enableMatchBOL) {
+                var nodeText = arAkahukuDOM.getInnerText2 (nodes [i]);
+                for (var j = nodeText.indexOf (quotedText);
+                     j >= 0; j = nodeText.indexOf (quotedText)) {
+                  /* 単一行なら行頭が合うかチェック */
+                  if (quotedLineNum > 1
+                      || j == 0 || nodeText [j-1] == "\n") {
+                    targetIndex = i;
+                    break;
+                  }
+                  if (!arAkahukuPopupQuote.enableNearest
+                      || candidateIndex == -1) {
+                    candidateIndex = i;
+                  }
+                  nodeText = nodeText.substr (j+1);
+                }
+                if (arAkahukuPopupQuote.enableNearest
+                    && targetIndex >= 0) {
+                  break;
+                }
+                continue;
+              }
+                  
               if (arAkahukuDOM.getInnerText2 (nodes [i])
                   .indexOf (quotedText) >= 0) {
                 targetIndex = i;
@@ -699,6 +826,9 @@ var arAkahukuPopupQuote = {
                 }
               }
             }
+          }
+          if (targetIndex == -1 && candidateIndex != -1) {
+            targetIndex = candidateIndex;
           }
           if (targetIndex != -1) {
             var original
@@ -709,11 +839,37 @@ var arAkahukuPopupQuote = {
                     
           /* 無かった場合 */
                     
+          if (quotedLineNum > 1) {
           /* 単一の行のみで探す */
+          quotedText
+          = originalQuotedText.replace (/^(>|&gt;)/, "");
+          candidateIndex = -1;
           for (var i = index - 1; i >= 0; i --) {
-            if (nodes [i].parentNode.style.display != "none") {
+            if (nodes [i].offsetHeight) {
+              if (arAkahukuPopupQuote.enableMatchBOL) {
+                var nodeText = arAkahukuDOM.getInnerText2 (nodes [i]);
+                for (var j = nodeText.indexOf (quotedText);
+                     j >= 0; j = nodeText.indexOf (quotedText)) {
+                  /* 行頭が合うかチェック */
+                  if (j == 0 || nodeText [j-1] == "\n") {
+                    targetIndex = i;
+                    break;
+                  }
+                  if (!arAkahukuPopupQuote.enableNearest
+                      || candidateIndex == -1) {
+                    candidateIndex = i;
+                  }
+                  nodeText = nodeText.substr (j+1);
+                }
+                if (arAkahukuPopupQuote.enableNearest
+                    && targetIndex >= 0) {
+                  break;
+                }
+                continue;
+              }
+
               if (arAkahukuDOM.getInnerText2 (nodes [i])
-                  .indexOf (originalQuotedText) >= 0) {
+                  .indexOf (quotedText) >= 0) {
                 targetIndex = i;
                 if (arAkahukuPopupQuote.enableNearest) {
                   break;
@@ -721,18 +877,23 @@ var arAkahukuPopupQuote = {
               }
             }
           }
+          if (targetIndex == -1 && candidateIndex != -1) {
+            targetIndex = candidateIndex;
+          }
           if (targetIndex != -1) {
             var original
             = new arAkahukuQuoteOriginal (targetIndex,
                                           nodes [targetIndex]);
             return original;
           }
+          } /* quotedLineNum > 1 */
           /* スペースを除外して探す */
           quotedText
           = originalQuotedText
-          .replace (/^(>|&gt; +)/, "")
+          .replace (/^(>|&gt;)[ \t\u3000\xa0]+/, "")
+          if (quotedText.length != originalQuotedText.length) {
           for (var i = index - 1; i >= 0; i --) {
-            if (nodes [i].parentNode.style.display != "none") {
+            if (nodes [i].offsetHeight) {
               if (arAkahukuDOM.getInnerText2 (nodes [i])
                   .indexOf (quotedText) >= 0) {
                 targetIndex = i;
@@ -748,18 +909,29 @@ var arAkahukuPopupQuote = {
                                           nodes [targetIndex]);
             return original;
           }
+          } /* quotedText.length != originalQuotedText.length */
                     
-          /* 引用内をテキストと見なしてNo.等を再探索 */
-		  quoted.normalize ();
-          var original
-          = getQuoteOriginal (quoted.firstChild,
-                              currentBlockQuote,
-                              currentTd, 2, info);
-          return original;
+          /* 引用内の子要素テキストから No.等を再探索 */
+          if (quoted.firstChild && quoted.firstChild
+              .nodeType == quoted.TEXT_NODE
+              && /(?:No\.[1-9][0-9]*|[0-9]+\.[a-z]+)/
+                 .test (originalQuotedText)) {
+            quoted.normalize ();
+            var original
+            = getQuoteOriginal (quoted.firstChild,
+                                currentBlockQuote,
+                                currentTd, 2, info);
+            if (original || quoted.childNodes.length == 1) {
+              /* 子要素が1つなら処理が重複するのでこれで終了 */
+              return original;
+            }
+          }
         }
                 
         var quotedIP = "";
+        var quotedIPisID = false;
                 
+        /* 古い IP 検索のコード
         switch (info.server + "/" + info.dir) {
           case "www/h":
           case "dat/l":
@@ -771,15 +943,31 @@ var arAkahukuPopupQuote = {
             }
           break;
         }
+        */
+        if (type == 0 || type == 1 || isQuotedInsideBQ) {
+          /* メール欄かレス文中のノードの場合に IP か ID を探す */
+          if (!quotedIP && info.ip) {
+            if (innerText.match (/\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:[0-9]+\.){0,2}\*\([^\(\)]+\))/)) {
+              quotedIP = RegExp.$1;
+            }
+          }
+          if (!quotedIP && info.id) {
+            if (innerText.match (/\bID:([A-Za-z0-9.\/]{8})\b/)) {
+              quotedIP = RegExp.$1; 
+              quotedIPisID = true;
+            }
+          }
+        }
                 
         if (quotedIP) {
-          /* IP アドレスの引用 */
+          /* IP アドレスや ID の引用 */
                     
           /* 引用元を探す */
-          targetNode = -1;
+          ensureCurrentIndexAndBQNodes ();
+          targetIndex = -1;
           for (var i = index - 1; i >= 0; i --) {
-            var ip = Akahuku.getMessageIP (nodes [i]);
-            if (nodes [i].parentNode.style.display != "none") {
+            var ip = Akahuku.getMessageIPID (nodes [i], quotedIPisID);
+            if (nodes [i].offsetHeight) {
               if (ip == quotedIP) {
                 /* 対象を発見 */
                 targetIndex = i;
