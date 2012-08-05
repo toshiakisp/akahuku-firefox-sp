@@ -41,6 +41,8 @@ arAkahukuPostFormParam.prototype = {
     
   upfile : "",                    /* String  添付ファイル */
     
+  bottomFormAlignTimerID : null,  /* Number  末尾位置フォームの整形タイマー ID */
+    
   /**
    * データを開放する
    */
@@ -60,6 +62,10 @@ arAkahukuPostFormParam.prototype = {
     if (this.changeTimerID != null) {
       clearInterval (this.changeTimerID);
       this.changeTimerID = null;
+    }
+    if (this.bottomFormAlignTimerID != null) {
+      clearInterval (this.bottomFormAlignTimerID);
+      this.bottomFormAlignTimerID = null;
     }
         
     this.targetDocument = null;
@@ -245,6 +251,7 @@ var arAkahukuPostForm = {
   enableDelformLeft : false, /* Boolean  削除フォームを左に */
     
   enableBottom : false,      /* Boolean  ページ末尾に置く */
+  enableBottomFormOnly : false,      /* Boolean  ページ末尾にフォームだけを置く */
     
   /**
    * 初期化処理
@@ -284,7 +291,11 @@ var arAkahukuPostForm = {
       if (arAkahukuPostForm.enableBottom) {
         var postform
         = targetDocument.getElementById ("akahuku_postform");
-        postform.scrollIntoView ();
+        if (arAkahukuPostForm.enableBottomFormOnly) {
+          postform
+          = targetDocument.getElementById ("akahuku_posttable");
+        }
+        postform.scrollIntoView (false);
       }
       else {
         targetDocument.defaultView.scrollTo (0, 0);
@@ -915,6 +926,9 @@ var arAkahukuPostForm = {
         
     if (arAkahukuPostForm.enableBottom) {
       arAkahukuPostForm.enableFloat = false;
+      arAkahukuPostForm.enableBottomFormOnly
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.postform.bottom_formonly", false);
     }
   },
     
@@ -1808,6 +1822,7 @@ var arAkahukuPostForm = {
         
     var row = targetDocument.getElementById ("akahuku_post_file_row");
     var form = targetDocument.getElementById ("akahuku_postform");
+    var table = targetDocument.getElementById ("akahuku_posttable");
     var header
     = targetDocument.getElementById ("akahuku_floatpostform_header");
     var header2
@@ -1816,6 +1831,9 @@ var arAkahukuPostForm = {
       case "akahuku_postmode_reply":
         if (form) {
           form.style.backgroundColor = "transparent";
+        }
+        if (table) {
+          table.style.backgroundColor = "";
         }
         if (row) {
           row.style.display = "none";
@@ -1830,6 +1848,9 @@ var arAkahukuPostForm = {
       case "akahuku_postmode_thread":
         if (form) {
           form.style.backgroundColor = "#f0e0d6";
+        }
+        if (table) {
+          table.style.backgroundColor = "#f0e0d6";
         }
         if (row) {
           row.style.display = "";
@@ -2131,6 +2152,9 @@ var arAkahukuPostForm = {
     var result;
     var node;
         
+    if (!Akahuku.getDocumentParam (targetDocument)) {
+      return;
+    }
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
         
@@ -3206,16 +3230,14 @@ var arAkahukuPostForm = {
       filebox = filebox [0];
       var filename = filebox.value;
             
-      try {
-        var param
-          = Akahuku.getDocumentParam (targetDocument).postform_param;
+      var documentParam = Akahuku.getDocumentParam (targetDocument);
+      if (documentParam) {
+        var param = documentParam.postform_param;
         if (param.upfile == filename) {
           /* ファイルが変わってない場合は何もしない */
           return
             }
         param.upfile = filename;
-      }
-      catch (e) { Akahuku.debug.exception (e);
       }
             
       var mimeType = "";
@@ -3259,13 +3281,13 @@ var arAkahukuPostForm = {
           file.initWithPath (filename);
         }
         catch (e) {
-		  /* ファイル名が不正 (含クリア) */
+          /* ファイル名が不正 (含クリア) */
           container.style.display = "none";
-		  preview.setAttribute ("__size", 0);
-		  arAkahukuDOM.setText (bytes, 0);
-		  preview.style.display = "none";
-		  preview.src = "";
-		  return;
+          preview.setAttribute ("__size", 0);
+          arAkahukuDOM.setText (bytes, 0);
+          preview.style.display = "none";
+          preview.src = "";
+          return;
         }
                     
         try {
@@ -3519,8 +3541,8 @@ var arAkahukuPostForm = {
                         ("\u30D0\u30A4\u30C8"));
       container.appendChild (span);
             
+      var form = arAkahukuDOM.findParentNode (filebox, "form");
       if (sio) {
-        var form = arAkahukuDOM.findParentNode (filebox, "form");
         form.appendChild (container);
       }
       else {
@@ -3538,6 +3560,17 @@ var arAkahukuPostForm = {
        function () {
         arAkahukuPostForm.onPreviewChange (arguments [0]);
       }, false);
+                    
+      if (form) {
+        form.addEventListener
+        ("reset",
+         function () {
+           setTimeout
+           (function () {
+              arAkahukuPostForm.onPreviewChange (arguments [0]);
+           }, 100, arguments [0]);
+        }, false);
+      }
                     
       if (filebox.value) {
         arAkahukuPostForm.onPreviewChangeCore
@@ -3768,6 +3801,11 @@ var arAkahukuPostForm = {
         enableFloat = false;
       }
             
+      if (hidePostForm && arAkahukuPostForm.enableBottom
+          && arAkahukuPostForm.enableBottomFormOnly) {
+        hidePostForm = false;
+      }
+            
       if (form) {
         form.id = "akahuku_postform";
         if (form.getElementsByTagName ("table") [0]) {
@@ -3780,7 +3818,7 @@ var arAkahukuPostForm = {
         }
                 
         for (var j = 0,
-               nodes = targetDocument.getElementsByTagName ("input");
+               nodes = form.getElementsByTagName ("input");
              j < nodes.length; j ++) {
           if (nodes [j].type.toLowerCase () == "submit") {
             nodes [j].id = "akahuku_postform_submitter";
@@ -3798,14 +3836,15 @@ var arAkahukuPostForm = {
             
             
       var nodes;
-      if (form && arAkahukuPostForm.enableBottom) {
+      if (form && arAkahukuPostForm.enableBottom
+          && !arAkahukuPostForm.enableBottomFormOnly) {
         var delTable = null;
         
-        nodes = targetDocument.getElementsByTagName ("input");
+        nodes = targetDocument.getElementsByName ("mode");
         for (var i = 0; i < nodes.length; i ++) {
-          if (nodes [i].type == "hidden"
-              && nodes [i].name == "mode"
-              && nodes [i].value == "usrdel") {
+          if (nodes [i].value == "usrdel"
+              && nodes [i].type == "hidden"
+              && nodes [i].nodeName.toLowerCase () == "input") {
             delTable
               = arAkahukuDOM.findParentNode (nodes [i], "table");
             if (!delTable) {
@@ -3831,6 +3870,47 @@ var arAkahukuPostForm = {
           delTable.parentNode.insertBefore (form, delTable);
         }
       }
+      else if (form && arAkahukuPostForm.enableBottom
+               && arAkahukuPostForm.enableBottomFormOnly) {
+        /* フォーム位置切替と同じ方法でフォームを下に表示 */
+        var table
+          = targetDocument.getElementById ("akahuku_posttable");
+        table.style.position = "absolute";
+        table.style.visibility = "hidden";
+        setTimeout
+        (function (targetDocument){
+          var ufm = targetDocument.getElementById ("ufm");
+          var param = Akahuku.getDocumentParam (targetDocument);
+          if (!ufm || !table || !param) {
+            return;
+          }
+          table.style.visibility = "visible";
+          ufm.style.height = table.offsetHeight + "px";
+          ufm.style.width = table.offsetWidth + "px";
+          ufm.innerHTML = "&nbsp;";
+          table.style.left = "50%";
+          table.style.marginLeft = "-" + (table.offsetWidth/2) + "px";
+          table.style.top
+            = (ufm.ownerDocument.body.offsetTop + ufm.offsetTop) + "px";
+          param.postform_param
+          .bottomFormAlignTimerID
+            = setInterval
+            (function (ufm, table) {
+              /* サイズ変更を反映 */
+              if (table.offsetTop != ufm.offsetTop) {
+                table.style.top
+                  = (ufm.ownerDocument.body.offsetTop + ufm.offsetTop) + "px";
+              }
+              if (ufm.style.width != table.offsetWidth + "px") {
+                table.style.marginLeft = "-" + (table.offsetWidth/2) + "px";
+                ufm.style.width = table.offsetWidth + "px";
+              }
+              if (table.offsetHeight != ufm.offsetHeight) {
+                ufm.style.height = table.offsetHeight + "px";
+              }
+            }, 300, ufm, table);
+        }, 300, targetDocument);
+      }
             
       if (form) {
         if (hidePostForm) {
@@ -3842,6 +3922,14 @@ var arAkahukuPostForm = {
              function () {
               arAkahukuPostForm.onCreateThreadClick
                 (arguments [0]);
+            }, false);
+            /* ファイルなどのD&D時にフォームを表示する */
+            opener.addEventListener
+            ("dragenter",
+             function () {
+              arAkahukuPostForm.ensureDispPostForm
+                (arguments [0].target.ownerDocument);
+              return true; /* true; ドロップを許可しない */
             }, false);
             if (info.isNormal) {
               opener.appendChild
@@ -3865,14 +3953,19 @@ var arAkahukuPostForm = {
           if (nodes2 [i].innerHTML.match
               (/\u3053\u306E\u677F\u306E\u4FDD\u5B58\u6570\u306F([0-9]+)\u4EF6\u3067\u3059/)) {
             var name = info.server + ":" + info.dir;
-            if (arAkahukuMaxNum [name] != RegExp.$1) {
+            if (!arAkahukuMaxNum.has (name)) {
               Akahuku.debug.log
-				(arAkahukuServerName [name]
-				 + "(" + name + ")"
-				 + "\u306E\u4FDD\u5B58\u6570 "
-				 + arAkahukuMaxNum [name] + " => " + RegExp.$1);
+                ("Unknown server (" + name 
+                 + ") \u306E\u4FDD\u5B58\u6570" + RegExp.$1);
             }
-            arAkahukuMaxNum [name] = parseInt (RegExp.$1);
+            else if (arAkahukuMaxNum.get (name) != RegExp.$1) {
+              Akahuku.debug.log
+                (arAkahukuServerName.get (name)
+                 + "(" + name + ")"
+                 + "\u306E\u4FDD\u5B58\u6570 "
+                 + arAkahukuMaxNum.get (name) + " => " + RegExp.$1);
+            }
+            arAkahukuMaxNum.set (name, parseInt (RegExp.$1));
             break;
           }
         }
@@ -3933,7 +4026,16 @@ var arAkahukuPostForm = {
                             
               var a = viewer.getElementsByTagName ("br");
               var alength = a.length;
-              arAkahukuDOM.copyChildren (nodes2 [i], viewer);
+              if (nodes2 [i].hasAttribute ("style")) {
+                /* li自体のスタイルをコピー */
+                var span = targetDocument.createElement ("span");
+                span.setAttribute ("style", nodes2 [i].getAttribute ("style"));
+                viewer.appendChild (span);
+                arAkahukuDOM.copyChildren (nodes2 [i], span);
+              }
+              else {
+                arAkahukuDOM.copyChildren (nodes2 [i], viewer);
+              }
               if (nodes2 [i].innerHTML.match
                   (/\u524A\u9664\u5BFE\u8C61/)) {
                 var b = viewer.getElementsByTagName ("br");
@@ -3947,6 +4049,16 @@ var arAkahukuPostForm = {
                       ("__akahuku_no_cleanup", 1);
                   }
                   lastb = b [j];
+                }
+              }
+              else if (nodes2 [i].textContent.match
+                       (/^\u677F\u306E\u8A2D\u5B9A\u5909\u66F4/)) { //板の設定変更
+                var b = viewer.getElementsByTagName ("br");
+                for (var j = alength; j < b.length; j ++) {
+                  if (b [j].nextSibling) {
+                    b [j].setAttribute
+                      ("__akahuku_no_cleanup", 1);
+                  }
                 }
               }
             }
@@ -4253,11 +4365,11 @@ var arAkahukuPostForm = {
             
       if (arAkahukuPostForm.enableDelformHide
           || arAkahukuPostForm.enableDelformLeft) {
-        nodes = targetDocument.getElementsByTagName ("input");
+        nodes = targetDocument.getElementsByName ("mode");
         for (var i = 0; i < nodes.length; i ++) {
-          if (nodes [i].type == "hidden"
-              && nodes [i].name == "mode"
-              && nodes [i].value == "usrdel") {
+          if ( nodes [i].value == "usrdel"
+              && nodes [i].type == "hidden"
+              && nodes [i].nodeName.toLowerCase () == "input") {
             var table
               = arAkahukuDOM.findParentNode (nodes [i], "table");
             if (!table) {
@@ -4269,6 +4381,20 @@ var arAkahukuPostForm = {
                 table.style.display = "none";
               }
               else {
+                if (table.nodeName.toLowerCase () == "div") {
+                  if (!arAkahukuPostForm.enableBottom
+                      && arAkahukuDelBanner.enableMoveTailAdAll) {
+                    table.style.position = "static";
+                    table.style.right = "auto";
+                    table.style.textAlign = "left";
+                  }
+                  else {
+                    table.style.position = "absolute";
+                    table.style.right = "auto";
+                    table.style.left = "0";
+                  }
+                }
+                else
                 table.setAttribute ("align", "left");
               }
               break;
@@ -4458,6 +4584,15 @@ var arAkahukuPostForm = {
         ("mousedown",
          function () {
           arAkahukuPostForm.onBodyMouseDown (arguments [0]);
+        }, false);
+                
+        /* ファイルなどのD&D時にフォームを表示する */
+        div.addEventListener
+        ("dragenter",
+         function () {
+          arAkahukuPostForm.ensureDispPostForm
+            (arguments [0].target.ownerDocument);
+          return true; /* true; ドロップを許可しない */
         }, false);
                 
         var postmodeContainer
@@ -4739,6 +4874,44 @@ var arAkahukuPostForm = {
                 
         targetDocument.body
         .insertBefore (div, targetDocument.body.firstChild);
+      }
+
+      /* 下部のフォームにスレ立てラヂオスイッチを移動させる */
+      if (info.isReply && form
+          && arAkahukuPostForm.enableReplyThread
+          && arAkahukuPostForm.enableBottom) {
+        var postmodeContainer
+        = targetDocument.getElementById ("akahuku_postmode_container");
+        var postformHeader
+        = targetDocument.getElementById ("akahuku_postform_header");
+        var table
+        = targetDocument.getElementById ("akahuku_posttable");
+        if (postmodeContainer && postformHeader && table) {
+          var postmodeIndicator
+            = targetDocument.createElement ("font");
+          postmodeIndicator.style.fontWeight = "bold";
+          postmodeIndicator.style.color = "#ffffff";
+          postmodeIndicator.appendChild
+            (targetDocument.createTextNode
+             ("\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9"));
+          postmodeContainer.parentNode
+            .replaceChild (postmodeIndicator, postmodeContainer);
+                    
+          table.style.tableLayout = "auto";
+          var tbody = table.getElementsByTagName ("tbody") [0];
+          var tr = targetDocument.createElement ("tr");
+          var td = targetDocument.createElement ("td");
+          td.style.textAlign = "center";
+          td.setAttribute ("colspan", 2);
+          td.setAttribute
+            ("bgcolor",
+             postformHeader.getAttribute ("bgcolor") || "#e04000");
+          postformHeader.removeAttribute ("id");
+          td.id = "akahuku_postform_header";
+          tr.appendChild (td);
+          td.appendChild (postmodeContainer);
+          tbody.insertBefore (tr, tbody.firstChild);
+        }
       }
             
       if (arAkahukuPostForm.enablePreview) {
