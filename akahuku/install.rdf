@@ -5,7 +5,7 @@
   
   <Description about="urn:mozilla:install-manifest">
     <em:id>{591c2cf0-0a6e-11da-8cd6-0800200c9a66}</em:id>
-    <em:version>5.2.90.sp59934</em:version>
+    <em:version>5.2.90.sp60557</em:version>
     <em:type>2</em:type>
     
     <em:targetApplication>
@@ -13,7 +13,7 @@
       <Description>
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
         <em:minVersion>1.0</em:minVersion>
-        <em:maxVersion>*.*</em:maxVersion>
+        <em:maxVersion>10.*</em:maxVersion>
       </Description>
       
       <!-- Mozilla Suite -->
@@ -50,8 +50,10 @@
     <em:creator>arai</em:creator>
     <em:homepageURL>http://www.unmht.org/akahuku/</em:homepageURL>
     
+    <!--
     <em:updateURL>http://www.unmht.org/akahuku/update.rdf</em:updateURL>
     <em:updateKey>MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCganJOtLPYi/fEBBtyDZeAL/T60GUNZewj0gmTbO/6XULYuyzbxEX3ZnBnBeLq8e/Qfi/uhghWWWJmKqOgK4yX4XNdQMGPnZvEXBgvTdxIRDe+7CFKB0Cq5L/DYPzrZRzb6cgdmEmkIRbztSYn6XFTRpMOQL+3XXY9npi2hAPxjwIDAQAB</em:updateKey>
+    -->
     
     <em:optionsURL>chrome://akahuku/content/options.xul</em:optionsURL>
     <em:iconURL>chrome://akahuku/content/images/icon.png</em:iconURL>
