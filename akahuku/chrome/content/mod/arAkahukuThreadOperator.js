@@ -868,6 +868,10 @@ var arAkahukuThreadOperator = {
    *         対象のドキュメント
    */
   onThumbnailClipperCheckCore : function (targetDocument) {
+    if (!Akahuku.getDocumentParam (targetDocument)) {
+      /* すでに unload されていた場合など */
+      return;
+    }
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
     var param
@@ -919,9 +923,9 @@ var arAkahukuThreadOperator = {
               }, false);
           }
                     
-          container.appendChild (anchor);
-                        
           anchor.appendChild (img);
+                        
+          container.appendChild (anchor);
                         
           param.thumbnailPopupData
             = new arAkahukuThumbnailPopupData (anchor,
@@ -1573,15 +1577,16 @@ var arAkahukuThreadOperator = {
       }
       targetDocument.body.appendChild (div);
             
-      if (arAkahukuThreadOperator.enableThumbnailOnly) {
-        arAkahukuThreadOperator.onThumbnailClipperCheckCore
-          (targetDocument);
-      }
-      else {
-        if (arAkahukuThreadOperator.enableThumbnail) {
-          arAkahukuThreadOperator.onThumbnailClipperCheckCore
-          (targetDocument);
-        }
+      if (arAkahukuThreadOperator.enableThumbnailOnly
+          || arAkahukuThreadOperator.enableThumbnail) {
+        /* 遅延実行で負荷軽減 */
+		setTimeout
+		((function (doc) {
+			return function () {
+			  arAkahukuThreadOperator
+			  .onThumbnailClipperCheckCore (doc);
+			};
+		 })(targetDocument), 1000, false);
       }
             
       if (arAkahukuThreadOperator.enableClickOpen
