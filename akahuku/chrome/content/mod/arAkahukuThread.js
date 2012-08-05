@@ -1088,7 +1088,7 @@ var arAkahukuThread = {
     var estimatedTime = 0;
         
     if (nodes.length >= 2
-        && (info.server + ":" + info.dir) in arAkahukuMaxNum) {
+        && arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
       /* 書き込みが 2 つ以上あるので予測をする */
       var firstTime = Akahuku.getMessageTime (nodes [0]);
       var firstNum = Akahuku.getMessageNum (nodes [0]);
@@ -1100,7 +1100,7 @@ var arAkahukuThread = {
         estimatedTime
           = firstTime
           + (lastTime - firstTime)
-          * arAkahukuMaxNum [info.server + ":" + info.dir]
+          * arAkahukuMaxNum.get (info.server + ":" + info.dir)
           / (lastNum - firstNum);
       }
     }
@@ -1207,7 +1207,7 @@ var arAkahukuThread = {
    */
   updateNewestNum : function (info, num) {
     var n;
-    if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
+    if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
       if ((info.server + ":" + info.dir) in arAkahukuThread.newestNum) {
         n = arAkahukuThread.newestNum [info.server + ":" + info.dir];
         if (n < num) {
@@ -1239,7 +1239,7 @@ var arAkahukuThread = {
   getExpireNum : function (targetDocument, info,
                            threadNumber, lastReplyNumber) {
     if (!info.isMht
-        && (info.server + ":" + info.dir) in arAkahukuMaxNum) {
+        && arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
       var n;
       if (arAkahukuThread.enableBottomStatusNumEntire) {
         n = arAkahukuThread.newestNum [info.server + ":" + info.dir];
@@ -1259,10 +1259,10 @@ var arAkahukuThread = {
       }
       if (threadNumber == 0
           || lastReplyNumber == 0) {
-        return arAkahukuMaxNum [info.server + ":" + info.dir];
+        return arAkahukuMaxNum.get (info.server + ":" + info.dir);
       }
       n = (threadNumber
-           + arAkahukuMaxNum [info.server + ":" + info.dir]
+           + arAkahukuMaxNum.get (info.server + ":" + info.dir)
            - lastReplyNumber);
       if (n < 0) {
         n = 0;
@@ -1429,7 +1429,11 @@ var arAkahukuThread = {
   onBodyUnload : function (targetDocument, documentParam) {
     var param;
         
-    arAkahukuThread.resetTabIcon (targetDocument);
+    try {
+      arAkahukuThread.resetTabIcon (targetDocument);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
         
     param = documentParam.respanel_param;
     if (param) {
@@ -1685,10 +1689,8 @@ var arAkahukuThread = {
       /* タブのアイコンをサムネにする */
             
       var tabbrowser = document.getElementById ("content");
-      var tab = tabbrowser.mTabContainer.firstChild;
-      while (tab) {
-        var targetDocument = tab.linkedBrowser.contentDocument;
                 
+      function setTabIconForDocument (targetDocument) {
         var thumbnail
           = targetDocument.getElementById ("akahuku_thumbnail");
         if (thumbnail) {
@@ -1698,7 +1700,25 @@ var arAkahukuThread = {
           arAkahukuThread.setTabIcon
             (targetDocument, info, thumbnail);
         }
-        tab = tab.nextSibling;
+      }
+
+      if ("visibleTabs" in tabbrowser) {
+        /* Firefox4/Gecko2.0 */
+        var numTabs = tabbrowser.visibleTabs.length;
+        for (var i = 0; i < numTabs; i ++) {
+          var tab = tabbrowser.visibleTabs [i];
+          var targetDocument
+            = tabbrowser.getBrowserForTab (tab).contentDocument;
+          setTabIconForDocument (targetDocument);
+        }
+      }
+      else if ("mTabContainer" in tabbrowser) {
+        var tab = tabbrowser.mTabContainer.firstChild;
+        while (tab) {
+          var targetDocument = tab.linkedBrowser.contentDocument;
+          setTabIconForDocument (targetDocument);
+          tab = tab.nextSibling;
+        }
       }
     }
   },
@@ -1771,12 +1791,12 @@ var arAkahukuThread = {
                       + targetDocument.body.scrollTop
                       + targetDocument.documentElement.scrollTop) + "px";
                  var iframe = targetDocument.createElement ("iframe");
-                 iframe.src = node.href; 
+                 iframe.src = node.getAttribute ("dummyhref") || node.href; 
                  iframe.style.position = "absolute";
                  iframe.style.zIndex = "200";
                  iframe.style.right = "0px";
                  iframe.style.top = "0px";
-                 iframe.style.width = "300px";
+                 iframe.style.width = "320px";
                  iframe.style.height = "600px";
                  iframe.style.backgroundColor = "#ffffff";
                  div.appendChild (iframe);
@@ -2025,30 +2045,24 @@ var arAkahukuThread = {
     
     var nodes = targetNode.getElementsByTagName ("a");
     var i;
+    var hrefbase = "/del.php?b=" + info.dir + "&d=";
     for (i = 0; i < nodes.length; i ++) {
-      var href = nodes [i].getAttribute ("href");
-      if (!href) {
-        continue;
-      }
-            
-      if (href.match (/del\.php\?/)) {
+      var onclick = nodes [i].getAttribute ("onclick");
+      if (onclick && onclick.match (/del\(([0-9]+)\);/)) {
+        var Num = RegExp.$1;
+        nodes [i].removeAttribute ("onclick");
+        if (arAkahukuThread.enableDelInline) {
+          nodes [i].setAttribute("dummyhref",hrefbase + Num);
+          continue;
+        }
+        nodes [i].href = hrefbase + Num;
         nodes [i].target = "_blank";
         nodes [i].setAttribute ("__akahuku_newtab", "1");
-      }
-
-      var onclick = nodes [i].getAttribute ("onclick");
-      if (!onclick) {
         continue;
       }
             
-      if (onclick.match (/del\(([0-9]+)\);/)) {
-        var Num = RegExp.$1;
-        onclick
-          = onclick.replace (/del\(([0-9]+)\);/, "");
-        nodes [i].removeAttribute ("onclick");
-        nodes [i].href
-          = "/del.php?b=" + info.dir
-          + "&d=" + Num;
+      var href = nodes [i].getAttribute ("href");
+      if (href && /del\.php\?/.test(href)) {
         nodes [i].target = "_blank";
         nodes [i].setAttribute ("__akahuku_newtab", "1");
       }
@@ -2646,6 +2660,15 @@ var arAkahukuThread = {
         if (container) {
           /* レスの場合 */
           arAkahukuThread.updateReplyPrefix (container, info);
+          
+          if (info.isReply && (!arAkahukuThread.enableNumbering
+               || replyNumber > arAkahukuThread.numberingMax)) {
+            /* 返信モードでは全てをスキャンする必要は無い */
+            replyNumber = nodes.length - 1;
+            lastReply = nodes [replyNumber];
+            lastNode = lastReply;
+            break;
+          }
           
           /* レス */
           replyNumber ++;

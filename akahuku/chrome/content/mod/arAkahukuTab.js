@@ -125,7 +125,7 @@ var arAkahukuTab = {
       var list = new Array ();
       if (value == "") {
         var name;
-        for (name in arAkahukuServerName) {
+        for (name in arAkahukuServerName.keys) {
           list.push (name);
         }
         list = list.sort (function (x, y) {
@@ -188,16 +188,24 @@ var arAkahukuTab = {
   sort : function (all) {
     var tabbrowser = document.getElementById ("content");
         
-    if ("mTabContainer" in tabbrowser
+    var tabs = null;
+    if ("visibleTabs" in tabbrowser) {
+      /* Firefox4/Gecko2.0 */
+      /* ソートは現在表示しているタブグループ内でのみ */
+      tabs = tabbrowser.visibleTabs;
+    }
+    else if ("mTabContainer" in tabbrowser) {
+      tabs = tabbrowser.mTabContainer.childNodes;
+    }
+    if (tabs
         && "moveTabTo" in tabbrowser) {
             
       var list = new Array ();
-      var tab = tabbrowser.mTabContainer.firstChild;
-      var i = 0;
       var data;
       var documentParam;
       var group = 0;
-      while (tab) {
+      for (i = 0; i < tabs.length; i ++) {
+        var tab = tabs [i];
         data = new arAkahukuTabData ();
         data.i = i;
         data.tab = tab;
@@ -234,9 +242,6 @@ var arAkahukuTab = {
         }
                 
         list.push (data);
-                
-        tab = tab.nextSibling;
-        i ++;
       }
             
       var allMatrix;

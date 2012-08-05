@@ -466,20 +466,86 @@ var arAkahukuServerData = {
 
 };
 
-var arAkahukuServerName = new Object ();
-var arAkahukuServerShortName = new Object ();
-var arAkahukuServerTrueName = new Object ();
-var arAkahukuMaxNum = new Object ();
-var arAkahukuCatalogBoards = new Object ();
+/**
+ * 板の別名情報
+ */
+var arAkahukuServerAliases = {
+  "up:d" : "dat:d",
+  "up:w" : "dat:w",
+  "up:t" : "dat:t",
+  "up:e" : "dat:e",
+  "up:j" : "dat:j",
+  "up:r" : "dat:r",
+  "up:v" : "dat:v",
+  "up:x" : "dat:x",
+  "tmp:img2" : "dat:img2",
+};
+
+/**
+ * 別名も設定できるマップ
+ *
+ * @param referedAlias 別名を参照するオブジェクト
+ */
+var arAkahukuDict = function (referedAlias) {
+  this._items = new Object ();
+  if (referedAlias === undefined)
+    this._aliases = new Object ();
+  else
+    this._aliases = referedAlias;
+};
+arAkahukuDict.prototype = {
+  get : function (key) {
+    key = this._unalias (key);
+    if (this._items.hasOwnProperty (key))
+      return this._items [key];
+    else
+      return undefined;
+  },
+  set : function (key, value) {
+    key = this._unalias (key);
+    this._items [key] = value;
+  },
+  has : function (key) {
+    key = this._unalias (key);
+    return (this._items.hasOwnProperty (key));
+  },
+  get keys() {
+    var items = this._items;
+    return (k for (k in items));
+  },
+  get values() {
+    var items = this._items;
+    return (items [k] for (k in items));
+  },
+
+
+  /* 別名の処理 */
+  _unalias : function (key) {
+    return (this._aliases.hasOwnProperty (key) ? this._aliases [key] : key);
+  },
+  setAlias : function (aliasKey, originKey) {
+    this._aliases [aliasKey] = originKey;
+  },
+  setAliases : function (aliases) {
+    for (var key in aliases)
+      this.setAlias (key, aliases [key]);
+  },
+};
+
+var arAkahukuServerName = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuServerShortName = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuServerTrueName = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuMaxNum = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuCatalogBoards = new arAkahukuDict (arAkahukuServerAliases);
 
 for (var name in arAkahukuServerData) {
-  arAkahukuServerName [name] = arAkahukuServerData [name][0];
-  arAkahukuServerShortName [name] = arAkahukuServerData [name][1];
-  arAkahukuServerTrueName [name] = arAkahukuServerData [name][2];
+  arAkahukuServerName.set (name, arAkahukuServerData [name][0]);
+  arAkahukuServerShortName.set (name, arAkahukuServerData [name][1]);
+  arAkahukuServerTrueName.set (name, arAkahukuServerData [name][2]);
   if (arAkahukuServerData [name][3] != -1) {
-    arAkahukuMaxNum [name] = arAkahukuServerData [name][3];
+    arAkahukuMaxNum.set (name, arAkahukuServerData [name][3]);
   }
   if (arAkahukuServerData [name][4]) {
-    arAkahukuCatalogBoards [name] = arAkahukuServerData [name][4];
+    arAkahukuCatalogBoards.set (name, arAkahukuServerData [name][4]);
   }
 }

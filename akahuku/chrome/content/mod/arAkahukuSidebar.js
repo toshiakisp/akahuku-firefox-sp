@@ -1126,7 +1126,7 @@ var arAkahukuSidebar = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       var size = arAkahukuSidebar.thumbnailSize + 2;
@@ -1251,7 +1251,7 @@ var arAkahukuSidebar = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
         ok = false;
       }
             
@@ -1494,7 +1494,42 @@ var arAkahukuSidebar = {
         if (link) {
           var tab = null;
           var tabbrowser = document.getElementById ("content");
-          if (tabbrowser.mTabContainer) {
+          function reloadTarget (browser, targetDocument) {
+            try {
+              if (arAkahukuReload.enable
+                  && arAkahukuReload.enableHook
+                  && Akahuku.getDocumentParam (targetDocument)) {
+                arAkahukuReload.diffReloadCore
+                  (targetDocument,
+                   arAkahukuReload.enableHookSync, false);
+              }
+              else {
+                browser.contentWindow
+                  .QueryInterface (Components.interfaces
+                                   .nsIInterfaceRequestor)
+                  .getInterface (Components.interfaces
+                                 .nsIWebNavigation)
+                  .reload (Components.interfaces.nsIWebNavigation
+                           .LOAD_FLAGS_NONE);
+              }
+            }
+            catch (e) { Akahuku.debug.exception (e);
+            }
+          }
+          if ("tabs" in tabbrowser) {
+            /* Firefox4/Gecko2.0 */
+            for (i =0; i < tabbrowser.tabs.length; i++) {
+              tab = tabbrowser.tabs [i];
+              var browser = tabbrowser.getBrowserForTab (tab);
+              var targetDocument = browser.contentDocument;
+              if (targetDocument.location.href == link) {
+                reloadTarget (browser, targetDocument);
+                break;
+              }
+              tab = null;
+            }
+          }
+          else if (tabbrowser.mTabContainer) {
             for (i = 0;
                  i < tabbrowser.mTabContainer.childNodes.length;
                  i ++) {
@@ -1503,11 +1538,7 @@ var arAkahukuSidebar = {
                 = tab.linkedBrowser.contentDocument;
               if (targetDocument.location.href == link) {
                 /* リロード */
-                try {
-                  targetDocument.location.href = link;
-                }
-                catch (e) {
-                }
+                reloadTarget (tab.linkedBrowser, targetDocument);
                 break;
               }
               tab = null;
@@ -1555,7 +1586,7 @@ var arAkahukuSidebar = {
                 }
               }
             }
-            catch (e) {
+            catch (e) { Akahuku.debug.exception (e);
             }
                         
             if (method == "hide") {
@@ -1896,9 +1927,9 @@ var arAkahukuSidebar = {
       tab.className = "tab";
       tab.orient = "vertical";
       tab.align = "center";
-      tab.setAttribute ("__item_label", arAkahukuServerShortName [tmp]);
+      tab.setAttribute ("__item_label", arAkahukuServerShortName.get (tmp));
       tab.setAttribute ("__item_value", tmp);
-      var n1 = arAkahukuServerShortName [tmp];
+      var n1 = arAkahukuServerShortName.get (tmp);
       var n2 = "";
       if (n1.length > 4) {
         if (n1.match (/^([^A-Za-z ]+)([A-Za-z]+)$/)) {
@@ -1965,7 +1996,7 @@ var arAkahukuSidebar = {
           arAkahukuSidebar.onRefresh0 (arguments [0]);
         }, false);
       buttons.appendChild (button);
-      if (tmp in arAkahukuCatalogBoards) {
+      if (arAkahukuCatalogBoards.has (tmp)) {
         button = sidebarDocument.createElement ("button");
         button.id = "akahuku_sidebar_refresh_catalog_" + name;
         button.className = "refresh";
@@ -2007,7 +2038,7 @@ var arAkahukuSidebar = {
                         
             arAkahukuSidebar.update (name);
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }, 1000, name);
             
@@ -2059,7 +2090,7 @@ var arAkahukuSidebar = {
                         
             arAkahukuSidebar.update (name);
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
           }
         }, 1000, name);
             
