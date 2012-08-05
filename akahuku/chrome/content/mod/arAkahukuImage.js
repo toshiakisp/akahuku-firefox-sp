@@ -1365,7 +1365,7 @@ var arAkahukuImage = {
         arAkahukuImage.changeImage (target, false);
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -1439,7 +1439,7 @@ var arAkahukuImage = {
             }
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
       }
             
@@ -1673,6 +1673,7 @@ var arAkahukuImage = {
         }
                 
         url = arAkahukuFile.getURLSpecFromFilename (filename);
+        url = url.replace (/^file:\/\/\//, "file://akahuku/");
         url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
       }
             
@@ -1862,7 +1863,7 @@ var arAkahukuImage = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       arAkahukuImage.updateContainer (container, exists, false);
