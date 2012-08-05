@@ -4,6 +4,24 @@
  * 板情報
  */
 var arAkahukuServerData = {
+  "ipv6:54" : [ /* IPv6 */
+    "IPv6",
+    "IPv6",
+    "IPv6",
+    1000, true
+    ],
+  "dec:53" : [ /* 発電 */
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    10000, true
+    ],
+  "dec:52" : [ /* 東日本大震災 */
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    10000, true
+    ],
   "zip:1" : [ /* 野球 */
     "\u91CE\u7403",
     "\u91CE\u7403",
@@ -320,7 +338,7 @@ var arAkahukuServerData = {
     "\u4EBA\u5F62",
     "\u4EBA\u5F62",
     "\u4EBA\u5F62\u30FB\u30C9\u30FC\u30EB",
-    3000, true
+    0, true
     ],
   "dat:x" : [ /* 3DCG */
     "3DCG",
@@ -400,25 +418,25 @@ var arAkahukuServerData = {
     "\u304A\u7D75\u304B\u304D",
     "\u304A\u7D75\u304B\u304D",
     "\u304A\u7D75\u304B\u304D",
-    4000, false
+    4000, true
     ],
   "nov:q" : [ /* 落書き */
     "\u843D\u66F8\u304D",
     "\u843D\u66F8\u304D",
     "\u843D\u66F8\u304D",
-    2000, false
+    2000, true
     ],
   "cgi:u" : [ /* 落書き裏 */
     "\u843D\u66F8\u304D\u88CF",
     "\u843D\u66F8\u304D\u88CF",
     "\u843D\u66F8\u304D\u88CF",
-    2000, false
+    2000, true
     ],
   "www:oe" : [ /* お絵sql */
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
-    1000, false
+    1000, true
     ],
   "zip:6" : [ /* ニュース表 */
     "\u30CB\u30E5\u30FC\u30B9\u8868",
@@ -430,7 +448,7 @@ var arAkahukuServerData = {
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
-    1000, false
+    1000, true
     ],
   "www:junbi" : [ /* 準備 */
     "\u6E96\u5099",
@@ -446,34 +464,88 @@ var arAkahukuServerData = {
     2000, true
     ],
 
-  "dec:52" : [ /* 東日本大震災 */
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    10000, true
-    ],
-  "dec:53" : [ /* 発電 */
-    "\u767A\u96FB",
-    "\u767A\u96FB",
-    "\u767A\u96FB",
-    10000, true
-    ],
 };
 
-var arAkahukuServerName = new Object ();
-var arAkahukuServerShortName = new Object ();
-var arAkahukuServerTrueName = new Object ();
-var arAkahukuMaxNum = new Object ();
-var arAkahukuCatalogBoards = new Object ();
+/**
+ * 板の別名情報
+ */
+var arAkahukuServerAliases = {
+  "up:d" : "dat:d",
+  "up:w" : "dat:w",
+  "up:t" : "dat:t",
+  "up:e" : "dat:e",
+  "up:j" : "dat:j",
+  "up:r" : "dat:r",
+  "up:v" : "dat:v",
+  "up:x" : "dat:x",
+  "tmp:img2" : "dat:img2",
+};
+
+/**
+ * 別名も設定できるマップ
+ *
+ * @param referedAlias 別名を参照するオブジェクト
+ */
+var arAkahukuDict = function (referedAlias) {
+  this._items = new Object ();
+  if (referedAlias === undefined)
+    this._aliases = new Object ();
+  else
+    this._aliases = referedAlias;
+};
+arAkahukuDict.prototype = {
+  get : function (key) {
+    key = this._unalias (key);
+    if (this._items.hasOwnProperty (key))
+      return this._items [key];
+    else
+      return undefined;
+  },
+  set : function (key, value) {
+    key = this._unalias (key);
+    this._items [key] = value;
+  },
+  has : function (key) {
+    key = this._unalias (key);
+    return (this._items.hasOwnProperty (key));
+  },
+  get keys() {
+    var items = this._items;
+    return (k for (k in items));
+  },
+  get values() {
+    var items = this._items;
+    return (items [k] for (k in items));
+  },
+
+
+  /* 別名の処理 */
+  _unalias : function (key) {
+    return (this._aliases.hasOwnProperty (key) ? this._aliases [key] : key);
+  },
+  setAlias : function (aliasKey, originKey) {
+    this._aliases [aliasKey] = originKey;
+  },
+  setAliases : function (aliases) {
+    for (var key in aliases)
+      this.setAlias (key, aliases [key]);
+  },
+};
+
+var arAkahukuServerName = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuServerShortName = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuServerTrueName = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuMaxNum = new arAkahukuDict (arAkahukuServerAliases);
+var arAkahukuCatalogBoards = new arAkahukuDict (arAkahukuServerAliases);
 
 for (var name in arAkahukuServerData) {
-  arAkahukuServerName [name] = arAkahukuServerData [name][0];
-  arAkahukuServerShortName [name] = arAkahukuServerData [name][1];
-  arAkahukuServerTrueName [name] = arAkahukuServerData [name][2];
+  arAkahukuServerName.set (name, arAkahukuServerData [name][0]);
+  arAkahukuServerShortName.set (name, arAkahukuServerData [name][1]);
+  arAkahukuServerTrueName.set (name, arAkahukuServerData [name][2]);
   if (arAkahukuServerData [name][3] != -1) {
-    arAkahukuMaxNum [name] = arAkahukuServerData [name][3];
+    arAkahukuMaxNum.set (name, arAkahukuServerData [name][3]);
   }
   if (arAkahukuServerData [name][4]) {
-    arAkahukuCatalogBoards [name] = arAkahukuServerData [name][4];
+    arAkahukuCatalogBoards.set (name, arAkahukuServerData [name][4]);
   }
 }

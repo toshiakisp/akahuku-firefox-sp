@@ -821,7 +821,7 @@ var arAkahukuImage = {
                 
         arAkahukuImage.currentTarget = target;
         arAkahukuImage.currentNormal = normal;
-        popup = document.getElementById ("akahuku-saveimage-popup");
+        var popup = document.getElementById ("akahuku-saveimage-popup");
                 
         if ("openPopup" in popup) {
           document.popupNode = target;
@@ -1346,7 +1346,7 @@ var arAkahukuImage = {
       for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
         var filename = arAkahukuImage.baseList [i].dir
           + arAkahukuFile.separator;
-        dir
+        var dir
           = arAkahukuImage.createSubdirName
           (arAkahukuImage.baseList [i], info, href);
         if (dir == null) {
@@ -1365,7 +1365,7 @@ var arAkahukuImage = {
         arAkahukuImage.changeImage (target, false);
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -1421,7 +1421,7 @@ var arAkahukuImage = {
           for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
             var filename = arAkahukuImage.baseList [i].dir
               + arAkahukuFile.separator;
-            dir
+            var dir
               = arAkahukuImage.createSubdirName
               (arAkahukuImage.baseList [i], info, href);
             if (dir == null) {
@@ -1439,7 +1439,7 @@ var arAkahukuImage = {
             }
           }
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
       }
             
@@ -1673,6 +1673,7 @@ var arAkahukuImage = {
         }
                 
         url = arAkahukuFile.getURLSpecFromFilename (filename);
+        url = url.replace (/^file:\/\/\//, "file://akahuku/");
         url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
       }
             
@@ -1827,7 +1828,7 @@ var arAkahukuImage = {
       messageNode.className = "akahuku_saveimage_message";
       container.appendChild (messageNode);
             
-      textNode = targetDocument.createTextNode ("\uFF1A");
+      var textNode = targetDocument.createTextNode ("\uFF1A");
       container.appendChild (textNode);
             
       linkNode.parentNode.insertBefore (container, linkNode);
@@ -1862,7 +1863,7 @@ var arAkahukuImage = {
           }
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
             
       arAkahukuImage.updateContainer (container, exists, false);

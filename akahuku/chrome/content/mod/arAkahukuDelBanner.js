@@ -15,6 +15,7 @@ var arAkahukuDelBanner = {
   enableFlash : false,       /* Boolean  二次の Flash 広告 */
   enableText : false,        /* Boolean  テキスト広告 */
   enableMoveTailAd : false,  /* Boolean  末尾の広告を横に置く */
+  enableMoveTailAdAll :false,/* Boolean  全て横に */
     
   /**
    * スタイルファイルのスタイルを設定する
@@ -83,6 +84,11 @@ var arAkahukuDelBanner = {
       arAkahukuDelBanner.enableMoveTailAd
         = arAkahukuConfig
         .initPref ("bool", "akahuku.delbanner.movetailad", false);
+      if (arAkahukuDelBanner.enableMoveTailAd) {
+        arAkahukuDelBanner.enableMoveTailAdAll
+          = arAkahukuConfig
+          .initPref ("bool", "akahuku.delbanner.movetailad.all", false);
+      }
     }
   },
     
@@ -346,8 +352,8 @@ akahuku://rrd.2chan.net/p2p/http.5/dec/ad/src/1272121796994.gif
     var targetTable = null;
     
     /* 広告を探すので Akahuku.getMessageBQ は使わない */
-    nodes = targetDocument.getElementsByTagName ("blockquote");
-    for (var i = 0; i < nodes.length; i ++) {
+    var nodes = targetDocument.getElementsByTagName ("blockquote");
+    for (var i = nodes.length - 1; i >= 0; i --) {
       var table = arAkahukuDOM.findParentNode (nodes [i], "table");
       if (table && table.getAttribute ("border") == 1) {
         targetTable = table;
@@ -392,7 +398,12 @@ akahuku://rrd.2chan.net/p2p/http.5/dec/ad/src/1272121796994.gif
         
     div.appendChild (div2);
         
-    node = targetTable;
+    var node = targetTable;
+    if (arAkahukuDelBanner.enableMoveTailAdAll
+        && targetTable.parentNode.nodeName.toLowerCase () == "div"
+        && targetTable.parentNode.align == "center") {
+      node = targetTable.parentNode.firstChild;
+    }
     while (node) {
       var nextSibling = node.nextSibling;
       div2.appendChild (node);

@@ -263,9 +263,9 @@ arAkahukuLocationInfo.prototype = {
       this.isOnline = true;
     }
         
-    if ((this.server + ":" + this.dir) in arAkahukuServerTrueName) {
+    if (arAkahukuServerTrueName.has (this.server + ":" + this.dir)) {
       this.board3
-      = arAkahukuServerTrueName [this.server + ":" + this.dir];
+      = arAkahukuServerTrueName.get (this.server + ":" + this.dir);
     }
     else  {
       if (this.isMht) {
@@ -377,7 +377,7 @@ arAkahukuLocationInfo.prototype = {
         
     nodes = targetDocument.getElementsByTagName ("li");
     for (var i = 0; i < nodes.length; i ++) {
-      if (nodes [i].innerHTML.match (/\u73FE\u5728([0-9]+)/i)) {
+      if (nodes [i].innerHTML.match (/\u73FE\u5728([0-9]+|\?+)/i)) {
         this.viewer = RegExp.$1;
         break;
       }
@@ -387,14 +387,14 @@ arAkahukuLocationInfo.prototype = {
       /* mht では li の中に居ない */
       nodes = targetDocument.getElementsByTagName ("span");
       for (var i = 0; i < nodes.length; i ++) {
-        if (nodes [i].innerHTML.match (/\u73FE\u5728([0-9]+)/i)) {
+        if (nodes [i].innerHTML.match (/\u73FE\u5728([0-9]+|\?+)/i)) {
           this.viewer = RegExp.$1;
           break;
         }
       }
       nodes = targetDocument.getElementsByTagName ("small");
       for (var i = 0; i < nodes.length; i ++) {
-        if (nodes [i].innerHTML.match (/\u73FE\u5728([0-9]+)/i)) {
+        if (nodes [i].innerHTML.match (/\u73FE\u5728([0-9]+|\?+)/i)) {
           this.viewer = RegExp.$1;
           break;
         }
@@ -1039,7 +1039,7 @@ arAkahukuLocationInfo.prototype = {
           + (this.subject ? "<check_subject />" : "")
           + (this.ip ? "<check_ip />" : "")
           + (this.id ? "<check_id />" : "")
-          + (this.viewer ? "<check_viewer />" : "") 
+          + (this.viewer&&!isNaN(this.viewer) ? "<check_viewer />" : "") 
           + (this.expire ? "<check_expire />" : "") 
           + (this.expireWarning ? "<check_warning />" : "") 
           

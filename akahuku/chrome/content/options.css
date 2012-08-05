@@ -6,3 +6,7 @@ label.warning {
 box.sub {
   margin-left: 20px;
 }
+
+checkbox.ineffective label {
+  text-decoration: line-through;
+}

@@ -13,10 +13,15 @@ var arAkahukuWindow = {
    *         見付からなければ null
    */
   getBrowserForWindow : function (targetWindow) {
+    /* フレーム中からの場合は親の window を手繰る */
     while (targetWindow.frameElement) {
       targetWindow = targetWindow.frameElement.ownerDocument.defaultView;
     }
     var tabbrowser = document.getElementById ("content");
+    if ("getBrowserForDocument" in tabbrowser) {
+      return tabbrowser.getBrowserForDocument (targetWindow.document);
+    }
+    /* 古いコード */
     if (tabbrowser.mTabContainer) {
       for (var i = 0; i < tabbrowser.mTabContainer.childNodes.length; i ++) {
         var tab = tabbrowser.mTabContainer.childNodes [i];
@@ -44,7 +49,18 @@ var arAkahukuWindow = {
    */
   getTabForWindow : function (targetWindow) {
     var tabbrowser = document.getElementById ("content");
-    if (tabbrowser.mTabContainer) {
+    if ("tabs" in tabbrowser) {
+      /* Firefox4/Gecko2.0 以降では安全なプロパティだけを使って単純に */
+      var numTabs = tabbrowser.tabs.length;
+      for (var i = 0; i < numTabs; i ++) {
+		var browser = tabbrowser.getBrowserForTab (tabbrowser.tabs [i]);
+        if (browser.contentWindow == targetWindow) {
+          return tabbrowser.tabs [i];
+        }
+      }
+      return null;
+    }
+    else if (tabbrowser.mTabContainer) {
       for (var i = 0; i < tabbrowser.mTabContainer.childNodes.length; i ++) {
         var tab = tabbrowser.mTabContainer.childNodes [i];
         if (tab.linkedBrowser

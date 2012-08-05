@@ -64,6 +64,12 @@ var Akahuku = {
   partialCount : 100,            /* Number  n 件 */
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
 
+  isXPathAvailable : false,
+
+  enableBQCache : false,
+  enableBoostByXPath : false,
+  enableDownloadLastDirHack : false,
+
   /**
    * デバッグ用
    */
@@ -106,6 +112,16 @@ var Akahuku = {
     exception : function (error) {
       if (!this.enabled) return;
       Components.utils.reportError (error);
+    },
+    tic : function () {
+      var start = new Date ();
+      start.toc = function () {
+        var now = new Date ();
+        var ms = now.getTime () - this.getTime ();
+        this.setTime (now.getTime ());
+        return ms;
+      };
+      return start;
     },
   },
     
@@ -186,9 +202,19 @@ var Akahuku = {
     Akahuku.partialUp
     = arAkahukuConfig
     .initPref ("int",  "akahuku.reload.partial.up", 100);
+    /* 拡張 */
     Akahuku.debug.enabled
     = arAkahukuConfig
-    .initPref ("bool",  "akahuku.debug", false);
+    .initPref ("bool",  "akahuku.ext.debug", false);
+    Akahuku.enableBQCache
+    = arAkahukuConfig
+    .initPref ("bool",  "akahuku.ext.cache_bq", true);
+    Akahuku.enableBoostByXPath
+    = arAkahukuConfig
+    .initPref ("bool",  "akahuku.ext.boost_by_xpath", true);
+    Akahuku.enableDownloadLastDirHack
+    = arAkahukuConfig
+    .initPref ("bool",  "akahuku.ext.download_lastdir_hack", true);
   },
     
   /**
@@ -219,6 +245,10 @@ var Akahuku = {
       }
     }
     catch (e) { Akahuku.debug.exception (e);
+    }
+    
+    if (typeof (XPathResult) != "undefined") {
+      Akahuku.isXPathAvailable = true;
     }
     
     /* ScrapBook で akahuku の保存を有効にする
@@ -321,6 +351,29 @@ var Akahuku = {
       catch (e) { Akahuku.debug.exception (e);
       }
     }
+
+    /* 画像鯖では保存場所を覚えさせないハック (Fx 7.0 以降) */
+    try {
+      Components.utils.import
+        ("resource://gre/modules/DownloadLastDir.jsm");
+      if (Akahuku.enableDownloadLastDirHack
+          && gDownloadLastDir
+          && typeof gDownloadLastDir.getFile == "function") {
+        /* 保存する直前/直後を捉える方法がわからないので、やっつけ */
+        gBrowser.addEventListener
+          ("pageshow", Akahuku.onImageDocumentActivity, true);
+        gBrowser.addEventListener
+          ("pagehide", Akahuku.onImageDocumentActivity, true);
+        gBrowser.addEventListener
+          ("focus", Akahuku.onImageDocumentActivity, true);
+        gBrowser.addEventListener
+          ("blur", Akahuku.onImageDocumentActivity, true);
+        gBrowser.tabContainer.addEventListener
+          ("TabClose", Akahuku.onImageDocumentActivity, true);
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
             
     Akahuku.initialized = true;
     Akahuku.debug.log ("initialized");
@@ -390,9 +443,9 @@ var Akahuku = {
    */
   getNeedApply : function (targetDocument, href) {
     if (href.match
-        (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
+        (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
         || href.match
-        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|junbi)\//)) {
+        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
       /* ふたばの板 */
       return true;
     }
@@ -403,9 +456,9 @@ var Akahuku = {
           || p.type == "filecache") {
         var href2 = p.original;
         if (href2.match
-            (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
+            (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
             || href2.match
-            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31)\//)) {
+            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
           /* ふたばの板のキャッシュ */
           return true;
         }
@@ -564,7 +617,7 @@ var Akahuku = {
         
     if (Akahuku.enableAll) {
       if (targetDocument.location.href.match
-          (/^http:\/\/www\.nijibox[25]\.com\/futabafiles\/(tubu|kobin|001|003)\/((.+)\.html|$)/)) {
+          (/^http:\/\/www\.nijibox[256]\.com\/futabafiles\/(tubu|kobin|mid|001|003)\/((.+)\.html|$)/)) {
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.applyPreview (targetDocument, true);
         }
@@ -591,15 +644,21 @@ var Akahuku = {
    *         コンテキストメニューからの適用か
    */
   apply : function (targetDocument, instant) {
+    var total_tic = Akahuku.debug.tic();
+    var tic = Akahuku.debug.tic();
+    var ticlog = "inside Akahku.apply()";
+    var bqnodes = null;
     var targetWindow = targetDocument.defaultView;
     
     var info = new arAkahukuLocationInfo (targetDocument, instant);
     var href = targetDocument.location.href;
+    ticlog += "\n  preparation "+tic.toc();
     
     info.replyFrom = 1;
     if (Akahuku.enablePartial && info.isReply
         && !info.isMht && !instant) {
       var nodes = Akahuku.getMessageBQ (targetDocument);
+      bqnodes = nodes;
       var partialNode = null;
       for (var i = 0; i < nodes.length - Akahuku.partialCount; i ++) {
         var container = Akahuku.getMessageContainer (nodes [i]);
@@ -626,7 +685,7 @@ var Akahuku = {
         partialNode.appendChild (targetDocument.createTextNode
                                  ("\u4EF6\u7701\u7565\u3002"));
       }
-    }
+    } ticlog += "\n  partialize "+tic.toc();
     
     if (Akahuku.enableAddCheckboxID) {
       var nodes = targetDocument.getElementsByTagName ("input");
@@ -640,7 +699,7 @@ var Akahuku = {
           nodes [i].id = tmp + i;
         }
       }
-    }
+    } ticlog += "\n  addCheckboxID "+tic.toc();
     
     if (Components.interfaces.nsIPrefBranch2 == undefined) {
       /* 監視していない場合にのみ設定を取得する */
@@ -672,7 +731,7 @@ var Akahuku = {
       arAkahukuLink.getConfig ();
       arAkahukuPopupQuote.getConfig ();
       arAkahukuCatalog.getConfig ();
-    }
+    } ticlog += "\n  getConfig "+tic.toc();
     
     if (arAkahukuBoard.enableSelect) {
       /* 板を制限する場合はチェックする */
@@ -691,35 +750,46 @@ var Akahuku = {
       return;
     }
     
+    bqnodes = bqnodes || Akahuku.getMessageBQ (targetDocument);
     Akahuku.addDocumentParam (targetDocument);
     Akahuku.getDocumentParam (targetDocument).location_info
     = info;
-    
+    /* キャッシュ手動設定 (DOM変更を検知しない) */
+    Akahuku.getDocumentParam (targetDocument)._messageBQCache
+    = bqnodes;
+
     targetWindow.addEventListener
     ("unload",
      function () {
       Akahuku.onBodyUnload (targetDocument, arguments [0]);
     }, true);
         
-    arAkahukuThread.fixBug (targetDocument, info);
+    ticlog += "\n  prepare documentParam "+tic.toc();
+    arAkahukuThread.fixBug (targetDocument, info);      ticlog+="\n  arAkahukuThread.fixBug "+tic.toc();
         
-    arAkahukuSidebar.apply (targetDocument, info);
-    arAkahukuStyle.apply (targetDocument, info);
-    arAkahukuDelBanner.apply (targetDocument, info);
-    arAkahukuPostForm.apply (targetDocument, info);
-    arAkahukuThread.apply (targetDocument, info);
-    arAkahukuThreadOperator.apply (targetDocument, info);
-    arAkahukuLink.apply (targetDocument, info);
-    arAkahukuTitle.apply (targetDocument, info);
-    arAkahukuImage.apply (targetDocument, info);
-    arAkahukuP2P.apply (targetDocument, info);
-    arAkahukuQuote.apply (targetDocument, info);
-    arAkahukuCatalog.apply (targetDocument, info);
-    arAkahukuPopupQuote.apply (targetDocument, info);
-    arAkahukuMHT.apply (targetDocument, info);
-    arAkahukuReload.apply (targetDocument, info);
-    arAkahukuScroll.apply (targetDocument, info, targetWindow);
-    arAkahukuWheel.apply (targetDocument, info);
+    arAkahukuSidebar.apply (targetDocument, info);      ticlog+="\n  arAkahukuSidebar.apply "+tic.toc();
+    arAkahukuStyle.apply (targetDocument, info);        ticlog+="\n  arAkahukuStyle.apply "+tic.toc();
+    arAkahukuDelBanner.apply (targetDocument, info);    ticlog+="\n  arAkahukuDelBanner.apply "+tic.toc();
+    arAkahukuPostForm.apply (targetDocument, info);     ticlog+="\n  arAkahukuPostForm.apply "+tic.toc();
+    arAkahukuThread.apply (targetDocument, info);       ticlog+="\n  arAkahukuThread.apply "+tic.toc();
+    arAkahukuThreadOperator.apply (targetDocument, info);ticlog+="\n  arAkahukuThreadOperator.apply "+tic.toc();
+    arAkahukuLink.apply (targetDocument, info);         ticlog+="\n  arAkahukuLink.apply "+tic.toc();
+    arAkahukuTitle.apply (targetDocument, info);        ticlog+="\n  arAkahukuTitle.apply "+tic.toc();
+    arAkahukuImage.apply (targetDocument, info);        ticlog+="\n  arAkahukuImage.apply "+tic.toc();
+    arAkahukuP2P.apply (targetDocument, info);          ticlog+="\n  arAkahukuP2P.apply "+tic.toc();
+    arAkahukuQuote.apply (targetDocument, info);        ticlog+="\n  arAkahukuQuote.apply "+tic.toc();
+    arAkahukuCatalog.apply (targetDocument, info);      ticlog+="\n  arAkahukuCatalog.apply "+tic.toc();
+    arAkahukuPopupQuote.apply (targetDocument, info);   ticlog+="\n  arAkahukuPopupQuote.apply "+tic.toc();
+    arAkahukuMHT.apply (targetDocument, info);          ticlog+="\n  arAkahukuMHT.apply "+tic.toc();
+    arAkahukuReload.apply (targetDocument, info);       ticlog+="\n  arAkahukuReload.apply "+tic.toc();
+    arAkahukuScroll.apply (targetDocument, info, targetWindow);ticlog+="\n  arAkahukuScroll.apply "+tic.toc();
+    arAkahukuWheel.apply (targetDocument, info);        ticlog+="\n  arAkahukuWheel.apply "+tic.toc();
+    /* 手動でキャッシュを削除 */
+    Akahuku.getDocumentParam (targetDocument)._messageBQCache = null;
+    var t = total_tic.toc();
+    if (t > 1000) {
+      Akahuku.debug.log ("Akahuku.apply() total " + t + "ms\n" + ticlog);
+    }
   },
     
   /**
@@ -851,22 +921,25 @@ var Akahuku = {
         
     return 0;
   },
-    
   /**
-   * メッセージの IP アドレスを取得する
+   * メッセージの IP アドレスか ID を取得する
    *
    * @param  HTMLQuoteElement targetNode
    *         対象のメッセージの blockquote 要素
+   * @param  Boolean isId
+   *         IP アドレスのかわりに ID を取得するかどうか
    * @return String
-   *         メッセージの IP アドレス
+   *         メッセージの ID
    */
-  getMessageIP : function (targetNode) {
+  getMessageIPID : function (targetNode, isId) {
     var node = targetNode;
     var lastText = "";
+    var patternIP = /\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:[0-9]+\.){0,2}\*\([^\(\)]+\))/;
+    var patternID = /\bID:([A-Za-z0-9.\/]{8})\b/;
+    var pattern = (isId ? patternID : patternIP);
     while (node) {
       if (node.nodeName.toLowerCase () == "#text") {
-        if ((node.nodeValue + lastText)
-            .match (/IP:([0-9]+\.[0-9]+\.[0-9]+\.)/)) {
+        if ((node.nodeValue + lastText).match (pattern)) {
           return RegExp.$1;
         }
         lastText = node.nodeValue + lastText;
@@ -877,8 +950,7 @@ var Akahuku = {
             
       if ((node.nodeName.toLowerCase () == "font"
            || node.nodeName.toLowerCase () == "a")
-          && arAkahukuDOM.getInnerText (node).match
-          (/IP:([0-9]+\.[0-9]+\.[0-9]+\.)/)) {
+          && arAkahukuDOM.getInnerText (node).match (pattern)) {
         return RegExp.$1;
       }
             
@@ -886,6 +958,30 @@ var Akahuku = {
     }
         
     return "";
+  },
+    
+  /**
+   * メッセージの IP アドレスを取得する
+   *
+   * @param  HTMLQuoteElement targetNode
+   *         対象のメッセージの blockquote 要素
+   * @return String
+   *         メッセージの IP アドレス
+   */
+  getMessageIP : function (targetNode) {
+     return this.getMessageIPID (targetNode, false);
+  },
+    
+  /**
+   * メッセージの ID を取得する
+   *
+   * @param  HTMLQuoteElement targetNode
+   *         対象のメッセージの blockquote 要素
+   * @return String
+   *         メッセージの ID
+   */
+  getMessageID : function (targetNode) {
+     return this.getMessageIPID (targetNode, true);
   },
     
   /**
@@ -982,7 +1078,52 @@ var Akahuku = {
    *         [HTMLQuoteElement, ...]
    */
   getMessageBQ : function (targetNode) {
+    /* キャッシュが利用できればそのコピーを返す */
+    var documentParam = null;
+    if (targetNode.nodeType == targetNode.DOCUMENT_NODE) {
+      documentParam = Akahuku.getDocumentParam (targetNode);
+      var nodes = Akahuku._getMessageBQCache (documentParam);
+      if (nodes) {
+        return nodes;
+      }
+    }
+
     var newNodes = new Array ();
+
+    /* 可能なら XPath による高速取得を試みる */
+    if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath) {
+      var doc = targetNode.ownerDocument || targetNode;
+      try {
+        var iterator =
+          doc.evaluate
+          (".//blockquote[count(ancestor::center)=0][count(ancestor::table[@border='1' or @class='ama'])=0][count(ancestor::div[@id='akahuku_respanel_content' or @class='ama'])=0]",
+           targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+        var node = iterator.iterateNext ();
+        while (node) {
+          newNodes.push (node);
+          node = iterator.iterateNext ();
+        }
+        if (newNodes.length == 0) {
+          /* BLOCKQUOTE ではない */
+          iterator =
+            doc.evaluate
+            (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
+             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+          node = iterator.iterateNext ();
+          while (node) {
+            newNodes.push (node);
+            node = iterator.iterateNext ();
+          }
+        }
+        if (documentParam) {
+          Akahuku._setMessageBQCache (documentParam, newNodes);
+        }
+        return newNodes;
+      }
+      catch (e) { Akahuku.debug.exception (e);
+       Akahuku.enableBoostByXPath = false;
+      }
+    }
     
     var nodes = targetNode.getElementsByTagName ("blockquote");
     for (var i = 0; i < nodes.length; i ++) {
@@ -1028,6 +1169,52 @@ var Akahuku = {
     }
     
     return newNodes;
+  },
+  
+  _setMessageBQCache : function (documentParam, nodes) {
+    if (!Akahuku.enableBQCache) {
+      return;
+    }
+    if (!("_messageBQCache" in documentParam)
+        || !documentParam._messageBQCache ) {
+      /* キャッシュを自動破棄するイベントハンドラを登録 */
+      function expireMBQCache (event) {
+        if (event.target.nodeType != event.target.ELEMENT_NODE
+            || /^akahuku_/.test (event.target.id)
+            || /\b(?:__)?akahuku_/.test (event.target.className)
+            || event.target.parentNode.id == "akahuku_ad_cell"
+            || /^(?:A|BR?|I(?:FRAME)?|SPAN|FONT)$/
+               .test (event.target.tagName)) {
+          /* 明らかにMessageBQが変化しないパターンでは破棄しない */
+          return;
+        }
+        var documentParam =
+          Akahuku.getDocumentParam (event.target.ownerDocument);
+        if (documentParam
+            && "_messageBQCache" in documentParam) {
+          documentParam._messageBQCache = null;
+        }
+        event.target.ownerDocument.body.removeEventListener
+          ("DOMNodeInserted", arguments.callee, false);
+        event.target.ownerDocument.body.removeEventListener
+          ("DOMNodeRemoved", arguments.callee, false);
+      }
+      documentParam.targetDocument.body.addEventListener
+        ("DOMNodeInserted", expireMBQCache, false);
+      documentParam.targetDocument.body.addEventListener
+        ("DOMNodeRemoved", expireMBQCache, false);
+    }
+    documentParam._messageBQCache = nodes.slice (0);
+  },
+  
+  _getMessageBQCache : function (documentParam) {
+    if (Akahuku.enableBQCache
+        && documentParam
+        && "_messageBQCache" in documentParam
+        && documentParam._messageBQCache) {
+      return documentParam._messageBQCache.slice (0);
+    }
+    return null;
   },
   
   /**
@@ -1276,7 +1463,65 @@ var Akahuku = {
     for (var i = 0; i < container.nodes.length; i ++) {
       container.nodes [i].parentNode.removeChild (container.nodes [i]);
     }
-  }
+  },
+  
+  /**
+   * 画像ドキュメントのタブのイベント
+   *
+   * @param  Event event
+   *         対象のイベント
+   */
+  onImageDocumentActivity : function (event) {
+    var doc = event.originalTarget;
+    if (event.target && "nodeName" in event.target
+        && event.target.nodeName == "tab") {
+      var browser = gBrowser.getBrowserForTab (event.target);
+      if (browser) {
+        doc = browser.contentDocument;
+      }
+    }
+    if (!(doc instanceof ImageDocument)) {
+      return;
+    }
+
+    try {
+      Components.utils.import
+        ("resource://gre/modules/DownloadLastDir.jsm");
+      Components.utils.import
+        ("resource://gre/modules/Services.jsm");
+      var pbsvc = null;
+      if ("@mozilla.org/privatebrowsing;1" in Components.classes) {
+        pbsvc = Components.classes ["@mozilla.org/privatebrowsing;1"]
+        .getService (Components.interfaces.nsIPrivateBrowsingService);
+      }
+      var aURI = doc.documentURIObject;
+
+      if (/^(apr|feb|jan|mar|jul|aug|sep|rrd)\.2chan\.net$/
+          .test (aURI.host)) { /* 画像鯖 */
+        if (pbsvc && pbsvc.privateBrowsingEnabled) {
+          /* プライベートブラウジングモード */
+          var lastdir = gDownloadLastDir.getFile ();
+          var targetdir = gDownloadLastDir.getFile (aURI);
+          if (lastdir && lastdir.path != targetdir.path) {
+            /* 設定は消せないが最後の場所で上書きする */
+            gDownloadLastDir.setFile (aURI, lastdir);
+          }
+        }
+        else {
+          /* ContentPrefs から設定を消す */
+          var LAST_DIR_PREF = "browser.download.lastDir";
+          var group = Services.contentPrefs.grouper.group (aURI);
+          if (Services.contentPrefs.hasPref (group, LAST_DIR_PREF)) {
+            var saveddir
+              = Services.contentPrefs.getPref (group, LAST_DIR_PREF);
+            Services.contentPrefs.removePref (group, LAST_DIR_PREF)
+          }
+        }
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  },
 };
 
 /* 古い Mozilla Suite では最初のイベントリスナが無視されるので 2 つ登録する */

@@ -164,6 +164,32 @@ arAkahukuCatalogPopupData.prototype =  {
             }
           }
         }
+        else {
+          /* キャッシュされているかチェック */
+          var cacheService
+            = Components.classes ["@mozilla.org/network/cache-service;1"]
+            .getService (Components.interfaces.nsICacheService);
+          var httpCacheSession
+            = cacheService
+            .createSession ("HTTP",
+                            Components.interfaces.nsICache.STORE_ANYWHERE,
+                            true);
+          httpCacheSession.doomEntriesIfExpired = false;
+          var targetSrc
+            = this.targetImage.src.replace ("/cat/", "/thumb/");
+          try {
+            var descriptor
+              = httpCacheSession
+              .openCacheEntry (targetSrc,
+                               Components.interfaces.nsICache.ACCESS_READ,
+                               true);
+            exists = true;
+            descriptor.close ();
+          }
+          catch (e) {
+            /* キャッシュが存在しなかった場合 */
+          }
+        }
                 
         if (!arAkahukuCatalog.enableZoomClick
             && !exists
@@ -1404,7 +1430,7 @@ arAkahukuCatalogParam.prototype = {
         + httpChannel.getResponseHeader ("Server") + "\r\n"
         + "Content-Type: text/html; charset=Shift_JIS\r\n";
     }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
     }
         
     /* 避難所 patch */
@@ -2788,6 +2814,10 @@ var arAkahukuCatalog = {
   updateCellInfo : function (tdElement, info, latestNum) {
     var targetDocument = tdElement.ownerDocument;
         
+    latestNum
+      = Math.max
+      (arAkahukuThread.newestNum [info.server + ":" + info.dir] || 0,
+       latestNum);
     var anchor = tdElement.getElementsByTagName ("a") [0];
     if (anchor) {
       if (arAkahukuCatalog.enableRed) {
@@ -2795,10 +2825,9 @@ var arAkahukuCatalog = {
             || anchor.href.match (/2\/([0-9]+)/)
             || anchor.href.match (/b\/([0-9]+)/)) {
           var num = RegExp.$1;
-          if ((info.server + ":" + info.dir)
-              in arAkahukuMaxNum) {
+          if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
             var max
-              = arAkahukuMaxNum [info.server + ":" + info.dir];
+              = arAkahukuMaxNum.get (info.server + ":" + info.dir);
                         
             if (num < latestNum - max * 0.9) {
               tdElement.style.border = "2px solid #ff0000";
@@ -3079,8 +3108,8 @@ var arAkahukuCatalog = {
       param.addedLastCells = true;
             
       var max;
-      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-        max = arAkahukuMaxNum [info.server + ":" + info.dir];
+      if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+        max = arAkahukuMaxNum.get (info.server + ":" + info.dir);
       }
       else {
         max = 10000;
@@ -3547,8 +3576,8 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableReloadLeftBefore
         && param.order == "akahuku_catalog_reorder_spec") {
       var max;
-      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-        max = arAkahukuMaxNum [info.server + ":" + info.dir];
+      if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+        max = arAkahukuMaxNum.get (info.server + ":" + info.dir);
       }
       else {
         max = 10000;
@@ -3603,8 +3632,8 @@ var arAkahukuCatalog = {
       param.addedLastCells = true;
             
       var max;
-      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-        max = arAkahukuMaxNum [info.server + ":" + info.dir];
+      if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+        max = arAkahukuMaxNum.get (info.server + ":" + info.dir);
       }
       else {
         max = 10000;
@@ -3672,6 +3701,9 @@ var arAkahukuCatalog = {
           = load.getRequest
           (Components.interfaces.nsIImageLoadingContent
            .CURRENT_REQUEST);
+        if (!request) {
+          continue;
+        }
                 
         var errorStatus
           = Components.interfaces.imgIRequest.STATUS_ERROR
@@ -4241,7 +4273,7 @@ var arAkahukuCatalog = {
       .createInstance (Components.interfaces.nsIURI);
       
       var visited;
-      for (i = 0; i < nodes.length; i ++) {
+      for (var i = 0; i < nodes.length; i ++) {
         uri.spec = nodes [i].href;
         visited = arAkahukuHistory.isVisited (uri);
         if (visited) {
@@ -4312,6 +4344,10 @@ var arAkahukuCatalog = {
             lastRule = node;
             break;
           }
+        }
+        /* カタログモードの設定にはhrが無い */
+        if (!lastRule) {
+          return;
         }
       }
             

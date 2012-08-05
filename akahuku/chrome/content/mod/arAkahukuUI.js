@@ -575,6 +575,11 @@ var arAkahukuUI = {
         .getElementById ("akahuku-toolbarbutton-preferences");
       if (panel) {
         panel.setAttribute ("status", "enabled");
+        var text = panel.getAttribute ("tooltiptext");
+        if (text.indexOf (AkahukuVersion) == -1) {
+          panel.setAttribute ("tooltiptext",
+                              text + " " + AkahukuVersion);
+        }
       }
       panel
         = document

@@ -221,6 +221,7 @@ var AkahukuOptions = {
       ["bool", "delbanner.flash", false],
       ["bool", "delbanner.text", false],
       ["bool", "delbanner.movetailad", false],
+      ["bool", "delbanner.movetailad.all", false, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkDelbanner ();
@@ -324,13 +325,13 @@ var AkahukuOptions = {
           = AkahukuOptions
           .initPref (map, "char", "akahuku.tab.sort.board_order.list", "");
           var newboard = new Object ();
-          for (name in arAkahukuServerName) {
+          for (name in arAkahukuServerName.keys) {
             newboard [name] = true;
           }
           var list = new Array ();
           var name;
           if (value == "") {
-            for (name in arAkahukuServerName) {
+            for (name in arAkahukuServerName.keys) {
               list.push (name);
             }
             list = list.sort (function (x, y) {
@@ -359,12 +360,12 @@ var AkahukuOptions = {
             if (name in newboard) {
               delete newboard [name];
             }
-            if (name in arAkahukuServerName
-                && arAkahukuServerName [name]) {
+            if (arAkahukuServerName.has (name)
+                && arAkahukuServerName.get (name)) {
               listitem = document.createElement ("listitem");
               listcell = document.createElement ("listcell");
               listcell.setAttribute ("value", name);
-              listcell.setAttribute ("label", arAkahukuServerName [name]);
+              listcell.setAttribute ("label", arAkahukuServerName.get (name));
               listitem.appendChild (listcell);
               listbox.appendChild (listitem);
             }
@@ -373,7 +374,7 @@ var AkahukuOptions = {
             listitem = document.createElement ("listitem");
             listcell = document.createElement ("listcell");
             listcell.setAttribute ("value", name);
-            listcell.setAttribute ("label", arAkahukuServerName [name]);
+            listcell.setAttribute ("label", arAkahukuServerName.get (name));
             listitem.appendChild (listcell);
             listbox.appendChild (listitem);
           }
@@ -670,9 +671,11 @@ var AkahukuOptions = {
       ["bool", "postform.shimonkin", false],
       ["char", "postform.shimonkin.type", "all"],
       ["bool", "postform.bottom", false],
+      ["bool", "postform.bottom_formonly", false, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkFloatPostForm ();
+          AkahukuOptions.checkPostFormBottom ();
           AkahukuOptions.checkPostFormPreview ();
         }]
       ],
@@ -771,8 +774,11 @@ var AkahukuOptions = {
       ["bool", "popupquote.clickhide", true],
       ["bool", "popupquote.image", true],
       ["int",  "popupquote.image.size", 2],
+      ["bool", "popupquote.image.preview", true, "privatemod"],
+      ["bool", "popupquote.image.preview.all", true, "privatemod"],
       ["bool", "popupquote.nearest", false],
       ["bool", "popupquote.bottomup", false],
+      ["bool", "popupquote.matchbol", false, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkPopupQuote ();
@@ -1286,7 +1292,7 @@ var AkahukuOptions = {
             return "";
           });
           var listbox = document.getElementById ("statusbar_order_list");
-          node = listbox.firstChild;
+          var node = listbox.firstChild;
           while (node) {
             var nextNode = node.nextSibling;
             listbox.removeChild (node);
@@ -2227,8 +2233,8 @@ var AkahukuOptions = {
   initBoard : function (value, ex, type, unmht) {
     var names = new Object ();
     var name;
-    for (name in arAkahukuServerName) {
-      names [name] = arAkahukuServerName [name];
+    for (name in arAkahukuServerName.keys) {
+      names [name] = arAkahukuServerName.get (name);
     }
     if (unmht) {
       names ["UnMHT:UnMHT"] = "UnMHT \u306E\u51FA\u529B";
@@ -2366,7 +2372,7 @@ var AkahukuOptions = {
     if (fstream) {
       AkahukuOptions
         .setPref (fstream, "char", "akahuku.version",
-                  AkahukuVersion);
+                  AkahukuVersion.split(".").splice(0,3).join("."));
     }
     else {
       if (AkahukuOptions.prefBranch == null) {
@@ -3224,6 +3230,14 @@ var AkahukuOptions = {
     = document.getElementById ("delbanner_text").disabled
     = document.getElementById ("delbanner_movetailad").disabled
     = !document.getElementById ("delbanner").checked;
+    
+    AkahukuOptions.checkDelbannerTailAd ();
+  },
+    
+  checkDelbannerTailAd : function () {
+    document.getElementById ("delbanner_movetailad_all").disabled
+    = !document.getElementById ("delbanner_movetailad").checked
+      || document.getElementById ("delbanner_movetailad").disabled;
   },
     
   checkWheelReload : function () {
@@ -3514,6 +3528,18 @@ var AkahukuOptions = {
       document.getElementById ("floatpostform").checked = false;
       AkahukuOptions.checkFloatPostForm ();
     }
+    document.getElementById ("postform_bottom_formonly").disabled
+    = !document.getElementById ("postform_bottom").checked
+    AkahukuOptions.checkPostFormBottomFormOnly ();
+  },
+    
+  checkPostFormBottomFormOnly : function () {
+    var formonly
+    = document.getElementById ("postform_bottom_formonly");
+    document.getElementById ("postform_normal_hide").disabled
+    = document.getElementById ("postform_reply_hide").disabled
+    = document.getElementById ("postform_reply_sendclose").disabled
+    = (formonly.checked && !formonly.disabled);
   },
     
   checkClickOpen : function () {
@@ -3724,6 +3750,7 @@ var AkahukuOptions = {
     = document.getElementById ("popupquote_delay_label2").disabled
     = document.getElementById ("popupquote_nearest").disabled
     = document.getElementById ("popupquote_bottomup").disabled
+    = document.getElementById ("popupquote_matchbol").disabled
     = !document.getElementById ("popupquote").checked;
         
     AkahukuOptions.checkPopupQuoteImage ();
@@ -3733,6 +3760,18 @@ var AkahukuOptions = {
     document.getElementById ("popupquote_image_size").disabled
     = !document.getElementById ("popupquote").checked
     || !document.getElementById ("popupquote_image").checked;
+    document.getElementById ("popupquote_image_preview").disabled
+    = !document.getElementById ("popupquote").checked
+    || !document.getElementById ("popupquote_image").checked;
+        
+    AkahukuOptions.checkPopupQuoteImagePreview ();
+  },
+    
+  checkPopupQuoteImagePreview : function () {
+    document.getElementById ("popupquote_image_preview_all").disabled
+    = !document.getElementById ("popupquote").checked
+    || !document.getElementById ("popupquote_image").checked
+    || !document.getElementById ("popupquote_image_preview").checked;
   },
     
   checkAutoLink : function () {

@@ -23,7 +23,7 @@ var arAkahukuWheel = {
     
     
   count : 0,           /* Number  ホイールの操作回数 */
-  timeoutID : 0,       /* Number  最新のタイムアウトの ID */
+  timeoutID : null,       /* Number  最新のタイムアウトの ID */
     
   /**
    * 設定を読み込む
@@ -136,18 +136,20 @@ var arAkahukuWheel = {
           status.label = text;
         }
                 
-        arAkahukuWheel.timeoutID ++;
-        setTimeout (function (status, text, id) {
-            if (arAkahukuWheel.timeoutID == id) {
+        /* timeout が設定済みならリセットして再設定 */
+        clearTimeout (arAkahukuWheel.timeoutID);
+        arAkahukuWheel.timeoutID =
+          setTimeout (function (status, text) {
               try {
                 if (status.label == text) {
                   status.label = "";
                 }
               }
-              catch (e) {
+              catch (e) { Akahuku.debug.exception (e);
               }
-            }
-          }, 1000, status, text, arAkahukuWheel.timeoutID);
+              arAkahukuWheel.timeoutID = null;
+            }, Math.max (1000, lastReloadTime + 5000 - now),
+            status, text);
                 
         return;
       }
@@ -210,6 +212,7 @@ var arAkahukuWheel = {
               browser.__akahuku_gobottom = true;
             }
                         
+            var lastPage = defIndex + ".htm";
             for (var i = 0; i < nodes.length; i ++) {
               if (nodes [i].href.match
                   (/\/([^\/]+)\/(futaba|[0-9]+)\.htm([#\?].*)?$/)) {
@@ -221,7 +224,7 @@ var arAkahukuWheel = {
                       + ".htm";
                     /* futaba: 未知なので外部には対応しない */
                   }
-                  lastPage = page + ".htm";
+                  lastPage = ((page == 0) ? defIndex : page) + ".htm";
                 }
               }
             }
@@ -306,23 +309,24 @@ var arAkahukuWheel = {
             + "%";
           status.label = text;
                     
-          arAkahukuWheel.timeoutID ++;
-          setTimeout (function (status, text, id) {
-              if (arAkahukuWheel.timeoutID == id) {
+          /* timeout が設定済みならリセットして再設定 */
+          clearTimeout (arAkahukuWheel.timeoutID);
+          arAkahukuWheel.timeoutID =
+            setTimeout (function (status, text) {
                 try {
                   if (status.label == text) {
                     status.label = "";
                   }
                 }
-                catch (e) {
+                catch (e) { Akahuku.debug.exception (e);
                 }
-              }
-            }, 1000, status, text, arAkahukuWheel.timeoutID);
+                arAkahukuWheel.timeoutID = null;
+              }, 1000, status, text);
                 
         }
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     

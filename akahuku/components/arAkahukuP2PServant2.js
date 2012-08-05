@@ -113,7 +113,7 @@ arAkahukuP2PServantPortChecker.prototype = {
       this.checkTimer.initWithCallback
       (this,
        arAkahukuP2PServant2.PORT_CHECK_TIMEOUT,
-       nsITimer.TYPE_ONESHOT);
+       nsITimer.TYPE_ONE_SHOT);
     }
     catch (e) {
     }
@@ -1724,7 +1724,7 @@ var arAkahukuP2PServant2 = {
     arAkahukuP2PServant2.transferCheckTimer.initWithCallback
     (arAkahukuP2PServant2,
      arAkahukuP2PServant2.TRANSFER_CHECK_INTERVAL,
-     nsITimer.TYPE_ONESHOT_SLACK);
+     nsITimer.TYPE_ONE_SHOT);
         
     arAkahukuP2PServant2.started = true;
     arAkahukuP2PServant2.stopOffline = false;
@@ -1814,7 +1814,7 @@ var arAkahukuP2PServant2 = {
           arAkahukuP2PServant2.cacheClearTimer.initWithCallback
           (arAkahukuP2PServant2,
            10,
-           nsITimer.TYPE_ONESHOT_SLACK);
+           nsITimer.TYPE_ONE_SHOT);
         }
         else {
           arAkahukuP2PServant2.forceClearCacheNow = false;
@@ -1829,7 +1829,7 @@ var arAkahukuP2PServant2 = {
         arAkahukuP2PServant2.transferCheckTimer.initWithCallback
         (arAkahukuP2PServant2,
          arAkahukuP2PServant2.TRANSFER_CHECK_INTERVAL,
-         nsITimer.TYPE_ONESHOT_SLACK);
+         nsITimer.TYPE_ONE_SHOT);
             
         var now;
             
@@ -2482,7 +2482,7 @@ var arAkahukuP2PServant2 = {
     arAkahukuP2PServant2.cacheClearTimer.initWithCallback
     (arAkahukuP2PServant2,
      10,
-     nsITimer.TYPE_ONESHOT_SLACK);
+     nsITimer.TYPE_ONE_SHOT);
         
     return true;
   },
@@ -3621,6 +3621,7 @@ var arAkahukuP2PServant2 = {
       status += "checking,";
     }
         
+    var board;
     for (board in arAkahukuP2PServant2.boardList) {
       status
       += board + ":" + arAkahukuP2PServant2.boardList [board] + ";";
