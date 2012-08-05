@@ -4295,6 +4295,10 @@ var arAkahukuCatalog = {
             break;
           }
         }
+        /* カタログモードの設定にはhrが無い */
+        if (!lastRule) {
+          return;
+        }
       }
             
       var nodes = table.getElementsByTagName ("tr");
