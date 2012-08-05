@@ -116,7 +116,7 @@ arAkahukuUserMatchPattern.prototype = {
                          return "$";
                        }
                        else {
-                         n = parseInt (part1);
+                         var n = parseInt (part1);
                          if (n < parens.length) {
                            var dest = parens [n];
                            if (dest === undefined) {

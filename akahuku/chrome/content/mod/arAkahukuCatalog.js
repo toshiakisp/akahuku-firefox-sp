@@ -4223,7 +4223,7 @@ var arAkahukuCatalog = {
       .createInstance (Components.interfaces.nsIURI);
       
       var visited;
-      for (i = 0; i < nodes.length; i ++) {
+      for (var i = 0; i < nodes.length; i ++) {
         uri.spec = nodes [i].href;
         visited = arAkahukuHistory.isVisited (uri);
         if (visited) {

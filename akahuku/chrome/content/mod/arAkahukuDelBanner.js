@@ -346,7 +346,7 @@ akahuku://rrd.2chan.net/p2p/http.5/dec/ad/src/1272121796994.gif
     var targetTable = null;
     
     /* 広告を探すので Akahuku.getMessageBQ は使わない */
-    nodes = targetDocument.getElementsByTagName ("blockquote");
+    var nodes = targetDocument.getElementsByTagName ("blockquote");
     for (var i = 0; i < nodes.length; i ++) {
       var table = arAkahukuDOM.findParentNode (nodes [i], "table");
       if (table && table.getAttribute ("border") == 1) {
@@ -392,7 +392,7 @@ akahuku://rrd.2chan.net/p2p/http.5/dec/ad/src/1272121796994.gif
         
     div.appendChild (div2);
         
-    node = targetTable;
+    var node = targetTable;
     while (node) {
       var nextSibling = node.nextSibling;
       div2.appendChild (node);
