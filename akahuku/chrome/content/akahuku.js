@@ -515,7 +515,7 @@ var Akahuku = {
         
     if (Akahuku.enableAll) {
       if (targetDocument.location.href.match
-          (/^http:\/\/www\.nijibox[25]\.com\/futabafiles\/(tubu|kobin|001|003)\/((.+)\.html|$)/)) {
+          (/^http:\/\/www\.nijibox[256]\.com\/futabafiles\/(tubu|kobin|mid|001|003)\/((.+)\.html|$)/)) {
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.applyPreview (targetDocument, true);
         }
