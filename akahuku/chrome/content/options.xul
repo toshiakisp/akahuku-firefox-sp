@@ -165,7 +165,12 @@
           <checkbox id="delbanner_text" checked="false"
                     label="テキスト広告" />
           <checkbox id="delbanner_movetailad" checked="false"
-                    label="末尾の広告を横に置く (ある程度の横幅が必要です)" />
+                    label="末尾の広告を横に置く (ある程度の横幅が必要です)"
+                    oncommand="AkahukuOptions.checkDelbannerTailAd ();" />
+          <box class="sub" orient="vertical">
+            <checkbox id="delbanner_movetailad_all" checked="false"
+                      label="全て横に" />
+          </box>
         </groupbox>
       </box>
       <box flex="1" id="tab_wheel" orient="vertical">
@@ -519,7 +524,7 @@
                    value="ボタンサイズ指定" />
             <textbox id="saveimage_buttonsize" size="6" />
           </box>
-          <checkbox id="saveimage_buttons" checked="false"
+          <checkbox id="saveimage_buttons" checked="false" class="ineffective"
                     label="メニューの代わりにボタンを表示する" />
         </groupbox>
       </box>
@@ -883,6 +888,11 @@
             <checkbox id="postform_bottom" checked="false"
                       label="ページ末尾に置く"
                       oncommand="AkahukuOptions.checkPostFormBottom ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="postform_bottom_formonly" checked="false"
+                        label="フォーム位置だけ"
+                        oncommand="AkahukuOptions.checkPostFormBottomFormOnly ();" />
+            </box>
           </groupbox>
         </box>
       </box>
@@ -1146,9 +1156,18 @@
                 <menuitem value="2" label="クオーター" />
               </menupopup>
             </menulist>
+            <checkbox id="popupquote_image_preview" checked="false"
+                      label="オートリンクプレビューを含める"
+                      oncommand="AkahukuOptions.checkPopupQuoteImagePreview ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="popupquote_image_preview_all" checked="false"
+                        label="画像以外も" />
+            </box>
           </box>
           <checkbox id="popupquote_nearest" checked="false"
                     label="現在のレスから近い方を表示" />
+          <checkbox id="popupquote_matchbol" checked="false"
+                    label="行単位で合うレスを優先して検索" />
           <checkbox id="popupquote_bottomup" checked="false"
                     label="ポップアップを上に延ばす" />
         </groupbox>
