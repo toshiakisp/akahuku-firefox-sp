@@ -646,7 +646,7 @@ var arAkahukuLink = {
         
     arAkahukuLink.urlPattern
     = new arAkahukuMatchPattern
-    (/(file|ftp|mms|rtsp|akahuku|h?t?t?p?s?)(:\/\/([^ \u0000-\u002C\u003A-\u0060\u3000-\u3004\uFF01-\uFFBE\xa0\/]+\/[\!#$%&\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]*|[\!#$%&\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]+))/,
+    (/(file|ftp|mms|rtsp|akahuku|h?t?t?p?s?)(:\/\/([^ \u0000-\u002C\u003A-\u0060\u3000-\u3004\uFF01-\uFFBE\xa0\/]+\/[\!#$%&|\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]*|[\!#$%&|\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]+))/,
      /* $1: http 等のプロトコル
       * $2: 残りの URL */
      function (parens) {
@@ -2736,7 +2736,8 @@ var arAkahukuLink = {
       var target = null;
             
       if (arAkahukuLink.enableAutoLinkPreview
-          && url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i)) {
+          && (url.match (/^http:\/\/((www\.)?youtube\.com\/watch\?([^&]+&)*v=|youtu\.be\/)[^&]+/i)
+            ||url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
         
@@ -2765,6 +2766,8 @@ var arAkahukuLink = {
             && info.isReply && !info.isMht
             && !url.match
             (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
+            && !url.match
+            (/^http:\/\/((www\.)?youtube\.com\/watch\?|youtu\.be\/)/)
             && !url.match (/\.(jpe?g|gif|png|bmp)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
@@ -2867,6 +2870,12 @@ var arAkahukuLink = {
    */
   onImageLoad : function (event) {
     var image = event.currentTarget;
+    if (!image.parentNode) return;
+    if (image.parentNode.hasAttribute ("__akahuku_preview_error")
+        && image.src != image.getAttribute ("dummyhref")) {
+      /* エラー後に第三者が画像を差し替え */
+      return;
+    }
     if (image.naturalWidth
         && image.naturalHeight) {
       var w = 0;
@@ -2971,7 +2980,13 @@ var arAkahukuLink = {
         statusText = RegExp.$2;
       }
     }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+        status = 0;
+        statusText = "Not connected?";
+      } else {
+        Akahuku.debug.exception (e);
+      }
     }
         
     if (!image.parentNode.hasAttribute
@@ -3057,10 +3072,41 @@ var arAkahukuLink = {
           arAkahukuLink.onImageError (arguments [0]);
         }, false);
     }
-    else if (uri.match (/\.(swf)$/i)) {
+    else if (uri.match (/\.(swf)(\?.*)?$/i)) {
       image = targetDocument.createElement ("embed");
       image.width = arAkahukuLink.autoLinkPreviewSWFWidth;
       image.height = arAkahukuLink.autoLinkPreviewSWFHeight;
+      if (RegExp.$2) {
+        var flashvars = RegExp.$2;
+        image.src = uri.substring (0, uri.length - flashvars.length);
+        image.setAttribute ("flashvars", flashvars);
+      }
+      image.type = "application/x-shockwave-flash";
+      image.setAttribute ("allowFullScreen", "true");
+      image.setAttribute ("allowScriptAccess", "never");
+    }
+    else if (uri.match (/^http:\/\/(?:(?:www\.)?youtube\.com\/watch\?(?:[^&]+&)*v=|youtu\.be\/)([^&?#]+)/i)) {
+      var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
+                     + "?rel=0&border=0&fs=1&showinfo=1";
+      if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s/)) {
+        var t = parseInt (RegExp.$3)
+              + parseInt (RegExp.$2 || 0) * 60
+              + parseInt (RegExp.$1 || 0) * 3600;
+        if (t > 0) {
+          youtubeUrl += "&start=" + t;
+        }
+      }
+      image = targetDocument.createElement ("iframe");
+      image.width = Math.max (480, arAkahukuLink.autoLinkPreviewSWFWidth);
+      image.height = Math.max (385, arAkahukuLink.autoLinkPreviewSWFHeight);
+      image.src = youtubeUrl;
+      image.setAttribute ("frameborder", "0");
+    }
+    else {
+      Akahuku.debug.warn ("Unknown preview uri pattern: "+uri);
+      image = targetDocument.createElement ("img");
+      image.className = "akahuku_preview";
+      return;
     }
         
     image.style.cssFloat = "left";
@@ -3127,7 +3173,7 @@ var arAkahukuLink = {
       }
     }
         
-    if (uri.match (/\.(swf)$/i)) {
+    if (uri.match (/\.(swf)(\?.*)?$/i)) {
       /* NoScript があれば解除する */
       try {
         uri2 = targetDocument.location.href;
@@ -3160,7 +3206,9 @@ var arAkahukuLink = {
       }
     }
         
-    image.src = src;
+    if (!image.src) {
+      image.src = src;
+    }
         
     return image;
   },
