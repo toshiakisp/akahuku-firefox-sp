@@ -962,11 +962,22 @@ var arAkahukuQuote = {
     for (var i = 0; i < nodes.length; i ++) {
       var node = nodes [i];
       while (node) {
-        if (node.nodeName.toLowerCase () == "#text"
+        if (node.nodeType == node.TEXT_NODE
             && node.nodeValue.match (/(No\.[0-9]+)/)) {
           var prev = RegExp.leftContext;
           var num = RegExp.$1;
           var next = RegExp.rightContext;
+                    
+          /* Text.splitText で高速分割 */
+          if (typeof (node.splitText) == "function") {
+            if (prev) {
+              node = node.splitText (prev.length);
+            }
+            if (next) {
+              node.splitText (num.length);
+            }
+            break;
+          }
                     
           node.nodeValue = num;
                     
