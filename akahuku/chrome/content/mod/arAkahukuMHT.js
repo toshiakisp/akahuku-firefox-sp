@@ -498,7 +498,7 @@ arAkahukuMHTFileData.prototype = {
   onCacheEntryAvailable : function (descriptor, accessGranted, status) {
     var httpStatus = 200;
     try {
-      var text = descriptor.getMetaDataElement ("response-head");
+      var text = (descriptor ? descriptor.getMetaDataElement ("response-head") : null);
       if (text && text.match (/HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/)) {
         httpStatus = parseInt (RegExp.$1);
       }
@@ -2443,7 +2443,12 @@ var arAkahukuMHT = {
           }
         }
                 
-        nodes [i].parentNode.removeChild (nodes [i]);
+        if (nodes [i].parentNode.nodeName.toLowerCase () == "object") {
+          nodes [i].parentNode.parentNode.removeChild (nodes [i].parentNode);
+        }
+        else {
+          nodes [i].parentNode.removeChild (nodes [i]);
+        }
         i --;
         continue;
       }
