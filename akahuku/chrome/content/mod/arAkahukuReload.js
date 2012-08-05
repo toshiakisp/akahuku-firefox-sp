@@ -557,7 +557,7 @@ arAkahukuReloadParam.prototype = {
         + httpChannel.getResponseHeader ("Server") + "\r\n"
         + "Content-Type: text/html; charset=Shift_JIS\r\n";
     }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
     }
         
     /* 避難所 patch */
@@ -1036,7 +1036,7 @@ var arAkahukuReload = {
         
     var viewersNumber = "";
     if (responseText.match
-        (/<li>\x8c\xbb\x8d\xdd([0-9]+)\x90\x6c/i)) {
+        (/<li>\x8c\xbb\x8d\xdd([0-9]+|\?+)\x90\x6c/i)) {
       /* <li>現在(xx)人 (Shift_JIS) */
       viewersNumber = RegExp.$1;
     }
@@ -1053,10 +1053,10 @@ var arAkahukuReload = {
         while (node) {
           if (node.nodeName.toLowerCase () == "#text") {
             if (node.nodeValue.match
-                (/\u73FE\u5728[0-9]+\u4EBA/)) {
+                (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/)) {
               node.nodeValue
                 = node.nodeValue
-                .replace (/\u73FE\u5728[0-9]+\u4EBA/,
+                .replace (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/,
                           "\u73FE\u5728" + viewersNumber
                           + "\u4EBA");
               break;
@@ -1099,16 +1099,16 @@ var arAkahukuReload = {
       var nodes = targetDocument.getElementsByTagName ("li");
       for (var i = 0; i < nodes.length; i ++) {
         if (nodes [i].innerHTML
-            .match (/^(<small>)?(\u73FE\u5728[0-9]+\u4EBA)/)) {
+            .match (/^(<small>)?(\u73FE\u5728(?:[0-9]+|\?+)\u4EBA)/)) {
           var startNode = nodes [i];
           node = nodes [i].firstChild;
           while (node) {
             if (node.nodeName.toLowerCase () == "#text") {
               if (node.nodeValue.match
-                  (/\u73FE\u5728[0-9]+\u4EBA/)) {
+                  (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/)) {
                 node.nodeValue
                   = node.nodeValue
-                  .replace (/\u73FE\u5728[0-9]+\u4EBA/,
+                  .replace (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/,
                             "\u73FE\u5728" + viewersNumber
                             + "\u4EBA");
                 break;
@@ -3261,7 +3261,7 @@ var arAkahukuReload = {
           .getInterface (Components.interfaces.nsIWebNavigation)
           .sessionHistory.addSHistoryListener (param);
       }
-      catch (e) { Akahuku.debug.exception (e);
+      catch (e) {
         /* フレーム内の可能性あり */
       }
             
