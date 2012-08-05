@@ -35,8 +35,8 @@
                   collapsed="true"
                   oncommand="openMenu (); event.stopPropagation ();">
       </xul:button>
-      <xul:popup anonid="menupopup" position="after_end">
-      </xul:popup>
+      <xul:menupopup anonid="menupopup" position="after_end">
+      </xul:menupopup>
     </content>
     
     <implementation>
@@ -74,7 +74,7 @@
         ]]></getter>
       </property>
       
-      <field name="_menuEventListener" readonly="true"><![CDATA[
+      <field name="_menuEventListener"><![CDATA[
           null
       ]]></field>
       <property name="menuEventListener">
@@ -87,7 +87,7 @@
         ]]></setter>
       </property>
 
-      <field name="_enableMenuButton" readonly="true"><![CDATA[
+      <field name="_enableMenuButton"><![CDATA[
           false
       ]]></field>
       <property name="enableMenuButton">
@@ -161,14 +161,28 @@
             }
             
             if (this.orient == "horizontal") {
-                this._menuPopup.showPopup
-                    (this._menuButton, -1, -1, "popup",
-                     "bottomright", "topright");
+                if (typeof this._menuPopup.openPopup == "function") {
+                    this._menuPopup.openPopup
+                        (this._menuButton,
+                         "after_end", 0, 0, false, false);
+                }
+                else {
+                    this._menuPopup.showPopup
+                        (this._menuButton, -1, -1, "popup",
+                         "bottomright", "topright");
+                }
             }
             else {
-                this._menuPopup.showPopup
-                    (this._menuButton, -1, -1, "popup",
-                     "bottomright", "bottomleft");
+                if (typeof this._menuPopup.openPopup == "function") {
+                    this._menuPopup.openPopup
+                        (this._menuButton,
+                         "end_after", 0, 0, false, false);
+                }
+                else {
+                    this._menuPopup.showPopup
+                        (this._menuButton, -1, -1, "popup",
+                         "bottomright", "bottomleft");
+                }
             }
         ]]></body>
       </method>
