@@ -1286,7 +1286,7 @@ var AkahukuOptions = {
             return "";
           });
           var listbox = document.getElementById ("statusbar_order_list");
-          node = listbox.firstChild;
+          var node = listbox.firstChild;
           while (node) {
             var nextNode = node.nextSibling;
             listbox.removeChild (node);

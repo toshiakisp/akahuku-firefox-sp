@@ -210,6 +210,7 @@ var arAkahukuWheel = {
               browser.__akahuku_gobottom = true;
             }
                         
+            var lastPage = defIndex + ".htm";
             for (var i = 0; i < nodes.length; i ++) {
               if (nodes [i].href.match
                   (/\/([^\/]+)\/(futaba|[0-9]+)\.htm([#\?].*)?$/)) {
@@ -221,7 +222,7 @@ var arAkahukuWheel = {
                       + ".htm";
                     /* futaba: 未知なので外部には対応しない */
                   }
-                  lastPage = page + ".htm";
+                  lastPage = ((page == 0) ? defIndex : page) + ".htm";
                 }
               }
             }

@@ -390,9 +390,9 @@ var Akahuku = {
    */
   getNeedApply : function (targetDocument, href) {
     if (href.match
-        (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
+        (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
         || href.match
-        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|junbi)\//)) {
+        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
       /* ふたばの板 */
       return true;
     }
@@ -403,9 +403,9 @@ var Akahuku = {
           || p.type == "filecache") {
         var href2 = p.original;
         if (href2.match
-            (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
+            (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
             || href2.match
-            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31)\//)) {
+            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
           /* ふたばの板のキャッシュ */
           return true;
         }
@@ -564,7 +564,7 @@ var Akahuku = {
         
     if (Akahuku.enableAll) {
       if (targetDocument.location.href.match
-          (/^http:\/\/www\.nijibox[25]\.com\/futabafiles\/(tubu|kobin|001|003)\/((.+)\.html|$)/)) {
+          (/^http:\/\/www\.nijibox[256]\.com\/futabafiles\/(tubu|kobin|mid|001|003)\/((.+)\.html|$)/)) {
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.applyPreview (targetDocument, true);
         }

@@ -116,7 +116,7 @@ arAkahukuUserMatchPattern.prototype = {
                          return "$";
                        }
                        else {
-                         n = parseInt (part1);
+                         var n = parseInt (part1);
                          if (n < parens.length) {
                            var dest = parens [n];
                            if (dest === undefined) {
@@ -673,11 +673,10 @@ var arAkahukuLink = {
                          && parens [1].substr (-1, 1) == "s")
                         ? "s" : "");
           
-          var info
-            = Akahuku.getDocumentParam (targetDocument)
-            .location_info;
+          var param
+            = Akahuku.getDocumentParam (targetDocument);
           if (protocol == "http"
-              && info.isFutasuke
+              && param && param.location_info.isFutasuke
               && parens [2].match (/^:\/\/[^.\/]+\.2chan\.net/)) {
             /* 双助を使っている場合でふたば内へのリンクは双助経由にする */
             protocol = "";

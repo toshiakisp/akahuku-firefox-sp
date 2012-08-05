@@ -450,7 +450,7 @@ var arAkahukuP2P = {
     + uinfo.leafNameExt;
     
     try {
-      file
+      var file
         = Components.classes ["@mozilla.org/file/local;1"]
         .createInstance (Components.interfaces.nsILocalFile);
       file.initWithPath (targetFileName);
@@ -804,7 +804,7 @@ var arAkahukuP2P = {
       return;
     }
     
-    panel = document.getElementById ("akahuku-toolbarbutton-p2pstatus");
+    var panel = document.getElementById ("akahuku-toolbarbutton-p2pstatus");
     if (panel && arAkahukuP2P.statusPlace == "statusbarpanel") {
       arAkahukuP2P.nodeLabel = null;
       arAkahukuP2P.update ();
@@ -886,13 +886,11 @@ var arAkahukuP2P = {
       label.value = "";
       label = arAkahukuP2P.sep2Label;
       label.value = "";
-      label
-        = document.gearAkahukuP2P.relayLabel;
+      label = arAkahukuP2P.relayLabel;
       label.value = "";
       label = arAkahukuP2P.sep3Label;
       label.value = "";
-      label
-        = document.gearAkahukuP2P.futabaLabel;
+      label = arAkahukuP2P.futabaLabel;
       label.value = "";
             
       return;
@@ -912,13 +910,11 @@ var arAkahukuP2P = {
       label.value = "";
       label = arAkahukuP2P.sep2Label;
       label.value = "";
-      label
-      = document.gearAkahukuP2P.relayLabel;
+      label = arAkahukuP2P.relayLabel;
       label.value = "";
       label = arAkahukuP2P.sep3Label;
       label.value = "";
-      label
-      = document.gearAkahukuP2P.futabaLabel;
+      label = arAkahukuP2P.futabaLabel;
       label.value = "";
             
       return;
@@ -938,23 +934,21 @@ var arAkahukuP2P = {
       label.value = "";
       label = arAkahukuP2P.sep2Label;
       label.value = "";
-      label
-      = document.gearAkahukuP2P.relayLabel;
+      label = arAkahukuP2P.relayLabel;
       label.value = "";
       label = arAkahukuP2P.sep3Label;
       label.value = "";
-      label
-      = document.gearAkahukuP2P.futabaLabel;
+      label = arAkahukuP2P.futabaLabel;
       label.value = "";
             
       return;
     }
     
+    label = arAkahukuP2P.nodeLabel;
     if (arAkahukuP2P.redLabel) {
       arAkahukuP2P.redLabel = false;
       label.style.color = "";
     };
-    label = arAkahukuP2P.nodeLabel;
     label.value = "\u63A5: " + aliveNode + "/" + namedNode;
         
     label = arAkahukuP2P.sep0Label;

@@ -672,6 +672,7 @@ var arAkahukuSidebar = {
   onCatalogLoad : function (targetDocument, name) {
     var thread = null;
     var node, nodeName, node2, nodeName2;
+    var threadLink;
         
     var num;
     var reply;
@@ -2141,6 +2142,7 @@ var arAkahukuSidebar = {
         
     if (box.id.match (/^akahuku_sidebar_deck_(.+)$/)) {
       var name = RegExp.$1;
+      var board;
             
       if (name in arAkahukuSidebar.boards) {
         board = arAkahukuSidebar.boards [name];

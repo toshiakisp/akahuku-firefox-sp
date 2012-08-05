@@ -4,6 +4,24 @@
  * 板情報
  */
 var arAkahukuServerData = {
+  "ipv6:54" : [ /* IPv6 */
+    "IPv6",
+    "IPv6",
+    "IPv6",
+    1000, true
+    ],
+  "dec:53" : [ /* 発電 */
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    10000, true
+    ],
+  "dec:52" : [ /* 東日本大震災 */
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    10000, true
+    ],
   "zip:1" : [ /* 野球 */
     "\u91CE\u7403",
     "\u91CE\u7403",
@@ -320,7 +338,7 @@ var arAkahukuServerData = {
     "\u4EBA\u5F62",
     "\u4EBA\u5F62",
     "\u4EBA\u5F62\u30FB\u30C9\u30FC\u30EB",
-    3000, true
+    0, true
     ],
   "dat:x" : [ /* 3DCG */
     "3DCG",
@@ -400,25 +418,25 @@ var arAkahukuServerData = {
     "\u304A\u7D75\u304B\u304D",
     "\u304A\u7D75\u304B\u304D",
     "\u304A\u7D75\u304B\u304D",
-    4000, false
+    4000, true
     ],
   "nov:q" : [ /* 落書き */
     "\u843D\u66F8\u304D",
     "\u843D\u66F8\u304D",
     "\u843D\u66F8\u304D",
-    2000, false
+    2000, true
     ],
   "cgi:u" : [ /* 落書き裏 */
     "\u843D\u66F8\u304D\u88CF",
     "\u843D\u66F8\u304D\u88CF",
     "\u843D\u66F8\u304D\u88CF",
-    2000, false
+    2000, true
     ],
   "www:oe" : [ /* お絵sql */
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
-    1000, false
+    1000, true
     ],
   "zip:6" : [ /* ニュース表 */
     "\u30CB\u30E5\u30FC\u30B9\u8868",
@@ -430,7 +448,7 @@ var arAkahukuServerData = {
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
-    1000, false
+    1000, true
     ],
   "www:junbi" : [ /* 準備 */
     "\u6E96\u5099",
@@ -446,18 +464,6 @@ var arAkahukuServerData = {
     2000, true
     ],
 
-  "dec:52" : [ /* 東日本大震災 */
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    10000, true
-    ],
-  "dec:53" : [ /* 発電 */
-    "\u767A\u96FB",
-    "\u767A\u96FB",
-    "\u767A\u96FB",
-    10000, true
-    ],
 };
 
 var arAkahukuServerName = new Object ();

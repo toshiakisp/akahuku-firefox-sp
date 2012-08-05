@@ -3621,6 +3621,7 @@ var arAkahukuP2PServant2 = {
       status += "checking,";
     }
         
+    var board;
     for (board in arAkahukuP2PServant2.boardList) {
       status
       += board + ":" + arAkahukuP2PServant2.boardList [board] + ";";
