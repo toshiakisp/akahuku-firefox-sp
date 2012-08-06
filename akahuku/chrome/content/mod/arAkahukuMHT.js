@@ -3587,8 +3587,8 @@ var arAkahukuMHT = {
       = targetDocument.createElement (fromNode.nodeName.toLowerCase ());
       if (fromNode.attributes) {
         for (var i = 0; i < fromNode.attributes.length; i ++) {
-          name = fromNode.attributes.item (i).nodeName.toLowerCase ();
-          value = fromNode.attributes.item (i).nodeValue;
+          name = fromNode.attributes.item (i).name.toLowerCase ();
+          value = fromNode.attributes.item (i).value;
           if (name == "src") {
             name = "dummysrc";
           }
@@ -3712,9 +3712,9 @@ var arAkahukuMHT = {
         if (element.attributes) {
           for (var i = 0; i < element.attributes.length; i ++) {
             name
-              = element.attributes.item (i).nodeName
+              = element.attributes.item (i).name
               .toLowerCase ();
-            value = element.attributes.item (i).nodeValue;
+            value = element.attributes.item (i).value;
                         
             if (nodeName == "font"
                 && name == "title") {
