@@ -289,6 +289,7 @@ var arAkahukuP2P = {
       var uinfo = arAkahukuImageURL.parse (uri, true);
       if (uinfo
           && uinfo.isImage
+          && !uinfo.isIp
           && uinfo.ext.match (/(jpg|png|gif)/)) {
         uri = arAkahukuP2P.enP2P (uri);
       }
@@ -1110,7 +1111,7 @@ var arAkahukuP2P = {
       var leafName = "";
             
       var uinfo = arAkahukuImageURL.parse (nodes [i].href, false, true);
-      if (uinfo && uinfo.isImage) {
+      if (uinfo && uinfo.isImage && !uinfo.isIp) {
         /* カタログ、サムネ、元画像の場合 */
         var href2 = arAkahukuP2P.enP2P (nodes [i].href);
         if (nodes [i].href != href2) {

@@ -1637,7 +1637,7 @@ var arAkahukuImage = {
             
       var url = "";
       if (arAkahukuP2P.enable
-          && uinfo && uinfo.isImage) {
+          && uinfo && uinfo.isImage && !uinfo.isIp) {
         url
           = "http://" + uinfo.server + ".2chan.net" + uinfo.port
           + "/" + uinfo.dir + "/" + uinfo.type
