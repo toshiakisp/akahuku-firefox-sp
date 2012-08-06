@@ -488,7 +488,7 @@ var arAkahukuP2P = {
       return;
     }
         
-    var uinfo = arAkahukuImageURL.parse (uri, true, true);
+    var uinfo = arAkahukuImageURL.parse (src, true, true);
     if (!uinfo) {
       return;
     }
