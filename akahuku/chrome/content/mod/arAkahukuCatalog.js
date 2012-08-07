@@ -134,38 +134,14 @@ arAkahukuCatalogPopupData.prototype =  {
           exists = true;
         }
         else if (arAkahukuP2P.enable) {
-          var uinfo
-            = arAkahukuImageURL.parse (this.targetImage.src);
-          if (uinfo
-              && uinfo.isImage) {
-            var targetFileName
-              = arAkahukuP2P.cacheBase
-              + arAkahukuFile.separator
-              + uinfo.server
-              + arAkahukuFile.separator
-              + uinfo.dir
-              + arAkahukuFile.separator
-              + uinfo.type
-              + arAkahukuFile.separator
-              + uinfo.leafNameExt;
-                        
-            var file
-              = Components.classes ["@mozilla.org/file/local;1"]
-              .createInstance
-              (Components.interfaces.nsILocalFile);
-            try {
-              file.initWithPath (targetFileName);
-            }
-            catch (e) { Akahuku.debug.exception (e);
-            }
-                    
-            if (file.exists ()) {
-              exists = true;
-            }
+          var targetSrc
+            = this.targetImage.src.replace ("/cat/", "/thumb/");
+          if (arAkahukuP2P.getCacheFile (targetSrc)) {
+            exists = true;
           }
         }
-        else {
-          /* キャッシュされているかチェック */
+        if (!exists) {
+          /* Firefox にキャッシュされているかチェック */
           var cacheService
             = Components.classes ["@mozilla.org/network/cache-service;1"]
             .getService (Components.interfaces.nsICacheService);
@@ -2764,14 +2740,20 @@ var arAkahukuCatalog = {
         if (uinfo && uinfo.isImage && !uinfo.isAd) {
           image [0].addEventListener
           ("error",
-           function () {
+           function (event) {
              setTimeout
-               (function (node) {
-                 node.src = node.src;
-               }, 100, this);
-             Akahuku.debug.warn ("Reloading a corrupt image "+this.src);
+               (function (node, src, handler) {
+                 if (node.src != src) {
+                   /* P2Pなどで src が変えられたのなら再登録 */
+                   node.addEventListener ("error", handler, false);
+                   return;
+                 }
+                 node.src = src;
+                 Akahuku.debug.log ("Reloading a corrupt image " + src
+                   + "\n" + node.ownerDocument.location.href);
+               }, 100, this, this.src, arguments.callee);
              this.removeEventListener ("error", arguments.callee, false);
-          }, false);
+           }, false);
         }
       }
     }

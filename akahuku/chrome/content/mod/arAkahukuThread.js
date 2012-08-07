@@ -1899,14 +1899,20 @@ var arAkahukuThread = {
         if (uinfo && uinfo.isImage && !uinfo.isAd) {
           nodes [i].addEventListener
           ("error",
-           function () {
+           function (event) {
              setTimeout
-               (function (node) {
-                 node.src = node.src;
-               }, 100, this);
-             Akahuku.debug.warn ("Reloading a corrupt image "+this.src);
+               (function (node, src, handler) {
+                  if (node.src != src) {
+                    /* P2Pなどで src が変えられたのなら再登録 */
+                    node.addEventListener ("error", handler, false);
+                    return;
+                  }
+                  node.src = src;
+                  Akahuku.debug.log ("Reloading a corrupt image " + src
+                    + "\n" + node.ownerDocument.location.href);
+                }, 100, this, this.src, arguments.callee);
              this.removeEventListener ("error", arguments.callee, false);
-          }, false);
+           }, false);
         }
       }
       
