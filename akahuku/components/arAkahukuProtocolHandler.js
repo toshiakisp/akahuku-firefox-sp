@@ -83,7 +83,7 @@ arAkahukuBypassChannel.prototype = {
     
   /* nsIChannel のメンバ */
   contentCharset : "",
-  contentLength : 0,
+  contentLength : -1,
   contentType : "",
   notificationCallbacks : null,
   originalURI : null,
@@ -283,7 +283,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     
   /* nsIChannel のメンバ */
   contentCharset : "",
-  contentLength : 0,
+  contentLength : -1,
   contentType : "",
   notificationCallbacks : null,
   originalURI : null,
