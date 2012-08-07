@@ -99,7 +99,10 @@ arAkahukuP2PServantPortChecker.prototype = {
       this.transport.setTimeout (nsISocketTransport.TIMEOUT_CONNECT,
                                  arAkahukuP2PServant2.CONNECT_TIMEOUT);
             
-      this.transport.setEventSink (this, null);
+      var currentThread
+        = Components.classes ["@mozilla.org/thread-manager;1"]
+        .getService (nsIThreadManager).currentThread;
+      this.transport.setEventSink (this, currentThread);
             
       this.inputStream
       = this.transport.openInputStream (0, 0, 0);
@@ -405,7 +408,10 @@ arAkahukuP2PNode.prototype = {
 
       /* 能動接続の場合、接続完了をチェック */
       if (!connected) {
-        this.transport.setEventSink (this, null);
+        var currentThread
+          = Components.classes ["@mozilla.org/thread-manager;1"]
+          .getService (nsIThreadManager).currentThread;
+        this.transport.setEventSink (this, currentThread);
       }
             
       /* 送受信開始 */
@@ -4434,7 +4440,10 @@ var arAkahukuP2PServant2 = {
   sendFull : function (transport) {
     transport.setTimeout (nsISocketTransport .TIMEOUT_READ_WRITE,
                           arAkahukuP2PServant2.READ_WRITE_TIMEOUT);
-    transport.setEventSink (arAkahukuP2PServant2, null);
+    var currentThread
+      = Components.classes ["@mozilla.org/thread-manager;1"]
+      .getService (nsIThreadManager).currentThread;
+    transport.setEventSink (arAkahukuP2PServant2, currentThread);
         
     var outputStream
     = transport.openOutputStream (nsITransport.OPEN_BLOCKING, 0, 0);
@@ -4496,7 +4505,10 @@ var arAkahukuP2PServant2 = {
    *         終了コード
    */
   sendBye : function (transport, outputStream, code) {
-    transport.setEventSink (arAkahukuP2PServant2, null);
+    var currentThread
+      = Components.classes ["@mozilla.org/thread-manager;1"]
+      .getService (nsIThreadManager).currentThread;
+    transport.setEventSink (arAkahukuP2PServant2, currentThread);
         
     var data = "";
         
