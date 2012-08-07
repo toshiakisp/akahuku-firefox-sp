@@ -3336,7 +3336,12 @@ var arAkahukuLink = {
       /* 自分を閉じる時 */
       if (!arAkahukuLink.enableAutoLinkPreviewMulti) {
         /* 複数表示しない場合はコンテナを消す */
-        blockquote.style.marginLeft = "";
+        if (blockquote.hasAttribute ("__akahuku_margin_left")) {
+          blockquote.style.marginLeft = 
+            blockquote.getAttribute ("__akahuku_margin_left_original");
+          blockquote.removeAttribute ("__akahuku_margin_left_original");
+          blockquote.removeAttribute ("__akahuku_margin_left");
+        }
         node.parentNode.removeChild (node);
       }
       else {
@@ -3361,7 +3366,12 @@ var arAkahukuLink = {
         }
         if (!node.firstChild) {
           /* 1つも無くなった時はコンテナを消す */
-          blockquote.style.marginLeft = "";
+          if (blockquote.hasAttribute ("__akahuku_margin_left")) {
+            blockquote.style.marginLeft = 
+              blockquote.getAttribute ("__akahuku_margin_left_original");
+            blockquote.removeAttribute ("__akahuku_margin_left_original");
+            blockquote.removeAttribute ("__akahuku_margin_left");
+          }
           node.parentNode.removeChild (node);
         }
       }
