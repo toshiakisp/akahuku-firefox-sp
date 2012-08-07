@@ -237,8 +237,12 @@ var arAkahukuPopupQuote = {
   onBodyMouseMove : function (event) {
     try {
       var targetDocument = event.target.ownerDocument;
-      var param
-      = Akahuku.getDocumentParam (targetDocument).popupquote_param;
+      var param = Akahuku.getDocumentParam (targetDocument);
+      if (!param) {
+        /* ドキュメントが閉じられた場合 */
+        return;
+      }
+      param = param.popupquote_param;
       
       if (param.isDragMode) {
         var x = parseInt (param.currentPopup.style.left);
@@ -952,7 +956,7 @@ var arAkahukuPopupQuote = {
             }
           }
           if (!quotedIP && info.id) {
-            if (innerText.match (/\bID:([A-Za-z0-9.\/]{8})\b/)) {
+            if (innerText.match (/\bID:([A-Za-z0-9.\/]{8})/)) {
               quotedIP = RegExp.$1; 
               quotedIPisID = true;
             }
