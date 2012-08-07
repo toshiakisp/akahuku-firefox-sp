@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<overlay id="akahukuPageInfoOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript"><![CDATA[
+    if ("function" == typeof (checkProtocol)) {
+      var _akahukuWrappedCheckProtocol = checkProtocol;
+      checkProtocol = function _akahukuCheckProtocol (img) {
+        if (/^akahuku:/.test (img [COL_IMAGE_ADDRESS])) {
+          return true;
+        }
+        return _akahukuWrappedCheckProtocol (img);
+      }
+    }
+  ]]></script>
+</overlay>
