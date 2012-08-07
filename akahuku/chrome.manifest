@@ -4,15 +4,17 @@ overlay chrome://global/content/customizeToolbar.xul      chrome://akahuku/conte
 overlay chrome://browser/content/browser.xul              chrome://akahuku/content/akahuku.xul
 overlay chrome://navigator/content/navigatorOverlay.xul   chrome://akahuku/content/akahuku.xul
 overlay chrome://multiviews/content/navigatorOverlay.xul  chrome://akahuku/content/akahuku.xul
+overlay chrome://browser/content/pageinfo/pageInfo.xul    chrome://akahuku/content/pageInfo.xul
 
 
 component   {87501060-b014-4b67-9a53-aa5e5af9d52c} components/arAkahukuContentPolicy.js
 contract    @unmht.org/akahuku-content-policy;1 {87501060-b014-4b67-9a53-aa5e5af9d52c}
 category    content-policy arAkahukuContentPolicy @unmht.org/akahuku-content-policy;1
 
-interfaces  components/arIAkahukuP2PChannel.xpt
-component   {6f220dbc-d883-43e7-a3aa-7336153dd076} components/arAkahukuP2PChannel.js
-contract    @unmht.org/akahuku-p2p-channel;1 {6f220dbc-d883-43e7-a3aa-7336153dd076}
+## directly implemented in arAkahukuProtocolHandler.js
+# interfaces  components/arIAkahukuP2PChannel.xpt
+# component   {6f220dbc-d883-43e7-a3aa-7336153dd076} components/arAkahukuP2PChannel.js
+# contract    @unmht.org/akahuku-p2p-channel;1 {6f220dbc-d883-43e7-a3aa-7336153dd076}
 
 interfaces  components/arIAkahukuP2PServant2.xpt
 interfaces  components/arIAkahukuP2PServantListener.xpt

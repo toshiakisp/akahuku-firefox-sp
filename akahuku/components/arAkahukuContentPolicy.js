@@ -49,6 +49,10 @@ arAkahukuContentPolicy.prototype = {
   _prefDelBannerImageName    : "akahuku.delbanner.image",
   _prefDelBannerFlashName    : "akahuku.delbanner.flash",
     
+  _prefDelBannerSitesImageName   : "akahuku.delbanner.sites.image",
+  _prefDelBannerSitesObjectName  : "akahuku.delbanner.sites.object",
+  _prefDelBannerSitesIframeName  : "akahuku.delbanner.sites.iframe",
+    
   _prefP2PName               : "akahuku.p2p",
     
   _prefP2PTatelogName        : "akahuku.p2p.tatelog",
@@ -133,6 +137,9 @@ arAkahukuContentPolicy.prototype = {
       this._pref.addObserver (this._prefAllName, this, false);
       this._pref.addObserver (this._prefCheckName, this, false);
       this._pref.addObserver (this._prefP2PName, this, false);
+      this._pref.addObserver (this._prefDelBannerSitesImageName, this, false);
+      this._pref.addObserver (this._prefDelBannerSitesObjectName, this, false);
+      this._pref.addObserver (this._prefDelBannerSitesIframeName, this, false);
     }
     else {
       this._pref
@@ -340,28 +347,63 @@ arAkahukuContentPolicy.prototype = {
     this._blockList [this.TYPE_SUBDOCUMENT] = new Array ();
     this._blockList [this.TYPE_OBJECT] = new Array ();
         
+    var tmp = "";
+    var list = this._blockList;
+    var type = this.TYPE_IMAGE;
+    function addMatchedToList (matched) {
+      if (matched)
+        list [type].push (matched);
+      return matched;
+    }
     if (this._enableBlockImage) {
-      /* 通常ページ - 上 */
-      //this._blockList [this.TYPE_IMAGE].push ("sante.kir.jp");
-      this._blockList [this.TYPE_IMAGE].push ("pink072.jp");
-      this._blockList [this.TYPE_IMAGE].push ("aqua.dmm.co.jp");
-      this._blockList [this.TYPE_IMAGE].push ("banner.luna-p.com");
-            
-      /* 通常ページ - 下 */
-      this._blockList [this.TYPE_IMAGE].push ("marionette.kir.jp");
-            
-      /* トップ */
-            
-      /* 404 */
-      this._blockList [this.TYPE_IMAGE].push ("affiliate.dtiserv.com");
-      this._blockList [this.TYPE_SUBDOCUMENT].push ("www.mmaaxx.com");
-      this._blockList [this.TYPE_SUBDOCUMENT].push ("click.dtiserv2.com");
-            
-      /* 予備 */
-      /*
-        this._blockList [this.TYPE_IMAGE].push ("www.delicon.jp");
-        this._blockList [this.TYPE_IMAGE].push ("www.adsweet.com");
-      */
+      /* 画像 */
+      tmp = ";" /* 埋め込みブロックリスト */
+        /* 通常ページ - 上 */
+        //+ "sante.kir.jp"
+        + "pink072.jp;"
+        + "aqua.dmm.co.jp;"
+        + "banner.luna-p.com;"
+        /* 通常ページ - 下 */
+        + "marionette.kir.jp;"
+        /* 404 */
+        + "affiliate.dtiserv.com;"
+        /* 予備 */
+        //+ "www.delicon.jp;"
+        //+ "affiliate.dtiserv.com;"
+        ;
+      if (this._pref.prefHasUserValue
+          (this._prefDelBannerSitesImageName)) {
+        tmp
+          = this._pref.getCharPref
+          (this._prefDelBannerSitesImageName);
+      }
+      type = this.TYPE_IMAGE;
+      tmp.replace (/[^\s,;]+/g, addMatchedToList);
+      /* IFRAME */
+      tmp = ";" /* 埋め込みブロックリスト */
+        /* 404 */
+        + "www.mmaaxx.com;"
+        + "click.dtiserv2.com;";
+      if (this._pref.prefHasUserValue
+          (this._prefDelBannerSitesIframeName)) {
+        tmp
+          = this._pref.getCharPref
+          (this._prefDelBannerSitesIframeName);
+      }
+      type = this.TYPE_SUBDOCUMENT;
+      tmp.replace (/[^\s,;]+/g, addMatchedToList);
+    }
+    if (this._enableBlockFlash) {
+      /* FLASH などの Object */
+      tmp = ""; /* 埋め込みブロックリスト */
+      if (this._pref.prefHasUserValue
+          (this._prefDelBannerSitesObjectName)) {
+        tmp
+          = this._pref.getCharPref
+          (this._prefDelBannerSitesObjectName);
+      }
+      type = this.TYPE_OBJECT;
+      tmp.replace (/[^\s,;]+/g, addMatchedToList);
     }
   },
     
@@ -645,8 +687,11 @@ arAkahukuContentPolicy.prototype = {
         var list = this._blockList [contentType];
         var reject = false;
         for (var i = 0; i < list.length; i ++) {
-          if (contentLocation.host.indexOf (list [i]) != -1) {
-            /* ブロックのリストにある場合 */
+          var index = contentLocation.host.indexOf (list [i]);
+          if (index != -1 && list [i]
+              && index + list [i].length
+                 == contentLocation.host.length) {
+            /* ブロックのリストにある場合 (後方一致) */
             reject = true;
             break;
           }
@@ -659,13 +704,16 @@ arAkahukuContentPolicy.prototype = {
         }
                 
         if (reject) {
+          /* shouldLoad 内からの DOM 操作は許されていない
           try {
-            /* 非表示にする */
+            // 非表示にする 
             context.style.display = "none";
           }
           catch (e) {
           }
+          */
                         
+          /* 暗黙的に XPCNativeWrapper 経由でattribute設定 */
           if (context.parentNode) {
             context.parentNode.setAttribute ("delete",
                                              "delete");

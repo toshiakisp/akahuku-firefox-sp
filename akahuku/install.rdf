@@ -5,7 +5,7 @@
   
   <Description about="urn:mozilla:install-manifest">
     <em:id>{591c2cf0-0a6e-11da-8cd6-0800200c9a66}</em:id>
-    <em:version>5.2.90.sp60557</em:version>
+    <em:version>5.2.90.sp60848</em:version>
     <em:type>2</em:type>
     
     <em:targetApplication>
@@ -15,28 +15,36 @@
         <em:minVersion>1.0</em:minVersion>
         <em:maxVersion>10.*</em:maxVersion>
       </Description>
+    </em:targetApplication>
       
+    <em:targetApplication>
       <!-- Mozilla Suite -->
       <Description>
         <em:id>{86c18b42-e466-45a9-ae7a-9b95ba6f5640}</em:id>
         <em:minVersion>1.2</em:minVersion>
         <em:maxVersion>1.8</em:maxVersion>
       </Description>
+    </em:targetApplication>
       
+    <em:targetApplication>
       <!-- SeaMonkey -->
       <Description>
         <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
         <em:minVersion>1.0</em:minVersion>
         <em:maxVersion>2.0.*</em:maxVersion>
       </Description>
+    </em:targetApplication>
       
+    <em:targetApplication>
       <!-- Flock -->
       <Description>
         <em:id>{a463f10c-3994-11da-9945-000d60ca027b}</em:id>
         <em:minVersion>1.0</em:minVersion>
         <em:maxVersion>1.1.*</em:maxVersion>
       </Description>
+    </em:targetApplication>
       
+    <em:targetApplication>
       <!-- Netscape Browser -->
       <Description>
         <em:id>{3db10fab-e461-4c80-8b97-957ad5f8ea47}</em:id>
@@ -48,6 +56,7 @@
     <em:name>赤福:非公式 Firefox 版</em:name>
     <em:description>虹裏ライフを甘美にする 赤福:非公式 Firefox 版</em:description>
     <em:creator>arai</em:creator>
+    <em:contributor>toshiaki</em:contributor>
     <em:homepageURL>http://www.unmht.org/akahuku/</em:homepageURL>
     
     <!--

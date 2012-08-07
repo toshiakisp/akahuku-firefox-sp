@@ -745,7 +745,7 @@ var arAkahukuLink = {
             }
           }
                      
-          if (query.match (/^(.*q=)([^&]+)(.*)$/)) {
+          if (query.match (/^(q=|.*&q=)([^&]+)(.*)$/)) {
             var prev = RegExp.$1;
             var word = RegExp.$2;
             var next = RegExp.$3;
@@ -2429,6 +2429,43 @@ var arAkahukuLink = {
   },
     
   /**
+   * オートリンクをドラッグしたイベント
+   *
+   * @param  Event event
+   *         対象のイベント
+   */
+  onAutoLinkDragStart: function (event) {
+    if (!("dataTransfer" in event) || !event.dataTransfer) {
+      return;
+    }
+
+    var target = event.target;
+    var caption = "";
+    switch (target.nodeName.toLowerCase ()) {
+      case "img":
+        /* 画像データ自体はデフォルトでセットされる？ */
+        if (!arAkahukuDOM.hasClassName
+             (event.target, "akahuku_preview")) {
+          break;
+        }
+        caption = caption || target.title;
+        /* IMG の dummyhref は A と同様に処理 */
+      case "a":
+        caption = caption || target.textContent;
+        var href = target.getAttribute ("dummyhref");
+        href = arAkahukuP2P.deP2P (href);
+        if (href) {
+          event.dataTransfer.setData
+            ("text/x-moz-url", href + "\n" + caption);
+          event.dataTransfer.setData
+            ("application/x-moz-file-promise-url", href);
+          event.dataTransfer.setData ("text/uri-list", href);
+          event.dataTransfer.setData ("text/plain", href);
+        }
+    }
+  },
+    
+  /**
    * 対象のノード以下に芝刈りを適用する
    *
    * @param  HTMLDocument targetDocument
@@ -2694,6 +2731,16 @@ var arAkahukuLink = {
      function () {
       arAkahukuLink.onAutoLinkOut (arguments [0]);
     }, false);
+        
+    if (Akahuku.isFx36) {
+      /* ドラッグ可能にする */
+      targetNode.draggable = true;
+      targetNode.addEventListener
+      ("dragstart",
+       function () {
+        arAkahukuLink.onAutoLinkDragStart (arguments [0]);
+      }, false);
+    }
   },
     
   /**
@@ -2736,7 +2783,7 @@ var arAkahukuLink = {
       var target = null;
             
       if (arAkahukuLink.enableAutoLinkPreview
-          && (url.match (/^http:\/\/((www\.)?youtube\.com\/watch\?([^&]+&)*v=|youtu\.be\/)[^&]+/i)
+          && (url.match (/^http:\/\/((www\.|m\.)?youtube\.com\/watch\?([^&]+&)*v=|youtu\.be\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
@@ -2767,7 +2814,7 @@ var arAkahukuLink = {
             && !url.match
             (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
-            (/^http:\/\/((www\.)?youtube\.com\/watch\?|youtu\.be\/)/)
+            (/^http:\/\/((www\.|m\.)?youtube\.com\/watch\?|youtu\.be\/)/)
             && !url.match (/\.(jpe?g|gif|png|bmp)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
@@ -3085,7 +3132,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowFullScreen", "true");
       image.setAttribute ("allowScriptAccess", "never");
     }
-    else if (uri.match (/^http:\/\/(?:(?:www\.)?youtube\.com\/watch\?(?:[^&]+&)*v=|youtu\.be\/)([^&?#]+)/i)) {
+    else if (uri.match (/^http:\/\/(?:(?:www\.|m\.)?youtube\.com\/watch\?(?:[^&]+&)*v=|youtu\.be\/)([^&?#]+)/i)) {
       var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s/)) {
@@ -3384,7 +3431,12 @@ var arAkahukuLink = {
       /* 自分を閉じる時 */
       if (!arAkahukuLink.enableAutoLinkPreviewMulti) {
         /* 複数表示しない場合はコンテナを消す */
-        blockquote.style.marginLeft = "";
+        if (blockquote.hasAttribute ("__akahuku_margin_left")) {
+          blockquote.style.marginLeft = 
+            blockquote.getAttribute ("__akahuku_margin_left_original");
+          blockquote.removeAttribute ("__akahuku_margin_left_original");
+          blockquote.removeAttribute ("__akahuku_margin_left");
+        }
         node.parentNode.removeChild (node);
       }
       else {
@@ -3409,7 +3461,12 @@ var arAkahukuLink = {
         }
         if (!node.firstChild) {
           /* 1つも無くなった時はコンテナを消す */
-          blockquote.style.marginLeft = "";
+          if (blockquote.hasAttribute ("__akahuku_margin_left")) {
+            blockquote.style.marginLeft = 
+              blockquote.getAttribute ("__akahuku_margin_left_original");
+            blockquote.removeAttribute ("__akahuku_margin_left_original");
+            blockquote.removeAttribute ("__akahuku_margin_left");
+          }
           node.parentNode.removeChild (node);
         }
       }

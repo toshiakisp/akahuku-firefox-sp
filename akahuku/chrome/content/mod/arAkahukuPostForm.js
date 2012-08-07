@@ -2909,8 +2909,12 @@ var arAkahukuPostForm = {
   onBodyMouseMove : function (event) {
     try {
       var targetDocument = event.target.ownerDocument;
-      var param
-      = Akahuku.getDocumentParam (targetDocument).postform_param;
+      var param = Akahuku.getDocumentParam (targetDocument);
+      if (!param) {
+        /* ドキュメントが閉じられた場合 */
+        return;
+      }
+      param = param.postform_param;
             
       if (gContextMenu != null && arAkahukuUI.contextMenuShown) {
         /* コンテキストメニューが表示されていたら何もしない */
@@ -4382,8 +4386,9 @@ var arAkahukuPostForm = {
               }
               else {
                 if (table.nodeName.toLowerCase () == "div") {
-                  if (!arAkahukuPostForm.enableBottom
-                      && arAkahukuDelBanner.enableMoveTailAdAll) {
+                  if (info.isNormal
+                      || (!arAkahukuPostForm.enableBottom
+                          && arAkahukuDelBanner.enableMoveTailAdAll)) {
                     table.style.position = "static";
                     table.style.right = "auto";
                     table.style.textAlign = "left";
