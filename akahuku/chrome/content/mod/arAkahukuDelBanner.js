@@ -163,12 +163,6 @@ var arAkahukuDelBanner = {
         src = "";
       }
             
-      /* 新しいサーバが IP アドレスになっているので名前にする */
-      src = src
-      .replace (/112\.78\.198\.230/, "jan.2chan.net")
-      .replace (/112\.78\.201\.90/, "mar.2chan.net")
-      .replace (/112\.78\.200\.214/, "jul.2chan.net");
-      
       if (src.indexOf (":") == -1
           && nodes [i].nodeName.toLowerCase () == "img") {
         /* 相対パス */
@@ -196,11 +190,11 @@ var arAkahukuDelBanner = {
         continue;
       }
       
-      if (src.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
-          || src.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
+      var uinfo =  arAkahukuImageURL.parse (src);
+      if (uinfo && uinfo.isAd) {
         /* 広告バナー */
       }
-      else if (src.match (/^http:\/\/([^\/]+\/)?[^\.\/]+\.2chan\.net(:[0-9]+)?\//)
+      else if (uinfo && uinfo.isImage
                && nodes [i].nodeName.toLowerCase () == "img") {
         /* ふたば内 */
         continue;
@@ -212,11 +206,9 @@ var arAkahukuDelBanner = {
         continue;
       }
             
-      if (Akahuku.protocolHandler.isAkahukuURI (src)) {
+      if (uinfo && uinfo.isAkahuku) {
         /* akahuku プロトコル */
-akahuku://rrd.2chan.net/p2p/http.5/dec/ad/src/1272121796994.gif
-        if (src.match (/^akahuku:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/ad\//)
-            || src.match (/^akahuku:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/dec\/ad\//)) {
+        if (uinfo.isAd) {
           /* 広告バナー */
         }
         else {

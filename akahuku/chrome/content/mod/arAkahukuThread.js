@@ -2912,11 +2912,6 @@ var arAkahukuThread = {
             /* サムネかどうかアドレスでチェック */
             if ("src" in nodes [i]) {
               var src = nodes [i].src;
-              /* 新しいサーバが IP アドレスになっているので名前にする */
-              src = src
-                .replace (/112\.78\.198\.230/, "jan.2chan.net")
-                .replace (/112\.78\.201\.90/, "mar.2chan.net")
-                .replace (/112\.78\.200\.214/, "jul.2chan.net");
               var uinfo
                 = arAkahukuImageURL.parse (src);
               

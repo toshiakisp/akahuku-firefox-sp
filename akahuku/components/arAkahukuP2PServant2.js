@@ -99,7 +99,10 @@ arAkahukuP2PServantPortChecker.prototype = {
       this.transport.setTimeout (nsISocketTransport.TIMEOUT_CONNECT,
                                  arAkahukuP2PServant2.CONNECT_TIMEOUT);
             
-      this.transport.setEventSink (this, null);
+      var currentThread
+        = Components.classes ["@mozilla.org/thread-manager;1"]
+        .getService (nsIThreadManager).currentThread;
+      this.transport.setEventSink (this, currentThread);
             
       this.inputStream
       = this.transport.openInputStream (0, 0, 0);
@@ -405,7 +408,10 @@ arAkahukuP2PNode.prototype = {
 
       /* 能動接続の場合、接続完了をチェック */
       if (!connected) {
-        this.transport.setEventSink (this, null);
+        var currentThread
+          = Components.classes ["@mozilla.org/thread-manager;1"]
+          .getService (nsIThreadManager).currentThread;
+        this.transport.setEventSink (this, currentThread);
       }
             
       /* 送受信開始 */
@@ -1781,7 +1787,7 @@ var arAkahukuP2PServant2 = {
         
     /* 全ノードを切断する */
     for (var i = 0; i < arAkahukuP2PServant2.nodeList.length; i ++) {
-      node = arAkahukuP2PServant2.nodeList [i];
+      var node = arAkahukuP2PServant2.nodeList [i];
       try {
         node.disconnect (arAkahukuP2PServant2.ERROR_STOPPING, 1);
       }
@@ -2514,7 +2520,7 @@ var arAkahukuP2PServant2 = {
       return;
     }
         
-    cacheDir
+    var cacheDir
     = Components.classes ["@mozilla.org/file/local;1"]
     .createInstance (nsILocalFile);
     cacheDir.initWithPath (arAkahukuP2PServant2.cacheBase);
@@ -3268,7 +3274,7 @@ var arAkahukuP2PServant2 = {
       hashFile.create (0x00, 0644);
     }
         
-    fstream
+    var fstream
     = Components.classes
     ["@mozilla.org/network/file-output-stream;1"]
     .createInstance (nsIFileOutputStream);
@@ -3411,7 +3417,7 @@ var arAkahukuP2PServant2 = {
            + arAkahukuP2PServant2.ACCEPT_SLOT;
          i < arAkahukuP2PServant2.activeNodeList.length;
          i ++) {
-      node = arAkahukuP2PServant2.activeNodeList [i];
+      var node = arAkahukuP2PServant2.activeNodeList [i];
       try {
         node.disconnect (arAkahukuP2PServant2.ERROR_STOPPING, 1);
       }
@@ -3631,7 +3637,7 @@ var arAkahukuP2PServant2 = {
     if (!self) {
       for (i = 0;
            i < arAkahukuP2PServant2.activeNodeList.length; i ++) {
-        node = arAkahukuP2PServant2.activeNodeList [i];
+        var node = arAkahukuP2PServant2.activeNodeList [i];
                 
         if (node.status == arAkahukuP2PServant2.STATUS_ALIVE) {
           status
@@ -4434,7 +4440,10 @@ var arAkahukuP2PServant2 = {
   sendFull : function (transport) {
     transport.setTimeout (nsISocketTransport .TIMEOUT_READ_WRITE,
                           arAkahukuP2PServant2.READ_WRITE_TIMEOUT);
-    transport.setEventSink (arAkahukuP2PServant2, null);
+    var currentThread
+      = Components.classes ["@mozilla.org/thread-manager;1"]
+      .getService (nsIThreadManager).currentThread;
+    transport.setEventSink (arAkahukuP2PServant2, currentThread);
         
     var outputStream
     = transport.openOutputStream (nsITransport.OPEN_BLOCKING, 0, 0);
@@ -4496,7 +4505,10 @@ var arAkahukuP2PServant2 = {
    *         終了コード
    */
   sendBye : function (transport, outputStream, code) {
-    transport.setEventSink (arAkahukuP2PServant2, null);
+    var currentThread
+      = Components.classes ["@mozilla.org/thread-manager;1"]
+      .getService (nsIThreadManager).currentThread;
+    transport.setEventSink (arAkahukuP2PServant2, currentThread);
         
     var data = "";
         

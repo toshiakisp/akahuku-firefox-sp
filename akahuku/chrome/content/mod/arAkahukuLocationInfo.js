@@ -1086,6 +1086,7 @@ arAkahukuLocationInfo.prototype = {
 function arAkahukuImageURLInfo () {
 }
 arAkahukuImageURLInfo.prototype = {
+  isIp : false,
   isAd : false
 };
 var arAkahukuImageURL = {
@@ -1186,6 +1187,42 @@ var arAkahukuImageURL = {
       
       if (url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
           || url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
+        /* 広告バナー */
+        uinfo.isAd = true;
+      }
+    }
+    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
+      /* IP アドレスで画像鯖らしき場所が指定された場合 */
+      uinfo = new arAkahukuImageURLInfo ();
+            
+      uinfo.server = RegExp.$1;
+      uinfo.port = RegExp.$2;
+      var sdir = RegExp.$3;
+      uinfo.dir = RegExp.$4;
+      uinfo.type = RegExp.$5;
+      uinfo.leafName = RegExp.$6;
+      uinfo.ext = RegExp.$7;
+            
+      uinfo.leafNameExt = uinfo.leafName + "." + uinfo.ext;
+      uinfo.board = uinfo.server + "_" + uinfo.dir;
+            
+      if (aboutCache && arAkahukuP2P.enableTreatAsSame) {
+        uinfo.server = sdir;
+      }
+      else {
+        uinfo.dir = sdir + "-" + uinfo.dir;
+        uinfo.board = sdir + "_" + uinfo.dir;
+      }
+            
+      uinfo.isImage = true;
+      uinfo.isIp = true;
+      
+      if (akahukuParam) {
+        uinfo.isAkahuku = true;
+        uinfo.akahukuParam = akahukuParam;
+      }
+      
+      if (sdir == "dec" && uinfo.dir == "ad") {
         /* 広告バナー */
         uinfo.isAd = true;
       }
