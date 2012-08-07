@@ -227,6 +227,11 @@ var arAkahukuDelBanner = {
             
       var delTarget = false;
             
+      /*  arAkahukuContentPolicy の結果から判定 */
+      if (parent) {
+        delTarget = parent.hasAttribute ("delete");
+      }
+      /*
       if (arAkahukuDelBanner.enableImage
           || all) {
         if (src.match (/http:\/\/aqua\.dmm\.co\.jp\//)
@@ -248,6 +253,7 @@ var arAkahukuDelBanner = {
       if (arAkahukuDelBanner.enableFlash
           || all) {
       }
+      */
             
       if (delTarget || all) {
         /* 削除対象 */
