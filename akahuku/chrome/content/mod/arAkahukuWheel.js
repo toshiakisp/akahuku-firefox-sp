@@ -258,7 +258,8 @@ var arAkahukuWheel = {
           }
         }
         else if (info.isReply) {
-          if (arAkahukuReload.enable) {
+          if (arAkahukuReload.enable
+              && documentParam.reload_param) {
             if (status) {
               status.label = "";
             }
@@ -277,7 +278,8 @@ var arAkahukuWheel = {
           }
         }
         else if (info.isCatalog) {
-          if (arAkahukuCatalog.enableReload) {
+          if (arAkahukuCatalog.enableReload
+              && documentParam.catalog_param) {
             if (status) {
               status.label = "";
             }
