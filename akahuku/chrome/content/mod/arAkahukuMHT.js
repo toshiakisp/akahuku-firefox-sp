@@ -637,7 +637,7 @@ arAkahukuMHTFileData.prototype = {
           (Components.interfaces.nsIHttpChannel)
           .responseStatus;
       }
-      catch (e) { Akahuku.debug.exception (e);
+      catch (e) {
       }
       
       if (httpStatus >= 400) {
