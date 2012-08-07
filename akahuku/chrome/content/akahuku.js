@@ -75,7 +75,7 @@ var Akahuku = {
    */
   debug : {
     enabled : true,
-    prefix : "Akahuku debug:",
+    prefix : "Akahuku debug: ",
     _consoleService : Components.classes ["@mozilla.org/consoleservice;1"]
       .getService (Components.interfaces.nsIConsoleService),
 
@@ -268,6 +268,8 @@ var Akahuku = {
         
     /* QuickDrag で akahuku の保存を有効にする
      * quickdrag.js の 167 行目 */
+    /* 新しい QuickDrag (少なくともver2.1.3.21) では
+     * このパッチは機能しておらず、そもそも不要っぽい
     try {
       if (typeof (QuickDrag) != "undefined"
           && "dragdrop" in QuickDrag
@@ -278,8 +280,8 @@ var Akahuku = {
                           "https?|ftp|chrome|file|akahuku"));
       }
     }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    catch (e) {
+    }*/
     
     /* 各種サービスの初期化 */
     arAkahukuConfig.loadPrefBranch ();
@@ -935,7 +937,7 @@ var Akahuku = {
     var node = targetNode;
     var lastText = "";
     var patternIP = /\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:[0-9]+\.){0,2}\*\([^\(\)]+\))/;
-    var patternID = /\bID:([A-Za-z0-9.\/]{8})\b/;
+    var patternID = /\bID:([A-Za-z0-9.\/]{8})/;
     var pattern = (isId ? patternID : patternIP);
     while (node) {
       if (node.nodeName.toLowerCase () == "#text") {
