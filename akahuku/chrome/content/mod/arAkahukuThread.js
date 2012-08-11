@@ -78,6 +78,7 @@ var arAkahukuThread = {
   enableTabIcon : false,     /* Boolean  タブのアイコンを変更する */
   enableTabIconSize : false, /* Boolean  サイズを n px にする */
   tabIconSizeMax : 24,       /* Number   サイズ [px]  */
+  enableTabIconAsFavicon : false,   /* Boolean  favicon として登録する */
     
   enableReloadOnBottom : false,     /* Boolean  通常モード末尾に
                                      *   リロードボタン */
@@ -126,6 +127,8 @@ var arAkahukuThread = {
   enableReplyNoMarginBottom : false, /* Boolean  レスの下のマージンを消す */
     
   enableAlertGIF : false, /* Boolean  GIF 画像を赤字で表示 */
+    
+  maxImageRetries : 0,  /* Number エラー画像の再試行回数 */
     
   enableMoveButton : false, /* Boolean  前後に移動ボタン */
     
@@ -453,6 +456,9 @@ var arAkahukuThread = {
       arAkahukuThread.tabIconSizeMax
         = arAkahukuConfig
         .initPref ("int",  "akahuku.tabicon.size.max", 24);
+      arAkahukuThread.enableTabIconAsFavicon
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.tabicon.asfavicon", false);
     }
         
     arAkahukuThread.enableReloadOnBottom
@@ -568,6 +574,9 @@ var arAkahukuThread = {
     arAkahukuThread.enableAlertGIF
     = arAkahukuConfig
     .initPref ("bool", "akahuku.alertgif", false);
+    arAkahukuThread.maxImageRetries
+    = arAkahukuConfig
+    .initPref ("int", "akahuku.ext.maximageretries", 1);
   },
     
   /**
@@ -813,6 +822,7 @@ var arAkahukuThread = {
         
     td = targetDocument.createElement ("td");
     td.style.paddingTop = "0";
+    td.style.backgroundColor = "inherit"; // 避難所 patch
     tr.appendChild (td);
     
     if (id) {
@@ -1088,7 +1098,7 @@ var arAkahukuThread = {
     var estimatedTime = 0;
         
     if (nodes.length >= 2
-        && arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+        && (info.server + ":" + info.dir) in arAkahukuMaxNum) {
       /* 書き込みが 2 つ以上あるので予測をする */
       var firstTime = Akahuku.getMessageTime (nodes [0]);
       var firstNum = Akahuku.getMessageNum (nodes [0]);
@@ -1100,7 +1110,7 @@ var arAkahukuThread = {
         estimatedTime
           = firstTime
           + (lastTime - firstTime)
-          * arAkahukuMaxNum.get (info.server + ":" + info.dir)
+          * arAkahukuMaxNum [info.server + ":" + info.dir]
           / (lastNum - firstNum);
       }
     }
@@ -1207,7 +1217,7 @@ var arAkahukuThread = {
    */
   updateNewestNum : function (info, num) {
     var n;
-    if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+    if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
       if ((info.server + ":" + info.dir) in arAkahukuThread.newestNum) {
         n = arAkahukuThread.newestNum [info.server + ":" + info.dir];
         if (n < num) {
@@ -1239,7 +1249,7 @@ var arAkahukuThread = {
   getExpireNum : function (targetDocument, info,
                            threadNumber, lastReplyNumber) {
     if (!info.isMht
-        && arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+        && (info.server + ":" + info.dir) in arAkahukuMaxNum) {
       var n;
       if (arAkahukuThread.enableBottomStatusNumEntire) {
         n = arAkahukuThread.newestNum [info.server + ":" + info.dir];
@@ -1259,10 +1269,10 @@ var arAkahukuThread = {
       }
       if (threadNumber == 0
           || lastReplyNumber == 0) {
-        return arAkahukuMaxNum.get (info.server + ":" + info.dir);
+        return arAkahukuMaxNum [info.server + ":" + info.dir];
       }
       n = (threadNumber
-           + arAkahukuMaxNum.get (info.server + ":" + info.dir)
+           + arAkahukuMaxNum [info.server + ":" + info.dir]
            - lastReplyNumber);
       if (n < 0) {
         n = 0;
@@ -1502,6 +1512,11 @@ var arAkahukuThread = {
                 
         var tabbrowser = document.getElementById ("content");
         
+        if (!info.isMht && "setIcon" in tabbrowser
+            && arAkahukuThread.enableTabIconAsFavicon) {
+          tabbrowser.setIcon (tab, src);
+        }
+        else // いつのバージョン用のコード?
         if ("updateIcon" in tabbrowser) {
           tab.linkedBrowser.mIconURL = src;
           tabbrowser.updateIcon (tab);
@@ -1633,6 +1648,10 @@ var arAkahukuThread = {
       if (tab) {
         var tabbrowser = document.getElementById ("content");
         
+        if ("setIcon" in tabbrowser) {
+          tabbrowser.setIcon (tab, "");
+        }
+        else
         if ("_updateAppTabIcons" in tabbrowser) {
           tab.setAttribute ("image", "");
           tabbrowser._updateAppTabIcons(tab);
@@ -1889,30 +1908,6 @@ var arAkahukuThread = {
                   };
                 })(nodes [i]), 10);
           }
-        }
-      }
-      
-      /* 画像ロード失敗時に再チャレンジ */
-      nodes = targetNode.getElementsByTagName ("img");
-      for (var i = 0; i < nodes.length; i ++) {
-        var uinfo = arAkahukuImageURL.parse (nodes [i].src);
-        if (uinfo && uinfo.isImage && !uinfo.isAd) {
-          nodes [i].addEventListener
-          ("error",
-           function (event) {
-             setTimeout
-               (function (node, src, handler) {
-                  if (node.src != src) {
-                    /* P2Pなどで src が変えられたのなら再登録 */
-                    node.addEventListener ("error", handler, false);
-                    return;
-                  }
-                  node.src = src;
-                  Akahuku.debug.log ("Reloading a corrupt image " + src
-                    + "\n" + node.ownerDocument.location.href);
-                }, 100, this, this.src, arguments.callee);
-             this.removeEventListener ("error", arguments.callee, false);
-           }, false);
         }
       }
       
@@ -2542,7 +2537,55 @@ var arAkahukuThread = {
       param.destruct ();
       document_param.respanel_param = null;
     }
-  },      
+  },
+    
+  /**
+   * 画像読み込みの失敗イベントで一度だけ再読込
+   *
+   * @param  Event event
+   *         対象のイベント
+   */
+  captureImageErrorToReload : function (event) {
+    var imageStatus
+      = Akahuku.Cache.getImageStatus (event.target, true);
+    if (!imageStatus.isImage || !imageStatus.isErrored
+        || imageStatus.isBlocked
+        // 非エラーのキャッシュ有り
+        || (imageStatus.cache.isExist
+            && imageStatus.cache.httpStatusCode [0] != "2")
+        // 赤福キャッシュ&プレビューURI
+        || (imageStatus.requestURI 
+            && imageStatus.requestURI.schemeIs ("akahuku")
+            && /^\/(?:(?:file)?cache\/|preview\.)/.test (imageStatus.requestURI.path))
+       ){ // 即リロードするべき対象・状態では無い
+      return;
+    }
+    var count = parseInt (event.target.getAttribute
+        ("__akahuku_img_error") || 0);
+    event.target.setAttribute ("__akahuku_img_error", ++count);
+    if (Akahuku.debug.enabled) {
+      Akahuku.debug.log
+        ("captureImageErrorToReload takes care of "
+         + imageStatus.requestURI.spec
+         + " (status=" + imageStatus.requestImageStatus
+         + " , count=" + count + ")"
+         //+ "\n" + arAkahukuJSON.encode (imageStatus)
+         + "\n" + event.target.ownerDocument.location.href);
+    }
+    if (count > arAkahukuThread.maxImageRetries) {
+      // 上限数以上のエラーは無視する
+      return;
+    }
+    try {
+      event.target
+        .QueryInterface (Components.interfaces.nsIImageLoadingContent)
+        .forceReload ();
+      event.stopPropagation ();
+      event.preventDefault ();
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  },
     
   /**
    * レス番号を振る、スレの消滅情報を追加する、[続きを読む] ボタンを追加する
@@ -3140,6 +3183,12 @@ var arAkahukuThread = {
     
     if (arAkahukuThread.enableDelInline) {
       arAkahukuThread.applyInlineDel (targetDocument, targetDocument);
+    }
+
+    if (info.isReply || info.isNormal || info.isCatalog) {
+      /* 画像ロード失敗時に再チャレンジ */
+      targetDocument.body.addEventListener
+        ("error", arAkahukuThread.captureImageErrorToReload, true);
     }
   }
 };

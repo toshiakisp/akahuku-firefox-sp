@@ -7,6 +7,18 @@ box.sub {
   margin-left: 20px;
 }
 
+/* sp 拡張設定項目の目印 */
+checkbox.sp label:after {
+  content: ".sp";
+  color: #00f;
+  font-size: 80%;
+  vertical-align: bottom;
+}
+checkbox.sp[disabled="true"] label:after {
+  color: inherit ! important;
+}
+
+label.ineffective,
 checkbox.ineffective label {
   text-decoration: line-through;
 }

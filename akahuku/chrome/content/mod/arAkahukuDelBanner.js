@@ -109,9 +109,21 @@ var arAkahukuDelBanner = {
     var src = "";
     var nodes = new Array ();
     var i;
+    var objectNodeName = "OBJECT";
+    var imgNodeName    = "IMG";
+    var iframeNodeName = "IFRAME";
     if (arAkahukuDelBanner.enableImage
         || arAkahukuDelBanner.enableImage404
+        || arAkahukuDelBanner.enableFlash
         || all) {
+      /* nodeName を比較用に取得 (表記法は文書内で同一と仮定) */
+      if (images.length > 0)
+        imgNodeName = String (images [0].nodeName);
+      if (iframes.length > 0)
+        iframeNodeName = String (iframes [0].nodeName);
+      if (objects.length > 0)
+        objectNodeName = String (objects [0].nodeName);
+            
       for (i = 0; i < images.length; i ++) {
         nodes.push (images [i]);
       }
@@ -124,7 +136,7 @@ var arAkahukuDelBanner = {
     }
         
     for (var i = 0; i < nodes.length; i ++) {
-      if (nodes [i].nodeName.toLowerCase () == "object") {
+      if (nodes [i].nodeName === objectNodeName) {
         src = "";
                 
         var params = nodes [i].getElementsByTagName ("param");
@@ -164,7 +176,7 @@ var arAkahukuDelBanner = {
       }
             
       if (src.indexOf (":") == -1
-          && nodes [i].nodeName.toLowerCase () == "img") {
+          && nodes [i].nodeName === imgNodeName) {
         /* 相対パス */
         continue;
       }
@@ -195,13 +207,13 @@ var arAkahukuDelBanner = {
         /* 広告バナー */
       }
       else if (uinfo && uinfo.isImage
-               && nodes [i].nodeName.toLowerCase () == "img") {
+               && nodes [i].nodeName === imgNodeName) {
         /* ふたば内 */
         continue;
       }
             
       if (src.match (/^\//)
-          && nodes [i].nodeName.toLowerCase () == "img") {
+          && nodes [i].nodeName === imgNodeName) {
         /* ふたば内 */
         continue;
       }
@@ -232,29 +244,6 @@ var arAkahukuDelBanner = {
       if (parent) {
         delTarget = parent.hasAttribute ("delete");
       }
-      /*
-      if (arAkahukuDelBanner.enableImage
-          || all) {
-        if (src.match (/http:\/\/aqua\.dmm\.co\.jp\//)
-            || src.match (/http:\/\/www\.mmaaxx\.com\//)
-            || src.match (/http:\/\/click\.dtiserv2\.com\//)) {
-          delTarget = true;
-        }
-      }
-            
-      if (arAkahukuDelBanner.enableImage404
-          || all) {
-        if (src.match (/http:\/\/affiliate\.dtiserv\.com\//)
-            || src.match (/http:\/\/www\.mmaaxx\.com\//)
-            || src.match (/http:\/\/click\.dtiserv2\.com\//)) {
-          delTarget = true;
-        }
-      }
-            
-      if (arAkahukuDelBanner.enableFlash
-          || all) {
-      }
-      */
             
       if (delTarget || all) {
         /* 削除対象 */
@@ -413,6 +402,30 @@ var arAkahukuDelBanner = {
   },
     
   /**
+   * コンテクストノードを削除する
+   */
+  deleteContextAfterBlock : function (context, text)
+  {
+    var targetDocument = context.ownerDocument;
+    var bannerAnchor = arAkahukuDOM.findParentNode (context, "a");
+    if (bannerAnchor) {
+      bannerAnchor.setAttribute ("delete", text || "delete");
+      context.setAttribute ("__akahuku_banner", "true");
+      var param = Akahuku.getDocumentParam (targetDocument);
+      var info = (param ? param.location_info : {isMht:false});
+      this.deleteImage (context.parentNode, info, false);
+    }
+    else {
+      // バナーではないようなのでとりあえずマークして非表示に
+      context.setAttribute ("delete", text || "delete");
+      context.style.display = "none";
+      Akahuku.debug.log
+        ("deleteContextAfterBlock hides a non-banner context " + context
+         + "\n" + targetDocument.location);
+    }
+  },
+
+  /**
    * 広告を削除する
    *
    * @param  HTMLDocument targetDocument
@@ -423,6 +436,10 @@ var arAkahukuDelBanner = {
   apply : function (targetDocument, info) {
     if (arAkahukuDelBanner.enable
         && (info.isFutaba || info.isMht)) {
+      // arAkahukuContentPolicy からの削除要求をまず適用
+      Akahuku.runContextTasks
+        (targetDocument, {handler: this.deleteContextAfterBlock});
+
       if (info.isNotFound) {
         if (arAkahukuDelBanner.enableImage404) {
           arAkahukuDelBanner.deleteImage

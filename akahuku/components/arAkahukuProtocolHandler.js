@@ -11,12 +11,16 @@ const nsIChannel            = Components.interfaces.nsIChannel;
 const nsIRequest            = Components.interfaces.nsIRequest;
 const nsIStreamListener     = Components.interfaces.nsIStreamListener;
 const nsIRequestObserver    = Components.interfaces.nsIRequestObserver;
+const nsIObserver           = Components.interfaces.nsIObserver;
+const nsIInterfaceRequestor = Components.interfaces.nsIInterfaceRequestor;
+const nsIChannelEventSink   = Components.interfaces.nsIChannelEventSink;
 
 const nsIPipe               = Components.interfaces.nsIPipe;
 const nsIIOService          = Components.interfaces.nsIIOService;
 const nsIInputStreamChannel = Components.interfaces.nsIInputStreamChannel;
 const nsIStringInputStream  = Components.interfaces.nsIStringInputStream;
 const nsIURI                = Components.interfaces.nsIURI;
+const nsIStandardURL        = Components.interfaces.nsIStandardURL;
 
 const nsILocalFile           = Components.interfaces.nsILocalFile;
 const nsIFile                = Components.interfaces.nsIFile;
@@ -27,6 +31,7 @@ const nsICacheService        = Components.interfaces.nsICacheService;
 const nsIHttpChannel         = Components.interfaces.nsIHttpChannel;
 const nsIWebBrowserPersist   = Components.interfaces.nsIWebBrowserPersist;
 const nsIWindowMediator      = Components.interfaces.nsIWindowMediator;
+const nsIInputStream         = Components.interfaces.nsIInputStream;
 const nsIFileInputStream     = Components.interfaces.nsIFileInputStream;
 const nsIFileOutputStream    = Components.interfaces.nsIFileOutputStream;
 const nsIBinaryInputStream   = Components.interfaces.nsIBinaryInputStream;
@@ -43,10 +48,17 @@ const arIAkahukuProtocolHandler = Components.interfaces.arIAkahukuProtocolHandle
 
 const nsIIDNService = Components.interfaces.nsIIDNService;
 
+const nsIAsyncVerifyRedirectCallback = Components.interfaces.nsIAsyncVerifyRedirectCallback;
+const nsIThreadManager = Components.interfaces.nsIThreadManager;
+const nsIThread        = Components.interfaces.nsIThread;
+
 /**
  * リファラを送信しないチャネル
+ * (画像などドキュメント以外ではクッキーも送受信しない)
  *   Inherits From: nsIChannel, nsIRequest
  *                  nsIStreamListener, nsIRequestObserver
+ *                  nsIObserver
+ *                  nsIInterfaceRequestor, nsIChannelEventSink
  *
  * @param  String uri
  *         akahuku プロトコルの URI
@@ -56,41 +68,40 @@ const nsIIDNService = Components.interfaces.nsIIDNService;
  *         MIME タイプ
  */
 function arAkahukuBypassChannel (uri, originalURI, contentType) {
-  this._originalURI = originalURI;
-  this.contentType = contentType;
-    
-  this.URI
-    = Components.classes ["@mozilla.org/network/standard-url;1"]
-    .createInstance (nsIURI);
-  this.URI.spec = uri;
-    
-  this.originalURI
-    = Components.classes ["@mozilla.org/network/standard-url;1"]
-    .createInstance (nsIURI);
-  this.originalURI.spec = uri;
+  var callbacks = null;
+  if (arguments.length == 1) {
+    /* 既存のチャネルをラップして生成する */
+    this._realChannel = arguments [0].QueryInterface (nsIChannel);
+    callbacks = this._realChannel.notificationCallbacks;
+    this.originalURI = this._realChannel.originalURI.clone ();
+  }
+  else {
+    var ios
+      = Components.classes ["@mozilla.org/network/io-service;1"]
+      .getService (nsIIOService);
+    this._realChannel = ios.newChannel (originalURI, null, null);
+    this.originalURI = ios.newURI (uri, null, null);
+  }
+  this.name = uri;
+  /* 通知をフィルタリングする */
+  this.notificationCallbacks = callbacks;
+  this._realChannel.notificationCallbacks = this;
+
+  if (contentType) {
+    this.contentType = contentType;
+  }
+  this.loadFlags |= this._realChannel.LOAD_REPLACE;
 }
 arAkahukuBypassChannel.prototype = {
-  _originalURI : "",  /* String  本来の URI */
   _listener : null,   /* nsIStreamListener  チャネルのリスナ */
-  _context : null,    /* nsISupports  ユーザ定義のコンテキスト */
-  _isPending : false, /* Boolean  リクエストの途中かどうか */
-    
-  /* nsIRequest のメンバ */
-  loadFlags : 0,
-  loadGroup : null,
+  _realChannel : null,/* nsIChannel  実チャネル */
+  _observingHeaders : false, /* Boolean ヘッダーを監視しているか */
+
+  /* 実チャネルに委譲しないプロパティ */
   name : "",
-  status : Components.results.NS_OK,
-    
-  /* nsIChannel のメンバ */
-  contentCharset : "",
-  contentLength : -1,
-  contentType : "",
   notificationCallbacks : null,
   originalURI : null,
-  owner : null,
-  securityInfo : null,
-  URI : null,
-    
+
   /**
    * インターフェースの要求
    *   nsISupports.QueryInterface
@@ -105,12 +116,35 @@ arAkahukuBypassChannel.prototype = {
     if (iid.equals (nsISupports)
         || iid.equals (nsIChannel)
         || iid.equals (nsIRequest)
+        || iid.equals (nsIObserver)
+        || iid.equals (nsIInterfaceRequestor)
+        || iid.equals (nsIChannelEventSink)
         || iid.equals (nsIStreamListener)
         || iid.equals (nsIRequestObserver)) {
       return this;
     }
         
     throw Components.results.NS_ERROR_NO_INTERFACE;
+  },
+
+  /**
+   * インターフェース要求 (notificationCallbacksのための)
+   *   nsIInterfaceRequestor.getInterface 
+   */
+  getInterface : function (iid) {
+    try {
+      return this.QueryInterface (iid);
+    }
+    catch (e) {
+      try {
+        /* nsIProgressEventSink 等、自身でサポートしないものは
+         * クライアントの notificationCallbacks から直に取得 */
+        return this.notificationCallbacks.getInterface (iid);
+      }
+      catch (e) {
+        throw Components.results.NS_NOINTERFACE;
+      }
+    }
   },
     
   /**
@@ -121,7 +155,7 @@ arAkahukuBypassChannel.prototype = {
    *         ステータス
    */
   cancel : function (status) {
-    this.status = status;
+    this._realChannel.cancel (status);
   },
     
   /**
@@ -132,27 +166,23 @@ arAkahukuBypassChannel.prototype = {
    *         リクエストの途中かどうか
    */
   isPending : function () {
-    return this._isPending;
+    return this._realChannel.isPending ();
   },
     
   /**
    * リクエストを再開する
    *   nsIRequest.resume
-   *
-   * @throws Components.results.NS_ERROR_NOT_IMPLEMENTED
    */
   resume : function () {
-    throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+    this._realChannel.resume ();
   },
     
   /**
    * リクエストを停止する
    *   nsIRequest.suspend
-   *
-   * @throws Components.results.NS_ERROR_NOT_IMPLEMENTED
    */
   suspend : function () {
-    throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+    this._realChannel.suspend ();
   },
     
   /**
@@ -166,14 +196,17 @@ arAkahukuBypassChannel.prototype = {
    */
   asyncOpen : function (listener, context) {
     this._listener = listener;
-    this._context = context;
-        
-    var ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (nsIIOService);
-        
-    var channel = ios.newChannel (this._originalURI, null, null);
-    channel.asyncOpen (this, null);
+    if (!(this.loadFlags & this._realChannel.LOAD_DOCUMENT_URI)) {
+      /* 埋め込み要素の場合 */
+      this.startHeadersBlocker ();
+    }
+    try {
+      this._realChannel.asyncOpen (this, context);
+    }
+    catch (e) {
+      this.stopHeadersBlocker ();
+      throw e;
+    }
   },
     
   /**
@@ -196,8 +229,12 @@ arAkahukuBypassChannel.prototype = {
    *         ユーザ定義
    */
   onStartRequest : function (request, context) {
-    this._isPending = true;
-    this._listener.onStartRequest (this, this._context);
+    try {
+      this._listener.onStartRequest (this, context);
+    }
+    catch (e) {
+      this.cancel (e.result);
+    }
   },
     
   /**
@@ -212,12 +249,15 @@ arAkahukuBypassChannel.prototype = {
    *         終了コード
    */
   onStopRequest : function (request, context, statusCode) {
-    this._isPending = false;
-    var tmp = this._listener;
-    this._listener = null;
-    this._context = null;
-        
-    tmp.onStopRequest (this, this._context, statusCode);
+    try {
+      this._listener.onStopRequest (this, context, statusCode);
+    }
+    catch (e) {
+    }
+    finally {
+      this._listener = null;
+      this.stopHeadersBlocker ();
+    }
   },
     
   /**
@@ -236,10 +276,183 @@ arAkahukuBypassChannel.prototype = {
    *         データの長さ
    */
   onDataAvailable : function (request, context, inputStream, offset, count) {
-    this._listener.onDataAvailable (this, this._context, inputStream,
-                                    offset, count);
-  }
+    try {
+      this._listener.onDataAvailable (this, context, inputStream,
+                                      offset, count);
+    }
+    catch (e) {
+      this.cancel (e.result);
+    }
+  },
+
+  /**
+   * ヘッダーを監視
+   *   nsIObserver.observe
+   *
+   * @param  nsISupports subject
+   *         この通知を引き起こしたチャネル (nsIChannel)
+   * @param  String topic
+   *         通知トピック
+   * @param  String data
+   *         データ
+   */
+  observe : function (subject, topic, data) {
+    if (subject != this._realChannel) {
+      return;
+    }
+    var httpChannel = subject.QueryInterface (nsIHttpChannel);
+
+    if (topic == "http-on-modify-request") {
+      /* リクエストにクッキーを含めないように */
+      httpChannel.setRequestHeader ("Cookie", "", false);
+    }
+    else if (topic == "http-on-examine-response") {
+      /* レスポンスによってクッキーをセットされないように */
+      httpChannel.setResponseHeader ("Set-Cookie", "", false);
+      this.stopHeadersBlocker ();
+    }
+  },
+
+  /**
+   * 必要ならヘッダー監視を開始する
+   */
+  startHeadersBlocker : function () {
+    if (this._observingHeaders
+        || !(this._realChannel instanceof nsIHttpChannel)) {
+      return;
+    }
+    var observerService
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+    observerService.addObserver (this, "http-on-modify-request", false);
+    observerService.addObserver (this, "http-on-examine-response", false);
+    this._observingHeaders = true;
+  },
+
+  /**
+   * ヘッダー監視を解除する
+   */
+  stopHeadersBlocker : function () {
+    if (!this._observingHeaders) {
+      return;
+    }
+    var observerService
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+    observerService.removeObserver (this, "http-on-modify-request");
+    observerService.removeObserver (this, "http-on-examine-response");
+    this._observingHeaders = false;
+  },
+
+  /**
+   * リダイレクトイベント
+   *   nsIChannelEventSink.asyncOnChannelRedirect
+   */
+  asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
+    try {
+      var sink
+        = this.notificationCallbacks
+        .getInterface (nsIChannelEventSink);
+    }
+    catch (e) {
+      /* リダイレクトを止める */
+      callback.onRedirectVerifyCallback
+        (Components.results.NS_ERROR_FAILURE);
+      return;
+    }
+    newChannel = this.createRedirectedChannel (oldChannel, newChannel);
+    sink.asyncOnChannelRedirect (this, newChannel, flags, callback);
+  },
+
+  /**
+   * リダイレクトイベント (Obsolete since Gecko 2)
+   *   nsIChannelEventSink.onChannelRedirect
+   */
+  onChannelRedirect : function (oldChannel, newChannel, flags) {
+    try {
+      var sink
+        = this.notificationCallbacks
+        .getInterface (nsIChannelEventSink);
+    }
+    catch (e) {
+      return;
+    }
+    newChannel = this.createRedirectedChannel (oldChannel, newChannel);
+    sink.onChannelRedirect (this, newChannel, flags);
+  },
+
+  /**
+   * リダイレクト用 arAkahukuBypassChannel を生成する
+   */
+  createRedirectedChannel : function (oldChannel, newChannel) {
+    if (newChannel instanceof nsIHttpChannel) {
+      newChannel = new arAkahukuBypassChannel (newChannel);
+      /* リダイレクト時にはリファラを付与 */
+      newChannel._realChannel.referrer = oldChannel.URI;
+    }
+    return newChannel;
+  },
+
+  /**
+   *  実チャネルに委譲するプロパティを定義する
+   *
+   * @param  String name 
+   *         プロパティ名
+   * @param  Boolean readonly
+   *         読込専用か (setter も定義するか)
+   */
+  defineDelegateProperty : function (name, readonly) {
+    var getter = function () { return this._realChannel [name]; };
+    var setter = null;
+    if (!readonly) {
+      setter = function (newValue) { this._realChannel [name] = newValue; };
+    }
+    this._defineGetterAndSetter (name, getter, setter);
+    return this;
+  },
+  _defineGetterAndSetter : function (name, getter, optSetter) {
+    var descriptor = {
+      configurable : false,
+      enumerable : true,
+      get : getter,
+    };
+    if (optSetter) {
+      descriptor.set = optSetter;
+    }
+    try {
+      if (typeof (Object.defineProperty) == "function") {
+        /* Gecko2/Firefox4 (JavaScript 1.8.5) */
+        Object.defineProperty (this, name, descriptor);
+      }
+      else {
+        /* legacy fallback */
+        this.__defineGetter__ (name, getter);
+        if (!readonly) {
+          this.__defineSetter__ (name, optSetter);
+        }
+      }
+    }
+    catch (e) {
+      Components.utils.reportError (e);
+    }
+  },
 };
+
+arAkahukuBypassChannel.prototype
+  /* nsIRequest のメンバ */
+  .defineDelegateProperty ("loadFlags")
+  .defineDelegateProperty ("loadGroup")
+  //.defineDelegateProperty ("name", "readonly")
+  .defineDelegateProperty ("status", "readonly")
+  /* nsIChannel のメンバ */
+  .defineDelegateProperty ("contentCharset")
+  .defineDelegateProperty ("contentLength")
+  .defineDelegateProperty ("contentType")
+  //.defineDelegateProperty ("notificationCallbacks")
+  //.defineDelegateProperty ("originalURI")
+  .defineDelegateProperty ("owner")
+  .defineDelegateProperty ("securityInfo", "readonly")
+  .defineDelegateProperty ("URI", "readonly");
 
 /**
  * JPEG サムネチャネル
@@ -601,6 +814,562 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     this._listener = null;
     this._context = null;
   }
+};
+
+/**
+ * キャッシュアクセスチャネル
+ *   Inherits From: nsIChannel, nsIRequest
+ *                  nsICacheListener
+ *
+ * @param  String clientID
+ * @param  String key
+ * @param  nsIURI  uri
+ */
+function arAkahukuCacheChannel (clientID, key, uri) {
+  this._originalKey = new String (key);
+  this._candidates = [
+    this._originalKey,
+    this._originalKey + ".backup", //スレのバックアップキャッシュ
+  ];
+
+  this._key = this._candidates.shift ();
+  this.name = uri.spec;
+  this.originalURI = uri;
+  this.URI = uri;
+
+  this._cacheSession
+    = Components.classes
+    ["@mozilla.org/network/cache-service;1"]
+    .getService (nsICacheService)
+    .createSession (clientID,
+                    nsICache.STORE_ANYWHERE,
+                    nsICache.STREAM_BASED);
+  this._cacheSession.doomEntriesIfExpired = false;
+}
+arAkahukuCacheChannel.prototype = {
+  _cacheSession : null,
+  _isPending : false,
+  _wasOpened : false,
+  _canceled : false,
+  _waitingForRedirectCallback : true,
+  _redirectChannel : null,
+  _contentEncoding : "",
+  _streamConverter : null,
+
+  QueryInterface : function (iid) {
+    if (iid.equals (nsISupports)
+        || iid.equals (nsIRequest)
+        || iid.equals (nsIChannel)
+        || iid.equals (nsICacheListener)
+        || iid.equals (nsIAsyncVerifyRedirectCallback)) {
+      return this;
+    }
+        
+    throw Components.results.NS_ERROR_NO_INTERFACE;
+  },
+
+  /* nsIRequest */
+  loadFlags : nsIRequest.LOAD_NORMAL,
+  loadGroup : null,
+  name : "",
+  status : Components.results.NS_OK,
+  cancel : function (status) {
+    this._canceled = true;
+    this.status = status;
+    if (this._redirectChannel)
+      this._redirectChannel.cancel (status);
+    if (this._streamConverter)
+      this._streamConverter.cancel (status);
+  },
+  isPending : function () {
+    return this._isPending;
+  },
+  resume : function () {
+    if (this._redirectChannel)
+      this._redirectChannel.resume ();
+    if (this._streamConverter)
+      this._streamConverter.resume ();
+  },
+  suspend : function () {
+    if (this._redirectChannel)
+      this._redirectChannel.suspend ();
+    if (this._streamConverter)
+      this._streamConverter.suspend ();
+  },
+
+  /* nsIChannel */
+  contentCharset : "",
+  contentLength : -1,
+  contentType : "",
+  notificationCallbacks : null, //ignored
+  originalURI : null,
+  owner : null,
+  securityInfo : null,
+  URI : null,
+  asyncOpen : function (listener, context) {
+    if (this._isPending) throw Components.results.NS_ERROR_IN_PROGRESS;
+    if (this._wasOpened) throw Components.results.NS_ERROR_ALREADY_OPENED;
+    if (this._canceled) throw this.status;
+    this._isPending = true;
+    this._wasOpened = true;
+    this._listener = listener;
+    this._context = context;
+    if (this._canceled) {
+      throw this.status;
+    }
+    try {
+      // TODO: isStorageEnabled()
+      this._cacheSession.asyncOpenCacheEntry
+        (this._key, nsICache.ACCESS_READ, this);
+    }
+    catch (e) { Components.utils.reportError (e);
+      this._isPending = false;
+      this._close (Components.results.NS_BINDING_FAILED);
+      throw e;
+    }
+    if (this.loadGroup) {
+      try {
+        this.loadGroup.addRequest (this, null);
+      } catch (e) { Components.utils.reportError (e);
+      }
+    }
+  },
+  open : function () {
+    throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+  },
+
+  // チャネルを片付ける
+  _close : function (status)
+  {
+    this.status = status;
+    if (this._isPending) {
+      if (this.loadGroup) {
+        try {
+          this.loadGroup.removeRequest (this, null, this.status);
+        } catch (e) { }
+      }
+      if (status != Components.results.NS_BINDING_REDIRECTED
+          && status != Components.results.NS_OK) {
+        // リクエスト失敗
+        try {
+          this._listener.onStartRequest (this, this._context);
+        } catch (e) { Components.utils.reportError (e); }
+        this._isPending = false;
+        try {
+          this._listener.onStopRequest (this, this._context, status);
+        } catch (e) { Components.utils.reportError (e); }
+      }
+      else {
+        this._isPending = false;
+      }
+    }
+    this._listener = null;
+    this._context = null;
+    this.notificationCallbacks = null;
+    this._redirectChannel = null;
+    this._streamConverter = null;
+  },
+
+  /**
+   * nsICacheListener.onCacheEntryAvailable 
+   *
+   * @param nsICacheEntryDescriptor descriptor
+   * @param nsCacheAccessMode accessGranted
+   * @param nsresult status
+   */
+  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
+    if (this._canceled) {
+      if (descriptor) descriptor.close ();
+      this._close (Components.results.NS_BINDING_ABORTED);
+      return;
+    }
+
+    var isValidCache = false;
+    if (Components.isSuccessCode (status)
+        && accessGranted & nsICache.ACCESS_READ) {
+      try { // レスポンスヘッダー解析
+        var text = descriptor.getMetaDataElement ("response-head");
+        var headers = (text ? text.split ("\n") : ["no response-head"]);
+        var statusCode = this._parseHeaders (headers);
+        if (!statusCode) {
+          throw new Components.Exception
+            ("Akahuku: unexpected cache status \""
+             + headers [0] + "\" ("+ descriptor.key + ")",
+             Components.results.NS_ERROR_UNEXPECTED);
+        }
+        else if (statusCode [0] == "2" && descriptor.dataSize > 0) {
+          isValidCache = true;
+          this.contentLength = descriptor.dataSize;
+        }
+        else { // 404 など
+          descriptor.close ();
+        }
+      }
+      catch (e) { Components.utils.reportError (e);
+        descriptor.close ();
+      }
+    }
+    if (!isValidCache) { // 次の候補に切り替えて再調査
+      var nextKey = this._candidates.shift ();
+      if (nextKey) {
+        this._key = nextKey;
+        try {
+          this._cacheSession.asyncOpenCacheEntry
+            (this._key, nsICache.ACCESS_READ, this);
+        }
+        catch (e) { Components.utils.reportError (e);
+          // asyncOpenCacheEntryが失敗するような場合は諦める
+          // TODO: or 時間をおいて再実行？
+          this._close (Components.results.NS_BINDING_FAILED);
+        }
+        return;
+      }
+    }
+
+    try {
+      var ischannel = null;
+      var doRedirect = false;
+      if (isValidCache) {
+        ischannel
+          = Components.classes
+          ["@mozilla.org/network/input-stream-channel;1"]
+          .createInstance (nsIInputStreamChannel);
+        ischannel.setURI (this.URI);
+        ischannel.contentStream = descriptor.openInputStream (0);          
+        this._setupReplacementChannel (ischannel);
+        doRedirect = true;
+      }
+      else {
+        if (status == Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND
+            && this.loadFlags & nsIRequest.LOAD_BYPASS_CACHE) {
+          // Shift-Reload ではキャッシュが無ければ普通に開く
+          var ios
+            = Components.classes ["@mozilla.org/network/io-service;1"]
+            .getService (nsIIOService);
+          ischannel = ios.newChannel (this._originalKey, null, null);
+          this._setupReplacementChannel (ischannel);
+          doRedirect = true;
+        }
+        else if (this.loadFlags & nsIChannel.LOAD_INITIAL_DOCUMENT_URI) {
+          // キャッシュが無いよメッセージ
+          ischannel = this._createFailChannel (this.URI);
+        }
+      }
+
+      if (!ischannel) {
+        this._close (Components.results.NS_ERROR_NO_CONTENT);
+        return;
+      }
+
+      if (doRedirect) {
+        var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
+        verifyHelper.init
+          (this, ischannel, nsIChannelEventSink.REDIRECT_INTERNAL);
+        this._waitingForRedirectCallback = true;
+        this._redirectChannel = ischannel;
+      }
+      else {
+        // リダイレクト通知せず直にチャネルを開く
+        this._redirectChannel = ischannel;
+        this.onRedirectVerifyCallback (Components.results.NS_OK);
+      }
+    }
+    catch (e) { Components.utils.reportError (e);
+      this._close (Components.results.NS_BINDING_FAILED);
+    }
+  },
+
+  onRedirectVerifyCallback : function (result)
+  {
+    if (this._canceled && Components.isSuccessCode (result)) {
+      result = Components.results.NS_BINDING_ABORTED;
+    }
+
+    if (Components.isSuccessCode (result)) {
+      // リダイレクト先を開く
+      try {
+        if (this._contentEncoding) {
+          this._streamConverter
+            = Components.classes
+            ["@mozilla.org/streamconv;1?from="
+            +this._contentEncoding
+            +"&to=uncompressed"]
+            .createInstance (nsIStreamConverter);
+        }
+        if (this._streamConverter) {
+          this._streamConverter.asyncConvertData
+            (this._contentEncoding, "uncompressed",
+             this._listener, this._context);
+          this._listener = this._streamConverter;
+        }
+        this._redirectChannel.asyncOpen
+          (this._listener, this._context);
+        if (this._waitingForRedirectCallback)
+          result = Components.results.NS_BINDING_REDIRECTED;
+      }
+      catch (e) { Components.utils.reportError (e);
+        result = Components.results.NS_BINDING_FAILED;
+      }
+    } else {
+      // リダイレクト拒絶
+    }
+
+    this._waitingForRedirectCallback = false;
+
+    this._close (result);
+  },
+
+  _parseHeaders : function (headers)
+  {
+    if (!/^HTTP\/1\.[10] \d\d\d /.test (headers [0])) {
+      return "";
+    }
+    var statusCode = headers [0].substr (9, 3);
+    var newLocations = new Array ();
+    for (var i = 1; i < headers.length; i++) {
+      if (!headers [i].match (/^([^: ]+): ([^\s]+)/)) {
+        continue;
+      }
+      var key = RegExp.$1, value = RegExp.$2;
+      switch (key) {
+        case "Content-Type":
+          value.replace
+            (/;\s*charset=([^\s]+)/,
+             function (matched, charset) {
+               this.contentCharset = charset;
+               return "";
+             });
+          this.contentType = new String (value);
+          break;
+        case "Content-Encoding":
+          if (!this._contentEncoding) {
+            this._contentEncoding = value;
+          }
+          break;
+        case "Location":
+          if (statusCode [0] == "3") {
+            newLocations.push (new String (value));
+          }
+          break;
+      }
+    }
+
+    // Locationを候補に追加 (HTTP/1.x 3xx)
+    for (var i = newLocations.length - 1; i >= 0; i--) {
+      this._candidates.unshift (newLocations [i]);
+    }
+
+    return statusCode;
+  },
+
+  _setupReplacementChannel : function (channel) 
+  {
+    channel = channel.QueryInterface (nsIChannel);
+    channel.loadGroup = this.loadGroup;
+    channel.notificationCallbacks = this.notificationCallbacks;
+    channel.loadFlags |= (this.loadFlags | nsIChannel.LOAD_REPLACE);
+    channel.originalURI = this.originalURI;
+
+    try {
+      channel = channel.QueryInterface (nsIInputStreamChannel);
+    } catch (e if e.result == Components.results.NS_ERROR_NO_INTERFACE) {
+      return;
+    }
+    // 既知のコンテンツ情報を引き継ぐ
+    if (this.contentType)
+      channel.contentType = this.contentType;
+    if (this.contentCharset)
+      channel.contentCharset = this.contentCharset; 
+    if (this.contentLength)
+      channel.contentLength = this.contentLength;
+  },
+
+  _createFailChannel : function (uri) 
+  {
+    var text = "No Cache for " + this._originalKey;
+    var sstream
+    = Components.classes ["@mozilla.org/io/string-input-stream;1"]
+    .createInstance (nsIStringInputStream);
+    sstream.setData (text, text.length);
+        
+    var inputStreamChannel
+    = Components.classes ["@mozilla.org/network/input-stream-channel;1"]
+    .createInstance (nsIInputStreamChannel);
+        
+    inputStreamChannel.setURI (uri);
+    inputStreamChannel.contentStream = sstream;
+    var channel = inputStreamChannel.QueryInterface (nsIChannel);
+    channel.contentCharset = "utf-8";
+    channel.contentType = "text/plain";
+    channel.contentLength = text.length;
+    return inputStreamChannel;
+  },
+};
+
+// Gecko 2.0 以降にも対応したリダイレクト通知ヘルパー
+// (based on nsAsyncRedirectVerifyHelper.cpp)
+function arAkahukuAsyncRedirectVerifyHelper () 
+{
+}
+arAkahukuAsyncRedirectVerifyHelper.prototype = {
+  _callbackInitiated : false, /* Boolean */
+  _expectedCallbacks : 0, /* Number VerifyCallback が返答されるはずの数 */
+  _result : Components.results.NS_OK, /* nsresult リダイレクト可否 */
+
+  _oldChan : null,
+  _newChan : null,
+  _flags : 0,
+
+  init : function (oldChan, newChan, flags)
+  {
+    this._oldChan = oldChan;
+    this._newChan = newChan;
+    this._flags   = flags;
+    var tm
+      = Components.classes ["@mozilla.org/thread-manager;1"]
+      .getService (nsIThreadManager);
+    this._callbackThread = tm.currentThread;
+
+    tm.mainThread.dispatch (this, nsIThread.DISPATCH_NORMAL);
+  },
+  //nsIRunnable
+  run : function ()
+  {
+    if (!Components.isSuccessCode (this._oldChan.status)) {
+      this._returnCallback (Components.results.NS_BINDING_ABORTED);
+      return;
+    }
+    var gsink
+      = Components.classes
+      ["@mozilla.org/netwerk/global-channel-event-sink;1"]
+      .getService (nsIChannelEventSink);
+    try {
+      this._delegateOnChannelRedirect (gsink);
+    } catch (e) { Components.utils.reportError (e);
+      this._returnCallback (e.result);
+      return;
+    }
+    try {
+      if (this._oldChan.notificationCallbacks) {
+        this._delegateOnChannelRedirect
+          (this._oldChan.notificationCallbacks);
+      }
+    } catch (e) { Components.utils.reportError (e);
+    }
+    try {
+      if (this._oldChan.loadGroup
+          && this._oldChan.loadGroup.notificationCallbacks) {
+        this._delegateOnChannelRedirect
+          (this._oldChan.loadGroup.notificationCallbacks);
+      }
+    } catch (e) { Components.utils.reportError (e);
+    }
+    this._initCallback ();
+  },
+  _initCallback : function ()
+  {
+    this._callbackInitiated = true;
+    if (this._expectedCallbacks == 0)
+      this._returnCallback (this._result);
+  },
+  _returnCallback : function (result)
+  {
+    try {
+      var callback
+        = this._oldChan.QueryInterface (nsIAsyncVerifyRedirectCallback);
+      this._callbackInitiated = false;
+      var event = new arAkahukuAsyncRedirectVerifyHelper.Event (callback, result);
+      this._callbackThread.dispatch (event, nsIThread.DISPATCH_NORMAL);
+    } catch (e) { Components.utils.reportError (e);
+      //no echo
+    }
+  },
+
+  _delegateOnChannelRedirect : function (sink)
+  {
+    this._expectedCallbacks ++;
+
+    if (!Components.isSuccessCode (this._oldChan.status)) {
+      // 既にキャンセルされてるのでリダイレクトも中止
+      this.onRedirectVerifyCallback (Components.results.NS_BINDING_ABORTED);
+      throw new Components.Exception
+        ("Old channel has been canceled:",
+         Components.results.NS_BINDING_ABORTED);
+    }
+
+    var cesink;
+    if (sink instanceof nsIChannelEventSink) {
+      cesink = sink;
+    } else {
+      try {
+        cesink = sink.getInterface (nsIChannelEventSink);
+      } catch (e) { Components.utils.reportError (e);
+        this._expectedCallbacks --;
+        return;
+      }
+    }
+    try {
+      if (typeof (cesink.onChannelRedirect) == "function") {
+        // Obsolete since Gecko 2.0 
+        cesink.onChannelRedirect
+          (this._oldChan, this._newChan, this._flags);
+        this._expectedCallbacks --; // Callbackを待つ必要がない
+      } else {
+        // Requires Gecko 2.0 (Firefox 4)
+        cesink.asyncOnChannelRedirect
+          (this._oldChan, this._newChan, this._flags, this);
+      }
+    } catch (e) { Components.utils.reportError (e);
+      // リダイレクト通知を中止
+      this.onRedirectVerifyCallback (e.result);
+      throw e;
+    }
+  },
+
+  // リダイレクトの問い合わせ結果を受ける
+  // nsIAsyncVerifyRedirectCallback
+  onRedirectVerifyCallback : function (result)
+  {
+    this._expectedCallbacks --;
+    if (!Components.isSuccessCode (result)) {
+      if (Components.isSuccessCode (this._result))
+        this._result = result; // 最初の否定的結果を保存
+      if (this._callbackInitiated)
+        this._returnCallback (this._result);
+    }
+    if (this._callbackInitiated
+        && this._expectedCallbacks == 0) {
+      this._returnCallback (this._result);
+    }
+  },
+  QueryInterface : function (iid) {
+    if (iid.equals (nsIAsyncVerifyRedirectCallback)
+        || iid.equals (Components.interfaces.nsIRunnable)
+        || iid.equals (nsISupports)) {
+      return this;
+    }
+    throw Components.results.NS_ERROR_NO_INTERFACE;
+  },
+};
+arAkahukuAsyncRedirectVerifyHelper.Event = function (callback, result) {
+  this._callback = callback;
+  this._result = result;
+};
+arAkahukuAsyncRedirectVerifyHelper.Event.prototype = {
+  // nsIRunnable
+  run : function ()
+  {
+    this._callback
+      .QueryInterface (nsIAsyncVerifyRedirectCallback)
+      .onRedirectVerifyCallback (this._result);
+  },
+  QueryInterface : function (iid) {
+    if (iid.equals (Components.interfaces.nsIRunnable)
+        || iid.equals (nsISupports)) {
+      return this;
+    }
+    throw Components.results.NS_ERROR_NO_INTERFACE;
+  },
 };
 
 /* moved from arAkahukuP2PChannel.js */
@@ -1786,6 +2555,7 @@ arAkahukuProtocolHandler.prototype = {
       }
     }
     
+    uri = this.deAkahukuURI (uri); // 二重エンコードしないと保証
     if (uri
         .match (/^([A-Za-z0-9\-]+):(\/\/)?([^\/]*)(\/\/)?(\/)?(.*)$/)) {
       var protocol = RegExp.$1;
@@ -1960,6 +2730,32 @@ arAkahukuProtocolHandler.prototype = {
    *         作成した URI
    */
   newURI : function (spec, charset, baseURI) {
+    var url
+      = Components.classes ["@mozilla.org/network/standard-url;1"]
+      .createInstance (nsIStandardURL);
+    var preamble; // encoded type, protocol, and sep
+    if (baseURI) {
+      // 相対アドレスを正しく解決させるために preamble を除外しておく
+      baseURI = baseURI.clone ();
+      var r = /^\/(?:p2p|preview\.[^\/]+|jpeg|(?:file)?cache)\/\w+\.\d(?=\/)/;
+      var match = r.exec (baseURI.path);
+      if (match) {
+        preamble = match [0];
+        baseURI.path = baseURI.path.substr (preamble.length);
+        // filecache からの相対アドレスはただの cache へ変換
+        preamble = preamble.replace (/^\/filecache/,"/cache");
+      }
+    }
+    url.init
+      (nsIStandardURL.URLTYPE_AUTHORITY, -1, spec, charset, baseURI);
+    var uri = url.QueryInterface (nsIURI);
+    if (preamble && uri.spec != spec) {
+      // 相対アドレスが解決された後に preamble を戻す
+      uri.path = preamble + uri.path;
+    }
+    return uri;
+
+    // 必要？
     var pos;
     while ((pos = spec.indexOf ("akahuku://", 1)) > 0) {
       /* Bazzacuda Image Saver が相対パスの連結に失敗する
@@ -2046,11 +2842,13 @@ arAkahukuProtocolHandler.prototype = {
     else if (tmp.match (/\.png$/i)) {
       contentType = "image/png";
     }
-    else if (tmp.match (/\.bmp/i)) {
+    else if (/\.bmp$/i.test (tmp)) {
       contentType = "image/bmp";
     }
     else {
+      /* 画像以外でもバイパスチャネルの利用を許可する
       return this._createEmptyChannel (uri);
+      */
     }
         
     var channel = new arAkahukuBypassChannel (uri.spec,
@@ -2120,7 +2918,11 @@ arAkahukuProtocolHandler.prototype = {
     var param = this.getAkahukuURIParam (uri.spec);
         
     try {
-      var bindata = "";
+      var istream = null;
+      var dataSize = 0;
+      var contentType = "text/html";
+      var charset = "";
+      //var bindata = "";
       if (isFile) {
         var mediator
           = Components.classes
@@ -2154,6 +2956,9 @@ arAkahukuProtocolHandler.prototype = {
           .classes ["@mozilla.org/network/file-input-stream;1"]
           .createInstance (nsIFileInputStream);
         fstream.init (targetFile, 0x01, 0444, 0);
+        istream = fstream.QueryInterface (nsIInputStream);
+        dataSize = targetFile.fileSize;
+        /*
         var bstream
           = Components.classes ["@mozilla.org/binaryinputstream;1"]
           .createInstance (nsIBinaryInputStream);
@@ -2161,8 +2966,13 @@ arAkahukuProtocolHandler.prototype = {
         bindata = bstream.readBytes (targetFile.fileSize);
         bstream.close ();
         fstream.close ();
+        */
       }
       else {
+        var channel
+          = new arAkahukuCacheChannel
+          ("HTTP", param.original, uri);
+        return channel;
         var cacheService
           = Components.classes
           ["@mozilla.org/network/cache-service;1"]
@@ -2175,15 +2985,62 @@ arAkahukuProtocolHandler.prototype = {
                           true);
         httpCacheSession.doomEntriesIfExpired = false;
             
-        descriptor
-          = httpCacheSession.openCacheEntry
-          (param.original + ".backup",
-           nsICache.ACCESS_READ,
-           false);
+        try {
+          var descriptor
+            = httpCacheSession.openCacheEntry
+            (param.original + ".backup",
+             nsICache.ACCESS_READ,
+             false);
+        }
+        catch (e if e.result == Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+          /* .backupが無くても元が有効なら使う */
+          descriptor = null;
+          try {
+            descriptor
+              = httpCacheSession.openCacheEntry
+              (param.original, nsICache.ACCESS_READ, false);
+            var headers
+              = descriptor.getMetaDataElement ("response-head")
+              .split ("\n");
+            if (!/^HTTP\/[0-9]\.[0-9] 200 /.test (headers.shift ())) {
+              throw "No valid cache";
+            }
+            /* レスポンスヘッダー解析 */
+            for (var i = 0; i < headers.length; i++) {
+              if (!headers [i].match (/^([^: ]+): ([^\s;]+)/)) {
+                continue;
+              }
+              var key = RegExp.$1, value = RegExp.$2;
+              switch (key) {
+                case "Content-Type":
+                  contentType = new String (value);
+                  if (headers [i].match (/ charset=([^\s]+)/)) {
+                    charset = new String (RegExp.$1);
+                  }
+                  break;
+                case "Content-Length":
+                  if (parseInt (value) != descriptor.dataSize) {
+                    throw "Incomplete cache";
+                  }
+                  break;
+              }
+            }
+          }
+          catch (e) {
+            /* 元キャッシュが無かった or 不適当だった */
+            if (descriptor) {
+              descriptor.close ();
+              descriptor = null;
+            }
+          }
+        }
         if (!descriptor) {
           return this._createThreadCacheFailChannel (uri);
         }
             
+        istream = descriptor.openInputStream (0);
+        dataSize = descriptor.dataSize;
+        /*
         var istream = descriptor.openInputStream (0);
         var bstream
           = Components.classes ["@mozilla.org/binaryinputstream;1"]
@@ -2192,9 +3049,10 @@ arAkahukuProtocolHandler.prototype = {
         bindata = bstream.readBytes (descriptor.dataSize);
         bstream.close ();
         istream.close ();
-        descriptor.close ();
+        descriptor.close ();*/
       }
             
+      /*
       var pipe
         = Components.classes ["@mozilla.org/pipe;1"]
         .createInstance (nsIPipe);
@@ -2203,6 +3061,7 @@ arAkahukuProtocolHandler.prototype = {
                     
       pipe.outputStream.write (bindata, bindata.length);
       pipe.outputStream.close ();
+      */
                     
       var inputStreamChannel
         = Components
@@ -2210,13 +3069,12 @@ arAkahukuProtocolHandler.prototype = {
         .createInstance (nsIInputStreamChannel);
                     
       inputStreamChannel.setURI (uri);
-      inputStreamChannel.QueryInterface (nsIChannel).contentType
-        = "text/html";
-      inputStreamChannel.QueryInterface (nsIChannel)
-        .contentCharset = "";
-      inputStreamChannel.contentStream = pipe.inputStream;
-      inputStreamChannel.QueryInterface (nsIChannel)
-        .contentLength = bindata.length;
+      inputStreamChannel.contentStream = istream;//pipe.inputStream;
+      var channel
+        = inputStreamChannel.QueryInterface (nsIChannel);
+      channel.contentType = contentType;
+      channel.contentCharset = charset; 
+      channel.contentLength = dataSize;//bindata.length;
             
       return inputStreamChannel;
     }
@@ -2225,7 +3083,7 @@ arAkahukuProtocolHandler.prototype = {
       return this._createThreadCacheFailChannel (uri);
     }
         
-    return channel;
+    //return channel;
   },
     
   /**

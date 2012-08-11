@@ -125,7 +125,7 @@ var arAkahukuTab = {
       var list = new Array ();
       if (value == "") {
         var name;
-        for (name in arAkahukuServerName.keys) {
+        for (name in arAkahukuServerName) {
           list.push (name);
         }
         list = list.sort (function (x, y) {
@@ -204,8 +204,14 @@ var arAkahukuTab = {
       var data;
       var documentParam;
       var group = 0;
+      var indics = []; // 移動可能な対象インデックス
       for (i = 0; i < tabs.length; i ++) {
         var tab = tabs [i];
+        // ソートできないピン留めされたタブを除外 (Gecko2.0)
+        if (tab.getAttribute ("pinned") == "true") {
+          continue;
+        }
+        indics.push (i);
         data = new arAkahukuTabData ();
         data.i = i;
         data.tab = tab;
@@ -216,7 +222,18 @@ var arAkahukuTab = {
           (tabbrowser.getBrowserForTab (tab).contentDocument, false);
         if (documentParam) {
           data.info = documentParam.location_info;
+        }
+        else {
+          // documentParam が得られない場合 (pending タブ含む)
+          data.info
+            = new arAkahukuLocationInfo
+            (tabbrowser.getBrowserForTab (tab).contentDocument);
+          if (!data.info.isFutaba) {
+            delete data.info;
+          }
+        }
                     
+        if (data.info) {
           if (data.info.isNormal) {
             data.type = 0;
           }
@@ -389,7 +406,7 @@ var arAkahukuTab = {
         });
             
       for (var i = 0; i < list.length; i ++) {
-        tabbrowser.moveTabTo (list [i].tab, i);
+        tabbrowser.moveTabTo (list [i].tab, indics [i]);
       }
     }
   }

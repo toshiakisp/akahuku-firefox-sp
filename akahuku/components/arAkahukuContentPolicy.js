@@ -12,6 +12,7 @@ const nsIInterfaceRequestor = Components.interfaces.nsIInterfaceRequestor;
 const nsIObserverService    = Components.interfaces.nsIObserverService;
 const nsIPrefBranch         = Components.interfaces.nsIPrefBranch;
 const nsIPrefBranch2        = Components.interfaces.nsIPrefBranch2;
+const nsIIOService          = Components.interfaces.nsIIOService;
 const nsIURI                = Components.interfaces.nsIURI;
 const nsIWebNavigation      = Components.interfaces.nsIWebNavigation;
 const nsIWindowMediator     = Components.interfaces.nsIWindowMediator;
@@ -58,7 +59,7 @@ arAkahukuContentPolicy.prototype = {
   _prefP2PTatelogName        : "akahuku.p2p.tatelog",
 
   _prefBoardExternalName         : "akahuku.board_external",
-  _prefBoardExternalPatternsName : "akahuku.board_external.patterns",
+  _prefBoardExternalPatternsName : "akahuku.board_external.patterns2",
     
   _pref : null,              /* nsIPrefBranch2/nsIPrefBranch  pref サービス */
     
@@ -146,6 +147,10 @@ arAkahukuContentPolicy.prototype = {
       = Components.classes ["@mozilla.org/preferences-service;1"]
       .getService (nsIPrefBranch);
     }
+
+    this._ios
+    = Components.classes ["@mozilla.org/network/io-service;1"]
+    .getService (nsIIOService);
         
     /* 設定を取得する */
     this._updateEnabled ();
@@ -172,6 +177,9 @@ arAkahukuContentPolicy.prototype = {
       this._pref.removeObserver (this._prefAllName, this);
       this._pref.removeObserver (this._prefCheckName, this);
       this._pref.removeObserver (this._prefP2PName, this);
+      this._pref.removeObserver (this._prefDelBannerSitesImageName, this, false);
+      this._pref.removeObserver (this._prefDelBannerSitesObjectName, this, false);
+      this._pref.removeObserver (this._prefDelBannerSitesIframeName, this, false);
     }
     else if (topic == "nsPref:changed") {
       /* 設定の変更の場合 */
@@ -278,40 +286,22 @@ arAkahukuContentPolicy.prototype = {
     = enableAll && enableBoardExternal;
         
     if (this._enableBoardExternal) {
-      var tmp = "";
-      if (this._pref.prefHasUserValue
-          (this._prefBoardExternalPatternsName)) {
-        tmp
+      if (typeof JSON != "undefined"
+          && this._pref.prefHasUserValue
+            (this._prefBoardExternalPatternsName)) {
+        var tmp
           = this._pref.getCharPref
           (this._prefBoardExternalPatternsName);
-      }
-      if (tmp != "") {
-        var self = this;
-                
-        if (this._old) {
-          /* 古い場合は this._unescape を使う */
-          var self = this;
-          /* 値を解析するだけなので代入はしない */
-          tmp.replace
-            (/([^&,]*)&([^&,]*),?/g,
-             function (matched, pattern, flag) {
-              self._boardExternalList.push
-                (new Array (new RegExp (self
-                                        ._unescape (pattern)),
-                            flag));
-              return "";
-            });
+        this._boardExternalList = JSON.parse (unescape (tmp));
+        while (this._boardExternalList.length
+               && this._boardExternalList [0] == undefined) {
+          this._boardExternalList.shift ();
         }
-        else {
-          /* 値を解析するだけなので代入はしない */
-          tmp.replace
-            (/([^&,]*)&([^&,]*),?/g,
-             function (matched, pattern, flag) {
-              self._boardExternalList.push
-                (new Array (new RegExp (unescape (pattern)),
-                            flag));
-              return "";
-            });
+        for (var i = 0; i < this._boardExternalList.length; i ++) {
+          if (!this._boardExternalList [i].prefix) {
+            this._boardExternalList [i].pattern
+              = new RegExp (this._boardExternalList [i].pattern);
+          }
         }
       }
     }
@@ -347,64 +337,130 @@ arAkahukuContentPolicy.prototype = {
     this._blockList [this.TYPE_SUBDOCUMENT] = new Array ();
     this._blockList [this.TYPE_OBJECT] = new Array ();
         
+    this._blockList [this.TYPE_IMAGE].includesFutaba = false;
+    this._blockList [this.TYPE_SUBDOCUMENT].includesFutaba = false;
+    this._blockList [this.TYPE_OBJECT].includesFutaba = false;
+        
     var tmp = "";
     var list = this._blockList;
     var type = this.TYPE_IMAGE;
+    var ios = this._ios;
+    /* String.replace 用関数 (this に注意) */
     function addMatchedToList (matched) {
-      if (matched)
-        list [type].push (matched);
+      try {
+        var obj = {
+          count: 0,
+          hostPattern : null,
+          URI : null,
+          isURI : /^[a-z]*:\/\//.test (matched),
+        };
+        if (obj.isURI) {
+          obj.URI = ios.newURI (matched, "UTF-8", null);
+          if (obj.URI && /\.2chan\.net$/i.test(obj.URI.host) ) {
+            list [type].includesFutaba = true;
+          }
+        }
+        else {
+          /* トップレベルや .2chan.net はドメインブロックしない */
+          if (! /^[^.]*$/.test (matched)
+              || !/^\.?(2chan\.)?net$/i.test (matched) ) {
+            var pat = matched.replace
+              (/[-\[\]\/\{\}\(\)\*\+\?\.\^\$\|\\]/g, "\\$&");
+            obj.hostPattern = new RegExp (pat+"$","i");
+          }
+          else {
+          }
+        }
+        if (obj.hostPattern || obj.URI) {
+          list [type].push (obj);
+        }
+      }
+      catch (e) {
+        Components.utils.reportError (e);
+      }
       return matched;
     }
     if (this._enableBlockImage) {
       /* 画像 */
-      tmp = ";" /* 埋め込みブロックリスト */
-        /* 通常ページ - 上 */
-        //+ "sante.kir.jp"
-        + "pink072.jp;"
-        + "aqua.dmm.co.jp;"
-        + "banner.luna-p.com;"
-        /* 通常ページ - 下 */
-        + "marionette.kir.jp;"
-        /* 404 */
-        + "affiliate.dtiserv.com;"
-        /* 予備 */
-        //+ "www.delicon.jp;"
-        //+ "affiliate.dtiserv.com;"
-        ;
+      tmp = "";
       if (this._pref.prefHasUserValue
           (this._prefDelBannerSitesImageName)) {
         tmp
           = this._pref.getCharPref
           (this._prefDelBannerSitesImageName);
+        tmp = unescape (tmp);
       }
       type = this.TYPE_IMAGE;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
       /* IFRAME */
-      tmp = ";" /* 埋め込みブロックリスト */
-        /* 404 */
-        + "www.mmaaxx.com;"
-        + "click.dtiserv2.com;";
+      tmp = "";
       if (this._pref.prefHasUserValue
           (this._prefDelBannerSitesIframeName)) {
         tmp
           = this._pref.getCharPref
           (this._prefDelBannerSitesIframeName);
+        tmp = unescape (tmp);
       }
       type = this.TYPE_SUBDOCUMENT;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
     }
     if (this._enableBlockFlash) {
       /* FLASH などの Object */
-      tmp = ""; /* 埋め込みブロックリスト */
+      tmp = "";
       if (this._pref.prefHasUserValue
           (this._prefDelBannerSitesObjectName)) {
         tmp
           = this._pref.getCharPref
           (this._prefDelBannerSitesObjectName);
+        tmp = unescape (tmp);
       }
       type = this.TYPE_OBJECT;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
     }
+  },
+
+  /** 
+   * ブラウザウィンドウを取得
+   */
+  _getBrowserWindow : function ()
+  {
+    var wm
+      = Components.classes ["@mozilla.org/appshell/window-mediator;1"]
+      .getService (nsIWindowMediator);
+    return wm.getMostRecentWindow ("navigator:browser");
+  },
+
+  /** 
+   * context に対するブラウザウィンドウを取得
+   */
+  _getContextBrowserWindow : function (context)
+  {
+    if (context instanceof Components.interfaces.nsIDOMXULElement) {
+      return context.ownerDocument.defaultView.top;
+    }
+    else if (context instanceof Components.interfaces.nsIDOMNode) {
+      var contextDocument = context;
+      if (context.ownerDocument) {
+        contextDocument = context.ownerDocument;
+      }
+      if (contextDocument.defaultView) {
+        contextDocument = contextDocument.defaultView.top.document;
+      }
+      var entries
+        = Components.classes
+        ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (nsIWindowMediator)
+        .getEnumerator ("navigator:browser");
+      while (entries.hasMoreElements ()) {
+        var targetWindow = entries.getNext ();
+        var tabbrowser
+          = targetWindow.document.getElementById ("content");
+        if (tabbrowser.getBrowserForDocument (contextDocument)) {
+          return targetWindow;
+        }
+      }
+    }
+    return null;
   },
     
   /**
@@ -437,19 +493,14 @@ arAkahukuContentPolicy.prototype = {
   shouldLoad : function (contentType, contentLocation,
                          requestOrigin, context,
                          mimeTypeGuess, extra) {
+  try {
     if (!this._enableP2P) {
       if (contentLocation.scheme == "akahuku") {
         if (contentLocation.spec.match
             (/^akahuku:\/\/[^\/]*\/p2p\//)) {
           /* 全体が無効の場合には P2P なアドレスを元に戻す */
-          var entries
-          = Components.classes
-          ["@mozilla.org/appshell/window-mediator;1"]
-          .getService (nsIWindowMediator)
-          .getEnumerator ("navigator:browser");
-                    
-          if (entries.hasMoreElements ()) {
-            var targetWindow = entries.getNext ();
+          var targetWindow = this._getBrowserWindow ();
+          if (targetWindow) {
             targetWindow.arAkahukuP2P.deP2PContext
               (context,
                contentLocation.spec);
@@ -464,33 +515,23 @@ arAkahukuContentPolicy.prototype = {
         && context.nodeName.match (/(xul:)?browser/)
         && contentLocation.spec.match
         (/^akahuku:\/\/[^\/]*\/p2p\//)) {
-      var entries
-      = Components.classes
-      ["@mozilla.org/appshell/window-mediator;1"]
-      .getService (nsIWindowMediator)
-      .getEnumerator ("navigator:browser");
-            
-      while (entries.hasMoreElements ()) {
-        var targetWindow = entries.getNext ();
-        try {
-          targetWindow.arAkahukuP2P.checkImage
-            (context,
-             context.contentDocument.location.href,
-             contentLocation.spec,
-             20, targetWindow, -1);
-          break;
-        }
-        catch (e) {
-        }
+      var targetWindow = this._getBrowserWindow ();
+      if (targetWindow) {
+        targetWindow.arAkahukuP2P.checkImage
+          (context,
+           context.contentDocument.location.href,
+           contentLocation.spec,
+           20, targetWindow, -1);
       }
             
       return this.ACCEPT;
     }
 
+    /* http(s) 以外でも cache の処理等があるのでまだ許可しない
     if (contentLocation.scheme.substring (0, 4) != "http") {
-      /* http(s) 以外の場合許可する */
       return this.ACCEPT;
     }
+    */
         
     var swapped = false;
         
@@ -524,7 +565,9 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
-    if (this._enableP2P) {
+    if (this._enableP2P
+        // http 以外もありえるため二重処理を避けて
+        && contentLocation.scheme.substring (0, 4) == "http") {
       /* P2P モードが有効の場合 */
 
       if (this._old && !swapped) {
@@ -636,6 +679,63 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
+    /* キャッシュページからの画像読込 */
+    if (this._enableAll // eusures !this._old || swapped
+        && contentType == this.TYPE_IMAGE
+        && requestOrigin
+        && requestOrigin.schemeIs ("akahuku")
+        && /^\/(file)?cache\//.test (requestOrigin.path)) {
+      if (!contentLocation.schemeIs ("akahuku")) {
+        // 通常の画像読込を禁止し、必要なら cache に差し替える
+        var contextWindow = this._getContextBrowserWindow (context);
+        if (contextWindow) {
+          var decodedOriginSpec
+            = contextWindow.Akahuku.protocolHandler
+            .deAkahukuURI (requestOrigin.spec);
+          var policy
+            = Components.classes
+            ["@mozilla.org/layout/content-policy;1"]
+            .getService (nsIContentPolicy);
+          var shouldLoad
+            = policy.shouldLoad
+            (contentType, contentLocation,
+             this._ios.newURI (decodedOriginSpec, "UTF-8", null),
+             context, mimeTypeGuess, extra);
+          if (shouldLoad != this.ACCEPT) {
+            return shouldLoad;
+          }
+          if (context instanceof Components.interfaces.nsIDOMElement) {
+            contextWindow.Akahuku.queueContextTask
+              (contextWindow.Akahuku.Cache,
+               "enCacheURIContext", context, contentLocation.spec);
+          }
+        }
+        return this.REJECT_OTHER;
+      }
+      else {
+        // 差し替えられた akahuku:///cache/ 画像は
+        // 元URLに戻した上で残りの判定へ
+        var targetWindow = this._getBrowserWindow ();
+        if (targetWindow) {
+          var decodedLocationSpec
+            = targetWindow.Akahuku.protocolHandler
+            .deAkahukuURI (contentLocation.spec);
+          contentLocation
+            = this._ios.newURI (decodedLocationSpec, "UTF-8", null);
+          var decodedOriginSpec
+            = targetWindow.Akahuku.protocolHandler
+            .deAkahukuURI (requestOrigin.spec);
+          requestOrigin
+            = this._ios.newURI (decodedOriginSpec, "UTF-8", null);
+        }
+      }
+    }
+
+    if (contentLocation.scheme.substring (0, 4) != "http") {
+      /* http(s) 以外の場合許可する */
+      return this.ACCEPT;
+    }
+        
     if (contentType == this.TYPE_IMAGE
         || contentType == this.TYPE_SUBDOCUMENT
         || contentType == this.TYPE_OBJECT) {
@@ -671,15 +771,16 @@ arAkahukuContentPolicy.prototype = {
         }
       }
             
-      if (requestOrigin.scheme.substring (0, 4) != "http") {
-        /* 呼出し元が http(s) 以外の場合は許可する */
+      if (!(/^(?:https?|akahuku)$/.test (requestOrigin.scheme))) {
+        /* 呼出し元が http(s) akahuku 以外の場合は許可する */
         return this.ACCEPT;
       }
             
       if (requestOrigin.host.indexOf ("2chan.net") != -1) {
         /* 2chan.net からの呼び出しの場合チェックする */
                 
-        if (contentLocation.host.indexOf ("2chan.net") != -1) {
+        if (!this._blockList [contentType].includesFutaba
+            && /\.2chan\.net$/i.test (contentLocation.host)) {
           /* 2chan.net 内の場合は許可する */
           return this.ACCEPT;
         }
@@ -687,36 +788,37 @@ arAkahukuContentPolicy.prototype = {
         var list = this._blockList [contentType];
         var reject = false;
         for (var i = 0; i < list.length; i ++) {
-          var index = contentLocation.host.indexOf (list [i]);
-          if (index != -1 && list [i]
-              && index + list [i].length
-                 == contentLocation.host.length) {
-            /* ブロックのリストにある場合 (後方一致) */
-            reject = true;
-            break;
+          if (list [i].isURI) {
+            /* URI で判定 */
+            if ("equalsExceptRef" in contentLocation
+                ? contentLocation.equalsExceptRef (list [i].URI)
+                : contentLocation.equals (list [i].URI)) {
+              reject = true;
+              list [i].count ++;
+              break;
+            }
           }
-        }
-                
-        if (reject
-            && contentLocation.spec
-            == "http://marionette.kir.jp/bannerimg/12095317030.gif") {
-          reject = false;
+          else {
+            /* ホスト名で判定 */
+            if (list [i].hostPattern.test (contentLocation.host) ) {
+              reject = true;
+              list [i].count ++;
+              break;
+            }
+          }
         }
                 
         if (reject) {
-          /* shouldLoad 内からの DOM 操作は許されていない
-          try {
-            // 非表示にする 
-            context.style.display = "none";
-          }
-          catch (e) {
-          }
-          */
-                        
-          /* 暗黙的に XPCNativeWrapper 経由でattribute設定 */
-          if (context.parentNode) {
-            context.parentNode.setAttribute ("delete",
-                                             "delete");
+          /* shouldLoad 内からの DOM 操作が許されない場合があるので
+           * 後から適当なタイミングで操作するようタスク登録する */
+          if (context instanceof Components.interfaces.nsIDOMElement) {
+            var contextWindow = this._getContextBrowserWindow (context);
+            if (contextWindow) {
+              contextWindow.Akahuku.queueContextTask
+                (contextWindow.arAkahukuDelBanner,
+                 "deleteContextAfterBlock",
+                 context, "deleteByContentPolicy");
+            }
           }
                         
           /* 拒否する */
@@ -750,7 +852,9 @@ arAkahukuContentPolicy.prototype = {
       if (this._enableBoardExternal) {
         var href = contentLocation.spec;
         for (var i = 0; i < this._boardExternalList.length; i ++) {
-          if (href.match (this._boardExternalList [i][0])) {
+          if (this._boardExternalList [i].prefix
+              ? href.indexOf (this._boardExternalList [i].pattern) == 0
+              : this._boardExternalList [i].pattern.test (href)) {
             needCheck = true;
             break;
           }
@@ -852,6 +956,7 @@ arAkahukuContentPolicy.prototype = {
     }
         
     return this.ACCEPT;
+  } catch (e) { Components.utils.reportError (e); }
   },
     
   /**

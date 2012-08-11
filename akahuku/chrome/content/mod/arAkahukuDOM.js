@@ -351,7 +351,37 @@ var arAkahukuDOM = {
     }
     return null;
   },
-  
+
+  /**
+   *  危険な要素を除外しながら innerHTML と同等に子要素を構築する
+   *
+   * @param  HTMLElement targetElement
+   *         対象の要素
+   * @param  String htmlText
+   *         HTMLの部分テキスト
+   */
+  setInnerHTMLSafely : function (targetElement, htmlText)
+  {
+    while (targetElement.lastChild) {
+      targetElement.removeChild (targetElement.lastChild);
+    }
+
+    try {
+      // require: Gecko 1.8/Firefox 1.5 +
+      var unescaper
+        = Components.classes ["@mozilla.org/feed-unescapehtml;1"]
+        .getService (Components.interfaces.nsIScriptableUnescapeHTML);
+      var fragment
+        = unescaper.parseFragment (htmlText, false, null, targetElement);
+      targetElement.appendChild (fragment);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      // 最悪でもテキストとしてセットしてあげる
+      var text = targetElement.ownerDocument.createTextNode (htmlText);
+      targetElement.appendChild (text);
+    }
+  },
+
   /**
    * タグ名とクラス名で子ノードを1つ取得する
    * (頻出パターンの可読性を上げる)
@@ -385,3 +415,160 @@ var arAkahukuDOM = {
   },
   
 };
+
+/**
+ * ノードのインラインスタイル (CSS) を操作するサブモジュール
+ * (Node.style プロパティの有無にかかわらず)
+ */
+arAkahukuDOM.Style = new function () {
+  "use strict";
+
+  this.setProperty = function (node, propertyName, value) {
+    var styles = new StyleDeclaration ();
+    styles.importText (node.getAttribute ("style"));
+    styles.setProperty (propertyName, value);
+    node.setAttribute ("style", styles.getCssText ());
+  };
+  this.removeProperty = function (node, propertyName, optWild) {
+    var styles = new StyleDeclaration ();
+    styles.importText (node.getAttribute ("style"));
+    styles.removeProperty (propertyName);
+    if (optWild) { // 短縮形がカバーするプロパティまで削除する
+      var pattern = _getShorthandPattern (propertyName);
+      if (pattern) {
+        for (var i = styles.getLength () - 1; i >= 0; i --) {
+          if (pattern.test (styles.getPropertyAt (i).name)) {
+            styles.removePropertyAt (i);
+          }
+        }
+      }
+    }
+    node.setAttribute ("style", styles.getCssText ());
+  };
+
+  // 短縮形 
+  const SHORTHANDS = [
+    {name:"border",         pattern:/^border(|(-(top|right|bottom|left))?(-width|-style|-color))$/},
+    {name:"margin",         pattern:/^margin(-(top|right|bottom|left))?$/},
+    {name:"padding",        pattern:/^padding(-(top|right|bottom|left))?$/},
+    {name:"font",           pattern:/^font(-(style|variant|weight|size|height|family))?$/},
+    {name:"border-radius",  pattern:/^border(-(top|bottom)-(left|right))?-radius$/},
+    {name:"border-top",     pattern:/^border-top(-width|-style|-color)?$/},
+    {name:"border-right",   pattern:/^border-right(-width|-style|-color)?$/},
+    {name:"border-bottom",  pattern:/^border-bottom(-width|-style|-color)?$/},
+    {name:"border-left",    pattern:/^border-left(-width|-style|-color)?$/},
+    {name:"border-color",   pattern:/^border(-(top|right|bottom|left))?-color$/},
+    {name:"border-style",   pattern:/^border(-(top|right|bottom|left))?-style$/},
+    {name:"border-width",   pattern:/^border(-(top|right|bottom|left))?-width$/},
+    {name:"background",     pattern:/^background(-(color|image|position|repeat|size|attachment))?$/},
+    {name:"columns",        pattern:/^column(s|-width|-count)$/},
+    {name:"column-rule",    pattern:/^column-rule(-(width|style|color))?$/},
+    {name:"list-style",     pattern:/^list-style(-(type|image|position))?$/},
+    {name:"outline",        pattern:/^outline(-(style|width|color))?$/},
+    {name:"transition",     pattern:/^transition(-(property|duration|timing-function|delay))?$/},
+  ];
+  function _getShorthandPattern (name) {
+    for (var i = 0; i < SHORTHANDS.length; i ++) {
+      if (SHORTHANDS [i].name === name) {
+        return SHORTHANDS [i].pattern;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * minimum CSS property & property list classes
+   */
+  function Property (name, value, priority) {
+    this.name = name.toLowerCase ();
+    this.value = value;
+    this.priority = priority || "";
+  };
+  Property.prototype = {
+    getCssText : function () {
+      return this.name + ": " + this.getValue () + ";"
+    },
+    getValue : function () {
+      var val = this.value;
+      if (this.priority) {
+        val += " !" + this.priority;
+      }
+      return val;
+    },
+  };
+  function StyleDeclaration (text) {
+    this._item = [];
+    if (text) this.importText (text);
+  };
+  StyleDeclaration.prototype = {
+    getLength: function () {
+      return this._item.length;
+    },
+    getCssText : function () {
+      var val = "";
+      for (var i = 0; i < this._item.length; i ++) {
+        val += this._item [i].getCssText ();
+      }
+      return val;
+    },
+    // see browser/devtools/styleinspector/CssRuleView.jsm
+    // (mozilla-central/rev/7fb03c72dbb0 (2012-01-20 16:36 +0100))
+    CSS_LINE_RE: /(?:[^;\(]*(?:\([^\)]*?\))?[^;\(]*)*;?/g,
+    CSS_PROP_RE: /\s*([^:\s]*)\s*:\s*(.*?)\s*(?:!\s*(important))?;?$/,
+    importText: function (text) {
+      if (!text) return;
+      var properties = text.match (this.CSS_LINE_RE);
+      for (var i = 0; i < properties.length; i ++) {
+        var matches = this.CSS_PROP_RE.exec (properties [i]);
+        if (!matches) continue;
+        this.setProperty (matches [1], matches [2], matches [3]);
+      }
+    },
+    getPropertyIndex: function (name) {
+      for (var i = 0; i < this._item.length; i ++) {
+        if (this._item [i].name === name) {
+          return i;
+        }
+      }
+      return -1;
+    },
+    getPropertyAt: function (index) {
+      return this._item [index];
+    },
+    removePropertyAt: function (index)
+    {
+      var prop = this._item [index];
+      if (prop) {
+        this._item.splice (index, 1);
+        return prop;
+      }
+      return null;
+    },
+    setProperty: function (name, value, priority) {
+      var prop = this.getProperty (name);
+      if (prop)
+        prop.setValue (value, priority);
+      else
+        this._item.push (new Property (name, value, priority));
+      return;
+    },
+    getProperty: function (name) {
+      var i = this.getPropertyIndex (name);
+      if (i < 0) return null;
+      return this.getPropertyAt (i);
+    },
+    removeProperty: function (name) {
+      var i = this.getPropertyIndex (name);
+      return this.removePropertyAt (i);
+    },
+    getPropertyValue: function (name) {
+      var prop = this.getProperty (name);
+      if (prop)
+        return prop.getValue ();
+      else
+        return null;
+    },
+  };
+
+};
+

@@ -134,6 +134,7 @@ arAkahukuMHTFileData.prototype = {
   anchor_status : 0,     /* Number  a 要素での取得の進行状況 */
   type : 0,              /* Number  参照元のノードの種類 */
   node : null,           /* HTMLElement  参照元のノード */
+  ownerDocument : null,  /* HTMLDocument 処理元のドキュメント */
     
   location : false,      /* String  本来のアドレス
                           *   Content-Location に使用する */
@@ -157,6 +158,23 @@ arAkahukuMHTFileData.prototype = {
   channel : null,       /* nsIChannel  ネットワーク取得用チャネル */
   delay : 0,            /* Number  ネットワーク取得のディレイ */
   converting : false,   /* Boolean  キャッシュ変換中 */
+
+  setLocations : function (url) {
+    this.location = url;
+    this.currentLocation = url;
+    this.originalLocation = url;
+    var uriParam
+      = Akahuku.protocolHandler.getAkahukuURIParam (url);
+    if ("original" in uriParam) {
+      url = uriParam.original;
+      switch (uriParam.type) {
+        case "cache":
+          this.currentLocation = url;
+        case "p2p":
+          this.location = url;
+      }
+    }
+  },
     
   /**
    * データを開放する
@@ -165,6 +183,7 @@ arAkahukuMHTFileData.prototype = {
     this.status = arAkahukuMHT.FILE_STATUS_NG;
         
     this.node = null;
+    this.ownerDocument = null;
     this.content = "";
     this.originalContent = "";
   },
@@ -212,6 +231,22 @@ arAkahukuMHTFileData.prototype = {
             .getService (Components.interfaces.nsIIOService);
             file.channel 
             = ios.newChannel (location, null, null);
+            try {
+              // webconsole でモニタできるようにウィンドウを関連づける
+              if (file.ownerDocument) {
+                file.channel.notificationCallbacks
+                  = file.ownerDocument.defaultView
+                  .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+                  .getInterface (Components.interfaces.nsIWebNavigation);
+              }
+              else {
+                Akahuku.debug.warn
+                  ("arAkahukuMHTFileData.getFile could not register a window to channel. (No owner documenet)"
+                   + " for " + location);
+              }
+            }
+            catch (e) { Akahuku.debug.exception (e);
+            }
             try {
               file.channel.asyncOpen (file, null);
             }
@@ -451,7 +486,9 @@ arAkahukuMHTFileData.prototype = {
                             
             /* 状態を取得不可に設定する */
             /* リンクの場合にはキャッシュのみなので即 NG */
-            this.node.src = "";
+            if (this.node && "src" in this.node) {
+              this.node.src = "";
+            }
             this.status = arAkahukuMHT.FILE_STATUS_NG;
           }
           else {
@@ -471,7 +508,9 @@ arAkahukuMHTFileData.prototype = {
                         
           /* 状態を取得不可に設定する */
           /* リンクの場合にはキャッシュのみなので即 NG */
-          this.node.src = "";
+          if (this.node && "src" in this.node) {
+            this.node.src = "";
+          }
           this.status = arAkahukuMHT.FILE_STATUS_NG;
         }
         else {
@@ -625,6 +664,12 @@ arAkahukuMHTFileData.prototype = {
    *         終了コード
    */
   onStopRequest : function (request, context, statusCode) {
+    if (!Components.isSuccessCode (statusCode)) {
+      // cancel された場合
+      this.channel = null;
+      this.originalContent = "";
+      return;
+    }
     if (this.converting) {
       this.content = btoa (this.originalContent);
       this.onGetFileData ();
@@ -838,7 +883,8 @@ var arAkahukuMHT = {
                   + "color: #ff4000; "
                   + "background-color: inherit;")
         .addRule ("#akahuku_cleanup_container",
-                  "font-size: 9pt;");
+                  "font-size: 9pt; "
+                  + "clear: left;");
       }
       if (arAkahukuMHT.enable) {
         var x_uri
@@ -878,9 +924,11 @@ var arAkahukuMHT = {
                   + "color: #ff0000; "
                   + "background-color: inherit;")
         .addRule ("#akahuku_savemht_status",
-                  "font-size: 9pt;")
+                  "font-size: 9pt;"
+                  + "clear: left;")
         .addRule ("#akahuku_savemht_container",
-                  "font-size: 9pt;")
+                  "font-size: 9pt; "
+                  + "clear: left;")
         .addRule ("#akahuku_savemht_progress",
                   "font-size: 9pt;")
         .addRule ("#akahuku_savemht_progress_error",
@@ -1004,6 +1052,10 @@ var arAkahukuMHT = {
           = arAkahukuConfig
           .initPref ("bool", "akahuku.savemht.auto.saveas", false);
       }
+      else {
+        arAkahukuMHT.enableAutoUnique = false;
+        arAkahukuMHT.enableAutoSaveAs = false;
+      }
             
       arAkahukuMHT.enableImagelink
       = arAkahukuConfig
@@ -1018,12 +1070,19 @@ var arAkahukuMHT = {
           .initPref ("bool", "akahuku.savemht.imagelink.perthread",
                      false);
       }
+      else {
+        arAkahukuMHT.enableImagelinkThread = false;
+        arAkahukuMHT.enableImagelinkPerThread = false;
+      }
       arAkahukuMHT.enablePreview
       = arAkahukuConfig
       .initPref ("bool", "akahuku.savemht.preview", true);
       arAkahukuMHT.enablePreviewCount
       = arAkahukuConfig
       .initPref ("bool", "akahuku.savemht.preview.count", false);
+      if (!arAkahukuMHT.enablePreview) {
+        arAkahukuMHT.enablePreviewCount = false;
+      }
       arAkahukuMHT.enableAimaHideEntireRes
       = arAkahukuConfig
       .initPref ("bool", "akahuku.savemht.aima.hide_entire_res", false);
@@ -1643,10 +1702,10 @@ var arAkahukuMHT = {
           /* 削除済みのレスの表示を変える */
           arAkahukuDOM.removeClassName (container.main, "akahuku_deleted_reply");
           
-          s = container.main.getAttribute ("style") || "";
-          s = s.replace (/ *border(\-[a-z]*)? *: *[^;]+;? */ig, "");
-          s = "border: 2px solid blue; " + s;
-          container.main.setAttribute ("style", s);
+          arAkahukuDOM.Style
+            .removeProperty (container.main, "border", "*");
+          arAkahukuDOM.Style
+            .setProperty (container.main, "border", "2px solid blue");
           var span = targetDocument.createElement ("span");
           span.setAttribute ("style",
                              "font-size: 10px;"
@@ -1657,6 +1716,34 @@ var arAkahukuMHT = {
              ("\u3053\u306E\u30EC\u30B9\u306F\u524A\u9664\u3055\u308C\u307E\u3057\u305F"));
           container.main.appendChild (span);
         }
+        if (arAkahukuDOM.hasClassName
+            (container.main, "akahuku_deleted_reply2")) {
+          /* 「削除されました」のレスの表示を変える */
+          arAkahukuDOM.removeClassName (container.main, "akahuku_deleted_reply2");
+          arAkahukuDOM.Style
+            .removeProperty (container.main, "border", "*");
+          arAkahukuDOM.Style
+            .setProperty (container.main, "border", "2px dotted red");
+        }
+      }
+
+      var thumb = Akahuku.getThumbnailFromBQ (nodes [i]);
+      if (thumb && arAkahukuDOM
+          .hasClassName (thumb, "akahuku_deleted_reply2")) {
+        arAkahukuDOM.removeClassName (thumb, "akahuku_deleted_reply2");
+        arAkahukuDOM.Style.removeProperty (thumb, "border", "*");
+        arAkahukuDOM.Style.setProperty (thumb, "border", "2px dotted red");
+        var span = targetDocument.createElement ("span");
+        span.setAttribute ("style",
+                           "font-size: 10px;"
+                           + "color: red;"
+                           + "float: left; clear: left;"
+                           + "margin-left: 20px;");
+        span.appendChild
+          (targetDocument.createTextNode // "この画像は削除されました"
+           ("\u3053\u306E\u753B\u50CF\u306F\u524A\u9664\u3055\u308C\u307E\u3057\u305F"));
+        thumb.parentNode.parentNode.insertBefore
+          (span, thumb.parentNode.nextSibling);
       }
       
       /* Firefox3 でバグ回避のための marginLeft を解除する */
@@ -1907,6 +1994,13 @@ var arAkahukuMHT = {
         }
         break;
       }
+    }
+        
+    /* フォーム位置だけ末尾に置いた時の追加スタイルを削除 */
+    node = arAkahukuDOM.getElementById (targetDocument,
+                                        "div", "ufm");
+    if (node) {
+      node.removeAttribute ("style");
     }
   },
   
@@ -2365,15 +2459,10 @@ var arAkahukuMHT = {
             if (!exists) {
               fileData = new arAkahukuMHTFileData ();
               fileData.type = arAkahukuMHT.FILE_TYPE_IMG;
-              fileData.location = url;
-              fileData.currentLocation = url;
-              if (nodes [i].hasAttribute ("__akahuku_p2p")) {
-                fileData.location
-                  = arAkahukuP2P.deP2P (fileData.location);
-              }
-              fileData.originalLocation = url;
+              fileData.setLocations (url);
               fileData.useNetwork = arAkahukuMHT.enableUseNetwork;
               fileData.node = nodes [i];
+              fileData.ownerDocument = targetDocument;
                             
               newFiles.push (fileData);
             }
@@ -2429,15 +2518,10 @@ var arAkahukuMHT = {
             if (!exists) {
               fileData = new arAkahukuMHTFileData ();
               fileData.type = arAkahukuMHT.FILE_TYPE_IMG;
-              fileData.location = url;
-              fileData.currentLocation = url;
-              if (nodes [i].hasAttribute ("__akahuku_p2p")) {
-                fileData.location
-                  = arAkahukuP2P.deP2P (fileData.location);
-              }
-              fileData.originalLocation = url;
+              fileData.setLocations (url);
               fileData.useNetwork = arAkahukuMHT.enableUseNetwork;
               fileData.node = nodes [i];
+              fileData.ownerDocument = targetDocument;
               newFiles.push (fileData);
             }
           }
@@ -2451,6 +2535,16 @@ var arAkahukuMHT = {
         }
         i --;
         continue;
+      }
+            
+      /* プレビューの iframe 要素は収集せず削除する */
+      nodes = param.cloneDocument.getElementsByTagName ("iframe");
+      for (i = 0; i < nodes.length; i ++) {
+        if (arAkahukuDOM.getClassName (nodes [i])
+            == "akahuku_preview") {
+          nodes [i].parentNode.removeChild (nodes [i]);
+          i --;
+        }
       }
             
       /* 空になったプレビューのコンテナを削除する */
@@ -2498,6 +2592,7 @@ var arAkahukuMHT = {
                 fileData.useNetwork
                   = arAkahukuMHT.enableUseNetwork;
                 fileData.node = nodes [i];
+                fileData.ownerDocument = targetDocument;
                             
                 newFiles.push (fileData);
               }
@@ -2541,6 +2636,7 @@ var arAkahukuMHT = {
                 fileData.useNetwork
                   = arAkahukuMHT.enableUseNetwork;
                 fileData.node = nodes [i];
+                fileData.ownerDocument = targetDocument;
                             
                 newFiles.push (fileData);
               }
@@ -2669,15 +2765,9 @@ var arAkahukuMHT = {
                 fileData = new arAkahukuMHTFileData ();
                 fileData.type
                   = arAkahukuMHT.FILE_TYPE_ANCHOR;
-                fileData.location = url;
-                fileData.currentLocation = url;
-                if (nodes [i].hasAttribute ("__akahuku_p2p")) {
-                  fileData.location
-                    = arAkahukuP2P.deP2P
-                    (fileData.location);
-                }
-                fileData.originalLocation = url;
+                fileData.setLocations (url);
                 fileData.node = nodes [i];
+                fileData.ownerDocument = targetDocument;
                 fileData.useNetwork = false;
                 fileData.redName
                   = arAkahukuDOM.getInnerText (fileData.node);
@@ -2897,6 +2987,7 @@ var arAkahukuMHT = {
       var fileData
         = arAkahukuMHT.getIndexFileData (param.cloneDocument,
                                          targetDocument.location.href);
+      fileData.ownerDocument = targetDocument;
       param.files.unshift (fileData);
       var title = targetDocument.title;
       param.cloneDocument = null;
@@ -3239,6 +3330,11 @@ var arAkahukuMHT = {
             param.files [i].node = null;
             param.files [i].content = "";
             param.files [i].originalContent = "";
+            // 通信中ならキャンセルする
+            if (param.files [i].channel) {
+              param.files [i].channel.cancel 
+                (Components.results.NS_BINDING_ABORTED);
+            }
           }
           catch (e) { Akahuku.debug.exception (e);
           }
@@ -3695,24 +3791,14 @@ var arAkahukuMHT = {
           else if (element.getAttribute ("dummyhref")) {
             src = element.getAttribute ("dummyhref");
           }
-          else {
-            src = "";
-          }
-          src = arAkahukuP2P.deP2P (src);
         }
         if (isPreview) {
           src = element.getAttribute ("dummyhref");
-          if (isP2P) {
-            src = arAkahukuP2P.deP2P (src);
-          }
           element.removeAttribute ("title");
           element.removeAttribute ("dummyhref");
         }
         else if (isPreviewLink) {
           src = element.getAttribute ("dummyhref");
-          if (isP2P) {
-            src = arAkahukuP2P.deP2P (src);
-          }
         }
         if (element.attributes) {
           for (var i = 0; i < element.attributes.length; i ++) {
@@ -3783,6 +3869,11 @@ var arAkahukuMHT = {
             if (value == "") {
               /* 値のないものは無視する */
               continue;
+            }
+                        
+            if (name == "src" || name == "href") {
+              /* p2p や cache のアドレスは元に戻す */
+              value = Akahuku.deAkahukuURI (value, ["cache","p2p"]);
             }
                         
             attributes += " " + name +  "=" + "\"" + value + "\"";
@@ -3943,7 +4034,7 @@ var arAkahukuMHT = {
    *         アドレスの情報
    */
   apply : function (targetDocument, info) {
-    if (info.isNotFound) {
+    if (info.isNotFound || info.isTsumanne) {
       return;
     }
         

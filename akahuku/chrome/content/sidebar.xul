@@ -4,7 +4,9 @@
 
 <page id="akahuku_sidebar"
       orient="vertical"
+      title="赤福サイドバー"
       onload="AkahukuSidebar.init ();"
+      onunload="AkahukuSidebar.term ();"
       context="akahuku-sidebar-popup"
       xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script type="application/x-javascript"

@@ -543,17 +543,20 @@ var arAkahukuThreadOperator = {
                 
         .addRule ("#akahuku_throp_menu",
                   "margin: 0 0 0 auto; "
+                  + "display: table; "
+                  + "min-width: 12em; "
                   + "border-collapse: collapse; "
                   + "background-color: #ffffee; "
-                  + "border:1px solid #800000; "
-                  + "border-top: 2px solid #800000;")
-        .addRule ("#akahuku_throp_menu div",
-                  "display: block; "
+                  + "border-style: solid; "
+                  + "border-color: #800000; "
+                  + "border-width: 2px 1px 1px;")
+        .addRule ("#akahuku_throp_menu>div",
+                  "display: table-row; ")
+        .addRule ("#akahuku_throp_menu>div>div",
+                  "display: table-cell; "
                   + "padding: 4px 12px 4px 12px; "
-                  + "text-align: right; "
-                  + "font-size: 10pt; "
                   + "border-top: 1px solid silver;")
-        .addRule ("#akahuku_throp_menu div:hover",
+        .addRule ("#akahuku_throp_menu>div:hover",
                   "background-color: #f0e0d6;")
                 
         .addRule ("#akahuku_throp_threadtime",
@@ -597,6 +600,13 @@ var arAkahukuThreadOperator = {
                   + "background-color: inherit;")
         .addRule ("#akahuku_throp_reload_status",
                   "font-size: 8.5pt;")
+        .addRule ("#akahuku_throp_menu span.nobr>span",
+                  "overflow: hidden; "
+                  + "text-overflow: ellipsis; " // Gecko 7.0+
+                  + "display: inline-block; "
+                  + "vertical-align: bottom; "
+                  + "max-width: 12em; "
+                  + "white-space: nowrap;")
                 
         .addRule ("#akahuku_throp_savemht_button",
                   "cursor: pointer; "
@@ -741,16 +751,8 @@ var arAkahukuThreadOperator = {
     }
         
     var element = targetDocument.getElementById ("akahuku_throp_menu");
-        
-    element.style.width = "12em";
-    if (arAkahukuThreadOperator.enableShowSaveMHT
-        && arAkahukuMHT.enable
-        && arAkahukuMHT.enablePreview
-        && arAkahukuMHT.enablePreviewCount) {
-      element.style.width = "15em";
-    }
     
-    element.style.display = "block";
+    element.style.removeProperty ("display");
   },
     
   /**
@@ -771,12 +773,11 @@ var arAkahukuThreadOperator = {
         
     var element = targetDocument.getElementById ("akahuku_throp_menu");
         
-    if (element.style.display == "block") {
+    if (element.style.display != "none") {
       element.style.display = "none";
     }
     else {
-      element.style.width = "12em";
-      element.style.display = "block";
+      element.style.removeProperty ("display");
     }
   },
     
@@ -1358,13 +1359,10 @@ var arAkahukuThreadOperator = {
       var a, label, input, nobr, font, menudiv, itemdiv;
             
       menudiv
-      = targetDocument.createElement ("menudiv");
+      = targetDocument.createElement ("div");
       menudiv.id = "akahuku_throp_menu";
       if (arAkahukuThreadOperator.enableHide) {
         menudiv.style.display = "none";
-      }
-      else {
-        menudiv.style.display = "block";
       }
       if (!arAkahukuThreadOperator.enableClickOpen) {
         menudiv.addEventListener
@@ -1376,6 +1374,9 @@ var arAkahukuThreadOperator = {
             
       if (arAkahukuThreadOperator.enableShowMove) {
         itemdiv = targetDocument.createElement ("div");
+        //insert display:table-row
+        itemdiv.appendChild (targetDocument.createElement ("div"));
+        itemdiv = itemdiv.firstChild;
             
         itemdiv.appendChild (targetDocument.createTextNode ("["));
         a = targetDocument.createElement ("a");
@@ -1430,11 +1431,14 @@ var arAkahukuThreadOperator = {
         itemdiv.appendChild (a);
         itemdiv.appendChild (targetDocument.createTextNode ("]"));
             
-        menudiv.appendChild (itemdiv);
+        menudiv.appendChild (itemdiv.parentNode);
       }
             
       if (arAkahukuThreadOperator.enableShowThumbnail) {
         itemdiv = targetDocument.createElement ("div");
+        //insert display:table-row
+        itemdiv.appendChild (targetDocument.createElement ("div"));
+        itemdiv = itemdiv.firstChild;
             
         label = targetDocument.createElement ("label");
         label.setAttribute ("for", "akahuku_thumbnail_clipper");
@@ -1457,15 +1461,18 @@ var arAkahukuThreadOperator = {
                            ("\u30B5\u30E0\u30CD\u56FA\u5B9A"));
         itemdiv.appendChild (label);
             
-        menudiv.appendChild (itemdiv);
+        menudiv.appendChild (itemdiv.parentNode);
       }
             
       if (arAkahukuThreadOperator.enableShowReload
           && arAkahukuReload.enable && !info.isMht) {
         itemdiv = targetDocument.createElement ("div");
+        //insert display:table-row
+        itemdiv.appendChild (targetDocument.createElement ("div"));
+        itemdiv = itemdiv.firstChild;
                 
-        nobr = targetDocument.createElement ("nobr");
-        nobr.style.overflow = "hidden";
+        nobr = targetDocument.createElement ("span");
+        nobr.className = "nobr";
                 
         nobr.appendChild (targetDocument.createTextNode ("["));
                 
@@ -1513,24 +1520,29 @@ var arAkahukuThreadOperator = {
                 
         itemdiv.appendChild (targetDocument.createTextNode ("]"));
                 
-        menudiv.appendChild (itemdiv);
+        menudiv.appendChild (itemdiv.parentNode);
       }
       if (arAkahukuThreadOperator.enableShowSaveMHT
           && arAkahukuMHT.enable && !info.isMht) {
         itemdiv = targetDocument.createElement ("div");
+        //insert display:table-row
+        itemdiv.appendChild (targetDocument.createElement ("div"));
+        itemdiv = itemdiv.firstChild;
                 
-        nobr = targetDocument.createElement ("nobr");
-        nobr.style.overflow = "hidden";
+        nobr = targetDocument.createElement ("span");
+        nobr.className = "nobr";
                 
         nobr.appendChild (targetDocument.createTextNode ("["));
+        var nobrspan = targetDocument.createElement ("span")
+        nobr.appendChild (nobrspan);
                 
         span = targetDocument.createElement ("span");
         span.id = "akahuku_throp_savemht_progress";
-        nobr.appendChild (span);
+        nobrspan.appendChild (span);
 
         span = targetDocument.createElement ("span");
         span.id = "akahuku_throp_savemht_status";
-        nobr.appendChild (span);
+        nobrspan.appendChild (span);
                 
         nobr.appendChild (targetDocument.createTextNode ("]"));
                 
@@ -1554,7 +1566,7 @@ var arAkahukuThreadOperator = {
                 
         itemdiv.appendChild (targetDocument.createTextNode ("]"));
                 
-        menudiv.appendChild (itemdiv);
+        menudiv.appendChild (itemdiv.parentNode);
       }
             
       div.appendChild (menudiv);
