@@ -5030,6 +5030,8 @@ var arAkahukuCatalog = {
                 
         arAkahukuCatalog.updateCell (nodes [i], info);
       }
+      // 最新スレ番号を板の最新レス番号へ反映する
+      arAkahukuThread.updateNewestNum (info, param.latestThread);
             
       for (var i = 0; i < nodes.length; i ++) {
         arAkahukuCatalog.updateCellInfo (nodes [i],

@@ -515,6 +515,7 @@ arAkahukuContentPolicy.prototype = {
     }
         
     if (contentLocation.scheme == "akahuku"
+        && context.nodeName
         && context.nodeName.match (/(xul:)?browser/)
         && contentLocation.spec.match
         (/^akahuku:\/\/[^\/]*\/p2p\//)) {
@@ -958,8 +959,8 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
-    return this.ACCEPT;
   } catch (e) { Components.utils.reportError (e); }
+    return this.ACCEPT;
   },
     
   /**
