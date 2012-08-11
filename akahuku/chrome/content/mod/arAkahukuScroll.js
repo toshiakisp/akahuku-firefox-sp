@@ -182,7 +182,7 @@ var arAkahukuScroll = {
           var container = Akahuku.getMessageContainer (node);
           var show = true;
           if (container) {
-            containerLast = container.nodes [container.nodes.length - 1];
+            var containerLast = container.nodes [container.nodes.length - 1];
           }
           
           if (container) {

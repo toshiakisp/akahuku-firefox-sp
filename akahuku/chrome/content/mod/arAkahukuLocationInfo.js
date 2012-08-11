@@ -322,6 +322,7 @@ arAkahukuLocationInfo.prototype = {
       if (this.isMht) {
         try {
           var param = UnMHT.protocolHandler.getUnMHTURIParam (location);
+          var extractor;
           if (param
               && param.original
               && (extractor = UnMHT.getExtractor (param.original))

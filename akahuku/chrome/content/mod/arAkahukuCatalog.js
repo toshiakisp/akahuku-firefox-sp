@@ -2472,7 +2472,7 @@ var arAkahukuCatalog = {
     = Akahuku.getDocumentParam (targetDocument).catalogpopup_param;
         
     var anchor = event.currentTarget;
-    nodes = anchor.getElementsByTagName ("img");
+    var nodes = anchor.getElementsByTagName ("img");
     if (nodes
         && nodes [0]) {
       var img = nodes [0];
