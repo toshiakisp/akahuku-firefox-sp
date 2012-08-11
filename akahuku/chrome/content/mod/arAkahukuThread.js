@@ -2201,8 +2201,9 @@ var arAkahukuThread = {
    *         対象のドキュメント
    */
   updateResPanel : function (targetDocument) {
-    var param
-    = Akahuku.getDocumentParam (targetDocument).respanel_param;
+    var document_param
+    = Akahuku.getDocumentParam (targetDocument);
+    var param = document_param.respanel_param;
     if (!param) {
       return;
     }
@@ -2289,6 +2290,7 @@ var arAkahukuThread = {
       
       if (i == 0) {
         param.diff = (param.offset - offset) * offsetHeight;
+        param.diff = parseInt (param.diff); /* px は整数 */
       }
       if (offsetBottom > param.height + param.diff) {
         break;
@@ -2305,15 +2307,13 @@ var arAkahukuThread = {
   showResPanel : function () {
     var frame, header, content, button, resizer, scroll, bar;
         
-    var tabbrowser = document.getElementById ("content");
-    var targetDocument = tabbrowser.contentDocument;
-        
-    var params
-    = Akahuku.getDocumentParam (targetDocument);
+    var params = Akahuku.getFocusedDocumentParam ();
         
     if (!params) {
       return;
     }
+        
+    var targetDocument = params.targetDocument;
         
     if (!params.location_info.isReply) {
       /* レス送信モードではない */
@@ -2384,6 +2384,7 @@ var arAkahukuThread = {
     resizer.style.height = "16px";
     resizer.style.backgroundColor = "#eeaa88";
     resizer.style.zIndex = "202";
+    resizer.style.cursor = "se-resize";
     frame.appendChild (resizer);
             
     scroll = targetDocument.createElement ("div");
@@ -2441,16 +2442,7 @@ var arAkahukuThread = {
      function () {
       var event = arguments [0];
       var targetDocument = event.target.ownerDocument;
-            
-      var param
-        = Akahuku.getDocumentParam (targetDocument).respanel_param;
-            
-      param.frame.parentNode.removeChild (param.frame);
-            
-      param.destruct ();
-            
-      Akahuku.getDocumentParam (targetDocument).respanel_param = null;
-                
+      arAkahukuThread.closeResPanel (targetDocument);
       event.preventDefault ();
     }, true);
         
@@ -2521,6 +2513,36 @@ var arAkahukuThread = {
             
     targetDocument.body.appendChild (frame);
   },
+    
+  /**
+   * レスパネルを閉じる
+   */
+  closeResPanel : function (targetDocument) {
+    var document_param;
+    if (targetDocument) {
+      document_param
+        = Akahuku.getDocumentParam (targetDocument);
+    }
+    else {
+      document_param
+        = Akahuku.getFocusedDocumentParam ();
+    }
+        
+    if (!document_param || !document_param.respanel_param) {
+      return;
+    }
+        
+    var param = document_param.respanel_param;
+    try {
+      param.frame.parentNode.removeChild (param.frame);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+    finally {
+      param.destruct ();
+      document_param.respanel_param = null;
+    }
+  },      
     
   /**
    * レス番号を振る、スレの消滅情報を追加する、[続きを読む] ボタンを追加する

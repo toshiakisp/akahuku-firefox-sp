@@ -93,18 +93,51 @@ var arAkahukuBoard = {
   },
     
   /**
+   * 外部板に追加できるか
+   */
+  isAbleToAddExternal : function (targetDocument) {
+    try {
+      if (!targetDocument) {
+        targetDocument
+        = document.commandDispatcher.focusedWindow.document;
+      }
+      var param = Akahuku.getDocumentParam (targetDocument);
+          
+      if (param) {
+        return false;
+      }
+          
+      var targetDocument
+      = document.commandDispatcher.focusedWindow.document;
+
+      var base = targetDocument.location.href;
+          
+      base = base
+      .replace (/\/res\/([0-9]+)\.html?$/, "/")
+      .replace (/\/(([^\.\/]+)\.php)?([#\?].*)?$/, "/")
+      .replace (/\/(([^\.\/]+)\.html?)?([#\?].*)?$/, "/");
+          
+      if (!/\/$/.test (base)) {
+        return false;
+      }
+          
+      return true;
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      return false;
+    }
+  },
+    
+  /**
    * 外部板に追加する
    */
   addExternal : function () {
-    var tabbrowser = document.getElementById ("content");
-    var targetDocument = tabbrowser.contentDocument;
-        
-    var param
-    = Akahuku.getDocumentParam (targetDocument);
-        
-    if (param) {
+    if (!arAkahukuBoard.isAbleToAddExternal ()) {
       return;
     }
+        
+    var targetDocument
+    = document.commandDispatcher.focusedWindow.document;
         
     var base = targetDocument.location.href;
         
@@ -112,10 +145,6 @@ var arAkahukuBoard = {
     .replace (/\/res\/([0-9]+)\.html?$/, "/")
     .replace (/\/(([^\.\/]+)\.php)?([#\?].*)?$/, "/")
     .replace (/\/(([^\.\/]+)\.html?)?([#\?].*)?$/, "/");
-        
-    if (!base.match (/\/$/)) {
-      return;
-    }
         
     var flag = 2;
     var value = {
