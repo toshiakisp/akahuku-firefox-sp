@@ -1,8 +1,8 @@
 #include "nsISupports.idl"
-#include "nsILocalFile.idl"
+#include "nsIFile.idl"
 #include "./idl/arIAkahukuP2PServantListener.idl"
 
-[scriptable, uuid (e2470698-e238-40f5-8b09-c3e617aae84c)]
+[scriptable, uuid (2761dcf6-c6b8-11e1-832d-37d86088709b)]
 interface arIAkahukuP2PServant2 : nsISupports {
   boolean start (in boolean noaccept);
   
@@ -13,7 +13,7 @@ interface arIAkahukuP2PServant2 : nsISupports {
   void getFile (in AString path,
                 in arIAkahukuP2PServantListener listener);
   
-  void createHashFile (in nsILocalFile targetFile,
+  void createHashFile (in nsIFile targetFile,
                        in AString leafName,
                        in AString hash);
   

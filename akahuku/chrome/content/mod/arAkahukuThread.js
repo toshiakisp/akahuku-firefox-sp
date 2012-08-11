@@ -849,7 +849,7 @@ var arAkahukuThread = {
    * @param  String expireWarning
    *         消滅情報
    * @param  Boolean isDel
-   *         del
+   *         del (スレに対する削除依頼が出ているかどうか)
    * @param  Boolean id
    *         id を付けるかどうか
    * @return HTMLDivElement
@@ -2719,7 +2719,7 @@ var arAkahukuThread = {
               .appendChild (arAkahukuThread.createThreadStatus
                             (targetDocument,
                              threadNumber,
-                             lastReplyNumber,
+                             threadNumber,
                              replyNumber,
                              expire,
                              expireWarning,

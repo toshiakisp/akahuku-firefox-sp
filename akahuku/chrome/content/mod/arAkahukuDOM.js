@@ -367,6 +367,28 @@ var arAkahukuDOM = {
     }
 
     try {
+      // sanitize by nsIParserUtils (Gecko14+)
+      // (nsIScriptableUnescapeHTML is obsolete)
+      if ("@mozilla.org/parserutils;1" in Components.classes) {
+        var parserUtils
+          = Components.classes ["@mozilla.org/parserutils;1"]
+          .getService (Components.interfaces.nsIParserUtils);
+        if (typeof (parserUtils.parseFragment) === "function") {
+          var flags
+            = parserUtils.SanitizerDropForms
+            | parserUtils.SanitizerDropMedia;
+          var fragment
+            = parserUtils.parseFragment
+            (htmlText, flags, false, null, targetElement);
+          targetElement.appendChild (fragment);
+          return;
+        }
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
+    try {
       // require: Gecko 1.8/Firefox 1.5 +
       var unescaper
         = Components.classes ["@mozilla.org/feed-unescapehtml;1"]
