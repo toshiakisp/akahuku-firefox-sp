@@ -1693,8 +1693,13 @@
                       label="レスの増加数を表示" />
             <checkbox id="catalog_reload_status_hold" checked="false"
                       label="ステータスを消さない" />
+            <box orient="horizontal" align="center">
             <checkbox id="catalog_reload_update_cache" checked="false"
+                      oncommand="AkahukuOptions.checkCatalogReloadUpdateCache ();"
                       label="キャッシュに反映させる" />
+              <label id="catalog_reload_update_cache_warning"
+                     value="※反映させるのが普通です .sp" class="warning" />
+            </box>
             <checkbox id="catalog_reload_hook" checked="false"
                       label="リロードの代わりに最新に更新" />
             <checkbox id="catalog_reload_timestamp" checked="false"

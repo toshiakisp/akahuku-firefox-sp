@@ -231,6 +231,12 @@ var arAkahukuTab = {
           if (!data.info.isFutaba) {
             delete data.info;
           }
+          else if (!data.info.isNormal
+              && !data.info.isCatalog
+              && !data.info.isReply ) {
+            // 対象モードでない場合は除外 (画像のタブなど)
+            delete data.info;
+          }
         }
                     
         if (data.info) {

@@ -2083,7 +2083,7 @@ var arAkahukuCatalog = {
       arAkahukuCatalog.enableReloadUpdateCache
         = arAkahukuConfig
         .initPref ("bool", "akahuku.catalog.reload.update_cache",
-                   false);
+                   true);
       arAkahukuCatalog.enableReloadLeftBefore
         = arAkahukuConfig
         .initPref ("bool", "akahuku.catalog.reload.left_before",
