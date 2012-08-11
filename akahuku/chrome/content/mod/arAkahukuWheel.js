@@ -93,12 +93,7 @@ var arAkahukuWheel = {
       var up = false;
             
       if (wheelDelta < 0
-          || targetDocument.body.scrollTop
-          + targetDocument.documentElement.scrollTop
-          < targetDocument.body.scrollHeight
-          - targetDocument.body.clientHeight
-          + targetDocument.documentElement.scrollHeight
-          - targetDocument.documentElement.clientHeight) {
+          || targetWindow.scrollY < targetWindow.scrollMaxY) {
         /* ページ末尾以外、もしくは上方向 */
         ok = false;
       }
@@ -106,8 +101,7 @@ var arAkahukuWheel = {
       if (info
           && info.isNormal && arAkahukuWheel.enableReloadLoop
           && wheelDelta < 0
-          && targetDocument.body.scrollTop
-          + targetDocument.documentElement.scrollTop == 0) {
+          && targetWindow.scrollY == 0) {
         /* ループの場合上方向もアリ */
         up = true;
         ok = true;
