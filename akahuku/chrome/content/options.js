@@ -4179,7 +4179,7 @@ var AkahukuOptions = {
           .classes ["@mozilla.org/scriptableinputstream;1"]
           .createInstance (Components.interfaces
                            .nsIScriptableInputStream);
-        fstream.init (file, 0x01, 0444, 0);
+        fstream.init (file, 0x01, 292/*0444*/, 0);
         sstream.init (fstream);
         var text = sstream.read (-1);
         sstream.close ();
@@ -4254,7 +4254,7 @@ var AkahukuOptions = {
           = Components
           .classes ["@mozilla.org/network/file-output-stream;1"]
           .createInstance (Components.interfaces.nsIFileOutputStream);
-        fstream.init (file, 0x02 | 0x08 | 0x20, 0644, 0);
+        fstream.init (file, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
                 
         AkahukuOptions.savePrefs (fstream, deletePath, true);
                 

@@ -1036,7 +1036,7 @@ var arAkahukuImage = {
             
       if (!dir.exists ()) {
         dir.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                    0755);
+                    493/* 0755 */);
       }
             
       var ret = filePicker.show ();
@@ -1086,7 +1086,7 @@ var arAkahukuImage = {
             
       if (!file.exists ()) {
         file.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                     0755);
+                     493/* 0755 */);
       }
             
       ; /* インデント用 */
@@ -1105,7 +1105,7 @@ var arAkahukuImage = {
       }
       if (!file.exists ()) {
         file.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                     0755);
+                     493/* 0755 */);
       }
             
       file.appendRelativePath (leafName);

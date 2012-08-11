@@ -186,7 +186,7 @@ var arAkahukuFile = {
         .createInstance (Components.interfaces.nsILocalFile);
       file.initWithPath (filename);
       if (!file.exists ()) {
-        file.create (0x00, 0644);
+        file.create (0x00, 420/* 0644 */);
       }
     }
     catch (e) {
@@ -199,7 +199,7 @@ var arAkahukuFile = {
         = Components
         .classes ["@mozilla.org/network/file-output-stream;1"]
         .createInstance (Components.interfaces.nsIFileOutputStream);
-        fstream.init (file, 0x02 | 0x08 | 0x20, 0644, 0);
+        fstream.init (file, 0x02 | 0x08 | 0x20, 420/* 0644 */, 0);
         fstream.write (text, text.length);
         fstream.close ();
       }
@@ -241,7 +241,7 @@ var arAkahukuFile = {
         .classes ["@mozilla.org/scriptableinputstream;1"]
         .createInstance (Components.interfaces
                          .nsIScriptableInputStream);
-        fstream.init (file, 0x01, 0444, 0);
+        fstream.init (file, 0x01, 292/* 0444 */, 0);
         sstream.init (fstream);
         text = sstream.read (-1);
         sstream.close ();
@@ -287,7 +287,7 @@ var arAkahukuFile = {
         = Components
         .classes ["@mozilla.org/binaryinputstream;1"]
         .createInstance (Components.interfaces.nsIBinaryInputStream);
-        fstream.init (file, 0x01, 0444, 0);
+        fstream.init (file, 0x01, 292/* 0444 */, 0);
         bstream.setInputStream (fstream);
         bindata = bstream.readBytes (file.fileSize);
         bstream.close ();
@@ -314,7 +314,7 @@ var arAkahukuFile = {
       .createInstance (Components.interfaces.nsILocalFile);
       dir.initWithPath (dirname);
       if (!dir.exists ()) {
-        dir.create (0x01, 0755);
+        dir.create (0x01, 493/* 0755 */);
       }
     }
     catch (e) {

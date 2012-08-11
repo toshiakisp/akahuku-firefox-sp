@@ -6,6 +6,7 @@
 .node {
   border: 2px solid #eeaa88;
   -moz-border-radius: 8px;
+  border-radius: 8px;
   color: #800000;
   background-color: #ffffee;
   margin: 0.2em;
@@ -15,6 +16,7 @@
 .selfnode {
   border: 2px solid #eeaa88;
   -moz-border-radius: 8px;
+  border-radius: 8px;
   background-color: #ffffee;
   margin: 0.2em;
   padding: 0.2em;
@@ -30,6 +32,7 @@
 .addbox {
   border: 2px solid #eeaa88;
   -moz-border-radius: 8px;
+  border-radius: 8px;
   color: #800000;
   background-color: #ffffee;
   margin: 0.2em;

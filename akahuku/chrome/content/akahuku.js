@@ -603,7 +603,7 @@ var Akahuku = {
   onDOMContentLoaded : function (event) {
     var targetDocument = event.target.defaultView.document;
     
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuConfig.loadPrefBranch ();
       Akahuku.getConfig ();
@@ -612,7 +612,7 @@ var Akahuku = {
     var needApply = false;
         
     if (Akahuku.enableAll) {
-      if (Components.interfaces.nsIPrefBranch2 == undefined) {
+      if (!arAkahukuConfig.isObserving) {
         /* 監視していない場合にのみ設定を取得する */
         arAkahukuTab.getConfig ();
         arAkahukuQuote.getConfig ();
@@ -732,7 +732,7 @@ var Akahuku = {
       }
     } ticlog += "\n  addCheckboxID "+tic.toc();
     
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuSound.getConfig ();
     }
@@ -747,7 +747,7 @@ var Akahuku = {
       return;
     }
     
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuTitle.getConfig ();
       arAkahukuScroll.getConfig ();

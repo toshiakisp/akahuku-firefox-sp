@@ -16,6 +16,7 @@
  */
 var arAkahukuConfig = {
   prefBranch : null,    /* nsIPrefBranch/nsIPrefBranch2  pref サービス */
+  isObserving : false,   /* boolean 監視しているかどうか */
     
   /**
    * 初期化処理
@@ -24,7 +25,7 @@ var arAkahukuConfig = {
     arAkahukuConfig.prefBranch.setCharPref ("akahuku.version",
                                             AkahukuVersion);
         
-    if (Components.interfaces.nsIPrefBranch2) {
+    if (typeof (arAkahukuConfig.prefBranch.addObserver) === "function") {
       /* 設定を取得する */
       Akahuku.getConfig ();
       arAkahukuTab.getConfig ();
@@ -58,6 +59,7 @@ var arAkahukuConfig = {
       arAkahukuConfig.prefBranch.addObserver ("akahuku.savepref",
                                               arAkahukuConfig,
                                               false);
+      arAkahukuConfig.isObserving = true;
     }
     else {
       Akahuku.getConfig ();
@@ -89,11 +91,12 @@ var arAkahukuConfig = {
    * 終了処理
    */
   term : function () {
-    if (Components.interfaces.nsIPrefBranch2) {
+    if (arAkahukuConfig.isObserving) {
       /* 設定の変更の監視を解除する */
       arAkahukuConfig.prefBranch
       .removeObserver ("akahuku.savepref",
                        arAkahukuConfig);
+      arAkahukuConfig.isObserving = false;
     }
   },
     

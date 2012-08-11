@@ -3294,7 +3294,7 @@ var arAkahukuLink = {
       Akahuku.debug.warn ("Unknown preview uri pattern: "+uri);
       image = targetDocument.createElement ("img");
       image.className = "akahuku_preview";
-      return;
+      return image;
     }
         
     image.style.cssFloat = "left";

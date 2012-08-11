@@ -959,7 +959,7 @@ var arAkahukuPostForm = {
           }
                     
           if (arAkahukuPostForm.enableFloatAlpha
-              && postformContainer.style.MozOpacity == "0.3") {
+              && postformContainer.style.opacity == "0.3") {
             /* 半透明の状態 = カーソルはフォームの外
              * なので、フォーカス待ちにする */
             waitForFocus |= 2;
@@ -2167,7 +2167,7 @@ var arAkahukuPostForm = {
     var node;
         
     if (!Akahuku.getDocumentParam (targetDocument)) {
-      return;
+      return false;
     }
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
@@ -2769,10 +2769,10 @@ var arAkahukuPostForm = {
                 
         if (arAkahukuPostForm.enableFloatAlpha && alpha) {
           if (alpha == 1) {
-            postformContainer.style.MozOpacity = "1.0";
+            postformContainer.style.opacity = "1.0";
           }
           else {
-            postformContainer.style.MozOpacity = "0.3";
+            postformContainer.style.opacity = "0.3";
           }
         }
       }
@@ -3907,7 +3907,7 @@ var arAkahukuPostForm = {
             ufm = targetDocument.createElement ("div");
             ufm.id = "ufm";
             node = delTable;
-            while (node = node.nextSibling) {
+            while ((node = node.nextSibling) != null) {
               if (node.nodeType != node.ELEMENT_NODE) {
                 continue;
               }
@@ -4600,7 +4600,7 @@ var arAkahukuPostForm = {
         = minimizePostForm ? "27px" : arAkahukuPostForm.floatWidth;
         param.waitForFocus = 0;
         if (arAkahukuPostForm.enableFloatAlpha) {
-          div.style.MozOpacity = "0.3";
+          div.style.opacity = "0.3";
         }
                 
         targetDocument.body.addEventListener

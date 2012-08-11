@@ -276,7 +276,7 @@ Akahuku.Cache = new function () {
   this.getImageStatus = function (img, optCheckCache) {
     var status = new ImageStatus ();
     try {
-      var img
+      img
         = img.QueryInterface
           (Components.interfaces.nsIImageLoadingContent);
       status.isImage = true;
