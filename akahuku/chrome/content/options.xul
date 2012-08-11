@@ -1205,6 +1205,7 @@
             <checkbox id="thread_bottom_status_num_short" checked="false"
                       label="短いのだけ" />
             <checkbox id="thread_bottom_status_num_entire" checked="false"
+                      tooltiptext="スレ操作パネルの「残り時間、番号を表示」にも影響"
                       label="板全体の最新レスを反映する" />
           </box>
         </box>

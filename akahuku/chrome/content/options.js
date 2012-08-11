@@ -3746,7 +3746,7 @@ var AkahukuOptions = {
   checkThreadBottomStatusNum : function () {
     document.getElementById ("thread_bottom_status_num_random").disabled
     = document.getElementById ("thread_bottom_status_num_short").disabled
-    = document.getElementById ("thread_bottom_status_num_entire").disabled
+    //= document.getElementById ("thread_bottom_status_num_entire").disabled
     = !document.getElementById ("thread_bottom_status_num").checked
     || !document.getElementById ("thread_bottom_status").checked;
   },

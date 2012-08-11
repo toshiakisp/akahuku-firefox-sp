@@ -507,19 +507,19 @@ var arAkahukuThread = {
     = arAkahukuConfig
     .initPref ("bool", "akahuku.thread.bottom_status", true);
     arAkahukuThread.enableBottomStatusDiff
-    = arAkahukuConfig
+    = arAkahukuThread.enableBottomStatus && arAkahukuConfig
     .initPref ("bool", "akahuku.thread.bottom_status.diff", false);
     arAkahukuThread.enableBottomStatusHidden
-    = arAkahukuConfig
+    = arAkahukuThread.enableBottomStatus && arAkahukuConfig
     .initPref ("bool", "akahuku.thread.bottom_status.hidden", false);
     arAkahukuThread.enableBottomStatusNum
-    = arAkahukuConfig
+    = arAkahukuThread.enableBottomStatus && arAkahukuConfig
     .initPref ("bool", "akahuku.thread.bottom_status.num", false);
     arAkahukuThread.enableBottomStatusNumRandom
-    = arAkahukuConfig
+    = arAkahukuThread.enableBottomStatusNum && arAkahukuConfig
     .initPref ("bool", "akahuku.thread.bottom_status.num.random", true);
     arAkahukuThread.enableBottomStatusNumShort
-    = arAkahukuConfig
+    = arAkahukuThread.enableBottomStatusNum && arAkahukuConfig
     .initPref ("bool", "akahuku.thread.bottom_status.num.short", false);
     arAkahukuThread.enableBottomStatusNumEntire
     = arAkahukuConfig

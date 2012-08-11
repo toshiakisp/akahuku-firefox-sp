@@ -865,7 +865,7 @@ arAkahukuReloadParam.prototype = {
               = this.targetDocument
               .getElementById ("akahuku_throp_expire_box2");
             if (expireBox2) {
-              expireBox2.style.display = "block";
+              expireBox2.style.removeProperty ("display");
             }
             arAkahukuReload.setStatus
               (arAkahukuReload.getNotFoundText (),
@@ -946,6 +946,8 @@ arAkahukuReloadParam.prototype = {
         arAkahukuReload.setStatus
           ("\u65B0\u7740\u306A\u3057", //"新着なし"
            false, this.targetDocument);
+        // 残りレス数の更新
+        arAkahukuReload.updateExpireDiffNum (this.targetDocument);
         break;
       case 404:
         /* ファイルが消えていた場合 */
@@ -967,7 +969,7 @@ arAkahukuReloadParam.prototype = {
           = this.targetDocument
           .getElementById ("akahuku_throp_expire_box2");
         if (expireBox2) {
-          expireBox2.style.display = "block";
+          expireBox2.style.removeProperty ("display");
         }
         arAkahukuReload.setStatus
           (arAkahukuReload.getNotFoundText (),
@@ -1055,6 +1057,7 @@ arAkahukuReloadParam.prototype = {
       return Components.results.NS_OK;
     }
     catch (e) {
+      this.reloadChannel = null;
       return e.result;
     }
   },
@@ -1502,13 +1505,13 @@ var arAkahukuReload = {
   updateExpireDiffNum : function (targetDocument) {
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
-    var node;
+    var node, node_throp;
         
     var expireBox
     = targetDocument
     .getElementById ("akahuku_throp_expire_box");
     if (expireBox) {
-      expireBox.style.display = "block";
+      expireBox.style.removeProperty ("display");
     }
     var expireBox2
     = targetDocument
@@ -1520,19 +1523,21 @@ var arAkahukuReload = {
     node
     = targetDocument.getElementById
     ("akahuku_bottom_status_expire_diff");
-    if (node) {
+    node_throp
+    = targetDocument.getElementById
+    ("akahuku_throp_expire_diff");
+    if (node || node_throp) {
       var expireDiff;
       expireDiff
         = arAkahukuThread.getExpireDiff (targetDocument,
                                          info.expire);
+    }
+    if (node) {
       arAkahukuDOM.setText (node, expireDiff);
-      
-      node
-        = targetDocument.getElementById
-        ("akahuku_throp_expire_diff");
-      if (node) {
-        arAkahukuDOM.setText (node, expireDiff);
-      }
+    }
+    if (node_throp) {
+      node = node_throp;
+      arAkahukuDOM.setText (node, expireDiff);
     }
     
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
@@ -1541,7 +1546,10 @@ var arAkahukuReload = {
     node
     = targetDocument.getElementById
     ("akahuku_bottom_status_expire_num");
-    if (node) {
+    node_throp
+    = targetDocument.getElementById
+    ("akahuku_throp_expire_num");
+    if (node || node_throp) {
       var expireNum
         = arAkahukuThread.getExpireNum (targetDocument, info,
                                         info.threadNumber,
@@ -1551,6 +1559,8 @@ var arAkahukuReload = {
                                         0, 0);
       var node2
         = targetDocument.getElementById ("akahuku_thread_warning");
+    }
+    if (node) {
       if (expireNum < expireMax / 10) {
         if (node2) {
           node.style.fontSize = "";
@@ -1562,10 +1572,10 @@ var arAkahukuReload = {
         }
       }
       arAkahukuDOM.setText (node, expireNum);
+    }
                 
-      node
-        = targetDocument.getElementById
-        ("akahuku_throp_expire_num");
+    if (node_throp) {
+      node = node_throp;
       if (node) {
         if (expireNum < expireMax / 10) {
           if (node2) {
@@ -2922,10 +2932,7 @@ var arAkahukuReload = {
       if (arAkahukuThread.enableBottomStatus) {
         var bottomStatus
           = targetDocument.getElementById ("akahuku_bottom_status");
-        if (bottomStatus) {
-          arAkahukuThread.displayReplyNumber (targetDocument);
-        }
-        else {
+        if (!bottomStatus) {
           /* レス 0 からのリロード */
           var lastReply
             = arAkahukuThread.getLastReply (targetDocument);
@@ -2939,9 +2946,9 @@ var arAkahukuReload = {
                             "",
                             true),
                            td.firstChild);
-          arAkahukuThread.displayReplyNumber (targetDocument);
         }
       }
+      arAkahukuThread.displayReplyNumber (targetDocument);
     }
         
     return new Array (newReplies, skippedReplies,
@@ -3535,6 +3542,8 @@ var arAkahukuReload = {
 
     try {
       // webconsole でモニタできるようにウィンドウを関連づける
+      if (Akahuku.isFx4 || !(flags & Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED))
+      // (Firefox 3.6 で LOAD_ONLY_IF_MODIFIED するとなぜかステータスが完了にならない)
       param.reloadChannel.notificationCallbacks
         = targetDocument.defaultView
         .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
