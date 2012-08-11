@@ -71,7 +71,7 @@ var Akahuku = {
   enableBoostByXPath : false,
   enableDownloadLastDirHack : false,
 
-  contextTasks : new Object (),
+  contextTasksArray : new Array (),
 
   /**
    * デバッグ用
@@ -768,6 +768,7 @@ var Akahuku = {
       /* 板を制限する場合はチェックする */
       var name = info.server + ":" + info.dir;
       if (name in arAkahukuBoard.selectExList) {
+        Akahuku.clearContextTasks (targetDocument, true);
         /* スタイルを解除してから抜ける */
         
         arAkahukuStyle.resetStyle (targetDocument);
@@ -1646,9 +1647,9 @@ var Akahuku = {
     }
     else {
       // DOMContentLoaded 前では後で実行するようリストに入れる
-      if (!(contextDocument in this.contextTasks)) {
-        this.contextTasks [contextDocument] = new Array ();
-      }
+      var tasks
+        = Akahuku.getContextTasks (contextDocument)
+        || Akahuku.addContextTasks (contextDocument);
       var task = {
         owner: handlerOwner,
         handler: handlerOwner [handlerName],
@@ -1658,9 +1659,18 @@ var Akahuku = {
       };
       if (Akahuku.debug.enabled) {
         task.toString = function () {
-          return "[task {"
-            + "context=" + this.context
-            + ", handler=\"" + this.handlerName+"\"}]";
+          var str = "[task ";
+          var props = ["context", "handlerName"];
+          for (var i = 0; i < props.length; i ++) {
+            str += props [i] + "=";
+            try {
+              str += this [props [i]] + " ";
+            }
+            catch (e) {
+              str += "!\"" + e.message + "\" ";
+            }
+          }
+          return str + "]";
         };
       }
       if (!task.handler) {
@@ -1668,29 +1678,68 @@ var Akahuku = {
           ("queueContextTasks: invalid handler \"" + handlerName + "\"");
         return;
       }
-      this.contextTasks [contextDocument].push (task);
+      tasks.push (task);
     }
   },
 
-  clearContextTasks : function (targetDocument)
+  addContextTasks : function (targetDocument)
   {
-    if (targetDocument in this.contextTasks) {
-      if (this.contextTasks [targetDocument].length > 0) {
-        Akahuku.debug.warn
-          ("clearContextTasks clears non-empty tasklist for "
-           + targetDocument.location
-           + "\nlist = " + this.contextTasks [targetDocument]);
+    var tasks = new Array ();
+    Akahuku.contextTasksArray.push (tasks);
+    // タスクリストの消去保証
+    // (apply されず onBodyUnload が呼ばれない場合がある)
+    targetDocument.defaultView.addEventListener
+      ("unload",
+       function (event) {
+         Akahuku.clearContextTasks (event.target);
+       }, false);
+    return tasks;
+  },
+
+  getContextTasks : function (targetDocument)
+  {
+    for (var i = 0; i < Akahuku.contextTasksArray.length; i ++) {
+      var tasks = Akahuku.contextTasksArray [i];
+      if (tasks.length > 0) {
+        if (tasks [0].context &&
+            tasks [0].context.ownerDocument === targetDocument) {
+          return tasks;
+        }
       }
-      delete this.contextTasks [targetDocument];
+    }
+    return null;
+  },
+
+  clearContextTasks : function (targetDocument, optForce)
+  {
+    for (var i = 0; i < Akahuku.contextTasksArray.length; i ++) {
+      var tasks = Akahuku.contextTasksArray [i];
+      if (tasks.length > 0) {
+        if (tasks [0].context &&
+            tasks [0].context.ownerDocument === targetDocument) {
+          if (!optForce && Akahuku.debug.enabled) {
+            Akahuku.debug.warn
+              ("clearContextTasks clears non-empty tasklist for "
+               + targetDocument.location
+               + "\nlist = " + tasks);
+          }
+          Akahuku.contextTasksArray.splice (i, 1);
+          break;
+        }
+      }
+      else {
+        Akahuku.contextTasksArray.splice (i, 1);
+        i --;
+      }
     }
   },
 
   runContextTasks : function (targetDocument, opt)
   {
-    if (!(targetDocument in this.contextTasks)) {
+    var tasks = Akahuku.getContextTasks (targetDocument);
+    if (!tasks) {
       return;
     }
-    var tasks = this.contextTasks [targetDocument];
     var num = 0;
     for (var i = 0; i < tasks.length; i ++) {
       // opt で指定されたタスクを選別
@@ -1710,14 +1759,16 @@ var Akahuku = {
         task.handler.apply (task.owner, task.args);
       }
       catch (e) { Akahuku.debug.exception (e);
-        Akahuku.debug.log
-          ("runContextTasks cought an error while a task " + num
-           + " \"" + task.handlerName + "\"" + " for " + task.context
-           + "\n" + targetDocument.location);
+        if (Akahuku.debug.enabled) {
+          Akahuku.debug.log
+            ("runContextTasks cought an error while a task " + num
+             + " " + task.toString ()
+             + "\n" + targetDocument.location);
+        }
       }
     }
     if (tasks.length == 0) {
-      delete this.contextTasks [targetDocument];
+      Akahuku.clearContextTasks (targetDocument);
     }
   },
 };

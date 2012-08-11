@@ -693,7 +693,7 @@ var arAkahukuLink = {
         
     arAkahukuLink.urlPattern
     = new arAkahukuMatchPattern
-    (/(file|ftp|mms|rtsp|akahuku|h?t?t?p?s?)(:\/\/([^ \u0000-\u002C\u003A-\u0060\u3000-\u3004\uFF01-\uFFBE\xa0\/]+\/[\!#$%&|\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]*|[\!#$%&|\'\(\)\*\+,\-\.\/0-9:;=\?@A-Z\\_a-z~\uFF5E\u2329]+))/,
+    (/(file|ftp|mms|rtsp|akahuku|h?t?t?p?s?)(:\/\/([^ \u0000-\u002C\u003A-\u0060\u3000-\u3004\uFF01-\uFFBE\xa0\/]+\/[\!#$%&|\'\(\)\*\+,\-\.\/0-9:;=\?@[\]A-Z\\_a-z~\uFF5E\u2329]*|[\!#$%&|\'\(\)\*\+,\-\.\/0-9:;=\?@[\]A-Z\\_a-z~\uFF5E\u2329]+))/,
      /* $1: http 等のプロトコル
       * $2: 残りの URL */
      function (parens) {
@@ -779,7 +779,7 @@ var arAkahukuLink = {
       nextNode.parentNode.insertBefore (anchor, nextNode);
       try {
         if (url.match
-            (/^http(:\/\/(?:www|images|maps|scholar|books)\.google\.[^\/]+\/[^\/#]*[\?#])(.+)/)) {
+            (/^https?(:\/\/(?:www|images|maps|scholar|books)\.google\.[^\/]+\/[^\/#]*[\?#])(.+)/)) {
           var parens2 = RegExp.$1;
           var query = RegExp.$2;
           var ie = "UTF-8";
@@ -982,6 +982,7 @@ var arAkahukuLink = {
     },
      function (targetNode, nextNode,
                parens, targetDocument) {
+      var linkToRedirect = false;
       var url;
       url = "http://www.nijibox2.com/futabafiles/";
       switch (parens [2].substr (0, 2)) {
@@ -1005,6 +1006,7 @@ var arAkahukuLink = {
         case "sq":
           url = "http://www.nijibox6.com/futabafiles/";
           url += "mid/";
+          linkToRedirect = true;
           break;
       }
       
@@ -1014,12 +1016,22 @@ var arAkahukuLink = {
       var param = Akahuku.getDocumentParam (targetDocument);
       if (param) {
         var info = param.location_info;
-        if (info && info.isTsumanne) {
-          url = _getAttachmentOnTsumanne (targetDocument, parens [2]) || url;
+        if (info && info.isTsumanne && parens [3]) {
+          var url2 = _getAttachmentOnTsumanne (targetDocument, parens [2]);
+          if (url2) {
+            url = url2;
+            linkToRedirect = false;
+          }
         }
       }
             
       var anchor = targetDocument.createElement ("a");
+      if (linkToRedirect && parens [3]) {
+        // 中瓶のDLKey付きでも自動でKey入力画面に飛ぶように
+        // 拡張子無しのURLでアクセスする
+        anchor.setAttribute ("dummyhref", url.replace (/(\d+)\.[^\.]+$/,"$1"));
+      }
+      else
       anchor.setAttribute ("dummyhref", url);
       anchor.className = "akahuku_generated_link";
       if (!(parens [3])) {
@@ -2410,9 +2422,23 @@ var arAkahukuLink = {
           .loadURI (href, 0, null, null, null);
         break;
       case 1:
+        try {
+          // ツリー型タブ アドオン対応 (0.12.2011060201+)
+          // オートリンク先も通常リンク先同様に子タブにさせる
+          if ("TreeStyleTabService" in window) {
+            TreeStyleTabService.readyToOpenChildTabNow
+              (tabbrowser.selectedTab);
+          }
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
         var newTab;
         if (Akahuku.isFx36) {
-          newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
+          newTab = tabbrowser.addTab (href, {
+            relatedToCurrent : true,
+            // gBrowser.loadOneTab と同じロジックでタブを関連付ける
+            ownerTab : (focus ? tabbrowser.selectedTab : null),
+          });
         }
         else {
           newTab = tabbrowser.addTab (href);
@@ -3633,7 +3659,8 @@ var arAkahukuLink = {
           /*  Flashblock のプレースホルダ */
           if (node2
               && node2.nodeName.toLowerCase () == "div"
-              && node2.getAttribute ("srcattribute")
+              && node2.hasAttribute ("srcattribute")
+              && Akahuku.deAkahukuURI (node2.getAttribute ("srcattribute"), "preview")
               == target.getAttribute ("dummyhref")) {
             node2.parentNode.removeChild (node2);
             break;
