@@ -838,6 +838,14 @@ arAkahukuReloadParam.prototype = {
         if (this.responseText.search (/<html/i) != -1) {
           if (this.responseText.search (/<blockquote/i) == -1
               && this.responseText.search (/<div class=\"t\"/i) == -1) {
+            // ">操作が早すぎ"(以下略) (Shift_JIS) の場合
+            if (/>\x91\x80\x8d\xec\x82\xaa\x91\x81\x82\xb7\x82\xac/
+                .test (this.responseText)) {
+              arAkahukuReload.setStatus
+                ("\u64CD\u4F5C\u304C\u65E9\u3059\u304E\u307E\u3059", // "操作が早すぎます"
+                 false, this.targetDocument);
+              break;
+            }
             /* スレが消えていた場合 */
             /* 区切りの削除 */
             var newReplyHeader
@@ -999,6 +1007,9 @@ arAkahukuReloadParam.prototype = {
           catch (e) { Akahuku.debug.exception (e);
           }
         }
+        // スレ消滅情報を通知
+        info.isNotFound = true;
+        info.notifyUpdate ("thread-updated");
         if (arAkahukuReload.enableExtCacheImages) {
           // 消滅後は全画像をキャッシュにして保護する
           Akahuku.Cache.enCacheURIForImages (this.targetDocument);
@@ -1525,6 +1536,8 @@ var arAkahukuReload = {
     }
     
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
+    // ステータス表示有無に関わらず最新レス番号更新
+    arAkahukuThread.updateNewestNum (info, lastReply.num);
     node
     = targetDocument.getElementById
     ("akahuku_bottom_status_expire_num");
@@ -3282,6 +3295,9 @@ var arAkahukuReload = {
       catch (e) { Akahuku.debug.exception (e);
       }
     }
+
+    // スレ情報の更新を通知 (連携)
+    info.notifyUpdate ("thread-updated");
         
     var updateCache = false;
         
@@ -3509,7 +3525,8 @@ var arAkahukuReload = {
     param.reloadChannel.loadFlags |= flags;
 
     if (param.requestMode == 0 //HEAD-GET
-        && !param.sync && !info.isMonaca) {
+        && !param.sync && !info.isMonaca
+        && !/\.php\?/.test (location)) {
       param.reloadChannel.requestMethod = "HEAD";
     }
     else {

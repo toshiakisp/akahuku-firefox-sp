@@ -2271,7 +2271,8 @@ var arAkahukuLink = {
         if (target
             && target.className == "akahuku_generated_link") {
           var to = -1;
-          var focus = arAkahukuLink.enableAutoLinkFocus;
+          // 中ボタンクリックは通常とフォーカスが逆
+          var focus = !arAkahukuLink.enableAutoLinkFocus;
                     
           if (event.button == 1) {
             /* 新規タブ */

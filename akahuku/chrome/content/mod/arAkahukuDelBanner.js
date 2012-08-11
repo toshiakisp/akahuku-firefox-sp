@@ -406,22 +406,47 @@ var arAkahukuDelBanner = {
    */
   deleteContextAfterBlock : function (context, text)
   {
-    var targetDocument = context.ownerDocument;
-    var bannerAnchor = arAkahukuDOM.findParentNode (context, "a");
-    if (bannerAnchor) {
-      bannerAnchor.setAttribute ("delete", text || "delete");
+    // 無駄な余白を生む祖先を辿る
+    var branch = context.nodeName;
+    var node = context;
+    function isBlankNode (node) {
+      return (node.offsetHeight == 0 || node.offsetWidth == 0);
+    }
+    while (node.parentNode) {
+      var blank = true;
+      for (var i = 0; i < node.parentNode.children.length; i ++) {
+        if (blank && node.parentNode.children [i] != context) {
+          blank = isBlankNode (node.parentNode.children [i]);
+        }
+      }
+      if (!blank) break; //空白ではない子供がいる親は刈らない
+      node = node.parentNode;
+      branch = node.nodeName + ">" + branch;
+
+      //(子孫は全て空白だが)自身が空白でないなら探索打ち切り
+      if (!isBlankNode (node)) break;
+    }
+
+    if (/^(?:DIV>)?A>IMG$/.test (branch)) {
+      // バナー広告のツリー構造は従来通りに削除処理
+      context.parentNode.setAttribute ("delete", text || "delete");
       context.setAttribute ("__akahuku_banner", "true");
-      var param = Akahuku.getDocumentParam (targetDocument);
+      var param = Akahuku.getDocumentParam (context.ownerDocument);
       var info = (param ? param.location_info : {isMht:false});
-      this.deleteImage (context.parentNode, info, false);
+      this.deleteImage (node, info, false);
     }
     else {
-      // バナーではないようなのでとりあえずマークして非表示に
       context.setAttribute ("delete", text || "delete");
-      context.style.display = "none";
-      Akahuku.debug.log
-        ("deleteContextAfterBlock hides a non-banner context " + context
-         + "\n" + targetDocument.location);
+      node.style.display = "none";
+      if (Akahuku.debug.enabled) {
+        var src
+          = context.getAttribute ("src")
+          || context.getAttribute ("href");
+        Akahuku.debug.log
+          ("deleteContextAfterBlock hides a non-banner context "
+           + branch + " (" + src + ")"
+           + "\n" + context.ownerDocument.location);
+      }
     }
   },
 

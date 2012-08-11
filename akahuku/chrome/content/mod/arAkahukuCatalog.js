@@ -218,7 +218,7 @@ arAkahukuCatalogPopupData.prototype =  {
                 for (var i = 0; i < nodes.length; i ++) {
                   if ("className" in nodes [i]
                       && nodes [i].className
-                      == "akahuku_cell") {
+                         .indexOf ("akahuku_cell") != -1) {
                                         
                     anchor.appendChild
                       (targetDocument.createTextNode
@@ -368,39 +368,25 @@ arAkahukuCatalogPopupData.prototype =  {
     - (this.zoomImageGeometry.height - this.targetImageGeometry.height) / 2;
         
     /* 画面からはみ出さないようにする */
-    var min = targetDocument.body.scrollLeft;
-    if (min < targetDocument.documentElement.scrollLeft) {
-      min = targetDocument.documentElement.scrollLeft;
+    var targetElement = targetDocument.body; //後方互換モード用
+    if (targetDocument.compatMode != "BackCompat") {
+      targetElement = targetDocument.documentElement; //標準準拠モード用
     }
+    var min = targetElement.scrollLeft;
     if (this.zoomImageGeometry.left < min) {
       this.zoomImageGeometry.left = min;
     }
-    min = targetDocument.body.scrollTop;
-    if (min < targetDocument.documentElement.scrollTop) {
-      min = targetDocument.documentElement.scrollTop;
-    }
+    min = targetElement.scrollTop;
     if (this.zoomImageGeometry.top < min) {
       this.zoomImageGeometry.top =  min;
     }
-    var max = targetDocument.body.scrollLeft
-    + targetDocument.body.clientWidth;
-    if (max > targetDocument.body.scrollLeft
-        + targetDocument.body.clientWidth) {
-      max = targetDocument.documentElement.scrollLeft
-        + targetDocument.documentElement.clientWidth;
-    }
+    var max = targetElement.scrollLeft + targetElement.clientWidth;
     if (this.zoomImageGeometry.left + this.zoomImageGeometry.width
         >= max - 1) {
       this.zoomImageGeometry.left
       = max - this.zoomImageGeometry.width - 2;
     }
-    max = targetDocument.body.scrollTop
-    + targetDocument.body.clientHeight;
-    if (max > targetDocument.body.scrollTop
-        + targetDocument.body.clientHeight) {
-      max = targetDocument.documentElement.scrollTop
-        + targetDocument.documentElement.clientHeight;
-    }
+    max = targetElement.scrollTop + targetElement.clientHeight;
     if (this.zoomImageGeometry.top + this.zoomImageGeometry.height
         >= max - 1) {
       this.zoomImageGeometry.top
@@ -728,6 +714,9 @@ arAkahukuCatalogPopupData.prototype =  {
    *         ポップアップ管理データ
    */
   onImageLoad : function (event, param) {
+    if (this.state != 0) {
+      return; // 読込待ち状態以外からは状態遷移させてはならない
+    }
     var exists = false;
     for (var key in param.popups) {
       if (key == this.key) {
@@ -751,6 +740,9 @@ arAkahukuCatalogPopupData.prototype =  {
    *         ポップアップ管理データ
    */
   onImageError : function (event, param) {
+    if (this.state != 0) {
+      return; // 読込待ち状態以外からは状態遷移させてはならない
+    }
     var exists = false;
     for (var key in param.popups) {
       if (key == this.key) {
@@ -808,6 +800,7 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     this.thread = null;
     this.baseNode = null;
     this.popup = null;
+    this.container = null;
     if (this.createTimerID) {
       clearTimeout (this.createTimerID);
       this.createTimerID = null;
@@ -943,39 +936,25 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     = this.baseNodeGeometry.top;
         
     /* 画面からはみ出さないようにする */
-    var min = targetDocument.body.scrollLeft;
-    if (min < targetDocument.documentElement.scrollLeft) {
-      min = targetDocument.documentElement.scrollLeft;
+    var targetElement = targetDocument.body; //後方互換モード用
+    if (targetDocument.compatMode != "BackCompat") {
+      targetElement = targetDocument.documentElement; //標準準拠モード用
     }
+    var min = targetElement.scrollLeft;
     if (this.popupGeometry.left < min) {
       this.popupGeometry.left = min;
     }
-    min = targetDocument.body.scrollTop;
-    if (min < targetDocument.documentElement.scrollTop) {
-      min = targetDocument.documentElement.scrollTop;
-    }
+    min = targetElement.scrollTop;
     if (this.popupGeometry.top < min) {
       this.popupGeometry.top =  min;
     }
-    var max = targetDocument.body.scrollLeft
-    + targetDocument.body.clientWidth;
-    if (max > targetDocument.body.scrollLeft
-        + targetDocument.body.clientWidth) {
-      max = targetDocument.documentElement.scrollLeft
-        + targetDocument.documentElement.clientWidth;
-    }
+    var max = targetElement.scrollLeft + targetElement.clientWidth;
     if (this.popupGeometry.left + this.popupGeometry.width
         >= max - 1) {
       this.popupGeometry.left
       = max - this.popupGeometry.width - 2;
     }
-    max = targetDocument.body.scrollTop
-    + targetDocument.body.clientHeight;
-    if (max > targetDocument.body.scrollTop
-        + targetDocument.body.clientHeight) {
-      max = targetDocument.documentElement.scrollTop
-        + targetDocument.documentElement.clientHeight;
-    }
+    max = targetElement.scrollTop + targetElement.clientHeight;
     if (this.popupGeometry.top + this.popupGeometry.height
         >= max - 1) {
       this.popupGeometry.top
@@ -1046,6 +1025,11 @@ arAkahukuCatalogCommentPopupData.prototype =  {
             
     width = right - left;
     height = bottom - top;
+    if (this.baseNode.ownerDocument.compatMode != "BackCompat") {
+      // CSS width/height には border/padding width は含まれない
+      width -= 8;
+      height -= 8; 
+    }
             
     /* 小さくなる時はサイズから変える */
     if (this.width > width) {
@@ -1228,8 +1212,8 @@ function arAkahukuMergeItem (td, innerHTML, index, threadId, currentReplyNumber,
   this.innerHTML = innerHTML;
   this.index = index;
   this.threadId = threadId;
-  this.currentReplyNumber = currentReplyNumber;
-  this.oldReplyNumber = oldReplyNumber;
+  this.currentReplyNumber = parseInt (currentReplyNumber);
+  this.oldReplyNumber = parseInt (oldReplyNumber);
   this.visited = visited;
   this.isNew = isNew;
   this.overflowed = overflowed;
@@ -1245,6 +1229,26 @@ arAkahukuMergeItem.prototype = {
   visited : false,        /* Boolean  既読かどうか */
   isNew : false,          /* Boolean  新規かどうか */
   overflowed : false      /* Boolean  オーバーフローしたか */
+  ,
+
+  /**
+   * レス増加数を得る* (isNew はレス数自体を増加数と見なす)
+   *
+   * @return Number
+   *         レス増加数
+   */
+  getDelta : function () {
+    var delta = this.currentReplyNumber || 0;
+    if (!this.isNew) {
+      if (this.oldReplyNumber >= 0) {
+        delta -= this.oldReplyNumber;
+      }
+      else {
+        delta = 0;
+      }
+    }
+    return delta;
+  },
 };
 /**
  * カタログ管理データ
@@ -1268,6 +1272,9 @@ arAkahukuCatalogParam.prototype = {
   targetDocument : null,  /* HTMLDocument  対象のドキュメント */
     
   oldTable : null,        /* HTMLTableElement  最新に更新の前のテーブル */
+  oldOrder : "",          /* String  最新に更新の前の order */
+  oldLatestThread : 0,    /* Number  最新に更新の前の latestThread */
+
   oldThreads : null,      /* Array  最新に更新で消えたスレ
                            *   [arAkahukuMergeItem, ...] */
     
@@ -1280,6 +1287,8 @@ arAkahukuCatalogParam.prototype = {
                            *   キャッシュ書き込み */
     
   addedLastCells : false, /* Boolean  最後のセルを追加したか */
+
+  updateAgeTimerID : null,    /* Number  __age 属性更新のデバウンス用タイマ */
     
   /**
    * データを開放する
@@ -1302,7 +1311,13 @@ arAkahukuCatalogParam.prototype = {
     }
     catch (e) {
     }
+    this.unregisterObserver ();
+    if (this.updateAgeTimerID) {
+      clearTimeout (this.updateAgeTimerID);
+      this.updateAgeTimerID = null;
+    }
     this.targetDocument = null;
+    this.oldTable = null;
   },
     
   /**
@@ -1317,6 +1332,7 @@ arAkahukuCatalogParam.prototype = {
    */
   QueryInterface : function (iid) {
     if (iid.equals (Components.interfaces.nsISupports)
+        || iid.equals (Components.interfaces.nsIObserver)
         || iid.equals (Components.interfaces.nsISupportsWeakReference)
         || iid.equals (Components.interfaces.nsISHistoryListener)
         || iid.equals (Components.interfaces.nsIRequestObserver)
@@ -1551,7 +1567,101 @@ arAkahukuCatalogParam.prototype = {
         
     var chunk = this.sstream.read (count);
     this.responseText += chunk;
-  }
+  },
+
+  /**
+   * 連携のためにオブザーバーとして登録する
+   */
+  registerObserver : function () {
+    var os
+    = Components.classes ["@mozilla.org/observer-service;1"]
+    .getService (Components.interfaces.nsIObserverService);
+    os.addObserver (this, "akahuku-location-info-updated", false);
+    os.addObserver (this, "akahuku-thread-newest-number", false);
+    this._observing = true;
+  },
+  unregisterObserver : function () {
+    if (!this._observing) return;
+    try {
+      var os
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+      os.removeObserver (this, "akahuku-location-info-updated", false);
+      os.removeObserver (this, "akahuku-thread-newest-number", false);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  },
+
+  /**
+   * nsIObserver.observe
+   */
+  observe : function (subject, topic, data) {
+    if (!arAkahukuCatalog.enableObserve) {
+      return;
+    }
+    try {
+      if (topic == "akahuku-location-info-updated") {
+        subject.QueryInterface (Components.interfaces.nsISupportsString);
+        var decodedData = arAkahukuJSON.decode (subject.data);
+        this.onNotifiedLocationInfoUpdated (decodedData, data);
+      }
+      else if (topic == "akahuku-thread-newest-number") {
+        subject.QueryInterface (Components.interfaces.nsISupportsString);
+        var decodedData = arAkahukuJSON.decode (subject.data);
+        this.onNotifiedThreadNewestNumber (decodedData, data);
+      }
+    }
+    catch (e) {
+      Akahuku.debug.exception (e);
+    }
+  },
+  /**
+   * スレ情報更新通知イベント
+   */
+  onNotifiedLocationInfoUpdated : function (infoThread, data) {
+    var info
+      = Akahuku.getDocumentParam (this.targetDocument)
+      .location_info;
+    if (!(info.server === infoThread.server
+        && info.dir === infoThread.dir)) {
+      return;
+    }
+    infoThread.prototype = info.prototype;
+    if (infoThread.isReply) {
+      arAkahukuCatalog.updateByThreadInfo
+        (this.targetDocument, infoThread);
+    }
+  },
+  /**
+   * 板の最新レス番号の更新通知イベント
+   */
+  onNotifiedThreadNewestNumber : function (newestNum, data) {
+    if (!arAkahukuCatalog.enableRed) {
+      return;
+    }
+    var info
+      = Akahuku.getDocumentParam (this.targetDocument)
+      .location_info;
+    var name = info.server + ":" + info.dir;
+    if (name != newestNum.name) {
+      return;
+    }
+    // 「古いスレを赤くする」の再判定
+    // (短時間に繰り返し実行しないようにデバウンス)
+    clearTimeout (this.updateAgeTimerID);
+    this.updateAgeTimerID
+      = setTimeout (function (param, num) {
+        param.updateAgeTimerID = null;
+        if (!param.targetDocument) return;
+        var table = arAkahukuCatalog.getCatalogTable (param.targetDocument);
+        if (!table) return;
+        var nodes = table.getElementsByTagName ("td");
+        for (var i = 0; i < nodes.length; i ++) {
+          arAkahukuCatalog.updateCellAge (nodes [i], info, num);
+        }
+      }, 100, this, newestNum.value);
+  },
 };
 /**
  * カタログ管理
@@ -1562,14 +1672,18 @@ var arAkahukuCatalog = {
   enableReorder : false,        /* Boolean  ソート */
   reorderWidth : 10,            /* Boolean  指定幅 */
   enableReorderSave : false,    /* Boolean  状態を記憶する */
-  reorderSaveType : 0,          /* Number  状態
-                                 *   0:  通常
-                                 *   1:  ページごと
-                                 *   2:  更新順に指定幅ずつ
-                                 *   -1: スレの立った順に指定幅ずつ */
+  reorderSaveType : 0,          /* Number  状態 */
+  REORDER_TYPES : {
+    akahuku_catalog_reorder_default : 0,    // 通常
+    akahuku_catalog_reorder_page : 1,       // ページごと
+    akahuku_catalog_reorder_spec : 2,       // 通常順に(指定幅ずつ)
+    akahuku_catalog_reorder_delta : 3,      // 増加数順に
+    akahuku_catalog_reorder_createtime : -1,// スレの立った順に
+  },
   enableReorderVisited : false, /* Boolean  未読と既読で分ける */
   enableReorderNew : false,     /* Boolean  最新に更新で新規を分ける */
   enableReorderFill : false,    /* Boolean  合間合間に で消した分を詰める */
+  enableReorderInfo : false,    /* Boolean  各行に情報を表示する */
     
   enableZoom : false,         /* Boolean  ズーム */
   enableZoomClick : false,    /* Boolean  クリックで開く */
@@ -1598,6 +1712,9 @@ var arAkahukuCatalog = {
   enableSidebar : false,        /* Boolean  サイドバーと連携 */
   enableSidebarComment : false, /* Boolean  スレ本文を長めに表示 */
   sidebarCommentLength : 12,    /* Number  スレ本文の長さ */
+
+  enableObserve : false,        /* Boolean  通常・返信モードと連携 */
+  enableObserveReplyNum : false,/* Boolean  レス数を即座に反映 */
     
   enableClickable : false, /* Boolean  空白の本文を強制リンク */
   enableVisited : false,   /* Boolean  一度見たスレをマーク */
@@ -1647,7 +1764,15 @@ var arAkahukuCatalog = {
         style
         .addRule ("table th",
                   "padding-left: 8px; "
+                  + "border-width: 0px;" // BackCompat
                   + "padding-right: 8px;")
+        .addRule ("table th.akahuku_header",
+                  "border-width: 1px;")
+        .addRule ("table th.akahuku_header_info",
+                  "font-size: 10pt; "
+                  + "vertical-align: top; "
+                  + "text-align: right; "
+                  + "font-weight: normal;")
         .addRule ("#akahuku_catalog_mode_indicator",
                   "font-size: 9pt; "
                   + "font-weight: normal; "
@@ -1658,26 +1783,22 @@ var arAkahukuCatalog = {
                   "text-align: center; "
                   + "font-size: 9pt; "
                   + "margin: 4px;")
+        .addRule ("#akahuku_catalog_reorder_container2",
+                  "text-align: center; "
+                  + "font-size: 9pt; "
+                  + "margin: 0px;")
         .addRule ("a.akahuku_catalog_reorder",
                   "cursor: pointer; "
                   + "color: #0040ee; "
                   + "background-color: inherit;")
+        .addRule ("a.akahuku_catalog_current_reorder",
+                  "font-weight: bold;")
         .addRule ("a.akahuku_catalog_reorder:hover",
                   "cursor: pointer; "
                   + "color: #ff4000; "
                   + "background-color: inherit;")
-        .addRule ("a.akahuku_catalog_reorder_save:hover",
-                  "font-size: 9pt; "
-                  + "vertical-align: sub; "
-                  + "cursor: pointer; "
-                  + "color: #ff4000; "
-                  + "background-color: inherit;")
-        .addRule ("a.akahuku_catalog_reorder_save",
-                  "font-size: 9pt; "
-                  + "vertical-align: sub; "
-                  + "cursor: pointer; "
-                  + "color: #0040ee; "
-                  + "background-color: inherit;");
+        .addRule ("span.akahuku_catalog_reorder_width",
+                  "font-size: inherit;") // 旧スタイル対策
       }
       /* 一度見たスレをマーク */
       if (arAkahukuCatalog.enableVisited) {
@@ -1707,9 +1828,13 @@ var arAkahukuCatalog = {
                   + "padding: 0; "
                   + "font-size: 9pt; "
                   + "color: #cc1105;")
+        .addRule ("div.akahuku_cell_horizontal", //コメント位置:右
+                  "float: left;")
         .addRule ("#akahuku_catalog_reload_container",
                   "text-align: left; "
-                  + "margin-bottom: 0.5em;")
+                  + "margin-bottom: "
+                  + (arAkahukuCatalog.enableReorder
+                    ? "0em" : "0.5em;"))
         .addRule ("#akahuku_catalog_reload_container2",
                   "text-align: left; "
                   + "margin-bottom: 0.5em;")
@@ -1777,6 +1902,14 @@ var arAkahukuCatalog = {
                   "cursor: pointer; "
                   + "color: #ff4000; "
                   + "background-color: inherit;");
+        // ニュース表 patch
+        if (info.server === "zip" && info.dir === "6") {
+          style
+          .addRule ("td a",
+                    "text-decoration: underline;")
+          .addRule ("td a font",
+                    "color: inherit;")
+        }
       }
       /* ズーム */
       if (arAkahukuCatalog.enableZoom) {
@@ -1803,6 +1936,37 @@ var arAkahukuCatalog = {
                       "background-color: #e04000;");
         }
       }
+      // 古いスレを赤くする
+      if (arAkahukuCatalog.enableRed) {
+        style
+        .addRule ('td[__age="9"]',
+                  "border-style: solid; "
+                  + "border-color: #f00;")
+        .addRule ('td[__age="10"]',
+                  "border-style: dotted; "
+                  + "border-color: #f00;")
+        .addRule ('td[__age="-1"]',
+                  "border-style: dotted; "
+                  + "border-color: #800;")
+        // 赤くすることでセルのサイズが変化しないように
+        .addRule ('table[border="1"] td',
+                  "border-width: 1px; "
+                  + "padding: 1px;")
+        .addRule ('table[border="1"] td[__age="9"]'
+                  + ',table[border="1"] td[__age="10"]'
+                  + ',table[border="1"] td[__age="-1"]',
+                  "border-width: 2px; "
+                  + "padding: 0px;")
+        // 枠無しのカタログでの赤枠 (ニュース表など)
+        .addRule ('table:not([border="1"]) td[__age="9"]'
+                  + ',table:not([border="1"]) td[__age="10"]'
+                  + ',table:not([border="1"]) td[__age="-1"]',
+                  "border-width: 1px;")
+      }
+      // 更新前を残す
+      style
+      .addRule ('td[__overflowed="true"]',
+                "background-color: #ddddcc;")
     }
   },
     
@@ -1834,6 +1998,9 @@ var arAkahukuCatalog = {
       arAkahukuCatalog.enableReorderFill
         = arAkahukuConfig
         .initPref ("bool", "akahuku.catalog.reorder.fill", false);
+      arAkahukuCatalog.enableReorderInfo
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.catalog.reorder.info", false);
     }
         
     arAkahukuCatalog.enableZoom
@@ -1961,9 +2128,32 @@ var arAkahukuCatalog = {
             });
         }
       }
-      if (arAkahukuCatalog.enableReorderVisited
-          || arAkahukuCatalog.enableReorderNew) {
-        arAkahukuCatalog.enableReloadLeftBefore = false;
+      else {
+        arAkahukuCatalog.enableReloadLeftBeforeMore = false;
+        arAkahukuCatalog.enableReloadLeftBeforeSave = false;
+      }
+      if (!arAkahukuCatalog.enableReloadLeftBeforeSave) {
+        arAkahukuCatalog.lastCellsText = "";
+        arAkahukuCatalog.lastCells = new Object ();
+
+        // lastcells.txt を削除
+        // (設定をオンオフする場合等で古いデータが使われないように)
+        var filename
+          = arAkahukuFile.systemDirectory
+          + arAkahukuFile.separator + "lastcells.txt";
+        try {
+          var file
+            = Components.classes ["@mozilla.org/file/local;1"]
+            .createInstance (Components.interfaces.nsILocalFile);
+          file.initWithPath (filename);
+          file.remove (false);
+        }
+        catch (e if e.result == Components.results.NS_ERROR_FILE_TARGET_DOES_NOT_EXIST
+               || e.result == Components.results.NS_ERROR_FILE_NOT_FOUND) {
+          // 無いなら無視
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
       }
     }
         
@@ -1979,6 +2169,14 @@ var arAkahukuCatalog = {
         .initPref ("int",  "akahuku.catalog.sidebar.comment.length",
                    12);
     }
+
+    arAkahukuCatalog.enableObserve
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.observe", false);
+    arAkahukuCatalog.enableObserveReplyNum
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.observe.replynum", false)
+    && arAkahukuCatalog.enableObserve;
         
     arAkahukuCatalog.enableClickable
     = arAkahukuConfig
@@ -2030,11 +2228,17 @@ var arAkahukuCatalog = {
         a.appendChild (targetDocument.createTextNode (pageno));
         th.appendChild (a);
         tr.appendChild (th);
+        th.className = "akahuku_header";
       }
-      else if (checkVisited || checkNew) {
+      else if (needHeader) {
         var th = targetDocument.createElement ("th");
         tr.appendChild (th);
       }
+    }
+
+    function setRowHeaderText (tr, text) {
+      tr.firstChild.textContent = text;
+      tr.firstChild.className = "akahuku_header";
     }
         
     var info
@@ -2055,24 +2259,30 @@ var arAkahukuCatalog = {
     newTable.appendChild (tbody);
     var latestThread = parseInt (mergedItems [0].threadId);
         
+    var doReorderToWidth = !(/_(?:default|page)$/.test (param.order));
     var checkVisited
     = arAkahukuCatalog.enableReorderVisited
-    && (param.order == "akahuku_catalog_reorder_spec"
-        || param.order == "akahuku_catalog_reorder_createtime");
+    && doReorderToWidth;
     var checkNew
     = arAkahukuCatalog.enableReorderNew
-    && (param.order == "akahuku_catalog_reorder_spec"
-        || param.order == "akahuku_catalog_reorder_createtime");
+    && doReorderToWidth;
+    var dispCreatetime
+    = arAkahukuCatalog.enableReorderInfo
+    && param.order === "akahuku_catalog_reorder_createtime";
+    var dispDeltaHeaders
+    = arAkahukuCatalog.enableReorderInfo
+    && param.order === "akahuku_catalog_reorder_delta";
+    var needHeader
+    = checkVisited || checkNew || dispCreatetime || dispDeltaHeaders;
+    var isBackCompat = (targetDocument.compatMode == "BackCompat");
         
-    var visitedState = 0;
-    var newState = 0;
-    if (!checkNew) {
-      newState = 1;
-    }
+    var visitedState = (checkVisited ? 0 : 1);
+    var newState = (checkNew ? 0 : 1);
     var diff = 0;
     var entire = false;
     var overflowedCount = 0;
     var leftNum = 0;
+    var diffAll = 0;
 
     if (arAkahukuCatalog.enableReloadLeftBeforeMore) {
       if (arAkahukuCatalog.reloadLeftBeforeMoreNum.match
@@ -2087,7 +2297,8 @@ var arAkahukuCatalog = {
     for (i = 0; i < mergedItems.length; i ++) {
       if (mergedItems [i].overflowed) {
         overflowedCount --;
-        if (overflowedCount < -leftNum) {
+        if (visitedState != 0 //既読中は overflowed も追加 
+            && overflowedCount < -leftNum) {
           continue;
         }
       }
@@ -2097,37 +2308,25 @@ var arAkahukuCatalog = {
         tbody.appendChild (tr);
         createRowHeader (tr, (i - diff));
       }
-      var newHeader = false;
       if (checkNew
           && newState == 0) {
         if (i == 0) {
           if (!mergedItems [i].isNew) {
-            if (!checkVisited) {
-              tr.firstChild.appendChild
-                (targetDocument.createTextNode
-                 ("\u65E2\u5B58"));
-            }
             newState = 1;
           }
           else {
-            tr.firstChild.appendChild
-              (targetDocument.createTextNode
-               ("\u65B0\u898F"));
-            newHeader = true;
+            setRowHeaderText (tr, "\u65B0\u898F"); //"新規"
           }
         }
         else if (!mergedItems [i].isNew) {
           newState = 1;
           diff = i % columns;
+          diffAll = i;
                     
-          tr = targetDocument.createElement ("tr");
-          tbody.appendChild (tr);
-          createRowHeader (tr, (i - diff));
-                    
-          if (!checkVisited) {
-            tr.firstChild.appendChild
-              (targetDocument.createTextNode
-               ("\u65E2\u5B58"));
+          if (diff != 0) { // 改行
+            tr = targetDocument.createElement ("tr");
+            tbody.appendChild (tr);
+            createRowHeader (tr, (i - diff));
           }
         }
       }
@@ -2135,44 +2334,36 @@ var arAkahukuCatalog = {
       if (checkVisited
           && visitedState == 0
           && newState != 0) {
-        if (i == 0) {
+        if (i == diffAll) {
           if (mergedItems [i].visited) {
-            if (!newHeader) {
-              tr.firstChild.appendChild
-              (targetDocument.createTextNode
-               ("\u65E2\u8AAD"));
-            }
+            setRowHeaderText (tr, "\u65E2\u8AAD"); // "既読"
           }
           else {
-            if (!newHeader) {
-              tr.firstChild.appendChild
-              (targetDocument.createTextNode
-               ("\u672A\u8AAD"));
-
-            }
             visitedState = 1;
           }
         }
         else if (!mergedItems [i].visited) {
           visitedState = 1;
+          var diffVisited = (i - diff) % columns;
           diff = i % columns;
+          diffAll = i;
                     
-          tr = targetDocument.createElement ("tr");
-          tbody.appendChild (tr);
-          createRowHeader (tr, (i - diff));
-                    
-          if (!newHeader) {
-            tr.firstChild.appendChild
-              (targetDocument.createTextNode
-               ("\u672A\u8AAD"));
+          if (diffVisited != 0) { // 改行
+            tr = targetDocument.createElement ("tr");
+            tbody.appendChild (tr);
+            createRowHeader (tr, (i - diff));
           }
         }
-        else if (newState == 1) {
-          tr.firstChild.appendChild
-          (targetDocument.createTextNode
-           ("\u65E2\u8AAD"));
+      }
+
+      if ((checkVisited || checkNew) //"未読"が必要か
+          && newState != 0 && visitedState != 0) {
+        if (i == diffAll) {
+          setRowHeaderText (tr, "\u672A\u8AAD"); // "未読"
+          // 新規・既読による端数も overflowed を残す分に含める
+          leftNum += ((diffAll + overflowedCount) % columns);
+          overflowedCount = 0;
         }
-        newState = 2;
       }
             
       if (parseInt (mergedItems [i].threadId) > latestThread) {
@@ -2182,7 +2373,7 @@ var arAkahukuCatalog = {
       var td = null;
       if (mergedItems [i].td) {
         td = mergedItems [i].td;
-        if (mergedItems [i].oldReplyNumber != undefined) {
+        if (mergedItems [i].oldReplyNumber >= 0) {
           td.setAttribute ("__old_reply_number",
                            mergedItems [i].oldReplyNumber);
         }
@@ -2193,17 +2384,12 @@ var arAkahukuCatalog = {
             img [0].src = img [0].src;
           }
         }
-        td.setAttribute ("__is_new", "false");
+        if (!mergedItems [i].isNew) {
+          td.removeAttribute ("__is_new");
+        }
+        td.setAttribute ("__original_index", mergedItems [i].index);
       }
       else {
-        var num = "";
-        if (arAkahukuCatalog.enableReloadReplyNumberDelta) {
-          num
-            = "<div class=\"akahuku_cell\">"
-            + (mergedItems [i].isNew ? "new" : "up")
-            + "</div>";
-        }
-                
         td = targetDocument.createElement ("td");
         /* mergedItems [i].innerHTML には HTML が含まれるので
          * innerHTML を使用する */
@@ -2212,9 +2398,13 @@ var arAkahukuCatalog = {
             && mergedItems [i].className != "null") {
           td.className = mergedItems [i].className;
         }
-        td.innerHTML = num + mergedItems [i].innerHTML;
-        td.setAttribute ("__is_new",
-                         mergedItems [i].isNew ? "true" : "false");
+        td.innerHTML = mergedItems [i].innerHTML;
+        // 必須の属性を updateCell より先に設定
+        td.setAttribute ("__original_index", mergedItems [i].index);
+        td.setAttribute ("__thread_id", mergedItems [i].threadId);
+        if (mergedItems [i].isNew) {
+          td.setAttribute ("__is_new", "true");
+        }
                 
         arAkahukuCatalog.updateCell (td, info);
                 
@@ -2222,15 +2412,18 @@ var arAkahukuCatalog = {
             && !arAkahukuLink.enableHideTrollsNoCat) {
           arAkahukuLink.applyHideTrolls (targetDocument, td);
         }
+
+        // マークは生成時から (最適化)
+        if (arAkahukuCatalog.enableVisited) {
+          arAkahukuCatalog.setCellVisited (td, mergedItems [i].visited);
+        }
       }
             
       if (mergedItems [i].overflowed) {
         td.setAttribute ("__overflowed", "true");
-        td.style.backgroundColor = "#ddddcc";
       }
       else {
         td.removeAttribute ("__overflowed");
-        td.style.backgroundColor = "";
       }
             
       try {
@@ -2239,7 +2432,7 @@ var arAkahukuCatalog = {
             Aima_Aimani.hideNGNumberCatalogueHandler (td);
             if (td.style.display == "none") {
               entire = true;
-              overflowedCount ++;
+              leftNum ++;
             }
           }
         }
@@ -2247,10 +2440,9 @@ var arAkahukuCatalog = {
       catch (e) { Akahuku.debug.exception (e);
       }
             
-      td.setAttribute ("__original_index", mergedItems [i].index);
+      if (mergedItems [i].currentReplyNumber >= 0)
       td.setAttribute ("__reply_number",
                        mergedItems [i].currentReplyNumber);
-      td.setAttribute ("__thread_id", mergedItems [i].threadId);
       tr.appendChild (td);
     }
         
@@ -2261,71 +2453,25 @@ var arAkahukuCatalog = {
     if (entire) {
       arAkahukuCatalog.onHideEntireThread (targetDocument);
     }
+
+    if (dispCreatetime) {
+      arAkahukuCatalog.setCreatetimeHeaders (newTable);
+    }
+    else if (dispDeltaHeaders) {
+      arAkahukuCatalog.setDeltaHeaders (newTable);
+    }
         
     var nodes;
         
     for (i = 0, nodes = newTable.getElementsByTagName ("td");
          i < nodes.length; i ++) {
-      if (nodes [i].getAttribute ("__old_reply_number") == undefined
-          || nodes [i].getAttribute ("__old_reply_number") == "") {
-        continue;
+      if (td.hasAttribute ("__old_reply_number")) {
+        // 新規追加セルに対しては省略可
+        arAkahukuCatalog.updateCellReplyNum (nodes [i]);
       }
-            
-      if (arAkahukuCatalog.enableReloadReplyNumberDelta) {
-        var div = nodes [i].getElementsByTagName ("div") [0];
-        if (div && !arAkahukuDOM.hasClassName (div, "akahuku_cell")) {
-          /* akahuku_comment などの div を間違って消さないように */
-          div = null;
-        }
-        var delta
-          = parseInt (nodes [i].getAttribute ("__reply_number"))
-          - parseInt (nodes [i].getAttribute ("__old_reply_number"));
-        if (delta > 0) {
-          delta = "+" + delta;
-        }
-        else if (delta == 0) {
-          delta = "";
-        }
-                
-        if (delta == "") {
-          if (div) {
-            div.parentNode.removeChild (div);
-          }
-        }
-        else {
-          if (!div) {
-            div = targetDocument.createElement ("div");
-            div.className = "akahuku_cell akahuku_catalog_delta";
-            nodes [i].insertBefore (div, nodes [i].firstChild);
-          }
-                    
-          arAkahukuDOM.setText (div, delta);
-        }
-      }
-            
       arAkahukuCatalog.updateCellInfo (nodes [i],
                                        info,
                                        param.latestThread);
-            
-      var fonts = nodes [i].getElementsByTagName ("font");
-      if (fonts && fonts.length > 0) {
-        var font = fonts [fonts.length - 1];
-        arAkahukuDOM.setText
-          (font,
-           nodes [i].getAttribute ("__reply_number"));
-      }
-      /* 避難所 patch */
-      else {
-        fonts = nodes [i].getElementsByTagName ("span");
-        for (var j = 0; j < fonts.length; j ++) {
-          if ("className" in fonts [j]
-              && fonts [j].className == "s14") {
-            arAkahukuDOM.setText (fonts [j],
-                                  nodes [i].getAttribute
-                                  ("__reply_number"));
-          }
-        }
-      }
     }
         
     if (arAkahukuCatalog.enableReloadLeftBeforeSave
@@ -2451,6 +2597,154 @@ var arAkahukuCatalog = {
             
     }
   },
+
+  /**
+   *  スレが立った時間帯を列ヘッダに表示
+   */
+  setCreatetimeHeaders : function (table) {
+    var ctimes = new Array ();
+
+    // 一次スキャン
+    var tdLast = null;
+    var skipToUnread = false;
+    var nodes = table.getElementsByTagName ("tr");
+    for (var i = 0; i < nodes.length; i ++) {
+      var th = nodes [i].firstChild;
+      if (!th || th.nodeName.toLowerCase () != "th") {
+        Akahuku.debug.log ("no th; break");
+        break;
+      }
+      // "未読"まで飛ばす
+      if (th.textContent != "\u672A\u8AAD") { //"未読"
+        if (!/^\s*$/.test (th.textContent)) { //"新規"や"既読"がある場合
+          skipToUnread = true;
+        }
+        if (skipToUnread) continue;
+      }
+      skipToUnread = false;
+
+      var tds = nodes [i].getElementsByTagName ("td");
+      for (var j = 0; j < tds.length; j ++) {
+        var td = tds [j];
+        if (j != 0 || td.getAttribute ("__overflowed") == "true") {
+          tdLast = td
+          continue;
+        }
+        //後は行頭のみの処理
+
+        var img = td.getElementsByTagName ("img") [0];
+        if (!img && tdLast) {
+          // 文字スレへの限定的な対処
+          img = tdLast.getElementsByTagName ("img") [0];
+          tdLast = null;
+        }
+        if (img && img.src && img.src.match (/(\d+)s\.jpg$/)) {
+          ctimes [i] = parseInt (RegExp.$1);
+        }
+      }
+    }
+
+    if (ctimes.length == 0) {
+      return;
+    }
+
+    // 時間帯表示を作る関数のリスト
+    var stamperList = [
+      { limit: 60*60*1000,
+        proc: function (d) {
+          return d.getMinutes () + "\u5206"; //"分"
+        },
+      },
+      { limit: 24*60*60*1000,
+        proc: function (d) {
+          return d.getHours () + "\u6642"; //"時"
+        },
+      },
+      { limit: 7*24*60*60*1000,
+        _weekdays: "\u65E5\u6708\u706B\u6C34\u6728\u91D1\u571F",
+          // "日月火水木金土"
+        proc: function (d) {
+          return "(" + this._weekdays [d.getDay ()] + ")";
+        },
+      },
+      { limit: Infinity,//no more entry
+        proc: function (d) {
+          return (d.getMonth () + 1) + "/" + d.getDate ();
+        },
+      },
+    ];
+    var index = 0;
+    var stamper = null;//stamperList [index];
+    var now = Date.now ();
+    var nodes = table.getElementsByTagName ("tr");
+    for (var i = 0; i < nodes.length; i ++) {
+      var tr = nodes [i], th = nodes [i].firstChild;
+      var ctime = ctimes [i];
+      if (!ctime)
+        continue;
+      if (!stamper) { //初回
+        stamper = stamperList [index];
+        // 初期表示は行間平均を参考に桁上げ
+        var dt = now - ctimes [ctimes.length - 1];
+        if (ctimes.length > 1) {
+          dt = parseInt (dt / (ctimes.length - 1));
+        }
+        while (dt >= stamper.limit) {
+          stamper = stamperList [++index];
+        }
+      }
+      else if (now - ctime >= stamper.limit / 2) {
+        stamper = stamperList [++index];
+      }
+      if (stamper) {
+        // setRowHeaderText 同様に
+        th.textContent = stamper.proc (new Date (ctime));
+        th.className = "akahuku_header akahuku_header_info";
+      }
+    }
+  },
+
+  /**
+   *  スレのレス増加数を列ヘッダに表示
+   */
+  setDeltaHeaders : function (table) {
+    function getDeltaForTd () {
+      var curReplyNumber 
+        = parseInt (td.getAttribute ("__reply_number"));
+      var oldReplyNumber 
+        = parseInt (td.getAttribute ("__old_reply_number"));
+      var delta = curReplyNumber || 0;
+      if (td.getAttribute ("__is_new") != "true") {
+        delta = oldReplyNumber >= 0 ? delta - oldReplyNumber : 0;
+      }
+      return delta;
+    }
+    var skipToUnread = false;
+    var nodes = table.getElementsByTagName ("tr");
+    for (var i = 0; i < nodes.length; i ++) {
+      var th = nodes [i].firstChild;
+      if (!th || th.nodeName.toLowerCase () != "th") {
+        Akahuku.debug.log ("no th; break");
+        break;
+      }
+      // "未読"まで飛ばす
+      if (th.textContent != "\u672A\u8AAD") { //"未読"
+        if (!/^\s*$/.test (th.textContent)) { //"新規"や"既読"がある場合
+          skipToUnread = true;
+        }
+        if (skipToUnread) continue;
+      }
+      skipToUnread = false;
+      var td = nodes [i].getElementsByTagName ("td")[0];
+      if (td && td.getAttribute ("__overflowed") != "true") {
+        var delta = getDeltaForTd (td);
+        if (delta > 0) {
+          th.textContent = "+" + delta;
+          th.className = "akahuku_header akahuku_header_info";
+        }
+      }
+    }
+  },
     
   /**
    * 更新時刻を表示する
@@ -2552,8 +2846,6 @@ var arAkahukuCatalog = {
    *         対象のイベント
    */
   onLinkClick : function (event) {
-    event.preventDefault ();
-        
     var targetDocument = event.target.ownerDocument;
     var param
     = Akahuku.getDocumentParam (targetDocument).catalogpopup_param;
@@ -2571,6 +2863,9 @@ var arAkahukuCatalog = {
             (key,
              param,
              new arAkahukuCatalogPopupData (img));
+          // ポップアップを新たに作った時だけクリックイベントを止める
+          // (ポップアップ保持領域からのクリックイベント転送に対応)
+          event.preventDefault ();
         }
       }
     }
@@ -2590,7 +2885,7 @@ var arAkahukuCatalog = {
         
     nodes = tdElement.getElementsByTagName ("font");
     for (var i = 0; i < nodes.length; i ++) {
-      if (nodes [i].innerHTML.match (/^[0-9]+$/)) {
+      if (/^(?:\d+|\(\d+\))$/.test (nodes [i].textContent)) {
         return nodes [i];
       }
     }
@@ -2618,6 +2913,10 @@ var arAkahukuCatalog = {
     var anchor
       = arAkahukuDOM.getFirstElementByNames (element, "a");
     if (anchor) {
+      if (arAkahukuCatalog.enableVisited) {
+        // 履歴調査済みなので属性から判断していい
+        return arAkahukuDOM.hasClassName (anchor, "akahuku_visited");
+      }
       var uri
         = Components
         .classes ["@mozilla.org/network/standard-url;1"]
@@ -2801,7 +3100,6 @@ var arAkahukuCatalog = {
           if (thread && thread.comment) {
             var node
               = arAkahukuCatalog.createCommentNode (tdElement);
-            node.setAttribute ("__thread", name + "/" + num);
             replaced = true;
             var text
               = arAkahukuCatalog.formatComment (thread.comment);
@@ -2822,7 +3120,6 @@ var arAkahukuCatalog = {
             && !("className" in nodes [0]
                  && nodes [0].className == "aima_aimani_generated")) {
           nodes [0].className = "akahuku_native_comment";
-          nodes [0].setAttribute ("__thread", name + "/" + num);
         }
       }
             
@@ -2886,27 +3183,8 @@ var arAkahukuCatalog = {
   updateCellInfo : function (tdElement, info, latestNum) {
     var targetDocument = tdElement.ownerDocument;
         
-    latestNum
-      = Math.max
-      (arAkahukuThread.newestNum [info.server + ":" + info.dir] || 0,
-       latestNum);
-    var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
-    if (anchor) {
-      if (arAkahukuCatalog.enableRed) {
-        if (anchor.href.match (/res[\/=]([0-9]+)/)
-            || anchor.href.match (/2\/([0-9]+)/)
-            || anchor.href.match (/b\/([0-9]+)/)) {
-          var num = RegExp.$1;
-          if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-            var max
-              = arAkahukuMaxNum [info.server + ":" + info.dir];
-                        
-            if (num < latestNum - max * 0.9) {
-              tdElement.style.border = "2px solid #ff0000";
-            }
-          }
-        }
-      }
+    if (arAkahukuCatalog.enableRed) {
+      arAkahukuCatalog.updateCellAge (tdElement, info, latestNum);
     }
         
     if (arAkahukuCatalog.enableSidebar
@@ -2945,6 +3223,200 @@ var arAkahukuCatalog = {
       }
     }
   },
+
+  /**
+   * セルのスレ年齢情報を更新する
+   */
+  updateCellAge : function (tdElement, info, latestNum) {
+    var name = info.server + ":" + info.dir;
+    var num = parseInt (tdElement.getAttribute ("__thread_id"));
+    if (!num) {
+      var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
+      if (anchor) {
+        if (anchor.href.match (/res[\/=]([0-9]+)/)
+            || anchor.href.match (/2\/([0-9]+)/)
+            || anchor.href.match (/b\/([0-9]+)/)) {
+          num = parseInt (RegExp.$1);
+        }
+      }
+    }
+    latestNum
+      = Math.max
+      (arAkahukuThread.newestNum [name] || 0,
+       latestNum || 0);
+    if (!(latestNum >= num)) {
+      Akahuku.debug.warn
+        ("arAkahukuCatalog.updateCellAgae aborted; "
+         + "latest No.(" + latestNum + ")"
+         + "must be >= thread's No.(" + num + ")");
+      return;
+    }
+    var oldAge = parseInt (tdElement.getAttribute ("__age"));
+    if (oldAge == -1
+        || !(name in arAkahukuMaxNum)) {
+      return;
+    }
+    var max = arAkahukuMaxNum [name];
+    var age = parseInt ((latestNum - num) * 10 / max);
+    if (age != oldAge) {
+      tdElement.setAttribute ("__age", age);
+      if (age > 10) {
+        tdElement.setAttribute ("__age", 10);
+      }
+    }
+  },
+
+  /**
+   * レス数(増加数)の表示を更新する 
+   *
+   * @param  HTMLTableCellElement td
+   *         セルの td 要素
+   */
+  updateCellReplyNum : function (td)
+  {
+    var newReplyNum
+      = parseInt (td.getAttribute ("__reply_number"));
+    if (!(newReplyNum >= 0)) {
+      // レス数取得ミス時は更新できない
+      return;
+    }
+
+    var fonts = td.getElementsByTagName ("font");
+    if (fonts && fonts.length > 0) {
+      var font = fonts [fonts.length - 1];
+      var text = font.textContent || "0";
+      if (text [0] == "(") { // ニュース表 patch
+        text = text.replace (/\d+/, newReplyNum);
+        arAkahukuDOM.setText (font, text);
+      }
+      else {
+        arAkahukuDOM.setText (font, newReplyNum);
+      }
+    }
+    /* 避難所 patch */
+    else {
+      fonts = td.getElementsByTagName ("span");
+      for (var j = 0; j < fonts.length; j ++) {
+        if ("className" in fonts [j]
+            && fonts [j].className == "s14") {
+          arAkahukuDOM.setText (fonts [j], newReplyNum);
+        }
+      }
+    }
+
+    // レス増加数 & new/up 表示
+    var deltaText = null, className = null;
+    if (arAkahukuCatalog.enableReloadReplyNumberDelta
+        && !(td.getAttribute ("__overflowed") === "true")) {
+      var oldReplyNum
+        = parseInt (td.getAttribute ("__old_reply_number"));
+      if (oldReplyNum >= 0) {
+        var delta = newReplyNum - oldReplyNum;
+        if (delta != 0) {
+          deltaText = (delta > 0 ? "+" : "") + delta;
+          className = "akahuku_cell akahuku_catalog_delta";
+        }
+      }
+      else if (td.getAttribute ("__is_new") === "true") {
+        className = "akahuku_cell";
+        deltaText = "new";
+      }
+      else if (!td.hasAttribute ("__old_reply_number")) {
+        className = "akahuku_cell";
+        deltaText = "up";
+      }
+    }
+    var div = td.getElementsByTagName ("div") [0];
+    if (div && !arAkahukuDOM.hasClassName (div, "akahuku_cell")) {
+      // akahuku_comment などの div を間違って消さないように
+      div = null;
+    }
+    if (deltaText && className) {
+      if (!div) {
+        if (td.ownerDocument) {
+          div = td.ownerDocument.createElement ("div");
+          td.insertBefore (div, td.firstChild);
+        }
+      }
+      if (div) {
+        if (td.getElementsByTagName ("br").length == 0) {
+          // コメント位置:右 (含ニュース表)
+          className += " akahuku_cell_horizontal";
+        }
+        arAkahukuDOM.setText (div, deltaText);
+        div.className = className;
+      }
+    }
+    else if (div) {
+      div.parentNode.removeChild (div);
+    }
+  },
+
+  getCatalogTable : function (targetDocument) {
+    var table = targetDocument.getElementsByTagName ("table") [1];
+    if (!table) {
+      /* 避難所 patch */
+      table = targetDocument.getElementsByTagName ("table") [0];
+    }
+    return table;
+  },
+
+  getThreadCell : function (targetDocument, threadId) {
+    var table = arAkahukuCatalog.getCatalogTable (targetDocument);
+    if (!table) {
+      return null;
+    }
+    var nodes = table.getElementsByTagName ("td");
+    for (var i = 0; i < nodes.length; i ++) {
+      if (nodes [i].getAttribute ("__thread_id")
+          == threadId) {
+        return nodes [i];
+      }
+    }
+    return null;
+  },
+
+  /**
+   * スレッド情報を元にカタログを更新する
+   *
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   * @param  arAkahukuLocationInfo info
+   *         スレッドの情報
+   */
+  updateByThreadInfo : function (targetDocument, info) {
+    var td
+      = arAkahukuCatalog.getThreadCell
+      (targetDocument, info.threadNumber);
+    if (!td) {
+      return;
+    }
+
+    // レス数を反映させる
+    if (arAkahukuCatalog.enableObserveReplyNum) {
+      var newReplyNum = info.replyCount;
+      var curReplyNum
+        = parseInt (td.getAttribute ("__reply_number")) || -1;
+      if (newReplyNum > 0 && newReplyNum > curReplyNum) {
+        td.setAttribute ("__reply_number", newReplyNum);
+        // 必要ならレス増加数を表示可能に (増加数はリセットしない)
+        if (!td.hasAttribute ("__old_reply_number")) {
+          td.setAttribute ("__old_reply_number", curReplyNum);
+        }
+        arAkahukuCatalog.updateCellReplyNum (td);
+      }
+    }
+
+    if (info.isNotFound) {
+      td.setAttribute ("__age", "-1");
+      td.setAttribute ("__overflowed", "true");
+    }
+
+    // 見たスレとしてマーク (履歴イベント無しでもマーク可能にする)
+    if (arAkahukuCatalog.enableVisited) {
+      arAkahukuCatalog.setCellVisited (td, true);
+    }
+  },
     
   /**
    * セルをソートする
@@ -2965,17 +3437,59 @@ var arAkahukuCatalog = {
   reorder : function (mergedItems, reorderId, param) {
     if (reorderId == "") {
       reorderId = param.order;
+      // 更新時 mergedItems は index 順と期待していい
+      var alreadySortedByIndex = true;
     }
     var columns = 10;
+
+    // index順以外の共通評価関数
+    function compareForReorderToWidth (x, y) {
+      if (arAkahukuCatalog.enableReorderNew) {
+        if (x.isNew && !y.isNew) {
+          return -1;
+        }
+        else if (!x.isNew && y.isNew) {
+          return 1;
+        }
+      }
+      if (arAkahukuCatalog.enableReorderVisited) {
+        if (x.visited && !y.visited) {
+          return -1;
+        }
+        else if (!x.visited && y.visited) {
+          return 1;
+        }
+      }
+      // 更新前の残り(overflowed)は既読・未読内で下へ
+      if (x.overflowed && !y.overflowed) {
+        return +1;
+      }
+      else if (!x.overflowed && y.overflowed) {
+        return -1;
+      }
+      else if (x.overflowed && y.overflowed) {
+        // overflowed 同士では
+        // 指定されたソート順によらずカタログ(通常)順
+        return x.index - y.index;
+      }
+      return 0;
+    }
+    if (!arAkahukuCatalog.enableReloadLeftBefore
+        && !arAkahukuCatalog.enableReorderNew
+        && !arAkahukuCatalog.enableReorderVisited) {
+      compareForReorderToWidth = function () {return 0};
+    }
         
     switch (reorderId) {
       case "akahuku_catalog_reorder_default":
         columns = param.defaultColumns;
+        if (alreadySortedByIndex) break;
         mergedItems.sort (function (x, y) {
             return x.index - y.index;
           });
         break;
       case "akahuku_catalog_reorder_page":
+        if (alreadySortedByIndex) break;
         mergedItems.sort (function (x, y) {
             return x.index - y.index;
           });
@@ -2986,20 +3500,8 @@ var arAkahukuCatalog = {
           columns = param.defaultColumns;
         }
         mergedItems.sort (function (x, y) {
-            if (arAkahukuCatalog.enableReorderNew) {
-              if (x.isNew && !y.isNew) {
-                return -1;
-              }
-              else if (!x.isNew && y.isNew) {
-                return 1;
-              }
-            }
-            if (x.visited && !y.visited) {
-              return -1;
-            }
-            else if (!x.visited && y.visited) {
-              return 1;
-            }
+            var ret = compareForReorderToWidth (x, y);
+            if (ret != 0) return ret;
             return x.index - y.index;
           });
         break;
@@ -3009,21 +3511,24 @@ var arAkahukuCatalog = {
           columns = param.defaultColumns;
         }
         mergedItems.sort (function (x, y) {
-            if (arAkahukuCatalog.enableReorderNew) {
-              if (x.isNew && !y.isNew) {
-                return -1;
-              }
-              else if (!x.isNew && y.isNew) {
-                return 1;
-              }
-            }
-            if (x.visited && !y.visited) {
-              return -1;
-            }
-            else if (!x.visited && y.visited) {
-              return 1;
-            }
+            var ret = compareForReorderToWidth (x, y);
+            if (ret != 0) return ret;
             return y.threadId - x.threadId;
+          });
+        break;
+      case "akahuku_catalog_reorder_delta":
+        columns = arAkahukuCatalog.reorderWidth;
+        if (columns == 0) {
+          columns = param.defaultColumns;
+        }
+        mergedItems.sort (function (x, y) {
+            var ret = compareForReorderToWidth (x, y);
+            if (ret != 0) return ret;
+            var deltadiff = y.getDelta () - x.getDelta();
+            if (deltadiff != 0) {
+              return deltadiff;
+            }
+            return x.index - y.index;
           });
         break;
     }
@@ -3069,29 +3574,17 @@ var arAkahukuCatalog = {
         
     var newestId = 0;
         
-    if (target_id.match (/_save$/)) {
-      var type = 0;
-      target_id = target_id.replace (/_save$/, "");
-            
-      switch (target_id) {
-        case "akahuku_catalog_reorder_default":
-          type = 0;
-          break;
-        case "akahuku_catalog_reorder_page":
-          type = 1;
-          break;
-        case "akahuku_catalog_reorder_spec":
-          type = 2;
-          break;
-        case "akahuku_catalog_reorder_createtime":
-          type = -1;
-          break;
-      }
-            
+    if (/^akahuku_catalog_reorder_save\d?$/.test (target_id)) {
+      // 現在の並び順を記憶
+      var type = arAkahukuCatalog.REORDER_TYPES [param.order];
       arAkahukuConfig.prefBranch
         .setIntPref ("akahuku.catalog.reorder.save.type", type);
       arAkahukuCatalog.reorderSaveType = type;
+      arAkahukuCatalog.updateReorderIndicator (targetDocument, param);
+      return;
     }
+
+    target_id = target_id.replace (/\d$/, "");
         
     var count = 0;
     var visited = false;
@@ -3132,7 +3625,7 @@ var arAkahukuCatalog = {
             oldCells [i].getAttribute ("__original_index"),
             oldCells [i].getAttribute ("__thread_id"),
             oldCells [i].getAttribute ("__reply_number"),
-            oldCells [i].getAttribute ("__reply_number"),
+            oldCells [i].getAttribute ("__old_reply_number"), // ソートではキープ
             visited,
             oldCells [i].getAttribute ("__is_new") == "true",
             oldCells [i].getAttribute ("__overflowed") == "true",
@@ -3222,14 +3715,56 @@ var arAkahukuCatalog = {
                                      targetDocument,
                                      param);
             
-      var indicator
-      = targetDocument
-      .getElementById ("akahuku_catalog_mode_indicator");
-      if (indicator) {
-        arAkahukuDOM.setText (indicator,
-                              "["
-                              + targetDocument.getElementById (target_id)
-                              .innerHTML + "]");
+      arAkahukuCatalog.updateReorderIndicator (targetDocument, param);
+    }
+  },
+
+  /**
+   * 現在のソート順、ソートボタンの状態を更新する
+   */
+  updateReorderIndicator : function (targetDocument, param)
+  {
+    var anchor;
+    var indicator
+    = targetDocument.getElementById ("akahuku_catalog_mode_indicator");
+        
+    var columns = arAkahukuCatalog.reorderWidth;
+    if (columns == 0) {
+      columns = param.defaultColumns;
+    }
+
+    var appends = ["", "2"];
+    for (var id in arAkahukuCatalog.REORDER_TYPES) {
+      for (var i = 0; i < appends.length; i ++) {
+        anchor = targetDocument.getElementById (id + appends [i]);
+        if (!anchor) {
+          continue;
+        }
+        var span
+          = anchor.getElementsByClassName
+          ("akahuku_catalog_reorder_width") [0];
+        if (span) {
+          arAkahukuDOM.setText (span, columns);
+        }
+        if (param.order === id) {
+          if (indicator) {
+            if (id === "akahuku_catalog_reorder_default") {
+              // "通常" は表示しない
+              arAkahukuDOM.setText (indicator, "");
+            }
+            else {
+              arAkahukuDOM.setText
+                (indicator, "[" + anchor.textContent + "]");
+            }
+            indicator = null;
+          }
+          arAkahukuDOM.addClassName
+            (anchor, "akahuku_catalog_current_reorder");
+        }
+        else {
+          arAkahukuDOM.removeClassName
+            (anchor, "akahuku_catalog_current_reorder");
+        }
       }
     }
   },
@@ -3371,6 +3906,7 @@ var arAkahukuCatalog = {
       arAkahukuCatalog.setTimeStamp (targetDocument);
     }
         
+    /* HttpChannel がキャッシュを制御するので不要
     if (update && arAkahukuCatalog.enableReloadUpdateCache) {
       if (param.writer == null) {
         param.writer = new arAkahukuCatalogCacheWriter ();
@@ -3396,8 +3932,11 @@ var arAkahukuCatalog = {
                               param.writer);
       }
     }
+    */
         
+    /* 二重処理のため不要
     arAkahukuCatalog.updateVisited (targetDocument);
+    */
     
     param.reloadChannel = null;
         
@@ -3479,6 +4018,8 @@ var arAkahukuCatalog = {
     }
         
     param.oldTable = oldTable.cloneNode (true);
+    param.oldOrder = param.order;
+    param.oldLatestThread = param.latestThread;
     if (arAkahukuCatalog.enableZoomClick) {
       var anchors = param.oldTable.getElementsByTagName ("a");
       for (i = 0; i < anchors.length; i ++) {
@@ -3540,9 +4081,9 @@ var arAkahukuCatalog = {
         continue;
       }
             
-      var replyNumber = 0;
-      if (currentTdText.match (/<font[^>]*>([0-9]+)<\/font>/i)) {
-        replyNumber = RegExp.$1;
+      var replyNumber = null; //検出失敗の値
+      if (currentTdText.match (/<font[^>]*>(?:(\d+)|\((\d+)\))<\/font>/i)) {
+        replyNumber = RegExp.$1 || RegExp.$2;
       }
       /* 避難所 patch */
       else if (currentTdText.match (/<span[^>]*>([0-9]+)<\/span>/i)) {
@@ -3585,7 +4126,7 @@ var arAkahukuCatalog = {
       }
       else {
         if (arAkahukuCatalog.enableReorderVisited) {
-          if (currentTdText.match (/href=([^ ]+)/)) {
+          if (currentTdText.match (/href=['"]?([^\s'"]+)/)) {
             var path = RegExp.$1;
                             
             var baseDir
@@ -3623,8 +4164,7 @@ var arAkahukuCatalog = {
       }
     }
         
-    if (arAkahukuCatalog.enableReloadLeftBefore
-        && param.order == "akahuku_catalog_reorder_spec") {
+    if (arAkahukuCatalog.enableReloadLeftBefore) {
       var max;
       if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
         max = arAkahukuMaxNum [info.server + ":" + info.dir];
@@ -3633,6 +4173,7 @@ var arAkahukuCatalog = {
         max = 10000;
       }
             
+      var overflowedItems = new Array ();
       for (threadId in oldCells) {
         if (parseInt (threadId) < newestId - max) {
           continue;
@@ -3647,11 +4188,12 @@ var arAkahukuCatalog = {
           newestId = parseInt (threadId);
         }
                 
-        mergedItems.push
+        overflowedItems.push
         (new arAkahukuMergeItem
          (oldCells [threadId],
           "",
-          count ++,
+          //元indexでひとまず作成しソート後更新
+          oldCells [threadId].getAttribute ("__original_index"),
           threadId,
           oldCells [threadId].getAttribute ("__reply_number"),
           oldCells [threadId].getAttribute ("__reply_number"),
@@ -3660,6 +4202,15 @@ var arAkahukuCatalog = {
           true,
           oldCells [threadId].getAttribute ("class")));
       }
+      // カタログ順になることを保証させる
+      overflowedItems.sort (function (x, y) {
+        return x.index - y.index;
+      });
+      for (i = 0; i < overflowedItems.length; i ++) {
+        overflowedItems [i].index = count ++;
+        mergedItems.push (overflowedItems [i]);
+      }
+      overflowedItems = null;
     }
         
     var name;
@@ -3774,44 +4325,7 @@ var arAkahukuCatalog = {
     }
         
     /* 指定幅を書き換える */
-    var anchor;
-    var indicator
-    = targetDocument.getElementById ("akahuku_catalog_mode_indicator");
-        
-    anchor
-    = targetDocument.getElementById ("akahuku_catalog_reorder_createtime");
-    if (anchor) {
-      var columns = arAkahukuCatalog.reorderWidth;
-      if (columns == 0) {
-        columns = param.defaultColumns;
-      }
-      arAkahukuDOM.setText (anchor,
-                            "\u30B9\u30EC\u306E\u7ACB\u3063\u305F\u9806\u306B"
-                            + columns + "\u305A\u3064");
-      if (param.order == "akahuku_catalog_reorder_createtime") {
-        if (indicator) {
-          arAkahukuDOM.setText
-            (indicator, "[" + anchor.innerHTML + "]");
-        }
-      }
-    }
-        
-    anchor = targetDocument.getElementById ("akahuku_catalog_reorder_spec");
-    if (anchor) {
-      var columns = arAkahukuCatalog.reorderWidth;
-      if (columns == 0) {
-        columns = param.defaultColumns;
-      }
-      arAkahukuDOM.setText (anchor,
-                            "\u30C7\u30D5\u30A9\u30EB\u30C8\u9806\u306B"
-                            + columns + "\u305A\u3064");
-      if (param.order == "akahuku_catalog_reorder_spec") {
-        if (indicator) {
-          arAkahukuDOM.setText
-            (indicator, "[" + anchor.innerHTML + "]");
-        }
-      }
-    }
+    arAkahukuCatalog.updateReorderIndicator (targetDocument, param);
         
     if (param.reloadChannel) {
       try {
@@ -3854,6 +4368,11 @@ var arAkahukuCatalog = {
     param.reloadChannel
     = ios.newChannel (targetDocument.location.href, null, null)
     .QueryInterface (Components.interfaces.nsIHttpChannel);
+    if (!arAkahukuCatalog.enableReloadUpdateCache) {
+      // HttpChannel にキャッシュを更新させない
+      param.reloadChannel.loadFlags
+        |= Components.interfaces.nsIRequest.INHIBIT_CACHING;
+    }
     try {
       // webconsole でモニタできるようにウィンドウを関連づける
       param.reloadChannel.notificationCallbacks
@@ -3901,6 +4420,18 @@ var arAkahukuCatalog = {
         
     oldTable.parentNode.replaceChild (param.oldTable, oldTable);
     param.oldTable = oldTable;
+
+    var tmp = param.oldLatestThread;
+    param.oldLatestThread = param.latestThread;
+    param.latestThread = tmp;
+
+    tmp = param.oldOrder;
+    param.oldOrder = param.order;
+    param.order = tmp;
+    arAkahukuCatalog.updateReorderIndicator (targetDocument, param);
+
+    // 既読のマークを最新に更新
+    arAkahukuCatalog.updateVisited (targetDocument);
         
     if (undo) {
       var tmpNode
@@ -4056,6 +4587,10 @@ var arAkahukuCatalog = {
           }
         }
       }
+      else if (img && img.nodeName.toLowerCase () == "a"
+          && img.className == "akahuku_popup_area") {
+        // ポップアップ保持エリアではそのまま
+      }
       else if (arAkahukuCatalog.enableZoomComment) {
         var tmp = null;
                 
@@ -4069,7 +4604,7 @@ var arAkahukuCatalog = {
         if (base
             && "className" in base
             && base.className == "akahuku_comment") {
-          tmp = base.getAttribute ("__thread");
+          tmp = arAkahukuDOM.findParentNode (base, "td");
         }
         if (!tmp) {
           if (img.nodeName.toLowerCase () == "small") {
@@ -4081,21 +4616,24 @@ var arAkahukuCatalog = {
           if (base
               && "className" in base
               && base.className == "akahuku_native_comment") {
-            tmp = base.getAttribute ("__thread");
+            tmp = arAkahukuDOM.findParentNode (base, "td");
           }
         }
                 
         var opened = false;
         if (tmp
-            && tmp.match (/([^\/]+)\/([0-9]+)/)) {
-          var name = RegExp.$1;
-          var num = RegExp.$2;
+            && tmp.hasAttribute ("__thread_id")) {
+          var num = tmp.getAttribute ("__thread_id");
+          var info
+          = Akahuku.getDocumentParam (targetDocument)
+          .location_info;
+          var name = info.server + "_" + info.dir;
           var thread = null;
           if (name in arAkahukuSidebar.boards) {
             thread
             = arAkahukuSidebar.boards [name].getThread (num);
           }
-          if (thread) {
+          if (thread && thread.comment) { //コメント情報は必須
             var key = "t" + num;
             if (key != param.lastPopupKey) {
               param.lastPopupKey = key;
@@ -4318,8 +4856,10 @@ var arAkahukuCatalog = {
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  Boolean clear
+   *         (オプション) 履歴を調べずに未読にするか
    */
-  updateVisited : function (targetDocument) {
+  updateVisited : function (targetDocument, clear) {
     if (arAkahukuCatalog.enableVisited) {
       var table = targetDocument.getElementsByTagName ("table") [1];
       if (!table) {
@@ -4339,7 +4879,7 @@ var arAkahukuCatalog = {
       var visited;
       for (var i = 0; i < nodes.length; i ++) {
         uri.spec = nodes [i].href;
-        visited = arAkahukuHistory.isVisited (uri);
+        visited = !clear && arAkahukuHistory.isVisited (uri);
         if (visited) {
           arAkahukuDOM.addClassName (nodes [i], "akahuku_visited");
         }
@@ -4347,6 +4887,19 @@ var arAkahukuCatalog = {
           arAkahukuDOM.removeClassName (nodes [i], "akahuku_visited");
         }
       }
+    }
+  },
+
+  /**
+   * セルを既読としてマーク
+   */
+  setCellVisited : function (td, visited) {
+    var nodes = td.getElementsByTagName ("a");
+    for (var i = 0; i < nodes.length; i ++) {
+      if (visited)
+        arAkahukuDOM.addClassName (nodes [i], "akahuku_visited");
+      else
+        arAkahukuDOM.removeClassName (nodes [i], "akahuku_visited");
     }
   },
     
@@ -4370,6 +4923,8 @@ var arAkahukuCatalog = {
             || arAkahukuCatalog.enableVisited
             || arAkahukuCatalog.enableZoom
             || arAkahukuCatalog.enableReload
+            || arAkahukuCatalog.enableRed
+            || arAkahukuCatalog.enableObserve
             || arAkahukuCatalog.enableLeft)) {
             
       var param = new arAkahukuCatalogParam ();
@@ -4430,8 +4985,8 @@ var arAkahukuCatalog = {
             || nodes [i].innerHTML.match (/b\/([0-9]+)/)) {
           nodes [i].setAttribute ("__thread_id", RegExp.$1);
         }
-        if (nodes [i].innerHTML.match (/<font.*>([0-9]+)<\/font>/i)) {
-          nodes [i].setAttribute ("__reply_number", RegExp.$1);
+        if (nodes [i].innerHTML.match (/<font.*>(?:(\d+)|\((\d+)\))<\/font>/i)) {
+          nodes [i].setAttribute ("__reply_number", RegExp.$1 || RegExp.$2);
         }
         /* 避難所 patch */
         else if (nodes [i].innerHTML.match
@@ -4454,6 +5009,9 @@ var arAkahukuCatalog = {
                                          info,
                                          param.latestThread);
       }
+      
+      // 既読チェックは reorder 以前に行うこと
+      arAkahukuCatalog.updateVisited (targetDocument);
             
       if (arAkahukuCatalog.enableReorder) {
         var nodes = targetDocument.getElementsByTagName ("font");
@@ -4479,12 +5037,20 @@ var arAkahukuCatalog = {
          * @param  String content
          *         アンカーの内容
          */
-        function createReorderOrderButton (aid, content) {
+        function createReorderOrderButton (aid, content, reorderWidth) {
           var anchor = targetDocument.createElement ("a");
           anchor.id = aid;
           anchor.className = "akahuku_catalog_reorder";
           anchor.appendChild (targetDocument.createTextNode
                               (content));
+          if (reorderWidth) {
+            var span = targetDocument.createElement ("span");
+            span.className = "akahuku_catalog_reorder_width";
+            span.appendChild (targetDocument.createTextNode (reorderWidth));
+            anchor.appendChild (span);
+            anchor.appendChild (targetDocument.createTextNode
+                                ("\u305A\u3064")); // "ずつ"
+          }
           anchor.addEventListener
             ("click",
              function () {
@@ -4493,21 +5059,6 @@ var arAkahukuCatalog = {
                     
           paragraph.appendChild (targetDocument.createTextNode ("["));
           paragraph.appendChild (anchor);
-                    
-          if (arAkahukuCatalog.enableReorderSave) {
-            var anchor = targetDocument.createElement ("a");
-            anchor.id = aid + "_save";
-            anchor.className = "akahuku_catalog_reorder_save";
-            anchor.appendChild (targetDocument.createTextNode
-                                ("\u8A18\u61B6"));
-            anchor.addEventListener
-              ("click",
-               function () {
-                arAkahukuCatalog.onReorderClick (arguments [0]);
-              }, false);
-                        
-            paragraph.appendChild (anchor);
-          }
           paragraph.appendChild (targetDocument.createTextNode ("]"));
         }
                 
@@ -4524,32 +5075,46 @@ var arAkahukuCatalog = {
          "\u30DA\u30FC\u30B8\u3054\u3068");
         createReorderOrderButton
         ("akahuku_catalog_reorder_spec",
-         "\u30C7\u30D5\u30A9\u30EB\u30C8\u9806\u306B"
-         + columns
-         + "\u305A\u3064");
+         "\u901A\u5E38\u9806\u306B", //"通常順に"
+         columns);
         createReorderOrderButton
         ("akahuku_catalog_reorder_createtime",
-         "\u30B9\u30EC\u306E\u7ACB\u3063\u305F\u9806\u306B"
-         + columns
-         + "\u305A\u3064");
+         "\u30B9\u30EC\u306E\u7ACB\u3063\u305F\u9806\u306B",
+         //"スレの立った順に"
+         columns);
+        createReorderOrderButton
+        ("akahuku_catalog_reorder_delta",
+         "\u5897\u52A0\u6570\u9806\u306B", // "増加数順に"
+         columns);
+                
+        if (arAkahukuCatalog.enableReorderSave) {
+          paragraph.appendChild
+            (targetDocument.createTextNode (" / "));
+          createReorderOrderButton
+          ("akahuku_catalog_reorder_save",
+           "\u8A18\u61B6"); // "記憶"
+        }
                 
         table.parentNode.insertBefore (paragraph, table.nextSibling);
+
+        // 上部にも同じものを置く
+        paragraph = paragraph.cloneNode (true);
+        paragraph.id += "2";
+        var nodes = paragraph.getElementsByTagName ("a");
+        for (var i = 0; i < nodes.length; i ++) {
+          nodes [i].id += "2";
+          nodes [i].addEventListener
+            ("click", arAkahukuCatalog.onReorderClick, false);
+        }
+        table.parentNode.insertBefore (paragraph, table);
                 
         if (arAkahukuCatalog.enableReorderSave) {
           var target_id = "";
-          switch (arAkahukuCatalog.reorderSaveType) {
-            case 0:
-              target_id = "akahuku_catalog_reorder_default";
-              break;
-            case 1:
-              target_id = "akahuku_catalog_reorder_page";
-              break;
-            case 2:
-              target_id = "akahuku_catalog_reorder_spec";
-              break;
-            case -1:
-              target_id = "akahuku_catalog_reorder_createtime";
-              break;
+          for (var id in arAkahukuCatalog.REORDER_TYPES) {
+            if (arAkahukuCatalog.REORDER_TYPES [id]
+                === arAkahukuCatalog.reorderSaveType) {
+              target_id = id;
+            }
           }
                     
           if (target_id) {
@@ -4673,6 +5238,10 @@ var arAkahukuCatalog = {
         span.id = "akahuku_catalog_reload_timestamp";
         div.appendChild (span);
                 
+        if (table.previousSibling && table.previousSibling.id
+            === "akahuku_catalog_reorder_container2")
+          table.parentNode.insertBefore (div, table.previousSibling);
+        else
         table.parentNode.insertBefore (div, table);
                 
         div = targetDocument.createElement ("div");
@@ -4745,8 +5314,9 @@ var arAkahukuCatalog = {
                 
         lastRule.parentNode.insertBefore (div, lastRule);
       }
-      
-      arAkahukuCatalog.updateVisited (targetDocument);
+
+      // スレッドの更新通知を待ち受ける
+      param.registerObserver ();
     }
   },
   
@@ -4794,6 +5364,7 @@ var arAkahukuCatalog = {
    *   nsINavHistoryObserver.onBeforeDeleteURI
    */
   onClearHistory : function () {
+    arAkahukuCatalog.onHistoryUpdateCore (true);
   },
 
   /**
@@ -4806,6 +5377,7 @@ var arAkahukuCatalog = {
    *         ページの GUID
    */
   onDeleteURI : function (aURI, aGUID) {
+    arAkahukuCatalog.onThreadHistoryChangeCore (aURI, false);
   },
 
   /**
@@ -4825,11 +5397,9 @@ var arAkahukuCatalog = {
   /**
    * バッチ終了イベント
    *   nsINavHistoryObserver.onEndUpdateBatch
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
    */
   onEndUpdateBatch : function () {
+    arAkahukuCatalog.onHistoryUpdateCore ();
   },
 
   /**
@@ -4894,20 +5464,53 @@ var arAkahukuCatalog = {
    */
   onVisit : function (aURI, aVisitID, aTime, aSessionID, aReferringID,
                       aTransitionType, aGUID) {
-    var spec = aURI.spec;
-    
-    if (spec.indexOf ("2chan.net/") == 0) {
-      return;
-    }
+    arAkahukuCatalog.onThreadHistoryChangeCore (aURI, true);
+  },
 
-    if (spec.indexOf ("/res/") == 0
-        && spec.indexOf ("?res=") == 0) {
+  /**
+   * 履歴追加/削除をカタログに反映する
+   */
+  onThreadHistoryChangeCore : function (aURI, visited) {
+    if (!arAkahukuCatalog.enableVisited) {
       return;
     }
-    
+    var matched = aURI.host.match (/^([^.]+)\.2chan\.net$/);
+    if (!matched)
+      return;
+    var server = matched [1];
+    matched = aURI.path.match (/^\/([^\/]+)\/(?:res\/|futaba\.php\?res=)(\d+)/);
+    if (!matched)
+      return;
+    var dir = matched [1], id = matched [2];
+
     for (var i = 0; i < Akahuku.documentParams.length; i ++) {
+      var info = Akahuku.documentParams [i].location_info;
+      if (!info.isCatalog
+          || info.server != server
+          || info.dir != dir) {
+        continue;
+      }
       var targetDocument = Akahuku.documentParams [i].targetDocument;
-      arAkahukuCatalog.updateVisited (targetDocument);
+      var td = arAkahukuCatalog.getThreadCell (targetDocument, id);
+      if (td) {
+        arAkahukuCatalog.setCellVisited (td, true);
+      }
     }
-  }
+  },
+
+  /**
+   * 履歴の大幅な変化をカタログに反映する
+   */
+  onHistoryUpdateCore : function (cleared) {
+    if (!arAkahukuCatalog.enableVisited) {
+      return;
+    }
+    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
+      var info = Akahuku.documentParams [i].location_info;
+      if (!info.isCatalog)
+        continue;
+      var targetDocument = Akahuku.documentParams [i].targetDocument;
+      arAkahukuCatalog.updateVisited (targetDocument, cleared);
+    }
+  },
 };

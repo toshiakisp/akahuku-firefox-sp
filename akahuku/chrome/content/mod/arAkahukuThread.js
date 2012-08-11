@@ -727,6 +727,7 @@ var arAkahukuThread = {
       container.style.top = "-7pt";
       container.style.left = "-8pt";
       container.style.fontSize = "10pt";
+      container.style.lineHeight = "normal"; //避難所対策
       container.style.color = "#800000";
       container.style.backgroundColor = "#ffffee";
     }
@@ -1216,19 +1217,37 @@ var arAkahukuThread = {
    *         レス番号
    */
   updateNewestNum : function (info, num) {
-    var n;
-    if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-      if ((info.server + ":" + info.dir) in arAkahukuThread.newestNum) {
-        n = arAkahukuThread.newestNum [info.server + ":" + info.dir];
+    if (!(num > 0)) return;
+    var name
+      = (typeof (info) === "string"
+         ? info : info.server + ":" + info.dir);
+    var updated = false;
+    if (name in arAkahukuMaxNum) {
+      if (name in arAkahukuThread.newestNum) {
+        var n = arAkahukuThread.newestNum [name];
         if (n < num) {
-          arAkahukuThread.newestNum [info.server + ":" + info.dir]
-            = num;
+          arAkahukuThread.newestNum [name] = num;
+          updated = true;
         }
       }
       else {
-        arAkahukuThread.newestNum [info.server + ":" + info.dir]
-          = num;
+        arAkahukuThread.newestNum [name] = num;
+        updated = true;
       }
+    }
+    if (updated) {
+      var observerService
+        = Components.classes ["@mozilla.org/observer-service;1"]
+        .getService (Components.interfaces.nsIObserverService);  
+      var subject
+        = Components.classes ["@mozilla.org/supports-string;1"]
+        .createInstance (Components.interfaces.nsISupportsString);  
+      subject.data = arAkahukuJSON.encode ({
+        name: name,
+        value: num,
+      });
+      observerService.notifyObservers
+        (subject, "akahuku-thread-newest-number", null); 
     }
   },
     
@@ -1248,32 +1267,20 @@ var arAkahukuThread = {
    */
   getExpireNum : function (targetDocument, info,
                            threadNumber, lastReplyNumber) {
-    if (!info.isMht
-        && (info.server + ":" + info.dir) in arAkahukuMaxNum) {
-      var n;
-      if (arAkahukuThread.enableBottomStatusNumEntire) {
-        n = arAkahukuThread.newestNum [info.server + ":" + info.dir];
-        if (n < threadNumber) {
-          arAkahukuThread.newestNum [info.server + ":" + info.dir]
-            = threadNumber;
-          n = threadNumber;
-        }
-                
-        if (n > lastReplyNumber) {
-          lastReplyNumber = n;
-        }
-        else {
-          arAkahukuThread.newestNum [info.server + ":" + info.dir]
-            = lastReplyNumber;
-        }
-      }
+    var name = info.server + ":" + info.dir;
+    if (!info.isMht && name in arAkahukuMaxNum) {
       if (threadNumber == 0
           || lastReplyNumber == 0) {
-        return arAkahukuMaxNum [info.server + ":" + info.dir];
+        return arAkahukuMaxNum [name];
       }
-      n = (threadNumber
-           + arAkahukuMaxNum [info.server + ":" + info.dir]
-           - lastReplyNumber);
+      if (arAkahukuThread.enableBottomStatusNumEntire) {
+        lastReplyNumber = arAkahukuThread.newestNum [name];
+        // newestNum の更新は既に済んでいる
+      }
+      else {
+        lastReplyNumber = Math.max (threadNumber, lastReplyNumber || 0);
+      }
+      var n = (threadNumber + arAkahukuMaxNum [name] - lastReplyNumber);
       if (n < 0) {
         n = 0;
       }
@@ -2598,6 +2605,7 @@ var arAkahukuThread = {
    */
   apply : function (targetDocument, info) {
     if (info.isNotFound) {
+      info.notifyUpdate ("thread-applied");
       return;
     }
     
@@ -2662,6 +2670,13 @@ var arAkahukuThread = {
        *         最後の blockquote 要素
        */
       function addStatus (node) {
+        // enableBottomStatus に関わらず最新レス番号を更新する
+        var lastReplyNumber = Akahuku.getMessageNum (lastReply);
+        var newestNumber = Math.max (threadNumber, lastReplyNumber);
+        if (newestNumber > 0) { // is a valid number
+          arAkahukuThread.updateNewestNum (info, newestNumber);
+        }
+
         if (info.isReply) {
           arAkahukuThread.displayReplyNumber (targetDocument);
         }
@@ -2686,7 +2701,7 @@ var arAkahukuThread = {
               .appendChild (arAkahukuThread.createThreadStatus
                             (targetDocument,
                              threadNumber,
-                             Akahuku.getMessageNum (lastReply),
+                             lastReplyNumber,
                              replyNumber,
                              expire,
                              expireWarning,
@@ -2704,7 +2719,7 @@ var arAkahukuThread = {
               .appendChild (arAkahukuThread.createThreadStatus
                             (targetDocument,
                              threadNumber,
-                             Akahuku.getMessageNum (lastReply),
+                             lastReplyNumber,
                              replyNumber,
                              expire,
                              expireWarning,
@@ -3189,6 +3204,10 @@ var arAkahukuThread = {
       /* 画像ロード失敗時に再チャレンジ */
       targetDocument.body.addEventListener
         ("error", arAkahukuThread.captureImageErrorToReload, true);
+    }
+
+    if (info.isReply) {
+      info.notifyUpdate ("thread-applied");
     }
   }
 };

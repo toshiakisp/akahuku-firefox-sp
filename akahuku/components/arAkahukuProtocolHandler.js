@@ -427,7 +427,7 @@ arAkahukuBypassChannel.prototype = {
       else {
         /* legacy fallback */
         this.__defineGetter__ (name, getter);
-        if (!readonly) {
+        if (optSetter) {
           this.__defineSetter__ (name, optSetter);
         }
       }
@@ -1017,7 +1017,10 @@ arAkahukuCacheChannel.prototype = {
           this._cacheSession.asyncOpenCacheEntry
             (this._key, nsICache.ACCESS_READ, this);
         }
-        catch (e) { Components.utils.reportError (e);
+        catch (e) {
+          if (e.result != Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+            Components.utils.reportError (e);
+          }
           // asyncOpenCacheEntryが失敗するような場合は諦める
           // TODO: or 時間をおいて再実行？
           this._close (Components.results.NS_BINDING_FAILED);
@@ -1064,7 +1067,7 @@ arAkahukuCacheChannel.prototype = {
       if (doRedirect) {
         var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
         verifyHelper.init
-          (this, ischannel, nsIChannelEventSink.REDIRECT_INTERNAL);
+          (this, ischannel, nsIChannelEventSink.REDIRECT_INTERNAL, this);
         this._waitingForRedirectCallback = true;
         this._redirectChannel = ischannel;
       }
@@ -1219,9 +1222,20 @@ arAkahukuAsyncRedirectVerifyHelper.prototype = {
   _oldChan : null,
   _newChan : null,
   _flags : 0,
+  _callback : null,
 
-  init : function (oldChan, newChan, flags)
+  init : function (oldChan, newChan, flags, callback)
   {
+    if (nsIAsyncVerifyRedirectCallback) {// Gecko2.0+
+      callback = callback.QueryInterface (nsIAsyncVerifyRedirectCallback);
+    }
+    if (typeof (callback.onRedirectVerifyCallback) != "function") {
+      throw new Components.Exception
+        ("arAkahukuAsyncRedirectVerifyHelper: "
+         + "no onRedirectVerifyCallback for a callback",
+         Components.results.NS_ERROR_UNEXPECTED);
+    }
+    this._callback = callback;
     this._oldChan = oldChan;
     this._newChan = newChan;
     this._flags   = flags;
@@ -1275,10 +1289,8 @@ arAkahukuAsyncRedirectVerifyHelper.prototype = {
   _returnCallback : function (result)
   {
     try {
-      var callback
-        = this._oldChan.QueryInterface (nsIAsyncVerifyRedirectCallback);
       this._callbackInitiated = false;
-      var event = new arAkahukuAsyncRedirectVerifyHelper.Event (callback, result);
+      var event = new arAkahukuAsyncRedirectVerifyHelper.Event (this._callback, result);
       this._callbackThread.dispatch (event, nsIThread.DISPATCH_NORMAL);
     } catch (e) { Components.utils.reportError (e);
       //no echo
@@ -1359,9 +1371,7 @@ arAkahukuAsyncRedirectVerifyHelper.Event.prototype = {
   // nsIRunnable
   run : function ()
   {
-    this._callback
-      .QueryInterface (nsIAsyncVerifyRedirectCallback)
-      .onRedirectVerifyCallback (this._result);
+    this._callback.onRedirectVerifyCallback (this._result);
   },
   QueryInterface : function (iid) {
     if (iid.equals (Components.interfaces.nsIRunnable)

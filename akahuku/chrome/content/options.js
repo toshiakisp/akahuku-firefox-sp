@@ -1029,6 +1029,7 @@ var AkahukuOptions = {
       ["bool", "catalog.reorder.visited", false],
       ["bool", "catalog.reorder.new", false],
       ["bool", "catalog.reorder.fill", false],
+      ["bool", "catalog.reorder.info", false, "privatemod"],
       ["bool", "catalog.zoom", false],
       ["bool", "catalog.zoom.click", false],
       ["bool", "catalog.zoom.noanim", false],
@@ -1079,6 +1080,8 @@ var AkahukuOptions = {
       ["bool", "catalog.sidebar", false],
       ["bool", "catalog.sidebar.comment", true],
       ["int",  "catalog.sidebar.comment.length", 12],
+      ["bool", "catalog.observe", false, "privatemod"],
+      ["bool", "catalog.observe.replynum", false, "privatemod"],
       ["bool", "catalog.clickable", true],
       ["bool", "catalog.visited", true],
       ["bool", "catalog.red", false],
@@ -1087,6 +1090,7 @@ var AkahukuOptions = {
        function (map) {
           AkahukuOptions.checkCatalogReload ();
           AkahukuOptions.checkCatalogSidebar ();
+          AkahukuOptions.checkCatalogObserve ();
         }]
       ],
     "sidebar" : [
@@ -3961,6 +3965,9 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_reorder_new").disabled
     = document.getElementById ("catalog_reorder_fill").disabled
     = document.getElementById ("catalog_reorder_misc_group_label").disabled
+    = document.getElementById ("catalog_reorder_misc_label").disabled
+    = document.getElementById ("catalog_reorder_info").disabled
+    = document.getElementById ("catalog_reorder_info_label").disabled
     = !document.getElementById ("catalog_reorder").checked;
         
     AkahukuOptions.checkCatalogReorderSave ();
@@ -4006,6 +4013,10 @@ var AkahukuOptions = {
 
   checkCatalogReloadLeftBefore : function () {
     document.getElementById ("catalog_reload_left_before_more").disabled
+    = document.getElementById ("catalog_reload_left_before_label1").disabled
+    = document.getElementById ("catalog_reload_left_before_label2").disabled
+    = document.getElementById ("catalog_reload_left_before_label3").disabled
+    = document.getElementById ("catalog_reload_left_before_label4").disabled
     = document.getElementById ("catalog_reload_left_before_more_num").disabled
     = document.getElementById ("catalog_reload_left_before_more_num_label").disabled
     = document.getElementById ("catalog_reload_left_before_save").disabled
@@ -4026,6 +4037,11 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_sidebar_comment_length_label2").disabled
     = !document.getElementById ("catalog_sidebar").checked
     || !document.getElementById ("catalog_sidebar_comment").checked;
+  },
+
+  checkCatalogObserve : function () {
+    document.getElementById ("catalog_observe_replynum").disabled
+    = !document.getElementById ("catalog_observe").checked;
   },
     
   checkSidebar : function () {

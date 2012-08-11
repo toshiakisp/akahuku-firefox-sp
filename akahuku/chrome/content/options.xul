@@ -1604,8 +1604,9 @@
                 <menupopup id="catalog_reorder_save_type_menu">
                   <menuitem value="0" label="通常" />
                   <menuitem value="1" label="ページごと" />
-                  <menuitem value="2" label="デフォルト順に指定幅ずつ" />
+                  <menuitem value="2" label="通常順に指定幅ずつ" />
                   <menuitem value="-1" label="スレの立った順に指定幅ずつ" />
+                  <menuitem value="3" label="増加数順に指定幅ずつ .sp" />
                 </menupopup>
               </menulist>
             </box>
@@ -1613,7 +1614,7 @@
               <caption>
                 <label value="詳細" id="catalog_reorder_misc_group_label" />
               </caption>
-              <label value="指定幅ずつ時のみ有効" class="warning" />
+              <label value="指定幅ずつ時のみ有効" id ="catalog_reorder_misc_label" class="warning" />
             <checkbox id="catalog_reorder_visited" checked="false"
                       label="未読と既読で分ける" />
             <checkbox id="catalog_reorder_new" checked="false"
@@ -1621,6 +1622,14 @@
             <checkbox id="catalog_reorder_fill" checked="false"
                       label="合間合間に で消した分を詰める" />
             </groupbox>
+            <checkbox id="catalog_reorder_info" checked="false"
+                      class="sp" tooltiptext="(デフォルト:無効) 各行にソート順に関する情報を表示する (スレの立った時間帯,増加数)"
+                      label="各行に情報を表示する" />
+            <box class="sub" orient="vertical">
+              <label id="catalog_reorder_info_label"
+                     class="warning"
+                     value="スレの立った順・増加数順でのみ有効" />
+            </box>
           </groupbox>
           <groupbox orient="vertical" flex="1">
             <caption>
@@ -1690,11 +1699,19 @@
             <checkbox id="catalog_reload_timestamp" checked="false"
                       label="更新時刻を表示する" />
             <checkbox id="catalog_reload_left_before" checked="false"
-                      label="合間合間に で消した分だけ更新前を残す"
+                      label="更新前を残す"
                       oncommand="AkahukuOptions.checkCatalogReloadLeftBefore ();" />
             <box class="sub" orient="vertical">
-              <label value="更新順に指定幅のみ" class="warning" />
-              <label value="未読と既読や新規を分けると不可" class="warning" />
+              <label value="更新順に指定幅のみ" class="ineffective"
+                     id="catalog_reload_left_before_label1"/>
+              <label value="未読と既読や新規を分けると不可" class="ineffective"
+                     id="catalog_reload_left_before_label2"/>
+              <box orient="horizontal" flex="1">
+                <label id="catalog_reload_left_before_label3"
+                       value="合間合間に で消した分 + 新規や既読を分けた分"/>
+                <label id="catalog_reload_left_before_label4"
+                       value=".sp" class="sp"/>
+              </box>
               <box orient="horizontal" align="center">
                 <checkbox id="catalog_reload_left_before_more" checked="false"
                           label="多めに残す" />
@@ -1724,6 +1741,17 @@
                 <label id="catalog_sidebar_comment_length_label2"
                        control="catalog_sidebar_comment_length" value="文字" />
               </box>
+            </groupbox>
+            <groupbox orient="vertical">
+              <caption>
+                <checkbox id="catalog_observe" checked="false"
+                          label="通常・返信モードと連携"
+                          class="sp" tooltiptext="(デフォルト：無効) 別タブの通常・返信モードと連携してカタログにスレ情報を反映させる"
+                          oncommand="AkahukuOptions.checkCatalogObserve ();" />
+              </caption>
+              <checkbox id="catalog_observe_replynum" checked="false"
+                        class="sp" tooltiptext="(デフォルト：無効) 返信モードでのレス数変化をカタログに即座に反映する"
+                        label="レス数を即座に反映" />
             </groupbox>
             <checkbox id="catalog_clickable" checked="false"
                       label="空白の本文を強制リンク" />

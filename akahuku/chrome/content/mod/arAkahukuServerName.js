@@ -161,7 +161,7 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF img",
     "\u8679\u88CF img",
     "\u4E8C\u6B21\u5143\u88CF",
-    8000, true
+    10000, true
     ],
   "dat:b" : [ /* 二次元裏 dat */
     "\u4E8C\u6B21\u5143\u88CF dat",

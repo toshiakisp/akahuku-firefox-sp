@@ -17,6 +17,14 @@ checkbox.sp label:after {
 checkbox.sp[disabled="true"] label:after {
   color: inherit ! important;
 }
+label.sp {
+  color: #00f;
+  font-size: 80%;
+  vertical-align: bottom;
+  padding: 0px;
+  margin-left: 0px;
+  margin-right: auto;
+}
 
 label.ineffective,
 checkbox.ineffective label {
