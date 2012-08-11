@@ -278,40 +278,22 @@ arAkahukuContentPolicy.prototype = {
     = enableAll && enableBoardExternal;
         
     if (this._enableBoardExternal) {
-      var tmp = "";
-      if (this._pref.prefHasUserValue
-          (this._prefBoardExternalPatternsName)) {
-        tmp
+      if (typeof JSON != "undefined"
+          && this._pref.prefHasUserValue
+            (this._prefBoardExternalPatternsName)) {
+        var tmp
           = this._pref.getCharPref
           (this._prefBoardExternalPatternsName);
-      }
-      if (tmp != "") {
-        var self = this;
-                
-        if (this._old) {
-          /* 古い場合は this._unescape を使う */
-          var self = this;
-          /* 値を解析するだけなので代入はしない */
-          tmp.replace
-            (/([^&,]*)&([^&,]*),?/g,
-             function (matched, pattern, flag) {
-              self._boardExternalList.push
-                (new Array (new RegExp (self
-                                        ._unescape (pattern)),
-                            flag));
-              return "";
-            });
+        this._boardExternalList = JSON.parse (unescape (tmp));
+        while (this._boardExternalList.length
+               && this._boardExternalList [0] == undefined) {
+          this._boardExternalList.shift ();
         }
-        else {
-          /* 値を解析するだけなので代入はしない */
-          tmp.replace
-            (/([^&,]*)&([^&,]*),?/g,
-             function (matched, pattern, flag) {
-              self._boardExternalList.push
-                (new Array (new RegExp (unescape (pattern)),
-                            flag));
-              return "";
-            });
+        for (var i = 0; i < this._boardExternalList.length; i ++) {
+          if (!this._boardExternalList [i].prefix) {
+            this._boardExternalList [i].pattern
+              = new RegExp (this._boardExternalList [i].pattern);
+          }
         }
       }
     }
@@ -750,7 +732,9 @@ arAkahukuContentPolicy.prototype = {
       if (this._enableBoardExternal) {
         var href = contentLocation.spec;
         for (var i = 0; i < this._boardExternalList.length; i ++) {
-          if (href.match (this._boardExternalList [i][0])) {
+          if (this._boardExternalList [i].prefix
+              ? href.indexOf (this._boardExternalList [i].pattern) == 0
+              : this._boardExternalList [i].pattern.test (href)) {
             needCheck = true;
             break;
           }

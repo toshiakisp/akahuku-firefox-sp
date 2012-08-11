@@ -2308,7 +2308,7 @@ var arAkahukuSidebar = {
       }
       else if (type == 10) {
         if (name in arAkahukuSidebar.boards) {
-          board = arAkahukuSidebar.boards [name];
+          var board = arAkahukuSidebar.boards [name];
                     
           if (board.lastSelected) {
             var num = board.lastSelected.getAttribute ("__num");

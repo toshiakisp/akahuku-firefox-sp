@@ -2188,6 +2188,10 @@ var arAkahukuCatalog = {
             
       if (arAkahukuCatalog.enableReloadReplyNumberDelta) {
         var div = nodes [i].getElementsByTagName ("div") [0];
+        if (div && !arAkahukuDOM.hasClassName (div, "akahuku_cell")) {
+          /* akahuku_comment などの div を間違って消さないように */
+          div = null;
+        }
         var delta
           = parseInt (nodes [i].getAttribute ("__reply_number"))
           - parseInt (nodes [i].getAttribute ("__old_reply_number"));
@@ -2470,7 +2474,7 @@ var arAkahukuCatalog = {
     = Akahuku.getDocumentParam (targetDocument).catalogpopup_param;
         
     var anchor = event.currentTarget;
-    nodes = anchor.getElementsByTagName ("img");
+    var nodes = anchor.getElementsByTagName ("img");
     if (nodes
         && nodes [0]) {
       var img = nodes [0];

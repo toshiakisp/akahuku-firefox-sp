@@ -1125,7 +1125,7 @@ var arAkahukuLink = {
         var font = targetDocument.createElement ("font");
         if (arAkahukuLink.enableHideTrollsRed) {
           var font2
-            = arAkahukuDOM.findParentNode (targetNode, "font");
+            = arAkahukuDOM.findParentNode (nextNode, "font");
           if (font2 == null) {
             font.color = arAkahukuLink.hideTrollsRedColor;
           }
