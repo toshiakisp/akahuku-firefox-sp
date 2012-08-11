@@ -368,6 +368,37 @@ var arAkahukuUI = {
         menuitem.label = "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON";
       }
     }
+        
+    var param = Akahuku.getFocusedDocumentParam ();
+    menuitem
+    = document.getElementById ("akahuku-statusbar-popup-apply");
+    if (menuitem) {
+      menuitem.disabled = (param != null);
+    }
+    menuitem
+    = document.getElementById ("akahuku-statusbar-popup-external");
+    if (menuitem) {
+      menuitem.disabled = !(arAkahukuBoard.isAbleToAddExternal ());
+    }
+    menuitem
+    = document.getElementById ("akahuku-statusbar-popup-respanel");
+    if (menuitem) {
+      menuitem.disabled
+      = (!param || !param.location_info.isReply);
+      if (param && "respanel_param" in param && param.respanel_param) {
+        if (!param.respanel_param.frame.parentNode) {
+          /* レスパネルの要素が誰かに消されてる場合 */
+          arAkahukuThread.closeResPanel (param.targetDocument);
+          menuitem.removeAttribute ("checked");
+        }
+        else {
+          menuitem.setAttribute ("checked", "true");
+        }
+      }
+      else {
+        menuitem.removeAttribute ("checked");
+      }
+    }
   },
     
   /**
@@ -425,6 +456,29 @@ var arAkahukuUI = {
                   String (new Date ().getTime ()));
         
     arAkahukuP2P.update ();
+  },
+    
+  /**
+   * レスパネルの表示を切り替える
+   */
+  switchResPanelShowing : function () {
+    var menuitem
+    = document.getElementById ("akahuku-statusbar-popup-respanel");
+    if (!menuitem) {
+      return;
+    }
+    if (menuitem.getAttribute ("checked") == "true") {
+      arAkahukuThread.closeResPanel ();
+      menuitem.removeAttribute ("checked");
+    }
+    else {
+      try {
+        arAkahukuThread.showResPanel ();
+        menuitem.setAttribute ("checked", "true");
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
   },
     
   /**
@@ -614,8 +668,8 @@ var arAkahukuUI = {
    * フォーカスのあるドキュメントに適用する
    */
   applyFocusedDocument : function () {
-    var tabbrowser = document.getElementById ("content");
-    var targetDocument = tabbrowser.contentDocument;
+    var targetDocument
+    = document.commandDispatcher.focusedWindow.document;
         
     var param
     = Akahuku.getDocumentParam (targetDocument);

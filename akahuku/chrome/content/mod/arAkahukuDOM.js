@@ -350,5 +350,38 @@ var arAkahukuDOM = {
       }
     }
     return null;
-  }
+  },
+  
+  /**
+   * タグ名とクラス名で子ノードを1つ取得する
+   * (頻出パターンの可読性を上げる)
+   *
+   * @param  HTMLElement targetElement
+   *         対象の要素
+   * @param  String tagName
+   *         タグ名
+   * @param  String className
+   *         クラス名、未指定ならクラス名で絞り込まない
+   * @return HTMLElement
+   *         見付かればその要素、見付からなければ null
+   */
+  getFirstElementByNames : function (targetElement, tagName, className) {
+    var nodes, i;
+        
+    nodes = targetElement.getElementsByTagName (tagName);
+    if (className) {
+      for (i = 0; i < nodes.length; i ++) {
+        if ("className" in nodes [i]
+            && nodes [i].className == className) {
+          return nodes [i];
+        }
+      }
+    }
+    else {
+      return nodes [0];
+    }
+        
+    return null;
+  },
+  
 };

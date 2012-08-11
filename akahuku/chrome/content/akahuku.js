@@ -182,7 +182,22 @@ var Akahuku = {
     
     return null;
   },
-    
+
+  /*
+   * フォーカスされているドキュメントの情報を取得する
+   * (フレーム内のドキュメントでも)
+   *
+   * @return arAkahukuDocumentParam
+   *         ドキュメントごとの情報
+   */
+  getFocusedDocumentParam : function () {
+    var wnd = document.commandDispatcher.focusedWindow;
+    if (window == wnd || !wnd) {
+      wnd = window.content;
+    }
+    return Akahuku.getDocumentParam (wnd.document);
+  },
+
   /**
    * 設定を読み込む
    */

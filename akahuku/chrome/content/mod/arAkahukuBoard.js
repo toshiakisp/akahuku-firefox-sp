@@ -93,18 +93,51 @@ var arAkahukuBoard = {
   },
     
   /**
+   * 外部板に追加できるか
+   */
+  isAbleToAddExternal : function (targetDocument) {
+    try {
+      if (!targetDocument) {
+        targetDocument
+        = document.commandDispatcher.focusedWindow.document;
+      }
+      var param = Akahuku.getDocumentParam (targetDocument);
+          
+      if (param) {
+        return false;
+      }
+          
+      var targetDocument
+      = document.commandDispatcher.focusedWindow.document;
+
+      var base = targetDocument.location.href;
+          
+      base = base
+      .replace (/\/res\/([0-9]+)\.html?$/, "/")
+      .replace (/\/(([^\.\/]+)\.php)?([#\?].*)?$/, "/")
+      .replace (/\/(([^\.\/]+)\.html?)?([#\?].*)?$/, "/");
+          
+      if (!/\/$/.test (base)) {
+        return false;
+      }
+          
+      return true;
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      return false;
+    }
+  },
+    
+  /**
    * 外部板に追加する
    */
   addExternal : function () {
-    var tabbrowser = document.getElementById ("content");
-    var targetDocument = tabbrowser.contentDocument;
-        
-    var param
-    = Akahuku.getDocumentParam (targetDocument);
-        
-    if (param) {
+    if (!arAkahukuBoard.isAbleToAddExternal ()) {
       return;
     }
+        
+    var targetDocument
+    = document.commandDispatcher.focusedWindow.document;
         
     var base = targetDocument.location.href;
         
@@ -113,11 +146,12 @@ var arAkahukuBoard = {
     .replace (/\/(([^\.\/]+)\.php)?([#\?].*)?$/, "/")
     .replace (/\/(([^\.\/]+)\.html?)?([#\?].*)?$/, "/");
         
-    if (!base.match (/\/$/)) {
-      return;
-    }
-        
     var flag = 2;
+    var value = {
+      prefix: true,
+      monaca: false,
+      pattern: base
+    };
         
     var form = targetDocument.getElementById ("postbox");
     if (form) {
@@ -125,21 +159,33 @@ var arAkahukuBoard = {
           && form.action
           && form.action.match (/monaca\.php/)) {
         flag |= 1;
+        value.monaca = true;
       }
     }
         
-    var tmp
-    = arAkahukuConfig
-    .initPref ("char", "akahuku.board_external.patterns", "");
-        
-    if (tmp) {
-      tmp += ",";
+    var tmp2 = arAkahukuConfig
+    .initPref ("char", "akahuku.board_external.patterns2", "null");
+    if (tmp2 != "null") {
+      var list = arAkahukuJSON.decode (unescape (tmp2));
+      list.push (value);
+      tmp2 = arAkahukuJSON.encode (list);
+      arAkahukuConfig.prefBranch.setCharPref
+      ("akahuku.board_external.patterns2", tmp2);
     }
-    tmp += escape (base)
-    + "&" + escape (flag);
-        
-    arAkahukuConfig.prefBranch.setCharPref
-    ("akahuku.board_external.patterns", tmp);
+    else {
+      var tmp
+      = arAkahukuConfig
+      .initPref ("char", "akahuku.board_external.patterns", "");
+          
+      if (tmp) {
+        tmp += ",";
+      }
+      tmp += escape (base)
+      + "&" + escape (flag);
+          
+      arAkahukuConfig.prefBranch.setCharPref
+      ("akahuku.board_external.patterns", tmp);
+    }
         
     arAkahukuBoard.getConfig ();
         

@@ -3318,7 +3318,7 @@ var arAkahukuPostForm = {
                 = Akahuku.protocolHandler.enAkahukuURI
                 ("preview",
                  arAkahukuFile.getURLSpecFromFilename
-                 (filename).replace (/^file:\/\/\//,"file://akahuku/"));
+                 (filename));
             }
             else {
               width.style.display = "none";

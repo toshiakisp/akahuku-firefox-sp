@@ -697,7 +697,7 @@ var arAkahukuLink = {
           .createInstance (Components.interfaces.nsIURI);
         testURL.spec = url;
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
         return false;
       }
       
@@ -2681,7 +2681,7 @@ var arAkahukuLink = {
     try {
       uri.spec = targetNode.getAttribute ("dummyhref");
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       return;
     }
     var flag = targetNode.getAttribute ("visited");
@@ -2919,8 +2919,13 @@ var arAkahukuLink = {
     var image = event.currentTarget;
     if (!image.parentNode) return;
     if (image.parentNode.hasAttribute ("__akahuku_preview_error")
-        && image.src != image.getAttribute ("dummyhref")) {
+        && !Akahuku.protocolHandler.isAkahukuURI (image.src)) {
       /* エラー後に第三者が画像を差し替え */
+      var src = image.src;
+      if (/^data:/.test (src)) {
+        src = src.substring (0, 32); /* たいてい長すぎるので割愛 */
+      }
+      Akahuku.debug.log ("arAkahukuLink.onImageLoad aborted: " + src);
       return;
     }
     if (image.naturalWidth
@@ -3135,13 +3140,17 @@ var arAkahukuLink = {
     else if (uri.match (/^http:\/\/(?:(?:www\.|m\.)?youtube\.com\/watch\?(?:[^&]+&)*v=|youtu\.be\/)([^&?#]+)/i)) {
       var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
+      var t = 0;
       if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s/)) {
-        var t = parseInt (RegExp.$3)
-              + parseInt (RegExp.$2 || 0) * 60
-              + parseInt (RegExp.$1 || 0) * 3600;
-        if (t > 0) {
-          youtubeUrl += "&start=" + t;
-        }
+        t = parseInt (RegExp.$3)
+          + parseInt (RegExp.$2 || 0) * 60
+          + parseInt (RegExp.$1 || 0) * 3600;
+      }
+      else if (uri.match (/[?&#]t=([0-9]+)/)) {
+        t = parseInt (RegExp.$1)
+      }
+      if (t > 0) {
+        youtubeUrl += "&start=" + t;
       }
       image = targetDocument.createElement ("iframe");
       image.width = Math.max (480, arAkahukuLink.autoLinkPreviewSWFWidth);
@@ -3197,7 +3206,7 @@ var arAkahukuLink = {
           src = uri;
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
         src = uri;
       }
     }
@@ -3220,7 +3229,8 @@ var arAkahukuLink = {
       }
     }
         
-    if (uri.match (/\.(swf)(\?.*)?$/i)) {
+    if (typeof (noscriptOverlay) != "undefined"
+        && uri.match (/\.(swf)(\?.*)?$/i)) {
       /* NoScript があれば解除する */
       try {
         uri2 = targetDocument.location.href;
@@ -3233,7 +3243,7 @@ var arAkahukuLink = {
         try {
           enabled = noscriptOverlay.ns.isJSEnabled (uri2);
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
                 
         if (!enabled) {
@@ -3249,7 +3259,7 @@ var arAkahukuLink = {
             }, 3000, uri2);
         }
       }
-      catch (e) {
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
         

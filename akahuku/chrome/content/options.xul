@@ -772,6 +772,19 @@
             </box>
           </groupbox>
         </box>
+		<groupbox orient="vertical">
+		  <caption label="コメント欄のカスタム背景画像について" />
+		  <box orient="horizontal">
+			<box orient="vertical" flex="1">
+			  <label value="赤福システムフォルダ(ディレクトリ)に特定の名前の画像があれば背景画像として使われます"/>
+			  <label value="ファイル名: bg_default.png (デフォルト), bg_img_b.png など(板固有)"/>
+			</box>
+			<box orient="horizontal">
+			  <button id="commentbox_open_systemdir_button" label="フォルダを開く"
+					  oncommand="AkahukuOptions.openSystemDirectory ();" />
+			</box>
+		  </box>
+		</groupbox>
       </box>
       <box flex="1" id="tab_form" orient="vertical">
         <box orient="horizontal">
@@ -895,6 +908,19 @@
             </box>
           </groupbox>
         </box>
+		<groupbox orient="vertical">
+		  <caption label="カスタム送信ボタンについて" />
+		  <box orient="horizontal">
+			<box orient="vertical" flex="1">
+			  <label value="赤福システムフォルダ(ディレクトリ)に指定の画像があれば使われます(48x36)"/>
+			  <label value="ファイル名: submit.png, submit_disabled.png, submit_hover.png, submit_push.png"/>
+			</box>
+			<box orient="horizontal">
+			  <button id="postform_open_systemdir_button" label="フォルダを開く"
+					  oncommand="AkahukuOptions.openSystemDirectory ();" />
+			</box>
+		  </box>
+		</groupbox>
       </box>
       <box flex="1" id="tab_reload" orient="vertical">
         <groupbox orient="horizontal">
@@ -1515,26 +1541,29 @@
               <label id="catalog_reorder_width_label2"
                      control="catalog_reorder_width" value=" (0 で板のデフォルト)" />
             </box>
-            <checkbox id="catalog_reorder_save" checked="false" label="状態を記憶する" oncommand="AkahukuOptions.checkCatalogReorderSave ();" />
+            <checkbox id="catalog_reorder_save" checked="false" label="デフォルトの順番を指定 (記憶)" oncommand="AkahukuOptions.checkCatalogReorderSave ();" />
             <box class="sub" orient="vertical">
               <menulist id="catalog_reorder_save_type">
                 <menupopup id="catalog_reorder_save_type_menu">
                   <menuitem value="0" label="通常" />
                   <menuitem value="1" label="ページごと" />
-                  <menuitem value="2" label="更新順に指定幅ずつ" />
+                  <menuitem value="2" label="デフォルト順に指定幅ずつ" />
                   <menuitem value="-1" label="スレの立った順に指定幅ずつ" />
                 </menupopup>
               </menulist>
             </box>
+			<groupbox orient="vertical">
+			  <caption>
+				<label value="詳細" id="catalog_reorder_misc_group_label" />
+			  </caption>
+              <label value="指定幅ずつ時のみ有効" class="warning" />
             <checkbox id="catalog_reorder_visited" checked="false"
                       label="未読と既読で分ける" />
             <checkbox id="catalog_reorder_new" checked="false"
                       label="最新に更新で新規を分ける" />
             <checkbox id="catalog_reorder_fill" checked="false"
                       label="合間合間に で消した分を詰める" />
-            <box class="sub" orient="vertical">
-              <label value="指定幅のみ" class="warning" />
-            </box>
+			</groupbox>
           </groupbox>
           <groupbox orient="vertical" flex="1">
             <caption>

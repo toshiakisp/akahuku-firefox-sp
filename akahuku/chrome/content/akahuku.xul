@@ -321,14 +321,18 @@
                 oncommand="arAkahukuUI.showPreferences (arguments [0]);" />
       <menuseparator id="akahuku-menuitem-separator" />
       <menuitem label="レス送信モードで動かす"
+			    id="akahuku-statusbar-popup-apply"
                 oncommand="arAkahukuUI.applyFocusedDocument ();" />
       <menuitem label="外部板に登録"
+			    id="akahuku-statusbar-popup-external"
                 oncommand="arAkahukuBoard.addExternal ();" />
       <menuseparator id="akahuku-menuitem-separator" />
       <menuitem label="サイドバー" observes="viewAkahukuSidebar" />
       <menuitem label="P2P サイドバー" observes="viewAkahukuP2PSidebar" />
-      <menuitem label="レスパネルを表示"
-                oncommand="arAkahukuThread.showResPanel ();" />
+	  <menuitem label="レスパネルを表示"
+			    type="checkbox" autocheck="false"
+			    id="akahuku-statusbar-popup-respanel"
+				oncommand="arAkahukuUI.switchResPanelShowing ();" />
       <menuseparator id="akahuku-menuitem-separator" />
       <menuitem label="サイトを開く"
                 oncommand="arAkahukuUI.openWebsite ();" />

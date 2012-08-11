@@ -2465,6 +2465,18 @@ var AkahukuOptions = {
   },
     
   /**
+   * カスタムのためのシステムディレクトリを開く
+   *
+   */
+  openSystemDirectory : function () {
+    var file
+      = Components.classes ["@mozilla.org/file/local;1"]
+      .createInstance (Components.interfaces.nsILocalFile);
+    file.initWithPath (arAkahukuFile.systemDirectory);
+    file.reveal ();
+  },
+    
+  /**
    * タブの並びかたが変わったイベント
    *
    * @param  Number n
@@ -3917,6 +3929,7 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_reorder_visited").disabled
     = document.getElementById ("catalog_reorder_new").disabled
     = document.getElementById ("catalog_reorder_fill").disabled
+    = document.getElementById ("catalog_reorder_misc_group_label").disabled
     = !document.getElementById ("catalog_reorder").checked;
         
     AkahukuOptions.checkCatalogReorderSave ();
