@@ -602,6 +602,20 @@ var arAkahukuLink = {
    * パターン初期化
    */
   initPatterns : function () {
+    function _getAttachmentOnTsumanne (targetDocument, name) {
+      var attachment = targetDocument.getElementById ("attachment");
+      if (attachment) {
+        var nodes = attachment.getElementsByTagName ("a");
+        for (var i = 0; i < nodes.length; i ++) {
+          var href = nodes [i].getAttribute ("href");
+          if (href === name) {
+            return targetDocument.location + name;
+          }
+        }
+      }
+      return null;
+    }
+
     arAkahukuLink.wikipediaPattern
     = new arAkahukuMatchPattern
     (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/,
@@ -868,7 +882,7 @@ var arAkahukuLink = {
       if (param) {
         var info = param.location_info;
         if (info && info.isTsumanne) {
-          url = targetDocument.location + parens [2];
+          url = _getAttachmentOnTsumanne (targetDocument, parens [2]) || url;
         }
       }
       
@@ -922,7 +936,7 @@ var arAkahukuLink = {
       if (param) {
         var info = param.location_info;
         if (info && info.isTsumanne) {
-          url = targetDocument.location + parens [2];
+          url = _getAttachmentOnTsumanne (targetDocument, parens [2]) || url;
         }
       }
       
@@ -1000,10 +1014,8 @@ var arAkahukuLink = {
       var param = Akahuku.getDocumentParam (targetDocument);
       if (param) {
         var info = param.location_info;
-        if (info && info.isTsumanne
-            // tsumanne.net は画像とテキストを保管している
-            && /^\.(jpg|png|gif|bmp|txt)/i.test (parens [3])) {
-          url = targetDocument.location + parens [2];
+        if (info && info.isTsumanne) {
+          url = _getAttachmentOnTsumanne (targetDocument, parens [2]) || url;
         }
       }
             

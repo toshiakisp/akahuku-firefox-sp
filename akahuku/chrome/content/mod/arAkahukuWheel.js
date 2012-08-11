@@ -356,7 +356,8 @@ var arAkahukuWheel = {
                && arAkahukuWheel.enableReload1) {
         ok = true;
       }
-      else if (info.isReply && arAkahukuWheel.enableReloadReply) {
+      else if (info.isReply && arAkahukuWheel.enableReloadReply
+               && !info.isTsumanne) {
         ok = true;
       }
       else if (info.isCatalog && arAkahukuWheel.enableReloadCatalog) {
