@@ -93,7 +93,7 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
     = Components
     .classes ["@mozilla.org/network/file-input-stream;1"]
     .createInstance (Components.interfaces.nsIFileInputStream);
-    this.fstream.init (this.targetFile, 0x01, 0444, 0);
+    this.fstream.init (this.targetFile, 0x01, 292/*0444*/, 0);
         
     return this.fstream;
   },
@@ -3018,7 +3018,7 @@ var arAkahukuMHT = {
         = Components.classes
         ["@mozilla.org/network/file-output-stream;1"]
         .createInstance (Components.interfaces.nsIFileOutputStream);
-      fstream.init (param.tmpFile, 0x02 | 0x08 | 0x20, 0644, 0);
+      fstream.init (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
             
       var data = "";
             
@@ -3360,7 +3360,7 @@ var arAkahukuMHT = {
         
     param.targetDocument = targetDocument;
         
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuConfig.loadPrefBranch ();
       arAkahukuMHT.getConfig ();
@@ -3449,7 +3449,7 @@ var arAkahukuMHT = {
             
       if (!dir.exists ()) {
         dir.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                    0755);
+                    493/*0755*/);
       }
     }
     else {
@@ -3503,7 +3503,7 @@ var arAkahukuMHT = {
         }
         else {
           if (arAkahukuMHT.enableAutoUnique) {
-            file.createUnique (0x00, 0644);
+            file.createUnique (0x00, 420/*0644*/);
           }
         }
         param.lastFilename = filename;

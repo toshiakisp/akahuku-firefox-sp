@@ -323,7 +323,7 @@ var arAkahukuUI = {
     var features = "chrome,titlebar,toolbar,centerscreen,resizable";
     arAkahukuUI.prefDialog = openDialog (optionsURL, "", features);
         
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       arAkahukuUI.prefDialog.addEventListener
         ("unload",
          function () {
@@ -678,7 +678,7 @@ var arAkahukuUI = {
       return;
     }
         
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuConfig.loadPrefBranch ();
       Akahuku.getConfig ();

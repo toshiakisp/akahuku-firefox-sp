@@ -125,6 +125,17 @@ arAkahukuContentPolicy.prototype = {
         
     /* pref サービスの取得 */
     if (nsIPrefBranch2 != undefined) {
+      this._pref
+      = Components.classes ["@mozilla.org/preferences-service;1"]
+      .getService (nsIPrefBranch2);
+    }
+    else {
+      this._pref
+      = Components.classes ["@mozilla.org/preferences-service;1"]
+      .getService (nsIPrefBranch);
+    }
+
+    if (typeof (this._pref.addObserver) === "function") {
       /* 新バージョンの場合、オブザーバを登録する */
       this._observerService
       = Components.classes ["@mozilla.org/observer-service;1"]
@@ -132,20 +143,12 @@ arAkahukuContentPolicy.prototype = {
             
       this._observerService.addObserver (this, "xpcom-shutdown", false);
             
-      this._pref
-      = Components.classes ["@mozilla.org/preferences-service;1"]
-      .getService (nsIPrefBranch2);
       this._pref.addObserver (this._prefAllName, this, false);
       this._pref.addObserver (this._prefCheckName, this, false);
       this._pref.addObserver (this._prefP2PName, this, false);
       this._pref.addObserver (this._prefDelBannerSitesImageName, this, false);
       this._pref.addObserver (this._prefDelBannerSitesObjectName, this, false);
       this._pref.addObserver (this._prefDelBannerSitesIframeName, this, false);
-    }
-    else {
-      this._pref
-      = Components.classes ["@mozilla.org/preferences-service;1"]
-      .getService (nsIPrefBranch);
     }
 
     this._ios

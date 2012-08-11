@@ -167,7 +167,7 @@ arAkahukuCatalogPopupData.prototype =  {
                         param, this, targetDocument);
         break;
       case 1:
-        this.targetImage.style.MozOpacity = 0;
+        this.targetImage.style.opacity = 0;
         this.lastTime = new Date ().getTime ();
         arAkahukuPopup.addEffector (param,
                                     this,
@@ -272,7 +272,7 @@ arAkahukuCatalogPopupData.prototype =  {
           this.popupArea.parentNode.removeChild (this.popupArea);
           this.popupArea = null;
         }
-        this.targetImage.style.MozOpacity = 1;
+        this.targetImage.style.opacity = 1;
         this.targetImage = null;
         break;
     }

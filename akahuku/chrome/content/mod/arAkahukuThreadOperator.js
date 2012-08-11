@@ -216,21 +216,21 @@ arAkahukuThumbnailPopupData.prototype = {
     if (arAkahukuThreadOperator.enableThumbnailAlpha) {
       if (arAkahukuThreadOperator.thumbnailSize == 1
           && arAkahukuThreadOperator.enableThumbnailSizeZoom) {
-        this.anchor.firstChild.style.MozOpacity
+        this.anchor.firstChild.style.opacity
         = ((100 - this.opacity) * this.zoomFactor / 100 + this.opacity)
         / 100;
       }
       else {
         if (this.state == 5) {
-          this.anchor.firstChild.style.MozOpacity = "1.0";
+          this.anchor.firstChild.style.opacity = "1.0";
         }
         else {
-          this.anchor.firstChild.style.MozOpacity = "0.5";
+          this.anchor.firstChild.style.opacity = "0.5";
         }
       }
     }
     else {
-      this.anchor.firstChild.style.MozOpacity = "1.0";
+      this.anchor.firstChild.style.opacity = "1.0";
     }
   },
     

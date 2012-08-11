@@ -274,14 +274,14 @@ arAkahukuReloadCacheWriter.prototype = {
       if (!targetFile.exists ()) {
         targetFile.create
           (Components.interfaces.nsIFile.NORMAL_FILE_TYPE,
-           0644);
+           420/*0644*/);
       }
             
       var fstream
       = Components.classes
       ["@mozilla.org/network/file-output-stream;1"]
       .createInstance (Components.interfaces.nsIFileOutputStream);
-      fstream.init (targetFile, 0x02 | 0x08 | 0x20, 0644, 0);
+      fstream.init (targetFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
             
       fstream.write (this.head, this.head.length);
       fstream.write (this.viewer, this.viewer.length);
@@ -2030,7 +2030,7 @@ var arAkahukuReload = {
           = Components
           .classes ["@mozilla.org/network/file-input-stream;1"]
           .createInstance (Components.interfaces.nsIFileInputStream);
-        fstream.init (targetFile, 0x01, 0444, 0);
+        fstream.init (targetFile, 0x01, 292/*0444*/, 0);
         var bstream
           = Components.classes ["@mozilla.org/binaryinputstream;1"]
           .createInstance
@@ -2365,7 +2365,7 @@ var arAkahukuReload = {
         
     try {
       if (typeof Aima_Aimani != "undefined") {
-        if (Components.interfaces.nsIPrefBranch2 == undefined) {
+        if (!arAkahukuConfig.isObserving) {
           /* 監視していない場合にのみ設定を取得する */
           if (Aima_Aimani.loadNGWord) {
             Aima_Aimani.loadNGWord ();

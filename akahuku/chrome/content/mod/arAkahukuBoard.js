@@ -107,7 +107,7 @@ var arAkahukuBoard = {
         return false;
       }
           
-      var targetDocument
+      targetDocument
       = document.commandDispatcher.focusedWindow.document;
 
       var base = targetDocument.location.href;

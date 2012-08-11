@@ -893,7 +893,7 @@ arAkahukuLocationInfo.prototype = {
    */
   escapeForFilename : function (filename, sep) {
     var parts = filename.split (/<separator ?\/>/);
-    var filename = "";
+    filename = "";
     var dirname = new Array ();
     for (var i = 0; i < parts.length; i ++) {
       if (i == parts.length - 1) {

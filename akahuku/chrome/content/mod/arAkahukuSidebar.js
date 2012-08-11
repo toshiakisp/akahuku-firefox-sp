@@ -1272,7 +1272,7 @@ var arAkahukuSidebar = {
    *         (optional) 対象のサイドバードキュメント
    */
   update : function (name, optSidebarDocument) {
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuConfig.loadPrefBranch ();
       arAkahukuSidebar.getConfig ();
@@ -2241,7 +2241,7 @@ var arAkahukuSidebar = {
       }
     }
         
-    if (Components.interfaces.nsIPrefBranch2 == undefined) {
+    if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuSidebar.getConfig ();
     }

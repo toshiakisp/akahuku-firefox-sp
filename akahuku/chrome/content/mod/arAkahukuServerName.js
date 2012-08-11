@@ -149,7 +149,7 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF jun",
     "\u8679\u88CF jun",
     "\u4E8C\u6B21\u5143\u88CF",
-    6000, true
+    8000, true
     ],
   "may:b" : [ /* 二次元裏 may */
     "\u4E8C\u6B21\u5143\u88CF may",
