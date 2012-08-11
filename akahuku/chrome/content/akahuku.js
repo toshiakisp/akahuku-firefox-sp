@@ -70,6 +70,8 @@ var Akahuku = {
   enableBoostByXPath : false,
   enableDownloadLastDirHack : false,
 
+  contextTasks : new Object (),
+
   /**
    * デバッグ用
    */
@@ -430,6 +432,7 @@ var Akahuku = {
    *         対象のイベント
    */
   onBodyUnload : function (targetDocument, event) {
+    Akahuku.clearContextTasks (targetDocument);
     /* リロード前にページトップにスクロール */
     var documentParam = Akahuku.getDocumentParam (targetDocument);
     if (documentParam == null) {
@@ -444,6 +447,7 @@ var Akahuku = {
     arAkahukuScroll.onBodyUnload (targetDocument, documentParam);
     arAkahukuThreadOperator.onBodyUnload (targetDocument, documentParam);
     arAkahukuThread.onBodyUnload (targetDocument, documentParam);
+    Akahuku.Cache.onBodyUnload (targetDocument, documentParam);
         
     Akahuku.deleteDocumentParam (targetDocument);
   },
@@ -790,6 +794,7 @@ var Akahuku = {
     arAkahukuPostForm.apply (targetDocument, info);     ticlog+="\n  arAkahukuPostForm.apply "+tic.toc();
     arAkahukuThread.apply (targetDocument, info);       ticlog+="\n  arAkahukuThread.apply "+tic.toc();
     arAkahukuThreadOperator.apply (targetDocument, info);ticlog+="\n  arAkahukuThreadOperator.apply "+tic.toc();
+    Akahuku.Cache.apply (targetDocument, info);         ticlog+="\n  Akahuku.Cache.apply "+tic.toc();
     arAkahukuLink.apply (targetDocument, info);         ticlog+="\n  arAkahukuLink.apply "+tic.toc();
     arAkahukuTitle.apply (targetDocument, info);        ticlog+="\n  arAkahukuTitle.apply "+tic.toc();
     arAkahukuImage.apply (targetDocument, info);        ticlog+="\n  arAkahukuImage.apply "+tic.toc();
@@ -803,6 +808,8 @@ var Akahuku = {
     arAkahukuWheel.apply (targetDocument, info);        ticlog+="\n  arAkahukuWheel.apply "+tic.toc();
     /* 手動でキャッシュを削除 */
     Akahuku.getDocumentParam (targetDocument)._messageBQCache = null;
+    Akahuku.getDocumentParam (targetDocument).wasApplied = true;
+    Akahuku.runContextTasks (targetDocument);           ticlog+="\n  runContextTasks "+tic.toc();
     var t = total_tic.toc();
     if (t > 1000) {
       Akahuku.debug.log ("Akahuku.apply() total " + t + "ms\n" + ticlog);
@@ -1212,9 +1219,9 @@ var Akahuku = {
           documentParam._messageBQCache = null;
         }
         event.target.ownerDocument.body.removeEventListener
-          ("DOMNodeInserted", arguments.callee, false);
+          ("DOMNodeInserted", expireMBQCache, false);
         event.target.ownerDocument.body.removeEventListener
-          ("DOMNodeRemoved", arguments.callee, false);
+          ("DOMNodeRemoved", expireMBQCache, false);
       }
       documentParam.targetDocument.body.addEventListener
         ("DOMNodeInserted", expireMBQCache, false);
@@ -1481,7 +1488,31 @@ var Akahuku = {
       container.nodes [i].parentNode.removeChild (container.nodes [i]);
     }
   },
-  
+
+  getThumbnailFromBQ : function (bq)
+  {
+    for (var node = bq.previousSibling;
+         node != null; node = node.previousSibling) {
+      if (node.nodeType != node.ELEMENT_NODE) {
+        continue;
+      }
+      if (node.nodeName.toLowerCase () == "a") {
+        for (var c = node.firstChild;
+             c != null; c = c.nextSibling) {
+          if (c.nodeName.toLowerCase () != "img") {
+            continue;
+          }
+          if ("className" in c) {
+            if (c.className == "akahuku_saveimage_src")
+              continue;
+          }
+          return c;
+        }
+      }
+    }
+    return null;
+  },
+
   /**
    * 画像ドキュメントのタブのイベント
    *
@@ -1512,9 +1543,14 @@ var Akahuku = {
         .getService (Components.interfaces.nsIPrivateBrowsingService);
       }
       var aURI = doc.documentURIObject;
+      try {
+        var host = aURI.host;
+      } catch (e) {
+        return; // ie. data scheme 
+      }
 
-      if (/^(apr|feb|jan|mar|jul|aug|sep|rrd)\.2chan\.net$/
-          .test (aURI.host)) { /* 画像鯖 */
+      if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd)\.2chan\.net$/
+          .test (host)) { /* 画像鯖 */
         if (pbsvc && pbsvc.privateBrowsingEnabled) {
           /* プライベートブラウジングモード */
           var lastdir = gDownloadLastDir.getFile ();
@@ -1537,6 +1573,141 @@ var Akahuku = {
       }
     }
     catch (e) { Akahuku.debug.exception (e);
+    }
+  },
+
+  /**
+   * 指定されたタイプの akahuku: スキーム URL を元に戻す
+   *
+   * @param  String spec
+   *         対象のURL
+   * @param  Object types
+   *         タイプ条件 (String, 複数ならArray)
+   * @return String
+   *         変換されたURL
+   */
+  deAkahukuURI : function (spec, types) {
+    var param = this.protocolHandler.getAkahukuURIParam (spec);
+    if (("original" in param) && ("type" in param)) {
+      if (!types) {
+        return param.original;
+      }
+      if (types && !(types instanceof Array)) {
+        types = new Array (String(types));
+      }
+      for (var i = 0; i < types.length; i++) {
+        if (types [i] == param.type) {
+          return param.original;
+        }
+      }
+    }
+    return spec;
+  },
+
+  /*
+   * コンテキストを処理する要求を受けつける
+   *   (DOMContentLoaded 前でも)
+   */
+  queueContextTask : function (handlerOwner, handlerName, context)
+  {
+    if (!(context instanceof Components.interfaces.nsIDOMNode)) {
+      Akahuku.debug.warn
+        ("queueContextTasks: context is not an instance of nsIDOMNode.");
+      return;
+    }
+    var contextDocument = context.ownerDocument || context;
+    if (!(contextDocument instanceof Components.interfaces.nsIDOMDocument)) {
+      Akahuku.debug.warn
+        ("queueContextTasks: no nsIDOMDocument retrieved via context.");
+      return;
+    }
+    var args = new Array (context);
+    for (var i = 3; i < arguments.length; i ++) {
+      args.push (arguments [i]);
+    }
+    var param = Akahuku.getDocumentParam (contextDocument);
+    if (param && "wasApplied" in param && param.wasApplied) {
+      // DOMContentLoaded 後では直に呼び出す
+      try {
+        handlerOwner [handlerName].apply (handlerOwner, args);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    else {
+      // DOMContentLoaded 前では後で実行するようリストに入れる
+      if (!(contextDocument in this.contextTasks)) {
+        this.contextTasks [contextDocument] = new Array ();
+      }
+      var task = {
+        owner: handlerOwner,
+        handler: handlerOwner [handlerName],
+        handlerName: handlerName,
+        args: args,
+        context: context,
+      };
+      if (Akahuku.debug.enabled) {
+        task.toString = function () {
+          return "[task {"
+            + "context=" + this.context
+            + ", handler=\"" + this.handlerName+"\"}]";
+        };
+      }
+      if (!task.handler) {
+        Akahuku.debug.warn
+          ("queueContextTasks: invalid handler \"" + handlerName + "\"");
+        return;
+      }
+      this.contextTasks [contextDocument].push (task);
+    }
+  },
+
+  clearContextTasks : function (targetDocument)
+  {
+    if (targetDocument in this.contextTasks) {
+      if (this.contextTasks [targetDocument].length > 0) {
+        Akahuku.debug.warn
+          ("clearContextTasks clears non-empty tasklist for "
+           + targetDocument.location
+           + "\nlist = " + this.contextTasks [targetDocument]);
+      }
+      delete this.contextTasks [targetDocument];
+    }
+  },
+
+  runContextTasks : function (targetDocument, opt)
+  {
+    if (!(targetDocument in this.contextTasks)) {
+      return;
+    }
+    var tasks = this.contextTasks [targetDocument];
+    var num = 0;
+    for (var i = 0; i < tasks.length; i ++) {
+      // opt で指定されたタスクを選別
+      if (opt &&
+          (("owner" in opt && tasks [i].owner != opt.owner)
+           || ("context" in opt && tasks [i].context != opt.context)
+           || ("handler" in opt && tasks [i].handler != opt.handler)
+           || ("handlerName" in opt
+               && tasks [i].handlerName != opt.handlerName)
+           )) {
+        continue;
+      }
+      var task = tasks [i];
+      tasks.splice (i --, 1); // --iではダメ
+      num ++;
+      try {
+        task.handler.apply (task.owner, task.args);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        Akahuku.debug.log
+          ("runContextTasks cought an error while a task " + num
+           + " \"" + task.handlerName + "\"" + " for " + task.context
+           + "\n" + targetDocument.location);
+      }
+    }
+    if (tasks.length == 0) {
+      delete this.contextTasks [targetDocument];
     }
   },
 };

@@ -44,6 +44,7 @@ arAkahukuLocationInfo.prototype = {
   isNotFound : false,           /* Boolean  404 かどうか */
   isRedirect : false,           /* Boolean  リダイレクトかどうか */
   isImage : false,              /* Boolean  画像かどうか */
+  isCache : false,              /* Boolean  キャッシュかどうか */
   path : "",                    /* String  板内のパス */
     
   normalPageNumber : 0,         /* Number  ページ番号 */
@@ -127,6 +128,7 @@ arAkahukuLocationInfo.prototype = {
       if (p.type == "cache"
           || p.type == "filecache") {
         location = p.original;
+        this.isCache = true;
       }
     }
         
@@ -263,9 +265,9 @@ arAkahukuLocationInfo.prototype = {
       this.isOnline = true;
     }
         
-    if (arAkahukuServerTrueName.has (this.server + ":" + this.dir)) {
+    if ((this.server + ":" + this.dir) in arAkahukuServerTrueName) {
       this.board3
-      = arAkahukuServerTrueName.get (this.server + ":" + this.dir);
+      = arAkahukuServerTrueName [this.server + ":" + this.dir];
     }
     else  {
       if (this.isMht) {

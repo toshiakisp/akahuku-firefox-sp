@@ -100,13 +100,16 @@ var arAkahukuPopupQuote = {
                   + "z-index: 402;")
         .addRule ("div.akahuku_reply_popup th",
                   "font-size: 9pt; "
+                  + "line-height: normal; "
                   + "font-weight: normal; "
                   + "vertical-align: top;")
         .addRule ("div.akahuku_reply_popup td",
                   "font-size: 9pt; "
+                  + "line-height: normal; "
                   + "padding: 2px 2px 2px 4px;")
         .addRule ("div.akahuku_reply_popup div.r",
                   "font-size: 9pt; "
+                  + "line-height: normal; "
                   + "padding: 2px 2px 2px 4px;")
         .addRule ("div.akahuku_reply_popup "
                   + "div.akahuku_popup_content_blockquote",
@@ -764,7 +767,7 @@ var arAkahukuPopupQuote = {
             return original;
           }
         }
-        else if (type == 0) {
+        if (type == 0) {
           /* 通常の引用 */
           var quotedText
           = arAkahukuDOM.getInnerText2 (quoted)
@@ -918,6 +921,7 @@ var arAkahukuPopupQuote = {
           /* 引用内の子要素テキストから No.等を再探索 */
           if (quoted.firstChild && quoted.firstChild
               .nodeType == quoted.TEXT_NODE
+              && quotedNo == -1 // 番号が未探索かどうか
               && /(?:No\.[1-9][0-9]*|[0-9]+\.[a-z]+)/
                  .test (originalQuotedText)) {
             quoted.normalize ();

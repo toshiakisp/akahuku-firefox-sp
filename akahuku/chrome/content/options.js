@@ -219,6 +219,9 @@ var AkahukuOptions = {
       ["bool", "delbanner.image", false],
       ["bool", "delbanner.image.404", false],
       ["bool", "delbanner.flash", false],
+      ["char", "delbanner.sites.image", "", "privatemod"],
+      ["char", "delbanner.sites.iframe", "", "privatemod"],
+      ["char", "delbanner.sites.object", "", "privatemod"],
       ["bool", "delbanner.text", false],
       ["bool", "delbanner.movetailad", false],
       ["bool", "delbanner.movetailad.all", false, "privatemod"],
@@ -325,13 +328,13 @@ var AkahukuOptions = {
           = AkahukuOptions
           .initPref (map, "char", "akahuku.tab.sort.board_order.list", "");
           var newboard = new Object ();
-          for (name in arAkahukuServerName.keys) {
+          for (name in arAkahukuServerName) {
             newboard [name] = true;
           }
           var list = new Array ();
           var name;
           if (value == "") {
-            for (name in arAkahukuServerName.keys) {
+            for (name in arAkahukuServerName) {
               list.push (name);
             }
             list = list.sort (function (x, y) {
@@ -360,12 +363,12 @@ var AkahukuOptions = {
             if (name in newboard) {
               delete newboard [name];
             }
-            if (arAkahukuServerName.has (name)
-                && arAkahukuServerName.get (name)) {
+            if (name in arAkahukuServerName
+                && arAkahukuServerName [name]) {
               listitem = document.createElement ("listitem");
               listcell = document.createElement ("listcell");
               listcell.setAttribute ("value", name);
-              listcell.setAttribute ("label", arAkahukuServerName.get (name));
+              listcell.setAttribute ("label", arAkahukuServerName [name]);
               listitem.appendChild (listcell);
               listbox.appendChild (listitem);
             }
@@ -374,7 +377,7 @@ var AkahukuOptions = {
             listitem = document.createElement ("listitem");
             listcell = document.createElement ("listcell");
             listcell.setAttribute ("value", name);
-            listcell.setAttribute ("label", arAkahukuServerName.get (name));
+            listcell.setAttribute ("label", arAkahukuServerName [name]);
             listitem.appendChild (listcell);
             listbox.appendChild (listitem);
           }
@@ -401,6 +404,7 @@ var AkahukuOptions = {
       ["bool", "tabicon", true],
       ["bool", "tabicon.size", true],
       ["int",  "tabicon.size.max", 24],
+      ["bool", "tabicon.asfavicon", true, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkTabSort ();
@@ -702,6 +706,7 @@ var AkahukuOptions = {
       ["bool", "reload.extcache", false],
       ["bool", "reload.extcache.file", false],
       ["char", "reload.extcache.file.base", ""],
+      ["bool", "reload.extcache.images", false, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkPartial ();
@@ -1039,11 +1044,12 @@ var AkahukuOptions = {
           if (value < 50) {
             value = 50;
           }
-          else if (value > 250) {
-            value = 250;
+          else if (value > 300) {
+            value = 300;
           }
           return value;
         }],
+      ["int",  "catalog.zoom.sizetype", 0], /* privatemod */
       ["int",  "catalog.zoom.cache.count", 16],
       ["bool", "catalog.zoom.comment", false],
       ["int",  "catalog.zoom.comment.delay", 10,
@@ -2233,8 +2239,8 @@ var AkahukuOptions = {
   initBoard : function (value, ex, type, unmht) {
     var names = new Object ();
     var name;
-    for (name in arAkahukuServerName.keys) {
-      names [name] = arAkahukuServerName.get (name);
+    for (name in arAkahukuServerName) {
+      names [name] = arAkahukuServerName [name];
     }
     if (unmht) {
       names ["UnMHT:UnMHT"] = "UnMHT \u306E\u51FA\u529B";
@@ -3239,11 +3245,32 @@ var AkahukuOptions = {
     document.getElementById ("delbanner_image").disabled
     = document.getElementById ("delbanner_image_404").disabled
     = document.getElementById ("delbanner_flash").disabled
+    = document.getElementById ("delbanner_contentpolicy_group_label").disabled
     = document.getElementById ("delbanner_text").disabled
     = document.getElementById ("delbanner_movetailad").disabled
     = !document.getElementById ("delbanner").checked;
     
+    AkahukuOptions.checkDelbannerImage ();
+    AkahukuOptions.checkDelbannerFlash ();
     AkahukuOptions.checkDelbannerTailAd ();
+  },
+    
+  checkDelbannerImage : function () {
+    document.getElementById ("delbanner_sites_image").disabled
+    = document.getElementById ("delbanner_sites_iframe").disabled
+    = document.getElementById ("delbanner_sites_image_label").disabled
+    = document.getElementById ("delbanner_sites_iframe_label").disabled
+    = ((!document.getElementById ("delbanner_image_404").checked
+        || document.getElementById ("delbanner_image_404").disabled)
+       && (!document.getElementById ("delbanner_image").checked
+           || document.getElementById ("delbanner_image").disabled));
+  },
+    
+  checkDelbannerFlash : function () {
+    document.getElementById ("delbanner_sites_object").disabled
+    = document.getElementById ("delbanner_sites_object_label").disabled
+    = !document.getElementById ("delbanner_flash").checked
+      || document.getElementById ("delbanner_flash").disabled;
   },
     
   checkDelbannerTailAd : function () {
@@ -3573,6 +3600,7 @@ var AkahukuOptions = {
     = document.getElementById ("reload_nolimit_label").disabled
     = document.getElementById ("reload_status_no_count").disabled
     = document.getElementById ("reload_extcache").disabled
+    = document.getElementById ("reload_extcache_images").disabled
     = !document.getElementById ("reload").checked;
         
     AkahukuOptions.checkReloadRangeSyncButton ();
@@ -3598,6 +3626,8 @@ var AkahukuOptions = {
   },
     
   checkReloadRangeSyncButton : function () {
+    document.getElementById ("reload_range_syncbutton").disabled
+    = !document.getElementById ("reload").checked;
     document.getElementById ("reload_range_syncbutton_nodelete").disabled
     = !document.getElementById ("reload").checked
     || !document.getElementById ("reload_range_syncbutton").checked;
@@ -3626,6 +3656,7 @@ var AkahukuOptions = {
     
   checkTabIcon : function () {
     document.getElementById ("tabicon_size").disabled
+    = document.getElementById ("tabicon_asfavicon").disabled
     = !document.getElementById ("tabicon").checked;
         
     AkahukuOptions.checkTabIconSize ();
@@ -3950,6 +3981,7 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_zoom_size").disabled
     = document.getElementById ("catalog_zoom_size_label1").disabled
     = document.getElementById ("catalog_zoom_size_label2").disabled
+    = document.getElementById ("catalog_zoom_sizetype").disabled
     = document.getElementById ("catalog_zoom_cache_count").disabled
     = document.getElementById ("catalog_zoom_cache_count_label1").disabled
     = document.getElementById ("catalog_zoom_cache_count_label2").disabled

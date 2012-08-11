@@ -2,7 +2,7 @@
 
 /**
  * Require: arAkahukuConfig, arAkahukuDOM, arAkahukuHistory,
- *          arAkahukuServerName
+ *          arAkahukuServerName, arAkahukuThread
  */
 
 /**
@@ -13,6 +13,7 @@ function arAkahukuSidebarThread () {
 arAkahukuSidebarThread.prototype = {
   num : 0,           /* Number  スレ番号 */
   comment : "",      /* String  コメント */
+  commentInCatalog : "",/* String  カタログから取得したコメント */
     
   reply : 0,         /* Number  レス数 */
   lastReply : 0,     /* Number  更新前のレス数 */
@@ -36,6 +37,97 @@ arAkahukuSidebarThread.prototype = {
   isMarked : false,  /* Boolean  マーク */
   isExpired : false, /* Boolean  消滅フラグ */
   node : null        /* HTMLDivElement  サイドバー上の div 要素 */
+  ,
+  threadLinkURIObject : null,   /* nsIURI スレの URI */
+
+  isValid : function ()
+  {
+    // 基本的なチェック
+    var valid
+      =  this.num > 0 
+      && typeof (this.comment) === "string"
+      && this.reply >= 0
+      && this.lastReply >= -1
+      //&& this.lastReply <= this.reply // レス削除の場合逆転する
+      && typeof (this.expire) === "string"
+      && typeof (this.warning) === "string"
+      && typeof (this.lastNum) === "number" // カタログの事情で
+      && typeof (this.imageSrc) === "string"
+      && (this.imageSrcType === 1 || this.imageSrcType === 2)
+      && typeof (this.imageLink) === "string"
+      && this.imageNum >= 0
+      && this.imageWidth >= 0
+      && this.imageHeight >= 0
+      && this.imageBytes >= 0
+      && /^(?:|jpg|gif|png)$/i.test (this.imageExt)
+      && (new RegExp ("/" + this.num + "\\.htm$"))
+         .test (this.threadLink);
+    if (!valid) {
+      return false;
+    }
+
+    // URLチェック
+    if (!this.threadLinkURIObject
+        || this.threadLinkURIObject.spec != this.threadLink) {
+      this.threadLinkURIObject = null;
+      var uri = this.makeURI (this.threadLink);
+      if (uri && this.isSafeURL (uri)) {
+        this.threadLinkURIObject = uri;
+        this.threadLink = uri.spec;
+      }
+    }
+    valid
+      = this.threadLinkURIObject
+      && this.isSafeURL (this.threadLinkURIObject)
+      // imageSrc, imageLink は未指定の場合もある
+      && (!this.imageSrc || this.isSafeURL (this.imageSrc))
+      && (!this.imageLink || this.isSafeURL (this.imageLink));
+    if (!valid) {
+      delete this.threadLinkURIObject;
+      return false;
+    }
+
+    return true;
+  },
+
+  makeURI : function (uriStr) {
+    var ios
+      = Components.classes ["@mozilla.org/network/io-service;1"]
+      .getService (Components.interfaces.nsIIOService);
+    try {
+      var uri = ios.newURI (uriStr, null, null);
+    }
+    catch (e if e.result == Components.results.NS_ERROR_MALFORMED_URI) {
+      return null;
+    }
+    return uri;
+  },
+  isSafeURL : function (url) {
+    var destURI
+      = (url instanceof  Components.interfaces.nsIURI
+         ? url : makeURI (url)); 
+    if (!destURI) {
+      return false;
+    }
+    try {
+      var secMan
+        = Components.classes ["@mozilla.org/scriptsecuritymanager;1"]
+        .getService (Components.interfaces.nsIScriptSecurityManager);
+      var flags
+        = Components.interfaces.nsIScriptSecurityManager.DISALLOW_SCRIPT;
+      if (this.threadLinkURIObject) {
+        secMan.checkLoadURI (this.threadLinkURIObject, destURI, flags);
+      }
+      else {
+        secMan.checkLoadURIStr
+          ("http://www.2chan.net/", destURI.spec, flags);
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      return false;
+    }
+    return true;
+  },
 };
 /**
  * サイドバーの板情報
@@ -58,7 +150,40 @@ arAkahukuSidebarBoard.prototype = {
    *         追加するスレ
    */
   addThread : function (thread) {
+    // thread の妥当性をチェック
+    if (!thread.isValid ()) {
+      if (Akahuku.debug.enabled) {
+        Akahuku.debug.warn
+          ("arAkahukuSidebarBoard rejects an invalid thread entry;\n"
+           + arAkahukuJSON.encode (thread));
+      }
+      return;
+    }
     this.threads.push (thread);
+  },
+    
+  /**
+   * スレを検証する (不正なら排除)
+   *
+   * @param  Number num
+   *         検証するスレの番号
+   */
+  validateThread : function (num) {
+    var thread;
+    for (var i = 0; i < this.threads.length; i ++) {
+      if (this.threads [i].num == num) {
+        thread = this.threads [i];
+        break;
+      }
+    }
+    if (thread && !thread.isValid ()) {
+      if (Akahuku.debug.enabled) {
+        Akahuku.debug.warn
+          ("arAkahukuSidebarBoard drops an invalid thread entry;\n"
+           + arAkahukuJSON.encode (thread));
+      }
+      this.threads.splice (i, 1);
+    }
   },
     
   /**
@@ -401,6 +526,67 @@ var arAkahukuSidebar = {
         
     return sidebar;
   },
+
+  /**
+   * イベント発生時に iframe 内外のドキュメントを取得する
+   *
+   * @param  Event event
+   *         対象のイベント
+   * @return Object
+   *         sidebar: iframe の親の XULDocument,
+   *         content: iframe 内 HTMLDocument,
+   */
+  _getDocumentsOnEvent : function (event)
+  {
+    var documents = {content: null, sidebar: null};
+
+    var target = event.target;
+    if (target instanceof Components.interfaces.nsIDOMXULElement) {
+      documents.sidebar = target.ownerDocument;
+      if (target.nodeName == "iframe") {
+        // iframe 自身に event が dispatch された場合 (chrome://)
+        documents.content = target.contentDocument;
+      }
+    }
+    else { // HTMLElement
+      documents.content = target.ownerDocument || target;
+      var parentWindow
+        = arAkahukuWindow.getParentWindowInChrome
+        (documents.content.defaultView);
+      if (parentWindow) {
+        documents.sidebar = parentWindow.document;
+      }
+      else {
+        // トップダウン的にサイドバーを取得する
+        // (サイドバー以外にロードされていると辿り着けない)
+        var sidebar = arAkahukuSidebar.getSidebar ();
+        if (!sidebar.docShell) {
+          Akahuku.debug.warn ("arAkahukuSidebar._getDocumentsOnEvent: return no sidebar;"
+              + " founded sidebar dose not have docShell.");
+          documents.sidebar = null;
+        }
+        else {
+          documents.sidebar = sidebar.contentDocument;
+        }
+      }
+    }
+
+    // 正しいサイドバーに辿り着けたか
+    try {
+      if (documents.sidebar.documentURI.indexOf
+          ("chrome://akahuku/content/sidebar.xul") != 0) {
+        Akahuku.debug.warn ("arAkahukuSidebar._getDocumentsOnEvent: return no sidebar;"
+            + " founded sidebar is not chrome://akahuku/content/sidebar.xul"
+            + ", but " + documents.sidebar.location.href);
+        documents.sidebar = null;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      documents.sidebar = null;
+    }
+
+    return documents;
+  },
     
   /**
    * 通常モードをロードしたイベント
@@ -454,6 +640,7 @@ var arAkahukuSidebar = {
                         
             node = node.previousSibling;
           }
+          board.validateThread (thread.num);
         }
                 
         node = nodes [i];
@@ -521,10 +708,10 @@ var arAkahukuSidebar = {
                     if ("alt" in node.firstChild
                         && node.firstChild.alt
                         .match (/([0-9]*)/)) {
-                      imageBytes = RegExp.$1;
+                      imageBytes = parseInt (RegExp.$1);
                     }
                     else {
-                      imageBytes = "0";
+                      imageBytes = 0;
                     }
                   }
                   else if (node.firstChild.nodeValue
@@ -647,6 +834,9 @@ var arAkahukuSidebar = {
         node = node.previousSibling;
       }
     }
+    if (thread) {
+      board.validateThread (thread.num);
+    }
   },
     
   /**
@@ -677,6 +867,7 @@ var arAkahukuSidebar = {
     var num;
     var reply;
     var imageSrc, imageNum;
+    var comment;
         
     var board = null;
         
@@ -697,6 +888,7 @@ var arAkahukuSidebar = {
       reply = 0;
       imageNum = 0;
       imageSrc = "";
+      comment = "";
             
       threadLink = "";
             
@@ -735,6 +927,9 @@ var arAkahukuSidebar = {
             }
           }
         }
+        else if (nodeName == "small") {
+          comment = node.textContent;
+        }
         else if (nodeName == "font") {
           if (node.innerHTML.match (/^([0-9]+)$/)) {
             reply = parseInt (RegExp.$1);
@@ -742,6 +937,11 @@ var arAkahukuSidebar = {
         }
                 
         node = node.nextSibling;
+      }
+
+      // amazon 広告の td 避け
+      if (num == 0) {
+        continue;
       }
             
       var append = false;
@@ -771,9 +971,15 @@ var arAkahukuSidebar = {
       thread.imageNum = imageNum;
             
       thread.threadLink = threadLink;
+
+      // カタログからもコメントを取得する
+      thread.commentInCatalog = comment;
             
       if (append) {
         board.addThread (thread);
+      }
+      else {
+        board.validateThread (thread.num);
       }
     }
   },
@@ -815,6 +1021,8 @@ var arAkahukuSidebar = {
     }
         
     thread.isExpired = true;
+
+    thread.warning = ""; // 消滅後は赤字にしない
         
     arAkahukuSidebar.sort (name);
     arAkahukuSidebar.update (name);
@@ -885,6 +1093,7 @@ var arAkahukuSidebar = {
     if (lastNum != null) {
       thread.lastNum = lastNum;
     }
+    board.validateThread (num);
         
     arAkahukuSidebar.updateVisited (name);
     arAkahukuSidebar.sort (name);
@@ -915,10 +1124,7 @@ var arAkahukuSidebar = {
     for (var i = 0; i < board.threads.length; i ++) {
       thread = board.threads [i];
             
-      var uri
-      = Components.classes ["@mozilla.org/network/standard-url;1"]
-      .createInstance (Components.interfaces.nsIURI);
-      uri.spec = thread.threadLink;
+      var uri = thread.threadLinkURIObject;
             
       thread.isVisited = arAkahukuHistory.isVisited (uri);
     }
@@ -941,16 +1147,46 @@ var arAkahukuSidebar = {
       arAkahukuSidebar.boards [name] = board;
     }
         
-    var max = 0;
-    for (var i = 0; i < board.threads.length; i ++) {
-      if (board.threads [i].num > max) {
-        max = board.threads [i].num;
+    if (name != "*_*") {
+      var max = 0;
+      for (var i = 0; i < board.threads.length; i ++) {
+        if (board.threads [i].num > max) {
+          max = board.threads [i].num;
+        }
       }
-    }
-    for (var i = 0; i < board.threads.length; i ++) {
-      if (board.threads [i].num < max - 10000) {
-        /* 最新のスレから 10000 経ったものは強制削除  */
-        board.threads [i].isExpired = true;
+      // 板全体の最新のレスを反映・更新する
+      var infoName = name.replace (/_/, ":");
+      if (infoName in arAkahukuThread.newestNum) {
+        if (max > arAkahukuThread.newestNum [infoName]) {
+          arAkahukuThread.newestNum [infoName] = max;
+        }
+        else {
+          max = arAkahukuThread.newestNum [infoName];
+        }
+      }
+      // 板の保存数を考慮して自動的に expired フラグを立てる
+      var savedNum
+        = (infoName in arAkahukuMaxNum
+        ? arAkahukuMaxNum [infoName] : 10000);
+      var reddenNum = max - 0.9 * savedNum;
+      var expireNum = max - savedNum;
+      for (var i = 0; i < board.threads.length; i ++) {
+        if (board.threads [i].num < expireNum) {
+          if (!board.threads [i].isExpired) {
+            board.threads [i].isExpired = true;
+            board.threads [i].warning = ""; // 消滅後は赤字にしない
+          }
+        }
+        else if (board.threads [i].num < reddenNum) {
+          // 赤字が出ていそうなスレを自動的に赤く
+          if (!board.threads [i].warning) {
+            board.threads [i].warning = "?";//なんでもいい
+            if (!board.threads [i].expire) {
+              //消滅時刻は不明だが赤字
+              board.threads [i].expire = "??:??";
+            }
+          }
+        }
       }
     }
         
@@ -1028,14 +1264,17 @@ var arAkahukuSidebar = {
    *
    * @param  String name
    *         対象の板
+   * @param  XULDocuemtn optSidebarDocuemtn
+   *         (optional) 対象のサイドバードキュメント
    */
-  update : function (name) {
+  update : function (name, optSidebarDocument) {
     if (Components.interfaces.nsIPrefBranch2 == undefined) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuConfig.loadPrefBranch ();
       arAkahukuSidebar.getConfig ();
     }
         
+    if (!optSidebarDocument) { // 互換性のため
     var menuitem = document.getElementById ("viewAkahukuSidebar");
     if (menuitem.getAttribute ("checked") != "true") {
       return;
@@ -1050,6 +1289,10 @@ var arAkahukuSidebar = {
     }
     catch (e) {
       sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
+    }
+    }
+    else {
+      var sidebarDocument = optSidebarDocument;
     }
     var iframe
     = sidebarDocument.getElementById ("akahuku_sidebar_iframe_" + name);
@@ -1080,6 +1323,11 @@ var arAkahukuSidebar = {
        function () {
         arAkahukuSidebar.onClick (arguments [0]);
       }, false);
+      iframe.addEventListener
+      ("mouseout",
+       function () {
+        arAkahukuSidebar.onMouseOut (arguments [0]);
+      }, false);
     }
         
     if (name in arAkahukuSidebar.boards) {
@@ -1092,6 +1340,15 @@ var arAkahukuSidebar = {
         
     if (targetDocument.body == null) {
       return;
+    }
+
+    function getBGColorForThread (thread) {
+      if (thread.isVisited) {
+        return thread.isExpired ? "#cc9977" : "#eeaa88";
+      }
+      else {
+        return thread.isExpired ? "#99bbdd" : "#aaccff";
+      }
     }
         
     arAkahukuDOM.setText (targetDocument.body, null);
@@ -1140,12 +1397,7 @@ var arAkahukuSidebar = {
           div = thread.node;
                     
           div.style.height = size + "px";
-          if (thread.isVisited) {
-            div.style.borderColor = "#eeaa88";
-          }
-          else {
-            div.style.borderColor = "#aaccff";
-          }
+          div.style.borderColor = getBGColorForThread (thread);
                     
           nodes = div.getElementsByTagName ("img");
           if (nodes && nodes.length >= 1) {
@@ -1155,6 +1407,9 @@ var arAkahukuSidebar = {
             node.style.maxHeight = (size - 2) + "px";
             var src = thread.imageSrc;
             src = arAkahukuP2P.tryEnP2P (src);
+            if (thread.isExpired && !arAkahukuP2P.enable) {
+              src = Akahuku.protocolHandler.enAkahukuURI ("cache", src);
+            }
             if (node.src != src
                 || !node.complete) {
               node.src = src;
@@ -1174,24 +1429,29 @@ var arAkahukuSidebar = {
                     == "akahuku_sidebar_comment") {
                   /* thread.comment に HTML が含まれるので
                    * innerHTML を使用する  */
-                  node.innerHTML = thread.comment;
+                  // node.innerHTML = thread.comment;
+                  // [SECURITY] chrome への読込はサニタイズが必要
+                  if (thread.comment) {
+                    arAkahukuDOM.setInnerHTMLSafely (node, thread.comment);
+                    node.style.removeProperty ("color");
+                  }
+                  else if (thread.commentInCatalog) {
+                    node.textContent = thread.commentInCatalog;
+                    node.style.color = "#aa8888";
+                  }
                   node.style.visibility = "";
                   if (thread.imageNum) {
                     node.style.marginLeft = size + "px";
                   }
-                  node.style.height = (size - 14) + "px";
+                  node.style.height = (size - 12) + "px";
                 }
                 else if (node.className
                          == "akahuku_sidebar_status") {
                   if (thread.imageNum) {
                     node.style.marginLeft = size + "px";
                   }
-                  if (thread.isVisited) {
-                    node.style.backgroundColor = "#eeaa88";
-                  }
-                  else {
-                    node.style.backgroundColor = "#aaccff";
-                  }
+                  node.style.backgroundColor
+                    = getBGColorForThread (thread);
                 }
               }
             }
@@ -1226,6 +1486,14 @@ var arAkahukuSidebar = {
                 else if (node.className
                          == "akahuku_sidebar_expire") {
                   arAkahukuDOM.setText (node, thread.expire);
+                  if (thread.warning) {
+                    node.style.fontWeight = "bold";
+                    node.style.color = "#ff0000";
+                  }
+                  else {
+                    node.style.removeProperty ("font-weight");
+                    node.style.removeProperty ("color");
+                  }
                 }
                 else if (node.className
                          == "akahuku_sidebar_aima") {
@@ -1258,21 +1526,8 @@ var arAkahukuSidebar = {
       if (!ok) {
         div = targetDocument.createElement ("div");
         div.className = "akahuku_sidebar_thread";
-        div.style.borderWidth = "0px 0px 2px 0px";
-        div.style.borderStyle = "solid";
-        if (thread.isVisited) {
-          div.style.borderColor = "#eeaa88";
-        }
-        else {
-          div.style.borderColor = "#aaccff";
-        }
-        div.style.marginBottom = "2px";
-        div.style.padding = "0px";
-        div.style.clear = "left";
+        div.style.borderColor = getBGColorForThread (thread);
         div.style.height = size + "px";
-        div.style.overflow = "-moz-hidden-unscrollable";
-        div.style.color = "#800000";
-        div.style.backgroundColor = "transparent";
         div.setAttribute ("__link", thread.threadLink);
         div.setAttribute ("__num", thread.num);
                 
@@ -1281,12 +1536,11 @@ var arAkahukuSidebar = {
           node.className = "akahuku_sidebar_image";
           node.style.maxWidth = (size - 2) + "px";
           node.style.maxHeight = (size - 2) + "px";
-          node.style.borderWidth = "1px";
-          node.style.borderStyle = "solid";
-          node.style.borderColor = "transparent";
-          node.style.cssFloat = "left";
           var src = thread.imageSrc;
           src = arAkahukuP2P.tryEnP2P (src);
+          if (thread.isExpired && !arAkahukuP2P.enable) {
+            src = Akahuku.protocolHandler.enAkahukuURI ("cache", src);
+          }
           node.src = src;
           if (thread.imageLink) {
             node.setAttribute ("__link", thread.imageLink);
@@ -1296,10 +1550,6 @@ var arAkahukuSidebar = {
                 
         node = targetDocument.createElement ("span");
         node.className = "akahuku_sidebar_mark";
-        node.style.fontSize = "12px";
-        node.style.cssFloat = "right";
-        node.style.color = "#ff0000";
-        node.style.backgroundColor = "#eeaa88";
         node.appendChild (targetDocument.createTextNode ("orz"));
         if (!thread.isMarked) {
           node.style.display = "none";
@@ -1308,38 +1558,35 @@ var arAkahukuSidebar = {
                 
         node = targetDocument.createElement ("div");
         node.className = "akahuku_sidebar_comment";
-        node.style.fontSize = "11px";
         if (thread.imageNum) {
           node.style.marginLeft = size + "px";
         }
         else {
           node.style.marginLeft = 8 + "px";
         }
-        node.style.height = (size - 14) + "px";
-        node.style.overflow = "-moz-hidden-unscrollable";
+        node.style.height = (size - 12) + "px";
         /* thread.comment に HTML が含まれるので innerHTML を使用する  */
-        node.innerHTML = thread.comment;
+        // node.innerHTML = thread.comment;
+        // [SECURITY] chrome への読込はサニタイズが必要
+        if (thread.comment) {
+          arAkahukuDOM.setInnerHTMLSafely (node, thread.comment);
+          node.style.removeProperty ("color");
+        }
+        else if (thread.commentInCatalog) {
+          node.textContent = thread.commentInCatalog;
+          node.style.color = "#aa8888";
+        }
         div.appendChild (node);
                 
         node = targetDocument.createElement ("div");
         node.className = "akahuku_sidebar_status";
-        node.style.fontSize = "11px";
         if (thread.imageNum) {
           node.style.marginLeft = size + "px";
         }
         else {
           node.style.marginLeft = 8 + "px";
         }
-        node.style.height = 14 + "px";
-        node.style.textAlign = "right";
-        node.style.overflow = "-moz-hidden-unscrollable";
-        node.style.color = "#800000";
-        if (thread.isVisited) {
-          node.style.backgroundColor = "#eeaa88";
-        }
-        else {
-          node.style.backgroundColor = "#aaccff";
-        }
+        node.style.backgroundColor = getBGColorForThread (thread);
         node2 = targetDocument.createElement ("span");
         node2.className = "akahuku_sidebar_reply";
         var text = "";
@@ -1367,7 +1614,6 @@ var arAkahukuSidebar = {
         if (thread.warning) {
           node2.style.fontWeight = "bold";
           node2.style.color = "#ff0000";
-          node2.style.backgroundColor = "transparent";
         }
         node2.appendChild (targetDocument.createTextNode
                            (thread.expire));
@@ -1405,6 +1651,9 @@ var arAkahukuSidebar = {
    *         対象のイベント
    */
   onMouseMove : function (event) {
+    var sidebarDocument
+      = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
+    /* 以下ではサイドバー以外にロードされた場合対応できない
     var sidebar = arAkahukuSidebar.getSidebar ();
     if (!sidebar.docShell) {
       return;
@@ -1416,8 +1665,15 @@ var arAkahukuSidebar = {
     catch (e) {
       sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
     }
+    */
     var deck = sidebarDocument.getElementById ("akahuku_sidebar_deck");
     var box = deck.selectedPanel;
+
+    // ポップアップメニュー表示中は選択を変えない
+    var popup = sidebarDocument.getElementById ("akahuku-sidebar-popup");
+    if ("state" in popup ? popup.state == "open" : popup.open) {
+      return
+    }
         
     if (box.id.match (/^akahuku_sidebar_deck_(.+)$/)) {
       var name = RegExp.$1;
@@ -1472,12 +1728,56 @@ var arAkahukuSidebar = {
   },
     
   /**
+   * マウスがフレームから出たイベント
+   */
+  onMouseOut : function (event) {
+    if (event.eventPhase != Event.AT_TARGET) {
+      return;
+    }
+    var sidebarDocument
+      = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
+
+    // ポップアップメニュー表示中は非選択状態にはしない
+    var popup = sidebarDocument.getElementById ("akahuku-sidebar-popup");
+    if ("state" in popup ? popup.state == "open" : popup.open) {
+      return
+    }
+    arAkahukuSidebar.unselectThread (sidebarDocument);
+  },
+
+  /**
+   * スレを非選択状態にする
+   */
+  unselectThread : function (sidebarDocument) {
+    var deck = sidebarDocument.getElementById ("akahuku_sidebar_deck");
+    var box = deck.selectedPanel;
+    if (!box.id.match (/^akahuku_sidebar_deck_(.+)$/)) {
+      return;
+    }
+    var name = RegExp.$1;
+    if (!(name in arAkahukuSidebar.boards)) {
+      return;
+    }
+    var board = arAkahukuSidebar.boards [name];
+    if (board.lastSelected) {
+      board.lastSelected.style.removeProperty ("background-color");
+      board.lastSelected = null;
+    }
+    if (board.lastSelectedImage) {
+      board.lastSelectedImage.style.removeProperty ("border-color");
+      board.lastSelectedImage = null;
+    }
+  },
+    
+  /**
    * スレをクリックしたイベント
    *
    * @param  Event event
    *         対象のイベント
    */
   onClick : function (event) {
+    // カーソル下のスレを選択
+    arAkahukuSidebar.onMouseMove (event);
     if (event.button != 0 && event.button != 1) {
       return;
     }
@@ -1666,6 +1966,8 @@ var arAkahukuSidebar = {
       var iframe
       = sidebarDocument
       .getElementById ("akahuku_sidebar_iframe2_" + name);
+      //onload で about:blank へ戻す処理が失敗していたら
+      if (iframe.getAttribute ("src") != "about:blank")
       iframe.setAttribute ("src", "about:blank");
       iframe.setAttribute ("src",
                            "http://" + server + ".2chan.net/"
@@ -1707,6 +2009,8 @@ var arAkahukuSidebar = {
       var iframe
       = sidebarDocument
       .getElementById ("akahuku_sidebar_iframe2_" + name);
+      //onload で about:blank へ戻す処理が失敗していたら
+      if (iframe.getAttribute ("src") != "about:blank")
       iframe.setAttribute ("src", "about:blank");
       iframe.setAttribute ("src",
                            "http://" + server + ".2chan.net/"
@@ -1730,13 +2034,38 @@ var arAkahukuSidebar = {
   },
     
   /**
+   * スレ一覧用のフレームが読み込み完了したイベント
+   *
+   * @param  Event event
+   *         対象のイベント
+   */
+  onIframeHtmlLoad : function (event) {
+    event.stopPropagation ();
+    var docs = arAkahukuSidebar._getDocumentsOnEvent (event);
+    var targetDocument = docs.content;
+    var sidebarDocument = docs.sidebar;
+    if (targetDocument.location.hash) {
+      var name = targetDocument.location.hash.substr (1);
+      arAkahukuSidebar.updateVisited (name);
+      arAkahukuSidebar.sort (name);
+      arAkahukuSidebar.update (name, sidebarDocument);
+    }
+  },
+    
+  /**
    * 更新用のフレームが読み込み完了したイベント
    *
    * @param  Event event
    *         対象のイベント
    */
   onIframe2Load : function (event) {
-    var targetDocument = event.target;
+    event.stopPropagation (); //サイドバー以外で開いた場合対策
+    var docs = arAkahukuSidebar._getDocumentsOnEvent (event);
+    var targetDocument = docs.content;
+    var sidebarDocument = docs.sidebar;
+    if (!sidebarDocument) {
+      return;
+    }
     if (targetDocument.location.href.match
         (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\/(.*)$/)) {
       var server = RegExp.$2;
@@ -1754,8 +2083,9 @@ var arAkahukuSidebar = {
             
       arAkahukuSidebar.updateVisited (name);
       arAkahukuSidebar.sort (name);
-      arAkahukuSidebar.update (name);
+      arAkahukuSidebar.update (name, sidebarDocument);
             
+      /* 以下ではサイドバー以外にロードされた場合対応できない
       var sidebar = arAkahukuSidebar.getSidebar ();
       if (!sidebar.docShell) {
         return;
@@ -1767,6 +2097,7 @@ var arAkahukuSidebar = {
       catch (e) {
         sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
       }
+      */
       var button;
       button
         = sidebarDocument
@@ -1780,6 +2111,10 @@ var arAkahukuSidebar = {
       if (button) {
         button.removeAttribute ("disabled");
       }
+      // DOMを解放する
+      setTimeout (function () {
+        targetDocument.location.href = "about:blank";
+      }, 10);
     }
   },
     
@@ -1791,6 +2126,10 @@ var arAkahukuSidebar = {
    */
   onSidebarLoad : function (sidebarDocument) {
     if (!arAkahukuSidebar.enable) {
+      return;
+    }
+    // 複数は開けない
+    if (arAkahukuSidebar.currentSidebarDocument) {
       return;
     }
     arAkahukuSidebar.currentSidebarDocument = sidebarDocument;
@@ -1818,6 +2157,14 @@ var arAkahukuSidebar = {
         ("popupshowing", 
          function () {
           arAkahukuSidebar.setContextMenu (arguments [0]);
+        }, false);
+      // ポップアップが消えるときにスレ選択を解除する
+      popup.addEventListener
+        ("popuphiding", 
+         function (event) {
+          var sidebarDocument
+            = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
+          arAkahukuSidebar.unselectThread (sidebarDocument);
         }, false);
             
       var item;
@@ -1905,6 +2252,18 @@ var arAkahukuSidebar = {
     }
         
         
+    function setupIframeDocShell (iframe, allowImages) {
+      // chrome:// で開くと browser に関連づけられてしまうので戻す
+      iframe.docShell.chromeEventHandler = iframe;
+      // スレ一覧表示用 iframe は画像だけ読めれば十分
+      iframe.docShell.allowImages = allowImages;
+      iframe.docShell.allowPlugins = false;
+      iframe.docShell.allowSubframes = false;
+      iframe.docShell.allowJavascript = false;
+      iframe.docShell.allowAuth = false;
+      iframe.docShell.allowMetaRedirects = false;
+    }
+        
     /* タブを作る */
     var i = 0;
     for (i = 0; i < arAkahukuSidebar.list.length; i ++) {
@@ -1927,9 +2286,9 @@ var arAkahukuSidebar = {
       tab.className = "tab";
       tab.orient = "vertical";
       tab.align = "center";
-      tab.setAttribute ("__item_label", arAkahukuServerShortName.get (tmp));
+      tab.setAttribute ("__item_label", arAkahukuServerShortName [tmp]);
       tab.setAttribute ("__item_value", tmp);
-      var n1 = arAkahukuServerShortName.get (tmp);
+      var n1 = arAkahukuServerShortName [tmp];
       var n2 = "";
       if (n1.length > 4) {
         if (n1.match (/^([^A-Za-z ]+)([A-Za-z]+)$/)) {
@@ -1996,7 +2355,7 @@ var arAkahukuSidebar = {
           arAkahukuSidebar.onRefresh0 (arguments [0]);
         }, false);
       buttons.appendChild (button);
-      if (arAkahukuCatalogBoards.has (tmp)) {
+      if (tmp in arAkahukuCatalogBoards) {
         button = sidebarDocument.createElement ("button");
         button.id = "akahuku_sidebar_refresh_catalog_" + name;
         button.className = "refresh";
@@ -2009,10 +2368,10 @@ var arAkahukuSidebar = {
         buttons.appendChild (button);
       }
       iframe = sidebarDocument.createElement ("iframe");
+      iframe.setAttribute ("type", "content");// 明示的に権限制限
+      var iframe2 = iframe; // 後でdocShellの設定をするため保管
       iframe.id = "akahuku_sidebar_iframe2_" + name;
-      iframe.style.height = "0px";
-      iframe.style.width = "0px";
-      iframe.style.visibility = "hidden";
+      iframe.collapsed = true; // 完全に非表示にする
       iframe.addEventListener
         ("DOMContentLoaded",
          function () {
@@ -2027,26 +2386,21 @@ var arAkahukuSidebar = {
       box.appendChild (buttons);
       iframe = sidebarDocument.createElement ("iframe");
       iframe.id = "akahuku_sidebar_iframe_" + name;
+      iframe.setAttribute ("type", "content");//念のため制限
+      iframe.addEventListener
+        ("load", arAkahukuSidebar.onIframeHtmlLoad, true);
       iframe.setAttribute ("src",
-                           "chrome://akahuku/content/sidebar_html.html");
+                           "chrome://akahuku/content/sidebar_html.html#" + name);
       iframe.setAttribute ("flex", "1");
-      setTimeout (function (name) {
-          try {
-            arAkahukuSidebar.updateVisited (name);
-                        
-            arAkahukuSidebar.sort (name);
-                        
-            arAkahukuSidebar.update (name);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-        }, 1000, name);
             
       box.appendChild (iframe);
       deck.appendChild (box);
       if (i == 0) {
         deck.selectedPanel = box;
       }
+      // docShell 設定 (DOM ツリー追加後でないと不可)
+      setupIframeDocShell (iframe, "allowImages");
+      setupIframeDocShell (iframe2); //リモート読込用は画像も不要
     }
     if (arAkahukuSidebar.enableMarked) {
       tmp = "*:*";
@@ -2079,31 +2433,47 @@ var arAkahukuSidebar = {
       box.setAttribute ("orient", "vertical");
       iframe = sidebarDocument.createElement ("iframe");
       iframe.id = "akahuku_sidebar_iframe_" + name;
+      iframe.setAttribute ("type", "content"); //念のため制限
+      iframe.addEventListener
+        ("load", arAkahukuSidebar.onIframeHtmlLoad, true);
       iframe.setAttribute ("src",
-                           "chrome://akahuku/content/sidebar_html.html");
+                           "chrome://akahuku/content/sidebar_html.html#" + name);
       iframe.setAttribute ("flex", "1");
-      setTimeout (function (name) {
-          try {
-            arAkahukuSidebar.updateVisited (name);
-                        
-            arAkahukuSidebar.sort (name);
-                        
-            arAkahukuSidebar.update (name);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-        }, 1000, name);
             
       box.appendChild (iframe);
       deck.appendChild (box);
       if (i == 0) {
         deck.selectedPanel = box;
       }
+      setupIframeDocShell (iframe, "allowImages");
     }
     var spacer = sidebarDocument.createElement ("spacer");
     spacer.className = "tabspace";
     spacer.setAttribute ("flex", "1");
     container.appendChild (spacer);
+  },
+    
+  /**
+   * サイドバーをアンロードしたイベント
+   *
+   * @param  XULDocument sidebarDocument
+   *         サイドバーのドキュメント
+   */
+  onSidebarUnload : function (sidebarDocument) {
+    if (arAkahukuSidebar.currentSidebarDocument != sidebarDocument) {
+      return;
+    }
+    arAkahukuSidebar.currentSidebarDocument = null;
+
+    // スレッド・板情報からの DOM 参照を切断
+    for (var name in arAkahukuSidebar.boards) {
+      var board = arAkahukuSidebar.boards [name];
+      board.lastSelected = null;
+      board.lastSelectedImage = null;
+      for (var j = 0; j < board.threads.length; j ++) {
+        board.threads [j].node = null;
+      }
+    }
   },
     
   /**
@@ -2124,6 +2494,9 @@ var arAkahukuSidebar = {
    *         対象のイベント
    */
   setContextMenu : function (event) {
+    var sidebarDocument
+      = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
+    /* 以下ではサイドバー以外にロードされた場合対応できない
     var sidebar = arAkahukuSidebar.getSidebar ();
     if (!sidebar.docShell) {
       return;
@@ -2135,6 +2508,7 @@ var arAkahukuSidebar = {
     catch (e) {
       sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
     }
+    */
     var item;
         
     item
@@ -2262,6 +2636,9 @@ var arAkahukuSidebar = {
    *           1: マークを外す
    */
   onSort : function (event, type, sorttype) {
+    var sidebarDocument
+      = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
+    /* 以下ではサイドバー以外にロードされた場合対応できない
     var sidebar = arAkahukuSidebar.getSidebar ();
     if (!sidebar.docShell) {
       return;
@@ -2273,6 +2650,7 @@ var arAkahukuSidebar = {
     catch (e) {
       sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
     }
+    */
     var deck = sidebarDocument.getElementById ("akahuku_sidebar_deck");
     var box = deck.selectedPanel;
         
@@ -2322,11 +2700,11 @@ var arAkahukuSidebar = {
             
       arAkahukuSidebar.sort (name);
             
-      arAkahukuSidebar.update (name);
+      arAkahukuSidebar.update (name, sidebarDocument);
       if (arAkahukuSidebar.enableMarked) {
         arAkahukuSidebar.updateMarked ();
         arAkahukuSidebar.sort ("*_*");
-        arAkahukuSidebar.update ("*_*");
+        arAkahukuSidebar.update ("*_*", sidebarDocument);
       }
     }
   },

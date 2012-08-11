@@ -4,7 +4,7 @@
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuHistory,
  *          arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuSidebar,
- *          arAkahukuSound
+ *          arAkahukuSound, arAkahukuThread
  */
 
 /**
@@ -75,6 +75,7 @@ arAkahukuCatalogCacheWriter.prototype = {
  */
 function arAkahukuCatalogPopupData (targetImage) {
   this.targetImage = targetImage;
+  this.targetSrc = targetImage.src.replace ("/cat/", "/thumb/");
 }
 arAkahukuCatalogPopupData.prototype =  {
   state : 0,                  /* Number  ポップアップの状態
@@ -84,8 +85,10 @@ arAkahukuCatalogPopupData.prototype =  {
                                *   3: 縮小中
                                *   4: 削除 */
   targetImage : null,         /* HTMLImageElement  対象のカタログ画像 */
+  targetSrc : "",             /* String  ポップアップする画像のURL */
   key : "",                   /* String  キャッシュのキー */
   popup : null,               /* HTMLDivElement  表示中のポップアップ */
+  popupArea : null,           /* HTMLAnchorElement  ポップアップ保持領域 */
   zoomFactor : 0,             /* Number  拡大の状態 */
   lastTime : 0,               /* Number  動作のタイマーの前回の時間 */
   createTimerID : null,       /* Number  表示待ち状態のタイマー ID */
@@ -99,6 +102,7 @@ arAkahukuCatalogPopupData.prototype =  {
   destruct : function () {
     this.targetImage = null;
     this.popup = null;
+    this.popupArea = null;
     if (this.createTimerID) {
       clearTimeout (this.createTimerID);
       this.createTimerID = null;
@@ -134,36 +138,18 @@ arAkahukuCatalogPopupData.prototype =  {
           exists = true;
         }
         else if (arAkahukuP2P.enable) {
-          var targetSrc
-            = this.targetImage.src.replace ("/cat/", "/thumb/");
-          if (arAkahukuP2P.getCacheFile (targetSrc)) {
+          if (arAkahukuP2P.getCacheFile (this.targetSrc)) {
             exists = true;
+            this.targetSrc = arAkahukuP2P.tryEnP2P (this.targetSrc);
           }
         }
         if (!exists) {
           /* Firefox にキャッシュされているかチェック */
-          var cacheService
-            = Components.classes ["@mozilla.org/network/cache-service;1"]
-            .getService (Components.interfaces.nsICacheService);
-          var httpCacheSession
-            = cacheService
-            .createSession ("HTTP",
-                            Components.interfaces.nsICache.STORE_ANYWHERE,
-                            true);
-          httpCacheSession.doomEntriesIfExpired = false;
-          var targetSrc
-            = this.targetImage.src.replace ("/cat/", "/thumb/");
-          try {
-            var descriptor
-              = httpCacheSession
-              .openCacheEntry (targetSrc,
-                               Components.interfaces.nsICache.ACCESS_READ,
-                               true);
-            exists = true;
-            descriptor.close ();
-          }
-          catch (e) {
-            /* キャッシュが存在しなかった場合 */
+          exists = Akahuku.Cache.getStatus (this.targetSrc).isExist;
+          if (exists) {
+            this.targetSrc
+              = Akahuku.protocolHandler
+              .enAkahukuURI ("cache", this.targetSrc);
           }
         }
                 
@@ -186,6 +172,7 @@ arAkahukuCatalogPopupData.prototype =  {
                                     this.zoominEffect);
         break;
       case 2:
+        this.popup.style.display = "block"; //非表示解除を保証
         arAkahukuPopup.removeEffector (param, this);
         var targetAnchor = null;
         for (var tmp = this.targetImage; tmp; tmp = tmp.parentNode) {
@@ -279,6 +266,10 @@ arAkahukuCatalogPopupData.prototype =  {
           this.popup.parentNode.removeChild (this.popup);
           this.popup = null;
         }
+        if (this.popupArea) {
+          this.popupArea.parentNode.removeChild (this.popupArea);
+          this.popupArea = null;
+        }
         this.targetImage.style.MozOpacity = 1;
         this.targetImage = null;
         break;
@@ -338,6 +329,21 @@ arAkahukuCatalogPopupData.prototype =  {
     this.targetImageGeometry.bottom
     = this.targetImageGeometry.top + this.targetImageGeometry.height;
         
+    if (arAkahukuCatalog.zoomSizeType == 1) { /* zoomSize [%] */
+      var image = this.popup.getElementsByTagName ("img") [0];
+      if (image && image.naturalWidth > 0) {
+        this.zoomImageGeometry.width
+          = image.naturalWidth * arAkahukuCatalog.zoomSize / 100;
+        this.zoomImageGeometry.height
+          = image.naturalHeight * arAkahukuCatalog.zoomSize / 100;
+      }
+      else {
+        /* まだ準備が出来ていない */
+        delete this.zoomImageGeometry;
+        return;
+      }
+    }
+    else /* zoomSize [px] */
     if (this.targetImageGeometry.height > this.targetImageGeometry.width) {
       this.zoomImageGeometry.width
         = arAkahukuCatalog.zoomSize
@@ -411,8 +417,16 @@ arAkahukuCatalogPopupData.prototype =  {
    * ポップアップの位置、サイズの更新
    */
   updatePopupGeometry : function () {
-    if (!this.targetImageGeometry) {
+    if (!this.targetImageGeometry || !this.zoomImageGeometry) {
       this.getImageGeometry (this.targetImage.ownerDocument);
+      if (!this.targetImageGeometry || !this.zoomImageGeometry) {
+        /* まだ準備が完了してはいない */
+        if (this.targetImageGeometry) {
+          this.popup.style.top = this.targetImageGeometry.top + "px";
+          this.popup.style.left = this.targetImageGeometry.left + "px";
+        }
+        return;
+      }
     }
         
     var targetImageGeometry = this.targetImageGeometry;
@@ -466,6 +480,13 @@ arAkahukuCatalogPopupData.prototype =  {
     width = right - left;
     height = bottom - top;
             
+    /* ズーム中は元サイズより極端に小さくはしない */
+    if (this.zoomFactor < 100
+        && (width <= targetImageGeometry.width/2
+            || height <= targetImageGeometry.height/2)) {
+      return;
+    }
+            
     /* 小さくなる時はサイズから変える */
     if (this.popup.firstChild.firstChild.width > width) {
       this.popup.firstChild.firstChild.width = width;
@@ -485,6 +506,13 @@ arAkahukuCatalogPopupData.prototype =  {
       this.popup.style.top = top + "px";
       this.popup.firstChild.firstChild.height = height;
     }
+
+    /* 準備完了につき非表示は解除 */
+    if ("removeProperty" in this.popup.style) {
+      this.popup.style.removeProperty ("display");
+    } else {
+      this.popup.style.display = "block";
+    }
   },
     
   /**
@@ -501,6 +529,22 @@ arAkahukuCatalogPopupData.prototype =  {
     if (arAkahukuCatalog.enableZoomNoAnim) {
       this.zoomFactor = 100;
       this.updatePopupGeometry ();
+    }
+        
+    if (!this.zoomImageGeometry) {
+      // 準備完了を待たずに zoominEffect が開始された場合
+      // 画像サイズが取得できるのをしばらく待ってみる
+      var nowTime = new Date ().getTime ();
+      if (nowTime < this.lastTime + 3000) {
+        this.getImageGeometry (this.targetImage.ownerDocument);
+        if (!this.zoomImageGeometry) {
+          return;
+        }
+        this.lastTime = nowTime;
+      }
+      else {
+        this.run (2, param);
+      }
     }
         
     if (this.zoomFactor < 100) {
@@ -590,10 +634,7 @@ arAkahukuCatalogPopupData.prototype =  {
     var image = param.cacheImageData.getCache (self.key);
     if (!image) {
       image = targetDocument.createElement ("img");
-      var src = self.targetImage.src;
-      src = src.replace ("/cat/", "/thumb/");
-      src = arAkahukuP2P.tryEnP2P (src);
-      image.src = src;
+      image.src = self.targetSrc;
       image.style.border = "1px solid #0040e0";
             
       param.cacheImageData.register (self.key, image);
@@ -607,6 +648,8 @@ arAkahukuCatalogPopupData.prototype =  {
     self.popup = targetDocument.createElement ("div");
     self.popup.className = "akahuku_popup";
     self.popup.style.position = "absolute";
+    // サイズ・位置が確定しない間は表示させない
+    self.popup.style.display = "none";
         
     anchor.appendChild (image);
     self.popup.appendChild (anchor);
@@ -616,6 +659,42 @@ arAkahukuCatalogPopupData.prototype =  {
     self.updatePopupGeometry ();
         
     targetDocument.body.appendChild (self.popup);
+        
+    /* ポップアップ保持エリア */
+    self.popupArea = targetDocument.createElement ("a");
+    self.popupArea.href = anchor.href;
+    self.popupArea.target = anchor.target;
+    self.popupArea.className = "akahuku_popup_area";
+    self.popupArea.style.position = "absolute";
+    self.popupArea.style.top = self.targetImageGeometry.top + "px";
+    self.popupArea.style.left = self.targetImageGeometry.left + "px";
+    self.popupArea.style.width = self.targetImageGeometry.width + "px";
+    self.popupArea.style.height = self.targetImageGeometry.height + "px";
+    self.popupArea.style.opacity = 0;
+    self.popupArea.style.zIndex = 201;
+    targetDocument.body.appendChild (self.popupArea);
+    self.popupArea.addEventListener
+    ("mouseout",
+     function () {
+       param.lastPopupKey = "";
+       arAkahukuPopup.removeActivePopups (param);
+     }, false);
+    // リンククリックのイベントは元のリンクへ転送する
+    function transferMouseEventsToCatalog (ev) {
+      var target = self.targetImage; // anchor よりいっそ大元へ (ねないこ支援?)
+      var evNew = target.ownerDocument.createEvent ("MouseEvents");
+      var view = target.ownerDocument.defaultView;
+      evNew.initMouseEvent
+        (ev.type, ev.bubbles , ev.cancelable, view, ev.detail,
+         ev.screenX, ev.screenY, ev.clientX, ev.clientY,
+         ev.ctrlKey, ev.altKey, ev.shiftKey, ev.metaKey,
+         ev.button, ev.relatedTarget);
+      ev.preventDefault ();
+      ev.stopPropagation ();
+      target.dispatchEvent (evNew);
+    }
+    self.popupArea.addEventListener
+    ("click", transferMouseEventsToCatalog, true);
         
     if (image.complete && !image.getAttribute ("__errored")) {
       self.run (1, param);
@@ -1208,8 +1287,8 @@ arAkahukuCatalogParam.prototype = {
   destruct : function () {
     if (this.reloadChannel) {
       try {
-        this.reloadChannel.cancel (0x80020006);
-        /* NS_BINDING_ABORTED */
+        this.reloadChannel.cancel
+          (Components.results.NS_BINDING_ABORTED || 0x80020006);
       }
       catch (e) { Akahuku.debug.exception (e);
       }
@@ -1497,6 +1576,9 @@ var arAkahukuCatalog = {
   enableZoomNoAnim : false,   /* Boolean  アニメーションしない */
   zoomTimeout : 10,           /* Number  表示まで [ms] */
   zoomSize : 96,              /* Number  サイズ [px] */
+  zoomSizeType : 0,           /* Number  サイズの単位
+                               *   0: px
+                               *   1: ％ */
   zoomCacheCount : 16,        /* Number  キャッシュ */
   enableZoomComment : false,  /* Boolean  コメントを全文表示 */
   zoomCommentTimeout : 10,    /* Number  表示まで [ms] */
@@ -1776,9 +1858,12 @@ var arAkahukuCatalog = {
       if (arAkahukuCatalog.zoomSize < 50) {
         arAkahukuCatalog.zoomSize = 50;
       }
-      else if (arAkahukuCatalog.zoomSize > 250) {
-        arAkahukuCatalog.zoomSize = 250;
+      else if (arAkahukuCatalog.zoomSize > 300) {
+        arAkahukuCatalog.zoomSize = 300;
       }
+      arAkahukuCatalog.zoomSizeType
+        = arAkahukuConfig
+        .initPref ("int",  "akahuku.catalog.zoom.sizetype", 0);
       arAkahukuCatalog.zoomCacheCount
         = arAkahukuConfig
         .initPref ("int",  "akahuku.catalog.zoom.cache.count", 16);
@@ -2761,30 +2846,6 @@ var arAkahukuCatalog = {
           }, true);
         }
       }
-            
-      /* 画像ロード失敗時に一度だけリロード */
-      var image = anchor.getElementsByTagName ("img"); 
-      if (image.length > 0) {
-        var uinfo = arAkahukuImageURL.parse (image [0].src);
-        if (uinfo && uinfo.isImage && !uinfo.isAd) {
-          image [0].addEventListener
-          ("error",
-           function (event) {
-             setTimeout
-               (function (node, src, handler) {
-                 if (node.src != src) {
-                   /* P2Pなどで src が変えられたのなら再登録 */
-                   node.addEventListener ("error", handler, false);
-                   return;
-                 }
-                 node.src = src;
-                 Akahuku.debug.log ("Reloading a corrupt image " + src
-                   + "\n" + node.ownerDocument.location.href);
-               }, 100, this, this.src, arguments.callee);
-             this.removeEventListener ("error", arguments.callee, false);
-           }, false);
-        }
-      }
     }
         
     if (arAkahukuCatalog.enableVisited) {
@@ -2836,9 +2897,9 @@ var arAkahukuCatalog = {
             || anchor.href.match (/2\/([0-9]+)/)
             || anchor.href.match (/b\/([0-9]+)/)) {
           var num = RegExp.$1;
-          if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
+          if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
             var max
-              = arAkahukuMaxNum.get (info.server + ":" + info.dir);
+              = arAkahukuMaxNum [info.server + ":" + info.dir];
                         
             if (num < latestNum - max * 0.9) {
               tdElement.style.border = "2px solid #ff0000";
@@ -3105,8 +3166,8 @@ var arAkahukuCatalog = {
       param.addedLastCells = true;
             
       var max;
-      if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
-        max = arAkahukuMaxNum.get (info.server + ":" + info.dir);
+      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
+        max = arAkahukuMaxNum [info.server + ":" + info.dir];
       }
       else {
         max = 10000;
@@ -3565,8 +3626,8 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableReloadLeftBefore
         && param.order == "akahuku_catalog_reorder_spec") {
       var max;
-      if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
-        max = arAkahukuMaxNum.get (info.server + ":" + info.dir);
+      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
+        max = arAkahukuMaxNum [info.server + ":" + info.dir];
       }
       else {
         max = 10000;
@@ -3611,8 +3672,8 @@ var arAkahukuCatalog = {
       param.addedLastCells = true;
             
       var max;
-      if (arAkahukuMaxNum.has (info.server + ":" + info.dir)) {
-        max = arAkahukuMaxNum.get (info.server + ":" + info.dir);
+      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
+        max = arAkahukuMaxNum [info.server + ":" + info.dir];
       }
       else {
         max = 10000;
@@ -3754,8 +3815,8 @@ var arAkahukuCatalog = {
         
     if (param.reloadChannel) {
       try {
-        param.reloadChannel.cancel (0x80020006);
-        /* NS_BINDING_ABORTED */
+        param.reloadChannel.cancel
+          (Components.results.NS_BINDING_ABORTED || 0x80020006);
       }
       catch (e) { Akahuku.debug.exception (e);
       }
@@ -3793,6 +3854,15 @@ var arAkahukuCatalog = {
     param.reloadChannel
     = ios.newChannel (targetDocument.location.href, null, null)
     .QueryInterface (Components.interfaces.nsIHttpChannel);
+    try {
+      // webconsole でモニタできるようにウィンドウを関連づける
+      param.reloadChannel.notificationCallbacks
+        = targetDocument.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
         
     arAkahukuCatalog.setStatus
     ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)",
@@ -3908,6 +3978,9 @@ var arAkahukuCatalog = {
             && timestamp.firstChild.nodeValue) {
           now = timestamp.firstChild.nodeValue;
         }
+        else {
+          now = "";
+        }
             
         if (timestamp.hasAttribute ("__old")) {
           arAkahukuDOM.setText (timestamp,
@@ -3926,6 +3999,9 @@ var arAkahukuCatalog = {
         if (timestamp.firstChild
             && timestamp.firstChild.nodeValue) {
           now = timestamp.firstChild.nodeValue;
+        }
+        else {
+          now = "";
         }
             
         if (timestamp.hasAttribute ("__old")) {
@@ -4014,8 +4090,11 @@ var arAkahukuCatalog = {
             && tmp.match (/([^\/]+)\/([0-9]+)/)) {
           var name = RegExp.$1;
           var num = RegExp.$2;
-          var thread
+          var thread = null;
+          if (name in arAkahukuSidebar.boards) {
+            thread
             = arAkahukuSidebar.boards [name].getThread (num);
+          }
           if (thread) {
             var key = "t" + num;
             if (key != param.lastPopupKey) {
@@ -4048,12 +4127,16 @@ var arAkahukuCatalog = {
           }
         }
       }
+      else if (img && img.nodeName.toLowerCase () == "a"
+               && img.className == "akahuku_popup_area") {
+        /* 保持エリアではそのまま */
+      }
       else {
         param.lastPopupKey = "";
         arAkahukuPopup.removeActivePopups (param);
       }
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
     }
   },

@@ -9,3 +9,45 @@ body {
   margin : 0;
   padding : 0;
 }
+
+.akahuku_sidebar_thread {
+  border-width: 0px 0px 2px;
+  border-style: solid;
+  margin-bottom: 2px;
+  padding: 0px;
+  clear: left;
+  overflow: -moz-hidden-unscrollable;
+  color: #800000;
+  background-color: transparent;
+  position: relative;
+  cursor: pointer;
+}
+
+img.akahuku_sidebar_image {
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  float: left;
+}
+
+span.akahuku_sidebar_mark {
+  font-size: 12px;
+  position: absolute;
+  right: 0px;
+  color: #ff0000;
+  background-color: #eeaa88;
+}
+
+div.akahuku_sidebar_comment {
+  font-size: 11px;
+  overflow: -moz-hidden-unscrollable;
+}
+
+div.akahuku_sidebar_status {
+  font-size: 11px;
+  text-align: right;
+  overflow: -moz-hidden-unscrollable;
+  color: #800000;
+  height: 12px;
+}
+

@@ -5,9 +5,15 @@ akahukutabcontainer {
 .tabspace {
   color: #800000;
   background-color: #ccccbb;
-  border-width: 0px 0px 1px 0px;
+  border-width: 0px;
   border-style: solid;
   border-color: #eeaa88;
+}
+akahukutabcontainer[orient="horizontal"] .tabspace {
+  border-bottom-width: 1px;
+}
+akahukutabcontainer[orient="vertical"] .tabspace {
+  border-right-width: 1px;
 }
 
 .tabs {

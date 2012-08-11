@@ -3,14 +3,36 @@
 <overlay id="akahukuPageInfoOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script type="application/x-javascript"><![CDATA[
-    if ("function" == typeof (checkProtocol)) {
-      var _akahukuWrappedCheckProtocol = checkProtocol;
-      checkProtocol = function _akahukuCheckProtocol (img) {
-        if (/^akahuku:/.test (img [COL_IMAGE_ADDRESS])) {
-          return true;
+    var AkahukuPageInfo = {
+      errored : false,
+      wrappedCheckProtocol : null,
+      checkProtocol : function (img) {
+        if (!AkahukuPageInfo.errored
+            && typeof (COL_IMAGE_ADDRESS) == "number"
+            && img instanceof Array
+            && COL_IMAGE_ADDRESS in img
+            && img [COL_IMAGE_ADDRESS]) {
+          try {
+            var protocolHandler
+            = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
+            .getService (Components.interfaces.arIAkahukuProtocolHandler);
+            var param = protocolHandler.getAkahukuURIParam (img [COL_IMAGE_ADDRESS]);
+            if ("original" in param && param.original) {
+              var imgOrig = [];
+              imgOrig [COL_IMAGE_ADDRESS] = param.original;
+              return AkahukuPageInfo.wrappedCheckProtocol.apply (this, [imgOrig]);
+            }
+          }
+          catch (e) {
+            AkahukuPageInfo.errored = true;
+          }
         }
-        return _akahukuWrappedCheckProtocol (img);
-      }
+        return AkahukuPageInfo.wrappedCheckProtocol.apply (this, arguments);
+      },
+    };
+    if ("function" == typeof (checkProtocol)) {
+      AkahukuPageInfo.wrappedCheckProtocol = checkProtocol;
+      checkProtocol = AkahukuPageInfo.checkProtocol;
     }
   ]]></script>
 </overlay>

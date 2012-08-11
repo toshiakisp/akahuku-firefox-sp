@@ -156,12 +156,59 @@
                       label="広告を隠す"
                       oncommand="AkahukuOptions.checkDelbanner ();" />
           </caption>
-          <checkbox id="delbanner_image" checked="false"
-                    label="バナー広告" />
-          <checkbox id="delbanner_image_404" checked="false"
-                    label="404 ページの広告" />
-          <checkbox id="delbanner_flash" checked="false"
-                    label="二次の Flash 広告" />
+          <groupbox orient="vertical">
+            <caption>
+              <label id="delbanner_contentpolicy_group_label"
+                     value="外部サイトをブロック"/>
+            </caption>
+            <box orient="horizontal">
+              <checkbox id="delbanner_image" checked="false"
+                        label="バナー広告"
+                        oncommand="AkahukuOptions.checkDelbannerImage ();"/>
+              <checkbox id="delbanner_image_404" checked="false"
+                        label="404 ページの広告"
+                        oncommand="AkahukuOptions.checkDelbannerImage ();"/>
+            </box>
+            <tooltip id="delbanner_sites_tooltip"
+                     orient="vertical">
+              <label value="ブロックリスト:"/>
+              <box class="sub" orient="vertical">
+                <label value="ふたばのページからの読み込みをブロックさせたいURLやホスト名を空白区切りで入力する"/>
+                <label value="例: http://mushoku.com/banner.jpg munen.org "/>
+              </box>
+            </tooltip>
+            <box class="sub" orient="vertical">
+              <box orient="horizontal" align="center">
+                <label id="delbanner_sites_image_label"
+                       control="delbanner_sites_image"
+                       tooltip="delbanner_sites_tooltip"
+                       value="画像ブロックリスト"/>
+                <textbox id="delbanner_sites_image" flex="1"
+                         tooltip="delbanner_sites_tooltip"/>
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="delbanner_sites_iframe_label"
+                       control="delbanner_sites_iframe"
+                       tooltip="delbanner_sites_tooltip"
+                       value="IFRAMEブロックリスト"/>
+                <textbox id="delbanner_sites_iframe" flex="1"
+                         tooltip="delbanner_sites_tooltip"/>
+              </box>
+            </box>
+            <checkbox id="delbanner_flash" checked="false"
+                      label="Flash 広告 (埋込オブジェクト)"
+                      oncommand="AkahukuOptions.checkDelbannerFlash ();"/>
+            <box class="sub" orient="vertical">
+              <box orient="horizontal" align="center">
+                <label id="delbanner_sites_object_label"
+                       control="delbanner_sites_object"
+                       tooltip="delbanner_sites_tooltip"
+                       value="OBJECTブロックリスト"/>
+                <textbox id="delbanner_sites_object" flex="1"
+                         tooltip="delbanner_sites_tooltip"/>
+              </box>
+            </box>
+          </groupbox>
           <checkbox id="delbanner_text" checked="false"
                     label="テキスト広告" />
           <checkbox id="delbanner_movetailad" checked="false"
@@ -169,6 +216,7 @@
                     oncommand="AkahukuOptions.checkDelbannerTailAd ();" />
           <box class="sub" orient="vertical">
             <checkbox id="delbanner_movetailad_all" checked="false"
+                      class="sp" tooltiptext="(デフォルト：無効) Amazon以外のバナーも全て横に置く"
                       label="全て横に" />
           </box>
         </groupbox>
@@ -305,6 +353,9 @@
             <label id="tabicon_size_max_label"
                    control="tabicon_size_max" value="px にする" />
           </box>
+          <checkbox id="tabicon_asfavicon" checked="false"
+                    class="sp" tooltiptext="(デフォルト：無効) ブックマーク、履歴、サイトアイコンなど、タブ以外の全てに適用されるよう登録する"
+                    label="favicon として登録する"/>
         </groupbox>
       </box>
       
@@ -772,19 +823,19 @@
             </box>
           </groupbox>
         </box>
-		<groupbox orient="vertical">
-		  <caption label="コメント欄のカスタム背景画像について" />
-		  <box orient="horizontal">
-			<box orient="vertical" flex="1">
-			  <label value="赤福システムフォルダ(ディレクトリ)に特定の名前の画像があれば背景画像として使われます"/>
-			  <label value="ファイル名: bg_default.png (デフォルト), bg_img_b.png など(板固有)"/>
-			</box>
-			<box orient="horizontal">
-			  <button id="commentbox_open_systemdir_button" label="フォルダを開く"
-					  oncommand="AkahukuOptions.openSystemDirectory ();" />
-			</box>
-		  </box>
-		</groupbox>
+        <groupbox orient="vertical">
+          <caption label="コメント欄のカスタム背景画像について" />
+          <box orient="horizontal">
+            <box orient="vertical" flex="1">
+              <label value="赤福システムフォルダ(ディレクトリ)に特定の名前の画像があれば背景画像として使われます"/>
+              <label value="ファイル名: bg_default.png (デフォルト), bg_img_b.png など(板固有)"/>
+            </box>
+            <box orient="horizontal">
+              <button id="commentbox_open_systemdir_button" label="フォルダを開く"
+                      oncommand="AkahukuOptions.openSystemDirectory ();" />
+            </box>
+          </box>
+        </groupbox>
       </box>
       <box flex="1" id="tab_form" orient="vertical">
         <box orient="horizontal">
@@ -904,23 +955,24 @@
             <box class="sub" orient="vertical">
               <checkbox id="postform_bottom_formonly" checked="false"
                         label="フォーム位置だけ"
+                        class="sp" tooltiptext="(デフォルト：無効) ふたばの「フォーム位置切替」機能と同様にフォームだけをページ末尾へ置く"
                         oncommand="AkahukuOptions.checkPostFormBottomFormOnly ();" />
             </box>
           </groupbox>
         </box>
-		<groupbox orient="vertical">
-		  <caption label="カスタム送信ボタンについて" />
-		  <box orient="horizontal">
-			<box orient="vertical" flex="1">
-			  <label value="赤福システムフォルダ(ディレクトリ)に指定の画像があれば使われます(48x36)"/>
-			  <label value="ファイル名: submit.png, submit_disabled.png, submit_hover.png, submit_push.png"/>
-			</box>
-			<box orient="horizontal">
-			  <button id="postform_open_systemdir_button" label="フォルダを開く"
-					  oncommand="AkahukuOptions.openSystemDirectory ();" />
-			</box>
-		  </box>
-		</groupbox>
+        <groupbox orient="vertical">
+          <caption label="カスタム送信ボタンについて" />
+          <box orient="horizontal">
+            <box orient="vertical" flex="1">
+              <label value="赤福システムフォルダ(ディレクトリ)に指定の画像があれば使われます(48x36)"/>
+              <label value="ファイル名: submit.png, submit_disabled.png, submit_hover.png, submit_push.png"/>
+            </box>
+            <box orient="horizontal">
+              <button id="postform_open_systemdir_button" label="フォルダを開く"
+                      oncommand="AkahukuOptions.openSystemDirectory ();" />
+            </box>
+          </box>
+        </groupbox>
       </box>
       <box flex="1" id="tab_reload" orient="vertical">
         <groupbox orient="horizontal">
@@ -1002,7 +1054,6 @@
                       label="スレが消えても表示できるようにする"
                       oncommand="AkahukuOptions.checkReloadExtCache ();" />
             <box class="sub" orient="vertical">
-              <label value="(画像の表示には P2P 必須)" class="warning" />
               <checkbox id="reload_extcache_file" checked="false"
                         label="スレをファイルに保存する"
                         oncommand="AkahukuOptions.checkReloadExtCacheFile ();" />
@@ -1013,6 +1064,9 @@
               </box>
               <label value="ファイルに保存した場合古くなっても削除されません" class="warning" />
             </box>
+            <checkbox id="reload_extcache_images" checked="false"
+                      class="sp" tooltiptext="(デフォルト:無効) スレ/レスが消えた時に、表示されているサムネ画像のキャッシュの有効期限を無期限にして、ページを開いている限り表示/保存できるようにします"
+                      label="消えそうな画像のキャッシュを保護する"/>
           </box>
         </groupbox>
       </box>
@@ -1184,15 +1238,18 @@
             </menulist>
             <checkbox id="popupquote_image_preview" checked="false"
                       label="オートリンクプレビューを含める"
+                      class="sp" tooltiptext="(デフォルト:有効) 引用元にオートリンク機能によるプレビューがある場合にポップアップに含める"
                       oncommand="AkahukuOptions.checkPopupQuoteImagePreview ();" />
             <box class="sub" orient="vertical">
               <checkbox id="popupquote_image_preview_all" checked="false"
+                        class="sp" tooltiptext="(デフォルト:有効) SWFなどのプレビューもポップアップに含める"
                         label="画像以外も" />
             </box>
           </box>
           <checkbox id="popupquote_nearest" checked="false"
                     label="現在のレスから近い方を表示" />
           <checkbox id="popupquote_matchbol" checked="false"
+                    class="sp" tooltiptext="(デフォルト：無効) 引用に行単位で合うコメントを優先して検索することで引用元をより正確にポップアップする"
                     label="行単位で合うレスを優先して検索" />
           <checkbox id="popupquote_bottomup" checked="false"
                     label="ポップアップを上に延ばす" />
@@ -1552,10 +1609,10 @@
                 </menupopup>
               </menulist>
             </box>
-			<groupbox orient="vertical">
-			  <caption>
-				<label value="詳細" id="catalog_reorder_misc_group_label" />
-			  </caption>
+            <groupbox orient="vertical">
+              <caption>
+                <label value="詳細" id="catalog_reorder_misc_group_label" />
+              </caption>
               <label value="指定幅ずつ時のみ有効" class="warning" />
             <checkbox id="catalog_reorder_visited" checked="false"
                       label="未読と既読で分ける" />
@@ -1563,7 +1620,7 @@
                       label="最新に更新で新規を分ける" />
             <checkbox id="catalog_reorder_fill" checked="false"
                       label="合間合間に で消した分を詰める" />
-			</groupbox>
+            </groupbox>
           </groupbox>
           <groupbox orient="vertical" flex="1">
             <caption>
@@ -1585,8 +1642,15 @@
               <label id="catalog_zoom_size_label1"
                      control="catalog_zoom_size" value="サイズ" />
               <textbox id="catalog_zoom_size" size="6" />
+              <menulist id="catalog_zoom_sizetype"
+                        tooltiptext="(デフォルト:px) サイズの単位">
+                <menupopup id="catalog_zoom_sizetype_menu">
+                  <menuitem value="0" label="px" />
+                  <menuitem value="1" label="%" />
+                </menupopup>
+              </menulist>
               <label id="catalog_zoom_size_label2"
-                     control="catalog_zoom_size" value="px (50 〜 250)" />
+                     control="catalog_zoom_size" value=" (50 〜 300)" />
             </box>
             <box orient="horizontal" align="center">
               <label id="catalog_zoom_cache_count_label1"

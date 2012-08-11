@@ -4,7 +4,7 @@
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuImage, arAkahukuLink,
  *          arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
- *          arAkahukuThread, arAkahukuTitle
+ *          arAkahukuThread, arAkahukuTitle, Akahuku.Cache
  */
 
 /**
@@ -41,7 +41,8 @@ arAkahukuReloadCacheWriter.prototype = {
     start_pos = 0;
     end_pos = 0;
     
-    end_pos = text.search (/<li>\x8C\xBB\x8D\xDD[0-9]+\x90\x6C/i,
+    // "<li>現在123人" || "<li>現在???人" (Shift_JIS)
+    end_pos = text.search (/<li>\x8C\xBB\x8D\xDD(?:[0-9]+|\?+)\x90\x6C/i,
                            start_pos);
     if (end_pos != -1) {
       end_pos += 8;
@@ -56,6 +57,9 @@ arAkahukuReloadCacheWriter.prototype = {
       start_pos = end_pos;
     }
     else {
+      Akahuku.debug.warn ("arAkahukuReloadCacheWriter.setText missed 'head' and 'viewer'.");
+      this.head = "";
+      this.viewer = "";
       start_pos = 0;
     }
         
@@ -74,9 +78,15 @@ arAkahukuReloadCacheWriter.prototype = {
             
       start_pos = end_pos;
     }
+    else {
+      Akahuku.debug.warn
+        ("arAkahukuReloadCacheWriter.setText missed 'head2' and 'expire'.");
+      this.head2 = "";
+      this.expire = "";
+    }
         
     end_pos = text.search
-    (/<font color="?#f00000"?><b>\x82\xB1\x82\xCC\x83\x58\x83\x8C\x82\xCD[^<]+<\/b><\/font>/,
+    (/<font color=['"]?#f00000['"]?><b>\x82\xB1\x82\xCC\x83\x58\x83\x8C\x82\xCD[^<]+<\/b><\/font>/,
      start_pos);
     if (end_pos != -1) {
       this.head3 = text.substr (start_pos, end_pos - start_pos);
@@ -102,6 +112,7 @@ arAkahukuReloadCacheWriter.prototype = {
       }
       
       if (end_pos == -1) {
+        Akahuku.debug.warn ("arAkahukuReloadCacheWriter.setText failed! (No reply or footer tag)");
         return false;
       }
             
@@ -120,6 +131,120 @@ arAkahukuReloadCacheWriter.prototype = {
       this.foot = text.substr (end_pos);
             
       return true;
+    }
+    else {
+      Akahuku.debug.warn ("arAkahukuReloadCacheWriter.setText missed 'foot'.");
+      this.body = text.substr (start_pos);
+      this.foot = "";
+      return true; // 一応全データを割り振りしたことになるので
+    }
+        
+    return false;
+  },
+
+  setTextMonaca : function (text) {
+    var start_pos, end_pos;
+    start_pos = 0;
+    end_pos = 0;
+
+    var diffMode = /^<span id=time>/.test (text);
+    
+    // "id=viewer>現在" (EUC-JP)
+    end_pos = text.search (/id=viewer>(\xB8\xBD\xBA\xDF)?/, start_pos);
+    if (end_pos != -1) {
+      end_pos += 10 + (RegExp.$1 || "").length;
+      this.head = text.substr (0, end_pos);
+            
+      start_pos = end_pos;
+      if (diffMode) {
+        end_pos = text.indexOf ("</span>", start_pos);
+      }
+      else {
+        end_pos = text.indexOf ("\xBF\xCD", start_pos); // "人" (EUC-JP)
+      }
+      if (end_pos != -1) {
+        this.viewer = text.substr (start_pos, end_pos - start_pos);
+      }
+            
+      start_pos = end_pos;
+    }
+    else {
+      Akahuku.debug.warn ("arAkahukuReloadCacheWriter.setTextMonaca missed 'head' and 'viewer'.");
+      this.head = "";
+      this.viewer = "";
+      start_pos = 0;
+    }
+        
+    end_pos = text.search (/id=expire>/, start_pos);
+    if (end_pos != -1) {
+      end_pos += 10;
+      this.head2 = text.substr (start_pos, end_pos - start_pos);
+
+      start_pos = end_pos;
+      end_pos = text.indexOf ("</", start_pos);
+      if (end_pos != -1) {
+        this.expire = text.substr (start_pos, end_pos - start_pos);
+      }
+
+      start_pos = end_pos;
+    }
+    else {
+      Akahuku.debug.warn
+        ("arAkahukuReloadCacheWriter.setTextMonaca missed 'head2' and 'expire'.");
+      this.head2 = "";
+      this.expire = "";
+    }
+        
+    end_pos = text.search (/id=warning class=s6>/, start_pos);
+    if (end_pos != -1) {
+      end_pos += 20;
+      this.head3 = text.substr (start_pos, end_pos - start_pos);
+            
+      start_pos = end_pos;
+      end_pos = text.indexOf ("</", start_pos);
+      if (end_pos != -1) {
+        this.warning = text.substr (start_pos, end_pos - start_pos);
+      }
+            
+      start_pos = end_pos;
+    }
+    else {
+      /* 警告はまだ出ていない */
+      end_pos = text.search (/<table><tr><th>([^<]+)<\/th><td>/, start_pos);
+      if (end_pos == -1) {
+        /* レスがない */
+        end_pos = text.indexOf ("<hr class=c1>", start_pos);
+      }
+      
+      if (end_pos == -1) {
+        if (diffMode) {
+          this.head3 = text.substr (start_pos);
+        }
+        else {
+          Akahuku.debug.warn ("arAkahukuReloadCacheWriter.setTextMonaca failed! (No reply or footer tag)");
+        }
+        return false;
+      }
+            
+      this.head3 = text.substr (start_pos, end_pos - start_pos);
+      //this.warning = "";
+            
+      start_pos = end_pos;
+    }
+        
+    end_pos = text.indexOf ("<hr class=c1>", start_pos);
+    if (end_pos != -1) {
+      this.body = text.substr (start_pos, end_pos - start_pos);
+      this.foot = text.substr (end_pos);
+            
+      return true;
+    }
+    else {
+      if (!diffMode) {
+        Akahuku.debug.warn ("arAkahukuReloadCacheWriter.setTextMonaca missed 'foot'.");
+      }
+      this.body = text.substr (start_pos);
+      //this.foot = "";
     }
         
     return false;
@@ -216,6 +341,14 @@ arAkahukuReloadCacheWriter.prototype = {
       descriptor.setMetaDataElement ("request-method", "GET");
       descriptor.setMetaDataElement ("response-head",
                                      this.responseHead);
+      if (!this.charset) {
+        var re
+          = this.responseHead.match
+          (/^Content-Type:\s*[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
+        if (re) {
+          this.charset = re [1];
+        }
+      }
       descriptor.setMetaDataElement ("charset", this.charset);
             
       descriptor.close ();
@@ -236,6 +369,7 @@ arAkahukuReloadParam.prototype = {
   replied : false,             /* Boolean  返信後フラグ */
   targetDocument : null,       /* HTMLDocument  対象のドキュメント */
     
+  requestMode : 0,             /* Number  リクエスト方法 0:HEAD-GET, 1:GET(Etag), -1:GET(no-more-HEAD) */
   useRange : false,            /* Boolean  この板で差分取得を行うか */
   sync : false,                /* Boolean  同期したか */
     
@@ -257,8 +391,8 @@ arAkahukuReloadParam.prototype = {
   destruct : function () {
     if (this.reloadChannel) {
       try {
-        this.reloadChannel.cancel (0x80020006);
-        /* NS_BINDING_ABORTED */
+        this.reloadChannel.cancel
+          (Components.results.NS_BINDING_ABORTED || 0x80020006);
       }
       catch (e) { Akahuku.debug.exception (e);
       }
@@ -518,7 +652,7 @@ arAkahukuReloadParam.prototype = {
         
     if (this.reloadChannel != null) {
       arAkahukuReload.setStatus
-        ("\u30ED\u30FC\u30C9\u4E2D (\u30DC\u30C7\u30A3)",
+        ("\u30ED\u30FC\u30C9\u4E2D (\u30DC\u30C7\u30A3)", //"ロード中 (ボディ)"
          true, this.targetDocument);
     }
   },
@@ -536,11 +670,28 @@ arAkahukuReloadParam.prototype = {
    */
   onStopRequest : function (request, context, statusCode) {
     /* 取得できなかった場合に備えて適当に指定しておく */
+    /*
     var httpStatus = 200;
     var responseHead = "HTTP/1.1 200 OK\r\n"
     + "Date: " + (new Date ()).toString () + "\r\n"
     + "Server: unknown\r\n"
     + "Content-Type: text/html; charset=Shift_JIS\r\n";
+    */
+    // 取得できなかった場合に備えて load error となる値を指定しておく
+    var httpStatus = 0;
+    var responseHead = "";
+    function statusToString (code) {
+      if (!Components.isSuccessCode (code)) {
+        for (var name in Components.results) {
+          if (code === Components.results [name]) {
+            return name;
+          }
+        }
+        return "[0x" + code.toString (16) + "]";
+      }
+      return "";
+    }
+    var errorStatus = statusToString (statusCode);
         
     try {
       var httpChannel
@@ -549,6 +700,7 @@ arAkahukuReloadParam.prototype = {
         = httpChannel.responseStatus;
             
       /* 206 の場合表示がおかしくなるので、Date と Server のみ更新する */
+      /*
       responseHead
         = "HTTP/1.1 200 OK\r\n"
         + "Date: "
@@ -556,8 +708,99 @@ arAkahukuReloadParam.prototype = {
         + "Server: "
         + httpChannel.getResponseHeader ("Server") + "\r\n"
         + "Content-Type: text/html; charset=Shift_JIS\r\n";
+      */
+      // 本当の HTTP レスポンスを得るには少し手順が必要なので仮定して
+      responseHead = "HTTP/1.1 "
+        + httpChannel.responseStatus + " "
+        + httpChannel.responseStatusText + "\r\n";
+      var visitor = {
+        // nsIHttpHeaderVisitor 
+        visitHeader : function (name, value) {
+          this.header [name] = new String (value);
+        },
+        header : new Object (),
+      };
+      httpChannel.visitResponseHeaders (visitor);
+
+      if ("Content-Encoding" in visitor.header) {
+        // デコード後のデータ長を Content-Length に設定する
+        delete visitor.header ["Content-Encoding"];
+        visitor.header ["Content-Length"] = this.responseText.length;
+      }
+      for (var name in visitor.header) {
+        if (visitor.header [name])
+          responseHead += name + ": " + visitor.header [name] + "\r\n";
+      }
+
+      if (httpChannel.requestMethod == "HEAD") {
+        var cacheStatus
+          = Akahuku.Cache.getHttpCacheStatus (request.originalURI.spec);
+
+        var cacheLastMod, resLastMod;
+        if ("Last-Modified" in cacheStatus.header)
+          cacheLastMod = Date.parse (cacheStatus.header ["Last-Modified"]);
+        if ("Last-Modified" in visitor.header) {
+          resLastMod = Date.parse (visitor.header ["Last-Modified"]);
+        }
+        if (!resLastMod) {
+          // このページではもう HEAD リクエストをしない
+          this.requestMode = -1; //GET(no-more-HEAD)
+          Akahuku.debug.log
+            ("arAkahukuReloadParam: no more HEAD requests for " + this.location);
+        }
+        if (errorStatus) {
+          httpStatus = - Math.abs (httpStatus);
+        }
+        else if (cacheLastMod && cacheLastMod == resLastMod) {
+          httpStatus = 304; // Not Modified
+        }
+        else {
+          // GET request
+          var ret = this._asyncOpenGetFromHead (httpChannel);
+          if (ret != Components.results.NS_OK) {
+            // "接続できませんでした "
+            arAkahukuReload.setStatus
+            ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F "
+             + statusToString (ret),
+             true, targetDocument);
+          }
+          return;
+        }
+
+        // 以降HEADリクエストを省略できるか判定
+        if (this.requestMode == 0){ //HEAD-GET
+          if (cacheStatus.header.hasOwnProperty ("Etag")
+              || visitor.header.hasOwnProperty ("Etag")) {
+            this.requestMode = 1; //GET(Etag)
+          }
+        }
+      }
+      else {// GET
+        if (this.responseText.length == 0) {
+          if (!errorStatus &&
+              Components.interfaces.nsICachingChannel
+              .LOAD_ONLY_IF_MODIFIED & request.loadFlags) {
+            // 条件付きリクエストの結果だろうから以降 304 Not Modified とみなす
+            httpStatus = 304;
+          }
+          else {
+            // 後の処理をエラーに流す
+            httpStatus = - Math.abs (httpStatus);
+          }
+        }
+
+        // レスポンスヘッダー次第で以降HEADリクエストを省略するか決める
+        if (this.requestMode == 0//HEAD-GET
+            && visitor.header.hasOwnProperty ("Etag")) {
+          this.requestMode = 1;//GET(Etag)
+        }
+      }
     }
-    catch (e) {
+    catch (e if e.result === Components.results.NS_ERROR_NOT_AVAILABLE) {
+      // responseStatus が無い (接続失敗時など)
+      errorStatus = "\u63A5\u7D9A\u5931\u6557?"; // "接続失敗?"
+    }
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     /* 避難所 patch */
@@ -566,6 +809,7 @@ arAkahukuReloadParam.prototype = {
       return;
     }
     var info = param.location_info;
+    /* 実際のレスポンスを使うので特別扱いは不要
     try {
       if (info.isMonaca) {
         responseHead
@@ -575,6 +819,7 @@ arAkahukuReloadParam.prototype = {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
+    */
         
     if (this.reloadChannel == null) {
       return;
@@ -587,7 +832,7 @@ arAkahukuReloadParam.prototype = {
         this.responseHead = responseHead;
                 
         arAkahukuReload.setStatus
-          ("\u66F4\u65B0\u4E2D",
+          ("\u66F4\u65B0\u4E2D", //"更新中"
            false, this.targetDocument);
         
         if (this.responseText.search (/<html/i) != -1) {
@@ -668,7 +913,7 @@ arAkahukuReloadParam.prototype = {
               .removeChild (newReplyHeader);
           }
           arAkahukuReload.setStatus
-            ("\u6E80\u54E1\u3067\u3059",
+            ("\u6E80\u54E1\u3067\u3059", //"満員です"
              true, this.targetDocument);
           break;
                         
@@ -682,8 +927,16 @@ arAkahukuReloadParam.prototype = {
         break;
       case 304:
         /* ファイルが更新されていない場合 */
+        /* 区切りの削除 */
+        var newReplyHeader
+          = this.targetDocument
+          .getElementById ("akahuku_new_reply_header");
+        if (newReplyHeader) {
+          newReplyHeader.parentNode
+            .removeChild (newReplyHeader);
+        }
         arAkahukuReload.setStatus
-          ("\u65B0\u7740\u306A\u3057",
+          ("\u65B0\u7740\u306A\u3057", //"新着なし"
            false, this.targetDocument);
         break;
       case 404:
@@ -746,10 +999,14 @@ arAkahukuReloadParam.prototype = {
           catch (e) { Akahuku.debug.exception (e);
           }
         }
+        if (arAkahukuReload.enableExtCacheImages) {
+          // 消滅後は全画像をキャッシュにして保護する
+          Akahuku.Cache.enCacheURIForImages (this.targetDocument);
+        }
         break;
       default:
         arAkahukuReload.setStatus
-          ("load error: " + httpStatus,
+          ("load error: " + errorStatus +" (" + httpStatus + ")",
            false,
            this.targetDocument);
     }
@@ -767,6 +1024,27 @@ arAkahukuReloadParam.prototype = {
     }
     else {
       arAkahukuSound.playReply ();
+    }
+  },
+
+  _asyncOpenGetFromHead : function (channel) {
+    try {
+      var ios
+        = Components.classes ["@mozilla.org/network/io-service;1"]
+        .getService (Components.interfaces.nsIIOService);
+      var channel4GET
+        = ios.newChannelFromURI (channel.originalURI)
+        .QueryInterface (Components.interfaces.nsIHttpChannel);
+      channel4GET.requestMethod = "GET";
+      channel4GET.loadFlags = channel.loadFlags;
+      channel4GET.notificationCallbacks = channel.notificationCallbacks;
+      this.reloadChannel = channel4GET;
+
+      this.reloadChannel.asyncOpen (this, null);
+      return Components.results.NS_OK;
+    }
+    catch (e) {
+      return e.result;
     }
   },
     
@@ -824,6 +1102,7 @@ var arAkahukuReload = {
                                           *   表示できるようにする */
   enableExtCacheFile : false,            /* Boolean  スレをファイルに保存する */
   extCacheFileBase : "",                 /* String  保存するディレクトリ */
+  enableExtCacheImages : false,          /* Boolean  消えそうな画像のキャッシュを保護する */
     
   expireLength : 80, /* Number このスレは〜 のタグ付きの長さ */
   adMargin : 80,     /* Number  テキスト広告の変化による差分位置のマージン
@@ -910,6 +1189,8 @@ var arAkahukuReload = {
                   "border: 2px solid red !important;")
         .addRule (".akahuku_deleted_reply",
                   "border: 2px solid blue !important;")
+        .addRule (".akahuku_deleted_reply2",
+                  "border: 2px dotted red !important;")
         .addRule ("#akahuku_reply_status",
                   "font-size: 9pt;")
         .addRule ("#akahuku_reply_target_frame",
@@ -1019,6 +1300,9 @@ var arAkahukuReload = {
         = arAkahukuConfig
         .initPref ("char", "akahuku.reload.extcache.file.base", "");
       arAkahukuReload.extCacheFileBase = unescape (value);
+      arAkahukuReload.enableExtCacheImages
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.reload.extcache.images", false);
     }
   },
     
@@ -1323,7 +1607,15 @@ var arAkahukuReload = {
       ddel.id = "ddel";
       ddel.style.display = "inline";
       
-      ddel.innerHTML = "\u524A\u9664\u3055\u308C\u305F\u8A18\u4E8B\u304C<span id=ddnum>0</span>\u4EF6\u3042\u308A\u307E\u3059.<span id=ddbut onclick=\"onddbut()\">\u898B\u308B</span><br>";
+      // 「削除されたレスを残す」設定なら「隠す」表示にする
+      var dispdel = targetDocument.defaultView.wrappedJSObject.dispdel;
+      if (dispdel != 1 && arAkahukuReload.enableSyncButtonNoDelete) {
+        targetDocument.defaultView.wrappedJSObject.dispdel = 1;
+        dispdel = 1;
+      }
+      ddel.innerHTML 
+      = "\u524A\u9664\u3055\u308C\u305F\u8A18\u4E8B\u304C<span id=ddnum>0</span>\u4EF6\u3042\u308A\u307E\u3059.<span id=ddbut onclick=\"onddbut()\">"
+      + (dispdel ? "\u96A0\u3059" : "\u898B\u308B") + "</span><br>";
       var bq
         = targetDocument.getElementById ("akahuku_thread_text");
       if (bq.nextSibling) {
@@ -1377,7 +1669,7 @@ var arAkahukuReload = {
     
     var expireWarning = "";
     if (responseText.match
-        (/<font color="?#f00000"?><b>(\x82\xb1\x82\xcc\x83\x58\x83\x8c\x82\xcd[^<]+)<\/b><\/font>/)) {
+        (/<font color=['"]?#f00000['"]?><b>(\x82\xb1\x82\xcc\x83\x58\x83\x8c\x82\xcd[^<]+)<\/b><\/font>/)) {
       /* <font color="?#f00000"?><b>(このスレは〜)</b></font>
          (Shift_JIS) */
       expireWarning = RegExp.$1;
@@ -1439,7 +1731,7 @@ var arAkahukuReload = {
     
     var delWarning = "";
     if (responseText.match
-        (/<font color="?#f00000"?>(\x82\xb1\x82\xcc\x83\x58\x83\x8c\x82\xc9\x91\xce\x82\xb7\x82\xe9\x8d\xed\x8f\x9c\x88\xcb\x97\x8a.+)<\/font>/)) {
+        (/<font color=['"]?#f00000['"]?>(\x82\xb1\x82\xcc\x83\x58\x83\x8c\x82\xc9\x91\xce\x82\xb7\x82\xe9\x8d\xed\x8f\x9c\x88\xcb\x97\x8a.+)<\/font>/)) {
       /* <font color="?#f00000"?>(このスレに対する削除依頼.+)</font>
          (Shift_JIS) */
       delWarning = RegExp.$1;
@@ -1953,6 +2245,26 @@ var arAkahukuReload = {
     var replyEndTag2 = null;
     var tagStop = ">";
     var checkColor = true;
+    var replyNoInputAttr = "name=";
+    var replyDisplay = "table";
+    var dispdel = -1;
+    try {
+      var ddbut = targetDocument.getElementById ("ddbut");
+      if (ddbut) {
+        if (ddbut.innerHTML == "\u898B\u308B") { // "見る"
+          dispdel = 0;
+        }
+        else if (ddbut.innerHTML == "\u96A0\u3059") { // "隠す"
+          dispdel = 1;
+        }
+      }
+      if (dispdel == -1) {
+        dispdel = (arAkahukuReload.enableSyncButtonNoDelete ? 1 : 0);
+        targetDocument.defaultView.wrappedJSObject.dispdel = dispdel;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
     
     /* 避難所 patch */
     if (info.isMonaca) {
@@ -1960,6 +2272,7 @@ var arAkahukuReload = {
       replyStartTag = "<th>\xa1\xc4</th><td";
       /* <th>…</tr><th (EUC-JP) */
       tagStop = "<td>";
+      replyNoInputAttr = "name=\"edit\\[\\]\" value=";
     }
     if (responseText.indexOf ("<div class=t>") != -1) {
       checkColor = false;
@@ -1967,6 +2280,7 @@ var arAkahukuReload = {
       tagStop = ">";
       replyEndTag = "</div>";
       replyEndTag2 = "</div>";
+      replyDisplay = "block";
     }
     
     var lastReplyNumber = 0;
@@ -1975,6 +2289,8 @@ var arAkahukuReload = {
     var noSkippedReplies = 0;
     var deletedReplies = 0;
     var nodeletedReplies = 0;
+    var redDeletedReplies = 0;
+    var deletedThumbnails = 0;
     var startPosition = 0;
     var endPosition = 0;
     var redReplies = 0;
@@ -2082,11 +2398,47 @@ var arAkahukuReload = {
     /* レスの追加 */
     if (sync) {
       startPosition = 0;
+      // スレ文の同期
+      try {
+        startPosition 
+          = responseText.search
+          (new RegExp ("<input\\s[^>]*" + replyNoInputAttr + "[\"']?[0-9]+","i"));
+        if (startPosition < 0) throw "no pattrn \"" + replyNoInputAttr + "\"";
+        startPosition
+          = responseText.lastIndexOf ("<", startPosition);
+        if (startPosition < 0) throw "no pattrn last \"<\"";
+        var threadStartPos
+          = responseText.lastIndexOf ("<form ", startPosition);
+        if (threadStartPos < 0) throw "no pattrn '<form '";
+        threadStartPos
+          = responseText.indexOf (">", threadStartPos);
+        if (threadStartPos < 0) throw "no pattrn '>'";
+        var threadHeaderText
+          = responseText.substring (threadStartPos, startPosition);
+
+        var imgTagExp = /<img\b[^>]*\bsrc=["']?(?:[^>"']+)["']?[^>]*>/i;
+        var thumbnail = targetDocument.getElementById ("akahuku_thumbnail");
+        if (thumbnail && !imgTagExp.test (threadHeaderText)) {
+          // サムネ画像が消えている場合
+          if (!arAkahukuDOM.hasClassName
+              (thumbnail, "akahuku_deleted_reply2")) {
+            deletedThumbnails ++;
+            arAkahukuDOM.addClassName
+            (thumbnail, "akahuku_deleted_reply2");
+            if (arAkahukuReload.enableExtCacheImages) {
+              Akahuku.Cache.enCacheURIContext (thumbnail);
+            }
+          }
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        startPosition = 0;
+      }
     }
     else {
       startPosition
       = responseText
-      .search (new RegExp ("name=\"?([0-9]+:)?" + lastReply.num + "\"?"));
+      .search (new RegExp (replyNoInputAttr + "[\"']?([0-9]+:)?" + lastReply.num + "[\"']?"));
     }
     for (startPosition
            = responseText.indexOf (replyStartTag, startPosition);
@@ -2144,11 +2496,11 @@ var arAkahukuReload = {
       }
             
       var num = 0;
-      if (currentReplyText.match (/name=\"?([0-9]+:)?([0-9]+)\"?/)) {
+      if (currentReplyText.match (/name=['"]?([0-9]+:)?([0-9]+)['"]?/)) {
         num = parseInt (RegExp.$2);
       }
       /* 避難所 patch */
-      else if (currentReplyText.match (/value=\"?([0-9]+)\"?/)) {
+      else if (currentReplyText.match (/value=['"]?([0-9]+)['"]?/)) {
         num = parseInt (RegExp.$1);
       }
       else if (currentReplyText.match (/No.([0-9]+)/)) {
@@ -2249,8 +2601,52 @@ var arAkahukuReload = {
                       reds2.push (bs2 [i]);
                     }
                     
-                    if (reds.length != reds2.length) {
-                      redReplies ++;
+                    //追加された赤字を選別
+                    var oldRedTexts = [], newRedTexts = [];
+                    for (var i = 0; i < reds2.length; i ++) {
+                      var t = arAkahukuDOM.getInnerText (reds2 [i]);
+                      oldRedTexts.push (t);
+                    }
+                    for (var i = 0; i < reds.length; i ++) {
+                      var t = arAkahukuDOM.getInnerText (reds [i]);
+                      for (var j = 0; j < oldRedTexts.length; j ++) {
+                        if (oldRedTexts [j] == t) {
+                          oldRedTexts.splice (j, 1);
+                          t = null;
+                          break;
+                        }
+                      }
+                      if (t) {
+                        newRedTexts.push (t);
+                      }
+                    }
+                    
+                    if (newRedTexts.length > 0) {
+                      function deletedByRed () {
+                        arAkahukuDOM.addClassName
+                          (container.main, "akahuku_deleted_reply2");
+                        if (dispdel) {
+                          container.nodes [0].style.display = replyDisplay;
+                        }
+                        arAkahukuDOM.addClassName
+                          (container.nodes [0], "deleted");
+                        if (arAkahukuReload.enableExtCacheImages) {
+                          Akahuku.Cache.enCacheURIForImages (container.main);
+                        }
+                      }
+                      if (newRedTexts [0].lastIndexOf
+                          // "削除されました"
+                          ("\u524A\u9664\u3055\u308C\u307E\u3057\u305F") >= 0) {
+                        redDeletedReplies ++;
+                        deletedByRed ();
+                      }
+                      else if (newRedTexts [0] == "\u306A\u30FC") { //なー"
+                        redReplies ++;
+                        deletedByRed ();
+                      }
+                      else {
+                        redReplies ++;
+                      }
                       for (var i = 0; i < reds2.length; i ++) {
                         var br = arAkahukuDOM.findBR (reds2 [i].nextSibling);
                         if (br) {
@@ -2278,6 +2674,22 @@ var arAkahukuReload = {
                         if (p
                             && p.nodeName.toLowerCase () == "#text") {
                           bqs2 [0].insertBefore (p, bqs2 [0].firstChild);
+                        }
+                      }
+                    }
+
+                    if (!arAkahukuDOM.hasClassName
+                        (container.main, "akahuku_deleted_reply2")) {
+                      var thumb = Akahuku.getThumbnailFromBQ (bqs [0]);
+                      var thumb2 = Akahuku.getThumbnailFromBQ (bqs2 [0]);
+                      if (thumb2 && !thumb // 画像が削除された
+                          && !arAkahukuDOM.hasClassName
+                          (thumb2, "akahuku_deleted_reply2")) {
+                        deletedThumbnails ++;
+                        arAkahukuDOM.addClassName
+                          (thumb2, "akahuku_deleted_reply2");
+                        if (arAkahukuReload.enableExtCacheImages) {
+                          Akahuku.Cache.enCacheURIContext (thumb2);
                         }
                       }
                     }
@@ -2323,6 +2735,11 @@ var arAkahukuReload = {
                          - deletedReplies
                          + 1);
                     }
+                  }
+
+                  if (arAkahukuReload.enableExtCacheImages) {
+                    // 削除されたレス中の画像はキャッシュにする
+                    Akahuku.Cache.enCacheURIForImages (container.main);
                   }
                 }
                 else {
@@ -2483,6 +2900,7 @@ var arAkahukuReload = {
     arAkahukuReload.updateDDel (targetDocument);
     
     skippedReplies -= noSkippedReplies;
+    nodeletedReplies += redDeletedReplies;
         
     if (newReplies + skippedReplies + nodeletedReplies + deletedReplies
         > 0) {
@@ -2515,7 +2933,7 @@ var arAkahukuReload = {
         
     return new Array (newReplies, skippedReplies,
                       nodeletedReplies + deletedReplies,
-                      newNodes, addNodes, redReplies);
+                      newNodes, addNodes, redReplies, deletedThumbnails);
   },
     
   /**
@@ -2679,6 +3097,7 @@ var arAkahukuReload = {
       newNodes = array [3];
       addNodes = array [4];
       var redReplies = array [5];
+      var deletedThumbnails = array [6];
             
       /* 避難所 patch */
       if (info.isMonaca) {
@@ -2782,6 +3201,11 @@ var arAkahukuReload = {
           s += ", \u524A\u9664: " + deletedReplies;
           parm = true;
         }
+        if (deletedThumbnails > 0) {
+          /* 画像が削除されたレスがあった場合 */
+          s += ", \u753B\u50CF\u524A\u9664: " + deletedThumbnails;
+          parm = true;
+        }
         if (redReplies > 0) {
           /* 赤字が変わったレスがあった場合 */
           s += ", \u8D64\u5B57\u5909\u5316: " + redReplies;
@@ -2863,6 +3287,10 @@ var arAkahukuReload = {
         
     if (param.writer == null) {
       param.writer = new arAkahukuReloadCacheWriter ();
+      /* 避難所 patch */
+      if (info.isMonaca) {
+        param.writer.setText = param.writer.setTextMonaca;
+      }
     }
         
     if (param.writer.setText (responseText)) {
@@ -2872,6 +3300,7 @@ var arAkahukuReload = {
         
     if (updateCache) {
       try {
+        /* Range request でもしなければ不要のはず
         param.writer.viewer = info.viewer;
         param.writer.expire
         = arAkahukuConverter.convertToSJIS (info.expire, "");
@@ -2879,6 +3308,7 @@ var arAkahukuReload = {
         = "<font color=\"#f00000\"><b>"
         + arAkahukuConverter.convertToSJIS (info.expireWarning, "")
         + "</b></font>";
+        */
                 
         var cacheService
         = Components.classes ["@mozilla.org/network/cache-service;1"]
@@ -2965,7 +3395,7 @@ var arAkahukuReload = {
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
         
-    if (param.replying) {
+    if (!param || param.replying) {
       return;
     }
         
@@ -3006,8 +3436,8 @@ var arAkahukuReload = {
     if (param.reloadChannel) {
       /* リロード中ならば中断する */
       try {
-        param.reloadChannel.cancel (0x80020006);
-        /* NS_BINDING_ABORTED */
+        param.reloadChannel.cancel
+          (Components.results.NS_BINDING_ABORTED || 0x80020006);
       }
       catch (e) { Akahuku.debug.exception (e);
       }
@@ -3038,7 +3468,17 @@ var arAkahukuReload = {
     var location = targetDocument.location.href;
         
     /* 避難所 patch */
-    if (info.isMonaca) {
+    if (info.isMonaca && !param.sync) {
+      // X-Content-Range 相当の情報を文書中から取得する
+      if (param.nextPosition == 0) {
+        var node = targetDocument.getElementById ("textlog_size");
+        if (node && node.hasAttribute ("value")) {
+          param.nextPosition = parseInt (node.getAttribute ("value"));
+        }
+        else {
+          param.nextPosition = 0;
+        }
+      }
       location = location.replace
         (/\/([^\/]+)\/res\/.*/, "/monacalib/include/dr.php?board=$1")
         + "&res=" + info.threadNumber
@@ -3052,11 +3492,44 @@ var arAkahukuReload = {
     param.reloadChannel
     = ios.newChannel (location, null, null)
     .QueryInterface (Components.interfaces.nsIHttpChannel);
+
+    // ロードフラグ:
+    // チャネルにはキャッシュに書き込ませない (赤福自身が制御)
+    var flags = Components.interfaces.nsIRequest.INHIBIT_CACHING;
+    if (param.sync || param.useRange ) {
+      // [同期]では If-Modified-Since などを効かせずに取得しなおす
+      flags |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
+    }
+    else {
+      // 常に更新問い合わせさせる (If-Modified-Sence 等を使って)
+      flags |= Components.interfaces.nsIRequest.VALIDATE_ALWAYS;
+      // 更新無し(304 Not Modified)でもキャッシュからデータを読まなくていい
+      flags |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
+    }
+    param.reloadChannel.loadFlags |= flags;
+
+    if (param.requestMode == 0 //HEAD-GET
+        && !param.sync && !info.isMonaca) {
+      param.reloadChannel.requestMethod = "HEAD";
+    }
+    else {
+      param.reloadChannel.requestMethod = "GET";
+    }
+
+    try {
+      // webconsole でモニタできるようにウィンドウを関連づける
+      param.reloadChannel.notificationCallbacks
+        = targetDocument.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
         
     param.location = location;
         
     arAkahukuReload.setStatus
-    ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)",
+    ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)", //"ロード中 (ヘッダ)"
      true, targetDocument);
         
     try {

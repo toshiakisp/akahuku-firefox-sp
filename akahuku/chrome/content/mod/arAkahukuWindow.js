@@ -83,5 +83,31 @@ var arAkahukuWindow = {
     }
         
     return null;
-  }
+  },
+
+  /**
+   * chrome/content間を越えて親ウィンドウを得る
+   * 
+   * @param  Window targetWindow
+   *         対象のウィンドウ
+   * @return Window
+   *         見付からなければ null
+   */
+  getParentWindowInChrome : function (targetWindow) {
+    var parentWindow = null;
+    try {
+      parentWindow
+        = targetWindow
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsIDocShellTreeItem)
+        .parent
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIDOMWindow);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+    return parentWindow;
+  },
+
 };

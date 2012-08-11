@@ -364,8 +364,8 @@ var AkahukuP2PSidebar = {
           }
           var name = list [i][0] + "/" + list [i][1];
           var name2 = list [i][0] + ":" + list [i][1];
-          if (arAkahukuServerShortName.has (name2)) {
-            name = arAkahukuServerShortName.get (name2);
+          if (name2 in arAkahukuServerShortName) {
+            name = arAkahukuServerShortName [name2];
           }
           value += name;
           if  (list [i][2] == "cat") {
@@ -475,8 +475,8 @@ var AkahukuP2PSidebar = {
           }
           var name = list [i][0] + "/" + list [i][1];
           var name2 = list [i][0] + ":" + list [i][1];
-          if (arAkahukuServerShortName.has (name2)) {
-            name = arAkahukuServerShortName.get (name2);
+          if (name2 in arAkahukuServerShortName) {
+            name = arAkahukuServerShortName [name2];
           }
           value += name;
           if  (list [i][2] == "cat") {
@@ -514,8 +514,8 @@ var AkahukuP2PSidebar = {
           }
           var name = list [i][0] + "/" + list [i][1];
           var name2 = list [i][0] + ":" + list [i][1];
-          if (arAkahukuServerShortName.has (name2)) {
-            name = arAkahukuServerShortName.get (name2);
+          if (name2 in arAkahukuServerShortName) {
+            name = arAkahukuServerShortName [name2];
           }
           value += name;
           if  (list [i][2] == "cat") {
