@@ -2517,6 +2517,30 @@ var arAkahukuCatalog = {
   },
     
   /**
+   * 既読のセルかを判定する
+   *
+   * @param  HTMLElement element
+   *         セルの要素
+   * @return Boolean
+   *         既読かどうか
+   */
+  isVisitedCell : function (element) {
+    var visited = false;
+    var anchor
+      = arAkahukuDOM.getFirstElementByNames (element, "a");
+    if (anchor) {
+      var uri
+        = Components
+        .classes ["@mozilla.org/network/standard-url;1"]
+        .createInstance (Components.interfaces.nsIURI);
+      uri.spec = anchor.href;
+                    
+      visited = arAkahukuHistory.isVisited (uri);
+    }
+    return visited;
+  },
+    
+  /**
    * コメントを表示可能な状態にフォーマットする
    *
    * @param  String comment
@@ -2567,6 +2591,7 @@ var arAkahukuCatalog = {
     
   /**
    * コメント用のノードを作成する
+   * (元コメントを消去して空のノードを適当な場所へ追加)
    *
    * @param  HTMLTableCellElement tdElement
    *         セルの td 要素
@@ -2800,7 +2825,7 @@ var arAkahukuCatalog = {
       = Math.max
       (arAkahukuThread.newestNum [info.server + ":" + info.dir] || 0,
        latestNum);
-    var anchor = tdElement.getElementsByTagName ("a") [0];
+    var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
     if (anchor) {
       if (arAkahukuCatalog.enableRed) {
         if (anchor.href.match (/res[\/=]([0-9]+)/)
@@ -2827,23 +2852,17 @@ var arAkahukuCatalog = {
           = arAkahukuSidebar.boards [name].getThread
           (tdElement.getAttribute ("__thread_id"));
         if (thread && thread.comment) {
-          var nodes = tdElement.getElementsByTagName ("div");
-          var node = null;
-                    
-          for (var i = 0; i < nodes.length; i ++) {
-            if ("className" in nodes [i]
-                && nodes [i].className == "akahuku_comment") {
-              node = nodes [i];
-              if (node.firstChild
-                  && node.firstChild.nodeName.toLowerCase ()
-                  == "a") {
-                node = node.firstChild;
-              }
-              break;
+          var node = 
+            arAkahukuDOM.getFirstElementByNames
+            (tdElement, "div", "akahuku_comment");
+          if (node) {
+            if (node.firstChild
+                && node.firstChild.nodeName.toLowerCase ()
+                == "a") {
+              node = node.firstChild;
             }
           }
-                    
-          if (node == null) {
+          else {
             node = arAkahukuCatalog.createCommentNode (tdElement);
           }
                     
@@ -3030,15 +3049,7 @@ var arAkahukuCatalog = {
         visited = false;
                 
         if (arAkahukuCatalog.enableReorderVisited) {
-          var anchor = oldCells [i].getElementsByTagName ("a") [0];
-                    
-          var uri
-            = Components
-            .classes ["@mozilla.org/network/standard-url;1"]
-            .createInstance (Components.interfaces.nsIURI);
-          uri.spec = anchor.href;
-                    
-          visited = arAkahukuHistory.isVisited (uri);
+          visited = arAkahukuCatalog.isVisitedCell (oldCells [i]);
         }
                 
         count ++;
@@ -3098,6 +3109,12 @@ var arAkahukuCatalog = {
       }
             
       var cells = arAkahukuCatalog.lastCells [name];
+      if (arAkahukuCatalog.enableReorderVisited) {
+        var uri
+          = Components
+          .classes ["@mozilla.org/network/standard-url;1"]
+          .createInstance (Components.interfaces.nsIURI);
+      }
       for (var i = 0; i < cells.length; i ++) {
         var cell = cells [i];
         if (cell.threadId in nums) {
@@ -3109,10 +3126,6 @@ var arAkahukuCatalog = {
                 
         visited = false;
         if (arAkahukuCatalog.enableReorderVisited) {
-          var uri
-            = Components
-            .classes ["@mozilla.org/network/standard-url;1"]
-            .createInstance (Components.interfaces.nsIURI);
           uri.spec = cell.href;
                         
           visited = arAkahukuHistory.isVisited (uri);
@@ -3482,17 +3495,7 @@ var arAkahukuCatalog = {
                 
       if (oldCells [threadId]) {
         if (arAkahukuCatalog.enableReorderVisited) {
-          var anchor
-            = oldCells [threadId]
-            .getElementsByTagName ("a") [0];
-                        
-          var uri
-            = Components
-            .classes ["@mozilla.org/network/standard-url;1"]
-            .createInstance (Components.interfaces.nsIURI);
-          uri.spec = anchor.href;
-                        
-          visited = arAkahukuHistory.isVisited (uri);
+          visited = arAkahukuCatalog.isVisitedCell (oldCells [threadId]);
         }
                 
         nums [parseInt (threadId)] = true;
@@ -3571,17 +3574,7 @@ var arAkahukuCatalog = {
         }
                 
         if (arAkahukuCatalog.enableReorderVisited) {
-          var anchor
-          = oldCells [threadId]
-          .getElementsByTagName ("a") [0];
-                        
-          var uri
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-          uri.spec = anchor.href;
-                        
-          visited = arAkahukuHistory.isVisited (uri);
+          visited = arAkahukuCatalog.isVisitedCell (oldCells [threadId]);
         }
             
         nums [parseInt (threadId)] = true;
@@ -3621,6 +3614,12 @@ var arAkahukuCatalog = {
         max = 10000;
       }
             
+      if (arAkahukuCatalog.enableReorderVisited) {
+        var uri
+          = Components
+          .classes ["@mozilla.org/network/standard-url;1"]
+          .createInstance (Components.interfaces.nsIURI);
+      }
       var cells = arAkahukuCatalog.lastCells [name];
       for (i = 0; i < cells.length; i ++) {
         var cell = cells [i];
@@ -3633,10 +3632,6 @@ var arAkahukuCatalog = {
                 
         visited = false;
         if (arAkahukuCatalog.enableReorderVisited) {
-          var uri
-            = Components
-            .classes ["@mozilla.org/network/standard-url;1"]
-            .createInstance (Components.interfaces.nsIURI);
           uri.spec = cell.href;
                         
           visited = arAkahukuHistory.isVisited (uri);
@@ -3743,7 +3738,7 @@ var arAkahukuCatalog = {
         columns = param.defaultColumns;
       }
       arAkahukuDOM.setText (anchor,
-                            "\u66F4\u65B0\u9806\u306B"
+                            "\u30C7\u30D5\u30A9\u30EB\u30C8\u9806\u306B"
                             + columns + "\u305A\u3064");
       if (param.order == "akahuku_catalog_reorder_spec") {
         if (indicator) {
@@ -4442,7 +4437,7 @@ var arAkahukuCatalog = {
          "\u30DA\u30FC\u30B8\u3054\u3068");
         createReorderOrderButton
         ("akahuku_catalog_reorder_spec",
-         "\u66F4\u65B0\u9806\u306B"
+         "\u30C7\u30D5\u30A9\u30EB\u30C8\u9806\u306B"
          + columns
          + "\u305A\u3064");
         createReorderOrderButton
