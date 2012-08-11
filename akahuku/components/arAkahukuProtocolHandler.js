@@ -1806,6 +1806,11 @@ arAkahukuProtocolHandler.prototype = {
         sep |= 4;
       }
             
+      if (!host) {
+        /* ホスト名省略はしない */
+        host = "localhost";
+      }
+            
       if (type == "preview") {
         type
         = type + "."

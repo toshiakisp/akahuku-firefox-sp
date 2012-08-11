@@ -1673,7 +1673,6 @@ var arAkahukuImage = {
         }
                 
         url = arAkahukuFile.getURLSpecFromFilename (filename);
-        url = url.replace (/^file:\/\/\//, "file://akahuku/");
         url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
       }
             
