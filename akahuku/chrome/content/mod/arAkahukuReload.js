@@ -2933,7 +2933,6 @@ var arAkahukuReload = {
         var bottomStatus
           = targetDocument.getElementById ("akahuku_bottom_status");
         if (!bottomStatus) {
-          /* レス 0 からのリロード */
           var lastReply
             = arAkahukuThread.getLastReply (targetDocument);
           var td = terminator.getElementsByTagName ("td") [1];
@@ -2944,6 +2943,7 @@ var arAkahukuReload = {
                             -1,
                             "",
                             "",
+                            false,
                             true),
                            td.firstChild);
         }

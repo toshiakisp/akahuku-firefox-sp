@@ -114,11 +114,22 @@ arAkahukuLocationInfo.prototype = {
       }
     }
         
-    nodes = targetDocument.getElementsByTagName ("b");
+    // 旧CGI仕様の板でスレが消えた場合のチェック
+    nodes = targetDocument.body.childNodes;
     for (var i = 0; i < nodes.length; i ++) {
-      if (nodes [i].innerHTML.indexOf
+      var nodename = nodes [i].nodeName.toLowerCase ();
+      if (nodename === "center"
+          || (nodename === "div" && nodes [i].align == "center")) {
+        node = nodes [i];
+      }
+      else {
+        continue;
+      }
+      node = arAkahukuDOM.getFirstElementByNames (node, "font");
+      node = (node ? arAkahukuDOM.getFirstElementByNames (node, "b") : null);
+      if (node && node.innerHTML.indexOf
+          //"該当記事がみつかりません"
           ("\u8A72\u5F53\u8A18\u4E8B\u304C\u307F\u3064\u304B\u308A\u307E\u305B\u3093") != -1) {
-        /* cgi 鯖でスレが消えた場合 */
         this.isNotFound = true;
       }
     }

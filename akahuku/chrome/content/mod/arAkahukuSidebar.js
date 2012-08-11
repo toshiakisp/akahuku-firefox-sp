@@ -1429,6 +1429,13 @@ var arAkahukuSidebar = {
                   if (thread.comment) {
                     arAkahukuDOM.setInnerHTMLSafely (node, thread.comment);
                     node.style.removeProperty ("color");
+                    // リンクは不要 ([広告]対策)
+                    (function (node) {
+                      var nodes = node.getElementsByTagName ("a");
+                      for (var i = 0; i < nodes.length; i ++) {
+                        nodes [i].removeAttribute ("href");
+                      }
+                    })(node);
                   }
                   else if (thread.commentInCatalog) {
                     node.textContent = thread.commentInCatalog;
@@ -1566,6 +1573,13 @@ var arAkahukuSidebar = {
         if (thread.comment) {
           arAkahukuDOM.setInnerHTMLSafely (node, thread.comment);
           node.style.removeProperty ("color");
+          // リンクは不要 ([広告]対策)
+          (function (node) {
+            var nodes = node.getElementsByTagName ("a");
+            for (var i = 0; i < nodes.length; i ++) {
+              nodes [i].removeAttribute ("href");
+            }
+          })(node);
         }
         else if (thread.commentInCatalog) {
           node.textContent = thread.commentInCatalog;

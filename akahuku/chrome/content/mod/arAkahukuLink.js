@@ -2663,16 +2663,17 @@ var arAkahukuLink = {
     var node;
     var nodeName;
     
+    /* 広告の blockquote 回避は getMessageBQ でやってるので無駄
     node = targetNode;
     for (var i = 0; node && i < 5; i ++) {
       if (node.nodeName.toLowerCase () == "a"
           && "href" in node
           && node.href.match (/http:\/\/www\.amazon\.co\.jp\//)) {
-        /* 広告なので何もしない */
         return;
       }
       node = node.previousSibling;
     }
+    */
         
     arAkahukuLink.textize (targetDocument, targetNode);
         
