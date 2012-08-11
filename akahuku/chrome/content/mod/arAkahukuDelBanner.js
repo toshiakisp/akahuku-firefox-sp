@@ -200,9 +200,10 @@ var arAkahukuDelBanner = {
         continue;
       }
             
-      if (uinfo && uinfo.isAkahuku) {
+      if (Akahuku.protocolHandler.isAkahukuURI (src)) {
         /* akahuku プロトコル */
-        if (uinfo.isAd) {
+        if (src.match (/^akahuku:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/ad\//)
+            || src.match (/^akahuku:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/dec\/ad\//)) {
           /* 広告バナー */
         }
         else {
