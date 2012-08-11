@@ -1070,7 +1070,7 @@ var AkahukuOptions = {
       ["bool", "catalog.reload", true],
       ["bool", "catalog.reload.reply_number_delta", false],
       ["bool", "catalog.reload.status.hold", false],
-      ["bool", "catalog.reload.update_cache", false],
+      ["bool", "catalog.reload.update_cache", true],
       ["bool", "catalog.reload.hook", false],
       ["bool", "catalog.reload.timestamp", false],
       ["bool", "catalog.reload.left_before", false],
@@ -4009,6 +4009,13 @@ var AkahukuOptions = {
     = !document.getElementById ("catalog_reload").checked;
         
     AkahukuOptions.checkCatalogReloadLeftBefore ();
+    AkahukuOptions.checkCatalogReloadUpdateCache ();
+  },
+
+  checkCatalogReloadUpdateCache : function () {
+    document.getElementById ("catalog_reload_update_cache_warning").disabled
+    = document.getElementById ("catalog_reload_update_cache").disabled
+    || document.getElementById ("catalog_reload_update_cache").checked;
   },
 
   checkCatalogReloadLeftBefore : function () {
