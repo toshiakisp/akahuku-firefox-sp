@@ -406,6 +406,10 @@ var arAkahukuDelBanner = {
    */
   deleteContextAfterBlock : function (context, text)
   {
+    if (context.hasAttribute ("delete")) {
+      // 処理済みのノードは無視
+      return;
+    }
     // 無駄な余白を生む祖先を辿る
     var branch = context.nodeName;
     var node = context;

@@ -92,6 +92,7 @@ arAkahukuCatalogPopupData.prototype =  {
   zoomFactor : 0,             /* Number  拡大の状態 */
   lastTime : 0,               /* Number  動作のタイマーの前回の時間 */
   createTimerID : null,       /* Number  表示待ち状態のタイマー ID */
+  hideCursorTimerID : null,   /* Number  保持領域でカーソル非表示にするタイマー ID */
   targetImageGeometry : null, /* Object  対象のカタログ画像の位置、サイズ */
   zoomImageGeometry : null,   /* Object  ズーム先の位置、サイズ */
     
@@ -107,6 +108,7 @@ arAkahukuCatalogPopupData.prototype =  {
       clearTimeout (this.createTimerID);
       this.createTimerID = null;
     }
+    clearTimeout (this.hideCursorTimerID);
     this.targetImageGeometry = null;
     this.zoomImageGeometry = null;
   },
@@ -681,6 +683,21 @@ arAkahukuCatalogPopupData.prototype =  {
     }
     self.popupArea.addEventListener
     ("click", transferMouseEventsToCatalog, true);
+    // ポップアップ保持エリアでは静止時マウスカーソルを隠す
+    function onMouseMoveOnPopupArea () {
+      self.popupArea.style.removeProperty ("cursor");
+      clearTimeout (self.hideCursorTimerID);
+      self.hideCursorTimerID
+      = setTimeout (function () {
+        self.hideCursorTimerID = null;
+        if (self.popupArea) {
+          self.popupArea.style.cursor = "none";
+        }
+      }, 300);
+    }
+    self.popupArea.addEventListener
+    ("mousemove", onMouseMoveOnPopupArea, false);
+    onMouseMoveOnPopupArea (); //開いた時点でタイマースタート
         
     if (image.complete && !image.getAttribute ("__errored")) {
       self.run (1, param);
@@ -2376,6 +2393,7 @@ var arAkahukuCatalog = {
         if (mergedItems [i].oldReplyNumber >= 0) {
           td.setAttribute ("__old_reply_number",
                            mergedItems [i].oldReplyNumber);
+          td.removeAttribute ("__is_up");
         }
                 
         var img = td.getElementsByTagName ("img");
@@ -2404,6 +2422,9 @@ var arAkahukuCatalog = {
         td.setAttribute ("__thread_id", mergedItems [i].threadId);
         if (mergedItems [i].isNew) {
           td.setAttribute ("__is_new", "true");
+        }
+        else {
+          td.setAttribute ("__is_up", "true");
         }
                 
         arAkahukuCatalog.updateCell (td, info);
@@ -2465,10 +2486,7 @@ var arAkahukuCatalog = {
         
     for (i = 0, nodes = newTable.getElementsByTagName ("td");
          i < nodes.length; i ++) {
-      if (td.hasAttribute ("__old_reply_number")) {
-        // 新規追加セルに対しては省略可
-        arAkahukuCatalog.updateCellReplyNum (nodes [i]);
-      }
+      arAkahukuCatalog.updateCellReplyNum (nodes [i]);
       arAkahukuCatalog.updateCellInfo (nodes [i],
                                        info,
                                        param.latestThread);
@@ -2510,7 +2528,7 @@ var arAkahukuCatalog = {
         }
         nodes = lastCells [i].getElementsByTagName ("img");
         for (j = 0; j < nodes.length; j ++) {
-          if (nodes [j].src.match (/cat\/([0-9]+)s\.jpg$/)) {
+          if (nodes [j].src.match (/(?:cat|thumb)\/([0-9]+)s\.jpg$/)) {
             imageLink = nodes [j].src;
             imageWidth = nodes [j].width;
             imageHeight = nodes [j].height;
@@ -2855,7 +2873,7 @@ var arAkahukuCatalog = {
     if (nodes
         && nodes [0]) {
       var img = nodes [0];
-      if (img.src.match (/cat\/([0-9]+)s\.jpg$/)) {
+      if (img.src.match (/(?:cat|thumb)\/([0-9]+)s\.jpg$/)) {
         var key = RegExp.$1;
         if (key != param.lastPopupKey) {
           param.lastPopupKey = key;
@@ -3240,6 +3258,9 @@ var arAkahukuCatalog = {
         }
       }
     }
+    if (!num) {
+      return;
+    }
     latestNum
       = Math.max
       (arAkahukuThread.newestNum [name] || 0,
@@ -3284,12 +3305,14 @@ var arAkahukuCatalog = {
     var fonts = td.getElementsByTagName ("font");
     if (fonts && fonts.length > 0) {
       var font = fonts [fonts.length - 1];
-      var text = font.textContent || "0";
+      var text = font.textContent || "";
       if (text [0] == "(") { // ニュース表 patch
-        text = text.replace (/\d+/, newReplyNum);
-        arAkahukuDOM.setText (font, text);
+        var newtext = text.replace (/\d+/, newReplyNum);
+        if (text != newtext) {
+          arAkahukuDOM.setText (font, newtext);
+        }
       }
-      else {
+      else if (text != newReplyNum) {
         arAkahukuDOM.setText (font, newReplyNum);
       }
     }
@@ -3321,7 +3344,7 @@ var arAkahukuCatalog = {
         className = "akahuku_cell";
         deltaText = "new";
       }
-      else if (!td.hasAttribute ("__old_reply_number")) {
+      else if (td.getAttribute ("__is_up") === "true") {
         className = "akahuku_cell";
         deltaText = "up";
       }
@@ -4125,7 +4148,9 @@ var arAkahukuCatalog = {
         delete oldCells [threadId];
       }
       else {
-        if (arAkahukuCatalog.enableReorderVisited) {
+        if (arAkahukuCatalog.enableReorderVisited
+            || arAkahukuCatalog.enableVisited) {
+          // 新しいスレの既読判定が必要な場合
           if (currentTdText.match (/href=['"]?([^\s'"]+)/)) {
             var path = RegExp.$1;
                             
@@ -4576,7 +4601,9 @@ var arAkahukuCatalog = {
         }
         else if (img.parentNode
                  && img.parentNode.nodeName.toLowerCase () == "a"
-                 && img.src.match (/cat\/([0-9]+)s\.jpg$/)) {
+                 && img.src.match (/(?:cat|thumb)\/([0-9]+)s\.jpg$/)
+                 && img.parentNode.parentNode
+                 && img.parentNode.parentNode.className != "akahuku_popup") {
           var key = RegExp.$1;
           if (key != param.lastPopupKey) {
             param.lastPopupKey = key;

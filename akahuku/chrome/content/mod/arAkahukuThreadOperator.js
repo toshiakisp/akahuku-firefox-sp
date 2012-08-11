@@ -575,6 +575,8 @@ var arAkahukuThreadOperator = {
                   "font-size: 10pt; "
                   + "vertical-align: text-bottom;")
 
+        .addRule ("#akahuku_throp_expire_box, #akahuku_throp_expire_box2",
+                  "display: inline;")
         .addRule ("#akahuku_throp_expire_diff",
                   "font-size: 10pt; "
                   + "vertical-align: text-bottom;")
@@ -1225,12 +1227,10 @@ var arAkahukuThreadOperator = {
             = arAkahukuThread.getExpireNum (targetDocument, info,
                                             0, 0);
           if (expireNum != null) {
-            enableBottomStatusNum
-              = arAkahukuThread.enableBottomStatusNum;
+            enableBottomStatusNum = true;
           }
           if (!info.isMht
-              && (arAkahukuThread.enableBottomStatusDiff
-                  || enableBottomStatusNum)) {
+              && enableBottomStatusNum) {
             br = targetDocument.createElement ("br");
             if (firstBr == null) {
               firstBr = br;
@@ -1256,7 +1256,7 @@ var arAkahukuThreadOperator = {
                               ("("));
             expireBox.appendChild (span);
             
-            if (arAkahukuThread.enableBottomStatusDiff) {
+            if (true) { //arAkahukuThread.enableBottomStatusDiff) {
               var expireDiff;
                     
               expireDiff
@@ -1276,7 +1276,7 @@ var arAkahukuThreadOperator = {
               expireBox.appendChild (span);
             }
             if (enableBottomStatusNum) {
-              if (arAkahukuThread.enableBottomStatusDiff) {
+              if (true) { //arAkahukuThread.enableBottomStatusDiff) {
                 span = targetDocument.createElement ("span");
                 span.className = "akahuku_status_suffix";
                 span.appendChild (targetDocument.createTextNode
