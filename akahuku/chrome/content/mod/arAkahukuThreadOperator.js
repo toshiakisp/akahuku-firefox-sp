@@ -600,6 +600,8 @@ var arAkahukuThreadOperator = {
                   + "background-color: inherit;")
         .addRule ("#akahuku_throp_reload_status",
                   "font-size: 8.5pt;")
+        .addRule ("#akahuku_throp_menu span.nobr",
+                  "font-size: 8.5pt;")
         .addRule ("#akahuku_throp_menu span.nobr>span",
                   "overflow: hidden; "
                   + "text-overflow: ellipsis; " // Gecko 7.0+

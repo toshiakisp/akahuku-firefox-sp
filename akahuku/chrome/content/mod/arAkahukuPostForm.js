@@ -646,7 +646,7 @@ var arAkahukuPostForm = {
         .addRule ("#akahuku_posttable td",
                   "border:none; "
                   + "text-align: left; "
-                  + "padding: 3px; "
+                  + "padding: 0px; " // ふたばと同じスタイルに
                   + "color: #800000;");
       }
     }
@@ -3718,6 +3718,28 @@ var arAkahukuPostForm = {
       commentbox.style.backgroundPosition = "right 35%";
     }
   },
+
+  /**
+   *  レス削除フォームを取得する
+   */
+  findUsrDelTable : function (targetDocument) {
+    var delTable = null;
+    var nodes = targetDocument.getElementsByName ("mode");
+    for (var i = nodes.length - 1; i >= 0 ; i --) {
+      if (nodes [i].value == "usrdel"
+          && nodes [i].type == "hidden"
+          && nodes [i].nodeName.toLowerCase () == "input") {
+        delTable
+          = arAkahukuDOM.findParentNode (nodes [i], "table");
+        if (!delTable) {
+          delTable
+          = arAkahukuDOM.findParentNode (nodes [i], "div");
+        }
+        break;
+      }
+    }
+    return delTable;
+  },
     
   /**
    * フォームを修正する
@@ -3858,23 +3880,7 @@ var arAkahukuPostForm = {
       var nodes;
       if (form && arAkahukuPostForm.enableBottom
           && !arAkahukuPostForm.enableBottomFormOnly) {
-        var delTable = null;
-        
-        nodes = targetDocument.getElementsByName ("mode");
-        for (var i = 0; i < nodes.length; i ++) {
-          if (nodes [i].value == "usrdel"
-              && nodes [i].type == "hidden"
-              && nodes [i].nodeName.toLowerCase () == "input") {
-            delTable
-              = arAkahukuDOM.findParentNode (nodes [i], "table");
-            if (!delTable) {
-              delTable
-              = arAkahukuDOM.findParentNode (nodes [i], "div");
-            }
-            break;
-          }
-        }
-                
+        var delTable = arAkahukuPostForm.findUsrDelTable (targetDocument);
         if (delTable) {
           var marker = targetDocument.createElement ("div");
           marker.id = "akahuku_postform_bottom_marker";
@@ -3894,12 +3900,36 @@ var arAkahukuPostForm = {
                && arAkahukuPostForm.enableBottomFormOnly) {
         /* フォーム位置切替と同じ方法でフォームを下に表示 */
         var ufm = targetDocument.getElementById ("ufm");
+        if (!ufm) {
+          // 旧CGI でも div#ufm を適切な場所に作って模擬させる
+          var delTable = arAkahukuPostForm.findUsrDelTable (targetDocument);
+          if (delTable) {
+            ufm = targetDocument.createElement ("div");
+            ufm.id = "ufm";
+            node = delTable;
+            while (node = node.nextSibling) {
+              if (node.nodeType != node.ELEMENT_NODE) {
+                continue;
+              }
+              if (node.nodeName.toLowerCase () == "center"
+                  || node.getAttribute ("align") == "center") {
+                break;
+              }
+            }
+            if (!node) {
+              delTable.parentNode.appendChild (ufm);
+            }
+            else {
+              node.parentNode.insertBefore (ufm, node);
+            }
+          }
+        }
         var table
           = targetDocument.getElementById ("akahuku_posttable");
         var param = Akahuku.getDocumentParam (targetDocument);
         if (ufm && table && param) {
-          table.style.position = "absolute";
           table.style.visibility = "hidden";
+          table.style.position = "absolute";
         }
         setTimeout
         (function (ufm, table, param){
@@ -3907,7 +3937,6 @@ var arAkahukuPostForm = {
           if (!ufm || !table || !param) {
             return;
           }
-          table.style.visibility = "visible";
           ufm.style.height = table.offsetHeight + "px";
           ufm.style.width = table.offsetWidth + "px";
           ufm.innerHTML = "&nbsp;";
@@ -3915,6 +3944,7 @@ var arAkahukuPostForm = {
           table.style.marginLeft = "-" + parseInt(table.offsetWidth/2) + "px";
           table.style.top
             = (ufm.ownerDocument.body.offsetTop + ufm.offsetTop) + "px";
+          table.style.visibility = "visible"; //レイアウトを終えてから
           param.postform_param
           .bottomFormAlignTimerID
             = setInterval
@@ -4388,31 +4418,19 @@ var arAkahukuPostForm = {
             
       if (arAkahukuPostForm.enableDelformHide
           || arAkahukuPostForm.enableDelformLeft) {
-        nodes = targetDocument.getElementsByName ("mode");
-        for (var i = 0; i < nodes.length; i ++) {
-          if ( nodes [i].value == "usrdel"
-              && nodes [i].type == "hidden"
-              && nodes [i].nodeName.toLowerCase () == "input") {
-            var table
-              = arAkahukuDOM.findParentNode (nodes [i], "table");
-            if (!table) {
-              table
-              = arAkahukuDOM.findParentNode (nodes [i], "div");
+        var table = arAkahukuPostForm.findUsrDelTable (targetDocument);
+        if (table) {
+          if (arAkahukuPostForm.enableDelformHide) {
+            table.style.display = "none";
+          }
+          else {
+            if (table.nodeName.toLowerCase () == "div") {
+              table.style.position = "static";
+              table.style.clear = "left";
+              table.style.cssFloat = "left";
             }
-            if (table) {
-              if (arAkahukuPostForm.enableDelformHide) {
-                table.style.display = "none";
-              }
-              else {
-                if (table.nodeName.toLowerCase () == "div") {
-                  table.style.position = "static";
-                  table.style.clear = "left";
-                  table.style.cssFloat = "left";
-                }
-                else
-                table.setAttribute ("align", "left");
-              }
-              break;
+            else {
+              table.setAttribute ("align", "left");
             }
           }
         }

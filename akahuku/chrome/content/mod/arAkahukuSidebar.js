@@ -60,8 +60,7 @@ arAkahukuSidebarThread.prototype = {
       && this.imageHeight >= 0
       && this.imageBytes >= 0
       && /^(?:|jpg|gif|png)$/i.test (this.imageExt)
-      && (new RegExp ("/" + this.num + "\\.htm$"))
-         .test (this.threadLink);
+      && typeof (this.threadLink) === "string"
     if (!valid) {
       return false;
     }
@@ -867,6 +866,7 @@ var arAkahukuSidebar = {
     var num;
     var reply;
     var imageSrc, imageNum;
+    var imageSrcType;
     var comment;
         
     var board = null;
@@ -915,11 +915,19 @@ var arAkahukuSidebar = {
                     .match (/cat\/([0-9]+)/)) {
                   imageNum = parseInt (RegExp.$1);
                   imageSrc = node2.src;
+                  imageSrcType = 2;
+                }
+                else if (node2.getAttribute ("src")
+                    .match (/\/thumb\/([0-9]+)/)) {
+                  // 画像サイズ大(含1-5)
+                  imageNum = parseInt (RegExp.$1);
+                  imageSrc = node2.src;
+                  imageSrcType = 1;
                 }
               }
               if (nodeName2 == "font") {
-                if (node2.innerHTML.match (/^([0-9]+)$/)) {
-                  reply = parseInt (RegExp.$1);
+                if (node2.innerHTML.match (/^(?:(\d+)|\((\d+)\))$/)) {
+                  reply = parseInt (RegExp.$1 || RegExp.$2);
                 }
               }
                             
@@ -931,8 +939,8 @@ var arAkahukuSidebar = {
           comment = node.textContent;
         }
         else if (nodeName == "font") {
-          if (node.innerHTML.match (/^([0-9]+)$/)) {
-            reply = parseInt (RegExp.$1);
+          if (node.innerHTML.match (/^(?:(\d+)|\((\d+)\))$/)) {
+            reply = parseInt (RegExp.$1 || RegExp.$2);
           }
         }
                 
@@ -966,7 +974,7 @@ var arAkahukuSidebar = {
             
       if (thread.imageSrcType != 1) {
         thread.imageSrc = imageSrc;
-        thread.imageSrcType = 2;
+        thread.imageSrcType = imageSrcType;
       }
       thread.imageNum = imageNum;
             
@@ -1156,13 +1164,9 @@ var arAkahukuSidebar = {
       }
       // 板全体の最新のレスを反映・更新する
       var infoName = name.replace (/_/, ":");
+      arAkahukuThread.updateNewestNum (infoName, max);
       if (infoName in arAkahukuThread.newestNum) {
-        if (max > arAkahukuThread.newestNum [infoName]) {
-          arAkahukuThread.newestNum [infoName] = max;
-        }
-        else {
-          max = arAkahukuThread.newestNum [infoName];
-        }
+        max = arAkahukuThread.newestNum [infoName];
       }
       // 板の保存数を考慮して自動的に expired フラグを立てる
       var savedNum
@@ -1313,21 +1317,12 @@ var arAkahukuSidebar = {
     if (iframe.getAttribute ("__modified") != "true") {
       /* 最初の更新でクリックをフックする */
       iframe.setAttribute ("__modified", "true");
-      iframe.contentWindow.addEventListener
-      ("mousemove",
-       function () {
-        arAkahukuSidebar.onMouseMove (arguments [0]);
-      }, false);
-      iframe.contentWindow.addEventListener
-      ("mousedown",
-       function () {
-        arAkahukuSidebar.onClick (arguments [0]);
-      }, false);
       iframe.addEventListener
-      ("mouseout",
-       function () {
-        arAkahukuSidebar.onMouseOut (arguments [0]);
-      }, false);
+      ("mousemove", arAkahukuSidebar.onMouseMove, false);
+      iframe.addEventListener
+      ("mousedown", arAkahukuSidebar.onClick, false);
+      iframe.addEventListener
+      ("mouseout", arAkahukuSidebar.onMouseOut, false);
     }
         
     if (name in arAkahukuSidebar.boards) {
@@ -2252,13 +2247,13 @@ var arAkahukuSidebar = {
     }
         
         
-    function setupIframeDocShell (iframe, allowImages) {
+    function setupIframeDocShell (iframe, allow) {
       // chrome:// で開くと browser に関連づけられてしまうので戻す
       iframe.docShell.chromeEventHandler = iframe;
       // スレ一覧表示用 iframe は画像だけ読めれば十分
-      iframe.docShell.allowImages = allowImages;
+      iframe.docShell.allowImages = allow;
       iframe.docShell.allowPlugins = false;
-      iframe.docShell.allowSubframes = false;
+      iframe.docShell.allowSubframes = allow; //for <link type="text/css"> (Firefox 3.6)
       iframe.docShell.allowJavascript = false;
       iframe.docShell.allowAuth = false;
       iframe.docShell.allowMetaRedirects = false;

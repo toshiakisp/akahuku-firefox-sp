@@ -107,6 +107,14 @@ var arAkahukuWindow = {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
+    if ("unwrap" in XPCNativeWrapper) {
+      parentWindow = XPCNativeWrapper.unwrap (parentWindow);
+    }
+    else {
+      if (parentWindow.wrappedJSObject) {
+        parentWindow = parentWindow.wrappedJSObject;
+      }
+    }
     return parentWindow;
   },
 

@@ -1083,7 +1083,29 @@ arAkahukuLocationInfo.prototype = {
     }
         
     return text;
-  }
+  },
+
+  /**
+   * 情報の更新を通知する
+   *
+   * @param  String formatString
+   *         フォーマット文字列
+   */
+  notifyUpdate : function (text)
+  {
+    if (!text) {
+      text = null;
+    }
+    var observerService
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);  
+    var subject
+      = Components.classes ["@mozilla.org/supports-string;1"]
+      .createInstance (Components.interfaces.nsISupportsString);  
+    subject.data = arAkahukuJSON.encode (this);
+    observerService.notifyObservers
+      (subject, "akahuku-location-info-updated", text); 
+  },
 };
 
 function arAkahukuImageURLInfo () {
