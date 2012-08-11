@@ -142,7 +142,9 @@ toolbar[iconsize="small"] #akahuku-toolbarbutton-p2psidebar:hover:active {
 }
 
 /* ツールバー (大きいアイコン : カスタマイズ直後) */
-
+/* iconsize="large"でも実際に必要なアイコンが24x24pxとは限らないので
+ * 以下のスタイルは16x16pxが使われる環境(Winのデフォテーマとか)ではまずい
+ * see https://developer.mozilla.org/en/XUL/Toolbars/Creating_toolbar_buttons#Styling_the_button
 toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-preferences {
   list-style-image: url("chrome://akahuku/content/images/icon_middle.png");
 }
@@ -181,6 +183,7 @@ toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-p2psidebar:hover {
 toolbox[iconsize="large"] #nav-bar #akahuku-toolbarbutton-p2psidebar:hover:active {
   list-style-image: url("chrome://akahuku/content/images/p2psidebar_middle_click.png");
 }
+*/
 
 /* 古いツールバー */
 
