@@ -293,6 +293,32 @@ var Akahuku = {
     catch (e) { Akahuku.debug.exception (e);
     }
         
+    /* ThumbnailZoomPlus で akahuku のズームを有効にする
+     * filterService.js の 494 行目 (ver.2.1) */
+    try {
+      if (typeof (ThumbnailZoomPlus) != "undefined"
+          && "FilterService" in ThumbnailZoomPlus
+          && "getZoomImage" in ThumbnailZoomPlus.FilterService
+          && typeof (ThumbnailZoomPlus.FilterService.getZoomImage) === "function") {
+        var origfunc, newfunc;
+        origfunc = ThumbnailZoomPlus.FilterService.getZoomImage.toString ();
+        newfunc = origfunc.replace (
+            /(\bif\s*\(\s*!\s*\/\^)(\()?https\?(?!\|([^|]*\|)*akahuku)/,
+            function (m,pre,par) {
+              return pre + (par ?"(https?|akahuku" : "(https?|akahuku)")
+            });
+        if (newfunc != origfunc) {
+          ThumbnailZoomPlus.FilterService.getZoomImage
+          = eval ("(" + newfunc + ")");
+        }
+        else {
+          Akahuku.debug.warn ("patch for ThumbnailZoomPuls failed.")
+        }
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+        
     /* QuickDrag で akahuku の保存を有効にする
      * quickdrag.js の 167 行目 */
     /* 新しい QuickDrag (少なくともver2.1.3.21) では
