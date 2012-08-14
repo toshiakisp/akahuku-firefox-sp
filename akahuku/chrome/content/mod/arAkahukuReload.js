@@ -385,6 +385,8 @@ arAkahukuReloadParam.prototype = {
     
   partialNodes : null,         /* Array  部分表示の時のボタン用の要素 */
     
+  statusTimerID : null,        /* Number ステータスを消すタイマーID */
+
   /**
    * データを開放する
    */
@@ -409,6 +411,8 @@ arAkahukuReloadParam.prototype = {
     }
     catch (e) {
     }
+    clearTimeout (this.statusTimerID);
+    this.statusTimerID = null;
     this.targetDocument = null;
   },
     
@@ -1896,7 +1900,11 @@ var arAkahukuReload = {
     }
         
     if (!permanent && !arAkahukuReload.enableStatusHold) {
-      setTimeout
+      var param
+      = Akahuku.getDocumentParam (targetDocument).reload_param;
+      clearTimeout (param.statusTimerID);
+      param.statusTimerID
+      = setTimeout
       (function (message) {
         for (var i = 0; i < ids.length; i++) {
           var node = targetDocument.getElementById (ids [i]);
