@@ -3274,10 +3274,6 @@ var arAkahukuLink = {
       var observer = arAkahukuLink.loadErrorObserverFactory ();
       observer.register (image, uri);
       image.addEventListener
-        ("DOMNodeRemoved", function () {
-          observer.unregister ();
-        }, false);
-      image.addEventListener
         ("load",
          function () {
           observer.unregister ();
@@ -3566,9 +3562,8 @@ var arAkahukuLink = {
         }
       }
       catch (e) { Akahuku.debug.exception (e);
-        /* 次善の策 */
-        image.removeAttribute ("src");
       }
+      image.src = ""; //trigger load error
     }
         
     arAkahukuLink.updateButton (target, opening);
