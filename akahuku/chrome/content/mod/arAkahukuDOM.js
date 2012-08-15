@@ -429,7 +429,7 @@ var arAkahukuDOM = {
         }
       }
     }
-    else {
+    else if (nodes && nodes.length > 0) {
       return nodes [0];
     }
         
