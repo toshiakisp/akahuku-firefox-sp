@@ -878,6 +878,31 @@ var Akahuku = {
       node = node.previousSibling;
     }
         
+    /* 見つからない場合より寛容に探す (改造スクリプト等) */
+    node = targetNode;
+    lastText = "";
+    var nodeName = "";
+    while (node) {
+      nodeName
+        = (node.nodeType == node.ELEMENT_NODE
+           ? node.nodeName.toLowerCase () : "");
+      if (nodeName == "br") {
+        lastText = "";
+      }
+      else if (node.nodeType == node.TEXT_NODE || nodeName == "a") {
+        lastText = node.textContent + lastText;
+        if (lastText.match (/No\.([0-9]+)/)) {
+          return parseInt (RegExp.$1);
+        }
+      }
+      node = node.previousSibling;
+    }
+
+    if (Akahuku.debug.enabled) {
+      Akahuku.debug.warn
+        ("getMessageNum failed to parse for blockquote \""
+         + targetNode.innerHTML + "\"");
+    }
     return 0;
   },
     
