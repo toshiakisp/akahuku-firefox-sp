@@ -3081,10 +3081,9 @@ var arAkahukuReload = {
    *         対象のドキュメント
    */
   update : function (targetDocument) {
-    var param
-    = Akahuku.getDocumentParam (targetDocument).reload_param;
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
+    var info = documentParam.location_info;
         
     var newNodes = new Array (), addNodes = new Array ();
         
@@ -3182,6 +3181,9 @@ var arAkahukuReload = {
         if (node) {
           arAkahukuDOM.setText (node, newReplies);
         }
+
+        /* BQ cache を消す */
+        Akahuku._setMessageBQCache (documentParam, null);
       }
             
       /* スレ消滅情報に反映する */
