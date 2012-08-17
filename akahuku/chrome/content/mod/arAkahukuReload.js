@@ -2113,19 +2113,15 @@ var arAkahukuReload = {
    *         レスを含む HTML
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  Boolean isNotTable
+   *         tableによる構造ではないかどうか
    * @return Object
    *         レスのコンテナ
    */
-  createContainer : function (responseText, targetDocument) {
+  createContainer : function (responseText, targetDocument, isNotTable) {
     var container = {};
     
-    var isOld = true;
-    
-    if (responseText.match (/<div class=t>/)) {
-      isOld = false;
-    }
-    
-    if (isOld) {
+    if (!isNotTable) {
       var table = targetDocument.createElement ("table");
       var tbody = targetDocument.createElement ("tbody");
       var tr = targetDocument.createElement ("tr");
@@ -2279,6 +2275,7 @@ var arAkahukuReload = {
     var replyNoInputAttr = "name=";
     var replyDisplay = "table";
     var dispdel = -1;
+    var isTable = true;
     try {
       var ddbut = targetDocument.getElementById ("ddbut");
       if (ddbut) {
@@ -2305,7 +2302,9 @@ var arAkahukuReload = {
       tagStop = "<td>";
       replyNoInputAttr = "name=\"edit\\[\\]\" value=";
     }
-    if (responseText.indexOf ("<div class=t>") != -1) {
+    else if (responseText.lastIndexOf (replyStartTag, 4096) == -1
+        && responseText.lastIndexOf ("<div class=t>", 4096) != -1) {
+      isTable = false;
       checkColor = false;
       replyStartTag = "<div class=r>";
       tagStop = ">";
@@ -2547,7 +2546,7 @@ var arAkahukuReload = {
           /* レスが無い時 */
           lastReply.container
           = arAkahukuReload.createContainer (responseText,
-                                             targetDocument);
+                                             targetDocument, !isTable);
           replyPrefix
           = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
           lastReplyNumber = 0;
