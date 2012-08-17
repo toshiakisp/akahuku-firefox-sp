@@ -2479,8 +2479,12 @@ var arAkahukuReload = {
       var isDeleted = false;
       if (checkColor) {
         var s = responseText.substr (startPosition, 100);
-        if (!s.match (/^<td bgcolor=\'?#F0E0D6/i)) {
+        if (!s.match (/^<td bgcolor=["']?#F0E0D6/i)) {
           endPosition = startPosition + 1;
+          if (Akahuku.debug.enabled) {
+            Akahuku.debug.warn
+              ("checkColor logic skips response text;\n" + s);
+          }
           continue;
         }
         
