@@ -347,6 +347,7 @@ var arAkahukuPostForm = {
           target.focus ();
                     
           arAkahukuPostForm.focus (targetDocument, target);
+          event.preventDefault ();
         }
         return;
       }
@@ -371,6 +372,7 @@ var arAkahukuPostForm = {
             return;
           }
           arAkahukuPostForm.onSageButtonClickCore (targetDocument);
+          event.preventDefault ();
         }
       }
     }

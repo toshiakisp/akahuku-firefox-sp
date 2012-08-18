@@ -78,6 +78,7 @@ var arAkahukuP2P = {
           && arAkahukuP2P.shortcutModifiersMeta == event.metaKey
           && arAkahukuP2P.shortcutModifiersShift == event.shiftKey) {
         toggleSidebar ("viewAkahukuP2PSidebar");
+        event.preventDefault ();
       }
     }
   },
