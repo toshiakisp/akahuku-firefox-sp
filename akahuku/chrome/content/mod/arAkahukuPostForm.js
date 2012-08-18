@@ -2953,11 +2953,9 @@ var arAkahukuPostForm = {
                 
         if (arAkahukuPostForm.enableFloatClickOpen) {
           /* クリックで開くので、開かない */
-          if (arAkahukuPostForm.enableFloatAlpha) {
-            /* 透明度だけ変える */
-            arAkahukuPostForm.changeFloatPostFormStatus
-              (targetDocument, 0, 1, 0);
-          }
+          /* 透明度だけ変える */
+          arAkahukuPostForm.changeFloatPostFormStatus
+          (targetDocument, 0, 1, 0);
         }
         else {
           /* 開く */
