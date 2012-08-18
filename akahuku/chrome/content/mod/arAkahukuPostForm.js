@@ -2769,13 +2769,11 @@ var arAkahukuPostForm = {
       else {
         param.waitForFocus = 0;
                 
-        if (arAkahukuPostForm.enableFloatAlpha && alpha) {
-          if (alpha == 1) {
-            postformContainer.style.opacity = "1.0";
-          }
-          else {
-            postformContainer.style.opacity = "0.3";
-          }
+        if (alpha == 1) {
+          postformContainer.style.removeProperty ("opacity");
+        }
+        else if (arAkahukuPostForm.enableFloatAlpha && alpha == 2) {
+          postformContainer.style.opacity = "0.3";
         }
       }
     }
