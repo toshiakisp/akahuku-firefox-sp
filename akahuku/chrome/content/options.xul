@@ -247,7 +247,13 @@
                       label="同期する" />
           </box>
           <checkbox id="wheel_reload_catalog" checked="false"
-                    label="カタログモード" />
+                    label="カタログモード"
+                    oncommand="AkahukuOptions.checkWheelReloadCatalog ();" />
+          <box class="sub" orient="vertical">
+            <checkbox id="wheel_reload_catalog_up" checked="false"
+                      class="sp" tooltiptext="(デフォルト：無効) 上端での上スクロールでもリロードする"
+                      label="ページ上端でも" />
+          </box>
           <checkbox id="wheel_reload_all" checked="false"
                     label="全てのページ" />
         </groupbox>

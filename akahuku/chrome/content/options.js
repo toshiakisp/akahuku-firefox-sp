@@ -239,6 +239,7 @@ var AkahukuOptions = {
       ["bool", "wheel.reload.reply", true],
       ["bool", "wheel.reload.reply.sync", false],
       ["bool", "wheel.reload.catalog", true],
+      ["bool", "wheel.reload.catalog.up", false, "privatemod"],
       ["bool", "wheel.reload.all", false],
       ["init",
        function (map) {
@@ -3293,6 +3294,14 @@ var AkahukuOptions = {
     = document.getElementById ("wheel_reload_all").disabled
     = document.getElementById ("wheel_reload_loop").disabled
     = !document.getElementById ("wheel_reload").checked;
+
+    AkahukuOptions.checkWheelReloadCatalog ();
+  },
+
+  checkWheelReloadCatalog : function () {
+    document.getElementById ("wheel_reload_catalog_up").disabled
+    = !document.getElementById ("wheel_reload_catalog").checked
+      || document.getElementById ("wheel_reload_catalog").disabled;
   },
     
   checkTabSort : function () {
