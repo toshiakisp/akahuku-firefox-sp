@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>akahuku-firefox-sp by toshiakisp</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>akahuku-firefox-sp</h1>
+        <p>「赤福:非公式 Firefox 版」の非公式改変版</p>
+
+        <p class="view"><a href="https://github.com/toshiakisp/akahuku-firefox-sp">View the Project on GitHub <small>toshiakisp/akahuku-firefox-sp</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>About</h2>
+
+<p>これはarai氏によりMPL 1.1/GPL 2.0/LGPL 2.1ライセンスで配布されていたFirefox拡張機能「赤福:非公式 Firefox 版」 の最終バージョン Ver.5.2.90 の、非公式な改変版です。主に最新のFirefoxに対応させることが目的ですが、いろいろいじってもいます。</p>
+
+<h2>Updates</h2>
+
+<h3>sp64768 (2012-08-03): オートリンクとか細々したこと</h3>
+
+<ul>
+<li>オートリンクのURL判定を改善: "[","]"を含むURLを認識、https://*.google も検索語を可読化</li>
+<li>塩中瓶へのオートリンクでDLKey付きの場合にNotFoundになる場合がある問題(塩の仕様変更?)に対応</li>
+<li>[spバグ] SWFプレビューに対してFlashBlockアドオンが効かなくなってた問題を修正、複数プレビュー時にFlashBlockすると消せない問題を修正</li>
+<li>ツリー型タブアドオンへの特別対応: オートリンクでも子タブになるように</li>
+<li>オートリンクで開くタブにも元タブの情報を付加するように変更 (→閉じる際に元タブに戻れたり?)</li>
+<li>カタログで古いスレを赤くする精度の改善: 別タブにカタログを開くタイミングでも更新
+(READMEから変更点一覧を別ファイルに分離、更新履歴をまとめるように)</li>
+</ul><h3>sp64332 (2012-07-05): Firefox 14対応など</h3>
+
+<ul>
+<li>Firefox 14 での変更点に対応 (P2Pの問題など)</li>
+<li>[spバグ] レス0のスレのステータスにおける残レス数表示が不正確になってしまってた件をなおした</li>
+<li>設定変更によるステータス行増殖バグの修正</li>
+<li>スレを開いた際の処理を少し高速化？</li>
+<li>赤福サイドバーの[広告]対策</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/toshiakisp">toshiakisp</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
