@@ -991,6 +991,7 @@ var arAkahukuMHT = {
             ("akahuku_savemht_button");
           if (button) {
             arAkahukuMHT.saveMHT (tabbrowser.contentDocument);
+            event.preventDefault ();
           }
         }
       }

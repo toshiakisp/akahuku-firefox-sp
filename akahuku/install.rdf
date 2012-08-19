@@ -5,7 +5,7 @@
   
   <Description about="urn:mozilla:install-manifest">
     <em:id>{591c2cf0-0a6e-11da-8cd6-0800200c9a66}</em:id>
-    <em:version>5.2.90.sp64768</em:version>
+    <em:version>5.2.90.sp64983</em:version>
     <em:type>2</em:type>
     
     <em:targetApplication>
@@ -57,12 +57,9 @@
     <em:description>虹裏ライフを甘美にする 赤福:非公式 Firefox 版</em:description>
     <em:creator>arai</em:creator>
     <em:contributor>toshiaki</em:contributor>
-    <em:homepageURL>http://www.unmht.org/akahuku/</em:homepageURL>
+    <em:homepageURL>http://toshiakisp.github.com/akahuku-firefox-sp/</em:homepageURL>
     
-    <!--
-    <em:updateURL>http://www.unmht.org/akahuku/update.rdf</em:updateURL>
-    <em:updateKey>MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCganJOtLPYi/fEBBtyDZeAL/T60GUNZewj0gmTbO/6XULYuyzbxEX3ZnBnBeLq8e/Qfi/uhghWWWJmKqOgK4yX4XNdQMGPnZvEXBgvTdxIRDe+7CFKB0Cq5L/DYPzrZRzb6cgdmEmkIRbztSYn6XFTRpMOQL+3XXY9npi2hAPxjwIDAQAB</em:updateKey>
-    -->
+    <em:updateURL>https://raw.github.com/toshiakisp/akahuku-firefox-sp/master/akahuku/update.rdf</em:updateURL>
     
     <em:optionsURL>chrome://akahuku/content/options.xul</em:optionsURL>
     <em:iconURL>chrome://akahuku/content/images/icon.png</em:iconURL>

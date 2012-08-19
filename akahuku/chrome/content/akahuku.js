@@ -293,6 +293,32 @@ var Akahuku = {
     catch (e) { Akahuku.debug.exception (e);
     }
         
+    /* ThumbnailZoomPlus で akahuku のズームを有効にする
+     * filterService.js の 494 行目 (ver.2.1) */
+    try {
+      if (typeof (ThumbnailZoomPlus) != "undefined"
+          && "FilterService" in ThumbnailZoomPlus
+          && "getZoomImage" in ThumbnailZoomPlus.FilterService
+          && typeof (ThumbnailZoomPlus.FilterService.getZoomImage) === "function") {
+        var origfunc, newfunc;
+        origfunc = ThumbnailZoomPlus.FilterService.getZoomImage.toString ();
+        newfunc = origfunc.replace (
+            /(\bif\s*\(\s*!\s*\/\^)(\()?https\?(?!\|([^|]*\|)*akahuku)/,
+            function (m,pre,par) {
+              return pre + (par ?"(https?|akahuku" : "(https?|akahuku)")
+            });
+        if (newfunc != origfunc) {
+          ThumbnailZoomPlus.FilterService.getZoomImage
+          = eval ("(" + newfunc + ")");
+        }
+        else {
+          Akahuku.debug.warn ("patch for ThumbnailZoomPuls failed.")
+        }
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+        
     /* QuickDrag で akahuku の保存を有効にする
      * quickdrag.js の 167 行目 */
     /* 新しい QuickDrag (少なくともver2.1.3.21) では
@@ -852,6 +878,31 @@ var Akahuku = {
       node = node.previousSibling;
     }
         
+    /* 見つからない場合より寛容に探す (改造スクリプト等) */
+    node = targetNode;
+    lastText = "";
+    var nodeName = "";
+    while (node) {
+      nodeName
+        = (node.nodeType == node.ELEMENT_NODE
+           ? node.nodeName.toLowerCase () : "");
+      if (nodeName == "br") {
+        lastText = "";
+      }
+      else if (node.nodeType == node.TEXT_NODE || nodeName == "a") {
+        lastText = node.textContent + lastText;
+        if (lastText.match (/No\.([0-9]+)/)) {
+          return parseInt (RegExp.$1);
+        }
+      }
+      node = node.previousSibling;
+    }
+
+    if (Akahuku.debug.enabled) {
+      Akahuku.debug.warn
+        ("getMessageNum failed to parse for blockquote \""
+         + targetNode.innerHTML + "\"");
+    }
     return 0;
   },
     
@@ -1207,37 +1258,65 @@ var Akahuku = {
   },
   
   _setMessageBQCache : function (documentParam, nodes) {
+    if (!nodes) {
+      if (documentParam
+          && "_messageBQCache" in documentParam) {
+        documentParam._messageBQCache = null;
+        return;
+      }
+    }
     if (!Akahuku.enableBQCache) {
       return;
     }
     if (!("_messageBQCache" in documentParam)
         || !documentParam._messageBQCache ) {
       /* キャッシュを自動破棄するイベントハンドラを登録 */
-      function expireMBQCache (event) {
-        if (event.target.nodeType != event.target.ELEMENT_NODE
-            || /^akahuku_/.test (event.target.id)
-            || /\b(?:__)?akahuku_/.test (event.target.className)
-            || event.target.parentNode.id == "akahuku_ad_cell"
-            || /^(?:A|BR?|I(?:FRAME)?|SPAN|FONT)$/
-               .test (event.target.tagName)) {
-          /* 明らかにMessageBQが変化しないパターンでは破棄しない */
+      var observer
+      = arAkahukuDOM.createMutationObserver
+      (function (records) {
+        function testMutation (target) {
+          if (target.nodeType != target.ELEMENT_NODE
+              || /^akahuku_/.test (target.id)
+              || /\b(?:__)?akahuku_/.test (target.className)
+              || (target.parentNode
+                 && target.parentNode.id == "akahuku_ad_cell")
+              || /^(?:A|BR?|I(?:FRAME)?|SPAN|FONT)$/
+                 .test (target.tagName)) {
+            /* 明らかにMessageBQが変化しないパターンでは破棄しない */
+            return false;
+          }
+          return true;
+        }
+        function testNodes (nodes) {
+          if (nodes) {
+            for (var j = 0; j < nodes.length; j ++) {
+              if (testMutation (nodes [j])) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+        var flag = false;
+        for (var i = 0; i < records.length; i ++) {
+          flag
+            = testNodes (records [i].addedNodes)
+            || testNodes (records [i].removedNodes);
+          if (flag) break;
+        }
+        if (!flag) {
           return;
         }
-        var documentParam =
-          Akahuku.getDocumentParam (event.target.ownerDocument);
         if (documentParam
             && "_messageBQCache" in documentParam) {
           documentParam._messageBQCache = null;
         }
-        event.target.ownerDocument.body.removeEventListener
-          ("DOMNodeInserted", expireMBQCache, false);
-        event.target.ownerDocument.body.removeEventListener
-          ("DOMNodeRemoved", expireMBQCache, false);
-      }
-      documentParam.targetDocument.body.addEventListener
-        ("DOMNodeInserted", expireMBQCache, false);
-      documentParam.targetDocument.body.addEventListener
-        ("DOMNodeRemoved", expireMBQCache, false);
+        observer.disconnect ();
+      });
+      var target
+        = arAkahukuDOM.findParentNode (nodes [0], "form")
+        || documentParam.targetDocument.body;
+      observer.observe (target, {childList: true, subtree: true});
     }
     documentParam._messageBQCache = nodes.slice (0);
   },

@@ -59,7 +59,10 @@ arAkahukuContentPolicy.prototype = {
   _prefP2PTatelogName        : "akahuku.p2p.tatelog",
 
   _prefBoardExternalName         : "akahuku.board_external",
-  _prefBoardExternalPatternsName : "akahuku.board_external.patterns2",
+  _prefBoardExternalPatternsName : "akahuku.board_external.patterns",
+  _prefBoardExternalPatterns2Name : "akahuku.board_external.patterns2",
+  _prefBoardSelectName           : "akahuku.board_select",
+  _prefBoardSelectExListName     : "akahuku.board_select.ex_list",
     
   _pref : null,              /* nsIPrefBranch2/nsIPrefBranch  pref サービス */
     
@@ -84,6 +87,9 @@ arAkahukuContentPolicy.prototype = {
   _enableBoardExternal : false,      /* Boolean  外部の板 */
   _boardExternalList : new Array (), /* Object  外部の板のリスト
                                       *   [[String 板名, Long フラグ], ...] */
+  _enableBoardSelect : false,        /* Boolean  動作する板を指定するか */
+  _boardSelectExList : new Object (),/* Object  動作しない板
+                                      *   <String 板名, Boolean ダミー> */
     
   _old : false,             /* Boolean  旧バージョンかどうか */
     
@@ -149,12 +155,41 @@ arAkahukuContentPolicy.prototype = {
       this._pref.addObserver (this._prefDelBannerSitesImageName, this, false);
       this._pref.addObserver (this._prefDelBannerSitesObjectName, this, false);
       this._pref.addObserver (this._prefDelBannerSitesIframeName, this, false);
+      this._pref.addObserver (this._prefBoardExternalName , this, false);
+      this._pref.addObserver (this._prefBoardExternalPatternsName , this, false);
+      this._pref.addObserver (this._prefBoardExternalPatterns2Name , this, false);
+      this._pref.addObserver (this._prefBoardSelectName , this, false);
+      this._pref.addObserver (this._prefBoardSelectExListName , this, false);
     }
 
     this._ios
     = Components.classes ["@mozilla.org/network/io-service;1"]
     .getService (nsIIOService);
         
+    // 必要なサブスクリプトのロード
+    var loader
+    = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
+    .getService (Components.interfaces.mozIJSSubScriptLoader);
+    try {
+      if (typeof arAkahukuJSON === "undefined") {
+        loader.loadSubScript
+          ("chrome://akahuku/content/mod/arAkahukuJSON.js");
+      }
+      if (typeof arAkahukuConfig === "undefined") {
+        loader.loadSubScript
+          ("chrome://akahuku/content/mod/arAkahukuConfig.js");
+        // minimum initialization for arAkahukuConfig.initPref ()
+        arAkahukuConfig.prefBranch = this._pref;
+      }
+      if (typeof arAkahukuBoard === "undefined") {
+        loader.loadSubScript
+          ("chrome://akahuku/content/mod/arAkahukuBoard.js");
+      }
+    }
+    catch (e) {
+      Components.utils.reportError (e);
+    }
+
     /* 設定を取得する */
     this._updateEnabled ();
     this._updateBlockList ();
@@ -183,6 +218,11 @@ arAkahukuContentPolicy.prototype = {
       this._pref.removeObserver (this._prefDelBannerSitesImageName, this, false);
       this._pref.removeObserver (this._prefDelBannerSitesObjectName, this, false);
       this._pref.removeObserver (this._prefDelBannerSitesIframeName, this, false);
+      this._pref.removeObserver (this._prefBoardExternalName , this, false);
+      this._pref.removeObserver (this._prefBoardExternalPatternsName , this, false);
+      this._pref.removeObserver (this._prefBoardExternalPatterns2Name , this, false);
+      this._pref.removeObserver (this._prefBoardSelectName , this, false);
+      this._pref.removeObserver (this._prefBoardSelectExListName , this, false);
     }
     else if (topic == "nsPref:changed") {
       /* 設定の変更の場合 */
@@ -211,8 +251,6 @@ arAkahukuContentPolicy.prototype = {
         
     var enableP2P = false;
     var enableP2PTatelog = false;
-        
-    var enableBoardExternal = false;
         
     if (this._pref.prefHasUserValue (this._prefAllName)) {
       enableAll
@@ -280,32 +318,18 @@ arAkahukuContentPolicy.prototype = {
     this._enableP2PTatelog
     = enableAll && enableP2P && enableP2PTatelog;
         
-    if (this._pref.prefHasUserValue (this._prefBoardExternalName)) {
-      enableBoardExternal
-        = this._pref.getBoolPref (this._prefBoardExternalName);
-    }
-        
-    this._enableBoardExternal
-    = enableAll && enableBoardExternal;
-        
-    if (this._enableBoardExternal) {
-      if (typeof JSON != "undefined"
-          && this._pref.prefHasUserValue
-            (this._prefBoardExternalPatternsName)) {
-        var tmp
-          = this._pref.getCharPref
-          (this._prefBoardExternalPatternsName);
-        this._boardExternalList = JSON.parse (unescape (tmp));
-        while (this._boardExternalList.length
-               && this._boardExternalList [0] == undefined) {
-          this._boardExternalList.shift ();
-        }
-        for (var i = 0; i < this._boardExternalList.length; i ++) {
-          if (!this._boardExternalList [i].prefix) {
-            this._boardExternalList [i].pattern
-              = new RegExp (this._boardExternalList [i].pattern);
-          }
-        }
+    if (arAkahukuBoard) {
+      arAkahukuBoard.getConfig ();
+      this._enableBoardExternal
+      = enableAll && arAkahukuBoard.enableExternal;
+      if (this._enableBoardExternal) {
+        this._boardExternalList = arAkahukuBoard.externalList;
+      }
+
+      this._enableBoardSelect
+      = enableAll && arAkahukuBoard.enableSelect;
+      if (this._enableBoardSelect) {
+        this._boardSelectExList = arAkahukuBoard.selectExList;
       }
     }
   },
@@ -420,6 +444,27 @@ arAkahukuContentPolicy.prototype = {
       type = this.TYPE_OBJECT;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
     }
+  },
+
+  /**
+   * 動作しない板かどうかを判定
+   */
+  _isExcludeBoard : function (uri) {
+    var server, dir, name;
+    if (!this._enableBoardSelect) {
+      return false;
+    }
+    if (uri.host.match (/([^\.\/]+)\.2chan\.net/)) {
+      server = RegExp.$1;
+    }
+    if (uri.path.match (/^\/(?:(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\//)) {
+      dir = (RegExp.$1 ? RegExp.$1 + "-" + RegExp.$2 : RegExp.$2);
+    }
+    name = server + ":" + dir;
+    if (name in this._boardSelectExList) {
+      return true;
+    }
+    return false;
   },
 
   /** 
@@ -782,6 +827,11 @@ arAkahukuContentPolicy.prototype = {
             
       if (requestOrigin.host.indexOf ("2chan.net") != -1) {
         /* 2chan.net からの呼び出しの場合チェックする */
+
+        if (this._isExcludeBoard (requestOrigin)) {
+          /* 動作しない板からは全て許可する */
+          return this.ACCEPT;
+        }
                 
         if (!this._blockList [contentType].includesFutaba
             && /\.2chan\.net$/i.test (contentLocation.host)) {
@@ -838,6 +888,10 @@ arAkahukuContentPolicy.prototype = {
       if (contentLocation.host.indexOf ("2chan.net") != -1) {
         /* 2chan.net の場合チェックする */
         needCheck = true;
+        if (this._isExcludeBoard (contentLocation)) {
+          /* 動作しない板の場合はチェックしない */
+          return this.ACCEPT;
+        }
       }
       if (contentLocation.host.indexOf ("nijibox.dyndns.dk") != -1
           || contentLocation.host.indexOf ("akahuku.dw.land.to") != -1

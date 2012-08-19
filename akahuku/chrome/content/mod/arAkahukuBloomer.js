@@ -91,6 +91,7 @@ var arAkahukuBloomer = {
           && arAkahukuBloomer.modifiersMeta == event.metaKey
           && arAkahukuBloomer.modifiersShift == event.shiftKey) {
         arAkahukuBloomer.openBloomer ();
+        event.preventDefault ();
       }
     }
   },

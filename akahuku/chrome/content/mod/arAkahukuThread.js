@@ -2671,7 +2671,8 @@ var arAkahukuThread = {
        */
       function addStatus (node) {
         // enableBottomStatus に関わらず最新レス番号を更新する
-        var lastReplyNumber = Akahuku.getMessageNum (lastReply);
+        var lastReplyNumber
+          = lastReply ? Akahuku.getMessageNum (lastReply) : 0;
         var newestNumber = Math.max (threadNumber, lastReplyNumber);
         if (newestNumber > 0) { // is a valid number
           arAkahukuThread.updateNewestNum (info, newestNumber);

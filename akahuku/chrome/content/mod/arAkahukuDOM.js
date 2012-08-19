@@ -429,7 +429,7 @@ var arAkahukuDOM = {
         }
       }
     }
-    else {
+    else if (nodes && nodes.length > 0) {
       return nodes [0];
     }
         
@@ -591,6 +591,218 @@ arAkahukuDOM.Style = new function () {
         return null;
     },
   };
+
+};
+
+/**
+ * factory of DOM Mutation Observer for DOM3/4
+ */
+arAkahukuDOM.createMutationObserver = function (callback) {
+  if (typeof (MutationObserver) != "undefined") {
+    return new MutationObserver (callback);
+  }
+  return new arAkahukuDOM.MutationObserverOnDOM3 (callback);
+};
+
+/**
+ * DOM3 Mutation Events で DOM4 の Mutation Observer を真似る
+ */
+arAkahukuDOM.MutationObserverOnDOM3 = function (callback) {
+  this._callback = callback;
+  this._targets = [];
+  this._options = [];
+  this._handles = [];
+  this._timer = null;
+  this._queue = [];
+  this._incomingQueue = [];
+  this._applying = false;
+};
+arAkahukuDOM.MutationObserverOnDOM3.prototype = {
+  observe : function (target, options) {
+    if (!(options.childList || options.attributes || options.characterData)) {
+      throw new SyntaxError ();
+    }
+    if (options.attributeOldValue && !options.attributes) {
+      throw new SyntaxError ();
+    }
+    if (options.attributeFilter && options.attributeFilter.length > 0
+        && !options.attributes) {
+      throw new SyntaxError ();
+    }
+    if (options.characterDataOldValue  && !options.characterData) {
+      throw new SyntaxError ();
+    }
+
+    // if target is already asociated, replace options
+    for (var i = 0; i < this._targets.length; i++) {
+      if (this._targets [i] == target) {
+        this._disconnectFromTargetAt (i);
+        this._targets.splice (i, 1);
+        this._options.splice (i, 1);
+        this._handles.splice (i, 1);
+        break;
+      }
+    }
+
+    var mo = this;
+    var handler = function (event) {
+      try {
+      var record = mo._createMutationRecord (event, target, options);
+      if (!record) {
+        return;
+      }
+      mo._appendToQueue (record);
+
+      if (!mo._timer) {
+        mo._timer
+        = setTimeout
+        (function () {
+          mo._timer = null;
+          mo._applying = true;
+          try {
+            // "Invoke _mo_'s callback with _queue_ as first argument,
+            // and _mo_ (itself) as second argument and callback this value."
+            mo._callback.apply (mo, [mo._queue, mo]);
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+          finally {
+            mo._applying = false;
+            mo._queue = mo._incomingQueue;
+            mo._incomingQueue = [];
+          }
+        }, 0);
+      }
+      } catch (e) {Akahuku.debug.exception (e);}
+    };
+    this._targets.push (target);
+    this._options.push (options);
+    this._handles.push (handler);
+
+    var targetEvents = this._optionsToEvents (options);
+    for (var i = 0; i < targetEvents.length; i ++) {
+      target.addEventListener (targetEvents [i], handler, false);
+    }
+  },
+
+  disconnect : function () {
+    for (var i = 0; i < this._targets.length; i ++) {
+      this._disconnectFromTargetAt (i);
+    }
+    this._targets.splice (0);
+    this._options.splice (0);
+    this._handles.splice (0);
+    window.clearTimeout (this._timer);
+    // "empty context object's record queue."
+    this._queue.splice (0);
+    this._incomingQueue.splice (0);
+  },
+
+  _disconnectFromTargetAt : function (index) {
+    var target = this._targets [index];
+    var options = this._options [index];
+    var handler = this._handles [index];
+    var targetEvents = this._optionsToEvents (options);
+    for (var i = 0; i < targetEvents.length; i ++) {
+      target.removeEventListener (targetEvents [i], handler, false);
+    }
+  },
+
+  _appendToQueue : function (record) {
+    (this._applying ? this._incomingQueue : this._queue).push (record);
+  },
+
+  _optionsToEvents : function (options) {
+    var types = [];
+    if ("childList" in options && options.childList) {
+      types.push ("DOMNodeInserted");
+      types.push ("DOMNodeRemoved");
+    }
+    if ("attributes" in options && options.attributes) {
+      types.push ("DOMAttrModified");
+    }
+    if ("characterData" in options && options.characterData) {
+      types.push ("DOMCharacterDataModified");
+    }
+    return types;
+  },
+
+  _createMutationRecord : function (event, target, options) {
+    function isTarget () {
+      if (("subtree" in options && options.subtree)
+          || record.target == target) {
+        return true;
+      }
+      return false;
+    }
+    var record = {
+      type : "",
+      target : event.target,
+      addedNodes : null,
+      removedNodes : null,
+      previousSibling : null,
+      nextSibling : null,
+      attributeName : null,
+      attributeNamespace : null,
+      oldValue : null,
+    };
+    switch (event.type) {
+      case "DOMAttrModified":
+        if ("attributes" in options && options.attributes) {
+          if (!isTarget ()) return null;
+          record.type = "attributes";
+          if ("attributeFilter" in options && options.attributeFilter) {
+            for (var i = 0; i < options.attributeFilter.length; i ++) {
+              if (options.attributeFilter [i] == event.attrName) {
+                return null;
+              }
+            }
+          }
+          record.attributeName = event.attrName;
+          record.attributeNamespace = null;//TODO
+          if ("attributeOldValue" in options && options.attributeOldValue) {
+            var recordWithOldValue = record.clone ();
+            recordWithOldValue.oldValue = event.prevValue;
+            this._appendToQueue (recordWithOldValue);
+          }
+        }
+        break;
+      case "DOMCharacterDataModified":
+        if ("characterData" in options && options.characterData) {
+          if (!isTarget ()) return null;
+          record.type = "characterData";
+          if ("characterDataOldValue" in options && options.characterDataOldValue) {
+            var recordWithOldValue = record.clone ();
+            recordWithOldValue.oldValue = event.prevValue;
+            this._appendToQueue (recordWithOldValue);
+          }
+        }
+      case "DOMNodeInserted":
+      case "DOMNodeRemoved":
+        if ("childList" in options && options.childList) {
+          record.target = event.relatedNode;// parent node of the node that has been inserted/removed
+          if (!isTarget ()) return null;
+          record.type = "childList";
+          var addedNodes = [];
+          var removedNodes = [];
+          if (event.type == "DOMNodeInserted") {
+            addedNodes.push (event.target);
+          }
+          else {
+            removedNodes.push (event.target);
+          }
+          record.addedNodes = addedNodes;
+          record.removedNodes = removedNodes;
+          record.previousSibling = event.target.previousSibling;
+          record.nextSibling = event.target.nextSibling;
+        }
+        break;
+      default:
+        Akahuku.debug.warn ("Unexpected event type: " + event.type);
+    }
+
+    return (record.type ? record : null);
+  },
 
 };
 

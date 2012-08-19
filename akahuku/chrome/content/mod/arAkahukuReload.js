@@ -385,6 +385,8 @@ arAkahukuReloadParam.prototype = {
     
   partialNodes : null,         /* Array  部分表示の時のボタン用の要素 */
     
+  statusTimerID : null,        /* Number ステータスを消すタイマーID */
+
   /**
    * データを開放する
    */
@@ -409,6 +411,8 @@ arAkahukuReloadParam.prototype = {
     }
     catch (e) {
     }
+    clearTimeout (this.statusTimerID);
+    this.statusTimerID = null;
     this.targetDocument = null;
   },
     
@@ -1896,7 +1900,11 @@ var arAkahukuReload = {
     }
         
     if (!permanent && !arAkahukuReload.enableStatusHold) {
-      setTimeout
+      var param
+      = Akahuku.getDocumentParam (targetDocument).reload_param;
+      clearTimeout (param.statusTimerID);
+      param.statusTimerID
+      = setTimeout
       (function (message) {
         for (var i = 0; i < ids.length; i++) {
           var node = targetDocument.getElementById (ids [i]);
@@ -2105,19 +2113,15 @@ var arAkahukuReload = {
    *         レスを含む HTML
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  Boolean isNotTable
+   *         tableによる構造ではないかどうか
    * @return Object
    *         レスのコンテナ
    */
-  createContainer : function (responseText, targetDocument) {
+  createContainer : function (responseText, targetDocument, isNotTable) {
     var container = {};
     
-    var isOld = true;
-    
-    if (responseText.match (/<div class=t>/)) {
-      isOld = false;
-    }
-    
-    if (isOld) {
+    if (!isNotTable) {
       var table = targetDocument.createElement ("table");
       var tbody = targetDocument.createElement ("tbody");
       var tr = targetDocument.createElement ("tr");
@@ -2271,6 +2275,7 @@ var arAkahukuReload = {
     var replyNoInputAttr = "name=";
     var replyDisplay = "table";
     var dispdel = -1;
+    var isTable = true;
     try {
       var ddbut = targetDocument.getElementById ("ddbut");
       if (ddbut) {
@@ -2297,7 +2302,9 @@ var arAkahukuReload = {
       tagStop = "<td>";
       replyNoInputAttr = "name=\"edit\\[\\]\" value=";
     }
-    if (responseText.indexOf ("<div class=t>") != -1) {
+    else if (responseText.lastIndexOf (replyStartTag, 4096) == -1
+        && responseText.lastIndexOf ("<div class=t>", 4096) != -1) {
+      isTable = false;
       checkColor = false;
       replyStartTag = "<div class=r>";
       tagStop = ">";
@@ -2471,8 +2478,12 @@ var arAkahukuReload = {
       var isDeleted = false;
       if (checkColor) {
         var s = responseText.substr (startPosition, 100);
-        if (!s.match (/^<td bgcolor=\'?#F0E0D6/i)) {
+        if (!s.match (/^<td bgcolor=["']?#F0E0D6/i)) {
           endPosition = startPosition + 1;
+          if (Akahuku.debug.enabled) {
+            Akahuku.debug.warn
+              ("checkColor logic skips response text;\n" + s);
+          }
           continue;
         }
         
@@ -2535,7 +2546,7 @@ var arAkahukuReload = {
           /* レスが無い時 */
           lastReply.container
           = arAkahukuReload.createContainer (responseText,
-                                             targetDocument);
+                                             targetDocument, !isTable);
           replyPrefix
           = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
           lastReplyNumber = 0;
@@ -2967,22 +2978,27 @@ var arAkahukuReload = {
   updateAd : function (responseText, targetDocument) {
     var startPosition = 0;
     var endPosition = 0;
-    var heading = "<table width=468 border><tr><td>";
+    var heading = "<div class=\"ama\">";
     var heading2 = "<table class=\"ama\"><tr><td>";
-    var heading3 = "<div class=\"ama\">";
+    var heading3 = "<table width=468 border><tr><td>";
     var startTag = heading + "<a href=\"http://www.amazon.co.jp/";
     var startTag2 = heading2 + "<a href=\"http://www.amazon.co.jp/";
     var startTag3 = heading3 + "<a href=\"http://www.amazon.co.jp/";
-    var mode = 1;
+    var mode = 2;
     var endTag = "</td>";
     var trailing2 = "</blockquote>";
     var endTag2 = "</blockquote></div>";
     
+    if (responseText.length > 4096) {
+      // 長いスレでの探索コストを抑える
+      startPosition = responseText.length - 4096;
+    }
     startPosition = responseText.indexOf (startTag, startPosition);
     if (startPosition != -1) {
       startPosition += heading.length;
     }
     else {
+      mode = 1;
       startPosition = responseText.indexOf (startTag2, startPosition);
       
       if (startPosition != -1) {
@@ -2992,7 +3008,6 @@ var arAkahukuReload = {
         startPosition = responseText.indexOf (startTag3, startPosition);
       
         if (startPosition != -1) {
-          mode = 2;
           startPosition += heading3.length;
         }
         else {
@@ -3022,7 +3037,7 @@ var arAkahukuReload = {
     adCell = targetDocument.getElementById ("akahuku_ad_cell");
     if (adCell == null) {
       var nodes = targetDocument.getElementsByTagName ("blockquote");
-      for (var i = 0; i < nodes.length; i ++) {
+      for (var i = nodes.length - 1; i >= 0; i --) {
         var isBanner = false;
         var mode2 = 1;
         if (arAkahukuDOM.findParentNode (nodes [i], "center") != null) {
@@ -3073,10 +3088,9 @@ var arAkahukuReload = {
    *         対象のドキュメント
    */
   update : function (targetDocument) {
-    var param
-    = Akahuku.getDocumentParam (targetDocument).reload_param;
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
+    var info = documentParam.location_info;
         
     var newNodes = new Array (), addNodes = new Array ();
         
@@ -3174,6 +3188,9 @@ var arAkahukuReload = {
         if (node) {
           arAkahukuDOM.setText (node, newReplies);
         }
+
+        /* BQ cache を消す */
+        Akahuku._setMessageBQCache (documentParam, null);
       }
             
       /* スレ消滅情報に反映する */

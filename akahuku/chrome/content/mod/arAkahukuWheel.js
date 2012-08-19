@@ -18,6 +18,7 @@ var arAkahukuWheel = {
   enableReloadReply : false,     /* Boolean レス送信 */
   enableReloadReplySync : false, /* Boolean 同期 */
   enableReloadCatalog : false,   /* Boolean カタログ */
+  enableReloadCatalogUp : false, /* Boolean ページ上端でも */
   enableReloadAll : false,       /* Boolean 全てのページ */
   reloadThreshold : 3,           /* Number  n 回操作 */
     
@@ -57,6 +58,9 @@ var arAkahukuWheel = {
       arAkahukuWheel.enableReloadLoop
         = arAkahukuConfig
         .initPref ("bool", "akahuku.wheel.reload.loop", false);
+      arAkahukuWheel.enableReloadCatalogUp
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.wheel.reload.catalog.up", false);
     }
   },
 
@@ -99,7 +103,8 @@ var arAkahukuWheel = {
       }
             
       if (info
-          && info.isNormal && arAkahukuWheel.enableReloadLoop
+          && ((info.isNormal && arAkahukuWheel.enableReloadLoop)
+            || (info.isCatalog && arAkahukuWheel.enableReloadCatalogUp))
           && wheelDelta < 0
           && targetWindow.scrollY == 0) {
         /* ループの場合上方向もアリ */
