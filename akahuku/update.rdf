@@ -15,7 +15,7 @@
                 <em:minVersion>1.0</em:minVersion>
                 <em:maxVersion>16.0a2</em:maxVersion>
                 <em:updateLink>https://raw.github.com/toshiakisp/akahuku-firefox-sp/master/akahuku.xpi</em:updateLink>
-                <em:updateInfoURL>http://toshiakisp.github.com/akahuku-firefox-sp/updateinfo.html</em:updateInfoURL>
+                <em:updateInfoURL>http://toshiakisp.github.com/akahuku-firefox-sp/updateinfo.xhtml</em:updateInfoURL>
               </RDF:Description>
             </em:targetApplication>
           </RDF:Description>
