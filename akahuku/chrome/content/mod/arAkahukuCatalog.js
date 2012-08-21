@@ -3434,11 +3434,6 @@ var arAkahukuCatalog = {
       td.setAttribute ("__age", "-1");
       td.setAttribute ("__overflowed", "true");
     }
-
-    // 見たスレとしてマーク (履歴イベント無しでもマーク可能にする)
-    if (arAkahukuCatalog.enableVisited) {
-      arAkahukuCatalog.setCellVisited (td, true);
-    }
   },
     
   /**

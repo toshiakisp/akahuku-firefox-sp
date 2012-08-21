@@ -3285,6 +3285,11 @@ var arAkahukuLink = {
           observer.unregister ();
           arAkahukuLink.onImageError (arguments [0]);
         }, false);
+      targetDocument.defaultView.addEventListener
+        ("pagehide",
+         function () {
+          observer.unregister ();
+        }, false);
     }
     else if (uri.match (/\.(swf)(\?.*)?$/i)) {
       image = targetDocument.createElement ("embed");

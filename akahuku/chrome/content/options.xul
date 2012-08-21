@@ -1769,6 +1769,10 @@
                       label="空白の本文を強制リンク" />
             <checkbox id="catalog_visited" checked="false"
                       label="一度見たスレをマーク" />
+            <box class="sub" orient="vertical">
+              <label id="catalog_visited_warning"
+                     value="※ブラウザの履歴に依存します .sp" class="warning" />
+            </box>
             <checkbox id="catalog_red" checked="false"
                       label="古いスレを赤くする" />
             <checkbox id="catalog_left" checked="false"
