@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>README</title>
+    <style type="text/css" media="all">
+      body {
+          background-color: #FFFFEE;
+          color: #800000;
+      }
+      .newfeature {
+        color: blue;
+        font-size: larger;
+      }
+      .newfeature:before {
+        font-family: monospace;
+        color: blue;
+        content: "[NEW]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .bugfix {
+        color: rgb(255,  0,  0);
+      }
+      .bugfix:before {
+        font-family: monospace;
+        content: "[FIX]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .improve:before {
+        font-family: monospace;
+        content: "[IMP]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .futaba:before {
+        font-family: monospace;
+        color: rgb(255,  0,153);
+        content: "[FTB]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .fxupdate:before {
+        font-family: monospace;
+        color: rgb(221,114, 24);
+        content: "[FOX]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .optimize:before {
+        font-family: monospace;
+        content: "[OPT]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .security {
+        color: rgb(255,  0,  0);
+        font-weight: bold;
+      }
+      .security:before {
+        font-family: monospace;
+        content: "[SECURITY]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+
+      li.explain {
+        background-color: rgb(240,224,214);
+        font-size: smaller;
+        margin-top: 1ex;
+        margin-bottom:1ex;
+      }
+      li.explain span.sub {
+        color: #cc8888;
+      }
+      .cited {
+        color: #789922;
+      }
+      .cited:before {
+        content: "&gt;";
+      }
+      .obsolete {
+        text-decoration: line-through;
+        font-weight: normal;
+      }
+      h1 {
+          font-size: 20pt;
+      }
+      h1, h2 {
+          text-align: center;
+      }
+      .centerbox {
+        width: 50%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      li.featurename,
+      ul#changes1>li {
+        font-weight: bold;
+        text-decoration: underline;
+      }
+      li.click:hover,
+      li.clicked:hover {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      li.clicked {
+        font-weight: bold;
+      }
+      .sp64768:after { /* latest update */
+        content: "NEW";
+        background-color: yellow;
+        color: black;
+        font-size: x-small;
+        font-weight: bold;
+        padding: 0px 1ex;
+        border: 1px solid black;
+        vertical-align: top;
+      }
+      .sp64332:after {
+        opacity: 0.5;
+        content: "[sp64332]";
+        font-weight: normal;
+      }
+      li.explain.sp64768:after {
+        content: none ! important;
+      }
+      div.legendbox {
+        width:16em;
+        border:1px solid;
+        background-color: #FFFFEE;
+        font-size:smaller;
+      }
+      div.legendbox>div.legendbox-header,
+      div.legendbox>div.legendbox-footer{
+        width:100%;
+        text-align:center;
+      }
+      div.legendbox>div.legendbox-header{
+        font-size: larger;
+        font-weight: bold;
+        background-color: rgb(240,224,214);
+        margin: 0px;
+        border-width: 0px 0px 1px 0px;
+        border-style: solid;
+      }
+      div.legendbox>div.legendbox-footer{
+        font-size: smaller;
+      }
+    </style>
+<script type="text/javascript">
+<![CDATA[
+function hideExceptClass(node, className, style, level) {
+  if (typeof(level) == "undefined") level = 0;
+  if (node.nodeType != node.ELEMENT_NODE) return false;
+  node.style.opacity = null;
+  if (node.className && node.className.indexOf(className) != -1) return true;
+  var childrenFlag = false;
+  var lastListItem = null, lastListItemFlag = false;
+  for (var i=0; i < node.children.length; i++) {
+    if (node.children[i].tagName == "li") {
+      if (lastListItem && !lastListItemFlag && level > 0) {
+        lastListItem.setAttribute("style",style);
+      }
+      lastListItem = node.children[i];
+      lastListItemFlag = arguments.callee(node.children[i],className,style,level+1);
+    } else if (!lastListItemFlag) {
+      lastListItemFlag = arguments.callee(node.children[i],className,style,level+1);
+    } else {
+      /* 有効なliの下に続くli以外の要素は全て残す */
+    }
+    childrenFlag = childrenFlag || lastListItemFlag;
+  }
+  if (lastListItem && !lastListItemFlag && level > 0) {
+    lastListItem.setAttribute("style",style);
+  }
+  return childrenFlag;
+}
+
+var classes = {};
+function clicktohide(className, clickNode) {
+  if (!classes[className]) {
+    classes[className] = true;
+    var style = 'opacity:0.25';//'display:none';
+    clickNode.className = clickNode.className.replace(/\bclick\b/,"clicked");
+    hideExceptClass(document.getElementById('changes1'),className,style, 0);
+    hideExceptClass(document.getElementById('changes2'),className,style, 1);
+    hideExceptClass(document.getElementById('legend'),className,'visibility:hidden', 1);
+  } else {
+    classes[className] = false;
+    clickNode.className = clickNode.className.replace(/\bclicked\b/,"click");
+    hideExceptClass(document.getElementById('changes1'),className, null, 0);
+    hideExceptClass(document.getElementById('changes2'),className, null, 1);
+    hideExceptClass(document.getElementById('legend'),className, null, 1);
+  }
+}
+//]]>
+</script>
+</head>
+  <body>
+    <h1>README</h1>
+    <hr style="color: black;" />
+    <div class="centerbox">
+      <p>これは<a href="http://www.unmht.org/">arai氏</a>によりMPL 1.1/GPL 2.0/LGPL 2.1ライセンスで配布されていたFirefox拡張機能「<a href="http://www.unmht.org/akahuku/">赤福:非公式 Firefox 版</a>」 の最終バージョン Ver.5.2.90 の、非公式な改変版です。主に最新のFirefoxに対応させることが目的ですが、いろいろいじってもいます。</p>
+      <ul>
+        <li><b>akahuku-5.2.90.sp<i>XXXXX</i>.xpi</b> : 拡張本体。ファイルをFirefoxへD&amp;Dすれば(元の赤福を上書きして)インストール。</li>
+        <li class="obsolete"><b>akahuku-5.2.90.sp<i>XXXXX</i>.diff</b> : オリジナル5.2.90からのソースコードの差分。改変箇所を確認できます。ただし chrome/akahuku.jar アーカイブを chrome フォルダ下に展開した上で diff -ur したもの。</li>
+        <li class="obsolete"><b>akahuku-5.2.90.sp<i>YYYYY</i>-5.2.90.sp<i>XXXXX</i>.diff</b> : 前の版との差分。</li>
+      </ul>
+      <p><b>注意</b>：<span class="obsolete">改変版は塩に置くだけなので、アドオンの自動更新は無効化されています。新しい版などへの更新・変更は手動で行う必要があります。</span> <a href="http://toshiakisp.github.com/akahuku-firefox-sp/">改変版のサイト(github)</a>経由で新しい<b>改変版への自動更新をサポート</b>するようになりました。</p>
+      <p>改変版使用後もオリジナル版へ手動で戻せます(追加機能以外は設定項目の互換性が保たれているはず)。</p>
+      <p><b>注意2</b>：古い Firefox (3.6系を含む)ではほとんどテストもしてないため、改変された箇所に非互換による不具合が生じる可能性があります。(一応互換を考慮してはいるけれど)</p>
+    </div>
+
+    <hr style="color: black;" />
+    <h2>更新履歴</h2>
+    <p>※全ての変更点とその詳細は<a href="CHANGES.xhtml">CHANGES</a>や<span class="obsolete">差分ファイル</span><a href="http://github.com/toshiakisp/akahuku-firefox-sp">githubリポジトリ</a>を参照のこと。</p>
+    <dl>
+      <dt>sp64983 (2012-08-20): </dt>
+      <dd>
+        <ul>
+          <li><a href="CHANGES.xhtml#github">githubでの管理、今後の自動更新対応</a></li>
+          <li>バグ修正: <a href="CHANGES.xhtml#753617c">フォームの半透明解除バグ</a>、<a href="CHANGES.xhtml#936bcb7">動作しない板にしても広告ブロックが動く問題</a></li>
+          <li><a href="https://addons.mozilla.org/ja/firefox/addon/thumbnail-zoom-plus/">Thumbnail Zoom Plus</a>アドオンをオートリンクプレビューに<a href="CHANGES.xhtml#a8a7bee">対応させる</a></li>
+          <li><a href="CHANGES.xhtml#7cf2cc1">カタログ上端でホイールリロードするオプション追加</a></li>
+          <li>Firefox 14: dead object, DOM4</li>
+          <li>外部板対応をやや強化: <a href="CHANGES.xhtml#b44aabc">No.がリンク等の板</a>とか</li>
+          <li>長いスレでの「続きを読む」をほんのり軽く</li>
+        </ul>
+      </dd>
+      <dt>sp64768 (2012-08-03): オートリンクとか細々したこと</dt>
+      <dd>
+        <ul>
+          <li>オートリンクのURL判定を改善: <a href="CHANGES.xhtml#SupportForBracketsInURL">"[","]"を含むURLを認識</a>、<a href="CHANGES.xhtml#sp64768-2">http<b>s</b>://*.google も検索語を可読化</a></li>
+          <li>塩中瓶へのオートリンクでDLKey付きの場合にNotFoundになる場合がある問題(塩の仕様変更?)に<a href="CHANGES.xhtml#SioMidDLKeyLinkFix">対応</a></li>
+          <li>[spバグ] SWFプレビューに対して<a href="https://addons.mozilla.org/ja/firefox/addon/flashblock/">FlashBlock</a>アドオンが<a href="CHANGES.xhtml#FlashBlockSpoilingFix">効かなくなってた問題を修正</a>、複数プレビュー時にFlashBlockすると消せない問題を修正</li>
+          <li><a href="https://addons.mozilla.org/ja/firefox/addon/tree-style-tab/">ツリー型タブ</a>アドオンへの特別対応: <a href="CHANGES.xhtml#TreeStyleTabSupport">オートリンクでも子タブになるように</a></li>
+          <li>オートリンクで開くタブにも元タブの情報を付加するように<a href="CHANGES.xhtml#sp64768-3">変更</a> (→閉じる際に元タブに戻れたり?)</li>
+          <li>カタログで古いスレを赤くする精度の改善: <a href="CHANGES.xhtml#sp64768-4">別タブにカタログを開くタイミングでも更新</a></li>
+          <li>(READMEから変更点一覧を別ファイルに分離、更新履歴をまとめるように)</li>
+        </ul>
+      </dd>
+      <dt>sp64332 (2012-07-05): Firefox 14対応など</dt>
+      <dd>
+        <ul>
+          <li>Firefox 14 での変更点に対応 (<a href="CHANGES.xhtml#P2PImageCorruption_Fx14">P2Pの問題</a>など)</li>
+          <li>[spバグ] レス0のスレのステータスにおける残レス数表示が不正確になってしまってた件をなおした</li>
+          <li>設定変更によるステータス行増殖バグの修正</li>
+          <li>スレを開いた際の処理を少し高速化？</li>
+          <li>赤福サイドバーの[広告]対策</li>
+        </ul>
+      </dd>
+      <dt>sp63787 (2012-06-02): 「」ッチーでの挙動修正</dt>
+      <dt>sp63736 (2012-05-28): Firefox 13対応</dt>
+      <dt>sp62681 (2012-03-24): タブソートバグ対策</dt>
+      <dt>sp62497 (2012-03-11): カタログ調整</dt>
+      <dt>sp62476 (2012-03-10): </dt>
+      <dt>sp62403 (2012-03-07): </dt>
+      <dt>sp61933 (2012-02-12): 通信改善とか</dt>
+      <dd>
+        <ul>
+          <li class="baseline">バグ修正: 引用内の芝刈りの色指定が効かない、</li>
+          <li></li>
+        </ul>
+      </dd>
+      <dt>sp60999 (2011-12-15): </dt>
+      <dd>
+        <ul>
+          <li class="baseline">バグ修正: 外部板に登録が効かない、外部板でリロードの替わりに続きを読む等が効かない、稀にホイールリロードが効かなくなることがある、</li>
+          <li></li>
+        </ul>
+      </dd>
+      <dt>sp60848 (2011-12-07): Firefox 9対応とかIPアドレス画像鯖対応とか</dt>
+      <dd>
+        <ul>
+          <li class="baseline">バグ修正: 「この画像のP2Pキャッシュを削除」機能不全、オートリンクプレビュー閉じる際のスタイル戻し忘れバグ</li>
+          <li class="baseline">IPアドレス画像鯖への対応</li>
+          <li class="baseline">Firefox9+でP2Pが機能しなくなる件へ対応</li>
+          <li>ページ情報のメディアタブを akahuku: URLスキームへ対応させる</li>
+          <li>オートリンクをドラッグ＆ドロップ可能に</li>
+          <li></li>
+        </ul>
+      </dd>
+      <dt>sp60557 (2011-11-21): </dt>
+      <dd>
+        <ul>
+          <li class="baseline">バグ修正: 未定義変数への代入警告(メモリリークの可能性)、P2Pステータスバー/ツールバーが壊れるバグ、ホイールのループで0.htmを開くバグ、サイドバーのタブメニュー機能不全、URLを板以外でオートリンクとして開けない</li>
+          <li class="baseline">処理対象鯖・板を追加: IPv6鯖(未テスト)、塩中瓶(プレビュー)</li>
+          <li class="baseline">板情報更新: IPv6板追加、人形板シュリンク、カタログ有無フラグ(サイドバーでのカタログボタンに反映)</li>
+          <li class="baseline">カタログモードの設定ページを処理しないように</li>
+          <li>レス処理の高速化 (XPath利用、抽出結果キャッシュ)</li>
+          <li>(Firefox7+) ダウンロード場所を画像鯖で覚えさせないハック</li>
+          <li>ツールバーボタンを標準的なスタイルに変更</li>
+          <li>カタログのホバーズームで、画像がFirefoxのキャッシュにあれば即開くように</li>
+		  <li>引用ポップアップの改善: 検索オプション追加、数字抽出の軽量化、ポップアップ中画像の制御オプション追加など</li>
+          <li></li>
+        </ul>
+      </dd>
+      <dt>sp59934 (2011-10-20): </dt>
+      <dd>
+        <ul>
+          <li class="baseline">バグ修正: サブタイトル、"404 NOT FOUND"スレで機能不全、ポップアップのドラッグ移動時の問題</li>
+          <li class="baseline">情報更新: 震災・発電を追加、板のレス保持数情報更新</li>
+          <li>オートリンクのURL検出パターン改善: ホスト名として許さない文字追加</li>
+          <li>画像歯抜け対策: 画像読込失敗時に自動的に読込を再試行</li>
+          <li>添付画像フォームのクリア時にプレビューを消すように</li>
+          <li>(他、Firefox 7での仕様変更に追従など細々)</li>
+        </ul>
+      </dd>
+    </dl>
+
+    <hr style="color: black;" />
+    <h2>オリジナル版からの主な変更点一覧</h2>
+    <ul>
+      <li>バグ修正 (処理の漏れ、メモリリーク、想定外エラーなどへの対処)</li>
+      <ul>
+        <li class="sp61933"><a href="CHANGES.xhtml#SidebarSecurityFix">サイドバー周りの致命的な<b>セキュリティホール修正</b></a></li>
+      </ul>
+      <li>Firefoxやふたばの仕様変更への対応</li>
+      <ul>
+        <li>対応する Firefox バージョンの底上げ(～15.0a2)： <a href="CHANGES.xhtml#P2P_Fx9" class="sp60848">Firefox9以降でもP2P利用可能に</a></li>
+        <li>死んでたりバグってた機能の修正：
+        <a href="CHANGES.xhtml#SidebarTabMenu">サイドバーのタブメニュー</a>、<a href="CHANGES.xhtml#SubtitleFromRes">サブタイトル</a>、
+        <a href="CHANGES.xhtml#addToExternalFix" class="sp60999">外部板に登録</a>、
+        <a href="CHANGES.xhtml#TabSortExceptPinned" class="sp61933">タブのソート(ピン留め対応)</a>、
+        </li>
+        <li><a href="CHANGES.xhtml#BoardInformation">鯖・板の情報更新</a></li>
+        <li><a href="CHANGES.xhtml#DwonloadLastDirHack">保存先をサイト別に記憶する新仕様(Firefox7～)と画像鯖の問題についてやっつけ対処</a></li>
+        <li class="sp60848"><a href="CHANGES.xhtml#IPImageServers">IPアドレス画像鯖への対応</a></li>
+        <li class="sp61933">[同期]機能の<a href="CHANGES.xhtml#SyncReddenDelete">「…により削除されました」対応</a>、<a href="CHANGES.xhtml#SyncDeletedThumbnail">画像のみ削除への対応</a></li>
+        <li class="sp62403"><a href="CHANGES.xhtml#CatalogNewLayoutSettings">カタログ新設定項目(虹裏may)への対応</a></li>
+      </ul>
+      <li>機能改善</li>
+      <ul>
+        <li><a href="CHANGES.xhtml#BoostInternalMethods">長いスレで無駄に重くなる一部の処理の高速化・負荷軽減</a></li>
+        <li><a href="CHANGES.xhtml#PopupQuote">引用ポップアップ</a>のNo.やIPの検索能力の強化</li>
+        <li><a href="CHANGES.xhtml#CatalogRedPrecision">カタログの「古いスレを赤くする」機能の精度向上</a></li>
+        <li class="sp61933"><a href="CHANGES.xhtml#ConfigurableBlocker">「広告を隠す」をカスタマイズ可能に</a></li>
+        <li class="sp61933">HTTP通信の改善：<a href="CHANGES.xhtml#WebConsoleReady">Webコンソール対応</a>、
+        <a href="CHANGES.xhtml#BypassChannelRefactoring">「オートリンクプレビュー」改善</a>、
+        <a href="CHANGES.xhtml#ReloadIfModified">「続きを読む」効率化</a></li>
+        <li class="sp61933"><a href="CHANGES.xhtml#CachedThreadWithImages">[キャッシュを見る]では画像もキャッシュから見るように</a>(まだいまいち)</li>
+        <li class="sp62403"><a href="CHANGES.xhtml#CatalogLeftOnReload">カタログの「更新前を残す」の利用可能範囲を拡大(制限緩和)</a></li>
+      </ul>
+      <li>使い勝手(UI)の改善</li>
+      <ul>
+        <li><a href="CHANGES.xhtml#BottomFormOnlyForm">ふたばのフォーム位置切替と同様にフォームを下部へ置くオプション</a></li>
+        <li><a href="CHANGES.xhtml#BottomFormTRSwitch">ページ末尾のフォームの近くに「新規スレッド作成」切替ボタンを表示</a></li>
+        <li><a href="CHANGES.xhtml#DragOpenForm">ファイル等をドラッグ＆ドロップしようとした時に閉じられたフォームを自動で開くように</a></li>
+        <li class="sp60848"><a href="CHANGES.xhtml#DragableAutoLink">オートリンクをドラッグ可能に</a></li>
+        <li class="sp62403"><a href="CHANGES.xhtml#AutoLinkMiddleClick">オートリンクを中ボタンクリックしたときのタブフォーカスを標準的な挙動に</a></li>
+        <li class="sp62403"><a href="CHANGES.xhtml#CatalogReorderButtonUIImprove">カタログのソートボタンをスマートに&amp;上下に配置</a></li>
+      </ul>
+      <li>新機能の追加</li>
+      <ul>
+        <li><a href="CHANGES.xhtml#PreviewYouTube">YouTube URLのオートリンクからプレビューを[見る]</a><br />
+        </li>
+        <li>引用ポップアップ：</li>
+        <ul>
+          <li><a href="CHANGES.xhtml#PopupFromID">ID引用のポップアップ(普通の引用、No.、IPと同様に１レスのみ)</a></li>
+          <li><a href="CHANGES.xhtml#PopupQuoteExact">引用の元レスをより正確にポップアップできるよう検索方法を変更するオプション</a></li>
+          <li><a href="CHANGES.xhtml#PopupExcludePreview">ポップアップにオートリンクのプレビューを含ませないようにするオプション</a><br />
+          </li>
+        </ul>
+        <li class="sp61933"><a href="CHANGES.xhtml#ThumbCacheProtection">サムネ画像のキャッシュを保護するオプション(MHT保存支援)</a></li>
+        <li>カタログ：</li>
+        <ul>
+          <li class="sp62403"><a href="CHANGES.xhtml#CatalogReorderDelta">ソート順「増加数順に」を追加</a></li>
+          <li class="sp62403"><a href="CHANGES.xhtml#CatalogRowInfo">ソート時に各行に情報(時間帯・増加数)を表示するオプション</a></li>
+          <li class="sp62403"><a href="CHANGES.xhtml#CatalogObserveInfo">通常・返信モードと連携させてスレ情報を即座に反映するオプション</a></li>
+        </ul>
+      </ul>
+    </ul>
+
+    <hr style="color: black;" />
+    <h2>既知の問題</h2>
+    <ul>
+      <li>赤福が関係するタブを複数のウィンドウ間で移動させ、元のウィンドウを閉じると、移動したタブでの赤福の処理がほとんど全て破綻する。ページをそもそもマルチウィンドウは全く考慮されてない設計のアドオンなので仕方がないのか…。ページを再読込みすればとりあえず凌げるが。</li>
+      <li><span class="obsolete">この改変版はオリジナルと同じアドオン(同じGUID)扱いなので(やっつけ)、Firefoxの計画してる<a href="https://wiki.mozilla.org/Features/Add-ons/Add-ons_Default_to_Compatible">将来の互換性チェックの仕組み</a>とはソリが合わなくなるかもしれない、あるいは大丈夫かもしれない。</span>→結果的には大丈夫だったようだ</li>
+      <li>赤福と連携するようなアドオンとの協調動作は未確認(どれも使っていないため)。一応、改変にあたって意識はしているが、自分では組み合わせて動作検証はしてない。</li>
+      <li>アドオンの同期(Firefox11+)には未対応。(そもそもAMOに登録されてないから(いまのところ？)対象外。設定の同期<a href="https://developer.mozilla.org/en/Firefox_Sync/Syncing_custom_preferences">[MDN]</a>は対応できそうだが、赤福自身にインポート・エクスポート機能があるから別にいらないか)</li>
+      <li>sp61933:<br/>
+        <span class="cited">これリロードが利かなかったりで使ってないや･･･</span><br/>
+        <span class="cited obsolete">俺も塩の画像MHTに保存できなかったから一つ前のバージョン使ってるな・・・</span><br/>
+      こういう声もあるみたいだけど、どういう状況なのかとか、どういう環境で再現するのかよくわからないない(「キャッシュを見る」のバグ修正でなおったかも？)。ところで動作テストはそれほど細かくやっていないので、古いFirefoxや他アドオンとの組合せによっては問題が起きることもあるかもしれない。</li>
+      <li>あたりまえのことだけど、信頼できない配布元からのアドオンをインストールするということには大きなセキュリティリスクがある、という問題がある。だから、<br/>
+      <span class="cited">ソース読めないからどこの誰かもわからん人が作ったものを使いたくないんだよなあ</span><br/>
+      <span class="cited">それをいったらペドい人もどこのだれかわからないといったらわからないけど</span><br/>
+      <span class="cited">でも塩にポンと挙げられたものを使うのは結構度胸がいる</span><br/>
+      というレスは至極当然のものなのだが、面倒でない解決方法が思いつかなかったので放置していた。メンテナになりたいわけでもなかったし。
+      とはいえ、もうずいぶん長いこと続けてるし、少なくとも<b>配布元の同一性確認</b>くらいはできるようにしておいたほうがいいだろう(第三者が悪意のあるコードを入れて同じように塩に置く危険性を減らすため)。
+      というとこで不慣れながら<a href="https://twitter.com/#!/toshiakisp">twitter</a>で塩に置いたことを告知することにした。
+      何もしないよりはマシだろう。</li>
+      <li>Firefox 14から、プラグインの「クリックして再生」設定が導入されはじめた(デフォルト無効)が[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=711552">Bug 711552</a>]、赤福のオートリンク機能でSWFをプレビューすると「クリックして再生」のUIが表示されず再生できない問題がある。プレビューではリファラを送らないように赤福独自スキーム(akahuk://)を使っていて、spでこのスキームをSWFにも使用するようにしているが、これが問題なようで…。とりあえず、どうしてもこの設定を有効にしたい場合には、*.2chan.netでは「クリックして再生」が出ないように、サイト別設定から「プラグインの実行」を「許可」にすればswfのオートリンクプレビューも表示されるので、問題をやりすごせる。(プレビューでなく別タブで開けばそもそも問題は起きない)<br/>
+      → Aurora 15 で、いつのまにか「クリックして再生」が期待通りに動くようになってるので、赤福側の対処は不要か。</li>
+      <li><br />
+      </li>
+    </ul>
+    <ul>
+    </ul>
+    <br />
+  </body>
+</html>

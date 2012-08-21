@@ -22,7 +22,7 @@
 
 
         <ul>
-          <li><a href="https://toshiakisp.github.com/akahuku-firefox-sp/akahuku.xpi">Download <strong>XPI File</strong></a></li>
+          <li><a href="http://toshiakisp.github.com/akahuku-firefox-sp/akahuku.xpi">Install <strong>Add-on</strong></a></li>
           <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/zipball/master">Download <strong>Source</strong></a></li>
           <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp">View On <strong>GitHub</strong></a></li>
         </ul>
@@ -32,48 +32,30 @@
 
 <p>これはarai氏によりMPL 1.1/GPL 2.0/LGPL 2.1ライセンスで配布されていたFirefox拡張機能「赤福:非公式 Firefox 版」 の最終バージョン Ver.5.2.90 の、非公式な改変版です。主に最新のFirefoxに対応させることが目的ですが、いろいろいじってもいます。</p>
 
-<h2>Updates</h2>
+<p>オリジナル版をアップデートする形で導入でき、設定項目などは基本的にオリジナル版を引き継ぎます。(自動)更新の対象はこの改変版に切り替わります。手動でインストールしなおせばオリジナル版に戻すことはできます。</p>
 
-<h3>sp64983 (2012-08-20): 自動更新対応したりとか</h3>
+<h3>改変版の主な要素</h3>
 <ul>
-<li>githubでの管理、今後の自動更新対応</li>
-<li>バグ修正: フォームの半透明解除バグ、動作しない板にしても広告ブロックが動く問題</li>
-<li>Thumbnail Zoom Plusアドオンをオートリンクプレビューに対応させる</li>
-<li>カタログ上端でホイールリロードするオプション追加</li>
-<li>Firefox 14: dead object, DOM4</li>
-<li>外部板対応をやや強化: No.がリンク等の板とか</li>
-<li>長いスレでの「続きを読む」をほんのり軽く</li>
+<li>最新の Firefox リリース、最新のふたば環境への対応</li>
+<li>コード見直しやバグ修正による処理の最適化、高速化</li>
+<li>ちょっとした新機能、新設定オプションの追加</li>
 </ul>
+<h3>注意</h3>
+<p>古い Firefox (3.6系も)では不具合が生じる可能性があります。(一応できるだけ互換を考慮してはいるけれど、ほとんどテストしてないため)</p>
 
-<h3>sp64768 (2012-08-03): オートリンクとか細々したこと</h3>
+<h2>最新版の更新情報</h2>
+<iframe src="updateinfo.xhtml" width="100%" height="300px"></iframe>
+<p>(Github の <a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/master/">履歴</a>や Twitter の方が情報は早いです)</p>
 
-<ul>
-<li>オートリンクのURL判定を改善: "[","]"を含むURLを認識、https://*.google も検索語を可読化</li>
-<li>塩中瓶へのオートリンクでDLKey付きの場合にNotFoundになる場合がある問題(塩の仕様変更?)に対応</li>
-<li>[spバグ] SWFプレビューに対してFlashBlockアドオンが効かなくなってた問題を修正、複数プレビュー時にFlashBlockすると消せない問題を修正</li>
-<li>ツリー型タブアドオンへの特別対応: オートリンクでも子タブになるように</li>
-<li>オートリンクで開くタブにも元タブの情報を付加するように変更 (→閉じる際に元タブに戻れたり?)</li>
-<li>カタログで古いスレを赤くする精度の改善: 別タブにカタログを開くタイミングでも更新</li>
-<li>(READMEから変更点一覧を別ファイルに分離、更新履歴をまとめるように)</li>
-</ul><h3>sp64332 (2012-07-05): Firefox 14対応など</h3>
-
-<ul>
-<li>Firefox 14 での変更点に対応 (P2Pの問題など)</li>
-<li>[spバグ] レス0のスレのステータスにおける残レス数表示が不正確になってしまってた件をなおした</li>
-<li>設定変更によるステータス行増殖バグの修正</li>
-<li>スレを開いた際の処理を少し高速化？</li>
-<li>赤福サイドバーの[広告]対策</li>
-</ul>
-      </section>
-      <footer>
-	    <p>This project is maintained by <a href="https://github.com/toshiakisp">toshiakisp</a></p>
+<h2>つぶやき</h2>
 <script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
 <script>
 new TWTR.Widget({
   version: 2,
-  type: 'profile',
+  type: 'faves',
   rpp: 4,
   interval: 30000,
+  title: 'ユーザー toshiakisp が選んだツイート',
   width: 'auto',
   height: 300,
   theme: {
@@ -95,6 +77,20 @@ new TWTR.Widget({
   }
 }).render().setUser('toshiakisp').start();
 </script>
+<p>(twitter widget)</p>
+
+<h2>他のリソース</h2>
+
+<dl>
+<dt><a href="README.xhtml">README</a></dt>
+<dd>塩リリース同梱のREADME</dd>
+<dt><a href="CHANGES.xhtml">CHANGES</a></dt>
+<dd>オリジナル版からの変更点の詳細な一覧(機能別、メモ付き)</dd>
+</dl>
+
+      </section>
+      <footer>
+	    <p>This project is maintained by <a href="https://github.com/toshiakisp">toshiakisp</a></p>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>

@@ -1,0 +1,1625 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <title>CHANGES</title>
+    <style type="text/css" media="all">
+      body {
+          background-color: #FFFFEE;
+          color: #800000;
+      }
+      .newfeature {
+        color: blue;
+        font-size: larger;
+      }
+      .newfeature:before {
+        font-family: monospace;
+        color: blue;
+        content: "[NEW]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .bugfix {
+        color: rgb(255,  0,  0);
+      }
+      .bugfix:before {
+        font-family: monospace;
+        content: "[FIX]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .improve:before {
+        font-family: monospace;
+        content: "[IMP]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .futaba:before {
+        font-family: monospace;
+        color: rgb(255,  0,153);
+        content: "[FTB]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .fxupdate:before {
+        font-family: monospace;
+        color: rgb(221,114, 24);
+        content: "[FOX]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .optimize:before {
+        font-family: monospace;
+        content: "[OPT]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+      .security {
+        color: rgb(255,  0,  0);
+        font-weight: bold;
+      }
+      .security:before {
+        font-family: monospace;
+        content: "[SECURITY]";
+        font-weight: bold;
+        margin-right: 1ex;
+      }
+
+      li.explain {
+        background-color: rgb(240,224,214);
+        font-size: smaller;
+        margin-top: 1ex;
+        margin-bottom:1ex;
+      }
+      li.explain span.sub {
+        color: #cc8888;
+      }
+      .cited {
+        color: #789922;
+      }
+      .cited:before {
+        content: "&gt;";
+      }
+      .obsolete {
+        text-decoration: line-through;
+        font-weight: normal;
+      }
+      h1 {
+          font-size: 20pt;
+      }
+      h1, h2 {
+          text-align: center;
+      }
+      .centerbox {
+        width: 50%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      li.featurename,
+      ul#changes1>li {
+        font-weight: bold;
+        text-decoration: underline;
+      }
+      li.click:hover,
+      li.clicked:hover {
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      li.clicked {
+        font-weight: bold;
+      }
+      div.legendbox {
+        width:16em;
+        border:1px solid;
+        background-color: #FFFFEE;
+        font-size:smaller;
+      }
+      div.legendbox>div.legendbox-header,
+      div.legendbox>div.legendbox-footer{
+        width:100%;
+        text-align:center;
+      }
+      div.legendbox>div.legendbox-header{
+        font-size: larger;
+        font-weight: bold;
+        background-color: rgb(240,224,214);
+        margin: 0px;
+        border-width: 0px 0px 1px 0px;
+        border-style: solid;
+      }
+      div.legendbox>div.legendbox-footer{
+        font-size: smaller;
+      }
+    </style>
+    <style type="text/css" media="all">
+      .VERSION:after { /* latest update */
+        content: "NEW";
+        background-color: yellow;
+        color: black;
+        font-size: x-small;
+        font-weight: bold;
+        padding: 0px 1ex;
+        border: 1px solid black;
+        vertical-align: top;
+      }
+    </style>
+<script type="text/javascript">
+<![CDATA[
+function hideExceptClass(node, className, style, level) {
+  if (typeof(level) == "undefined") level = 0;
+  if (node.nodeType != node.ELEMENT_NODE) return false;
+  node.style.opacity = null;
+  if (node.className && node.className.indexOf(className) != -1) return true;
+  var childrenFlag = false;
+  var lastListItem = null, lastListItemFlag = false;
+  for (var i=0; i < node.children.length; i++) {
+    if (node.children[i].tagName == "li") {
+      if (lastListItem && !lastListItemFlag && level > 0) {
+        lastListItem.setAttribute("style",style);
+      }
+      lastListItem = node.children[i];
+      lastListItemFlag = arguments.callee(node.children[i],className,style,level+1);
+    } else if (!lastListItemFlag) {
+      lastListItemFlag = arguments.callee(node.children[i],className,style,level+1);
+    } else {
+      /* 有効なliの下に続くli以外の要素は全て残す */
+    }
+    childrenFlag = childrenFlag || lastListItemFlag;
+  }
+  if (lastListItem && !lastListItemFlag && level > 0) {
+    lastListItem.setAttribute("style",style);
+  }
+  return childrenFlag;
+}
+
+var classes = {};
+function clicktohide(className, clickNode) {
+  if (!classes[className]) {
+    classes[className] = true;
+    var style = 'opacity:0.25';//'display:none';
+    clickNode.className = clickNode.className.replace(/\bclick\b/,"clicked");
+    hideExceptClass(document.getElementById('changes1'),className,style, 0);
+    hideExceptClass(document.getElementById('changes2'),className,style, 1);
+    hideExceptClass(document.getElementById('legend'),className,'visibility:hidden', 1);
+  } else {
+    classes[className] = false;
+    clickNode.className = clickNode.className.replace(/\bclicked\b/,"click");
+    hideExceptClass(document.getElementById('changes1'),className, null, 0);
+    hideExceptClass(document.getElementById('changes2'),className, null, 1);
+    hideExceptClass(document.getElementById('legend'),className, null, 1);
+  }
+}
+
+function onLoad() {
+  //レジェンドボックスとバージョンのスタイルを動的に生成する
+  var versionsToDisp = ['sp64768','sp64983','sp99999']; 
+
+  var cssRuleTemplates = [
+    '._VERSION_:after { opacity: 0.5; content: "[_VERSION_]"; font-weight: normal; }',
+    'li.explain._VERSION_:after { content: none ! important; }',
+    ];
+  var legendbox = document.getElementById('legendbox');
+  if (legendbox.firstChild.nodeType == legendbox.COMMENT_NODE) {
+    legendbox.innerHTML = legendbox.firstChild.data;
+  }
+  var legend = document.getElementById('legend');
+  if (legend) {
+    var versions = versionsToDisp.slice(0);
+    while (versions.length > 0) {
+      var version = versions.shift();
+      var li = document.createElement('li');
+      li.className = 'click '+version;
+      li.setAttribute('onclick','clicktohide("'+version+'", this)');
+      li.textContent = (versions.length ? '前の':'最新')+'版の変更点';
+      legend.appendChild(li);
+
+      if (versions.length) {
+        var sheet = document.styleSheets[1];
+        if (sheet) {
+          for (var i = 0; i < cssRuleTemplates.length; i++) {
+            sheet.insertRule(cssRuleTemplates[i].split('_VERSION_').join(version), sheet.cssRules.length);
+          }
+        }
+      }
+      else {
+        var sheet = document.styleSheets[1];
+        if (sheet && sheet.cssRules.length > 0) {
+          var text = sheet.cssRules[0].cssText;
+          sheet.insertRule(text.replace('VERSION',version), sheet.cssRules.length);
+        }
+      }
+    }
+  }
+}
+//]]>
+</script>
+</head>
+  <body onload="onLoad();">
+    <h1>CHANGES</h1>
+    <hr style="color: black;" />
+    <p>変更点詳細。作業メモを兼ねて元バージョン(5.2.90)からの細かい変更点を項目毎に羅列する。</p>
+    <div class="legendbox" id="legendbox"><!--
+      <div class="legendbox-header">変更点の凡例</div>
+      <ul id="legend">
+        <li class="click newfeature" onclick="clicktohide('newfeature',this)">新機能</li>
+        <li class="click bugfix"     onclick="clicktohide('bugfix',this)"    >バグ修正</li>
+        <li class="click futaba"     onclick="clicktohide('futaba',this)"    >ふたば更新対応</li>
+        <li class="click fxupdate"   onclick="clicktohide('fxupdate',this)"  >Firefox対応</li>
+        <li class="click optimize"   onclick="clicktohide('optimize',this)"  >最適化</li>
+        <li class="click improve"    onclick="clicktohide('improve' ,this)"  >改善？</li>
+        <li>その他？</li>
+        <li></li>
+      </ul>
+      <div class="legendbox-footer">クリックで要素以外をフィルタリング</div>
+    --><noscript><span style="color:red;">(注意:JavaScriptが有効でないとバージョンの情報などが表示されません)</span></noscript>
+    </div>
+    <h3>機能別</h3>
+    <ul id="changes1">
+      <li>タイトル</li>
+      <ul>
+        <li class="futaba sp59934 baseline" id="SubtitleFromRes">「レスの一部をサブタイトルにする」が今のふたばでも機能するように修正</li>
+        <ul>
+          <li class="explain">通常モードのタイトル(ページ最上部の「二次元裏＠ふたば」のこと)のHTML書式が変わってからずっと死んでた機能。</li>
+        </ul>
+      </ul>
+      <li>スクロール</li>
+      <li>広告</li>
+      <ul>
+        <li class="newfeature">「末尾の広告を横に置く」時、Amazonだけでなく他の末尾バナー広告も一緒に横へ置くオプションを追加</li>
+        <li class="featurename" id="ConfigurableBlocker">外部サイトをブロック</li>
+        <ul>
+          <li class="explain sp61933">現状は、ブロックするサイトがあちこちにハードコーディングしてあり、今では見ないサイトも残ってる(だいぶ前にブロックサイトの更新は放棄されたのかな?)。そして、この埋め込み設定を使うか否か程度しか選べない。<br/>
+          → <b>改変ポリシー：</b>機能は整理して残すが埋め込みブロック対象は白紙化する。ユーザーが対象を手動で設定して初めて機能するように。お手軽に設定オンで全部消えるとかは無し。</li>
+          <li class="sp60848">コンテンツポリシー中心にコードを整理</li>
+          <ul>
+            <li class="explain"><b>解説：</b><a href="https://developer.mozilla.org/en/XUL_School/Intercepting_Page_Loads#Content_Policy">コンテンツポリシー</a>(<a href="https://developer.mozilla.org/ja/XUL_School/Intercepting_Page_Loads#Content_Policy">ja</a>)とは、Firefoxが様々なコンテンツを読み込みむかどうかを判定する機構。読み込み処理の初期段階に適用されるため、コンテンツポリシーにより拒否判定されると通信も行われないことが特徴。例えば、Firefox自身の「画像の読み込みを許可しない例外サイト」設定はこの機能で実現されている。他に Adblock Plus、RequestPolicy といったアドオンもこれを利用しているらしい。</li>
+            <li class="sp60848">コンテンツスクリプト側にある冗長なブロックホスト判定を消去し、コンテンツポリシーに一元化</li>
+            <li class="sp60848 obsolete">赤福コンテンツポリシーの埋め込みブロックリストを隠し設定 akahuku.delbanner.sites の image,object,iframe (文字列) から弄れるように変更</li>
+            <ul>
+              <li class="explain">設定名はそのままで、隠し設定ではなく設定ダイアログから編集できるようにした(下の<a href="#ConfigurableCPBlocklists">変更項目</a>を参照)</li>
+            </ul>
+            <li class="sp61933">ホストだけでなくURL単位でもブロック対象にできるように</li>
+            <ul>
+              <li class="explain">ホスト単位では過剰で、ピンポイントに対象を指定したい場合に対応するため。URLは完全一致で判定する(ホスト名は後方一致)。</li>
+              <li class="explain">また、URL単位でなら 2chan.net ドメインでも対象にできるようにした。</li>
+            </ul>
+          </ul>
+          <li class="sp61933">埋め込まれたブロック対象ホストを削除</li>
+          <ul>
+            <li class="explain">古く、メンテナンスされていない情報であり、ユーザーが設定できるように改変したので削除した。</li>
+            <li class="explain">(一部の特殊なホワイトリストも削除したが、ホワイトリスト機能はつけていない。URL単位のブロック指定が出来れば十分ではないだろうか)</li>
+            <!--
+            <li class="explain">ちなみに元の挙動とだいたい同じようにする設定は以下の通り：(下の<a href="#ConfigurableCPBlocklists">変更項目</a>を参照)
+            <ul>
+              <li>画像ブロックリスト［ pink072.jp aqua.dmm.co.jp banner.luna-p.com marionette.kir.jp affiliate.dtiserv.com ］</li>
+              <li>IFRAMEブロックリスト ［ www.mmaaxx.com click.dtiserv2.com ］</li>
+              <li>FLASHブロックリスト ［ ］※設定無し</li>
+            </ul>
+            </li>
+            -->
+          </ul>
+          <li class="newfeature sp61933" id="ConfigurableCPBlocklists">設定ダイアログからブロックリストを編集できるように</li>
+          <ul>
+            <li class="explain">レイアウトや説明を変更・追加。従来の「バナー広告」「404 ページの広告」「<s>二次の</s> Flash 広告」設定が、コンテンツポリシーによる外部サイトからの読み込みブロックの設定であることを理解しやすいように。単に表現の変更のみで、これら3つの設定項目は維持される。「二次の」は実態と違うので削除。</li>
+            <li class="explain">内部処理の構造そのままに、「バナー広告」「404 ページの広告」については画像とIFRAMEのブロックリストを、「Flash 広告」には埋め込みオブジェクト(Flash以外も含まれる)のブロックリストを設定できるようにした。画像くらいしか使わないとは思うけど、備わっていた機能なので一応設定可能にしておく。</li>
+          </ul>
+          <li class="improve sp62403">通常のバナー広告の構造(DIV&gt;A&gt;IMG)以外でもなるべく余白まで消せるように</li>
+          <ul>
+            <li class="explain">バナー広告をブロックした場合に、ブロックした画像要素のみを含む親(祖先)要素は無駄な余白を生むので、適当な祖先までDOMツリーを辿って根こそぎ削除するというコードになっていた。ツリー構造が既知のバナー広告ではこのコードはうまく働くが、ちょっと構造が変わると対応できないという弱さがあった。そこでより汎用的な方法で同等の処理をするコードを追加し、既知のバナー構造以外の要素(例えばAではなくMAPを使ったバナー)をブロックした際にはこれを用いて余白を非表示にするようにした(削除はしない)。</li>
+          </ul>
+          <li class="sp64768">新たに加えたブロック後要素削除処理管理コードの不備(Firefox15+)を訂正</li>
+          <ul>
+            <li class="explain">コンテンツポリシーによるブロック時には無駄な要素を削除する処理が走るが、コードの整理に伴って、削除処理の走らせ方をタスク登録制に変更していた(変更点としてちゃんと書いていなかったけど)。通常期待通りに動いていたが、JavaScriptへの思い違いから潜在的な仕様バグがあり、稀にエラーが起きて赤福の処理全体が機能しなくなる不具合がおきることがあった(Fx15+のみで発現)：「動作する板を指定する」で指定を外した板を見た場合に「広告を隠す」有効だとエラーを起こし、その後で動作するよう指定を変更しても赤福が機能しなくなる(再起動で治る)。そもそも機能不全には陥らないようエラーハンドリングを見直し、実装方法も訂正して根本的に問題が発生しないようにした。</li>
+            <li class="explain obsolete">既知の問題:「動作する板を指定する」で指定を外した板を見た場合でも「広告を隠す」によりロードがブロックされてしまう。この修正は面倒...。</li>
+          </ul>
+          <li class="bugfix sp64983" id="936bcb7">「動作する板を指定」した場合に除外した板でも広告ブロックが動いてしまう件を修正</li>
+          <ul>
+            <li class="explain">赤福コンテンツポリシーでも「動作する板を指定」の設定を正しく読み込み、広告ブロック(＆リロードフック)も動作しないように修正した。</li>
+          </ul>
+        </ul>
+      </ul>
+      <li>ホイール</li>
+      <ul>
+        <li class="bugfix sp60557 baseline">「通常モードで上下ループする」機能で、1ページ(futaba.htm)しか無い板でホイールで前のページに移動しようとすると存在しない0.htmを開いてしまうバグを修正</li>
+        <ul>
+          <li class="explain">整合性から、単に1ページ目の下へループ(スクロール)するようにした。</li>
+        </ul>
+        <li class="sp60557">ホイールリロードの「ちょっと待ってね」の表示・クリア処理の整理と表示時間の調整</li>
+        <ul>
+          <li class="explain">リロードは5秒おきにしかできないが、ちょっと待ってねは１秒で消えるので、なぜだかリロードが効かないという体験に陥りがちだった。これを修正。ついでに、タイマー処理が乱暴なのを修正。</li>
+        </ul>
+        <li class="bugfix sp60848">一部の外部のサイトでホイールリロードが失敗する問題を修正</li>
+        <ul>
+          <li class="explain">「続きを読む」が自動的に無効になるようなサイト(「」ッチーとか)でも「続きを読」もうとしてしまい、結果エラーになっていた。エラーを起こさずに普通のリロードになるように修正。</li>
+          <li class="sp63787">「」ッチーでは普通のリロードもしないように変更</li>
+          <ul>
+            <li class="explain">挙動変更に戸惑う人が居たようなので、バグってた頃と同じ挙動になるように明示的に「」ッチーでホイールリロードが無効になるようにした。（「全てのページ」チェック時はのぞく）</li>
+            <li class="explain"><span class="cited">末尾スクロールで勝手にページ更新しちゃうのと</span><br/>
+            <span class="cited">swfリンク開くと塩の方に飛ばされちゃうんだ</span><br/>
+            良かれと思ったんだ良かれと<br/>swfはオートリンクの方で対応したよ</li>
+          </ul>
+        </ul>
+        <li class="bugfix sp60999">ページをズーム表示しているとホイールリロードが効かない場合がある問題を修正</li>
+        <ul>
+          <li class="explain">ページ末尾で下スクロールしても「ちょっと待ってね」すら表示されず、ホイールリロードが全く働かなくなる場合があった。</li>
+          <li class="explain">手元では、ページの拡大率を変えると問題が起きやすくなった。この時ページの内容部分の上に1pxのスペースが空いてるのが確認できる。どうも、ページ全体を拡大縮小する際にページのサイズの端数が出て、ピクセルサイズに反映するときに整数に丸められることで生じる分がスペースになってるみたい。この1px分が赤福のページ末尾を判定する方法に影響を与えてるようで、実際に、末尾まで1px足りないと判定されてリロードが起きない事態になってた。</li>
+          <li class="explain">Firefoxのバグっぽいが、ページ末尾かどうかの判定方法をより安定した方法(window.scrollY,scrollMaxY)に変更することで問題が起こらないようにした。古いバージョンのFirefoxでも大丈夫なはず。</li>
+        </ul>
+        <li class="newfeature sp64983" id="7cf2cc1">カタログのページ上端でもリロード可能にするオプションを追加</li>
+        <ul>
+          <li class="explain"><span class="cited">上方向に回してもリロードにならないかな</span><br/>
+          <span class="cited">カタログ下に伸ばしてるとめどい</span><br/>
+          たしかに</li>
+        </ul>
+      </ul>
+      <li>タブ</li>
+      <ul>
+        <li class="featurename">「ソート」</li>
+        <ul>
+          <li class="fxupdate sp61933" id="TabSortExceptPinned">(Firfox4+)ピン留めされたタブがある場合などでも正しくソートできるように修正</li>
+          <ul>
+            <li class="explain">ピン留めされたタブが動かせないことを考慮していなかったので、除外してソートするように修正した。また、読込保留中のタブ(Firefox9+)を正しい位置に並べられていなかった件にも対処した。</li>
+          </ul>
+          <li class="sp62681">(エンバグ) 元画像を開いたタブが先頭にソートされてた件を修正</li>
+          <ul>
+            <li class="explain">sp61933 (2012/02/12) で読込保留中のタブをソートするための処理を追加した以降で起きていた問題で、元画像を開いたタブまで保留タブ同様の処理をされてしまって先頭(ふたばのURL&amp;他モードよりも先)に位置づけられてしまっていた。従来通り「その他」扱いになるように修正した。</li>
+            <li class="explain"><span class="cited">最新版ソートおかしくない？</span><br/>
+            <span class="cited">どう設定しても画像が先頭にもってこられる</span><br/>
+            あー、タブのソートの話だったのね<br/>
+            タイミング的にカタログの話だと思ってそっちしか見直していなかった</li>
+          </ul>
+        </ul>
+        <li class="featurename">「アイコンを変更する」</li>
+        <ul>
+          <li class="newfeature sp61933">タブより広範囲のアイコンを変更するための「favicon として登録する」オプションを追加</li>
+          <ul>
+            <li class="explain">ブックマーク、履歴、panoramaに表示されるアイコンなど、タブのアイコン以外の部分も全て変えられるような「変更」方法を使えるようにした。一応、これまでとの互換性を考えて、オプション扱いに。</li>
+            <li class="explain">(「アイコンを変更する」設定でスレをピン留めしたときに、panorama(タブグループ)を表示させるとピン留めタブが悲しいことになってたことの対策として使える)</li>
+          </ul>
+        </ul>
+      </ul>
+      <li>メニュー/引用</li>
+      <li>MHTで保存</li>
+      <ul>
+        <li class="bugfix sp59934 baseline"> [MHTで保存]ボタン生成で起きるメモリリーク(Zombie compartment化)を修正</li>
+        <ul>
+          <li class="explain">about:memoryを見てたら、スレのタブを閉じてもcompartmentが解放されなかった。タブを閉じる毎に未解放領域が増加するわけではないが、解放されないのは問題だ。</li>
+        </ul>
+        <li class="fxupdate sp60848 baseline">Firefox7以降で保存時に警告がでる問題を修正</li>
+        <ul>
+          <li class="explain">Firefox7でのDOM4対応により、Attr 要素が Node の派生では無くなったことで警告が出ていた。ということで、nodeName/nodeValueを使ってた箇所をname/valueへ修正した。</li>
+          <li class="explain cited">警告: 属性の nodeName プロパティの使用は推奨されません。代わりに name プロパティを使用してください。<br/>ソースファイル: about:blank</li>
+          <li class="explain cited">警告: 属性の nodeValue プロパティの使用は推奨されません。代わりに value プロパティを使用してください。<br/>ソースファイル: about:blank</li>
+        </ul>
+        <li class="sp60999" id="SaveMHTPreviewBugFix">(エンバグ) MHT保存時にオートリンクのプレビュー画像が保存できなくなってた件を修正</li>
+        <ul>
+          <li class="explain"><div class="cited">これでログを保存するとIPアドレス直打ちのサムネは保存されても塩辛リンクで表示されたサムネは保存されないな…</div>
+          マジか</li>
+          <li class="explain">保存時に要らない要素を消す処理について、軽い気持ちで効率化したつもりが無惨にエンバグしてたので修正。</li>
+        </ul>
+        <li class="bugfix sp61933">一部の設定項目を変更しても挙動が変化しない問題を修正</li>
+        <ul>
+          <li class="explain">「サムネ表示の場合に元画像も保存する」の設定をオフにしたはずなのに「スレ毎に設定」のUIがスレに表示される……など、親の項目の設定変更によって無効になったはずのサブ設定項目が有効になることがあったので修正。</li>
+          <li class="explain">(メモ：赤福全体として、この類のバグは割とありがち。怪しいときは Firefox を再起動すれば正常に設定が反映されるはず。)</li>
+        </ul>
+        <li class="bugfix sp61933">「ネットワークからも取得」設定オン時に、MHT保存を中断しても通信が止まらない問題を修正</li>
+        <ul>
+          <li class="explain">開いている通信チャネルをちゃんとキャンセルする処理を追加した。(Webコンソールで通信をモニタできるにしたら発覚した問題)</li>
+        </ul>
+        <li class="sp61933"> [MHTで保存]/[保存用に整形]ボタンが「ページ末尾に追加」した「リンク」に位置を影響されないようスタイル修正</li>
+      </ul>
+      <li>ファイル名変換</li>
+      <li>画像を保存</li>
+      <ul>
+        <li>「メニューの代わりにボタンを表示する」が未実装なので設定画面で打ち消し線を表示するようにした</li>
+        <ul>
+          <li class="explain">昔は実装されていたんだっけ？
+            ともかく今のバージョンにはコード片すら無かったように見えたので。<br />
+          </li>
+        </ul>
+      </ul>
+      <li>メール／コメント欄</li>
+      <ul>
+        <li class="improve sp60999">設定ダイアログにコメント欄のカスタム背景画像の設定方法と指定フォルダを開くボタンを追加。</li>
+      </ul>
+      <li>フォーム</li>
+      <ul>
+        <li class="sp59934">プレビュー画像の内部URLを調整</li>
+        <ul>
+          <li class="explain">赤福の他の内部画像と同様に、ホストをakahukuにした。
+          つまりakahuku:///preview...をakahuku://akahuku/preview..に。
+          ホスト部が無いと<a href="https://addons.mozilla.org/ja/firefox/addon/requestpolicy/">RequestPolicy</a>が困ったことになるので。
+          本来はlocalhostにしたほうがいいのかもしれないが他の画像に揃えておく。</li>
+          <li class="explain sp60999">ホスト部分が省略されててる場合(file:///C:/...など)はやはり"akahuku://<b>localhost</b>/preview..."にするように再変更した。akahuku://akahuku/なのはリソース(chrome://akahuku/...)だけでいいや。また、場当たり的な調整だったのを根本的な変更にしたので、処理漏れがあった所(フォームのカスタム画像とか)も統一された。</li>
+        </ul>
+        <li class="sp59934">添付ファイルがクリアされた時にプレビューのHTML要素から前のファイル名等を消すよう変更</li>
+        <ul>
+          <li class="explain"><a href="https://addons.mozilla.org/ja/firefox/addon/bug431098clear-file-upload-fie/">ClearFileUploadField</a>
+          等でフォームをクリアするとプレビューは非表示になりうるが、imgのsrcは依然そのままで、何かの拍子(プレビューが新たにロードされる前とか)に前の画像が見えたりもしたため。
+          </li>
+        </ul>
+        <li>「フォームを固定」あるいは「デフォルトで閉じる」の時の板の注意書きで…</li>
+        <ul>
+          <li class="futaba">準備板の「板の設定変更を...」の注意書きから改行を消してしまって見づらくなってる問題に対処</li>
+          <li class="futaba">注意書きの元のスタイルをもうすこし維持するように修正</li>
+          <ul>
+            <li class="explain">東日本大震災板の「東北地方太平洋沖地震」の部分のスタイルとか</li>
+          </ul>
+        </ul>
+        <li class="futaba">「削除フォームを左に」機能が現在のふたばのHTML構造でも機能するように修正 </li>
+        <ul>
+          <li class="sp60848 obsolete">通常モードでページリンク部分に被ってしまわないよう修正</li>
+          <li class="sp61933">再修正 (シンプルにfloat:leftでいいやもう)</li>
+        </ul>
+        <li class="improve" id="DragOpenForm">ファイル等のドラッグに応じて、閉じられているフォームを開くように変更</li>
+        <ul>
+          <li class="explain">ドラッグ時にマウスを重ねるだけで「フォームを固定」「デフォルトで閉じる」などで閉じられていたフォームを開くようになるが、開くだけなので、ドロップ自体はファイル添付欄やテキストボックスで行う必要がある点に注意。Firefox7?以降では拡張無しでもファイル添付欄にファイルをD&amp;Dできるが、閉じられているとドロップできずガッカリなので。</li>
+          <li class="explain"> (ところで、選択では1つしか選べないフォームでも複数D&amp;Dできるみたいだけど、これはFirefoxのバグ?)</li>
+        </ul>
+        <li class="featurename">フォームをページ末尾に置く</li>
+        <ul>
+          <li class="newfeature"><a id="BottomFormOnlyForm"></a>「フォームをページ末尾に置く」に「フォーム位置だけ」というサブ設定項目を追加</li>
+          <ul>
+            <li class="explain">解説：ふたばのフォーム位置切替機能と同様にフォーム位置だけを下部に置くようになる。今のふたばの実装だと、赤福が有効なら設定によらずふたば側のフォーム位置切り替え機能が無効化されてしまうため、同等のスタイルにする機能を赤福で提供するようにした。としあきが、ふたば公式のページスタイルをできるだけ崩さないことにこだわってたみたいなので。ただし、この設定有効時には「フォームをデフォルトで閉じる」は機能しないという制限がある。</li>
+            <li class="sp61933">有効時、「MHTで保存」するとページ末尾に空白が残ってしまっていたので修正</li>
+            <li class="sp61933">投稿失敗などのメッセージもページ末尾に表示されるように修正</li>
+            <li class="sp61933 obsolete">古いログを赤福で処理した時にフォーム表示が狂わないように修正</li>
+            <ul>
+              <li class="explain">HTML要素div#ufmの存在を前提にしていたが、古いログなどではこの要素が無いこともありえると気づいた。将来的なHTML変化にも弱いということなのでよろしくない。前提が崩れた場合にも、せめてこの機能がフォームを狂わせないように修正。</li>
+            </ul>
+            <li class="sp62403">古いログや古いCGIを使っている外部の板でも下部へ移動させるようにした</li>
+            <ul>
+              <li class="explain">div#ufm が無くても適切な場所に生成して機能するようにはしたが、古いスタイルでは移動させるフォーム自体のHTML構造も違うので、全く同一デザインにはならないだろう(板のコメント部分も下へ移動してしまったり)。</li>
+            </ul>
+          </ul>
+          <li class="improve">フォームをページ末尾に置いている場合のフォームへのスクロールを改善</li>
+          <ul>
+            <li class="explain">引用等でフォーカスが自動的にフォームへ動く際に、フォームの位置が画面下端に来るようスクロールするよう変更した。今までは上端だったが、末尾にフォームがある場合は下に揃えた方が見やすいだろう。</li>
+          </ul>
+          <li class="improve"><a id="BottomFormTRSwitch"></a>「スレッドを立てられるようにする」設定による切り替えラジオボタンをページ末尾のフォーム直上に表示するよう変更</li>
+          <ul>
+            <li class="explain">フォームのすぐそばに切り替えボタンが無いと不便なので、「フォームを固定する」と同様にすぐ上へ移動させた。</li>
+          </ul>
+        </ul>
+        <li class="improve sp60999">設定ダイアログにカスタム送信ボタンの設定方法と指定フォルダを開くボタンを追加。</li>
+        <li class="bugfix sp64983" id="753617c">「フォームを固定」で、「半透明」の設定を動的にオフにすると半透明のままになってしまう件に対応</li>
+        <ul>
+          <li class="explain">半透明の設定を動的に切り替えても半透明のままにならないように対応した。<span class="sub">(この手の、設定を切り替えると既に開いているタブの動作が狂うというのは、赤福に良くあるバグ。根本的に、そういう操作に対応したコードになってないため、場当たり的に対処するハメになってる。)</span></li>
+          <li class="explain"><span class="cited">@toshiakisp 「フォームを固定」「クリックで開閉」「外をクリックで閉じる」「アイコン化」「半透明」これらをチェックした状態でスレを開き、「半透明」のチェックを外すとフォームを開いても半透明のままになります。スレを開き直すと直りますが。Ver.5.2.90.sp62681</span><br/>何ヶ月も気づかなくてすまない…</li>
+        </ul>
+      </ul>
+      <li>続きを読む</li>
+      <ul>
+        <li class="sp59934">動的に追加されるレスのHTML要素が無駄なclass属性を持たないように変更</li>
+        <ul>
+          <li class="explain"> レスが&lt;table class=""&gt;とかになってて気持ちが悪かったため。コアとなるメソッドを変更したので、table以外でも空のclass属性を持たないようになった。</li>
+        </ul>
+        <li class="featurename">「同期」</li>
+        <ul>
+          <li class="bugfix">赤字変化の検出方法を修正</li>
+          <ul>
+            <li class="explain">「赤字変化」なのに「なー」は一度発生するとなぜか毎回カウントされていた。他の赤字と同様に変化検出時のみカウントするようにした。</li>
+          </ul>
+          <li class="futaba sp61933" id="SyncReddenDelete">「…により削除されました」と赤字表記されるタイプのレス削除仕様に対応(見た目&amp;カウント)</li>
+          <ul>
+            <li class="explain"><b>問題:</b>レスを削除すると「…により削除されました」と赤字で表示される仕様になって長いが、その昔はごっそり消えていて、赤福は同期時に削除を検出すると青枠でレス全体を囲って表示していた。今の「削除されました」は赤字変化として検出されるが、青枠などにはされない。また、本来の赤字の意味からずれていて気持ち悪い。今のふたばの仕様にちゃんと対応させたほうがいいのでは？</li>
+            <li class="explain">「削除され」たレスは普通の赤字変化とは別として「削除」扱いで集計し、<b>赤点線で枠をつけて表示</b>するようにした。「なー」は赤字変化にカウントされるが、(table.deleted になってるので)、表示は削除と同じで枠をつけることにする。</li>
+            <li class="explain">同期で検出されたこのタイプの削除レスは、普通の削除レスと同様に(ふたばの機能の)<b>「削除された記事を見る」「隠す」で表示制御</b>されるようにした。既に「見る／隠す」が表示されている場合は、現在の状態に応じてレスを表示／非表示にするようにした。</li>
+            <li class="explain">サブ設定「削除されたレスを残す」はごっそり消された場合(青枠)の挙動を指定するものであり、このタイプのレス削除には基本的に影響しない＝レスのデータ自体は残る。が、できるだけ表示させたいという意図があってオンにするのだろうから、少し反映させることにした： 設定オンでは、レスが削除されてない(＝「見る／隠す」がまだ無い)ページを開き、その後、続きを読む＆同期により削除が検出された場合において、削除されたレスは見えている状態(＝ボタンは「隠す」)を保つ、という挙動になる。(注：スレを開いたときの「見る／隠す」の初期状態を設定させてくれっていう需要に対応したものではない。いらないおせっかいかもしれないなあ)</li>
+            <li class="explain">MHT保存時(保存用に整形時)にはこの赤点線が維持されるようにもした。昔の青枠削除レスでは「このレスは削除されました」というメッセージも付加されていたが、赤字で説明があるので文字は無し。</li>
+          </ul>
+          <li class="improve sp61933" id="SyncDeletedThumbnail">同期を画像に対しても行い、画像だけ削除された場合に見た目に反映させる処理を追加</li>
+          <ul>
+            <li class="explain">これまでは画像だけ削除された場合、同期をしても変化が検出されなかった。そこでサムネ画像の有無の変化も調べるようにし、<b>削除された画像は赤点線枠をつけ</b>、検出時には「画像削除」としてカウントするようにした。
+            この処理はレスだけでなく<b>スレ画も含まれる</b>。(スレ本文はもともと同期対象外だったのだが、とりあえずスレ画は処理するようにした。本文はどうしようか...)</li>
+            <li class="explain">MHT保存時(保存用に整形時)には赤点線は維持され、青枠の削除レスと同じポリシーにより、画像の下に<b>「この画像は削除されました」と説明を付加</b>するようにした。</li>
+          </ul>
+        </ul>
+        <li class="optimize sp61933" id="ReloadIfModified">「続きを読む」によるデータ受信を更新時のみに効率化</li>
+        <ul>
+          <li class="explain"><b>背景</b>今のふたばの板は結構賢く、HTTP/1.1対応で、HEADリクエストによる更新日時などの取得をサポートしており、一部の板(虹裏など)では条件付きリクエストまでサポートしている。画像に限らず、スレでも。つまり、ブラウザが前にデータを受信したときのヘッダー情報(Last-Modified や Etag フィールド)に基づいて適切なリクエストを送れば、キャッシュを活用し、不要なデータの送信を省略できるようになってる。<br/>
+          これらの機能は実際に再読み込み時に活用されている：<ul>
+            <li><b>ふたば公式の「リロード」機能</b>はHEADリクエストにより更新日時の情報を取得し(古い板でも更新日時は取得できるようになってるみたい)、ブラウザ側のスクリプトで判定し、更新が無ければデータを受信せずに済ませるように実装されている。読み込み前にいちいちHEADリクエストを送ることは僅かに無駄になったりするが無視できる範囲。画像は有効期限(1時間とか)切れでなければほとんどキャッシュから読み込まれるので、画像鯖にも優しい。さすが公式。</li>
+            <li><b>ブラウザによる更新</b>(「リロード」を使わず)は、前のレスポンスヘッダー情報に基づいてブラウザが条件付きリクエストを送るので、板が対応していれば非更新時には読み込みが省略される。ただし非対応な古い板では更新無しでも再ダウンロードしてしまうし、さらに、全てのサムネ画像のキャッシュが適切かを問い合わせてしまう(画像再読込までは不要で済むことが大半とはいえ)ので画像鯖にあまり優しくない。読み込み完了(と判断される)までの時間もかかりがち。</li>
+            <li><b>赤福(従来)の「続きを読む」</b>は、新しい仕様には対応しておらず、レスポンスヘッダー情報を一切使わずに、続きを読むたびに毎回データを送れとリクエストしていた。他と比べると、板への負荷が大きい。ただし、表示済みの画像については一切通信しないので画像鯖には非常に優しい<span class="sub">(が裏腹に、後でMHT保存しようとしたときに画像が欠ける原因でもある。期限切れ画像キャッシュが更新されないままひっそり消えてしまうのだ)</span>。もちろん、赤福が行う色々な処理(スレ整形とか、合間とか)にかかる手間が更新分だけで済むメリットはあるが通信とは別の問題ね。</li>
+          </ul>ということで、ユーザー側で問題が起きているわけではないのだが、赤福のリクエストの出し方は改善の余地があった。</li>
+          <li>レスポンスヘッダーをキャッシュに格納するように変更</li>
+          <ul>
+            <li class="explain">まず、今まではほとんど全部捨ててた鯖からのレスポンス情報を生かしたままキャッシュに格納するようにした<span class="sub">(むしろなぜわざわざ加工してキャッシュに入れてたのかがわからない。気づいていない問題があるか不安だが、大丈夫に見える)</span>。これで、次のリクエスト時にはHTTPチャネルが自動的に情報を取得して、適切なリクエストヘッダー(If-Modified-SinceやIf-None-Matche)を付けて条件付きリクエストを送れるようになる。</li>
+            <li class="explain sub">(あまり重要ではないが、いままでも最初の一回だけは元のキャッシュのレスポンス情報を使った条件付きリクエストを送れていた。すぐに赤福自身がキャッシュを上書きしてしまうのだが。</li>
+          </ul>
+          <li>可能なら条件付きリクエストを送って「更新なし」で即終了するように変更</li>
+          <ul>
+            <li class="explain">HTTPチャネルのフラグを適切に立てることで、リクエストや受信が狙い通りにいくようにした：<ul>
+              <li>期限内のキャッシュがあっても常にリクエストを送るフラグ(VALIDATE_ALWAYS)＝キャッシュがあればそこから情報を得、可能なら条件付きリクエストになるように。(フラグを立てなくてもスレのキャッシュが期限切れ(普通はそうなる)なら自動的に条件付きリクエストになるが、念のため)</li>
+              <li>更新が無くてもキャッシュからデータを読ませないフラグ(LOAD_ONLY_IF_MODIFIED)＝条件付きリクエストの結果として未更新なら処理をせずに済むようにするために必要。これを立てないと未更新時にキャッシュからデータを読んでしまって、赤福は更新時同様の処理を走らせてしまう(実際そうなってた)。</li>
+              <li>([同期]時: キャッシュの情報を使わずリクエストを送るフラグ(LOAD_BYPASS_CACHE)＝[同期]はスレが何かおかしい時に行ったりもするので、キャッシュが壊れてる可能性を考慮し、再読込させるように。)</li>
+            </ul>
+            さらに、リクエスト終了時の処理が更新が無い場合に対応できるよう変更した。条件付きリクエストに対応してる板では、新着レスがない時「続きを読む」処理は以前より短時間で終わり、<b>公式「リロード」に相当する軽さ</b>になったはず。</li>
+          </ul>
+          <li>まずHEADリクエストを送って更新日時を確かめる方式に対応した([同期]でない場合)</li>
+          <ul>
+            <li class="explain">ふたばは条件付きリクエスト対応の板ばかりではないので、公式の「リロード」と同様に、「続きを読む」ときにはまずHEADリクエストをおくって更新日時を問い合わせるようにした。これがデフォルトだが、レスポンスヘッダーを見て条件付きリクエスト対応の板(鯖)と判断できる場合(現状を見るに"Etag"があれば、でいいだろうか)には、自動的に以降のリクエストではHEADを省略してGET(If-None-MatchやIf-Modified-Sinceが付くはず)を送るようにした。更新が無ければ304レスポンスが返り、あればすぐデータが返るので、「リロード」より僅かに早く応答を受け取れるはず。まあ普通は大した差は出ないだろうが。</li>
+          </ul>
+          <li class="explain">以上の変更により、通信に関しては<b>赤福の「続きを読む」はふたば公式の「リロード」とほぼ同等の挙動</b>となるようになった。これで見劣りしない。細かい挙動は<a href="#WebConsoleReady">赤福が裏で行う通信をWebコンソールでモニタできるようにした</a>」のでそれで確認できる。<br/>
+          それと、この辺りのコードを見直すことにより、他に細かい修正もできた：</li>
+          <li class="optimize sp61933">受信後のキャッシュ更新が2重に行われている無駄を修正</li>
+          <ul>
+            <li class="explain">通信に使うHTTPチャネルが自動的にキャッシュを作成・更新する動作と、レス更新後に赤福が独自にキャッシュへ書き出す動作が重複しており、無駄に2回もキャッシュ書き出しをしていた。赤福側で制御したいので、自動的にキャッシュへ書き出されないようHTTPチャネルにフラグ(INHIBIT_CACHING)を設定して通信するようにした。</li>
+            <li class="explain">この問題の修正による二次効果：今までは「続きを読む」(同期)でもスレが消えるとキャッシュが「ファイルがないよ」に上書されてしまっていたが、赤福がキャッシュを制御できるようにしたので、「続きを読む」(同期)でなら<b>キャッシュを最後の状態のままにしておけるようになった</b>。この効果は、例えば、消えたスレを開いているタブを一度を閉じた後に、Firefoxの最近閉じたタブを戻す機能により復帰できることを意味する(ただしキャッシュには削除されたレスなどの蓄積情報は残っていない)。タブの復元ではなく履歴から開くと、普通にURLを開いてるのと同じなので「ファイルが無いよ」になってしまう(開く時点でサーバーへの問い合わせが発生してる)。
+            現状ではいまいちぱっとしない効果だが、バックアップキャッシュ(「スレが消えても表示できるようにする」で作成される予備キャッシュ)の役割が一つ消えた感じはする。</li>
+          </ul>
+          <li class="futaba sp61933">稀に赤福が書き出すキャッシュ(ファイル含む)の内容が変になる問題を修正</li>
+          <ul>
+            <li class="explain">「現在???人くらいが見てます」という状態のスレを開いた際、「続きを読む」(同期)した時に書き出されるキャッシュの内容がわずかに狂ってる問題があった(HTMLが"???&lt;!DOCTYPE HTML..."などと余計な"???"から始まる)。キャッシュ書き出しのコードにおいて、人数が"???"となる場合への対処が欠けていることが原因だったので修正。特に実害はなかったとは思うが...。</li>
+            <li class="explain">(コメント: そもそも、このキャッシュ書き出し機構(arAkahukuReloadCacheWriter)は現時点ではかなり無駄な処理をしてるのではないだろうか。単にデータを書き出すだけでなくて独自にパースもしていて、そのせいで今回の問題が生じたりもした。範囲読込を実装しようとしてる途中なのか？と思うが、いまのところmonaca.php(避難所)相手でしか範囲読込をしていないし、というかそもそもmonaca.php相手でもうまく動いていないし！ 全体的に手を入れてもいいのかもしれない)</li>
+          </ul>
+          <li class="sp62497">Firefox 3.6で「続きを読む」するとステータスバーの表示が「転送中」のままになる問題を回避</li>
+          <ul>
+            <li class="explain">明確な理由はわからないが、Webコンソールで監視可能にしつつ、LOAD_ONLY_IF_MODIFIEDフラグを立てて通信すると、ステータスバーの表示が「～から転送中」みたいな表示のままになってしまうようだった(処理自体は終わっているのに)。現象が起きたら、同期やリロードをしないとステータス表示が変わらず、気持ち悪い。とりあえず、Firefox 3.6.x のような Gecko 4.0 未満の環境では不要なWebコンソール監視用の処理を省くことで、問題が起きないようにした。(この対策ではステータスバーに「接続中」などの状況メッセージも出なくなるようだが、どうせもともと出ていなかったわけだし、まあいいか)</li>
+          </ul>
+          <li class="sp62497">更新が無いときでも残り時間・残りレス番号の表示は更新されるように変更</li>
+          <ul>
+            <li class="explain">304 Not Modified で更新無しになる場合には「続きを読む」は即終了するように変更したが、ページ末尾とスレ操作パネルのステータス表示における残り時間・残りレス番号が最新に更新されるようにした。(残りレス番号は「板全体の最新レスを反映する」が有効でないと変わらないが)</li>
+            <li class="explain">(これで完全に従来通りの更新処理を最適化したことになるだろうか)</li>
+          </ul>
+        </ul>
+        <li class=" sp61933">[未完] monaca.php (避難所) での動作を修正? </li>
+        <ul>
+          <li class="explain">問題：避難所での「続きを読む」動作があやしく、monaca.php専用のレス差分読込機能が期待するようには動いていない模様。<ul>
+            <li>パーサ(arAkahukuReloadCacheWriter.setText)にはmonaca用のコードが全く含まれていなかった。monaca用のパーサをとりあえず書いてみたが、専用CGIから取得した差分データと元(キャッシュ)データの結合はまだなので、キャッシュへの書き出しまではいっていない。未完！</li>
+            <li>まだ一度も範囲リクエストを出していない段階<span class="sub">(/monacalib/include/dr.php から返る X-Content-Range が未取得)</span>で無駄に全データをリクエストしてしまっていたので、初期の取得済み範囲を文書中(#textlog_size)から拾うようにすることで通信を効率化した。</li>
+          </ul></li>
+        </ul>
+        <li class="featurename">「スレが消えても表示できるようにする」(キャッシュを見る)</li>
+        <ul>
+          <li class="explain sp61933">※このオプション項目自体は、実際は、バックアップキャッシュの作成機能のオンオフを意味するが、キャッシュ表示機能自体もここに分類することにする</li>
+          <li class="improve sp61933">キャッシュのページでも「広告を隠す」が元ページと同じように働くように改善</li>
+          <ul>
+            <li class="explain">キャッシュページ(akahuku://*.2chan.net/cache/http.5/...)については元ページ同様に処理される方が自然である。不自然だった理由は、機能を司る赤福コンテンツポリシーにおいてhttp/httpsスキームのページ以外からのリクエストについては全て許可するようになっていたことによる。ということで、キャッシュ(akahukuスキーム)からのリクエストもブロックリストで評価するよう、赤福コンテンツポリシーを変更した。</li>
+          </ul>
+          <li class="improve sp61933" id="CachedThreadWithImages">鯖から画像が消える場合に備えて画像はキャッシュからのみ表示するように変更 (P2Pオフ時)</li>
+          <ul>
+            <li class="explain">キャッシュされたスレを見ていても、鯖から画像が消えた後では表示できなくなったりする(P2P使わない場合)。なぜなら、Firefoxはキャッシュの有効期限(1時間とか?)が切れると鯖に問い合わせにいき、この時サムネ画像がもう無いとキャッシュは妥当でないと判断され破棄されるからである。これ自体は正常な挙動だが、「スレが消えても表示できるように」したい場合には不都合。一応、事前にFirefoxをオフラインモードにしておけば破棄を回避できるが、その間普通にブラウジング出来ないし、まあ不便。そこで、キャッシュされたスレからは画像もキャッシュからのみ読み込むように変更した。画像読込では通信しなくなるので、鯖に無いからキャッシュ破棄ってことは無くなる。</li>
+            <li class="">スレ以外もキャッシュ観覧用URIでアクセスできるように赤福プロトコルハンドラを拡張</li>
+            <ul><li class="explain">スレ自体以外の任意URIも特殊URI(akahuku://www.2chan.net/cache/http.5/1234.jpg など)経由で取得できるようにした。</li></ul>
+            <li class="">プロトコルハンドラのキャッシュアクセスコードを整理・拡張しチャネルとして実装</li>
+            <ul><li class="explain">画像などをスムースに複数同時読込できるように、プロトコルハンドラにて、新設したキャッシュアクセス用チャネル(nsIChannelを実装した arAkahukuCacheChannel)を利用するようにした。一般的なキャッシュデータのハンドリング(gzip圧縮やリダイレクト)もこのチャネルで対応(いままでは平文のバックアップキャッシュしか考慮されてなかった)。</li></ul>
+            <li class="">キャッシュ観覧に関するコンテンツ側の処理を新モジュールAkahuku.Cacheに実装(整理)</li>
+            <ul>
+              <li class="explain">キャッシュされたスレを見る時に行われる処理、キャッシュ存在判定や状態判定、画像要素のキャッシュURIへの変換、キャッシュエントリのリダイレクトを辿る処理など、キャッシュ関係の処理を新しいファイル(chrome/content/mod/arAkahukuCache.js)にまとめて実装した。あちこちに散在してたキャッシュ状態・存在判定コードはここに整理した。</li>
+              <li class="explain">(キャッシュへの書き込み処理もあちこちにあって、つい整理・集約したくなるが、それらは今のところ特にいじる必要がないので手をつけてない)</li>
+            </ul>
+            <li class="">キャッシュページの画像をキャッシュ経由に制限する処理を追加</li>
+            <ul><li class="explain">キャッシュページからの画像ロードを全てコンテンツポリシーで遮断し、替わりにキャッシュ用URIに置き換えるようにした。(P2P画像への置換と同じ方法だが、URI書き換え処理はタイマーを使わない方法へ改良)</li></ul>
+            <li class=""> キャッシュページ観覧中は画像キャッシュの有効期限を無期限にして保護するように</li>
+            <ul><li class="explain">キャッシュが期限切れで消される可能性を下げるため、キャッシュされたスレ(返信モード)を観覧中は有効期限を最大にするようにした。ページを閉じる時には元の期限に戻される。</li></ul>
+          </ul>
+          <li class="improve sp61933">「スレが消えても表示できるようにする」がオフでもその時点のキャッシュが見られるようになった</li>
+          <ul>
+            <li class="explain">上記のakahuku://*/cache/のプロトコルハンドラ拡張により、バックアップ未作成でもキャッシュがあればスレをキャッシュURIで表示できるようになった。現在のところURLを直接入力しなければキャッシュページを開けないし、設定がオフだとスレが消えた時に「ページが無いよ」でキャッシュが上書きされてしまうので、あまり意味はない。</li>
+          </ul>
+          <li class="improve sp61933">キャッシュページでは情報を通知するように</li>
+          <ul>
+            <li class="explain">キャッシュページならではの処理をする機構を追加し、とりあえず、ページ上部に「キャッシュを表示中 (更新日時: 2012年3月4日 05:06:07)」などと情報を通知するようにした。キャッシュのキー(基本的にはURL。「スレが消えても表示できるようにする」によるバックアップキャッシュなら本来のURL+".backup"、あるいはファイル名)も表示される。</li>
+          </ul>
+          <li class="futaba sp61933">一部の板でキャッシュのスタイルが狂うようになった件に対応</li>
+          <ul>
+            <li class="explain"><b>問題:</b>ふたば側の変更(一部の板?)でCSSスタイルが別ファイルになったが、スレが消えたときのキャッシュページからは正しく読み込めず、スタイルが狂うようになった。</li>
+            <li class="explain"><b>修正詳細:</b> 画像や.jsは読めてスタイルが読めないのは、&lt;base&gt;が指定される前に相対アドレスで&lt;link href="/bin/style0.css" rel="stylesheet" type="text/css"&gt;と指定されてるためのようだ。結局のところ、akahuku://...のプロトコルハンドラ(arAkahukuProtocolHandler)で相対アドレスを全く考慮していないことがスタイルファイルを読めない原因。つまり newURI() に akahuku:// をベースURIとした相対アドレスが渡された際の処理が不適切で、絶対アドレスに解決されず、ファイルを読みに行けなくなってた。ということで、<!--相対アドレスの場合はベースのakahuku://アドレスを元に戻して、元スキームのURIとして相対アドレスを解決したURIを生成するように変更した。元スキームに戻す理由は、例えakahukuスキーム(キャッシュタイプ)で相対アドレスを解決したとしても、そのファイルの「スレキャッシュ」(URL+".backup"のキャッシュ)が無いとアクセスできないからである。-->プロトコルハンドラの newURI() における相対アドレス処理をちゃんと実装することで問題を修正した。</li>
+            <li class="explain">(この修正では、タイプ(cacheやpreveiwなど)に関わらず、相対アドレスに対する振る舞いが変更されたので、想定外のところで変化があるかもしれない。)</li>
+            <li class="explain">/bin/style0.css (ベースは akahuku://may.2chan.net/cache/http.5/b/1234.htm)<br/>
+            修正前: → /bin/style0.css (※不正なURI)<br/>
+            修正後: → akahuku://may.2chan.net/cache/http.5/bin/style0.css
+            (※http://may.2chan.net/bin/style0.cssのキャッシュ)</li>
+          </ul>
+          <li class="sp62403" id="Fx36CacheChannelBug">(エンバグ) Firefox 4以前でキャッシュ読込が機能していなかった件を修正</li>
+          <ul>
+            <li class="explain">4以前(4以降の新しいInterfaceが定義されていない環境)のためのコードがうまく機能しておらず、キャッシュ読込機能が死んでた。「キャッシュを見る」以外でも、カタログのズーム画像(の一部)やサイドバーのスレ画像でも同機能を使っていたので、それらも死んでたことになる。修正。</li>
+          </ul>
+        </ul>
+        <li class="newfeature sp61933" id="ThumbCacheProtection">「消えそうな画像のキャッシュを保護する」オプション</li>
+        <ul>
+          <li class="explain">P2Pを使わなくても画像をできるだけ表示できるようにするため、サーバーから消されそうなサムネ画像についてキャッシュを保護(表示をキャッシュURI経由に置き換えて有効期限を延長)するオプション機能を追加した。上の、キャッシュページを見る時の「保護」と同等のことを通常のページでも部分的に行う、ということ。実際にこの「保護」が適用されるのはレス送信モードでの次のケース：<ul>
+            <li>「同期」でサムネ画像の削除(レスごと削除、画像のみ削除、なー等)を検出した場合、</li>
+            <li>スレッドが消滅した場合 (スレ内に表示中の全ての画像を対象に)</li>
+          </ul>
+          デフォルト有効でもいいような気もしたが、置き換え処理は余計なことではあるので、オプションに。</li>
+        </ul>
+        <li class="futaba sp62403">futaba.php?res=12345 でスレを開いた場合の挙動を少し改善</li>
+        <ul>
+          <li>操作が早すぎる旨の警告メッセージを表示できるように</li>
+          <ul><li class="explain">may鯖落ち後に、一時的に http://may.2chan.net/b/futaba.php?res=12345 というパターンのURLへカタログからリンクが張られたが<span class="sub">(赤福は、このパターンだと自動的に通常のURLに修正するので、カタログからリンクでは飛べなかったはず。この挙動も問題かもしれないが、まあそれはさておき)</span>、この場合にスレを更新すると"Not Found"になることがあった。これは本来は「操作が早すぎます」などと表示される事態なのだが、赤福が知らないレスポンスをスレ消えと誤解したことによる。一応、このパターンのエラーメッセージも表示できるようにしておいた。<b>load error: 操作が早すぎます あと2秒で再送できます</b></li></ul>
+          <li>futaba.php?res=...には「続きを読む」でいきなりHEADリクエストを送らないように</li>
+          <ul><li class="explain">HEADリクエストを送ってもLast-Modifiedを教えてもらえないようだし、HEAD→GETとリクエストを続けるとGETが必ず「操作が早すぎます」に終わりデータが受け取れないし、と通信効率化後のアルゴリズムでは少々問題がある。一度失敗するとGETしか使わないモードにはなるとはいえ、最初からHEADを使わない方がいいので、URLから判別してGETモードになるようにした。</li></ul>
+        </ul>
+        <li class="optimize sp64983">更新により受信したスレの構造解析をいくらか軽量に</li>
+        <ul>
+          <li class="explain">スレのHTML構造をチェックするために受信したテキスト全体を無駄に何度もスキャンしていたので適当に軽量化した。最も頻度が高いであろう現在のふたばの構造から最初にチェックしたりとか、チェックする範囲のサイズ制限をしたりとか。(実感できるレベルではない？)</li>
+        </ul>
+        <li class="optimize sp64983">長いスレで末尾の広告を更新する処理をやや軽量化</li>
+        <ul>
+          <li class="explain">初回の更新(このタイミングでama広告を探してidを付けてる)に、レス数に応じた時間がかかっていたので改善した。(blockquoteをページの後ろから探すように)</li>
+        </ul>
+      </ul>
+      <li>スレ操作パネル</li>
+      <ul>
+        <li class="optimize">長いスレを開いた際のパネル生成処理の負荷軽減</li>
+        <ul>
+          <li class="explain">パネルのサムネの下準備を非同期実行に変更した。サムネ関係の操作でレイアウト更新＆再描画が行われるのか、数1000レスのスレでは少し時間がかかってしまっていたので、後回しにしたということ。</li>
+        </ul>
+        <li class="improve sp61933">メニューのHTML構造およびスタイルを修正</li>
+        <ul>
+          <li class="explain">上の枠が変だったり、通常のHTML要素ではない&lt;menudiv&gt;や&lt;nobr&gt;などが使われているなど、いまいちな点が見られたので改修。横にあまり大きくならないようにするスタイルも上手く機能していないようだったので修正。text-overflowも使ってみたり(Gecko7.0+)。</li>
+        </ul>
+        <li class="sp62497">「残り時間、番号を表示する」オンでも顔ボタンが単独行にならないようスタイル修正</li>
+        <li class="improve sp62497">「スレ」の「末尾にステータス表示」オフでも「残り時間、番号を表示する」による表示が「続きを読む」等で更新されるように</li>
+        <ul>
+          <li class="explain">「続きを読む」「同期」しても、末尾ステータス表示が無いと操作パネル内のステータス表示が更新されなかった。そもそも、末尾ステータス表示を切ってる時には操作パネル内にステータス表示をしないコードっぽかったのだが、バグで表示されてただけに見える。操作パネル内だけに表示するっていうのも有用だろうということで、バグを直しつつ末尾ステータスオフでも表示可能にし、さらに更新も正しく行われるよう修正した。</li>
+          <li class="explain">ところで、スレ操作パネル内のステータス表示は、末尾ステータス表示設定の影響を受けていた。
+          具体的には「スレが消えるまでの時間を表示」設定と「スレ番号 + 保持数 - 最終レス番号 を表示」設定だが、これらの設定が無効(グレーアウト表示)でも実は影響を受けていたというのがまたいやらしい。今回の仕様変更で末尾ステータスとスレ操作パネルの表示・非表示を独立して制御できるようにしたかったので、末尾ステータスの設定がどうあれ、<b>単純に「残り時間、番号を表示する」をオンにすれば残り時間と番号が表示されるようにした</b>。</li>
+          <li class="explain">ただし、スレ操作パネル内の残り番号表示の仕方は、末尾ステータス表示の「板全体の最新レスを反映する」設定の影響を受ける。末尾ステータスを切ってもこの設定は影響する(影響させざるをえない)ので、せめて少しでもわかりやすくするために、設定ダイアログで「末尾にステータス表示」をオフにしても「板全体の…」のチェックボックスが無効にならないようにした。</li>
+          <li class="sp64332">レス0のスレを開いた時に末尾ステータスの残レス数が板の保存数ままになるようになった件を修正</li>
+          <ul>
+            <li class="explain">スレ操作パネルの仕様変更のために施したスレ末尾ステータス側のコード変更にミスがあり、レスが無い場合の処理に使う最新レス番号の数字が狂ってしまっていた(arAkahukuThread.createThreadStatusを呼ぶ際に渡す最新レスNoはスレNoであるべきだったが、0になってしまっており、これが間接的にarAkahukuThread.getExpireNum()の特殊動作(レスNoを0として呼ぶと板の最大保持数を残りレス数として返す)をトリガして問題の挙動となっていた)</li>
+            <li class="explain">
+            <span class="cited">赤福MOD快調だけどな</span><br/>
+            <span class="cited">レス０のスレ開いた時に続きを読むの上にあるレス残量が必ず10000になるのが気になるぐらい</span><br/>
+            長いこと放置しちゃってたけど<br/>別件でコード見直したらようやく原因わかったよ…
+            </li>
+          </ul>
+        </ul>
+      </ul>
+      <li>リンク</li>
+      <ul>
+        <li class="featurename">delをインラインで開く</li>
+        <ul>
+          <li class="optimize">スレを開いた際の下準備を合理化して高速化(約2倍速？)</li>
+          <ul>
+            <li class="explain">hrefを書き換えてしまうと多分履歴周りで余計な手続きが発生するので、インラインで開く場合はこれを回避。また、「delを別タブで開く」の処理に変に依存して二度手間になってるのをやめさせた。</li>
+          </ul>
+          <li>インラインdelフォームの横幅+20px (やっつけ。手元の環境では少し狭かったから)</li>
+        </ul>
+      </ul>
+      <li>スレ</li>
+      <ul>
+        <li class="featurename">末尾にステータス表示</li>
+        <ul>
+          <li class="bugfix sp60557">末尾のステータス表示などで、スレを開いたときに「現在???人くらいが見てます」でも以降の更新で人数が更新されるように改善</li>
+          <li class="bugfix sp64332">表示設定を途中からオンにすると「続きを読む」時にステータス行が増殖する問題を修正</li>
+          <ul>
+            <li class="explain">設定オフでスレを開き、設定をオンに変更してから「続きを読む」で更新すると末尾のステータス表示が追加されるが、再度「続きを読む」してまた状態が更新されるとステータス表示が更新されるのではなく追加されてしまい、「続きを読む」度に延々と増殖してしまうという問題があった。</li>
+            <li class="explain">原因: 過去に末尾ステータスを作成するルーチン(arAkahukuThread.createThreadStatus)の引数仕様変更があったらしいのだが、末尾ステータス作り直しの部分でその変更が反映されておらず、変な動作になっていた。(ステータス表示要素にidが付与されないので増殖する、Delと表示される＝スレに削除依頼があるという表示(古い))</li>
+            <li class="explain">該当部分で正しく末尾ステータスを作成するよう引数を修正した。</li>
+          </ul>
+        </ul>
+      </ul>
+      <li id="PopupQuote">引用のポップアップ</li>
+      <ul>
+        <li class="improve">引用部分の元レスが見つからない時に、引用テキスト内のNo.等を元に対象レスを探しにいく処理を追加</li>
+        <ul>
+          <li class="explain">見つからない場合の追加処理なので、基本的にはポップアップされる内容は変わらない(IPは除く)。<br />
+          </li>
+        </ul>
+        <li class="bugfix sp59934 baseline">ポップアップのドラッグ移動時にテキスト選択にならないよう修正</li>
+        <li class="featurename">IPアドレスからのポップアップ</li>
+        <ul>
+          <li class="futaba sp60557">IP:123.*(hogehoge.jp)のようなマスク部分の多いパターンもIPアドレスと見なすように変更</li>
+          <ul>
+            <li class="explain">IP:1.2.3.* のようなパターンしかIPとして見なしていなかった。</li>
+          </ul>
+          <li class="improve">特定の板だけでなくIP表示のスレ(スレ本文にIPがあるスレ)ならどこででも機能するようにした</li>
+          <ul>
+            <li class="explain">一部の板で有効なはずなのだが今のふたばではほぼ死んでいたので。</li>
+          </ul>
+        </ul>
+        <li class="newfeature sp60557" id="PopupFromID">ID表示のスレでは(No.やIP引用と同様に)IDから関連レスをポップアップする機能を追加</li>
+        <ul>
+          <li class="explain">対象IDのレスを前方から1つ探してポップアップする。「現在のレスから近い方を表示」設定に準じる(ID&amp;IPに関しては通常のレスと設定を分けたい気もする)。</li>
+          <li class="sp60848">ポップアップできないIDがあったので修正(IDの末尾が"."や"/"の場合など)</li>
+        </ul>
+        <li class="newfeature sp60557" id="PopupQuoteExact">「行単位で合うレスを優先して検索」するオプションを追加</li>
+        <ul>
+          <li class="explain">このオプションをオンすると引用内容の行レベルの厳密な検索(より正確に言えば行頭を含んだマッチング)を優先して行うようになり、引用の元レスを見つけやすくなる。見つからなければ今までと同じ検索方式の結果となる。検索コストは微増するかもしれない。</li>
+          <li class="explain">詳細： これまでも、複数行引用(の２行目以降から)のポップアップでは改行まで含めた厳密なレス検索が優先して行われていた。しかし一行引用からはそのような検索はなく、行の途中にある文字列にマッチする検索であった。このために、同様の一行引用が複数のレスで行われている場合、引用の大元のレスではなく同じように引用してるレスをポップアップしてしまっていた。それはそれで使い途があったのかもしれないが、複数行引用時と同様に、本当の大元のレスこそがポップアップして欲しいと個人的には思う。ひょっとすると、「現在のレスから近い方を表示」設定をオフすることにより同種の引用レスを飛ばして大元のレスをポップアップさせていたかもしれないが、厳密には意味が異なるし、そもそもこの設定をオフにするとすぐ上に引用もとがあったとしても必ず最初のレスまで検索するハメになるので処理が遅くなる。ということで、新たなオプション項目により変更された挙動となるようにした。オフならこれまでの検索順位は保たれるはず。</li>
+        </ul>
+        <li class="bugfix">複数行引用から引用元を見つけられないことがある問題を修正</li>
+        <ul>
+          <li class="explain">複数行引用の2行目以降からのポップアップで、引用全体がマッチするレスが無い時(例：引用の1行目に日付やNo.なども入ってる場合)は、全体のマッチを諦めてマウスカーソル下の引用行だけで元レスを検索するのだが、この際に引用記号"&gt;"を付けたままの文字列で検索を行ってしまっていた。これでは同様に引用しているレスにしかマッチしないため、元レスにもマッチせずに何もポップアップしないことが起 こりうる。ということで、普通の一行引用の検索同様、引用記号を削って検索するよう修正した。</li>
+          <li class="explain">このケースにおいても「行単位で合うレスを優先して検索」設定は反映される。</li>
+        </ul>
+        <li class="featurename">「画像も含める」設定：</li>
+        <ul>
+          <li class="improve sp60557">画像も含めるがオフの場合にオートリンクプレビューも含めないよう変更</li>
+          <li class="improve sp60557">画像サイズの設定がオートリンクプレビューのサイズにも反映されるよう変更</li>
+          <li class="newfeature sp60557" id="PopupExcludePreview">サブ設定項目に「オートリンクプレビューを含める」「画像以外も」オプションを追加</li>
+          <ul>
+            <li class="explain">オートリンクのプレビューを開いているレスの引用で、引用ポップアップ中にはプレビュー(特にSWF)を含ませたくないことがあったために追加した。デフォルトでは２つともオンで従来と同じ挙動。「画像以外も」をオフにすることでSWF等をポップアップに含ませないことができる。</li>
+          </ul>
+        </ul>
+        <li class="futaba sp60557">ふたばが非表示にしているレスもポップアップしてしまう問題を修正</li>
+        <ul>
+          <li class="explain">元のコードは(たぶん合間が消した)非表示レスを候補から除いているのだが、現状ではふたば側による非表示レス(「…により削除されました」とか)はポップアップされることがあった。非表示レスがポップアップされ、そのNo.クリックでスクロールしようとするとページの頭へ飛んでしまうという問題があったので、非表示かどうかの判定を広くし、ポップアップさせないように修正した。</li>
+          <li class="explain">非表示レスでも(合間が消したレスでなければ)かまわずポップアップし、かつNo.クリック時にはレスを表示するよう切り替えて正しくスクロールする、という機能を追加してもいいのかもしれないけど面倒なのでやめた。見えてないレスは見たくないものだろう。</li>
+        </ul>
+        <li class="optimize sp60557">スレ本文からの引用検索という無駄な処理が走らないように</li>
+        <li class="optimize sp60557">日時部分などからの無駄な数字(No.等)検索処理を止めた</li>
+        <ul>
+          <li class="explain">日時とかのレス本文では無いテキスト(題名・メ欄は別)にある数字についても、No.や画像じゃないかと検索してた。不要な処理のはず。</li>
+        </ul>
+        <li class="optimize sp60557">テキストに検索するべき要素がなかった時の無駄な処理を止めた</li>
+        <ul>
+          <li class="explain">Akahuku.getMessageBQのキャッシュによって問題の処理の負荷は多少軽減できるが、現在のレスが何レス目なのかを求めたりもしていたところも無駄なので、その辺りを全て情報が必要になってから初めて処理するようにした。</li>
+        </ul>
+        <li class="optimize sp60557">Firefox4以降で、カーソル下の数字(No.等)を探しだす処理を軽量化</li>
+        <ul>
+          <li class="explain">一行に複数の数字が書かれている場合、これまではDOM要素を破壊的に操作してマウスカーソルの下の数字を求めていた。破壊的操作はもちろん重いので、Firefox4以降では新API(Range.getBoundingClientRect)により非破壊で同様の処理をするよう追加した。</li>
+        </ul>
+        <li class="bugfix sp61933">数字のみのレスの引用からポップアップが開けないことがある問題を修正</li>
+        <ul>
+          <li class="explain">例えば「12345」というレスに対して「<span class="cited">12345</span>」と数字のみを引用しているレスからは元レスをポップアップできないという問題があった。数字のみの引用からはまずNo.か画像番号の可能性が検索されるのだが、これに失敗した場合に、本来次に行うべき通常の引用テキストの検索がスキップされていたことが原因。</li>
+        </ul>
+      </ul>
+      <li>芝刈り</li>
+      <ul>
+        <li class="bugfix sp61933 baseline">「色を変える」設定の「引用」の指定色が反映されない問題を修正</li>
+        <ul>
+          <li class="explain">引用内かどうかを判定する処理のバグで、引用内でも「通常」の指定色が適用されていた。</li>
+        </ul>
+      </ul>
+      <li>レス一般</li>
+      <li>オートリンク</li>
+      <ul>
+        <li class="improve">URL検出パターンを改善</li>
+        <ul>
+          <li class="sp59934">誤検出を防ぐためホスト名として許容しない文字を追加</li>
+          <ul>
+            <li class="explain">国際化ドメイン名(RFC5892)を参考にしつつ、スキャンのパフォーマンスとの兼ね合いで \u0000-\u002C\u003A-\u0060\u3001-\u3004\uFF01-\uFFBEを追加した。例えば"firefoxでhttp://が表示されない"なんてレスでもURLとは認識しないように。</li>
+          </ul>
+          <li>パスとして許容する文字に"|"を追加</li>
+          <ul>
+            <li class="explain">問題があった例：http://translate.google.co.jp/?hl=ja#en|ja|test</li>
+          </ul>
+          <li class="bugfix sp64768" id="SupportForBracketsInURL">許容文字に"[","]"を追加</li>
+          <ul>
+            <li class="explain">問題があった例：https://www.google.co.jp/search?q=[%E7%B6%9A%E3%81%8D%E3%82%92%E8%AA%AD%E3%82%80]</li>
+			<li class="explain">"["と"]"は昔(RFC2396,1998年)はURIの構成文字ではなかったが、今(RFC3986,2005)は含まれてる。が、赤福のURL検出パターンではホスト部以外で"[","]"をURLの一部と認めていなかった。パスの構成文字にも追加して対応。</li>
+          </ul>
+        </ul>
+        <li class="featurename">「プレビュー」</li>
+        <ul>
+          <li class="obsolete">プレビュー画像の読み込みエラーのメッセージを一部改善</li>
+          <ul>
+            <li class="explain obsolete">キャッシュのエントリが見つからずエラー原因が不明の場合にエラー"(0 Not connected?)"が表示されるように。</li>
+          </ul>
+          <li class="improve sp61933">読込エラー時の原因を正確に取得するよう改善</li>
+          <ul><li class="explain">キャッシからエラーの原因を推測する方法がとられていたが、リダイレクトされた場合や、古いキャッシュがありつつも新たな接続に失敗した場合に正しくエラー状況を取得できなかった。そこでより直接的な判断方法として、読込時には通信(HTTPリクエスト)を監視し、サーバーからのレスポンスに基づいた正確なエラー状態を表示できるようにした。</li></ul>
+          <li>エラーを起こしたプレビュー画像が他のアドオン等により差し替えられる場合でも、赤福からはエラーと見なしたままにするようイベント処理を改善</li>
+          <ul>
+            <li class="explain"> RequestPolicy対応の一環。Adblockへの対応にもなってるのかも？</li>
+          </ul>
+          <li class="bugfix">"hoge.swf?var=vas"のようなパラメータ付きSWFのパターンがプレビュー有効化判定から漏れていた問題を修正</li>
+          <li class="newfeature"><a id="PreviewYouTube"></a>YouTubeの動画URLに対して動画プレビュー([見る])を表示できるようにした</li>
+          <ul>
+            <li class="explain">youtube.comあるいはyoutu.be(短いフォーマット)に対応。#t=1m23sなどの再生開始時間は反映させるが、他のパラメータはプレビューには反映させていない。プレビューの大きさはSWFのサイズ設定で可変(ただし最小でも480x385)。</li>
+            <li class="sp60848">モバイルサイトのURL(m.youtube.com)にも対応。</li>
+            <li class="sp60999">#t=1234 といった秒数のみの指定もプレビューに反映させるように(公式の書式では無いように思うけど)</li>
+            <li class="sp61933">(Firefox10+) HTML5版プレイヤーでもフルスクリーン表示できるようにした</li>
+            <li class="sp61933">MHTで保存時に残らないようにした</li>
+          </ul>
+          <li class="bugfix sp60848 baseline">プレビューを閉じても元のスタイルに戻らないことがある問題を修正</li>
+          <ul>
+            <li class="explain">プレビューを開くと画像の幅に応じてコメントのマージン設定を上書きするが、画像レスができる板でレス画像に加えてプレビューを開くと、閉じる時にマージン消してしまっていた。元の値に戻すように修正。</li>
+          </ul>
+          <li class="bugfix sp61933" id="BypassChannelRefactoring">プレビュー画像の読込を中止させられないなどの通信周りの不備を補強</li>
+          <ul>
+            <li class="explain">プレビュー読込中にESCキーを押すなどしても(表示の更新は停止するが)読み込みは停止されないという不審な挙動が見られた。コードを調査したところ、プレビュー画像をリファラ無しで読み込むための仕組みに不備が色々見つかった。諸々を考慮して全面的に書き直すことで、読込を中止できるようにし、また、<b>プレビュー読込のネットワーク状況がWebコンソールで監視できる</b>ようにもなった。</li>
+            <li class="explain"><b>詳細:</b>(arAkahukuProtocolHandler.jsのarAkahukuBypassChannelが問題で、実チャネル(本来のURIに対するもの)のProxyとして働くべきなのに実装が不完全で、最低限のことしか出来ないようだった。nsIChannel インタフェースのメソッドやプロパティ(ほとんどが未処理だった...)のget/setを実チャネルに適切に委譲させるよう整理して書き直した。特に、notificationCallbacks を適切に処理できるようになったことで、Web コンソールでモニタできるようになった。)</li>
+            <li>リファラだけでなくクッキー送受信もブロックするように変更</li>
+            <ul>
+              <li class="explain">arAkahukuBypassChannel はサンドボックス接続のための機能として設計されてるということで、意をくんで、コード書き直しのついでに、クッキー送受信もブロックできるようにした [<a href="https://developer.mozilla.org/ja/Creating_Sandboxed_HTTP_Connections">参考</a>]。さらに、リダイレクトの処理も追加し、リダイレクト先に対する新しい接続も arAkahukuBypassChannel でラップするようにし、サンドボックスが維持されるようにした(もちろんリダイレクトの際のリファラは消さない)。</li>
+              <li class="explain">ただし iframe などで HTML を読み込む場合(youtube)には、外部サイトの機能を普通に使いたいだろうということから、リファラは切るがクッキーは送受信するようになってる。そしてもちろん、プレビューでなくクリックして別タブで開く場合はリファラだけしかブロックされない。</li>
+            </ul>
+            <li>拡張子の自動識別の通信もこのサンドボックス接続で行うよう変更</li>
+            <ul>
+              <li class="explain">一貫性を持たせると言うことで、画像読込だけでなく自動識別用の通信も同様に通信するように変更した。</li>
+            </ul>
+            <li class="sp62403" id="Fx36PreviewChannelBug">(エンバグ) Firefox 4以前ではプレビュー画像が表示されなくなってしまってた件を修正</li>
+            <ul>
+              <li class="explain"><span class="cited">Firefox3.6.27preで赤福5.2.90.sp61933を使ってるんだけど</span><br/>
+              <span class="cited">赤福のこのバージョンから一部の画像が表示されなくなった</span><br/>
+              ああ、改変でバグらせちゃってた<br/>それにしても3.6系ユーザーも使ってたのは予想外だったわ</li>
+              <li class="explain">一応3.6とかで問題が起きないように、4以降の新機能を使うときは特に気をつけていたつもりだったけど、真面目にテストしてなかったせいで3.6系では不具合を生んでいたらしい。ミスを修正。</li>
+            </ul>
+          </ul>
+          <li class="improve sp61933">画像以外のオートリンクプレビューもリファラを送らないように</li>
+          <ul>
+            <li class="explain">画像のオートリンクプレビューではリファラを送らない特殊チャネル(arAkahukuBypassChannel)のURIを用いているのに、このチャネルは画像以外では利用を許可されておらず(なぜ?)、普通のURIでアクセスされていた＝リファラを送っていた。チャネルのこの制限には特に意味がないように思えるので、あらゆるファイルで利用可能にし、オートリンクプレビューのURIは全てこれを用いることとした。</li>
+            <li class="explain">(注：オートリンクをクリックして辿るときのリファラと、プレビューのリファラでは問題が違う。クリック時は既に全て切っていたが、プレビュー(埋め込み表示)では事情が違った。)</li>
+            <li class="sp64768" id="FlashBlockSpoilingFix">SWFプレビューに対してFlashBlockが効かなくなってた件に対応</li>
+            <ul>
+              <li class="explain">いつのまにかSWFのプレビューに対してFlashBlockアドオンのブロックが効かなくなっていた。FlashBlock側の処理方法と、リファラ送らないようにする変更の組合せで、赤福コンテンツポリシーで予期せぬ例外が起きるようになり("context.nodeName is undefined")、加えてその例外処理がまずかったためにFlashBlockの動作が阻害されていたらしい。例外処理を正しく行うことで対処でき、ついでに問題の例外が発生しないようにもしておいた。</li>
+            </ul>
+            <li class="sp64768">プレビュー複数表示設定でFlashBlockでブロックすると[閉じる]で消せなくなってた問題を修正</li>
+            <ul>
+              <li class="explain">赤福はプレビューを閉じる際にFlashBlock対応の処理をしていたのだが、SWFでもリファラを送らないようにした際にその部分を変更しておらず、複数プレビュー設定時に閉じてもFlashBlockの枠が消えないという問題が起きるようになってしまっていた。ちゃんと修正。</li>
+            </ul>
+          </ul>
+          <li class="improve sp61933">プレビュー読込中に[閉じる]した時は画像読込を即時中止するように</li>
+          <ul>
+            <li class="explain">「閉じる」とプレビュー画像の表示は消えるが、読込は裏で行われたままになっていた。オートリンクされる画像はサイズが大きいことも多く、うっかり開いたもののすぐ閉じるといったユースケースを想定すると、閉じる際にはロード中止させたほうが帯域に優しい。塩など、今時の鯖ではうっかり中止しても再度開けばちゃんと続きから読み込まれるので無駄もないはず。</li>
+          </ul>
+          <li class="newfeature sp64983" id="a8a7bee">Thumbnail Zoom Plus アドオン利用時にプレビューから拡大できるようにするパッチ</li>
+          <ul>
+            <li class="explain">最近のバージョンのTZPではオートリンクプレビューからは画像拡大が出来なくなってる。あえて古いバージョンを使うような人もいるようなので、最近のバージョンでも拡大できるようにしてみた。</li>
+            <li class="explain">(TZP は画像のURLに http: か https: スキームのものしか許さないようなチェックをしている。これは無駄なセキュリティリスクを負わないようにする安全策らしいのだが、オートリンクプレビューは akahuku: スキーム(リファラを消したりする特殊仕様のため)なので拡大できなかった。仕方がないので、TZPの該当する処理を含む関数を akahuku: も許すよう書き換えた関数に置き換えることで無理矢理対応させた。置き換えは toString/replace/evalという典型的なパターンで。よく知られるようにこの方法は荒っぽいハックで、あちらの更新によって挙動が狂う可能性もあるので注意が必要。)</li>
+          </ul>
+        </ul>
+        <li class="featurename">「板以外で選択範囲をオートリンクとして開く」</li>
+        <ul>
+          <li class="bugfix sp60557 baseline">URLパターン判定が板以外ではエラーで動かない問題を修正</li>
+          <ul>
+            <li class="explain">http://hoge/huga みたいなURLのパターン判定のバグで、エラーが起きて開けない問題。</li>
+          </ul>
+          <li class="bugfix sp61933">フレーム内からは機能しない問題を修正</li>
+          <li class="bugfix sp61933">フレーム内のスレでは「オートリンクとして開く」が無効にならない問題を修正</li>
+          <ul>
+            <li class="explain">本来、オートリンクが既に処理されているページではコンテキストメニューの「オートリンクとして開く」は無効になるはずなのだが、フレーム内だと判定が正しく行えていなかった。</li>
+          </ul>
+          <li class="bugfix sp61933">「…として開く」際にエラーが記録されることがある件を修正</li>
+          <ul>
+            <li class="explain">画像を保存ボタンをオートリンクプレビューにもつける設定だと、オートリンクは開かれるもののコンソールにエラーが記録されていた。</li>
+            <li class="explain cited">エラー: '[JavaScript Error: "uri is null" {file: "jar:file:///PROFILE/extensions/akahuku.xpi!/components/arAkahukuProtocolHandler.js" line: 1876}]' when calling method: [arIAkahukuProtocolHandler::isAkahukuURI] = NS_ERROR_XPC_JAVASCRIPT_ERROR_WITH_DETAILS<br/>
+            ソースファイル: chrome://akahuku/content/mod/arAkahukuP2P.js<br/>行: 309</li>
+            <li class="explain">処理時に仮に作成されるオートリンクに対して、想定外の要素(保存の中断ボタン)まで開こうとしてエラーが起きていた。処理すべき要素を A.akahuku_generated_link に限定することで修正。</li>
+          </ul>
+        </ul>
+        <li class="featurename">リンクURL可読化</li>
+        <ul>
+          <li class="explain">(対応サイトのURLにおけるエンコード文字列 %AB%AC%AD%AE...などを日本語化する動作のことを指す)</li>
+          <li class="bugfix sp60848">google検索結果のURLを可読化する処理が失敗するパターンがあったので修正</li>
+          <ul>
+            <li class="explain">最近のFirefoxの検索バーからのURLが"...&amp;aq=t&amp;..."となってて、これが検索語(q=...)を探すパターンの想定外だった。より厳密にマッチングさせるよう修正。</li>
+          </ul>
+          <li class="improve sp61933">(maps|scholor|books).google.*もwww|images同様に検索語を可読化するように</li>
+          <li class="improve sp61933">最近のgoogleのURLパターン(...#q=word)に対応</li>
+          <ul>
+            <li class="explain">インスタント検索ができてからか、例えば http://www.google.co.jp/search?q=word#q=instantword などというパターンもありえるようなので対応</li>
+          </ul>
+          <li class="improve sp61933" id="ReadableOnHover">マウスホバー時にステータス表示されるURLを通常リンク同様に可読化するように</li>
+          <ul>
+            <li class="explain">全てのオートリンクに対して、ロケーションバーと同様の処理(のはず)によりURLを可読化するようにした。対応サイトURLのインライン可読化(サイト別の処理をしてる)とは違い、<b>オートリンク全てで一様に可読化が試みられるが、全てを可読化できるわけではない</b>(エンコード元がUnicodeでない場合など?)。</li>
+            <li class="explain">Firefox の内部関数を利用するため、バージョン依存がありそうだが未調査。未対応バージョンでも最低限従来通りのはず。</li>
+            <li class="explain">(コードの整理: IDN 関係は nsIURI に任せるように)</li>
+          </ul>
+          <li class="fxupdate sp64768" id="sp64768-2">https://*.googleでも検索語を可読化するように</li>
+          <ul>
+            <li class="explain">Firefox自身もgoogleをhttpsで使うようになり、レスとしても最近よく見るようになったので、http<b>s</b>でもgoogle検索URLの可読化処理が走るように対応した。</li>
+          </ul>
+        </ul>
+        <li class="newfeature sp60848" id="DragableAutoLink">オートリンクも通常のリンクと同様にドラッグ出来るように(Firefox3.6+)</li>
+        <ul>
+          <li class="explain">オートリンクはリファラを送らないようにするとかの特殊な処理をしている都合上D&amp;Dできなかった。そこで関係するイベント処理を追加して、通常のリンクのようにD&amp;DでURL(akahuku://ではない)を渡せるように...完全にはまだできてないみたい。</li>
+        </ul>
+        <li class="fxupdate sp61933">Firefox4+ でマウスホバー時のリンク先表示が点滅を繰り返すことがある件に対処</li>
+        <ul>
+          <li class="explain"><b>問題の詳細</b>：Firefox4でステータスバーが無くなってから、リンク先表示は右/左下にポップアップされるようになった。ポップアップとページ内容が重なってしまうことを避けるために、ポップアップにマウスが重なったら自動的に左右を切り替えるという処理がされているのだが、赤福のリンク先表示の処理はこのような挙動を考慮していないため、画面左下にオートリンクがある場合に表示非表示が無限に切り替わり続けるというループに陥ることがあった。MHT保存時の取得できなかったファイルリストはページ左下隅に表示されるので特に問題を避けようがなかった。</li>
+          <li class="explain">マウスアウトでメッセージを即消さずに短時間待つようにして、重なったポップアップが逆側へ逃げる動作を邪魔しないようにした。普通のリンクホバーもこういう処理が行われているはず。</li>
+        </ul>
+        <li class="futaba sp61933 obsolete">「」ッチーで、うぷ・塩の画像以外のファイルは本来の場所へリンクを張るように修正</li>
+        <ul>
+          <li class="explain obsolete">「」ッチーにおけるオートリンクは、うぷや塩のファイルが全て「」ッチーに取得されてることを期待したオートリンクの張り方になっていたが、実際には取得されるのは画像などに限られていて、リンクを辿れないことがあった。ということで、画像・txt以外では普通にオートリンクを作成するよう変更した。</li>
+          <li class="sp63787">「」ッチーではページ末尾のリンク一覧を参考に適切にリンクを張るように修正</li>
+          <ul>
+            <li class="explain">ッチーの仕様を誤解していたようで、swfのリンクで困る人が出てしまったようだ。ということで、元の事情も考え、より適切なリンクの張り方＝tsumanne.net上にあるものはそこに、無いものは本来のURLになるよう変更した。ファイル数が多くなると処理が重くなるかもしれないが(O(N^2)？)、問題ない程度だと思う。</li>
+          </ul>
+        </ul>
+        <li class="bugfix sp61933">拡張子のないオートリンクに手動・自動で付加した拡張子が引用&amp;ポップアップを妨げる問題を修正</li>
+        <ul>
+          <li class="explain">拡張子を付加していると、No.クリックやコンテキストメニューから引用した時に付加した拡張子が残ってしまう問題があった。また、原因を同じくして、拡張子が付加されたオートリンクを含むレスに対する引用をポップアップできないことがある問題があった。</li>
+          <li class="explain">赤福が生成した要素をうまく処理させるための機構があるのに、付加拡張子部分は必要な構造(akahuku_generatedクラスで囲う)が欠けていたことが原因。HTML構造を修正して2つの問題を解決した。ついでに、付加した拡張子部分がちょっと違う見た目になるようにスタイルを追加した。</li>
+        </ul>
+        <li class="improve sp62403" id="AutoLinkMiddleClick">中ボタンクリックは通常クリックとフォーカスが逆になるように修正</li>
+        <ul>
+          <li class="explain">普通のリンクと同じ挙動になるように修正した。クリック/中ボタンクリックでタブのフォーカス有無を切り替えられないのは辛いため。</li>
+          <li class="explain"><span class="cited"><span class="cited">入れた人赤福の調子どう？</span></span><br/>
+            <span class="cited">リンクミドルクリックしたら新タブに強制移動になったのがちょっと困ったぐらい</span><br/>
+            オートリンク設定の「開いたタブを選択する」をオンにすると<br/>左クリック時と逆にミドル(中ボタン)時ではタブへ移動(選択/フォーカス)しなくなるよ<br/>
+            それにしてもこの辺の挙動はわかりにくいね</li>
+          <li class="explain">挙動まとめ：
+          <ul>
+            <li>普通のリンク：左クリック＝開く、中クリック＝タブで開く <span class="sub">※タブのフォーカスはオプションの「リンクを新しいタブで開いたとき、すぐにそのタブへ切り替える」の設定による</span></li>
+            <li>新しく開くリンク：左クリック＝タブで開く、中クリック＝タブで開く(<b>フォーカス逆</b>) <span class="sub">※通常は左だとフォーカスするが browser.tabs.loadDivertedInBackground = true にすると左と中の挙動は逆転する</span></li>
+            <li>赤福オートリンク(従来)：左クリック＝タブで開く、中クリック＝タブで開く <span class="sub">※左/中とも、フォーカスは赤福の設定の「開いたタブを選択する」に従う</span></li>
+            <li><b>赤福オートリンク(修正)</b>：左クリック＝タブで開く、中クリック＝タブで開く(<b>フォーカス逆</b>) <span class="sub">※左のフォーカスは赤福の設定の「開いたタブを選択する」により、中はその逆になる</span></li>
+          </ul>
+          </li>
+          <li class="explain">Firefox本体と赤福とではタブフォーカスの設定が分かれているため、挙動が揃わない可能性がある点に注意。<b>通常のFirefoxと挙動を揃えるにはオートリンク設定「開いたタブを選択する」をオンにする必要がある</b>。<span class="sub">(赤福の側をFirefox本体の挙動と揃えるようにして挙動を単純にするよう変更することもできるのだが、それは逆に赤福の機能を削ることになるので見送った。赤福の設定がわかりにくいのは問題だとは思うけれど互換性を優先させたほうがいいかなあと)</span></li>
+          <li class="explain"><b>注意:</b>オートリンクは普通のリンクとは全くの別物で、赤福がタブの制御などを行うため、他のアドオン(TMPなど、タブのフォーカスを独自に制御する拡張機能)と制御がかちあったりすると上記のような挙動にならない可能性がある。らしい。TMPみたいなの使ってないから本当のところは知らないが。</li>
+        </ul>
+        <li class="optimize sp64332">オートリンク(&amp;芝刈り)のスキャンにおける無駄な除外判定を削除</li>
+        <ul>
+          <li class="explain">オートリンクと芝刈りに共通するスキャンコード部分にあった、ページ末尾のamazon.co.jp広告を処理からはずすための判定(おそらく)が無駄なので削除した(getMessageBQ で処理した段階でこの可能性は無いため)。長いスレでのオートリンク・芝刈り処理にかかる時間が半減するかも(3000レス級の実況スレで50%減だったが、レスの内容にもよるので常にそうではないはず)。</li>
+        </ul>
+        <li class="futaba sp64768" id="SioMidDLKeyLinkFix">塩中瓶のDLKey付きファイルで自動でKey入力画面に飛ぶようにリンク先変更</li>
+        <ul>
+          <li class="explain">塩の仕様が変わったのか最初からそうだったのかは知らないが、中瓶のDLKey付きファイルを拡張子込みで書かれた場合のオートリンクではNot Foundになってしまっていて、勘違いする場合が結構あるみたい。期待通りにKey入力画面に飛ぶように、中瓶のリンク先を若干変更してみた。拡張子無しのURLならリダイレクトしてもらえるみたいなので。</li>
+          <li class="explain">この対応方法では、DLKey無しのファイルだった場合に"Download sq12345.jpg"等と表示されるリダイレクトページが一瞬表示されてしまうのだが、Not Foundよりはマシだろう。</li>
+        </ul>
+        <li class="improve sp64768" id="TreeStyleTabSupport">ツリー型タブアドオンへ対応:オートリンクは子タブとして開かれるように</li>
+        <ul>
+          <li class="explain">元のレスは忘れてしまったのだけど、誰かがこういう挙動にしたがっていたようなので。ツリー型タブは他アドオン用にAPIを提供しているので、可能ならそれを使って子タブとして開かれるようにツリー型タブ側に通知するようにした。(オートリンクは普通のリンクとは違う特別なリンクなので、この例のように違う挙動となることも多い。この件の場合はツリー型タブの方で対処方法を用意していたので、通常リンクと同様の挙動になるよう制御することが可能だった。)</li>
+        </ul>
+        <li class="improve sp64768" id="sp64768-3">オートリンクで開くタブに通常リンク時同様に元タブの情報を付加するようにした</li>
+        <ul>
+          <li class="explain">ツリー型タブを使ってみて気づいたが、オートリンクで開くタブは閉じても元タブに戻らないことがあった。この問題はツリー型タブとは関係なく、Firefoxのbrowser.tabs.insertRelatedAfterCurrentをfalseに設定している場合でも顕著だった(わざわざそんな設定にしないから気づかなかったが)。通常のリンクで開かれるタブは、この設定に関わらず、閉じたときに元のタブに戻れる(バックグラウンドでタブを開くとダメみたいだが)。オートリンクも、できるだけ通常リンク同様の挙動であることが望ましいので、開かれた元タブの情報(owner)を付加するように改善した。</li>
+          <li class="explain">注：タブ周りの挙動を変更するアドオンなんかを使ってる場合に、この変更が影響して、挙動が狂うかもしれない。が、その手のアドオンは使ってないので不明。挙動を揃えただけだから大丈夫だと思うが・・・。ということで元仕様との切り替え設定等は用意しない。</li>
+        </ul>
+      </ul>
+      <li>P2P</li>
+      <ul>
+        <li class="bugfix sp60557 baseline">P2Pの状況表示がツールバー/ステータスバーで正しく動作するように修正</li>
+        <ul>
+          <li class="explain">例えばブラウザをオフライン作業モードにした場合などで、ツールバー/ステータスバーの表示更新がエラーを起こして、正しい状態を示さなくなるバグ。コードの一部が変な状態(置換失敗か?)になってるのが原因。</li>
+        </ul>
+        <li>公式サイト停止につき、P2Pの初回起動時に使われる最初期ノードをコード上から削除</li>
+        <li>非公式改変版のバージョン番号部分はP2Pモジュールに渡さないように(5.2.90と同等ということで)。</li>
+        <li class="bugfix sp60848 baseline">スレッド関係の潜在的問題を解消</li>
+        <ul>
+          <li class="explain">P2P有効時、次のようなコンソールメッセージが出ていた;</li>
+          <li class="explain cited">Attempt to use JS function on a different thread calling nsITransportEventSink.onTransportStatus. JS objects may not be shared across threads.</li>
+          <li class="explain">具体的に不具合が起きていたわけではなさそうだったが、想定外のスレッドで無駄な処理をしている可能性があったので、nsITransport.setEventSink を使う際に当該スレッドだけがイベントを受けるよう修正した。</li>
+        </ul>
+        <li class="bugfix sp60848 baseline">ポップアップメニューの「この画像の P2P キャッシュを削除」が壊れていたのを修正</li>
+        <ul>
+          <li class="explain cited">エラー: uri is not defined<br/>ソースファイル: chrome://akahuku/content/mod/arAkahukuP2P.js</li>
+        </ul>
+        <li class="fxupdate sp60848 baseline" id="P2P_Fx9">Firefox9+でP2Pオン時に画像がロードされないという互換性の問題に対応</li>
+        <ul>
+          <li class="explain">Firefox4(Gecko 2.0)で全XPCOMインタフェースが unfrozen に<a href="https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0">変わった</a>が、今回ついに arIAkahukuP2PChannel (赤福のP2P用独自チャネル。akahuku://*/p2p/*を扱う)の継承元である<a href="https://developer.mozilla.org/en/nsIChannel">nsIChannel</a>に微妙に<a href="https://developer.mozilla.org/en/Firefox/Updating_add-ons_for_Firefox_9#Interface_changes">変更が加わってしまい</a>、インスタンスを生成できなくなった。例えば画像単体をタブで開くとロード画面のまま即エラーとなるのがわかる：</li>
+          <li class="explain cited">エラー: Component returned failure code: 0x80570015 (NS_ERROR_XPC_CI_RETURNED_FAILURE) [nsIJSCID.createInstance]<br/>
+          ソースファイル: jar:file:///C:/PROFILEDIR/extensions/%7B591c2cf0-0a6e-11da-8cd6-0800200c9a66%7D.xpi!/components/arAkahukuProtocolHandler.js<br/>行: 1339</li>
+          <li class="explain">新しいIDLに応じてarIAkahukuP2PChannel.xptを再生成するのが筋らしいのだが、どうせ赤福内でしか使ってないと思うので、XPCOMコンポーネントとして別に登録するかわりに、必要としているコンポーネント(arAkahukuProtocolHandler.js)内に実装をまるっと埋め込んでしまうことにした。これなら8までとの互換も保たれるはずだし、今後似たような事が起きても問題が発生しにくいし。</li>
+        </ul>
+        <li class="fxupdate sp63736" id="NonprefixedBorderRadius">P2Pサイドバー内のボックスが角丸デザインにならなくなる件に対応(Firefox13+)</li>
+        <ul>
+          <li class="explain">Firefox4以降では角丸はベンダー接頭辞が付かない"border-radius"でサポートされていたが、それ以前に使われていた"-moz-border-radius"のサポートがFirefox13でついに削除されたことで、赤福P2Pサイドバー内の枠のデザインが角丸にならなくなった。接頭辞無しプロパティも併記することでデザインが同じになるように修正した。</li>
+        </ul>
+        <li class="fxupdate sp64332" id="P2PImageCorruption_Fx14">Firefox14+で画像が「壊れているため、表示できませんでした」となることがある問題に対応</li>
+        <ul>
+          <li class="explain">Firefox14 の XPCOM インタフェースの変更により、P2Pコンポーネントにおける画像ハッシュ作成のメソッドが呼べなくなり、画像を自取得(P2Pノードからでない)した際にデータ無しになるようになった。画像ファイル自体は保存済みであるので、再読込すると表示することはできる。(ただし対応するハッシュファイルは生成失敗しているため、その画像はP2Pノード間の転送に使われない)。</li>
+          <li class="explain">nsILocalFile が nsIFile にマージされたそうで[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=682360">Bug 682360</a>]、nsILocalFile の uuid が変わってしまったのか、オリジナル版のXPT()では引数が合わなくなったらしい(例外NS_ERROR_XPC_CANT_GET_PARAM_IFACE_INFOが発生する)。arIAkahukuP2PServant2.idl を更新して当該メソッドの引数をnsIFileに変更し、14.0b11のxulrunner-sdkでxptファイルを生成しなおすことで、エラーが起こらないようにした。</li>
+          <li class="explain">XPCOM周りのこういう対策は前方互換性が失われる(旧バージョンで動かなくなる)可能性があるっぽいので避けていたのだが、とりあえず今回は大丈夫そう。3.6系でも動いた。この辺をいじるのはちょっと怖い。</li>
+        </ul>
+      </ul>
+      <li>カタログ</li>
+      <ul>
+        <li class="sp60557 baseline">カタログモードの設定ページをカタログと見なさないように</li>
+        <ul>
+          <li class="explain">設定のページでも赤福のカタログ用処理が行われるが、無駄だし、カタログページとの構造の違いによるエラーも起きていた。エラーが起きる場合はカタログ用の処理を行わないように変更した。</li>
+        </ul>
+        <li class="featurename">「ズーム」</li>
+        <ul>
+          <li class="featurename">マウスホバーによるズーム</li>
+          <ul>
+            <li class="explain">＝(「クリックで開く」ではない場合)</li>
+            <li class="sp60557 improve">Firefox自身のキャッシュにサムネ画像があれば即ズームするように</li>
+            <ul>
+              <li class="explain">カタログ画像は普段は即ズームせず、鯖への無駄なリクエストを減らすために(「表示まで」の設定秒数が短くても)最低１秒の待ち時間が設けられている。今まではFirefoxのキャッシュに画像があっても赤福の管理するIMG要素キャッシュに無ければ１秒待っていた。しかしキャッシュされてれば鯖に負荷がかからないだろうから、普通に「表示まで」 の設定秒数だけ待ち、即ズームするよう変更した。キャッシュの妥当性は未調査だが普通大丈夫だろう。</li>
+              <li class="sp61933">キャッシュ存在判定のコードを整理</li>
+              <ul>
+                <li class="explain">(コード整理・統一: Akahuku.Cache.getStatus())</li>
+                <li class="explain">キャッシュの有効期限が切れていた場合は即ズームしないようになった</li>
+              </ul>
+              <li class="sp61933">キャッシュがある時は絶対にキャッシュからのみ読み込むように</li>
+              <ul>
+                <li class="explain">普通の読込方法では鯖から画像が消えているとキャッシュが消えてしまうことがある。ふたばではできるだけキャッシュを保っておいた方が便利なので、少なくともズームではキャッシュを消さないように、読込方法を変更した。</li>
+              </ul>
+            </ul>
+            <li class="bugfix sp60848">P2P利用時の即ズームして良いかの判定を修正</li>
+            <ul>
+              <li class="explain">P2Pキャッシュがあるかを探すコードが存在していながら正しく機能していなかった。</li>
+            </ul>
+          </ul>
+          <li class="improve sp61933">ズームサイズとして設定できる値を最大300へ拡大</li>
+          <ul>
+            <li class="explain">250pxが最大だったが、壁紙板などサムネ画像が300pxの板があるので、300まで設定できるよう変更。</li>
+            <li class="explain">加えて、大きいサイズに設定したときのアニメーションで、反動で小さいサイズにならないようにした。またロード中に画像がページ最下部に表示されないよう対処した(大きいサイズだとさすがに気になる)。</li>
+          </ul>
+          <li class="improve sp61933">ズーム元のカタログ画像の領域からマウスカーソルが出た段階でズームを閉じるよう変更</li>
+          <ul>
+            <li class="explain">ズームを維持しない＝ズーム画像が閉じられる条件は、マウスカーソルがズーム画像上から出ることだった。しかしこれでは、ズームサイズが大きく(250px等に)設定されている場合にカタログ上で隣接するスレの画像への切り替えがスムースに行えないという問題がある。そこで、ThumbnailExpanderアドオンの挙動のように、ズーム元のカタログ画像の領域からマウスカーソルが出た段階でズームを閉じるようにした。これならどんなサイズのズームが開かれてもスムースに隣接スレに切り替えることが出来る。</li>
+            <li class="explain"><span class="cited"><span class="cited">赤福でカタログでズームのチェック入れてると同じスレがあっても新タブで開くな</span><br/>
+              <span class="cited">同じスレがあるときに既存タブに移動するのが別アドオンの機能なので…</span></span><br/>
+            なんて話があったので、関係しそうなこの変更のついでに対策を入れた：<br/>
+            そもそもこの変更は、領域判定用のダミーA要素を新たにズーム画像の上に被せることで実現されているが、このA要素で起きる<b>クリックイベントは元のカタログ画像へ転送</b>するようにした。つまり、ズーム画像をクリックしてもズーム未使用時と同じ挙動になる。試してないけど、ねないこもこれなら大丈夫なのでは。
+            </li>
+            <li class="explain">(従来の挙動と互換させるためのオプションは無くて大丈夫かな？)</li>
+            <li class="sp62403">(エンバグ)「クリックで開く」有効時に、ズーム画像からスレが開けなくなった件を修正</li>
+            <ul>
+              <li class="explain">良かれと思って変更したクリックイベントの転送によるバグで、赤福自身が対応できていなかった。チェック不足。カタログ画像のクリックに対するイベントハンドラ(リンクを開く動作をキャンセルしてズームさせる役割)を、転送に対応できるロジックに変更した。</li>
+            </ul>
+            <li class="sp62403">(エンバグ)「コメントを全文表示」有効時に、ズームが正常に機能しなくなった件を修正</li>
+            <ul>
+              <li class="explain">追加したダミー要素に対して、マウスの動きに対するイベント処理が未考慮のままで、ズームを開閉を繰り返してしまっていた。テスト不足が過ぎた…。</li>
+            </ul>
+            <li class="improve sp62497">ズーム画像(領域)上でマウスカーソルを止めてる間はカーソルを隠すようにした</li>
+            <ul>
+              <li class="explain">
+              <span class="cited">mod版はカタログでズームした画像を元に戻すかを元画像の大きさで判定するようになったのか</span><br/>
+              <span class="cited">これだとマウスカーソルがズームした画像の邪魔になるから</span><br/>
+              <span class="cited">赤福のオプションからででも以前の挙動を残してもらえないかな</span><br/>
+              邪魔だというならカーソルを隠してしまったほうがよくね？
+              </li>
+              <li class="explain">そもそもズーム保持の判定に関する改変がオプション扱いでなかった理由は、この件が完全に従来の挙動を改善したつもりだったからだった (この程度の差でいちいち設定項目を増やしていると複雑化しすぎるという側面もある)。
+              とはいえ邪魔だという問題はわからないでもないので、抜本的に問題が解決されるように改変した。つまり、マウスカーソルをズーム画像上で止めている間はカーソルが隠れ、動かすと現れるというように。これなら以前の挙動に戻せなくても構わないんじゃないかなあ。</li>
+            </ul>
+          </ul>
+          <li class="newfeature sp61933">ズームサイズの単位をズーム画像比(%)に設定できるように</li>
+          <ul>
+            <li class="explain">これまではピクセル(px)単位だったが、これでは実サイズが小さいズーム(サムネ)画像もズームサイズ(px)に一様に引き延ばされてしまい、例え250と設定してもピクセル等倍に設定することは出来なかった。</li>
+            <li class="explain">設定ダイアログにて、ズームサイズの単位を"px"(従来)と"%"(ズーム画像比)から選べるよう追加した。例えば"100%"とすればピクセル等倍のズームが実現できる(ただしページの拡大率=100%の時)。"50%"や"200%"も有用だろう。</li>
+          </ul>
+          <li class="featurename">「コメントを全文表示」</li>
+          <ul>
+            <li class="bugfix sp62403">空白のポップアップが開かれることがある問題を修正</li>
+            <ul>
+              <li class="explain">カタログからサイドバーに反映されたスレにはコメント情報がなく、本来は全文表示できないが、考慮しないでポップアップを作ってしまっていた。</li>
+            </ul>
+            <li class="bugfix sp62403">最新に更新によって追加されたスレでは全文表示ができなかった問題を修正</li>
+            <ul>
+              <li class="explain">カタログを開いたときの処理と、更新で追加(new/up)するスレへの処理が食い違っていたことによる。コメントの要素(akahuku_comment/akahuku_native_commentクラス)において"__thread"(勝手)属性の付加・利用を廃止する方向で統一した(合間などからも使用されてない属性のはず)。</li>
+            </ul>
+            <li class="sp62403">全文表示ズームのサイズがやや大きすぎるのを修正</li>
+            <ul>
+              <li class="explain">特に高さ方向に大きく不格好なので、適切なサイズになるように修正。(本来、標準準拠モードではwidth/heightにpadding幅は含まれないが、その辺りを考慮していないコードになってて、padding幅分(=4px×2)だけ大きくなっていた)</li>
+            </ul>
+          </ul>
+          <li class="bugfix sp62403">レス増加数がズーム表示左下に反映されないことがある問題を修正</li>
+          <ul>
+            <li class="explain">本来はズーム画像左下のレス数表示に"(+X)"などと情報が追記されるはずだが、new/upおよびその直後にレス数増加したレスでしか正常に機能していなかった。これは5.2.90より少し前の更新(誰かの要望で、レス数増加を表示する要素に"akahuku_catalog_delta"クラスを付けるようになったと記憶してる)によって生まれた問題。"akahuku_catalog_delta"クラスを付与するべきところで付与していなかったり、逆に、付与されることを考慮していないコードがあったりして起きていた。件のクラスを正しく取り扱うように修正して解決。</li>
+          </ul>
+          <li class="bugfix sp62403">横スクロールバーが存在するような場合にズーム表示位置が大きくズレることがある問題を修正</li>
+          <ul>
+            <li class="explain">スクロールを考慮して画面に表示できる範囲にズーム表示(画像・コメント全文)をおさめようとするのだが、レンダリングが標準準拠モード(最近のふたばはこれ)の場合に対応しきれておらず、特に横スクロールバーが出る状況で大きなずれが起きていた。ロジックを見直して修正。</li>
+            <li class="explain">この修正で、(横スクロールバーが出てない状況でも)画面右/下端付近からのズームの挙動が修正されたことになり、縦横方向ともに、画面外に出そうな場合には画面端ピッタリにズームするようになる。(アニメーション使用時に、途中で画面外へはみ出してしまうのは元からの仕様(オーバーシュートする遷移関数を使ってる)。横にはみ出すと横スクロールバーが瞬間的に表示されて見苦しいが…)</li>
+          </ul>
+        </ul>
+        <li class="featurename">「ソート」</li>
+        <ul>
+          <li class="improve sp60999">「更新順に??ずつ」の表現を、新順・多順などにも当てはまるよう「<span class="obsolete">デフォルト</span>通常順に」に変更</li>
+          <ul>
+            <li class="explain">カタログに新順・多順などがない時代の機能がそのままになっており、現在でも動作はするもののわかりにくい表示になっていた。これまでの「更新順に」は、例えば多順で開いているときは多順で、つまりデフォルトの順番なのである(昔カタログは更新順しかなかった)。とりあえず、表現を現状に合うように修正した。処理は変わっていない。</li>
+            <li class="explain sp62403">デフォルトという語が↓の「デフォルトの順番」という表現と混同してわかりにくいようなので、通常順に再変更した。「通常」ボタンの順序と同じ、という意味で。</li>
+          </ul>
+          <li class="improve sp60999">設定ダイアログの「状態を保存する」の意味があまりにも不明瞭だったので「デフォルトの順番を指定」に変更</li>
+          <li class="improve sp60999">設定ダイアログの「未読と既読で分ける」などをわかりやすく配置しなおした</li>
+          <ul>
+            <li class="explain">「未読と既読」「新規を分ける」「消した分を詰める」は一部のソート順序でしか機能しないが、これまでは「消した分を詰める」のみがそうだと誤解されかねないレイアウトになっていた。わかりやすく配置を変えた。機能に変化はなく、再設定の必要もない。</li>
+          </ul>
+          <li class="newfeature sp62403" id="CatalogReorderDelta">「増加数順に??ずつ」ソートできる機能を追加</li>
+          <ul>
+            <li class="explain">「最新に更新」を使った場合に得られるレス増加数の情報に基づいて、増加数が多い順に並び替える機能。ただし新スレ(new)はレス数を増加数と見なし、上がってきたスレ(up)は判断不能なので0と見なす。増加数で順序づけられないスレはデフォルト順で並ぶ。</li>
+          </ul>
+          <li class="newfeature sp62403" id="CatalogRowInfo">ソート順に応じて「各行に情報を表示する」オプションを追加 (一部順序のみで有効)</li>
+          <ul>
+            <li class="explain">カタログの各行について一番左端に位置しているスレの情報を表示するオプション。その行の雰囲気を知るてがかりになるが、その行全てにその情報が合致しているわけではないことには注意。</li>
+            <li>「スレの立った順に??ずつ」＝スレの立った時間帯を左に表示する</li>
+            <ul>
+              <li class="explain">要は虹覧のスタイルを真似した感じ。時間帯と言いながら、流れの速さによって自動的に表示単位("分"、"時"、曜日、月日)を調整し、同じ"X時"等の表示が複数行に並びにくくしてある。ただし、流れの速い板の最初の行で"X分"表示が選ばれても、1時間前以上古い行は"X時"になるというように、下(古い方)の行では表示単位が自動的に繰り上がるようになってる。</li>
+              <li class="explain">(スレの立った時間は画像ファイル名から算出しているので、ふたばの仕様が変わってこの前提が崩れたら無関係な時間を表示してしまうかもしれない。また、文字スレが多いと表示できないこともある。)</li>
+            </ul>
+            <li>(新機能の)「増加数順に??ずつ」＝「最新に更新」により検知される増加数を左に表示する</li>
+            <ul>
+              <li class="explain">そのまま。最新の更新の「レスの増加数を表示する」オプションのオンオフは関係しない。</li>
+            </ul>
+          </ul>
+          <li class="improve sp62403">ソート順(並べ替え)ボタンを押して並べ替えてもレス増加数などの情報が消えないように</li>
+          <ul>
+            <li class="explain">ソート順を色々切り替えてながめる際に便利だろうということで。逆に、並べ替え直しても消せなくなったとも言えるので、増加数表示設定を切り変えて並べ替え直せば(リロードせずに)表示を消せる/出せるようにもした。</li>
+          </ul>
+          <li class="improve sp62403" id="CatalogReorderButtonUIImprove">並べ替えボタンの見た目を改善 (現在の順序を太字に、記憶ボタンは1つだけに)</li>
+          <ul>
+            <li class="explain">ページ下部を見ている場合など(上部の"カタログ"表示が見えないと)どの並び順かわからなくなる時がある。そこでカタログへのリンクのように<b>現在の並び順は太字で表示</b>するようにした。</li>
+            <li class="explain">また、設定でデフォルトのソート順を指定すると全てのボタンに"記憶"が付いていたがくどいので、記憶用のボタンは右端に一つ＝その時選択している並び順を規定値として記憶させるボタンを1つ置くだけに変更した。</li>
+          </ul>
+          <li class="improve sp62403">並べ替えボタンをカタログのテーブルの上部にも配置するようにした</li>
+          <ul>
+            <li class="explain">カタログの縦横サイズを拡大できる現状では、下部だけにしか制御ボタンが無いのは使いづらいので。一応、「最新に更新」ボタンとのマージン調整をしてコンパクトに収めたつもり。</li>
+          </ul>
+          <li class="sp62403">新規や既読を分ける場合で、行ヘッダが空白なら枠も表示しないように</li>
+          <ul>
+            <li class="explain">最近のふたばでは"新規"、"既読"、"未読"のヘッダ以外の空白部分も枠がついていたが、多分本来は枠無しで表示されることを狙ってたと思われるのでスタイルを変更した。(古いCGI(外部の板)では後方互換モードでレンダリングされ、無駄な枠が無いスタイルだった。標準準拠モードでも同じスタイルになるように調整した、ということ)</li>
+          </ul>
+          <li class="sp62403">(新規・既読を分けてテーブルに配置するコードを整理し、無駄な行が生成されないように)</li>
+          <li class="optimize sp62403">(「通常」「ページごと」では不要なソート処理を省略)</li>
+        </ul>
+        <li class="featurename">「最新に更新」</li>
+        <ul>
+          <li class="bugfix sp61933 baseline">「レス数の増加数を表示」＆「サイドバーと連携」しているとスレの本文が消えることがある問題を修正</li>
+          <ul>
+            <li class="explain"><b>発生条件</b>：カタログ設定で「最新に更新」の「レス数の増加数を表示」が有効で、かつ「サイドバーと連携」で「本文を長めに表示」している場合において、スレを一度開くなどしてサイドバーに長い本文が登録された状態で、カタログを更新か指定幅に並び替えするとレス本文が消える。</li>
+            <li class="explain">「レス数の増加数を表示」が有効だと、更新やソートなどの処理で増加数を表示するDIV要素を操作(内容を変えたり消したり)するのだが、この時にスレの長めの本文(これもDIV要素)を誤って消してしまっていた。ということで、スレ増加数の処理で消すべき要素をちゃんとチェックするように修正した。</li>
+          </ul>
+          <li class="bugfix sp61933">アンドゥ/リドゥを繰り返すと更新時間が"undefined"と表示される件を修正</li>
+          <li class="improve sp62403">アンドゥ/リドゥで新スレ判定基準とソート順表示も元に戻すように</li>
+          <ul>
+            <li class="explain">アンドゥしてから更新すると、アンドゥ前にはカタログで新規扱い("new")だったスレが更新後は新規でなく("up"に)なっていた。一般的に「アンドゥ」に期待する動作としては不自然なので修正。</li>
+            <li class="explain">更新してソート順を変えてからアンドゥすると、テーブルは最後の更新前に戻るがソート順の表示は戻っていなかったので修正。(並び替えボタンの太字で状態表示するようにしたので余計気になるようになった)</li>
+          </ul>
+          <li class="featurename" id="CatalogLeftOnReload">「<span class="obsolete">合間合間に で消した分だけ</span>更新前を残す」</li>
+          <ul>
+            <li class="improve sp62403">新規や既読を分けても更新前を残せるように</li>
+            <ul>
+              <li class="explain">これまでは「未読と既読や新規を分けると不可」となっていたが、実際は不可というほどでは無いため、制限を無くすよう変更した。致命的な問題(＝更新したばかりのスレが以前のスレに押し出されて表示されなくなる)は起きないはず。ただし、<b>残したスレはソートの対象にはならない</b>という制限がある(「スレが立った順に」しても下部に通常順に並ぶ)。現状はそういう仕様(混ぜて並ばせられるようにまでするのは面倒だった)。</li>
+            </ul>
+            <li class="improve sp62403">新規や既読を分けて行が半端になった分についても更新前を残すように</li>
+            <ul>
+              <li class="explain">「更新前を残す」は基本的に「合間合間に で消した分」を更新前の情報から追加する機能だったが、範囲を拡大し、ソートにより新規や既読を上に分けた分で生じる行の端数分も同様に処理するようにした。(カタログのテーブルをしっかり埋めやすくなった)</li>
+              <li class="explain">既読を分けてる場合は、この変更により、<b>カタログ落ちした既読スレが既読の行に残り続ける</b>ようになる。既読をわざわざ分けるユースケースではこういう仕様が望まれそうなので、個数制限なく残り続けるようにしてある。既読行に残っていても、カタログ落ちしているレスは「最新に更新」しても情報が更新されない点には注意。しかし、「通常」「ページごとに」ボタンで並べ替えてしまうと、(この2つは既読をわけないので)残す数が減り、古い既読スレは切り捨てられる可能性が高いのに注意(逆に、この挙動を利用して古い既読スレを掃除できる)。</li>
+            </ul>
+            <li class="improve sp62403">「更新順に」以外のソート順でも残せるように</li>
+            <ul>
+              <li class="explain">これまではソート順が「更新(デフォルト)順に指定幅」でなければ不可だったが、他のソート順でも問題が起きないようソート方法を対応させることで可能にした。(ただし「ページごと」時は意味合い的におかしいだろうが、そもそも「ページごと」はカタログ(更新順)以外では意味が無くなってることもあり、無視した)</li>
+              <li class="explain">(マージ(mergeCellNodes)の段階で、残すレスについても元のカタログ出現順になることを保証させることで…？あれ、これは何のために必要だったのだっけ)</li>
+            </ul>
+            <li class="bugfix sp62403">「状態を保存する」がオンのまま「更新前を残す」をオフに切り替えても設定が完全には反映されない問題を修正</li>
+            <ul>
+              <li class="explain">再起動しないと設定が反映されないバグシリーズ＝上位の設定項目をオフにしても下位が無効にならない問題。</li>
+              <li class="explain">この修正の延長線上で、チェックを外すか上位をオフにして無効にすることで「保存する」がオフになった場合には、状態を保存しているファイルを削除するようにした。設定のオンオフを切り替える場合に、古い情報が意図せずに使われてしまうことを防ぐため。</li>
+            </ul>
+          </ul>
+          <li class="featurename">「レスの増加数を表示」</li>
+          <ul>
+            <li class="bugfix sp62403">「更新前を残す」の「状態を保存する」により最初に追加されるスレが"up"になる件を修正</li>
+            <li class="bugfix sp62403">増加数を表示する要素のクラスが akahuku_catalog_delta にならない場合がある問題を修正</li>
+            <ul>
+              <li class="explain">直前の更新で "new" や "up" だったスレが次の更新でレス数増加した場合、"+X"の要素に設定されるべきクラス akahuku_catalog_delta を持たないままになっていた。赤福としては動作にもスタイルにも問題は無いが、このクラスを利用して(Stylishなどで)増加数部分を独自のスタイルにしようとすると問題になる。(そもそもこのクラスはそういう用途向けに提供された機能だったはず)</li>
+              <li class="explain">(コードの整理: 増加数、"new"、"up"を追加するコードを分散させずに集約 (arAkahukuCatalog.updateCellReplyNum))</li>
+              <li class="sp62497">(エンバグ) たまにレス数・増加数が更新されないことがある問題を修正</li>
+              <ul>
+                <li class="explain">sp62403において、カタログを最新に更新した後で右下(最後)に来るスレが新しい("new"/"up"が表示されるべき)場合に、カタログ全体のレス数とレス増加数が更新されなくなってしまっていた。コードを整理したことで、不要な表示更新を省略する為のロジックが狂った(期待通りに働かなくなった)ため。判定を修正。("up"が表示されるセルに __is_up 属性を付与するようにも)</li>
+
+                <li class="explain"><span class="cited">なんかカタログのレス増加数周りが上手く動いてないみたいだから</span><br/>
+                <span class="cited">60999版に戻しちゃったよ</span><br/>
+                状況がわからないけど、このバグかなあ</li>
+              </ul>
+            </ul>
+          </ul>
+          <li class="bugfix sp62403">「キャッシュに反映させる」をオフにしてもキャッシュが更新され、また、オンにすると二重に更新されていた件を修正</li>
+          <ul>
+            <li class="explain">Firefoxの通信(HttpChannel)が自動的にキャッシュを更新してるのに、赤福自身もデータ受信後にキャッシュに書き込みにいっており、二重処理になっていた。また、「キャッシュを更新する」を無効にしてもFirefoxによりキャッシュが更新されていた。赤福のカタログキャッシュ書き込みを廃止し、設定オンオフでは単にFirefoxのキャッシュ書き込みをオンオフするように変更することで修正した。</li>
+            <li class="sp62681">挙動の互換性のため「キャッシュに反映させる」設定のデフォルト値をオンに変更&amp;オフ時に警告表示</li>
+            <ul>
+              <li class="explain">
+              <span class="cited">一応それ使ってるけど何故かカタログの機能が少しおかしくなったな</span><br/>
+              <span class="cited">カタログ表示→掲示板に戻る→ブラウザのバックでカタログに戻ると</span><br/>
+              <span class="cited">何故かカタログが最初に開いた時のカタログでとっくに落ちてるスレばかり</span><br/>
+              <span class="cited">○○人くらいが見てますの隣のリンクからカタログに行くか最新に更新するとちゃんと今のスレを表示するけど</span><br/>
+              カタログの設定の「キャッシュに反映させる」がオフならそうなるよね<br/>
+              …デフォルトはオフだコレ！
+              </li>
+              <li class="explain">この設定がデフォルトでオフなせいか、バグ修正したことで逆にカタログがおかしくなったと感じる人がいるらしい。設定を正しく変更すればいいだけだが、この設定はデフォルトでオンにしたほうがいい類の物なので、この設定の初期値をオンに変更した。(新規プロファイル時や設定初期化時にしか影響はしない)</li>
+              <li class="explain">ついでに、ずっと使ってきたユーザーがこの設定の「過ち」に気が付きやすくするため、オフの場合は、設定ダイアログのチェックの横に「<b>※反映させるのが普通です</b>」と赤字で警告を表示するようにした(設定値を勝手にオンにしてしまうのはやりすぎかと思うので)。わかりにくいかなー。</li>
+            </ul>
+          </ul>
+        </ul>
+        <li class="featurename">「一度見たスレをマーク」</li>
+        <ul>
+          <li class="optimize sp62403">最新に更新やソートの処理で履歴チェックが多重に走ってたのを省略した</li>
+          <li class="improve sp62403">履歴を削除しても、即座にマークに反映されるように改善</li>
+          <ul>
+            <li class="explain">従来は新たにページを見るか、最新に更新か、ソートしないと削除された履歴は反映されなかった。履歴削除の通知も監視するようにして改善した。(動的情報は一貫して即座に反映することが望ましいだろう)</li>
+          </ul>
+          <li class="sp62497">(エンバグ) カタ落ちから上がってきたスレでマークが消えてしまうことがある件を修正</li>
+          <ul>
+            <li class="explain">sp62403においてカタログ処理のコードを整理したら生まれたバグで、「ソート」&amp;「未読と既読を分ける」がオフだと発生する。既読判定を一元化したつもりが、処理漏れがあったため。</li>
+          </ul>
+          <li class="sp99999">「通常・返信モードと連携」設定時にマークの挙動が理解しづらいものになる仕様を修正</li>
+          <ul>
+            <li class="explain">ブラウザの履歴を記憶させてなくても、「通常・返信モードと連携」設定を有効にしている場合はスレを開くことによってマークするようにしていた。しかし、このマーク方法は、ブラウザ履歴に基づいたマーク方法との整合性が取れない可能性があり、例えばカタ落ちするまではマークされるがあがってくるとマークが解除されてるといった理解しづらい挙動を引き起こしていた。そこで挙動の整合性をとることを優先して、「連携」設定時の余計なマークを廃止し、マークは完全にブラウザの履歴に依存するようにした。</li>
+            <li class="explain">ということで、ブラウザにページの履歴を記憶させてない場合(プライベートブラウジング含む)では「一度見たスレをマーク」は完全に働かない、という仕様に統一された。</li>
+          </ul>
+        </ul>
+        <li class="featurename">「古いスレを赤くする」</li>
+        <ul>
+          <li class="improve" id="CatalogRedPrecision">赤くするタイミングをもう少し精度良く改善</li>
+          <ul>
+            <li class="explain">カタログ内の最新スレ番号で判定されていたが、板全体の最新レス番号(スレを開いた際などに取得済み)を反映させるよう変更。</li>
+            <li class="improve sp64768" id="sp64768-4">カタログのロードでも板全体の最新レス番号を更新するように</li>
+            <ul>
+              <li class="explain">スレ(返信モード、通常モード)を開いた時だけでなくカタログ自体を開いたとき(リロード含む)にも、最新のスレ番号が板全体の最新レス番号より大きかった場合には最新レス番号情報を更新するようにした。最新レス番号が更新される機会を増やしたことになるが、特に、別タブで[新順]を開いた場合などにも最新の赤字変化を反映させることができるようになる。</li>
+            </ul>
+          </ul>
+          <li class="bugfix sp62403">「古いスレを赤くする」のみを有効にすると機能しない件を修正</li>
+          <li class="bugfix sp62403">更新で追加されたスレ(new/up)が赤くならない問題を修正</li>
+          <ul>
+            <li class="explain">例えば古順で全てが赤くなるような列数に設定して更新すると確認できる。レス数(増加数)を更新するコードを整理したついでに判定から漏れているのに気づいたので修正した。</li>
+          </ul>
+          <li class="sp62403">赤くする方法を変更</li>
+          <ul>
+            <li class="sp62403">(内部構造変更) セル(TD要素)にスレ年齢を表す勝手な属性 "__age" を付加し、それによってスタイルを付けるように</li>
+            <ul>
+              <li class="explain">「古いスレを赤くする」オプションが有効な場合、保存数・スレNo.・板の最新レスNo.に基づいて、スレの年齢を表す(勝手な)属性 "__age"を付与し、古いスレを赤くするのに利用するようにした。9歳(保存数の9割が経過)から赤くなり、10歳＝寿命(10以上には更新されない)。ただし消えたことが実際に確認されたスレは-1が設定される。</li>
+              <li class="explain">(コードを集約させるため)一つ一つの要素にインラインで定義するのをやめて、__age属性を使ってスタイルが適用されるようにした。</li>
+              <li class="explain">(内部構造の変更で、機能的には変わらない。が、Stylishなどでスタイルを変更しやすくなる？というメリットはある。)</li>
+            </ul>
+            <li class="sp62403">2px赤枠によってテーブルの寸法が変化しないように</li>
+            <ul>
+              <li class="explain">1pxだった枠を、赤くする時に2pxにすることで表の寸法が変わっていた。1pxだったpaddingを赤枠時は0pxにすることで、寸法変化を起こさないように対処した。ニュース表のように枠がないカタログの場合は寸法維持の対象外だが、枠は1pxにするようにした。</li>
+            </ul>
+          </ul>
+        </ul>
+        <li class="featurename newfeature sp62403" id="CatalogObserveInfo">「通常・返信モードと連携」</li>
+        <ul>
+          <li class="explain">別タブ(ウィンドウ)で開いた同じ板の通常モード、返信モードと連携し、スレの情報を更新したりする機能。(カタログを複数のタブで開いていても機能する)</li>
+          <li class="sp62403">連携によりスレの最新レス番号を得たら即座に「古いスレを赤くする」の判定を更新するように</li>
+          <ul>
+            <li class="explain">従来は、カタログをリロードするか「最新に更新」したタイミングでしか古いスレを赤くしていなかった。頻繁にカタログを更新しない使い方では情報が古くなりがちで、あるスレを開いた後でカタログに戻って別のスレを開いてみたらもう消えてた、なんてことがしばしばあった。そこで、スレを開く・更新する等によりその板の最新のレス番号が得られたら、その瞬間にカタログの情報を更新できるようにした、というのがこの機能。</li>
+            <li class="explain">「一度見たスレをマーク」が即座に反映されるように、他の情報も可能なら即座に反映させたほうがわかりやすいだろう、という考えもある。デフォルトで有効にしてもよさそうではあったが、カタログの振る舞いが大きく変わるので一応オプションとした。</li>
+            <li class="sp62403">寿命が来たと判定したスレを赤点線枠とするように (「古いスレを赤くする」有効時)</li>
+            <ul>
+              <li class="explain">カタログをしばらく更新していないと消えているスレが混じる確立が増えるが、動的な情報更新を出来るようにしたので、保存数的に消えてるスレがわかるようにしたい。ということで、保存数限界により消えたと推測されるスレ(__age="10")は<b>赤点線で囲う</b>ようにした。古い＝赤枠、古くてたぶん消えてる＝赤点線枠。</li>
+            </ul>
+          </ul>
+          <li class="sp62403">連携によりスレ消滅をカタログに反映させるように</li>
+          <ul>
+                  <li class="explain">開いたり最新に更新したりして消滅が確認されたスレは<b>灰色背景</b>(以前から使われていたカタ落ちスレのスタイル)になるようにした。なお、「古いスレを赤くする」有効時は<b>黒点線枠</b>が付く。</li>
+          </ul>
+          <li class="newfeature sp62403">スレのレス数を即座にカタログへ反映するオプション</li>
+          <ul>
+            <li class="explain">返信モードで読み込んだレス数を、(別タブで開いている)カタログのレス数へ即座に反映することが出来る機能。スレの「続きを読む」した場合も反映される(通常モードからは今のところ未対応)。「レス増加数を表示する」有効時は増加数も即座に更新され、レス数が1増えたら増加数も1増える(増加数＝カタログ更新前のレス数から増えた数、という意味は変わらないということ)。</li>
+            <li class="explain"><b>目的：</b>連携でレス数を反映させると、カタログ更新で既読スレの新着レスを見分けやすくなる。つまり、カタログ開く→スレをタブで開く→(スレを更新する)→カタログに戻って更新する、というケースで、別タブで開いているスレのレス数がカタログを更新したときに増加したら、必ずそのスレに未読(読み込んでない)レスがあるということになる。……わかりにくいなあ。</li>
+          </ul>
+        </ul>
+        <li class="futaba sp62403" id="CatalogNewLayoutSettings">文字位置:右や画像サイズ:大,1～5に設定されたカタログに対応 (ニュース表のカタログ対応も含む)</li>
+        <ul>
+          <li class="explain">虹裏mayに導入された新しいカタログ設定「文字位置」を「右」に設定したときにも赤福が対応できるようにした。つまり
+          <ul>
+            <li>「一度見たスレをマーク」が機能するように</li>
+            <li>「最新に更新」するとレス数が全て0になってしまう問題を解消 (レス数表示が"(0)"形式でも認識するように。増加数が正しく計算されるように。)</li>
+            <li>「最新に更新」の「レス増加数」の表示を、画像の上ではなく左横に置くように調整 (コメントを右に置くということはセルを横長に表示したい場合だろうという判断から)</li>
+            <li>(サイドバーのカタログ読込が正しく機能するように)</li>
+          </ul>
+          (文字位置:右のカタログはニュース表のカタログとだいたい同じ形式なので、ニュース表のカタログで起きてた問題も解消された(ついでに、リンクに下線を付けたりも))</li>
+          <li class="explain">また、「画像サイズ」を「小」以外に設定したときに問題が起きないようにした(サイドバーも)。<span class="obsolete">ただし「ズーム」は使えない。</span></li>
+          <li class="explain sp62497">「ズーム」も使えるようにしたが、画像サイズと赤福のズームのサイズ設定によっては<b>むしろ小さくなる場合もある</b>ことに注意(ズームのサイズを100%などに設定するといいと思う)。<span class="sub">(メモ: カタログを画像サイズ＝1～大に設定すると、カタログ画像(cat/12345s.jpg)のかわりにサムネ画像(thumb/12345s.jpg)がカタログに表示されるようになる。このためにズーム(非クリック時)の際のロード待機時間(1秒)が無くなり、ほぼ「表示まで [ms]」設定でズームするようになる。)</span></li>
+        </ul>
+      </ul>
+      <li>サイドバー</li>
+      <ul>
+        <li class="futaba sp60557 baseline">カタログボタンが有効でない板があった(落書とか)ので反映</li>
+        <li class="improve">クリックで既に開いているスレのタブへ切り替える時、続きを読む/同期をするよう改善</li>
+        <ul>
+          <li class="explain">問答無用でページをリロードしていたが、「続きを読む」の「リロードの代わりに続きを読む」の設定が反映されるように改善</li>
+        </ul>
+        <li class="bugfix sp60557 baseline" id="SidebarTabMenu">タブメニュー機能がFirefox4以降で正常に動作していなかった問題を修正</li>
+        <ul>
+          <li class="explain">設定を有効にしてもタブメニューが表示すらされない問題。</li>
+        </ul>
+        <li class="sp61933">(デバッグ専用: 赤福サイドバーをサイドバー以外で開いても機能するように)</li>
+        <ul>
+          <li class="explain">赤福サイドバーの本体である chrome://akahuku/content/sidebar.xul はサイドバー中以外ではうまく動かなかった。動作確認する上で少し不自由と言うことで、最低限の部分はサイドバー中に依存しないコードに変更した(別タブでスレ・カタログを開いた時の反映など、未対応な動作もある)。</li>
+          <li class="explain">(セキュリティ的に少し弱くなることもあり、デバッグオプション有効時にしか機能させないようにしている)</li>
+          <li class="sp62403" id="Fx36SidebarDocumentBug">(エンバグ) Firefox 3.6系でサイドバー全体が正常に機能しなくなってしまったのを修正</li>
+        </ul>
+        <li class="security bugfix sp61933" id="SidebarSecurityFix">ブラウザ(chrome)権限で任意のjavascriptが実行されうるセキュリティ問題を修正</li>
+        <ul>
+          <li class="explain"><b>危険性:</b> 赤福(たぶん過去バージョン全て)のサイドバー機能が持つ脆弱性により、リモートからブラウザ(chrome)権限の任意のコードを実行可能であり、あらゆる操作を実行される危険がある。深刻。</li>
+          <li class="explain"><b>攻撃可能性：</b>サイドバー機能を有効にし、スレが反映される状態(赤福サイドバーを表示するか「非表示の間も反映させる」設定をオン)で、悪意のあるコードを含むページ(スレ・通常ページ・カタログ(設定に依る))を<b>観覧する</b>かサイドバーの<b>「0ページ」「カタログ」ボタンにより読み込む</b>ことで脆弱性をついた攻撃が可能。例えば次のようなパターン：
+          <ul>
+            <li>(ふたばの)管理人さんがその気になる (<b>すぐにでも攻撃可能</b>)</li>
+            <li>第三者がふたばのページを改竄するか、DNS改竄等で成りすますか、通信経路中(プロキシ等)でページを改竄することで、スクリプトを含ませる</li>
+            <li>第三者がふたばの脆弱性をついてクライアント側で実行される状態のスクリプトを含む投稿をする (ふたばの脆弱性が存在するかどうかは知らないが可能性として挙げる)</li>
+          </ul>
+          「サイドバーの情報を保存する」設定が有効の場合はローカルから
+          <ul>
+            <li>プロファイルフォルダ内に保存されているサイドバー情報ファイルを書き換えてスクリプトを含ませる</li>
+          </ul>
+          </li>
+          <li class="explain"><b>対処方法：</b>赤福サイドバーを表示させない。あるいは、修正された赤福(.sp61933以降)を使う(下記問題を修正したが、完璧かどうかは不明)。</li>
+          <li class="security bugfix sp61933">「0ページ」「カタログ」ボタンにより読み込むページがchrome権限で実行される問題を修正</li>
+          <ul>
+            <li class="explain">各読込ボタンを押すことによりサイドバー内に読み込まれるページ(ふたば各板の0ページ(futaba.htm)およびカタログページ(futaba.php?mode=cat))から、無条件で常に、ブラウザ(chrome)権限の任意のコードが実行可能な状態になっていた。</li>
+            <li class="explain">詳しく言うと、赤福サイドバーでは非表示iframeにスレ等を読み込ませることでHTMLをパースしてDOM処理を行うが(※古くさい方法ではある<a href="https://developer.mozilla.org/en/Code_snippets/HTML_to_DOM#Using_a_hidden_iframe_element_to_parse_HTML_to_a_window's_DOM">[MDN]</a>)、読込用iframeにchrome権限が与えられている状態(デフォルト)で使われてしまっていることが問題である。
+            とうことで、当然、iframeの権限をコンテンツ用(type="content")に落として使うように変更した。これで通常のブラウザ領域のように、特権を持つ親のwindowにはアクセスできなくなるため危険性が低減される。さらに、そもそも不要だったスクリプト実行を許可しないように設定した(iframe.docShell.allowJavascript=false)。</li>
+          </ul>
+          <li class="security bugfix sp61933">サイドバーへのスレ反映時にスクリプトが混入しchrome権限で実行されうる問題を修正</li>
+          <ul>
+            <li class="explain">スレがサイドバーへ反映される際に、スレ本文にもし悪意あるスクリプトが実行可能状態で埋め込まれていると、それをchrome権限で実行してしまう可能性がある<span class="sub">(普通の投稿ではスクリプトを埋め込むのは無理だが、ふたばのセキュリティに依存しており、可能性は無くはないので問題)</span>。
+            あるいは「サイドバーの情報を保存する」が有効の場合に、ローカルのプロファイルフォルダ内に保存されるサイドバー情報ファイルが悪意を持って書き換えられたら、その後Firefoxを起動させ赤福サイドバーを開くと混入されたコードをchrome権限で実行してしまう可能性がある。</li>
+            <li class="explain">赤福は、スレの情報をコンテンツ領域・ローカルファイルから取得すると、その情報に基づいてサイドバーに特定構造でDOM要素を挿入する。しかしこの時に、信頼してはいけない「外部由来の文字列」をchrome権限の文書の子要素のinnerHTMLとして与えてしまっていることが問題だった。
+            対策として、<ul>
+              <li>スレ一覧表示用iframeをchrome権限からcontent権限に落とし、(＝スクリプトが危険な行為を行えないようにする)</li>
+              <li>(docShellで)スクリプトの実行を不許可にし、(＝そもそもスクリプトが走らないようにする)</li>
+              <li>さらに、外部から読み込んだHTMLを挿入する際に不要なスクリプトを除去するようにした。(＝信頼できないページからスクリプトが混入されないようにする)</li></ul>
+            スクリプト除去は Firefox の nsIScriptableUnescapeHTML.parseFragment 頼り<a href="https://developer.mozilla.org/En/Displaying_web_content_in_an_extension_without_security_issues#Safe_HTML.C2.A0manipulation_functions">[MDN]</a>で、古い Firefox ではこのメソッドに脆弱性があったこともあるため、他の対策と組み合わせて可能性をできるだけ減らした。</li>
+            <li class="sp64332">(Firefox14+) obsolete になった nsIScriptableUnescapeHTML の代わりに、新しい nsIParserUtils を利用するように</li>
+          </ul>
+          <li class="security bugfix sp61933">スレ・画像へのリンクに危険なURL(含スクリプト)が混入しうる問題を修正</li>
+          <ul>
+            <li class="explain">スレの観覧、読込ボタン、サイドバー情報ファイルからスレ情報をサイドバーに反映する際に、リンク先URLが安全でない場合でも反映してしまい、サイドバーでの不正なサムネ画像URLを開いてしまうことによるブラウザやOSクラッシュの危険性、また、スレのクリックにより任意のコンテンツスクリプトを実行させられる危険性があった。
+            対策として、スレの追加・反映の際にはURLなど各情報の妥当性を常にチェックし、不正なデータがサイドバーに混入されないようにした。
+            スレリンク先・サムネ画像・画像リンク先のURLが安全かどうかは、nsIScriptSecurityManager.checkLoadURIStr <a href="https://developer.mozilla.org/en/Safely_loading_URIs">[MDN]</a>を用いて検証している(javascript:は除外し、http://www.2chan.net/ を読み込み元として)。</li>
+          </ul>
+        </ul>
+        <li class="optimize sp61933">「0ページ」「カタログ」読込ボタンで、不要なリソースまで読み込まないように変更</li>
+        <ul>
+          <li class="explain">本来、スレをサイドバーに反映させるためにはHTML(DOMツリー)だけあれば十分だが、ページ内のリソース(画像・スクリプト・プラグインなど)を全て読み込んでいた。無駄なので、制限を加えて最小限(+α)の読込で済ませるように変更した。これにより、クリックしてからスレ反映までの時間が短縮される。画像の読込はサイドバーに追加された後で始まるので、表示が遅れるように感じるかもしれないが、トータルでは速くなってるはず。</li>
+        </ul>
+        <li class="bugfix sp61933">赤字がでたことがサイドバーに反映されない場合があるのを修正</li>
+        <ul>
+          <li class="explain">スレが新しく反映(追加)された時にしか赤字を反映していなかった。バグだと思われるので修正。</li>
+        </ul>
+        <li class="improve sp61933">板の保存数と最新レス番号の情報に基づいてスレの消滅フラグ立てや赤字化をするように</li>
+        <ul>
+          <li class="explain">サイドバーではこれまでどの板でも固定の条件で消滅したと見なしていた(最新スレ番から10000経過という荒い条件)。本来はおそらく板の保存数よりも十分長く設定されていたのであろうが、現状では板の寿命が数万になっているところもあるため、実際は消滅していないスレでも途中で消滅とみなされて並び順を下に動かされるという問題が起きていた。固定条件はやめ、カタログの赤字判定などと同じように、板ごとのスレ寿命情報や最新レス番号を参照して消滅扱いするように変更した。</li>
+          <li class="explain">この辺りの挙動の不透明さをぬぐうため、<b>消滅したと判定・記録されたスレはくすんだ色で表示</b>されるようにスタイルを変更した。また、板の保存数の情報を使って、赤字が出ていそうなスレは自動的に消滅(予想)時刻を赤字にするようにした(カタログの「古いスレを赤くする」みたいな処理)。
+          赤字だと判断したが消滅時刻が未取得の場合には<b>"??:??"</b>と赤字で出るようにした。</li>
+        </ul>
+        <li class="improve sp61933">サムネサイズを小さく設定しても「マーク」により消滅時間などがずれないようスタイル修正</li>
+        <ul>
+          <li class="explain">マーク("orz")はfloatで右に配置されていたが、サムネサイズを26以下にするとマークに重なったレス数・消滅時間のステータス表示が左にずれる問題があった。たとえマークが重なってしまってでもステータス表示をずらさない方が良いと思うので、そのようにスタイル定義を変えた。</li>
+          <li class="explain">ついでに、スレのステータス欄の高さを少し低く変更(-2px)</li>
+          <li class="explain">(整理:スレ一覧のスタイル指定のうち固定のものをインラインからcssファイルへ移動)</li>
+        </ul>
+        <li class="improve sp61933">マウスカーソルホバーによるスレ選択の挙動を改善</li>
+        <ul>
+          <li class="explain">マウスカーソルがサイドバーから出た場合などで非選択状態になるように変更した。他、ポップアップメニュー表示中は同じスレを選択し続けるなど、細かい挙動も自然になるように調整した。</li>
+        </ul>
+        <li class="improve sp61933">カタログからも本文を取得して反映するように(ただし灰色表示)</li>
+        <ul>
+          <li class="explain">最近のカタログはどの板でも設定次第で本文の一部を表示できるようになるが、カタログ読込ボタンや「カタログをチェックする」でスレをサイドバーに反映させる場合に、この何文字かの本文も取り込むように変更した。ただし、完全な本文とは違って灰色で表示される。例えカタログ表示字数を長く設定しても完全かどうかはわからないため、カタログ経由で反映された本文は灰色。</li>
+        </ul>
+        <li class="improve sp61933">消滅したスレのサムネ画像は保護のためキャッシュからのみ読み込むように変更</li>
+        <li class="optimize sp61933">サイドバー表示後からレス一覧表示までの間の無駄なタイムラグを削除</li>
+        <ul>
+          <li class="explain">なぜかスレ一覧表示まで1秒待ち時間があったので(簡易実装だった?)、準備でき次第すぐに一覧表示するように改善。</li>
+        </ul>
+        <li class="futaba sp64332">サイドバー内のスレ本文にアンカーが有っても無効にするように([広告]対応)</li>
+        <ul>
+          <li class="explain">[広告]スレ(may独特?)では元のスレ文にアンカーが含まれており、これがサイドバーにも反映されるため、スレを開こうとして運悪くリンク部分をクリックしてしまうと、スレだけでなくリンクターゲットもタブで開かれてしまって驚く。赤福サイドバーからはスレしか開かれないことが望ましいので、スレ本文内に含まれるアンカーは無効化してサイドバーに取り込むようにした。</li>
+        </ul>
+      </ul>
+      <li id="BoardInformation">板</li>
+      <ul>
+        <li class="futaba baseline">保存数の情報を更新 (2012/05) </li>
+        <ul>
+          <li class="explain"><b>解説：</b>通常、最新の保存数情報はスレを開いたとき等に自動的に取得・更新されるが、セッションを越えて保存はされない。そこでFirefoxを起動後にカタログしか開いていない場合などに、この埋め込みの板情報が使われる。実際には、板の保存数はカタログなどでスレの寿命を判定したりするのに使われる程度で、情報が古くてもそれほど困らないのではあるが。</li>
+          <li class="sp60557">人形板はまだ内部リストから削除せず保持数0に。</li>
+          <li class="sp61933">虹裏 may のレス保存数 32000 → 36000 → 40000</li>
+          <li class="sp62403">虹裏 img のレス保存数 8000 → 10000</li>
+          <li class="sp63736">虹裏 jun のレス保存数 6000 → 8000</li>
+        </ul>
+        <li class="futaba baseline">新しい板の追加</li>
+        <ul>
+          <li class="futaba sp59934 baseline">東日本大震災、発電</li>
+          <li class="futaba sp60557 baseline">ipv6.2chan.net鯖を対象に追加</li>
+          <ul>
+            <li class="explain">ipv6.2chan.net鯖をとりあえず動作させる対象に追加したものの、自分はアクセスできないので未テスト。</li>
+          </ul>
+        </ul>
+        <li class="futaba sp59934 baseline">鯖名の変更を反映</li>
+        <ul>
+          <li class="explain">up.2chan.net,tmp.2chan.net → dat.2chan.net：どうぶつ、虫、料理、のりもの、二輪、鉄道、模型、3DCG、二次元。現時点ではupもtmpもdatも同じIPのホストなので問題は無いのだが、いつかup/tmp鯖の名前が消えてもいいように。</li>
+        </ul>
+        <li class="obsolete">旧鯖名でアクセスしても新しい鯖設定を参照できるように赤福の内部構造を変更</li>
+        <ul>
+          <li class="explain obsolete">今は旧鯖名でアクセスすると新鯖に飛ばされるので大丈夫だが、そうではない時も合ったので、別名でアクセスしてる時も本来の名前の鯖情報を参照できるような機構を追加した。現状では不要になったのだが、この機構自体はいつか何かの役に立つかもしれないのでそのまま。</li>
+          <li class="explain sp61933">板の情報(寿命など)を得るためのAPIを変化させてしまっていたが、他アドオン(合間とか?)との互換性の問題がありそうだったので元に戻した。実際に問題があったかどうかは知らないが、不必要に変更するのは避けるべきなのだろう。</li>
+        </ul>
+      </ul>
+      <li>外部の板</li>
+      <ul>
+        <li class="bugfix sp61933 baseline">外部の板では「リロードの替わりに続きを読む」系機能が死んでいたので修正</li>
+        <ul>
+          <li class="explain"><a href="#addToExternalFix">外部の板に追加コマンドのバグ</a>と同様に、外部の板の設定データが旧バージョンで変更されたが、一部コードに反映されていなかったことで起きる問題。リロード処理のフックを実現するための赤福コンテンツポリシー(広告ブロックにも使われている機構)における外部の板関係のコードが古いままで、外部の板かどうかの判定が正しく行えず、本来の動作（リロードをいったん拒絶して赤福の「続きを読む」系機能をキックする)に至っていなかった。</li>
+        </ul>
+        <li class="improve sp64983" id="b44aabc">No.部分が改変された一部の外部の板でも処理できるよう対応</li>
+        <ul>
+          <li class="explain">レスのNo.部分をリンクにしたりという改変が施された一部の外部の板でも赤福が機能するようにした。通常の方法でレスNo.が判別できなかった場合に、AやSPAN程度を許容してNo.を探索し直すように変更して。</li>
+        </ul>
+      </ul>
+      <li>ブルマ女将</li>
+      <li>音</li>
+      <li>その他</li>
+      <ul>
+        <li class="featurename">ツールバー</li>
+        <ul>
+          <li class="sp60557">ツールバーアイコンのツールチップにも赤福のバージョンを追加表示</li>
+          <li class="sp60557">ボタンのスタイルを改善</li>
+          <ul>
+            <li class="explain">パディング等が変なので普通のボタンと同じスタイルへ戻した。これにより5.2.89辺りで導入されたボタン枠の削除は廃止される。</li>
+            <li class="sp60999">(Firefox4+)ツールバーボタンのアイコンサイズが大きすぎることがある件を修正</li>
+            <ul>
+              <li class="explain">OSやテーマによって、16x16のサイズが選ばれるべき場合でも24x24が使われることがあり、ボタンが無駄に大きくなっていた。ボタンのスタイル定義を<a href="https://developer.mozilla.org/en/XUL/Toolbars/Creating_toolbar_buttons#Styling_the_button">正しい方法</a>に修正した。</li>
+              <li class="explain">しかしまだ、テーマを切り替えた際などに24pxアイコンが使われたまま元に戻らないことがある。これはアドオンが追加したツールバーボタンにすべからく起きる問題っぽい。こういう場合は一度「小さいアイコンを利用する」をチェック＆アンチェックすると元に戻る。</li>
+            </ul>
+          </ul>
+        </ul>
+        <li>見ているページを対象とするメニューコマンド (「レス送信モードで動かす」「外部板に登録」「レスパネルを表示」)</li>
+        <ul>
+          <li class="improve sp60999">実行できない時には無効になるように変更</li>
+          <ul>
+            <li class="explain">「レス送信モードで動かす」「外部板に登録」「レスパネルを表示」は、見ているページによって実行できない(する必要がない)場合がある。例えば、ふたばのスレを開いている時は外部板への登録は必要ない(実行しても何も起きない)、などのように。このような状況をわかりやすくするため、メニューを表示する段階で判断して無効にするようにした。</li>
+          </ul>
+          <li class="improve sp60999">フレーム有りの時も最後にフォーカスされていたフレーム内を対象に動作するよう変更</li>
+          <ul>
+            <li class="explain">これまではフレームの元(例えば http://www.2chan.net/index.html 自身)が対象となっていて、コマンドは期待通りの結果にならなかったことがあった。例えばふたば内では、フレームがあるとレスパネルが表示されなかった。</li>
+          </ul>
+          <li class="bugfix sp60999"><a id="addToExternalFix"></a>「外部板に登録」が機能していなかったので修正</li>
+          <ul>
+            <li class="explain">これまでは、見ているページは一時的に赤福が処理するが、登録が正常に働いておらず、設定の外部の板の一覧にも追加されていなかった。外部板登録を設定に追加するコードが古かったことが原因なので、適切に修正した。</li>
+            <li class="explain">詳細：このコマンドは設定 akahuku.board_external.patterns にパターンを追加していたが、この項目は古い赤福が使っていたもので、現在では akahuku.board_external.patterns2 に置き換わっている。 patterns2 がある環境では patterns は読み込まれないので、コマンドは動作しても期待する結果になっていなかった。ところで、ユーザーがコマンドを実行したことがあると akahuku.board_external.patterns に使われないデータが溜まってしまっている。気になる人は削除していいはず。</li>
+          </ul>
+        </ul>
+        <li class="featurename">レスパネル</li>
+        <ul>
+          <li class="improve sp60999">コマンドメニューをチェックメニューに変更</li>
+          <li class="improve sp60999">パネルをリサイズできる場所(パネル右下隅)ではマウスカーソルを変更するように</li>
+        </ul>
+      </ul>
+    </ul>
+    <h4>その他の変更点</h4>
+    <ul id="changes2">
+      <li class="sp59934">デバッグ用にエラーコンソールへのメッセージ出力機能の追加</li>
+      <ul>
+        <li class="explain">隠し設定 akahuku.ext.debug を true にすることで有効化される。</li>
+        <li>板の保存数変更を検出時にメッセージ</li>
+        <li>画像読み込み再試行時に警告メッセージ</li>
+        <li>単にスルーしていた例外発生を可視化</li>
+        <ul>
+          <li class="explain">ふたばやFirefoxの変更などによる異常動作に気づきやすくするため、今まで例外が起きても無視していた部分でメッセージを表示するようにした。とりあえず他に修正点があるファイルのみで。ただし例外発生を前提とした処理では一々可視化しない。</li>
+        </ul>
+      </ul>
+      <li class="futaba sp60557 baseline">塩中瓶のフォームでもプレビューが動くように</li>
+      <ul>
+        <li class="explain">他の瓶と同じように、アップロードフォーム(標準版)で画像プレビューが働くように、処理対象に加えた。</li>
+      </ul>
+      <li class="optimize" id="BoostInternalMethods">内部処理の高速化 (長いスレでの負荷軽減)</li>
+      <ul>
+        <li class="explain">(メモ：長いスレで重くなる機能：(1) delを新しいタブかインラインで開く、(2) Noクリックして引用、(3) オートリンク・芝刈り、(4) 画像を保存ボタン(画像数による))</li>
+        <li class="optimize sp60557">レス単位の処理であちこちから何度も呼ばれるメソッド Akahuku.getMessageBQ() の高速化</li>
+        <ul>
+          <li>可能なら最近のFirefoxの機能を使って高速抽出する</li>
+          <ul>
+            <li class="explain">最近のふたばのフォーマットに合ったXPathを使うことで従来の方式より約6倍？高速に。デフォルトで有効だが隠し設定akahuku.ext.boost_by_xpathをfalseにすることで無効に出来る。</li>
+          </ul>
+          <li>抽出結果をできるだけキャッシュする</li>
+          <ul>
+            <li class="explain">特に引用ポップアップ利用時、マウスをレステキスト上で動かした時の負荷が軽減する。
+              続きを読む等で内容が変わったときにはキャッシュが自動的に削除されるようにしたつもりだが、問題がありそうなら無効にすれば元の動作に戻る(隠し設定akahuku.ext.cache_bqをfalseに)。</li>
+            <li class="fxupdate sp64983">キャッシュ破棄タイミングの検知に DOM4 Mutation Observer を使うように変更</li>
+            <ul>
+              <li class="explain">DOM3 Mutation Events を使ってページ改変に応じてキャッシュを破棄していたが、これは deprecated であるし、Firefox14で警告も出るようになったので、DOM4(draft)の Mutation Observer を使う方法へ変更した。window.MutationObserver が無いバージョンのFirefox(14より前)で動かす場合には、Mutation Events を使って実装した Mutation Observer もどきを使うようにして互換を取った(Firefox 3.6で動作確認)。</li>
+            </ul>
+          </ul>
+        </ul>
+        <li>「No.を押して引用」機能に必要な前処理をText.splitText()を用いたシンプルなコードに変更</li>
+        <ul>
+          <li class="explain">実はこの前処理は長いレスではそこそこ重い。この程度の変更では効果は微妙すぎるかも。抜本的には、No.部分への細工を後回しにしたり、あるいは、前処理を必要としない方式に変えた方が良い。</li>
+        </ul>
+        <li>返信モードの下準備(arAkahukuThread.apply)における無駄なレスのスキャンを省いた</li>
+        <li class="optimize sp64332">スレの消滅情報判断コードの一部を最適化</li>
+        <ul>
+          <li class="explain">スレを開いたときに"該当記事がみつかりません"というメッセージを判定するコードが走るが、長いスレではレス数に比例？して少し時間がかかっていたので最適化を図った。(手元の遅いPCでは2800レスで150ms処理時間が減った)</li>
+          <li class="explain">判定対象のHTML構造を厳密にしたので、ひょっとしたら判定をミスする外部板があるかもしれない。</li>
+          <li class="explain">というか以前の判定は荒っぽすぎて、書き込みによって暴発する可能性すらある気がする。</li>
+        </ul>
+      </ul>
+      <li class="bugfix">警告 assignment to undeclared variable への対応</li>
+      <ul>
+        <li class="explain">arAkahukuMHT.jsの同様の件以外ではあまり細かく見てないが、メモリリーク(zombie compartment化)をひきおこしかねない問題なので、見つけ次第修正してる。設定を変えて厳密なJavaScriptの警告を表示するようにしないとコンソールに出ないので見逃されがちっぽい。</li>
+      </ul>
+      <li class="bugfix sp59934 baseline">スレ本文が404～とかの場合に赤福が機能しなくなる件を修正</li>
+      <ul>
+        <li class="explain">ふたば側でスレ文からページタイトルを付けるようになってから問題が起きてたはず。</li>
+      </ul>
+      <li class="bugfix">フレーム内で開いたページでの挙動が一部おかしいのを修正？</li>
+      <ul>
+        <li class="explain">「続きを読む」「レス送信と連携」設定だと送信できないのが治った ( browser is null とエラーが出て送信処理が止まってた)。あと、ホイールの「通常モード上下でループする」等のスクロールが正常になった。他にも変化あるかも?</li>
+        <li class="explain">フレーム内だと「リロードの代わりに続きを読む」、タブの「アイコンを変更する」は機能しない仕様。「タイトルを修正する」は機能してはいるが当然タブのタイトルにはならない。</li>
+      </ul>
+      <li class="fxupdate sp59934"><s>カタログとレス送信モードで、</s>画像の読み込み失敗後に<s>一度だけ</s>再読込を試行するよう変更</li>
+      <ul>
+        <li class="explain">解説：Firefox6以降で大量の画像をロードしきれない環境があるみたいなので場当たり的に対策した。問題が出る環境では、そもそも、Firefoxの接続数(network.http.max-connections)を適当に制限したほうがいいらしいのだけれど、赤福がグローバルな勝手に設定を弄ってしまうのはまずいだろう。</li>
+        <li class="sp60848">P2P有効時でもちゃんと動作するように修正。</li>
+        <ul>
+          <li class="sp61933">再読込が必要最低限になるように再修正</li>
+          <ul>
+            <li class="explain">特にP2P有効時に不必要なものも再読込させてしまっていたが、必要最低限のリロードとなるように、エラー状態を判定してから再読込するようにした。</li>
+          </ul>
+        </ul>
+        <li class="sp61933">カタログとレス送信モードに加え、通常モードでもエラー画像を再試行するように (+コードの整理・統一)</li>
+        <ul>
+          <li class="explain">(コードの整理・統一: 対象モードでは arAkahukuThread.apply 時にエラーをキャプチャするイベントハンドラをページに登録するように。)</li>
+        </ul>
+        <li class="sp61933">機能のオン/オフおよび最大試行回数を調整可能に</li>
+        <ul>
+          <li class="explain">隠し設定 akahuku.ext.maximageretries により最大試行回数を設定可能にした。<b>0にすれば再読込は行われなくなる</b>(デバッグログに記録は出る)。デフォルトは1(=一度だけ再試行)。</li>
+        </ul>
+      </ul>
+      <li class="fxupdate">Firefox4以上では、タブ関連の処理に tabbrowser.tabs や visibleTabs を使うように。</li>
+      <ul>
+        <li class="explain">古いブラウザ対応のコードなのか、現在ではドキュメントされていないプロパティ(linkedBrowser,mTabContainer)を参照したりしてるし、別のところ(mPanelContainer周り)ではWarningが出たりもするので。以前のコードは残しつつ、新しい環境では現在ドキュメントされてる機能を使った(将来的な意味で)安全な処理に切り替えた。tabsとvisibleTabsの違いはPanorama対応で、スレのソートとかは今表示してるタブグループ内だけで働くようになってる(従来通りだが)。</li>
+      </ul>
+      <li class="fxupdate sp59934 baseline">Firefox7でDeprecatedになった<a href="https://developer.mozilla.org/en/nsIJSON">nsIJSON</a>.decode/encode の代わりに、<a href="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/JSON">JSON</a>.parse/stringify を優先的に利用するよう変更</li>
+      <ul>
+        <li class="explain"> Betaチャネルの7でnsIJSONのメソッドが消えるという話[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=645922#c5">Bug 645922#c5</a>]があったので対応したけど、後方互換の観点から結局リリースでは再実装された[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=672063">Bug 672063</a>]。とはいえDeprecatedなのは変わりないので、JSONが利用できる環境ではそちらを優先することにしておく。</li>
+        <li class="explain">ところで、赤福は独自のJSONルーチンも持ってるので、nsIJSONのメソッドが消えていたとしても動作に問題はなかったのかも。未検証だけれど。</li>
+      </ul>
+      <li class="fxupdate sp60557" id="DwonloadLastDirHack">Firefox7からダウンロード場所をサイト別に覚える仕様だが、ふたば画像鯖では保存場所をサイト別には覚えないよう対処</li>
+      <ul>
+        <li class="explain">保存の仕方によっては、画像自体のURLからサイトを判断してダウンロード場所を記憶してしまうため、複数画像鯖があるふたばでは混乱する。そこで対症療法的に、画像鯖単位のダウンロード場所の記憶は逐一消してしまう処理を入れた。記憶がなければ、従来と同様に、直前に使われた保存場所が使われるのでまだマシではないかと。ただしやっつけハックなので記憶の消去タイミングは完全ではないし、さらに<span style="font-weight: bold;">保存の仕方によっては元スレがあるサイト別の保存場所記憶が使われる(正常動作)</span>こともあることは注意したい。多少マシになるかなって感じ。</li>
+        <li class="explain">この動作が不必要な場合は、隠し設定 akahuku.ext.download_lastdir_hack を about:config から false に。</li>
+        <li class="explain"><span style="font-weight: bold;">問題の詳細：</span> タブで開いて「名前を付けてページを保存」だと画像を開いた元スレURL(リファラ)から判定されるサイトに対して記憶されたダウンロード場所を使うため、画像が複数鯖にあっても問題ない。つまり、mayとかjunとかimgとかの単位では別の場所になるが、画像鯖は関係なくなる。しかし、右クリックからの「名前をつけて画像を保存」だとリファラが使われずに画像自体のURLからサイトが判断されるため、画像鯖毎の記憶が使われ、問題が起きる。他にも保存方法によっては画像鯖毎になる場合があるかもしれない。リファラ切ってたらページを保存でもダメだし。この挙動はまあ理解はできるけどユーザからしたら混乱するだけなので、Firefoxのバグとして扱われてもいいんじゃないかな・・・。[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=693153">Bug 693153</a>]とか既にあるけど。</li>
+        <li class="explain sp60848">browser.download.lastDir.savePerSite で有効/無効を制御出来るようにしようって試みができた[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=702748">Bug 702748</a>]けど、<s>いつになったら解決するのやら...</s><span>導入はFirefox11までおあずけ...</span><br/>
+        無効にするアドオン: <a href="https://addons.mozilla.org/en-US/firefox/addon/nocontentdownloadlastdir/">NoContentDownloadLastDir</a> (<a href="https://addons.mozilla.jp/firefox/details/350594">.jp</a>)</li>
+        <li class="sp61933">対象画像鯖にoct.2chan.netを追加</li>
+      </ul>
+      <li class="fxupdate sp60848">拡張機能 QuickDrag で P2Pやプレビュー画像(akahuku://*)の保存を有効にするパッチを無効化。</li>
+      <ul>
+        <li class="explain">パッチを当てるコードが現バージョンのQuickDragには適合しておらず効果がなかった。そもそもパッチ当てなくても困らないように思えるし、(evalを伴う)危険な行為ではあるので、この処理を削除した。</li>
+      </ul>
+      <li class="futaba sp60848 baseline" id="IPImageServers">画像がIPアドレス指定の場合にふたばのファイルと認識せず色々問題が起きる件に対処</li>
+      <ul>
+        <li class="explain">新画像鯖が試験的に導入される場合など、DNS浸透を待たずに適応させるために最初は画像のsrcにIPアドレスが直に書かれることがある。そうなると赤福はふたばの画像ではないとして処理し、<b>MHT保存に含まれない</b>とか、<b>スレ画像と認識されない</b>(タブアイコンやスレ操作パネルへ影響)とかの問題が起きる。</li>
+        <li class="explain">これまでは問題が起きる都度IPアドレスをハードコーディングして凌いでいたが、そういう事はいちいちやってられないので、IPアドレスでも画像URLっぽければふたばの画像と見なすようにした。ただしP2Pの処理には含めない。</li>
+        <li class="explain">この変更により、外部サイトの広告画像などを間違ってふたばの画像と認識してしまう可能性がわずかに生じるが特に問題はないだろう。</li>
+      </ul>
+      <li class="newfeature sp60848">akahuku://...の画像でも、Firefoxのページ情報でメディアプレビューが見れるようにした</li>
+      <ul>
+        <li class="explain">背景解説：赤福のプレビュー画像(オートリンク含む)やP2P有効時の画像は http: の変わりに独自の akahuku: スキームとなってて、普通は出来ない赤福独特の処理を追加したり(P2P経由の取得とか)している。このスキームの登録は通常うまく働いていて、普通は問題は起きないのだが、一部、デフォルトのスキームしか考慮してないような本体機能/拡張機能では akahuku: なURLを弾いてしまったりする。ページ情報のメディアプレビューはそういう物の1つ。</li>
+        <li class="explain">FirefoxのpageInfo.jsのコードがakahuku://を知らないためにプレビューが表示されない。akahuku:でも表示に問題は無いので、pageInfo.xulオーバーレイを追加して、pageInfo.js におけるスキーム判定処理を上書きすることで対応させた。バージョン依存ありそう。4以降か？</li>
+        <li class="explain sp61933">akahuku://全許可はやめて元のURLでチェックするように変更した。また、問題が起こりにくいように、もし問題が起きても通常の機能をあまり邪魔しないように、コードを修正した。</li>
+      </ul>
+      <li class="bugfix sp60848">マウス動作監視用イベントリスナがタブを閉じた時などに無駄なエラーメッセージをださない用にした</li>
+      <ul>
+        <li class="explain cited">エラー: Akahuku.getDocumentParam(targetDocument) is null</li>
+      </ul>
+      <li class="sp60999">(コードの整理: arAkahukuDOM.getFirstElementByNames)</li>
+      <li class="sp61933">この改変版によって追加された設定項目に目印 "<span style="color:blue;">.sp</span>" と解説のツールチップを付加</li>
+      <li class="sp61933">(コードの整理: テキストベースのスタイル操作を arAkahukuDOM.Style.* にまとめて整理)</li>
+      <ul>
+        <li class="explain">MHT保存時など、Node.style プロパティが使えることを期待できない時に style 属性をいじるためのコードを整理して CSSStyleDeclaration っぽいインターフェースで適当にまとめた。ただし、このコードを使うのは別件で修正を入れたところを中心としてで、特に問題が起きてなさげなところはとりあえず元のまま。(今のところMHT保存(&amp;保存用に整形)時の削除レスのスタイリングに使用)</li>
+      </ul>
+      <li class="improve sp61933" id="WebConsoleReady">赤福が裏で行う通信をWebコンソールでモニタできるようにした (P2P以外)</li>
+      <ul>
+        <li class="explain">もちろん最近出来たWebコンソールのことなど考慮されてなく、赤福が裏で勝手に(ページ中の要素としてロードさせるのとは別に)開いた通信チャネルはWebコンソールのネットワークに表示されなかった。デバッグなどをしやすくするために、開いているページと関連づけて通信チャネルを使うように変更することで、Webコンソール(たぶんFirebugも)が表示するべき通信だと認識できるようにした。</li>
+        <li class="explain">モニタ可能になったのは次の操作に伴う通信：(P2Pのノード間通信以外はモニタ可能になったはず)<ul>
+          <li>スレ(返信モード)の「<b>続きを読む</b>」と「<b>同期</b>」</li>
+          <li>カタログの「<b>最新に更新</b>」</li>
+          <li>「MHTで保存」の「<b>ネットワークからも取得する(元画像以外)</b>」(例：画像自動読込オフで開いたスレのサムネ、オートリンクで「MHTに含め」た要素)</li>
+          <li>オートリンクのコンテクストメニュー「<b>拡張子を指定 - 自動認識</b>」(※実現方法は少し違う(arAkahukuLinkExtListener へ nsILoadContext を実装))</li>
+          <li>(オートリンクプレビュー画像の読込自体も、別の修正の副作用でモニタ可能になった)</li>
+        </ul>
+        </li>
+      </ul>
+      <li class="fxupdate sp63736" id="RemovedMozOpacityAlias">固定フォーム、スレ操作パネルの半透明指定が効かなくなる件に対応(Firefox13+)</li>
+      <ul>
+        <li class="explain">Firefox13に含まれる修正[<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=730532">Bug 730532</a>]により古いエイリアスが削除されたことに伴って、赤福の古いコード中に見られた半透明処理が効かなくなったので、"MozOpacity"ではなく"opacity"プロパティを操作するよう更新した。<span class="sub">(この更新によりFirefox3.5以前では逆に半透明処理が動かなくなるだろうが、もう他にも色々動いていないだろうから無視する。)</span></li>
+      </ul>
+      <li class="fxupdate sp63736">(内部変更) Firefox13でnsIPrefBranch2がdeprecated指定になった件に保険的に対応</li>
+      <ul>
+        <li class="explain">nsIPrefBranch2がnsIPrefBranchにマージされ、2はdeprecatedになった。とりあえず現状でも互換性は保たれているのだが、将来的にはnsIPrefBranch2は廃止されると予想される。赤福はnsIPrefBranch2の存在に依存してコードを切り替えるロジックを持っており、nsIPrefBranch2が削除された場合に古い時代(Firefox1?)の時の挙動(設定変更の反映処理に関して)に戻ってしまって、ついでに何か不具合が出るとも限らないので、今のうちに対策をとっておいた。</li>
+      </ul>
+      <li class="fxupdate sp63736">(コード整理) Firefox14?で増えたJavaScriptのstrict警告に応じて微修正</li>
+      <ul>
+        <li class="explain">変数の多重宣言の解消、8進数リテラルを10進数に、返り値があったりなかったりした関数の修正など。</li>
+      </ul>
+      <li class="fxupdate sp64983">Firefox 14での「アドオンのメモリ使用量を最適化」によって起きるちょっとしたエラーへの対策</li>
+      <ul>
+        <li class="explain">タブを閉じた場合などに出るちょっとしたエラー(解放するべきオブジェクトへのアクセス)が出ないようにちょっと対応。</li>
+      </ul>
+      <li class="improve sp64983">設定したショートカットキーの動作の時にデフォルトの動作を行わせないように</li>
+      <ul>
+        <li class="explain">何かの機能にAlt-Shift-S(例)などとショートカットキーを設定した時に、Alt-Sに反応してメニューが開いたりすることが無いようにした。(つもりだがFirefox 3.6では効いてないっぽいのでバージョン依存がありそう)</li>
+      </ul>
+      <li class="sp64983" id="github">githubでのソース管理 &amp; 自動更新</li>
+      <ul>
+        <li class="explain">github の<a href="http://github.com/toshiakisp/akahuku-firefox-sp">toshiakisp/akahuku-firefox-sp</a>でソースコードを管理するようにした。(履歴はやっつけ再現: 元の5.2.90のインポートからはじめて、sp64768 までの変更をリリース単位のパッチ等でcommitしてみた。項目毎にパッチを分けて再現するのは時間が無駄すぎる...)</li>
+        <li class="explain">github の https なアクセスを使って自動更新に対応した。今後の改変版リリースへの更新がFirefoxによってチェックされるはず。</li>
+      </ul>
+    </ul>
+  </body>
+</html>
