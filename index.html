@@ -34,7 +34,7 @@
 
 <h2>Updates</h2>
 
-<h3>sp64983 (2012-08-20):</h3>
+<h3>sp64983 (2012-08-20): 自動更新対応したりとか</h3>
 <ul>
 <li>githubでの管理、今後の自動更新対応</li>
 <li>バグ修正: フォームの半透明解除バグ、動作しない板にしても広告ブロックが動く問題</li>
@@ -53,8 +53,8 @@
 <li>[spバグ] SWFプレビューに対してFlashBlockアドオンが効かなくなってた問題を修正、複数プレビュー時にFlashBlockすると消せない問題を修正</li>
 <li>ツリー型タブアドオンへの特別対応: オートリンクでも子タブになるように</li>
 <li>オートリンクで開くタブにも元タブの情報を付加するように変更 (→閉じる際に元タブに戻れたり?)</li>
-<li>カタログで古いスレを赤くする精度の改善: 別タブにカタログを開くタイミングでも更新
-(READMEから変更点一覧を別ファイルに分離、更新履歴をまとめるように)</li>
+<li>カタログで古いスレを赤くする精度の改善: 別タブにカタログを開くタイミングでも更新</li>
+<li>(READMEから変更点一覧を別ファイルに分離、更新履歴をまとめるように)</li>
 </ul><h3>sp64332 (2012-07-05): Firefox 14対応など</h3>
 
 <ul>
@@ -66,7 +66,35 @@
 </ul>
       </section>
       <footer>
-        <p>This project is maintained by <a href="https://github.com/toshiakisp">toshiakisp</a></p>
+	    <p>This project is maintained by <a href="https://github.com/toshiakisp">toshiakisp</a></p>
+<script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+<script>
+new TWTR.Widget({
+  version: 2,
+  type: 'profile',
+  rpp: 4,
+  interval: 30000,
+  width: 'auto',
+  height: 300,
+  theme: {
+    shell: {
+      background: '#c0deed',
+      color: '#000000'
+    },
+    tweets: {
+      background: '#ffffff',
+      color: '#000000',
+      links: '#3399ff'
+    }
+  },
+  features: {
+    scrollbar: false,
+    loop: false,
+    live: false,
+    behavior: 'all'
+  }
+}).render().setUser('toshiakisp').start();
+</script>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
