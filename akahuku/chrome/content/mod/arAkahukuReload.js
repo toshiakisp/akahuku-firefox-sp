@@ -2262,8 +2262,9 @@ var arAkahukuReload = {
                                targetDocument, retNode) {
     var newNodes = new Array ();
     var addNodes = new Array ();
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var info = documentParam.location_info;
+    var isUpdated = false;
         
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
     
@@ -2542,6 +2543,11 @@ var arAkahukuReload = {
       }
       if (sync || num > lastReply.num) {
         /* レスの追加 */
+        if (!isUpdated) {
+          isUpdated = true;
+          /* MessageBQ cache があればここで消す */
+          Akahuku._setMessageBQCache (documentParam, null);
+        }
         if (!lastReply.container) {
           /* レスが無い時 */
           lastReply.container
@@ -3188,9 +3194,6 @@ var arAkahukuReload = {
         if (node) {
           arAkahukuDOM.setText (node, newReplies);
         }
-
-        /* BQ cache を消す */
-        Akahuku._setMessageBQCache (documentParam, null);
       }
             
       /* スレ消滅情報に反映する */
