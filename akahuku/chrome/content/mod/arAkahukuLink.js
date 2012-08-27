@@ -3568,7 +3568,7 @@ var arAkahukuLink = {
       }
       catch (e) { Akahuku.debug.exception (e);
       }
-      image.src = ""; //trigger load error
+      image.src = "about:blank"; //trigger load error
     }
         
     arAkahukuLink.updateButton (target, opening);
