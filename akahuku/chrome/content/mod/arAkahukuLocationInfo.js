@@ -115,7 +115,7 @@ arAkahukuLocationInfo.prototype = {
     }
         
     // 旧CGI仕様の板でスレが消えた場合のチェック
-    nodes = targetDocument.body.childNodes;
+    nodes = targetDocument.body ? targetDocument.body.childNodes : [];
     for (var i = 0; i < nodes.length; i ++) {
       var nodename = nodes [i].nodeName.toLowerCase ();
       if (nodename === "center"
