@@ -725,6 +725,7 @@ var Akahuku = {
             partialNode.id = "akahuku_partial_indicator";
             container.nodes [0].parentNode.insertBefore
               (partialNode, container.nodes [0]);
+            bqnodes = null; // BQ再走査させるため
           }
           Akahuku.removeMessageContainer (container);
           info.replyFrom ++;

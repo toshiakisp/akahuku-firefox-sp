@@ -2226,8 +2226,14 @@ var arAkahukuMHT = {
       var bstream
       = Components.classes ["@mozilla.org/binaryinputstream;1"]
       .createInstance (Components.interfaces.nsIBinaryInputStream);
-      bstream.setInputStream (istream);
-      var bindata = bstream.readBytes (descriptor.dataSize);
+      var bindata = "";
+      try {
+        bstream.setInputStream (istream);
+        bindata = bstream.readBytes (descriptor.dataSize);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        // キャッシュ破損?
+      }
       bstream.close ();
       istream.close ();
             
