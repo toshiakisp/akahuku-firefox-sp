@@ -955,6 +955,10 @@ arAkahukuReloadParam.prototype = {
            false, this.targetDocument);
         // 残りレス数の更新
         arAkahukuReload.updateExpireDiffNum (this.targetDocument);
+        // 更新時間の更新
+        if (arAkahukuReload.enableTimeStamp) {
+          arAkahukuReload.setTimeStamp (this.targetDocument);
+        }
         break;
       case 404:
         /* ファイルが消えていた場合 */
