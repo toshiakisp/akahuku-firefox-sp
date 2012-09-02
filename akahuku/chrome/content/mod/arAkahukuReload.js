@@ -368,6 +368,7 @@ arAkahukuReloadParam.prototype = {
   replying : false,            /* Boolean  返信中フラグ */
   replied : false,             /* Boolean  返信後フラグ */
   targetDocument : null,       /* HTMLDocument  対象のドキュメント */
+  lastModified : NaN,          /* Number  ドキュメントの更新日時 (LOAD_ONLY_IF_MODIFIEDフラグ用) */
     
   requestMode : 0,             /* Number  リクエスト方法 0:HEAD-GET, 1:GET(Etag), -1:GET(no-more-HEAD) */
   useRange : false,            /* Boolean  この板で差分取得を行うか */
@@ -737,12 +738,7 @@ arAkahukuReloadParam.prototype = {
       }
 
       if (httpChannel.requestMethod == "HEAD") {
-        var cacheStatus
-          = Akahuku.Cache.getHttpCacheStatus (request.originalURI.spec);
-
-        var cacheLastMod, resLastMod;
-        if ("Last-Modified" in cacheStatus.header)
-          cacheLastMod = Date.parse (cacheStatus.header ["Last-Modified"]);
+        var resLastMod;
         if ("Last-Modified" in visitor.header) {
           resLastMod = Date.parse (visitor.header ["Last-Modified"]);
         }
@@ -755,7 +751,7 @@ arAkahukuReloadParam.prototype = {
         if (errorStatus) {
           httpStatus = - Math.abs (httpStatus);
         }
-        else if (cacheLastMod && cacheLastMod == resLastMod) {
+        else if (this.lastModified && this.lastModified == resLastMod) {
           httpStatus = 304; // Not Modified
         }
         else {
@@ -773,8 +769,7 @@ arAkahukuReloadParam.prototype = {
 
         // 以降HEADリクエストを省略できるか判定
         if (this.requestMode == 0){ //HEAD-GET
-          if (cacheStatus.header.hasOwnProperty ("Etag")
-              || visitor.header.hasOwnProperty ("Etag")) {
+          if (visitor.header.hasOwnProperty ("Etag")) {
             this.requestMode = 1; //GET(Etag)
           }
         }
@@ -834,6 +829,14 @@ arAkahukuReloadParam.prototype = {
       case 200:
       case 206:
         this.responseHead = responseHead;
+        if ("Last-Modified" in visitor.header) {
+          this.lastModified
+            = Date.parse (visitor.header ["Last-Modified"]);
+        }
+        else {
+          // ヘッダに Last-Modified が無いなら諦める
+          this.lastModified = NaN;
+        }
                 
         arAkahukuReload.setStatus
           ("\u66F4\u65B0\u4E2D", //"更新中"
@@ -3546,8 +3549,17 @@ var arAkahukuReload = {
     else {
       // 常に更新問い合わせさせる (If-Modified-Sence 等を使って)
       flags |= Components.interfaces.nsIRequest.VALIDATE_ALWAYS;
-      // 更新無し(304 Not Modified)でもキャッシュからデータを読まなくていい
-      flags |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
+
+      var cacheStatus = Akahuku.Cache.getHttpCacheStatus (location);
+      var lmcache = NaN;
+      if ("Last-Modified" in cacheStatus.header) {
+        lmcache = Date.parse (cacheStatus.header ["Last-Modified"]);
+      }
+      if (lmcache && param.lastModified
+          && lmcache == param.lastModified) {
+        // 更新無し(304 Not Modified)でもキャッシュからデータを読まなくていい
+        flags |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
+      }
     }
     param.reloadChannel.loadFlags |= flags;
 
@@ -3772,6 +3784,7 @@ var arAkahukuReload = {
       var param = new arAkahukuReloadParam ();
       Akahuku.getDocumentParam (targetDocument).reload_param = param;
       param.targetDocument = targetDocument;
+      param.lastModified = Date.parse (targetDocument.lastModified);
             
       try {
         targetDocument.defaultView
