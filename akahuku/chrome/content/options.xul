@@ -108,16 +108,16 @@
               <textbox id="title_format_sample" value="" disabled="true" />
             </box>
           </deck>
-          <box orient="horizontal" align="center">
-            <label id="title_comment_length_label1"
-                   control="title_comment_length"
-                   value="スレ本文の長さ" />
-            <textbox id="title_comment_length" size="6" />
-            <label id="title_comment_length_label2"
-                   control="title_comment_length"
-                   value="文字まで" />
-          </box>
         </groupbox>
+        <box orient="horizontal" align="center">
+          <label id="title_comment_length_label1"
+                 control="title_comment_length"
+                 value="スレ本文の先頭の長さ" />
+          <textbox id="title_comment_length" size="6" />
+          <label id="title_comment_length_label2"
+                 control="title_comment_length"
+                 value="文字まで (&amp;message;と&amp;message2;の長さ)" />
+        </box>
         <checkbox id="comment_fixup" checked="false"
                   label="本文なしを適当に修正する" />
         <checkbox id="subtitle" checked="false"

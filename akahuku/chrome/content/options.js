@@ -3203,9 +3203,10 @@ var AkahukuOptions = {
     
   checkTitle : function () {
     document.getElementById ("title_type").disabled
-    = document.getElementById ("title_comment_length").disabled
-    = document.getElementById ("title_comment_length_label1").disabled
-    = document.getElementById ("title_comment_length_label2").disabled
+    = document.getElementById ("title_comment").disabled
+    = document.getElementById ("title_mode").disabled
+    = document.getElementById ("title_thread_info").disabled
+    = document.getElementById ("title_format").disabled
     = !document.getElementById ("title").checked;
         
     AkahukuOptions.checkTitleType ();
