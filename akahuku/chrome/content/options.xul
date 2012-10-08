@@ -114,9 +114,16 @@
                  control="title_comment_length"
                  value="スレ本文の先頭の長さ" />
           <textbox id="title_comment_length" size="6" />
+          <menulist id="title_comment_length_type"
+                    tooltiptext="(デフォルト:文字) 長さの単位">
+            <menupopup id="title_comment_lengthtype_menu">
+              <menuitem value="0" label="文字" />
+              <menuitem value="1" label="バイト" />
+            </menupopup>
+          </menulist>
           <label id="title_comment_length_label2"
                  control="title_comment_length"
-                 value="文字まで (&amp;message;と&amp;message2;の長さ)" />
+                 value="まで (&amp;message;と&amp;message2;の長さ)" />
         </box>
         <box class="sub" orient="vertical">
           <checkbox id="title_comment_multiline" checked="false"

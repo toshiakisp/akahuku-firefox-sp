@@ -192,6 +192,7 @@ var AkahukuOptions = {
                    escape (value));
        }],
       ["int",  "title.comment.length", 20],
+      ["int",  "title.comment.length.type", 0], /* privatemod */
       ["bool", "title.comment.multiline", false, "privatemod"],
       ["bool", "subtitle", false],
       ["bool", "comment.fixup", true],

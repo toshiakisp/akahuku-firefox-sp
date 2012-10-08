@@ -16,6 +16,7 @@ var arAkahukuTitle = {
                              *   expert: 詳細設定 */
   enableComment : false,    /* Boolean  スレ本文の先頭 */
   commentLength : 0,        /* Number  スレ本文の先頭の長さ */
+  commentLengthType : 0,    /* Number  長さの単位 (0:文字, 1:バイト) */
   enableCommentMultiLine : false, /* Boolean  複数行から */
   enableMode : false,       /* Boolean  [ページ n]、[返信] 等 */
   enableThreadInfo : false, /* Boolean  スレの消滅情報 */
@@ -82,6 +83,10 @@ var arAkahukuTitle = {
       = arAkahukuConfig
       .initPref ("int",  "akahuku.title.comment.length", 20);
 
+    arAkahukuTitle.commentLengthType
+      = arAkahukuConfig
+      .initPref ("int",  "akahuku.title.comment.length.type", 0);
+
     arAkahukuTitle.enableCommentMultiLine
       = arAkahukuConfig
       .initPref ("bool",  "akahuku.title.comment.multiline", false);
@@ -117,6 +122,45 @@ var arAkahukuTitle = {
     else {
       return text;
     }
+  },
+
+  /**
+   * 長いコメントを打ち切る
+   * @param  String text
+   *         文字列
+   * @param  Number length
+   *         最大長さ (省略時はarAkahukuTitle.commentLength)
+   * @param  Number type
+   *         長さの単位 (0:文字数, 1:SJISバイト数)
+   *         (省略時はarAkahukuTitle.commentLengthType)
+   * @param  String sign
+   *         打ち切り時に末尾に付ける文字列 (省略可)
+   * @return String
+   *         文字列
+   */
+  truncateComment : function (text, length, type, sign) {
+    length = length || arAkahukuTitle.commentLength;
+    type = type ||  arAkahukuTitle.commentLengthType;
+    var ret;
+    var truncated = false;
+    if (type == 1) {
+      // SJISバイト数単位の場合
+      ret = arAkahukuConverter.getSubstrForSJISByteLength (text, length);
+      if (ret.length != text.length) {
+        truncated = true;
+      }
+    }
+    else {
+      // 文字数単位の場合
+      if (text.length > arAkahukuTitle.commentLength) {
+        ret = text.substr (0, arAkahukuTitle.commentLength);
+        truncated = true;
+      }
+    }
+    if (truncated && sign) {
+      ret += sign;
+    }
+    return ret;
   },
     
   /**

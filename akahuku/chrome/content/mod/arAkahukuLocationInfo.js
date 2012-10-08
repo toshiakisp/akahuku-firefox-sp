@@ -481,23 +481,12 @@ arAkahukuLocationInfo.prototype = {
         this.message
           = arAkahukuTitle.fixUpText (this.message2);
                 
-        var tmp;
-        if (this.message.length > arAkahukuTitle.commentLength) {
-          tmp = arAkahukuConverter.unescapeEntity (this.message);
-          tmp
-            = tmp.substr
-            (0, arAkahukuTitle.commentLength) + "...";
-          tmp = arAkahukuConverter.escapeEntity (tmp);
-          this.message = tmp;
-        }
-        if (this.message2.length > arAkahukuTitle.commentLength) {
-          tmp = arAkahukuConverter.unescapeEntity (this.message2);
-          tmp
-            = tmp.substr
-            (0, arAkahukuTitle.commentLength) + "...";
-          tmp = arAkahukuConverter.escapeEntity (tmp);
-          this.message2 = tmp;
-        }
+        this.message
+          = arAkahukuTitle.truncateComment
+          (this.message, null, null, "...");
+        this.message2
+          = arAkahukuTitle.truncateComment
+          (this.message2, null, null, "...");
                 
         node = nodes [0];
         while (node
