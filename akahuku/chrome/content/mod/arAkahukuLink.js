@@ -1398,6 +1398,12 @@ var arAkahukuLink = {
                   "font-size: 9pt; "
                   + "font-weight: bold; "
                   + "color: #ff4000;");
+
+        if (info.isTsumanne) {
+          style
+          .addRule ("iframe.akahuku_preview",
+                    "display: block;")
+        }
                 
         /* mht で保存用 */
         style
