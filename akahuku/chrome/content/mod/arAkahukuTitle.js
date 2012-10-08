@@ -146,16 +146,13 @@ var arAkahukuTitle = {
     if (type == 1) {
       // SJISバイト数単位の場合
       ret = arAkahukuConverter.getSubstrForSJISByteLength (text, length);
-      if (ret.length != text.length) {
-        truncated = true;
-      }
     }
     else {
       // 文字数単位の場合
-      if (text.length > arAkahukuTitle.commentLength) {
-        ret = text.substr (0, arAkahukuTitle.commentLength);
-        truncated = true;
-      }
+      ret = text.substr (0, length);
+    }
+    if (ret.length != text.length) {
+      truncated = true;
     }
     if (truncated && sign) {
       ret += sign;
