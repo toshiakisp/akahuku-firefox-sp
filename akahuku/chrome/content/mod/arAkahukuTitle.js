@@ -16,6 +16,7 @@ var arAkahukuTitle = {
                              *   expert: 詳細設定 */
   enableComment : false,    /* Boolean  スレ本文の先頭 */
   commentLength : 0,        /* Number  スレ本文の先頭の長さ */
+  enableCommentMultiLine : false, /* Boolean  複数行から */
   enableMode : false,       /* Boolean  [ページ n]、[返信] 等 */
   enableThreadInfo : false, /* Boolean  スレの消滅情報 */
   format : "",              /* String  フォーマット */
@@ -80,6 +81,10 @@ var arAkahukuTitle = {
     arAkahukuTitle.commentLength
       = arAkahukuConfig
       .initPref ("int",  "akahuku.title.comment.length", 20);
+
+    arAkahukuTitle.enableCommentMultiLine
+      = arAkahukuConfig
+      .initPref ("bool",  "akahuku.title.comment.multiline", false);
         
     arAkahukuTitle.enableSubtitle
     = arAkahukuConfig

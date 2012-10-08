@@ -118,6 +118,11 @@
                  control="title_comment_length"
                  value="文字まで (&amp;message;と&amp;message2;の長さ)" />
         </box>
+        <box class="sub" orient="vertical">
+          <checkbox id="title_comment_multiline" checked="false"
+                    class="sp" tooltiptext="(デフォルト：無効) 最初の行だけでなく、複数行に渡るスレ本文を連結してから「スレ本文の先頭」を抽出する。"
+                    label="複数行から" />
+        </box>
         <checkbox id="comment_fixup" checked="false"
                   label="本文なしを適当に修正する" />
         <checkbox id="subtitle" checked="false"

@@ -470,8 +470,14 @@ arAkahukuLocationInfo.prototype = {
         this.entiremessage
           = arAkahukuConverter.normalize
           (this.entiremessage);
-        this.message2
-          = arAkahukuTitle.getFirstLine (this.entiremessage);
+        if (arAkahukuTitle.enableCommentMultiLine) {
+          this.message2
+            = this.entiremessage.replace (/[\r\n]/, "");
+        }
+        else {
+          this.message2
+            = arAkahukuTitle.getFirstLine (this.entiremessage);
+        }
         this.message
           = arAkahukuTitle.fixUpText (this.message2);
                 
