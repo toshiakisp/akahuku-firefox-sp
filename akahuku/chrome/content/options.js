@@ -3505,6 +3505,16 @@ var AkahukuOptions = {
   checkSaveImageBaseDialog : function () {
     document.getElementById ("saveimage_base_dialog_keep").disabled
     = !document.getElementById ("saveimage_base_dialog").checked;
+
+    document.getElementById ("saveimage_base_subdir").disabled
+    = document.getElementById ("saveimage_base_subdir_url").disabled
+    = document.getElementById ("saveimage_base_subdir_board").disabled
+    = document.getElementById ("saveimage_base_subdir_server").disabled
+    = document.getElementById ("saveimage_base_subdir_dir").disabled
+    = document.getElementById ("saveimage_base_subdir_thread").disabled
+    = document.getElementById ("saveimage_base_subdir_msg8b").disabled
+    = document.getElementById ("saveimage_base_subdir_format").disabled
+    = document.getElementById ("saveimage_base_dialog").checked;
   },
     
   checkSaveImageInstantSrc : function () {
