@@ -114,12 +114,16 @@ arAkahukuSidebarThread.prototype = {
         .getService (Components.interfaces.nsIScriptSecurityManager);
       var flags
         = Components.interfaces.nsIScriptSecurityManager.DISALLOW_SCRIPT;
+      var principal
+        = Components.classes ["@mozilla.org/nullprincipal;1"]
+        .createInstance (Components.interfaces.nsIPrincipal);
       if (this.threadLinkURIObject) {
-        secMan.checkLoadURI (this.threadLinkURIObject, destURI, flags);
+        secMan.checkLoadURIWithPrincipal
+          (principal, this.threadLinkURIObject, destURI, flags);
       }
       else {
-        secMan.checkLoadURIStr
-          ("http://www.2chan.net/", destURI.spec, flags);
+        secMan.checkLoadURIStrWithPrincipal
+          (principal, "http://www.2chan.net/", destURI.spec, flags);
       }
     }
     catch (e) { Akahuku.debug.exception (e);

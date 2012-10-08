@@ -1398,6 +1398,12 @@ var arAkahukuLink = {
                   "font-size: 9pt; "
                   + "font-weight: bold; "
                   + "color: #ff4000;");
+
+        if (info.isTsumanne) {
+          style
+          .addRule ("iframe.akahuku_preview",
+                    "display: block;")
+        }
                 
         /* mht で保存用 */
         style
@@ -2881,7 +2887,7 @@ var arAkahukuLink = {
       var target = null;
             
       if (arAkahukuLink.enableAutoLinkPreview
-          && (url.match (/^http:\/\/((www\.|m\.)?youtube\.com\/watch\?([^&]+&)*v=|youtu\.be\/)[^&]+/i)
+          && (url.match (/^http:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?([^&]+&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
@@ -2912,7 +2918,7 @@ var arAkahukuLink = {
             && !url.match
             (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
-            (/^http:\/\/((www\.|m\.)?youtube\.com\/watch\?|youtu\.be\/)/)
+            (/^http:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
             && !url.match (/\.(jpe?g|gif|png|bmp)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
@@ -3306,7 +3312,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowFullScreen", "true");
       image.setAttribute ("allowScriptAccess", "never");
     }
-    else if (uri.match (/^http:\/\/(?:(?:www\.|m\.)?youtube\.com\/watch\?(?:[^&]+&)*v=|youtu\.be\/)([^&?#]+)/i)) {
+    else if (uri.match (/^http:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]+&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
       var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
@@ -3316,6 +3322,9 @@ var arAkahukuLink = {
           + parseInt (RegExp.$1 || 0) * 3600;
       }
       else if (uri.match (/[?&#]t=([0-9]+)/)) {
+        t = parseInt (RegExp.$1)
+      }
+      else if (uri.match (/^http:\/\/www\.youtube\.com\/embed\/.*[?&]start=([0-9]+)/)) {
         t = parseInt (RegExp.$1)
       }
       if (t > 0) {

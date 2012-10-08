@@ -108,16 +108,28 @@
               <textbox id="title_format_sample" value="" disabled="true" />
             </box>
           </deck>
-          <box orient="horizontal" align="center">
-            <label id="title_comment_length_label1"
-                   control="title_comment_length"
-                   value="スレ本文の長さ" />
-            <textbox id="title_comment_length" size="6" />
-            <label id="title_comment_length_label2"
-                   control="title_comment_length"
-                   value="文字まで" />
-          </box>
         </groupbox>
+        <box orient="horizontal" align="center">
+          <label id="title_comment_length_label1"
+                 control="title_comment_length"
+                 value="スレ本文の先頭の長さ" />
+          <textbox id="title_comment_length" size="6" />
+          <menulist id="title_comment_length_type"
+                    tooltiptext="(デフォルト:文字) 長さの単位">
+            <menupopup id="title_comment_lengthtype_menu">
+              <menuitem value="0" label="文字" />
+              <menuitem value="1" label="バイト" />
+            </menupopup>
+          </menulist>
+          <label id="title_comment_length_label2"
+                 control="title_comment_length"
+                 value="まで (&amp;message;と&amp;message2;の長さ)" />
+        </box>
+        <box class="sub" orient="vertical">
+          <checkbox id="title_comment_multiline" checked="false"
+                    class="sp" tooltiptext="(デフォルト：無効) 最初の行だけでなく、複数行に渡るスレ本文を連結してから「スレ本文の先頭」を抽出する。"
+                    label="複数行から" />
+        </box>
         <checkbox id="comment_fixup" checked="false"
                   label="本文なしを適当に修正する" />
         <checkbox id="subtitle" checked="false"
@@ -628,6 +640,9 @@
                             label="ディレクトリ" />
                   <checkbox id="saveimage_base_subdir_thread" checked="false"
                             label="スレ番号" />
+                  <checkbox id="saveimage_base_subdir_msg8b" checked="false"
+                            class="sp" tooltiptext="スレ本文の最初の4文字を使う"
+                            label="本文4文字" />
                 </box>
                 <box id="saveimage_base_subdir_deck_expert" orient="vertical" flex="1">
                   <textbox id="saveimage_base_subdir_format" multiline="true" rows="3"
@@ -2262,6 +2277,10 @@
               <column flex="1">
                 <label value="&amp;message; 本文の最初" />
                 <label value="&amp;message2; 本来の本文の最初" />
+                <box orient="horizontal">
+                  <label value="&amp;message8byte; 本来の本文の最初の４文字" />
+                  <label value=".sp" class="sp" />
+                </box>
                 <label value="&amp;entiremessage; 本文全体" />
                 <label value="&amp;name; 名前" />
                 <label value="&amp;mail; メル欄" />

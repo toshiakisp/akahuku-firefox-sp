@@ -307,6 +307,53 @@ var arAkahukuConverter = {
         
     return length;
   },
+
+  /**
+   * Shift_JIS 換算のバイト長分の先頭部分文字列を得る
+   * @param  String text
+   *         UTF-16 の文字列
+   * @param  Number bytelen
+   *         Shift_JIS 換算の文字列のバイト長
+   * @return String
+   *         指定バイト長に相当する UTF-16 の部分文字列
+   */
+  getSubstrForSJISByteLength : function (text, bytelen) {
+    var utf16 = text.substr (0, bytelen);
+
+    arAkahukuConverter.converter.charset = "shift_jis";
+    var sjis = arAkahukuConverter.converter.ConvertFromUnicode (utf16);
+
+    var utf16_i = 0;
+    var sjis_i = 0;
+    var sjis_c;
+    var utf16_c;
+
+    while (sjis_i < sjis.length && sjis_i < bytelen) {
+      sjis_c = sjis.charCodeAt (sjis_i);
+      utf16_c = utf16.charCodeAt (utf16_i);
+
+      if (sjis_c > 0x80) {
+        if (sjis_c >= 0xa0 && sjis_c <= 0xdf) {
+          /* 半角カナの場合 */
+          sjis_i ++;
+        }
+        else {
+          /* 2バイト文字の1バイト目の場合 */
+          sjis_i += 2;
+          if (sjis_i > bytelen) {
+            /* 2バイト目が溢れる場合は中断 */
+            break;
+          }
+        }
+      }
+      else {
+        sjis_i ++;
+      }
+      utf16_i ++;
+    }
+
+    return utf16.substr (0, utf16_i);
+  },
     
   /**
    * HTML に使えない文字をエスケープする

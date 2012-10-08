@@ -508,6 +508,7 @@ var arAkahukuImage = {
               value.subdir_server = (subdir & 4) ? true : false;
               value.subdir_dir = (subdir & 8) ? true : false;
               value.subdir_thread = (subdir & 16) ? true : false;
+              value.subdir_msg8b = (subdir & 64) ? true : false;
               
               list.push (value);
             });
@@ -1214,6 +1215,17 @@ var arAkahukuImage = {
             dir += "_";
           }
           dir += info.threadNumber;
+        }
+        else {
+          return null;
+        }
+      }
+      if (value.subdir_msg8b) {
+        if (info.isReply) {
+          if (dir) {
+            dir += "_";
+          }
+          dir += info.message8byte;
         }
         else {
           return null;
