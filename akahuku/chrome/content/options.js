@@ -590,6 +590,7 @@ var AkahukuOptions = {
               value.subdir_server = (subdir & 4) ? true : false;
               value.subdir_dir = (subdir & 8) ? true : false;
               value.subdir_thread = (subdir & 16) ? true : false;
+              value.subdir_msg8b = (subdir & 64) ? true : false;
               
               AkahukuOptions.ListManager.addItem
                 ("saveimage_base", value, null);
@@ -1402,6 +1403,8 @@ var AkahukuOptions = {
             = document.getElementById ("saveimage_base_subdir_dir").checked;
           value.subdir_thread
             = document.getElementById ("saveimage_base_subdir_thread").checked;
+          value.subdir_msg8b
+            = document.getElementById ("saveimage_base_subdir_msg8b").checked;
         }
         else {
           value.subdir_format
@@ -1443,7 +1446,8 @@ var AkahukuOptions = {
                 && value1.subdir_board == value2.subdir_board
                 && value1.subdir_server == value2.subdir_server
                 && value1.subdir_dir == value2.subdir_dir
-                && value1.subdir_thread == value2.subdir_thread) {
+                && value1.subdir_thread == value2.subdir_thread
+                && value1.subdir_msg8b == value2.subdir_msg8b) {
               return true;
             }
           }
@@ -1509,6 +1513,8 @@ var AkahukuOptions = {
           = value.subdir_dir;
           document.getElementById ("saveimage_base_subdir_thread").checked
           = value.subdir_thread;
+          document.getElementById ("saveimage_base_subdir_msg8b").checked
+          = value.subdir_msg8b;
         }
         
         AkahukuOptions.checkSaveImageBaseSubdir ();
@@ -1550,6 +1556,9 @@ var AkahukuOptions = {
               }
               if (value.subdir_thread) {
                 labels.push ("\u30B9\u30EC");
+              }
+              if (value.subdir_msg8b) {
+                labels.push ("\u672C\u6587"); //"本文"
               }
               if (labels.length == 0) {
                 labels.push ("\u306A\u3057");
@@ -2702,6 +2711,7 @@ var AkahukuOptions = {
     info.board3 = "\u4E8C\u6B21\u5143\u88CF";
     info.message = "\u304A\u3063\u3071\u3044\u301C\u3093";
     info.message2 = "\u304A\u3063\u3071\u3044\u301C\u3093";
+    info.message8byte = "\u304A\u3063\u3071\u3044";
     info.entiremessage = "\u304A\u3063\u3071\u3044\u301C\u3093";
     info.name = "";
     info.mail = "";

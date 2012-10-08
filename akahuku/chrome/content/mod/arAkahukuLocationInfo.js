@@ -62,6 +62,7 @@ arAkahukuLocationInfo.prototype = {
   board3 : "",                  /* String  実際の板名 */
   message : "",                 /* String  サブタイトル */
   message2 : "",                /* String  修正なしのコメントの 1 行目 */
+  message8byte : "",            /* String  コメント最初の４文字 */
   entiremessage : "",           /* String  コメント全体 */
   name : "",                    /* String  名前 */
   mail : "",                    /* String  メル欄 */
@@ -473,10 +474,16 @@ arAkahukuLocationInfo.prototype = {
         if (arAkahukuTitle.enableCommentMultiLine) {
           this.message2
             = this.entiremessage.replace (/[\r\n]/, "");
+          this.message8byte
+            = arAkahukuTitle.truncateComment
+            (this.message2, 8, 1);
         }
         else {
           this.message2
             = arAkahukuTitle.getFirstLine (this.entiremessage);
+          this.message8byte
+            = arAkahukuTitle.truncateComment
+            (this.entiremessage.replace (/[\r\n]/, ""), 8, 1);
         }
         this.message
           = arAkahukuTitle.fixUpText (this.message2);
@@ -649,6 +656,7 @@ arAkahukuLocationInfo.prototype = {
       case "thread":
       case "message":
       case "message2":
+      case "message8byte":
       case "entiremessage":
       case "name":
       case "mail":
@@ -1007,6 +1015,7 @@ arAkahukuLocationInfo.prototype = {
           + "<replycount>" + this.replyCount + "</replycount>"
           + "<message>" + this.message + "</message>"
           + "<message2>" + this.message2 + "</message2>"
+          + "<message8byte>" + this.message8byte + "</message8byte>"
           + "<entiremessage>"
           + this.entiremessage + "</entiremessage>"
           + "<name>"
@@ -1042,6 +1051,7 @@ arAkahukuLocationInfo.prototype = {
           + (this.replyCount ? "<check_replycount />" : "") 
           + (this.message ? "<check_message />" : "") 
           + (this.message2 ? "<check_message2 />" : "") 
+          + (this.message8byte ? "<check_message8byte />" : "") 
           + (this.entiremessage ? "<check_entiremessage />" : "") 
           + (this.name ? "<check_name />" : "")
           + (this.mail ? "<check_mail />" : "")

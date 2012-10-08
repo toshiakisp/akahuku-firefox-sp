@@ -640,6 +640,9 @@
                             label="ディレクトリ" />
                   <checkbox id="saveimage_base_subdir_thread" checked="false"
                             label="スレ番号" />
+                  <checkbox id="saveimage_base_subdir_msg8b" checked="false"
+                            class="sp" tooltiptext="スレ本文の最初の4文字を使う"
+                            label="本文4文字" />
                 </box>
                 <box id="saveimage_base_subdir_deck_expert" orient="vertical" flex="1">
                   <textbox id="saveimage_base_subdir_format" multiline="true" rows="3"
@@ -2274,6 +2277,10 @@
               <column flex="1">
                 <label value="&amp;message; 本文の最初" />
                 <label value="&amp;message2; 本来の本文の最初" />
+                <box orient="horizontal">
+                  <label value="&amp;message8byte; 本来の本文の最初の４文字" />
+                  <label value=".sp" class="sp" />
+                </box>
                 <label value="&amp;entiremessage; 本文全体" />
                 <label value="&amp;name; 名前" />
                 <label value="&amp;mail; メル欄" />
