@@ -209,6 +209,59 @@ Akahuku.Cache = new function () {
 
     return status;
   };
+  this.asyncGetHttpCacheStatus = function (key, noRedirect, callback) {
+    var status = new CacheStatus (key);
+    var finder = new Akahuku.Cache.RedirectedCacheFinder ();
+    finder.init ();
+    if (noRedirect) {
+      finder.maxRedirections = 0;
+    }
+    var callbackStatus = callback;
+    if (!callbackStatus) {
+      Akahuku.debug.warning ("aborted by invalid callback");
+      return;
+    }
+    try {
+      finder.asyncOpen (key, function (descriptor) {
+        if (!descriptor) {
+          callbackStatus.apply (null, [status]);
+          return;
+        }
+
+        status.isExist = true;
+        status.key = descriptor.key;
+        status.expires = descriptor.expirationTime;
+        status.dataSize = descriptor.dataSize;
+        status.lastModified = descriptor.lastModified * 1000; //[ms]
+
+        // HTTP status
+        var text = descriptor.getMetaDataElement ("response-head");
+        if (text) {
+          var headers = text.match (/[^\r\n]*\r\n/g);
+          if (headers.length > 0) {
+            status.header = {};
+            var re = headers [0].match
+              (/^HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/);
+            if (re) {
+              status.httpStatusCode = re [1];
+              status.httpStatusText = re [2];
+            }
+          }
+          for (var i = 1; i < headers.length; i ++) {
+            var matches = headers [i].match (/^([^:\s]+):\s*([^\s].*)\r\n/);
+            if (!matches) continue;
+            status.header [matches [1]] = matches [2];
+          }
+        }
+
+        descriptor.close ();
+        callbackStatus.apply (null, [status]);
+      });
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      callbackStatus.apply (null, [status]);
+    }
+  };
 
   function CacheStatus (key) {
     this.isExist = false;
