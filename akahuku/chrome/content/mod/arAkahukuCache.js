@@ -321,12 +321,10 @@ Akahuku.Cache = new function () {
    *
    * @param  HTMLImageElement img
    *         対象の画像要素
-   * @param  Boolean optCheckCache
-   *         エラーの詳細を調べるか
    * @return Object
    *         画像の状態
    */
-  this.getImageStatus = function (img, optCheckCache) {
+  this.getImageStatus = function (img) {
     var status = new ImageStatus ();
     try {
       img
@@ -358,10 +356,6 @@ Akahuku.Cache = new function () {
       status.isImage = false;
     }
     catch (e) { Akahuku.debug.exception (e);
-    }
-
-    if (optCheckCache && status.requestURI) {
-      status.cache = Akahuku.Cache.getStatus (status.requestURI.spec);
     }
 
     return status;

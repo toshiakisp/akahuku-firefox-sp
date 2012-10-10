@@ -2564,6 +2564,10 @@ var arAkahukuThread = {
        ){ // 即リロードするべき対象・状態では無い
       return;
     }
+    if (!imageStatus.requestURI) {
+      this._captureImageErrorToReload2 (event, imageStatus);
+      return;
+    }
     var that = this;
     Akahuku.Cache.asyncGetHttpCacheStatus
       (imageStatus.requestURI.spec, false,
