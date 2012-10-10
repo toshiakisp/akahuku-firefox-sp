@@ -76,6 +76,8 @@
           src="chrome://akahuku/content/mod/arAkahukuWheel.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuWindow.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuCompat.js" />
 
   <script type="application/x-javascript"
           src="chrome://akahuku/content/akahuku.js" />

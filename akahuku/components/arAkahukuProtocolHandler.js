@@ -52,6 +52,19 @@ const nsIAsyncVerifyRedirectCallback = Components.interfaces.nsIAsyncVerifyRedir
 const nsIThreadManager = Components.interfaces.nsIThreadManager;
 const nsIThread        = Components.interfaces.nsIThread;
 
+var loader
+= Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
+.getService (Components.interfaces.mozIJSSubScriptLoader);
+try {
+  if (typeof arAkahukuCompat === "undefined") {
+    loader.loadSubScript
+      ("chrome://akahuku/content/mod/arAkahukuCompat.js");
+  }
+}
+catch (e) {
+  Components.utils.reportError (e);
+}
+
 /**
  * リファラを送信しないチャネル
  * (画像などドキュメント以外ではクッキーも送受信しない)
@@ -628,11 +641,10 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = this;
     try {
-      webBrowserPersist.saveURI (uri, null, this._targetFile);
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, {uri: uri, file: this._targetFile});
     }
-    catch (e) {
-      webBrowserPersist.saveURI (uri, null, null, null, null,
-                                 this._targetFile);
+    catch (e) { Components.utils.reportError (e);
     }
   },
     
@@ -2178,15 +2190,10 @@ arAkahukuP2PChannel.prototype = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = this;
     try {
-      webBrowserPersist.saveURI (uri, null, cacheFile);
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, {uri: uri, file: cacheFile});
     }
-    catch (e) {
-      try {
-        webBrowserPersist.saveURI (uri, null, null, null, null,
-                                   cacheFile);
-      }
-      catch (e) { Components.utils.reportError (e);
-      }
+    catch (e) { Components.utils.reportError (e);
     }
   },
     

@@ -37,6 +37,19 @@ const arIAkahukuP2PServantListener = Components.interfaces.arIAkahukuP2PServantL
 const nsIChannelEventSink         = Components.interfaces.nsIChannelEventSink;
 const nsIStreamConverter          = Components.interfaces.nsIStreamConverter;
 
+var loader
+= Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
+.getService (Components.interfaces.mozIJSSubScriptLoader);
+try {
+  if (typeof arAkahukuCompat === "undefined") {
+    loader.loadSubScript
+      ("chrome://akahuku/content/mod/arAkahukuCompat.js");
+  }
+}
+catch (e) {
+  Components.utils.reportError (e);
+}
+
 /**
  * gzip ファイル展開用
  *   Inherits From: nsIStreamListener, nsIRequestObserver
@@ -832,15 +845,10 @@ arAkahukuP2PChannel.prototype = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = this;
     try {
-      webBrowserPersist.saveURI (uri, null, cacheFile);
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, {uri: uri, file: cacheFile});
     }
-    catch (e) {
-      try {
-        webBrowserPersist.saveURI (uri, null, null, null, null,
-                                   cacheFile);
-      }
-      catch (e) { Components.utils.reportError (e);
-      }
+    catch (e) { Components.utils.reportError (e);
     }
   },
     
