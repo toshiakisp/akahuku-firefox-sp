@@ -162,7 +162,7 @@ arAkahukuP2PChannel.prototype = {
     
   /* nsIChannel のメンバ */
   contentCharset : "",
-  contentLength : 0,
+  contentLength : -1,
   contentType : "",
   notificationCallbacks : null,
   originalURI : null,
@@ -332,7 +332,7 @@ arAkahukuP2PChannel.prototype = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Components.utils.reportError (e);
     }
         
     if (chromeWindow.arAkahukuP2P.cacheBase) {
@@ -725,7 +725,7 @@ arAkahukuP2PChannel.prototype = {
             return;
           }
         }
-        catch (e) {
+        catch (e) { Components.utils.reportError (e);
         }
       }
             
@@ -839,7 +839,7 @@ arAkahukuP2PChannel.prototype = {
         webBrowserPersist.saveURI (uri, null, null, null, null,
                                    cacheFile);
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
   },
@@ -917,16 +917,21 @@ arAkahukuP2PChannel.prototype = {
               }
                         
               var bindata = bstream.readBytes (size);
+              try {
               size
                 = this._outputStream.write
                 (bindata, bindata.length);
+              }
+              catch (e if e.result == Components.results.NS_BINDING_ABORTED) {
+                break;
+              }
               wrote += size;
             }
             bstream.close ();
           }
         }
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
         
@@ -936,7 +941,7 @@ arAkahukuP2PChannel.prototype = {
         this._listener.onStopRequest (this, this._context,
                                       Components.results.NS_OK);
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
         this._isPending = false;
       }
     }
@@ -944,14 +949,14 @@ arAkahukuP2PChannel.prototype = {
       try {
         this._outputStream.close ()
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
         
     try {
       fstream.close ();
     }
-    catch (e) {
+    catch (e) { Components.utils.reportError (e);
     }
         
     this._listener = null;
@@ -976,7 +981,7 @@ arAkahukuP2PChannel.prototype = {
       try {
         this._outputStream.close ()
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
         
