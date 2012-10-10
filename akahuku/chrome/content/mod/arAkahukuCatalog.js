@@ -146,13 +146,26 @@ arAkahukuCatalogPopupData.prototype =  {
           }
         }
         if (!exists) {
-          /* Firefox にキャッシュされているかチェック */
-          exists = Akahuku.Cache.getStatus (this.targetSrc).isExist;
-          if (exists) {
-            this.targetSrc
-              = Akahuku.protocolHandler
-              .enAkahukuURI ("cache", this.targetSrc);
-          }
+          // Firefox にキャッシュされているかのチェック(非同期)
+          var that = this;
+          Akahuku.Cache.asyncGetHttpCacheStatus
+            (this.targetSrc, false,
+             function (cacheStatus) {
+              if (!cacheStatus.isExist || that.state != 0) {
+                return;
+              }
+              if (that.createTimerID) {
+                clearTimeout (that.createTimerID);
+                that.createTimerID = null;
+              }
+              that.targetSrc
+                = Akahuku.protocolHandler
+                .enAkahukuURI ("cache", that.targetSrc);
+              that.createTimerID
+                = setTimeout (that.createPopup,
+                              arAkahukuCatalog.zoomTimeout,
+                              param, that, targetDocument);
+             });
         }
                 
         if (!arAkahukuCatalog.enableZoomClick
