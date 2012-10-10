@@ -2565,7 +2565,7 @@ var arAkahukuThread = {
       return;
     }
     if (!imageStatus.requestURI) {
-      this._captureImageErrorToReload2 (event, imageStatus);
+      arAkahukuThread._captureImageErrorToReload2 (event, imageStatus);
       return;
     }
     var that = this;
@@ -2577,7 +2577,7 @@ var arAkahukuThread = {
           // 非エラーのキャッシュが有る場合
           return;
         }
-        that._captureImageErrorToReload2 (event, imageStatus);
+        arAkahukuThread._captureImageErrorToReload2 (event, imageStatus);
        });
   },
   _captureImageErrorToReload2 : function (event, imageStatus) {
