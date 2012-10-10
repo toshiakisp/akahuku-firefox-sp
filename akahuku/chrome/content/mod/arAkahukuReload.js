@@ -2086,12 +2086,34 @@ var arAkahukuReload = {
       param.partialNodes [i].parentNode.removeChild
         (param.partialNodes [i]);
     }
-        
-    try {
-      if (!arAkahukuReload.enableExtCache) {
-        throw false;
+
+    var _loadCacheAndUpdate = function (istream, dataSize) {
+      var bstream
+      = Components.classes ["@mozilla.org/binaryinputstream;1"]
+      .createInstance
+      (Components.interfaces.nsIBinaryInputStream);
+      bstream.setInputStream (istream);
+      param.responseText = bstream.readBytes (dataSize);
+      bstream.close ();
+      istream.close ();
+
+      if (arAkahukuReload.enableNolimit) {
+        arAkahukuConfig.setTime (arAkahukuReload.limitTime);
       }
             
+      param.reloadChannel = null;
+      param.sync = true;
+      param.replied = false;
+      param.useRange = false;
+      param.location = location;
+
+      setTimeout
+      (arAkahukuReload.update,
+       10,
+       targetDocument);
+    }
+
+    if (arAkahukuReload.enableExtCache) {
       param.responseText = "";
             
       var location = targetDocument.location.href;
@@ -2111,77 +2133,36 @@ var arAkahukuReload = {
           = Components.classes ["@mozilla.org/file/local;1"]
           .createInstance (Components.interfaces.nsILocalFile);
         targetFile.initWithPath (path);
-        if (!targetFile.exists ()) {
-          throw false;
+        if (targetFile.exists ()) {
+          var fstream
+            = Components
+            .classes ["@mozilla.org/network/file-input-stream;1"]
+            .createInstance (Components.interfaces.nsIFileInputStream);
+          fstream.init (targetFile, 0x01, 292/*0444*/, 0);
+          _loadCacheAndUpdate (fstream, targetFile.fileSize);
         }
-                
-        var fstream
-          = Components
-          .classes ["@mozilla.org/network/file-input-stream;1"]
-          .createInstance (Components.interfaces.nsIFileInputStream);
-        fstream.init (targetFile, 0x01, 292/*0444*/, 0);
-        var bstream
-          = Components.classes ["@mozilla.org/binaryinputstream;1"]
-          .createInstance
-          (Components.interfaces.nsIBinaryInputStream);
-        bstream.setInputStream (fstream);
-        param.responseText = bstream.readBytes (targetFile.fileSize);
-        bstream.close ();
-        fstream.close ();
+        else {
+          // キャッシュが存在しなかった場合
+          arAkahukuReload.diffReloadCore (targetDocument, true, false);
+        }
       }
       else {
-        var cacheService
-        = Components.classes
-        ["@mozilla.org/network/cache-service;1"]
-        .getService (Components.interfaces.nsICacheService);
-        var httpCacheSession;
-        httpCacheSession
-        = cacheService
-        .createSession
-        ("HTTP",
-         Components.interfaces.nsICache.STORE_ANYWHERE,
-         true);
-        httpCacheSession.doomEntriesIfExpired = false;
-            
-        descriptor
-        = httpCacheSession.openCacheEntry
-        (location + ".backup",
-         Components.interfaces.nsICache.ACCESS_READ,
-         false);
-        if (!descriptor) {
-          throw false;
-        }
-            
-        var istream = descriptor.openInputStream (0);
-        var bstream
-        = Components.classes ["@mozilla.org/binaryinputstream;1"]
-        .createInstance
-        (Components.interfaces.nsIBinaryInputStream);
-        bstream.setInputStream (istream);
-        param.responseText = bstream.readBytes (descriptor.dataSize);
-        bstream.close ();
-        istream.close ();
-        descriptor.close ();
+        var finder = new Akahuku.Cache.RedirectedCacheFinder ();
+        finder.doomEntriesIfExpired = false;
+        finder.accessMode = Components.interfaces.nsICache.ACCESS_READ;
+        finder.init ();
+        finder.asyncOpen (location + ".backup", function (descriptor) {
+          if (descriptor) {
+            var istream = descriptor.openInputStream (0);
+            _loadCacheAndUpdate (istream, descriptor.dataSize);
+            descriptor.close ();
+          }
+          else {
+            // キャッシュが存在しなかった場合
+            arAkahukuReload.diffReloadCore (targetDocument, true, false);
+          }
+        });
       }
-            
-      if (arAkahukuReload.enableNolimit) {
-        arAkahukuConfig.setTime (arAkahukuReload.limitTime);
-      }
-            
-      param.reloadChannel = null;
-      param.sync = true;
-      param.replied = false;
-      param.useRange = false;
-      param.location = location;
-            
-      setTimeout
-      (arAkahukuReload.update,
-       10,
-       targetDocument);
-    }
-    catch (e) {
-      /* キャッシュが存在しなかった場合 */
-      arAkahukuReload.diffReloadCore (targetDocument, true, false);
     }
         
     event.preventDefault ();
