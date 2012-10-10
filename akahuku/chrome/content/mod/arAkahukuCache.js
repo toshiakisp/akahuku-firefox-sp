@@ -101,14 +101,16 @@ Akahuku.Cache = new function () {
     }
 
     if (info.isCache) {
-      notifyCacheStatus (targetDocument);
+      Akahuku.Cache.asyncGetStatus
+        (targetDocument.location.href,
+         function (cacheStatus) {
+          notifyCacheStatus (targetDocument, cacheStatus);
+         });
     }
   };
 
   // キャッシュを表示中 とユーザーに通知
-  function notifyCacheStatus (targetDocument) {
-    var cacheStat
-      = Akahuku.Cache.getStatus (targetDocument.location.href);
+  function notifyCacheStatus (targetDocument, cacheStat) {
     if (!cacheStat.isExist || cacheStat.httpStatusCode === "404") {
       return;
     }
@@ -138,76 +140,34 @@ Akahuku.Cache = new function () {
 
 
   /**
-   * キャッシュの状態を調べる
-   *
+   * キャッシュの状態を調べる (非同期)
    * @param  String url
    *         対象のURL
-   * @return Object
-   *         キャッシュの状態
+   * @param  Function callback
+   *         状態(Object)を受け取るコールバック関数
    */
-  this.getStatus = function (url) {
+  this.asyncGetStatus = function (url, callback) {
     var p = Akahuku.protocolHandler.getAkahukuURIParam (url);
     if (p.type === "filecache") {
-      return _getFilecacheStatus (p.original);
+      var status = _getFilecacheStatus (p.original);
+      callback.apply (null, [status]);
     }
     else if (p.type === "cache") {
-      var status = Akahuku.Cache.getHttpCacheStatus (p.original);
-      if ((!status.isExist || status.httpStatusCode === "404")
-          && /\d+\.htm$/.test (url)) {
-        url = p.original + ".backup";
-        var statusBackup = Akahuku.Cache.getHttpCacheStatus (url);
-        if (statusBackup.isExist) {
-          status = statusBackup;
-        }
-      }
-      return status;
-    }
-    return Akahuku.Cache.getHttpCacheStatus (url);
-  };
-  this.getHttpCacheStatus = function (key, noRedirect) {
-    var status = new CacheStatus (key);
-    var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-    finder.init ();
-    if (noRedirect) {
-      finder.maxRedirections = 0;
-    }
-    try {
-      var descriptor = finder.open (key);
-      if (!descriptor)
-        return status;
-      status.isExist = true;
-      status.key = descriptor.key;
-      status.expires = descriptor.expirationTime;
-      status.dataSize = descriptor.dataSize;
-      status.lastModified = descriptor.lastModified * 1000; //[ms]
-      // HTTP status
-      var text = descriptor.getMetaDataElement ("response-head");
-      if (text) {
-        var headers = text.match (/[^\r\n]*\r\n/g);
-        if (headers.length > 0) {
-          status.header = {};
-          var re = headers [0].match
-            (/^HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/);
-          if (re) {
-            status.httpStatusCode = re [1];
-            status.httpStatusText = re [2];
+      var callbackHttpCacheStatus
+        = function (status) {
+          if ((!status.isExist || status.httpStatusCode === "404")
+              && /\d+\.htm$/.test (url)) {
+            url = p.original + ".backup";
+            Akahuku.Cache.asyncGetHttpCacheStatus
+              (url, false, callbackHttpCacheStatus);
+            return;
           }
-        }
-        for (var i = 1; i < headers.length; i ++) {
-          var matches = headers [i].match (/^([^:\s]+):\s*([^\s].*)\r\n/);
-          if (!matches) continue;
-          status.header [matches [1]] = matches [2];
-        }
-      }
+          callback.apply (null, [status]);
+        };
+      Akahuku.Cache.asyncGetHttpCacheStatus
+        (p.original, false, callbackHttpCacheStatus);
     }
-    catch (e if e.result
-        == Components.results.NS_ERROR_CACHE_WAIT_FOR_VALIDATION) {
-      status.isExist = true;
-    }
-    if (descriptor)
-      descriptor.close ();
-
-    return status;
+    Akahuku.Cache.asyncGetHttpCacheStatus (url, false, callback);
   };
   this.asyncGetHttpCacheStatus = function (key, noRedirect, callback) {
     var status = new CacheStatus (key);
