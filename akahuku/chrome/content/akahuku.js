@@ -114,7 +114,26 @@ var Akahuku = {
     },
     exception : function (error) {
       if (!this.enabled) return;
-      Components.utils.reportError (error);
+      var message = 'exception: ' + error.message;
+      //Components.utils.reportError (error);
+      for (var frame = Components.stack.caller;
+          frame && frame.filename; frame = frame.caller) {
+        message
+          += "\n    "
+          + frame.filename + " (" + frame.lineNumber + ")";
+        if (frame.name) {
+          message += " " + frame.name + "()";
+        }
+      }
+      var scriptError
+        = Components.classes ["@mozilla.org/scripterror;1"]
+        .createInstance (Components.interfaces.nsIScriptError);
+      scriptError.init
+        (this.prefix + message,
+         error.filename, null, error.lineNumber, null,
+         Components.interfaces.nsIScriptError.warningFlag,
+         null);
+      this._consoleService.logMessage (scriptError);
     },
     tic : function () {
       var start = new Date ();
