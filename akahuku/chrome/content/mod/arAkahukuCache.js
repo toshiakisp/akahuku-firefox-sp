@@ -528,18 +528,29 @@ Akahuku.Cache = new function () {
                         Components.interfaces.nsICache.STREAM_BASED);
       cacheSession.doomEntriesIfExpired = false;
 
+      var CacheEtimeRestorer = function (t) {
+        this.originalExpirationTime = t;
+        this.requestAccessMode
+          = Components.interfaces.nsICache.ACCESS_READ;
+      };
+      CacheEtimeRestorer.prototype = {
+        onCacheEntryAvailable : function (descriptor, accessGranted, status)
+        {
+          if (accessGranted == this.requestAccessMode
+              && Components.isSuccessCode (status)) {
+            if (descriptor.expirationTime == 0xFFFFFFFF) {
+              descriptor.setExpirationTime (this.originalExpirationTime);
+            }
+          }
+        }
+      };
+
       for (var i=0; i < this.keys.length; i++) {
         var t = this.originalExpireTimes [this.keys [i]];
+        var listener = new CacheEtimeRestorer (t);
         try {
-          var descriptor
-            = cacheSession.openCacheEntry
-            (this.keys [i],
-             Components.interfaces.nsICache.ACCESS_READ,
-             Components.interfaces.nsICache.BLOCKING);
-          if (descriptor.expirationTime != 0xFFFFFFFF) {
-            continue; //保持が解除されてたら触らない
-          }
-          descriptor.setExpirationTime (t);
+          cacheSession.asyncOpenCacheEntry
+            (this.keys [i], listener.requestAccessMode, listener);
         }
         catch (e) { Akahuku.debug.exception (e);
         }
