@@ -2554,12 +2554,9 @@ var arAkahukuThread = {
    */
   captureImageErrorToReload : function (event) {
     var imageStatus
-      = Akahuku.Cache.getImageStatus (event.target, true);
+      = Akahuku.Cache.getImageStatus (event.target);
     if (!imageStatus.isImage || !imageStatus.isErrored
         || imageStatus.isBlocked
-        // 非エラーのキャッシュ有り
-        || (imageStatus.cache.isExist
-            && imageStatus.cache.httpStatusCode [0] != "2")
         // 赤福キャッシュ&プレビューURI
         || (imageStatus.requestURI 
             && imageStatus.requestURI.schemeIs ("akahuku")
@@ -2567,6 +2564,23 @@ var arAkahukuThread = {
        ){ // 即リロードするべき対象・状態では無い
       return;
     }
+    if (!imageStatus.requestURI) {
+      arAkahukuThread._captureImageErrorToReload2 (event, imageStatus);
+      return;
+    }
+    var that = this;
+    Akahuku.Cache.asyncGetHttpCacheStatus
+      (imageStatus.requestURI.spec, false,
+       function (cacheStatus) {
+        if (cacheStatus.isExist
+            && cacheStatus.httpStatusCode [0] != "2") {
+          // 非エラーのキャッシュが有る場合
+          return;
+        }
+        arAkahukuThread._captureImageErrorToReload2 (event, imageStatus);
+       });
+  },
+  _captureImageErrorToReload2 : function (event, imageStatus) {
     var count = parseInt (event.target.getAttribute
         ("__akahuku_img_error") || 0);
     event.target.setAttribute ("__akahuku_img_error", ++count);

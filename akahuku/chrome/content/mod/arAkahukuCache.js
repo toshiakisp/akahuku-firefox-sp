@@ -101,14 +101,16 @@ Akahuku.Cache = new function () {
     }
 
     if (info.isCache) {
-      notifyCacheStatus (targetDocument);
+      Akahuku.Cache.asyncGetStatus
+        (targetDocument.location.href,
+         function (cacheStatus) {
+          notifyCacheStatus (targetDocument, cacheStatus);
+         });
     }
   };
 
   // キャッシュを表示中 とユーザーに通知
-  function notifyCacheStatus (targetDocument) {
-    var cacheStat
-      = Akahuku.Cache.getStatus (targetDocument.location.href);
+  function notifyCacheStatus (targetDocument, cacheStat) {
     if (!cacheStat.isExist || cacheStat.httpStatusCode === "404") {
       return;
     }
@@ -138,76 +140,87 @@ Akahuku.Cache = new function () {
 
 
   /**
-   * キャッシュの状態を調べる
-   *
+   * キャッシュの状態を調べる (非同期)
    * @param  String url
    *         対象のURL
-   * @return Object
-   *         キャッシュの状態
+   * @param  Function callback
+   *         状態(Object)を受け取るコールバック関数
    */
-  this.getStatus = function (url) {
+  this.asyncGetStatus = function (url, callback) {
     var p = Akahuku.protocolHandler.getAkahukuURIParam (url);
     if (p.type === "filecache") {
-      return _getFilecacheStatus (p.original);
+      var status = _getFilecacheStatus (p.original);
+      callback.apply (null, [status]);
     }
     else if (p.type === "cache") {
-      var status = Akahuku.Cache.getHttpCacheStatus (p.original);
-      if ((!status.isExist || status.httpStatusCode === "404")
-          && /\d+\.htm$/.test (url)) {
-        url = p.original + ".backup";
-        var statusBackup = Akahuku.Cache.getHttpCacheStatus (url);
-        if (statusBackup.isExist) {
-          status = statusBackup;
-        }
-      }
-      return status;
+      var callbackHttpCacheStatus
+        = function (status) {
+          if ((!status.isExist || status.httpStatusCode === "404")
+              && /\d+\.htm$/.test (url)) {
+            url = p.original + ".backup";
+            Akahuku.Cache.asyncGetHttpCacheStatus
+              (url, false, callbackHttpCacheStatus);
+            return;
+          }
+          callback.apply (null, [status]);
+        };
+      Akahuku.Cache.asyncGetHttpCacheStatus
+        (p.original, false, callbackHttpCacheStatus);
     }
-    return Akahuku.Cache.getHttpCacheStatus (url);
+    Akahuku.Cache.asyncGetHttpCacheStatus (url, false, callback);
   };
-  this.getHttpCacheStatus = function (key, noRedirect) {
+  this.asyncGetHttpCacheStatus = function (key, noRedirect, callback) {
     var status = new CacheStatus (key);
     var finder = new Akahuku.Cache.RedirectedCacheFinder ();
     finder.init ();
     if (noRedirect) {
       finder.maxRedirections = 0;
     }
+    var callbackStatus = callback;
+    if (!callbackStatus) {
+      Akahuku.debug.warning ("aborted by invalid callback");
+      return;
+    }
     try {
-      var descriptor = finder.open (key);
-      if (!descriptor)
-        return status;
-      status.isExist = true;
-      status.key = descriptor.key;
-      status.expires = descriptor.expirationTime;
-      status.dataSize = descriptor.dataSize;
-      status.lastModified = descriptor.lastModified * 1000; //[ms]
-      // HTTP status
-      var text = descriptor.getMetaDataElement ("response-head");
-      if (text) {
-        var headers = text.match (/[^\r\n]*\r\n/g);
-        if (headers.length > 0) {
-          status.header = {};
-          var re = headers [0].match
-            (/^HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/);
-          if (re) {
-            status.httpStatusCode = re [1];
-            status.httpStatusText = re [2];
+      finder.asyncOpen (key, function (descriptor) {
+        if (!descriptor) {
+          callbackStatus.apply (null, [status]);
+          return;
+        }
+
+        status.isExist = true;
+        status.key = descriptor.key;
+        status.expires = descriptor.expirationTime;
+        status.dataSize = descriptor.dataSize;
+        status.lastModified = descriptor.lastModified * 1000; //[ms]
+
+        // HTTP status
+        var text = descriptor.getMetaDataElement ("response-head");
+        if (text) {
+          var headers = text.match (/[^\r\n]*\r\n/g);
+          if (headers.length > 0) {
+            status.header = {};
+            var re = headers [0].match
+              (/^HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/);
+            if (re) {
+              status.httpStatusCode = re [1];
+              status.httpStatusText = re [2];
+            }
+          }
+          for (var i = 1; i < headers.length; i ++) {
+            var matches = headers [i].match (/^([^:\s]+):\s*([^\s].*)\r\n/);
+            if (!matches) continue;
+            status.header [matches [1]] = matches [2];
           }
         }
-        for (var i = 1; i < headers.length; i ++) {
-          var matches = headers [i].match (/^([^:\s]+):\s*([^\s].*)\r\n/);
-          if (!matches) continue;
-          status.header [matches [1]] = matches [2];
-        }
-      }
-    }
-    catch (e if e.result
-        == Components.results.NS_ERROR_CACHE_WAIT_FOR_VALIDATION) {
-      status.isExist = true;
-    }
-    if (descriptor)
-      descriptor.close ();
 
-    return status;
+        descriptor.close ();
+        callbackStatus.apply (null, [status]);
+      });
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      callbackStatus.apply (null, [status]);
+    }
   };
 
   function CacheStatus (key) {
@@ -268,12 +281,10 @@ Akahuku.Cache = new function () {
    *
    * @param  HTMLImageElement img
    *         対象の画像要素
-   * @param  Boolean optCheckCache
-   *         エラーの詳細を調べるか
    * @return Object
    *         画像の状態
    */
-  this.getImageStatus = function (img, optCheckCache) {
+  this.getImageStatus = function (img) {
     var status = new ImageStatus ();
     try {
       img
@@ -305,10 +316,6 @@ Akahuku.Cache = new function () {
       status.isImage = false;
     }
     catch (e) { Akahuku.debug.exception (e);
-    }
-
-    if (optCheckCache && status.requestURI) {
-      status.cache = Akahuku.Cache.getStatus (status.requestURI.spec);
     }
 
     return status;
@@ -388,7 +395,6 @@ Akahuku.Cache = new function () {
     doomEntriesIfExpired : false,
     // access mode for all entries (asyncOpenCacheEntry)
     accessMode : Components.interfaces.nsICache.ACCESS_READ,
-    blockingMode : Components.interfaces.nsICache.NON_BLOCKING,
     init : function (cacheSession)
     {
       if (!cacheSession) {
@@ -409,28 +415,6 @@ Akahuku.Cache = new function () {
       this._isPending = false;
       if (this._lastDescriptor)
         this._lastDescriptor.close ();
-    },
-    open : function (key)
-    {
-      this._redirected = 0;
-      var descriptor;
-      while (key) {
-        if (descriptor)
-          descriptor.close ();
-        try {
-          descriptor
-            = this.session.openCacheEntry (key,
-                this.accessMode,
-                this.blockingMode);
-        }
-        catch (e if e.result
-            == Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
-          descriptor = null;
-          break;
-        }
-        key = this._resolveRedirection (descriptor);
-      }
-      return descriptor;
     },
     asyncOpen : function (key, callback)
     {
@@ -521,18 +505,29 @@ Akahuku.Cache = new function () {
                         Components.interfaces.nsICache.STREAM_BASED);
       cacheSession.doomEntriesIfExpired = false;
 
+      var CacheEtimeRestorer = function (t) {
+        this.originalExpirationTime = t;
+        this.requestAccessMode
+          = Components.interfaces.nsICache.ACCESS_READ;
+      };
+      CacheEtimeRestorer.prototype = {
+        onCacheEntryAvailable : function (descriptor, accessGranted, status)
+        {
+          if (accessGranted == this.requestAccessMode
+              && Components.isSuccessCode (status)) {
+            if (descriptor.expirationTime == 0xFFFFFFFF) {
+              descriptor.setExpirationTime (this.originalExpirationTime);
+            }
+          }
+        }
+      };
+
       for (var i=0; i < this.keys.length; i++) {
         var t = this.originalExpireTimes [this.keys [i]];
+        var listener = new CacheEtimeRestorer (t);
         try {
-          var descriptor
-            = cacheSession.openCacheEntry
-            (this.keys [i],
-             Components.interfaces.nsICache.ACCESS_READ,
-             Components.interfaces.nsICache.BLOCKING);
-          if (descriptor.expirationTime != 0xFFFFFFFF) {
-            continue; //保持が解除されてたら触らない
-          }
-          descriptor.setExpirationTime (t);
+          cacheSession.asyncOpenCacheEntry
+            (this.keys [i], listener.requestAccessMode, listener);
         }
         catch (e) { Akahuku.debug.exception (e);
         }

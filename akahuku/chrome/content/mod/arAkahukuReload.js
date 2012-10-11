@@ -1093,7 +1093,81 @@ arAkahukuReloadParam.prototype = {
         
     var chunk = this.sstream.read (count);
     this.responseText += chunk;
-  }
+  },
+
+  /**
+   * リロードのチャネルを適切なロードフラグで開く
+   */
+  asyncOpenReloadChannel : function ()
+  {
+    // ロードフラグ:
+    // チャネルにはキャッシュに書き込ませない (赤福自身が制御)
+    this.reloadChannel.loadFlags
+      = Components.interfaces.nsIRequest.INHIBIT_CACHING;
+
+    if (this.sync || this.useRange ) {
+      // [同期]では If-Modified-Since などを効かせずに取得しなおす
+      this.reloadChannel.loadFlags
+        |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
+      this._asyncOpenReloadChannel2 ();
+    }
+    else {
+      // 常に更新問い合わせさせる (If-Modified-Sence 等を使って)
+      this.reloadChannel.loadFlags
+        |= Components.interfaces.nsIRequest.VALIDATE_ALWAYS;
+
+      // キャッシュを調べてフラグ決定する
+      arAkahukuReload.setStatus
+      ("\u30ED\u30FC\u30C9\u4E2D (\u30AD\u30E3\u30C3\u30B7\u30E5)", // "ロード中 (キャッシュ)"
+       true, this.targetDocument);
+      var param = this;
+      Akahuku.Cache.asyncGetHttpCacheStatus
+        (this.location, true,
+         function (cacheStatus) {
+          var lmcache = NaN;
+          if ("Last-Modified" in cacheStatus.header) {
+            lmcache = Date.parse (cacheStatus.header ["Last-Modified"]);
+          }
+          if (lmcache && param.lastModified
+              && lmcache == param.lastModified) {
+            // 更新無し(304 Not Modified)でもキャッシュからデータを読まなくていい
+            param.reloadChannel.loadFlags
+              |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
+          }
+          param._asyncOpenReloadChannel2 ();
+         });
+    }
+  },
+  _asyncOpenReloadChannel2 : function ()
+  {
+    var LOAD_ONLY_IF_MODIFIED
+      = Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
+    try {
+      // webconsole でモニタできるようにウィンドウを関連づける
+      if (Akahuku.isFx4 || !(this.reloadChannel.loadFlags & LOAD_ONLY_IF_MODIFIED))
+      // (Firefox 3.6 で LOAD_ONLY_IF_MODIFIED するとなぜかステータスが完了にならない)
+      this.reloadChannel.notificationCallbacks
+        = this.targetDocument.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
+    try {
+      this.reloadChannel.asyncOpen (this, null);
+
+      arAkahukuReload.setStatus
+      ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)", //"ロード中 (ヘッダ)"
+       true, this.targetDocument);
+    }
+    catch (e) {
+      arAkahukuReload.setStatus
+      ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F", //"接続できませんでした"
+       true, this.targetDocument);
+      this.reloadChannel = null;
+    }
+  },
 };
 /**
  * [続きを読む] 管理
@@ -2012,12 +2086,34 @@ var arAkahukuReload = {
       param.partialNodes [i].parentNode.removeChild
         (param.partialNodes [i]);
     }
-        
-    try {
-      if (!arAkahukuReload.enableExtCache) {
-        throw false;
+
+    var _loadCacheAndUpdate = function (istream, dataSize) {
+      var bstream
+      = Components.classes ["@mozilla.org/binaryinputstream;1"]
+      .createInstance
+      (Components.interfaces.nsIBinaryInputStream);
+      bstream.setInputStream (istream);
+      param.responseText = bstream.readBytes (dataSize);
+      bstream.close ();
+      istream.close ();
+
+      if (arAkahukuReload.enableNolimit) {
+        arAkahukuConfig.setTime (arAkahukuReload.limitTime);
       }
             
+      param.reloadChannel = null;
+      param.sync = true;
+      param.replied = false;
+      param.useRange = false;
+      param.location = location;
+
+      setTimeout
+      (arAkahukuReload.update,
+       10,
+       targetDocument);
+    }
+
+    if (arAkahukuReload.enableExtCache) {
       param.responseText = "";
             
       var location = targetDocument.location.href;
@@ -2037,77 +2133,36 @@ var arAkahukuReload = {
           = Components.classes ["@mozilla.org/file/local;1"]
           .createInstance (Components.interfaces.nsILocalFile);
         targetFile.initWithPath (path);
-        if (!targetFile.exists ()) {
-          throw false;
+        if (targetFile.exists ()) {
+          var fstream
+            = Components
+            .classes ["@mozilla.org/network/file-input-stream;1"]
+            .createInstance (Components.interfaces.nsIFileInputStream);
+          fstream.init (targetFile, 0x01, 292/*0444*/, 0);
+          _loadCacheAndUpdate (fstream, targetFile.fileSize);
         }
-                
-        var fstream
-          = Components
-          .classes ["@mozilla.org/network/file-input-stream;1"]
-          .createInstance (Components.interfaces.nsIFileInputStream);
-        fstream.init (targetFile, 0x01, 292/*0444*/, 0);
-        var bstream
-          = Components.classes ["@mozilla.org/binaryinputstream;1"]
-          .createInstance
-          (Components.interfaces.nsIBinaryInputStream);
-        bstream.setInputStream (fstream);
-        param.responseText = bstream.readBytes (targetFile.fileSize);
-        bstream.close ();
-        fstream.close ();
+        else {
+          // キャッシュが存在しなかった場合
+          arAkahukuReload.diffReloadCore (targetDocument, true, false);
+        }
       }
       else {
-        var cacheService
-        = Components.classes
-        ["@mozilla.org/network/cache-service;1"]
-        .getService (Components.interfaces.nsICacheService);
-        var httpCacheSession;
-        httpCacheSession
-        = cacheService
-        .createSession
-        ("HTTP",
-         Components.interfaces.nsICache.STORE_ANYWHERE,
-         true);
-        httpCacheSession.doomEntriesIfExpired = false;
-            
-        descriptor
-        = httpCacheSession.openCacheEntry
-        (location + ".backup",
-         Components.interfaces.nsICache.ACCESS_READ,
-         false);
-        if (!descriptor) {
-          throw false;
-        }
-            
-        var istream = descriptor.openInputStream (0);
-        var bstream
-        = Components.classes ["@mozilla.org/binaryinputstream;1"]
-        .createInstance
-        (Components.interfaces.nsIBinaryInputStream);
-        bstream.setInputStream (istream);
-        param.responseText = bstream.readBytes (descriptor.dataSize);
-        bstream.close ();
-        istream.close ();
-        descriptor.close ();
+        var finder = new Akahuku.Cache.RedirectedCacheFinder ();
+        finder.doomEntriesIfExpired = false;
+        finder.accessMode = Components.interfaces.nsICache.ACCESS_READ;
+        finder.init ();
+        finder.asyncOpen (location + ".backup", function (descriptor) {
+          if (descriptor) {
+            var istream = descriptor.openInputStream (0);
+            _loadCacheAndUpdate (istream, descriptor.dataSize);
+            descriptor.close ();
+          }
+          else {
+            // キャッシュが存在しなかった場合
+            arAkahukuReload.diffReloadCore (targetDocument, true, false);
+          }
+        });
       }
-            
-      if (arAkahukuReload.enableNolimit) {
-        arAkahukuConfig.setTime (arAkahukuReload.limitTime);
-      }
-            
-      param.reloadChannel = null;
-      param.sync = true;
-      param.replied = false;
-      param.useRange = false;
-      param.location = location;
-            
-      setTimeout
-      (arAkahukuReload.update,
-       10,
-       targetDocument);
-    }
-    catch (e) {
-      /* キャッシュが存在しなかった場合 */
-      arAkahukuReload.diffReloadCore (targetDocument, true, false);
     }
         
     event.preventDefault ();
@@ -3543,30 +3598,6 @@ var arAkahukuReload = {
     = ios.newChannel (location, null, null)
     .QueryInterface (Components.interfaces.nsIHttpChannel);
 
-    // ロードフラグ:
-    // チャネルにはキャッシュに書き込ませない (赤福自身が制御)
-    var flags = Components.interfaces.nsIRequest.INHIBIT_CACHING;
-    if (param.sync || param.useRange ) {
-      // [同期]では If-Modified-Since などを効かせずに取得しなおす
-      flags |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
-    }
-    else {
-      // 常に更新問い合わせさせる (If-Modified-Sence 等を使って)
-      flags |= Components.interfaces.nsIRequest.VALIDATE_ALWAYS;
-
-      var cacheStatus = Akahuku.Cache.getHttpCacheStatus (location);
-      var lmcache = NaN;
-      if ("Last-Modified" in cacheStatus.header) {
-        lmcache = Date.parse (cacheStatus.header ["Last-Modified"]);
-      }
-      if (lmcache && param.lastModified
-          && lmcache == param.lastModified) {
-        // 更新無し(304 Not Modified)でもキャッシュからデータを読まなくていい
-        flags |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
-      }
-    }
-    param.reloadChannel.loadFlags |= flags;
-
     if (param.requestMode == 0 //HEAD-GET
         && !param.sync && !info.isMonaca
         && !/\.php\?/.test (location)) {
@@ -3575,34 +3606,10 @@ var arAkahukuReload = {
     else {
       param.reloadChannel.requestMethod = "GET";
     }
-
-    try {
-      // webconsole でモニタできるようにウィンドウを関連づける
-      if (Akahuku.isFx4 || !(flags & Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED))
-      // (Firefox 3.6 で LOAD_ONLY_IF_MODIFIED するとなぜかステータスが完了にならない)
-      param.reloadChannel.notificationCallbacks
-        = targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
         
     param.location = location;
         
-    arAkahukuReload.setStatus
-    ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)", //"ロード中 (ヘッダ)"
-     true, targetDocument);
-        
-    try {
-      param.reloadChannel.asyncOpen (param, null);
-    }
-    catch (e) {
-      /* サーバに接続できなかった場合 */
-      arAkahukuReload.setStatus
-      ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F",
-       true, targetDocument);
-    }
+    param.asyncOpenReloadChannel ();
         
     if (info.isFutaba
         && !info.isFutasuke) {

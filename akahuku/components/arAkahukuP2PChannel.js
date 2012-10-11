@@ -37,6 +37,19 @@ const arIAkahukuP2PServantListener = Components.interfaces.arIAkahukuP2PServantL
 const nsIChannelEventSink         = Components.interfaces.nsIChannelEventSink;
 const nsIStreamConverter          = Components.interfaces.nsIStreamConverter;
 
+var loader
+= Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
+.getService (Components.interfaces.mozIJSSubScriptLoader);
+try {
+  if (typeof arAkahukuCompat === "undefined") {
+    loader.loadSubScript
+      ("chrome://akahuku/content/mod/arAkahukuCompat.js");
+  }
+}
+catch (e) {
+  Components.utils.reportError (e);
+}
+
 /**
  * gzip ファイル展開用
  *   Inherits From: nsIStreamListener, nsIRequestObserver
@@ -162,7 +175,7 @@ arAkahukuP2PChannel.prototype = {
     
   /* nsIChannel のメンバ */
   contentCharset : "",
-  contentLength : 0,
+  contentLength : -1,
   contentType : "",
   notificationCallbacks : null,
   originalURI : null,
@@ -332,7 +345,7 @@ arAkahukuP2PChannel.prototype = {
         }
       }
     }
-    catch (e) {
+    catch (e) { Components.utils.reportError (e);
     }
         
     if (chromeWindow.arAkahukuP2P.cacheBase) {
@@ -725,7 +738,7 @@ arAkahukuP2PChannel.prototype = {
             return;
           }
         }
-        catch (e) {
+        catch (e) { Components.utils.reportError (e);
         }
       }
             
@@ -832,15 +845,10 @@ arAkahukuP2PChannel.prototype = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = this;
     try {
-      webBrowserPersist.saveURI (uri, null, cacheFile);
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, {uri: uri, file: cacheFile});
     }
-    catch (e) {
-      try {
-        webBrowserPersist.saveURI (uri, null, null, null, null,
-                                   cacheFile);
-      }
-      catch (e) {
-      }
+    catch (e) { Components.utils.reportError (e);
     }
   },
     
@@ -917,16 +925,21 @@ arAkahukuP2PChannel.prototype = {
               }
                         
               var bindata = bstream.readBytes (size);
+              try {
               size
                 = this._outputStream.write
                 (bindata, bindata.length);
+              }
+              catch (e if e.result == Components.results.NS_BINDING_ABORTED) {
+                break;
+              }
               wrote += size;
             }
             bstream.close ();
           }
         }
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
         
@@ -936,7 +949,7 @@ arAkahukuP2PChannel.prototype = {
         this._listener.onStopRequest (this, this._context,
                                       Components.results.NS_OK);
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
         this._isPending = false;
       }
     }
@@ -944,14 +957,14 @@ arAkahukuP2PChannel.prototype = {
       try {
         this._outputStream.close ()
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
         
     try {
       fstream.close ();
     }
-    catch (e) {
+    catch (e) { Components.utils.reportError (e);
     }
         
     this._listener = null;
@@ -976,7 +989,7 @@ arAkahukuP2PChannel.prototype = {
       try {
         this._outputStream.close ()
       }
-      catch (e) {
+      catch (e) { Components.utils.reportError (e);
       }
     }
         

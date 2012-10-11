@@ -52,6 +52,19 @@ const nsIAsyncVerifyRedirectCallback = Components.interfaces.nsIAsyncVerifyRedir
 const nsIThreadManager = Components.interfaces.nsIThreadManager;
 const nsIThread        = Components.interfaces.nsIThread;
 
+var loader
+= Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
+.getService (Components.interfaces.mozIJSSubScriptLoader);
+try {
+  if (typeof arAkahukuCompat === "undefined") {
+    loader.loadSubScript
+      ("chrome://akahuku/content/mod/arAkahukuCompat.js");
+  }
+}
+catch (e) {
+  Components.utils.reportError (e);
+}
+
 /**
  * リファラを送信しないチャネル
  * (画像などドキュメント以外ではクッキーも送受信しない)
@@ -628,11 +641,10 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = this;
     try {
-      webBrowserPersist.saveURI (uri, null, this._targetFile);
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, {uri: uri, file: this._targetFile});
     }
-    catch (e) {
-      webBrowserPersist.saveURI (uri, null, null, null, null,
-                                 this._targetFile);
+    catch (e) { Components.utils.reportError (e);
     }
   },
     
@@ -2178,15 +2190,10 @@ arAkahukuP2PChannel.prototype = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = this;
     try {
-      webBrowserPersist.saveURI (uri, null, cacheFile);
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, {uri: uri, file: cacheFile});
     }
-    catch (e) {
-      try {
-        webBrowserPersist.saveURI (uri, null, null, null, null,
-                                   cacheFile);
-      }
-      catch (e) { Components.utils.reportError (e);
-      }
+    catch (e) { Components.utils.reportError (e);
     }
   },
     
@@ -2931,174 +2938,69 @@ arAkahukuProtocolHandler.prototype = {
    */
   _createThreadCacheChannel : function (uri, isFile) {
     var param = this.getAkahukuURIParam (uri.spec);
-        
+
+    if (!isFile) {
+      var channel
+        = new arAkahukuCacheChannel
+        ("HTTP", param.original, uri);
+      return channel;
+    }
+
     try {
-      var istream = null;
-      var dataSize = 0;
-      var contentType = "text/html";
-      var charset = "";
-      //var bindata = "";
-      if (isFile) {
-        var mediator
-          = Components.classes
-          ["@mozilla.org/appshell/window-mediator;1"]
-          .getService (nsIWindowMediator);
-        var chromeWindow
-          = mediator
-          .getMostRecentWindow ("navigator:browser");
-                
-        var base
-          = chromeWindow.arAkahukuFile.getURLSpecFromFilename
-          (chromeWindow.arAkahukuReload.extCacheFileBase);
-        var param = this.getAkahukuURIParam (uri.spec);
-        var path = param.original
-          .replace (/^https?:\/\//, "");
-                
-        path
-          = chromeWindow.arAkahukuFile.getFilenameFromURLSpec
-          (base + path);
-                
-        var targetFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (nsILocalFile);
-        targetFile.initWithPath (path);
-        if (!targetFile.exists ()) {
-          throw false;
-        }
-                
-        var fstream
-          = Components
-          .classes ["@mozilla.org/network/file-input-stream;1"]
-          .createInstance (nsIFileInputStream);
-        fstream.init (targetFile, 0x01, 0444, 0);
-        istream = fstream.QueryInterface (nsIInputStream);
-        dataSize = targetFile.fileSize;
-        /*
-        var bstream
-          = Components.classes ["@mozilla.org/binaryinputstream;1"]
-          .createInstance (nsIBinaryInputStream);
-        bstream.setInputStream (fstream);
-        bindata = bstream.readBytes (targetFile.fileSize);
-        bstream.close ();
-        fstream.close ();
-        */
+      var mediator
+        = Components.classes
+        ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (nsIWindowMediator);
+      var chromeWindow
+        = mediator
+        .getMostRecentWindow ("navigator:browser");
+
+      var base
+        = chromeWindow.arAkahukuFile.getURLSpecFromFilename
+        (chromeWindow.arAkahukuReload.extCacheFileBase);
+      var param = this.getAkahukuURIParam (uri.spec);
+      var path = param.original
+        .replace (/^https?:\/\//, "");
+
+      path
+        = chromeWindow.arAkahukuFile.getFilenameFromURLSpec
+        (base + path);
+
+      var targetFile
+        = Components.classes ["@mozilla.org/file/local;1"]
+        .createInstance (nsILocalFile);
+      targetFile.initWithPath (path);
+      if (!targetFile.exists ()) {
+        return this._createThreadCacheFailChannel (uri);
       }
-      else {
-        var channel
-          = new arAkahukuCacheChannel
-          ("HTTP", param.original, uri);
-        return channel;
-        var cacheService
-          = Components.classes
-          ["@mozilla.org/network/cache-service;1"]
-          .getService (nsICacheService);
-        var httpCacheSession;
-        httpCacheSession
-          = cacheService
-          .createSession ("HTTP",
-                          nsICache.STORE_ANYWHERE,
-                          true);
-        httpCacheSession.doomEntriesIfExpired = false;
-            
-        try {
-          var descriptor
-            = httpCacheSession.openCacheEntry
-            (param.original + ".backup",
-             nsICache.ACCESS_READ,
-             false);
-        }
-        catch (e if e.result == Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
-          /* .backupが無くても元が有効なら使う */
-          descriptor = null;
-          try {
-            descriptor
-              = httpCacheSession.openCacheEntry
-              (param.original, nsICache.ACCESS_READ, false);
-            var headers
-              = descriptor.getMetaDataElement ("response-head")
-              .split ("\n");
-            if (!/^HTTP\/[0-9]\.[0-9] 200 /.test (headers.shift ())) {
-              throw "No valid cache";
-            }
-            /* レスポンスヘッダー解析 */
-            for (var i = 0; i < headers.length; i++) {
-              if (!headers [i].match (/^([^: ]+): ([^\s;]+)/)) {
-                continue;
-              }
-              var key = RegExp.$1, value = RegExp.$2;
-              switch (key) {
-                case "Content-Type":
-                  contentType = new String (value);
-                  if (headers [i].match (/ charset=([^\s]+)/)) {
-                    charset = new String (RegExp.$1);
-                  }
-                  break;
-                case "Content-Length":
-                  if (parseInt (value) != descriptor.dataSize) {
-                    throw "Incomplete cache";
-                  }
-                  break;
-              }
-            }
-          }
-          catch (e) {
-            /* 元キャッシュが無かった or 不適当だった */
-            if (descriptor) {
-              descriptor.close ();
-              descriptor = null;
-            }
-          }
-        }
-        if (!descriptor) {
-          return this._createThreadCacheFailChannel (uri);
-        }
-            
-        istream = descriptor.openInputStream (0);
-        dataSize = descriptor.dataSize;
-        /*
-        var istream = descriptor.openInputStream (0);
-        var bstream
-          = Components.classes ["@mozilla.org/binaryinputstream;1"]
-          .createInstance (nsIBinaryInputStream);
-        bstream.setInputStream (istream);
-        bindata = bstream.readBytes (descriptor.dataSize);
-        bstream.close ();
-        istream.close ();
-        descriptor.close ();*/
-      }
-            
-      /*
-      var pipe
-        = Components.classes ["@mozilla.org/pipe;1"]
-        .createInstance (nsIPipe);
-                    
-      pipe.init (false, false, bindata.length, 1, null);
-                    
-      pipe.outputStream.write (bindata, bindata.length);
-      pipe.outputStream.close ();
-      */
-                    
+
+      var fstream
+        = Components
+        .classes ["@mozilla.org/network/file-input-stream;1"]
+        .createInstance (nsIFileInputStream);
+      fstream.init (targetFile, 0x01, 0444, 0);
+
       var inputStreamChannel
         = Components
         .classes ["@mozilla.org/network/input-stream-channel;1"]
         .createInstance (nsIInputStreamChannel);
-                    
       inputStreamChannel.setURI (uri);
-      inputStreamChannel.contentStream = istream;//pipe.inputStream;
+      inputStreamChannel.contentStream
+        = fstream.QueryInterface (nsIInputStream);
+
       var channel
         = inputStreamChannel.QueryInterface (nsIChannel);
-      channel.contentType = contentType;
-      channel.contentCharset = charset; 
-      channel.contentLength = dataSize;//bindata.length;
-            
+      channel.contentType = "text/html";
+      channel.contentCharset = "";
+      channel.contentLength = targetFile.fileSize;
+
       return inputStreamChannel;
     }
     catch (e) {
-      /* キャッシュが存在しなかった場合 */
+      // 想定外のエラーが起きた場合
+      Components.utils.reportError (e);
       return this._createThreadCacheFailChannel (uri);
     }
-        
-    //return channel;
   },
     
   /**

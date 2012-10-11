@@ -918,13 +918,19 @@ var arAkahukuImage = {
       webBrowserPersist.persistFlags = flags;
       webBrowserPersist.progressListener = listener;
             
+      var args = {uri: uri, file: file};
       try {
-        webBrowserPersist.saveURI (uri, null, file);
+        // required for Firefox 18.0+
+        args.privacyContext
+          = targetDocument.defaultView
+          .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+          .getInterface (Components.interfaces.nsIWebNavigation)
+          .QueryInterface (Components.interfaces.nsILoadContext);
       }
-      catch (e) {
-        webBrowserPersist.saveURI (uri, null, null, null, null,
-                                   file);
+      catch (e) { Akahuku.debug.exception (e);
       }
+      arAkahukuCompat.WebBrowserPersist.saveURI
+        (webBrowserPersist, args);
     }
     else {
       arAkahukuImage.saveImage
@@ -991,11 +997,11 @@ var arAkahukuImage = {
     if (targetDirIndex == -1) {
       targetDirIndex = 0;
     }
-    
-    var uri
-    = Components.classes ["@mozilla.org/network/standard-url;1"]
-    .createInstance (Components.interfaces.nsIURI);
-    uri.spec = href;
+
+    var ios
+      = Components.classes ["@mozilla.org/network/io-service;1"]
+      .getService (Components.interfaces.nsIIOService);
+    var uri = ios.newURI (href, null, null);
         
     var file;
         
@@ -1131,13 +1137,20 @@ var arAkahukuImage = {
     = Components.interfaces.nsIWebBrowserPersist.PERSIST_FLAGS_NONE;
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = listener;
+
+    var args = {uri: uri, file: file};
     try {
-      webBrowserPersist.saveURI (uri, null, file);
+      // required for Firefox 18.0+
+      args.privacyContext
+        = targetDocument.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsILoadContext);
     }
-    catch (e) {
-      webBrowserPersist.saveURI (uri, null, null, null, null,
-                                 file);
+    catch (e) { Akahuku.debug.exception (e);
     }
+    arAkahukuCompat.WebBrowserPersist.saveURI
+      (webBrowserPersist, args);
   },
     
   saveBaseList : function () {
