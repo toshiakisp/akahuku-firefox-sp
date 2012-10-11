@@ -395,7 +395,6 @@ Akahuku.Cache = new function () {
     doomEntriesIfExpired : false,
     // access mode for all entries (asyncOpenCacheEntry)
     accessMode : Components.interfaces.nsICache.ACCESS_READ,
-    blockingMode : Components.interfaces.nsICache.NON_BLOCKING,
     init : function (cacheSession)
     {
       if (!cacheSession) {
@@ -416,28 +415,6 @@ Akahuku.Cache = new function () {
       this._isPending = false;
       if (this._lastDescriptor)
         this._lastDescriptor.close ();
-    },
-    open : function (key)
-    {
-      this._redirected = 0;
-      var descriptor;
-      while (key) {
-        if (descriptor)
-          descriptor.close ();
-        try {
-          descriptor
-            = this.session.openCacheEntry (key,
-                this.accessMode,
-                this.blockingMode);
-        }
-        catch (e if e.result
-            == Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
-          descriptor = null;
-          break;
-        }
-        key = this._resolveRedirection (descriptor);
-      }
-      return descriptor;
     },
     asyncOpen : function (key, callback)
     {
