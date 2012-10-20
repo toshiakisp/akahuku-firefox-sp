@@ -1238,7 +1238,7 @@ var arAkahukuImage = {
           if (dir) {
             dir += "_";
           }
-          dir += info.message8byte;
+          dir += info.escapeForFilename (info.message8byte);
         }
         else {
           return null;
