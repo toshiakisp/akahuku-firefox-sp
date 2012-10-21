@@ -3252,9 +3252,8 @@ var arAkahukuPostForm = {
         var param = documentParam.postform_param;
         if (param.upfile == filename) {
           /* ファイルが変わってない場合は何もしない */
-          return
-            }
-        param.upfile = filename;
+          return;
+        }
       }
             
       var mimeType = "";
@@ -3290,6 +3289,10 @@ var arAkahukuPostForm = {
       ("akahuku_postform_preview_status_slash");
             
       if (container && preview && bytes) {
+        if (documentParam && param) {
+          // 以下で処理することになる添付ファイル名を記憶する
+          param.upfile = filename;
+        }
         try {
           var file
             = Components.classes ["@mozilla.org/file/local;1"]
