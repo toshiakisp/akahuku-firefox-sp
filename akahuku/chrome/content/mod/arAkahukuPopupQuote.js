@@ -113,7 +113,8 @@ var arAkahukuPopupQuote = {
                   + "padding: 2px 2px 2px 4px;")
         .addRule ("div.akahuku_reply_popup "
                   + "div.akahuku_popup_content_blockquote",
-                  "margin: 1em 1em 1em 1em;")
+                  "word-break: break-all; " // Fx15+
+                  + "margin: 1em 1em 1em 1em;")
         .addRule ("div.akahuku_reply_popup small",
                   "font-size: 9pt;")
         .addRule ("div.akahuku_reply_popup font",
