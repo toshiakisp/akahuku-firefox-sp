@@ -248,9 +248,30 @@ var arAkahukuDelBanner = {
       if (delTarget || all) {
         /* 削除対象 */
         if (parent) {
-          if (parent.parentNode.nodeName.toLowerCase () == "div"
-              && parent.parentNode.childNodes.length == 1) {
-            parent = parent.parentNode;
+          if (parent.parentNode.nodeName.toLowerCase () == "div") {
+            if (parent.parentNode.childNodes.length == 1) {
+              parent = parent.parentNode;
+            }
+            else if (parent.parentNode.children.length == 1) {
+              // 子ノード数が1ではないのに子要素数が1の場合は
+              // 無駄なノードがある可能性があるので精密に探索する
+              var child = parent.parentNode.childNodes [0];
+              var valuableChildsLength = 0;
+              while (child) {
+                if (child.nodeType === Node.ELEMENT_NODE) {
+                  valuableChildsLength ++;
+                }
+                else if (child.nodeType === Node.TEXT_NODE
+                    && !(/^[ \r\n\t]*$/.test (child.nodeValue))) {
+                  valuableChildsLength ++;
+                }
+                child = child.nextSibling;
+              }
+              if (valuableChildsLength == 1) {
+                // 価値あるノードが1つなら削除対象を親へ移動
+                parent = parent.parentNode;
+              }
+            }
           }
           var next = parent.nextSibling;
           if (next
