@@ -31,6 +31,8 @@
           src="chrome://akahuku/content/mod/arAkahukuServerName.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuTitle.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuCompat.js" />
   
   <script type="application/x-javascript"
           src="chrome://akahuku/content/options.js" />

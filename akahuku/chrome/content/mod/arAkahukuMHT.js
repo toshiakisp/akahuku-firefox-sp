@@ -3,7 +3,7 @@
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuFile, arAkahukuLink,
- *          arAkahukuP2P, arAkahukuSound, arAkahukuThread
+ *          arAkahukuP2P, arAkahukuSound, arAkahukuThread, arAkahukuCompat
  */
 
 /**
@@ -3608,7 +3608,8 @@ var arAkahukuMHT = {
         /* ベースのディレクトリが不正 */
       }
             
-      var ret = filePicker.show ();
+      arAkahukuCompat.FilePicker.open
+        (filePicker, function (ret) {
       if (ret == Components.interfaces.nsIFilePicker.returnOK
           || ret == Components.interfaces.nsIFilePicker.returnReplace) {
         var text
@@ -3662,6 +3663,7 @@ var arAkahukuMHT = {
                 
         arAkahukuSound.playSaveMHTError ();
       }
+        });
     }
   },
     

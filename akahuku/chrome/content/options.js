@@ -1,7 +1,8 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuLocationInfo, arAkahukuFile, arAkahukuServerName
+ * Require: arAkahukuLocationInfo, arAkahukuFile, arAkahukuServerName,
+ *          arAkahukuCompat
  */
 
 /* Unicode をエスケープ解除できない場合に unescape を定義しなおす */
@@ -2586,12 +2587,13 @@ var AkahukuOptions = {
     catch (e) {
     }
         
-    if (filePicker.show ()
-        == Components.interfaces.nsIFilePicker.returnOK) {
-      document.getElementById (id).value
-      = filePicker.file
-      .QueryInterface (Components.interfaces.nsILocalFile).path;
-    }
+    arAkahukuCompat.FilePicker.open (filePicker, function (ret) {
+      if (ret == Components.interfaces.nsIFilePicker.returnOK) {
+        document.getElementById (id).value
+        = filePicker.file
+        .QueryInterface (Components.interfaces.nsILocalFile).path;
+      }
+    });
   },
     
   /**
@@ -4196,8 +4198,13 @@ var AkahukuOptions = {
       filePicker.appendFilters (Components.interfaces.nsIFilePicker
                                 .filterAll);
             
-      var ret = filePicker.show ();
-      if (ret == Components.interfaces.nsIFilePicker.returnOK) {
+      arAkahukuCompat.FilePicker.open (filePicker, function (ret) {
+        if (ret !== Components.interfaces.nsIFilePicker.returnOK) {
+          document.getElementById ("import_export_message").value
+          = "\u30A4\u30F3\u30DD\u30FC\u30C8\u3092\u4E2D\u65AD\u3057\u307E\u3057\u305F";
+          return;
+        }
+
         var file
           = filePicker.file
           .QueryInterface (Components.interfaces.nsILocalFile);
@@ -4242,11 +4249,7 @@ var AkahukuOptions = {
           document.getElementById ("import_export_message").value
             = "\u4E0D\u6B63\u306A\u8A2D\u5B9A\u30D5\u30A1\u30A4\u30EB\u3067\u3059";
         }
-      }
-      else {
-        document.getElementById ("import_export_message").value
-        = "\u30A4\u30F3\u30DD\u30FC\u30C8\u3092\u4E2D\u65AD\u3057\u307E\u3057\u305F";
-      }
+      });
     }
     catch (e) {
       document.getElementById ("import_export_message").value
@@ -4275,9 +4278,13 @@ var AkahukuOptions = {
       filePicker.appendFilters (Components.interfaces.nsIFilePicker
                                 .filterAll);
             
-      var ret = filePicker.show ();
-      if (ret == Components.interfaces.nsIFilePicker.returnOK ||
-          ret == Components.interfaces.nsIFilePicker.returnReplace) {
+      arAkahukuCompat.FilePicker.open (filePicker, function (ret) {
+        if (ret != Components.interfaces.nsIFilePicker.returnOK &&
+            ret != Components.interfaces.nsIFilePicker.returnReplace) {
+          document.getElementById ("import_export_message").value
+          = "\u30A8\u30B9\u30AF\u30DD\u30FC\u30C8\u3092\u4E2D\u65AD\u3057\u307E\u3057\u305F";
+          return;
+        }
         var file
           = filePicker.file
           .QueryInterface (Components.interfaces.nsILocalFile);
@@ -4294,11 +4301,7 @@ var AkahukuOptions = {
                 
         document.getElementById ("import_export_message").value
           = "\u30A8\u30B9\u30AF\u30DD\u30FC\u30C8\u304C\u5B8C\u4E86\u3057\u307E\u3057\u305F";
-      }
-      else {
-        document.getElementById ("import_export_message").value
-        = "\u30A8\u30B9\u30AF\u30DD\u30FC\u30C8\u3092\u4E2D\u65AD\u3057\u307E\u3057\u305F";
-      }
+      });
     }
     catch (e) {
       document.getElementById ("import_export_message").value

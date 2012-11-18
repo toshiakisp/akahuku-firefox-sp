@@ -1046,7 +1046,8 @@ var arAkahukuImage = {
                     493/* 0755 */);
       }
             
-      var ret = filePicker.show ();
+      arAkahukuCompat.FilePicker.open
+        (filePicker, function (ret) {
       if (ret == Components.interfaces.nsIFilePicker.returnOK
           || ret == Components.interfaces.nsIFilePicker.returnReplace) {
         file = filePicker.file;
@@ -1075,6 +1076,8 @@ var arAkahukuImage = {
          "\u4E2D\u65AD\u3057\u307E\u3057\u305F", "", normal);
         return;
       }
+      arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
+        });
     }
     else {
       file
@@ -1116,8 +1119,12 @@ var arAkahukuImage = {
       }
             
       file.appendRelativePath (leafName);
+      arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
     }
-        
+  },
+
+  saveImageCore : function (target, file, uri, leafName, normal) {
+    var targetDocument = target.ownerDocument;
     var listener = new arAkahukuImageListener ();
     listener.target = target;
     listener.file = file;
