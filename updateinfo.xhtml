@@ -1,33 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"> 
-<h4>sp65654.2 (2012-10-12)</h4>
+<h4>sp_rev.8</h4>
 <ul>
-<li>Firefox Aurora 18.0a2 でのAPI変更に対応</li>
-<ul>
-  <li>キャッシュへのアクセスを完全非同期化 (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=695399">bugzilla.mozilla.org 695399</a>)</li>
-  <li>画像の保存等が動かなくなる件への対応 (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=794602">bugzilla.mozilla.org 794602</a>)</li>
-</ul>
-</ul>
-<h4>sp65654.1 (2012-10-08)</h4>
-<ul>
-<li>spバグ修正(sp65654): スレ本文先頭を文字数にしていた場合に色々バグる件</li>
-</ul>
-<h4>sp65654 (2012-10-08)</h4>
-<ul>
-<li>設定「タイトル」の「スレ本文の先頭」のカスタマイズ性向上</li>
-<ul>
-  <li>バグ修正:「タイトルを修正」無効時にフォーマットの実体参照&amp;message;等が正しく生成されない件 (設定項目を移動)</li>
-  <li>設定追加:「スレ本文の先頭の長さ」を文字数ではなくバイト数単位で指定可能なオプションを追加</li>
-  <li>設定追加:スレ文先頭を複数行から得るオプション追加</li>
-  <li>設定追加:スレ文先頭を複数行から得るオプション追加</li>
-</ul>
-<li>カタログ表示ライクな本文先頭4文字を扱う機能の追加</li>
-<ul>
-  <li>設定追加:「画像を保存2」の保存先の設定で、本文先頭4文字をサブディレクトリに設定可能に</li>
-  <li>スレ本文先頭4文字を指すフォーマットの実体参照"&amp;message8byte;"を追加</li>
-</ul>
-<li>ッチーで youtube を[見る]できない件に対処</li>
-<li>オートリンクにて youtube.com/embed/* でも[見る]が出るように</li>
-<li>17.0a2+での赤福サイドバー機能不全を解消</li>
+  <li>塩に置かなくなったので版数の付け方を変更</li>
+  <li>広告隠しで空白が残る場合がある件に対応</li>
+  <li>ファイル添付状態でページを再読込してもプレビュー画像表示が維持されるよう修正</li>
+  <li>長いレスの引用をポップアップした場合のレイアウト崩れを修正</li>
+  <li>フォームを固定している場合に、手書き等のサイズ拡大に応じてフォームサイズが変化するように改善</li>
+  <li>Firefox17+以降の潜在的なAPI変更に対応(nsITransferable,nsIFilePicker)</li>
+  <li>spバグ修正(sp65654):スレ文先頭4文字をファイル名に使う場合にダメな文字を変換していなかった問題</li>
 </ul>
 </html>
