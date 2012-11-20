@@ -596,7 +596,7 @@ var arAkahukuPostForm = {
                     + "border: none; "
                     + "border-bottom: 1px solid #eeaa88;")
           .addRule ("#akahuku_floatpostform_container table",
-                    "width: auto; "
+                    "width: 100%; "
                     + "margin: 0; "
                     + "padding: 0;")
           .addRule ("#akahuku_floatpostform_container td",
@@ -2868,7 +2868,6 @@ var arAkahukuPostForm = {
           }
           if (postformContainer) {
             postformContainer.style.width = "27px";
-            postformContainer.style.minWidth = "";
           }
         }
       }
@@ -2891,8 +2890,7 @@ var arAkahukuPostForm = {
             status2.style.display = "block";
           }
           if (postformContainer) {
-            postformContainer.style.width = "";
-            postformContainer.style.minWidth
+            postformContainer.style.width
             = arAkahukuPostForm.floatWidth;
           }
         }
@@ -3817,26 +3815,6 @@ var arAkahukuPostForm = {
             oebtn.addEventListener
               ("click",
                (function (targetDocument) {
-                 if (targetDocument.getElementById ("akahuku_floatpostform_container")) {
-                   // フォームを固定で手書きを表示する場合に
-                   // テーブルサイズが oe3 のサイズを反映するようにする
-                   return function () {
-                     var oe = targetDocument.getElementById ("oe3");
-                     var textarea
-                       = targetDocument.getElementById ("akahuku_commentbox")
-                       || targetDocument.getElementById ("ftxa");
-                     if (oe && textarea) {
-                       if (oe.style.visibility == "visible") {
-                         oe.style.position = "relative";
-                         textarea.style.display = "none";
-                       }
-                       else {
-                         oe.style.position = "absolute";
-                         textarea.style.display = "";
-                       }
-                     }
-                   };
-                 }
                  return function () {
                    var oe = targetDocument.getElementById ("oe3");
                    if (oe) {
@@ -4619,12 +4597,8 @@ var arAkahukuPostForm = {
         else {
           div.style.backgroundColor = "#ffffee";
         }
-        if (minimizePostForm) {
-          div.style.width = "27px";
-        }
-        else {
-          div.style.minWidth = arAkahukuPostForm.floatWidth;
-        }
+        div.style.width
+        = minimizePostForm ? "27px" : arAkahukuPostForm.floatWidth;
         param.waitForFocus = 0;
         if (arAkahukuPostForm.enableFloatAlpha) {
           div.style.opacity = "0.3";
