@@ -44,5 +44,48 @@ var arAkahukuCompat = new function () {
       }
     }
   };
+
+  this.FilePicker = new function () {
+    // Fx17 から nsIFilePicker.show() は obsolete になり
+    // コールバックを取る非同期な open() が新設された [Bug 731307]。
+    // そこで非同期なインタフェースに統一し、
+    // 古い環境では非同期呼び出しを模擬することで動作させる。
+    this.open = function (picker, callback) {
+      if (typeof picker.open !== "function") {
+        _asyncShow (picker, callback);
+        return;
+      }
+      if (typeof callback === "function") {
+        // nsIFilePickerShownCallback
+        var callbackFunc = callback;
+        callback = {done : callbackFunc};
+      }
+      picker.open (callback);
+    };
+
+    function _asyncShow (picker, callback) {
+      var tm
+        = Components.classes ["@mozilla.org/thread-manager;1"]
+        .getService (Components.interfaces.nsIThreadManager);
+      tm.currentThread.dispatch ({
+        run : function () {
+          var ret = Components.interfaces.nsIFilePicker.returnCancel;
+          try {
+            ret = picker.show ();
+          }
+          catch (e) {
+          }
+          if (typeof callback === "function") {
+            var args = [ret];
+            callback.apply (null, args);
+          }
+          else {
+            callback.done (ret);
+          }
+        }
+      }, Components.interfaces.nsIThread.DISPATCH_NORMAL);
+    };
+  };
+
 };
 

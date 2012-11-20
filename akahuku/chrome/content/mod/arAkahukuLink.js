@@ -2,7 +2,8 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
- *          arAkahukuHistory, arAkahukuImage, arAkahukuP2P
+ *          arAkahukuHistory, arAkahukuImage, arAkahukuP2P,
+ *          arAkahukuClipboard
  */
 
 /**
@@ -2186,33 +2187,12 @@ var arAkahukuLink = {
   copyLink : function () {
     var copytext = document.popupNode.getAttribute ("dummyhref");
         
-    var str
-    = Components.classes ["@mozilla.org/supports-string;1"]
-    .createInstance (Components.interfaces.nsISupportsString);
-    if (!str) {
-      return;
+    try {
+      var targetDocument = document.popupNode.ownerDocument;
+      arAkahukuClipboard.copyString (copytext, targetDocument);
     }
-    str.data = copytext;
-        
-    var trans
-    = Components.classes ["@mozilla.org/widget/transferable;1"]
-    .createInstance (Components.interfaces.nsITransferable);
-    if (!trans) {
-      return;
+    catch (e) { Akahuku.debug.exception (e)
     }
-        
-    trans.addDataFlavor ("text/unicode");
-    trans.setTransferData ("text/unicode", str, copytext.length * 2);
-        
-    var clip
-    = Components.classes ["@mozilla.org/widget/clipboard;1"]
-    .getService (Components.interfaces.nsIClipboard);
-    if (!clip) {
-      return;
-    }
-        
-    clip.setData (trans, null,
-                  Components.interfaces.nsIClipboard.kGlobalClipboard);
   },
     
   /**
