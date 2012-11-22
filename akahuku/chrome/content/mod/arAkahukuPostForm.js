@@ -1951,7 +1951,6 @@ var arAkahukuPostForm = {
   setFormHidden : function (targetDocument, postform, hide) {
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
-    postform.style.overflow = "hidden";
     param.formHidden = hide;
     var oe = targetDocument.getElementById ("oe3");
     var commentbox
@@ -1959,6 +1958,7 @@ var arAkahukuPostForm = {
     || targetDocument.getElementById ("ftxa");
     
     if (hide) {
+      postform.style.overflow = "hidden";
       if (oe) {
         oe.style.visibility = "hidden";
       }
@@ -1968,6 +1968,7 @@ var arAkahukuPostForm = {
       postform.style.padding = "0px";
     }
     else {
+      postform.style.overflow = "";
       if (oe) {
         if (commentbox) {
           if (commentbox.style.visibility == "hidden") {
