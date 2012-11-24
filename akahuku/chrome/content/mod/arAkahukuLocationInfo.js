@@ -1120,7 +1120,7 @@ arAkahukuLocationInfo.prototype = {
       .createInstance (Components.interfaces.nsISupportsString);  
     subject.data = arAkahukuJSON.encode (this);
     observerService.notifyObservers
-      (subject, "akahuku-location-info-updated", text); 
+      (subject, "arakahuku-location-info-changed", text);
   },
 };
 

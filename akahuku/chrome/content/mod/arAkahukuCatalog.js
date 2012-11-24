@@ -1606,8 +1606,8 @@ arAkahukuCatalogParam.prototype = {
     var os
     = Components.classes ["@mozilla.org/observer-service;1"]
     .getService (Components.interfaces.nsIObserverService);
-    os.addObserver (this, "akahuku-location-info-updated", false);
-    os.addObserver (this, "akahuku-thread-newest-number", false);
+    os.addObserver (this, "arakahuku-location-info-changed", false);
+    os.addObserver (this, "arakahuku-board-newest-num-updated", false);
     this._observing = true;
   },
   unregisterObserver : function () {
@@ -1616,8 +1616,8 @@ arAkahukuCatalogParam.prototype = {
       var os
       = Components.classes ["@mozilla.org/observer-service;1"]
       .getService (Components.interfaces.nsIObserverService);
-      os.removeObserver (this, "akahuku-location-info-updated", false);
-      os.removeObserver (this, "akahuku-thread-newest-number", false);
+      os.removeObserver (this, "arakahuku-location-info-changed", false);
+      os.removeObserver (this, "arakahuku-board-newest-num-updated", false);
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -1631,12 +1631,12 @@ arAkahukuCatalogParam.prototype = {
       return;
     }
     try {
-      if (topic == "akahuku-location-info-updated") {
+      if (topic == "arakahuku-location-info-changed") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
         var decodedData = arAkahukuJSON.decode (subject.data);
         this.onNotifiedLocationInfoUpdated (decodedData, data);
       }
-      else if (topic == "akahuku-thread-newest-number") {
+      else if (topic == "arakahuku-board-newest-num-updated") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
         var decodedData = arAkahukuJSON.decode (subject.data);
         this.onNotifiedThreadNewestNumber (decodedData, data);

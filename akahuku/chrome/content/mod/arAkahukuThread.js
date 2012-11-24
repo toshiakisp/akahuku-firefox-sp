@@ -1247,7 +1247,7 @@ var arAkahukuThread = {
         value: num,
       });
       observerService.notifyObservers
-        (subject, "akahuku-thread-newest-number", null); 
+        (subject, "arakahuku-board-newest-num-updated", null);
     }
   },
     
