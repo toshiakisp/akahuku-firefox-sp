@@ -171,7 +171,10 @@ arAkahukuContentPolicy.prototype = {
     = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
     .getService (Components.interfaces.mozIJSSubScriptLoader);
     try {
-      if (typeof arAkahukuJSON === "undefined") {
+      if ("import" in Components.utils) {
+        Components.utils.import("resource://akahuku/json.jsm");
+      }
+      else {
         loader.loadSubScript
           ("chrome://akahuku/content/mod/arAkahukuJSON.js");
       }

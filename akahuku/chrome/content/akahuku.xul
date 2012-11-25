@@ -33,8 +33,6 @@
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuJPEG.js" />
   <script type="application/x-javascript"
-          src="chrome://akahuku/content/mod/arAkahukuJSON.js" />
-  <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuLink.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuLocationInfo.js" />

@@ -822,26 +822,3 @@ var arAkahukuJSON = {
   }
 };
 
-try {
-  if (JSON) {
-    arAkahukuJSON.decode = function (text) {
-      return JSON.parse (text);
-    };
-    arAkahukuJSON.encode = function (value) {
-      return JSON.stringify (value);
-    };
-  } else if ("@mozilla.org/dom/json;1" in Components.classes) {
-    arAkahukuJSON.json
-      = Components.classes ["@mozilla.org/dom/json;1"]
-      .createInstance (Components.interfaces.nsIJSON);
-  
-    arAkahukuJSON.decode = function (text) {
-      return arAkahukuJSON.json.decode (text);
-    };
-    arAkahukuJSON.encode = function (value) {
-      return arAkahukuJSON.json.encode (value);
-    };
-  }
-}
-catch (e) {
-}
