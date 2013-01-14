@@ -9,7 +9,7 @@
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuBloomer.js" />
   <script type="application/x-javascript"
-          src="chrome://akahuku/content/mod/arAkahukuBoard.js" />
+          src="chrome://akahuku/content/mod/arAkahukuBoardLoader.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuCatalog.js" />
   <script type="application/x-javascript"
@@ -52,8 +52,10 @@
           src="chrome://akahuku/content/mod/arAkahukuReload.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuScroll.js" />
+  <!-- loaded internally by arAkahukuBoard.js
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuServerName.js" />
+  -->
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuSidebar.js" />
   <script type="application/x-javascript"

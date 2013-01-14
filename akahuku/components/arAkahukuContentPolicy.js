@@ -186,7 +186,7 @@ arAkahukuContentPolicy.prototype = {
       }
       if (typeof arAkahukuBoard === "undefined") {
         loader.loadSubScript
-          ("chrome://akahuku/content/mod/arAkahukuBoard.js");
+          ("chrome://akahuku/content/mod/arAkahukuBoardLoader.js");
       }
     }
     catch (e) {
