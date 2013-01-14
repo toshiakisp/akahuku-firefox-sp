@@ -4,7 +4,7 @@
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuHistory,
  *          arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuSidebar,
- *          arAkahukuSound, arAkahukuThread
+ *          arAkahukuSound, arAkahukuBoard
  */
 
 /**
@@ -2481,7 +2481,7 @@ var arAkahukuCatalog = {
     }
         
     param.latestThread = latestThread;
-    arAkahukuThread.updateNewestNum (info, latestThread);
+    arAkahukuBoard.updateNewestNum (info, latestThread);
         
     oldTable.parentNode.removeChild (oldTable);
     if (entire) {
@@ -3276,7 +3276,7 @@ var arAkahukuCatalog = {
     }
     latestNum
       = Math.max
-      (arAkahukuThread.newestNum [name] || 0,
+      (arAkahukuBoard.getNewestNum (name) || 0,
        latestNum || 0);
     if (!(latestNum >= num)) {
       Akahuku.debug.warn
@@ -3287,10 +3287,10 @@ var arAkahukuCatalog = {
     }
     var oldAge = parseInt (tdElement.getAttribute ("__age"));
     if (oldAge == -1
-        || !(name in arAkahukuMaxNum)) {
+        || !arAkahukuBoard.knows (name)) {
       return;
     }
-    var max = arAkahukuMaxNum [name];
+    var max = arAkahukuBoard.getMaxNum (name);
     var age = parseInt ((latestNum - num) * 10 / max);
     if (age != oldAge) {
       tdElement.setAttribute ("__age", age);
@@ -3690,8 +3690,8 @@ var arAkahukuCatalog = {
       param.addedLastCells = true;
             
       var max;
-      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-        max = arAkahukuMaxNum [info.server + ":" + info.dir];
+      if (arAkahukuBoard.knows (name)) {
+        max = arAkahukuBoard.getMaxNum (name);
       }
       else {
         max = 10000;
@@ -4199,8 +4199,8 @@ var arAkahukuCatalog = {
         
     if (arAkahukuCatalog.enableReloadLeftBefore) {
       var max;
-      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-        max = arAkahukuMaxNum [info.server + ":" + info.dir];
+      if (arAkahukuBoard.knows (info)) {
+        max = arAkahukuBoard.getMaxNum (info);
       }
       else {
         max = 10000;
@@ -4256,8 +4256,8 @@ var arAkahukuCatalog = {
       param.addedLastCells = true;
             
       var max;
-      if ((info.server + ":" + info.dir) in arAkahukuMaxNum) {
-        max = arAkahukuMaxNum [info.server + ":" + info.dir];
+      if (arAkahukuBoard.knows (name)) {
+        max = arAkahukuBoard.getMaxNum (name);
       }
       else {
         max = 10000;
@@ -5039,7 +5039,7 @@ var arAkahukuCatalog = {
         arAkahukuCatalog.updateCell (nodes [i], info);
       }
       // 最新スレ番号を板の最新レス番号へ反映する
-      arAkahukuThread.updateNewestNum (info, param.latestThread);
+      arAkahukuBoard.updateNewestNum (info, param.latestThread);
             
       for (var i = 0; i < nodes.length; i ++) {
         arAkahukuCatalog.updateCellInfo (nodes [i],

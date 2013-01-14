@@ -1627,7 +1627,7 @@ var arAkahukuReload = {
     
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
     // ステータス表示有無に関わらず最新レス番号更新
-    arAkahukuThread.updateNewestNum (info, lastReply.num);
+    arAkahukuBoard.updateNewestNum (info, lastReply.num);
     node
     = targetDocument.getElementById
     ("akahuku_bottom_status_expire_num");

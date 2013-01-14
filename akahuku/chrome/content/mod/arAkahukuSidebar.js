@@ -2,7 +2,7 @@
 
 /**
  * Require: arAkahukuConfig, arAkahukuDOM, arAkahukuHistory,
- *          arAkahukuServerName, arAkahukuThread
+ *          arAkahukuBoard
  */
 
 /**
@@ -1169,14 +1169,12 @@ var arAkahukuSidebar = {
       }
       // 板全体の最新のレスを反映・更新する
       var infoName = name.replace (/_/, ":");
-      arAkahukuThread.updateNewestNum (infoName, max);
-      if (infoName in arAkahukuThread.newestNum) {
-        max = arAkahukuThread.newestNum [infoName];
-      }
+      arAkahukuBoard.updateNewestNum (infoName, max);
+      max = arAkahukuBoard.getNewestNum (infoName) || max;
       // 板の保存数を考慮して自動的に expired フラグを立てる
       var savedNum
-        = (infoName in arAkahukuMaxNum
-        ? arAkahukuMaxNum [infoName] : 10000);
+        = (arAkahukuBoard.knows (infoName)
+        ? arAkahukuBoard.getMaxNum (infoName) : 10000);
       var reddenNum = max - 0.9 * savedNum;
       var expireNum = max - savedNum;
       for (var i = 0; i < board.threads.length; i ++) {
@@ -2300,9 +2298,9 @@ var arAkahukuSidebar = {
       tab.className = "tab";
       tab.orient = "vertical";
       tab.align = "center";
-      tab.setAttribute ("__item_label", arAkahukuServerShortName [tmp]);
+      var n1 = arAkahukuBoard.getServerName (tmp, "short");
+      tab.setAttribute ("__item_label", n1);
       tab.setAttribute ("__item_value", tmp);
-      var n1 = arAkahukuServerShortName [tmp];
       var n2 = "";
       if (n1.length > 4) {
         if (n1.match (/^([^A-Za-z ]+)([A-Za-z]+)$/)) {
@@ -2369,7 +2367,7 @@ var arAkahukuSidebar = {
           arAkahukuSidebar.onRefresh0 (arguments [0]);
         }, false);
       buttons.appendChild (button);
-      if (tmp in arAkahukuCatalogBoards) {
+      if (arAkahukuBoard.hasCatalog (tmp)) {
         button = sidebarDocument.createElement ("button");
         button.id = "akahuku_sidebar_refresh_catalog_" + name;
         button.className = "refresh";

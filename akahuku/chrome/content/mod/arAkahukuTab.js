@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: Akahuku, arAkahukuConfig, arAkahukuServerName
+ * Require: Akahuku, arAkahukuConfig, arAkahukuBoard
  */
 
 /**
@@ -124,10 +124,7 @@ var arAkahukuTab = {
         .initPref ("char", "akahuku.tab.sort.board_order.list", "");
       var list = new Array ();
       if (value == "") {
-        var name;
-        for (name in arAkahukuServerName) {
-          list.push (name);
-        }
+        list = arAkahukuBoard.getBoardIDs ("internal");
         list = list.sort (function (x, y) {
             return x < y ? -1 : 1;
           });

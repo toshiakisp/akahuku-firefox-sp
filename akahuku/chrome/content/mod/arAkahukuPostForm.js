@@ -5,7 +5,7 @@
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuFile,
  *          arAkahukuP2P, arAkahukuReload, arAkahukuScroll,
  *          arAkahukuStyle, arAkahukuSound, arAkahukuThread,
- *          arAkahukuUI, arAkahukuWindow
+ *          arAkahukuUI, arAkahukuWindow, arAkahukuBoard
  */
 
 /**
@@ -4030,19 +4030,19 @@ var arAkahukuPostForm = {
           if (nodes2 [i].innerHTML.match
               (/\u3053\u306E\u677F\u306E\u4FDD\u5B58\u6570\u306F([0-9]+)\u4EF6\u3067\u3059/)) {
             var name = info.server + ":" + info.dir;
-            if (!(name in arAkahukuMaxNum)) {
+            if (!arAkahukuBoard.knows (name)) {
               Akahuku.debug.log
                 ("Unknown server (" + name 
                  + ") \u306E\u4FDD\u5B58\u6570" + RegExp.$1);
             }
-            else if (arAkahukuMaxNum [name] != RegExp.$1) {
+            else if (arAkahukuBoard.getMaxNum (name) != RegExp.$1) {
               Akahuku.debug.log
-                (arAkahukuServerName [name]
+                (arAkahukuBoard.getServerName (name)
                  + "(" + name + ")"
                  + "\u306E\u4FDD\u5B58\u6570 "
-                 + arAkahukuMaxNum [name] + " => " + RegExp.$1);
+                 + arAkahukuBoard.getMaxNum (name) + " => " + RegExp.$1);
             }
-            arAkahukuMaxNum [name] = parseInt (RegExp.$1);
+            arAkahukuBoard.setMaxNum (name, parseInt (RegExp.$1));
             break;
           }
         }

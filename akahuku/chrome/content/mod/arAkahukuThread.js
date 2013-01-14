@@ -3,7 +3,7 @@
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuP2P,
- *          arAkahukuReload, arAkahukuWindow
+ *          arAkahukuReload, arAkahukuWindow, arAkahukuBoard
  */
 
 /**
@@ -131,8 +131,6 @@ var arAkahukuThread = {
   maxImageRetries : 0,  /* Number エラー画像の再試行回数 */
     
   enableMoveButton : false, /* Boolean  前後に移動ボタン */
-    
-  newestNum : new Object (), /* 最新のレス */
     
   /**
    * 初期化処理
@@ -1099,7 +1097,7 @@ var arAkahukuThread = {
     var estimatedTime = 0;
         
     if (nodes.length >= 2
-        && (info.server + ":" + info.dir) in arAkahukuMaxNum) {
+        && arAkahukuBoard.knows (info)) {
       /* 書き込みが 2 つ以上あるので予測をする */
       var firstTime = Akahuku.getMessageTime (nodes [0]);
       var firstNum = Akahuku.getMessageNum (nodes [0]);
@@ -1111,7 +1109,7 @@ var arAkahukuThread = {
         estimatedTime
           = firstTime
           + (lastTime - firstTime)
-          * arAkahukuMaxNum [info.server + ":" + info.dir]
+          * arAkahukuBoard.getMaxNum (info)
           / (lastNum - firstNum);
       }
     }
@@ -1209,49 +1207,6 @@ var arAkahukuThread = {
   },
     
   /**
-   * 板全体の最新のレスを更新する
-   *
-   * @param  arAkahukuLocationInfo info
-   *         アドレス情報
-   * @param  Number num
-   *         レス番号
-   */
-  updateNewestNum : function (info, num) {
-    if (!(num > 0)) return;
-    var name
-      = (typeof (info) === "string"
-         ? info : info.server + ":" + info.dir);
-    var updated = false;
-    if (name in arAkahukuMaxNum) {
-      if (name in arAkahukuThread.newestNum) {
-        var n = arAkahukuThread.newestNum [name];
-        if (n < num) {
-          arAkahukuThread.newestNum [name] = num;
-          updated = true;
-        }
-      }
-      else {
-        arAkahukuThread.newestNum [name] = num;
-        updated = true;
-      }
-    }
-    if (updated) {
-      var observerService
-        = Components.classes ["@mozilla.org/observer-service;1"]
-        .getService (Components.interfaces.nsIObserverService);  
-      var subject
-        = Components.classes ["@mozilla.org/supports-string;1"]
-        .createInstance (Components.interfaces.nsISupportsString);  
-      subject.data = arAkahukuJSON.encode ({
-        name: name,
-        value: num,
-      });
-      observerService.notifyObservers
-        (subject, "arakahuku-board-newest-num-updated", null);
-    }
-  },
-    
-  /**
    * 消滅時刻までの番号を算出する
    *
    * @param  HTMLDocument targetDocument
@@ -1268,19 +1223,19 @@ var arAkahukuThread = {
   getExpireNum : function (targetDocument, info,
                            threadNumber, lastReplyNumber) {
     var name = info.server + ":" + info.dir;
-    if (!info.isMht && name in arAkahukuMaxNum) {
+    if (!info.isMht && arAkahukuBoard.knows (name)) {
       if (threadNumber == 0
           || lastReplyNumber == 0) {
-        return arAkahukuMaxNum [name];
+        return arAkahukuBoard.getMaxNum (name);
       }
       if (arAkahukuThread.enableBottomStatusNumEntire) {
-        lastReplyNumber = arAkahukuThread.newestNum [name];
+        lastReplyNumber = arAkahukuBoard.getNewestNum (name);
         // newestNum の更新は既に済んでいる
       }
       else {
         lastReplyNumber = Math.max (threadNumber, lastReplyNumber || 0);
       }
-      var n = (threadNumber + arAkahukuMaxNum [name] - lastReplyNumber);
+      var n = (threadNumber + arAkahukuBoard.getMaxNum (name) - lastReplyNumber);
       if (n < 0) {
         n = 0;
       }
@@ -2689,7 +2644,7 @@ var arAkahukuThread = {
           = lastReply ? Akahuku.getMessageNum (lastReply) : 0;
         var newestNumber = Math.max (threadNumber, lastReplyNumber);
         if (newestNumber > 0) { // is a valid number
-          arAkahukuThread.updateNewestNum (info, newestNumber);
+          arAkahukuBoard.updateNewestNum (info, newestNumber);
         }
 
         if (info.isReply) {
