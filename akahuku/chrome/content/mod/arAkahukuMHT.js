@@ -4043,7 +4043,7 @@ var arAkahukuMHT = {
    *         アドレスの情報
    */
   apply : function (targetDocument, info) {
-    if (info.isNotFound || info.isTsumanne) {
+    if (info.isNotFound || info.isTsumanne || info.isCatalog) {
       return;
     }
         
