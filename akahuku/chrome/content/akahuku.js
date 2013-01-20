@@ -108,7 +108,10 @@ var Akahuku = {
         .createInstance (Components.interfaces.nsIScriptError);
       scriptError.init
         (this.prefix + message,
-         stack.filename, null, stack.lineNumber, null,
+         "filename" in stack ? stack.filename : null,
+         null,
+         "lineNumber" in stack ?  stack.lineNumber : null,
+         null,
          Components.interfaces.nsIScriptError.warningFlag,
          null);
       this._consoleService.logMessage (scriptError);
@@ -121,7 +124,10 @@ var Akahuku = {
         .createInstance (Components.interfaces.nsIScriptError);
       scriptError.init
         (this.prefix + message,
-         stack.filename, null, stack.lineNumber, null,
+         "filename" in stack ? stack.filename : null,
+         null,
+         "lineNumber" in stack ?  stack.lineNumber : null,
+         null,
          Components.interfaces.nsIScriptError.errorFlag,
          null);
       this._consoleService.logMessage (scriptError);
@@ -132,19 +138,17 @@ var Akahuku = {
       //Components.utils.reportError (error);
       for (var frame = Components.stack.caller;
           frame && frame.filename; frame = frame.caller) {
-        message
-          += "\n    "
-          + frame.filename + " (" + frame.lineNumber + ")";
-        if (frame.name) {
-          message += " " + frame.name + "()";
-        }
+        message += "\n    " + frame.toString ();
       }
       var scriptError
         = Components.classes ["@mozilla.org/scripterror;1"]
         .createInstance (Components.interfaces.nsIScriptError);
       scriptError.init
         (this.prefix + message,
-         error.filename, null, error.lineNumber, null,
+         "fileName" in error ? error.fileName : null,
+         null,
+         "lineNumber" in error ?  error.lineNumber : null,
+         "columnNumber" in error ?  error.columnNumber : null,
          Components.interfaces.nsIScriptError.warningFlag,
          null);
       this._consoleService.logMessage (scriptError);
