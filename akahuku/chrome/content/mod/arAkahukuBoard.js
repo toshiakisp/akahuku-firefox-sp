@@ -193,7 +193,7 @@ var arAkahukuBoard = {
           
       return true;
     }
-    catch (e) { Components.utils.reportError (error);
+    catch (e) { Components.utils.reportError (e);
       return false;
     }
   },
