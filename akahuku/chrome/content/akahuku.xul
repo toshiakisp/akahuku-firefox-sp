@@ -332,7 +332,7 @@
                 oncommand="arAkahukuUI.applyFocusedDocument ();" />
       <menuitem label="外部板に登録"
                 id="akahuku-statusbar-popup-external"
-                oncommand="arAkahukuBoard.addExternal ();" />
+                oncommand="arAkahukuUI.addFocusedToExternalBoards ();" />
       <menuseparator id="akahuku-menuitem-separator" />
       <menuitem label="サイドバー" observes="viewAkahukuSidebar" />
       <menuitem label="P2P サイドバー" observes="viewAkahukuP2PSidebar" />

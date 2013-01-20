@@ -180,19 +180,6 @@ var arAkahukuBoard = {
    */
   isAbleToAddExternal : function (targetDocument) {
     try {
-      if (!targetDocument) {
-        targetDocument
-        = document.commandDispatcher.focusedWindow.document;
-      }
-      var param = Akahuku.getDocumentParam (targetDocument);
-          
-      if (param) {
-        return false;
-      }
-          
-      targetDocument
-      = document.commandDispatcher.focusedWindow.document;
-
       var base = targetDocument.location.href;
           
       base = base
@@ -206,7 +193,7 @@ var arAkahukuBoard = {
           
       return true;
     }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) { Components.utils.reportError (error);
       return false;
     }
   },
@@ -214,14 +201,7 @@ var arAkahukuBoard = {
   /**
    * 外部板に追加する
    */
-  addExternal : function () {
-    if (!arAkahukuBoard.isAbleToAddExternal ()) {
-      return;
-    }
-        
-    var targetDocument
-    = document.commandDispatcher.focusedWindow.document;
-        
+  addExternal : function (targetDocument) {
     var base = targetDocument.location.href;
         
     base = base
@@ -275,8 +255,6 @@ var arAkahukuBoard = {
     arAkahukuBoard.enableExternal = true;
     arAkahukuConfig.prefBranch.setBoolPref
     ("akahuku.board_external", true);
-        
-    Akahuku.apply (targetDocument, false);
   },
 
   /**

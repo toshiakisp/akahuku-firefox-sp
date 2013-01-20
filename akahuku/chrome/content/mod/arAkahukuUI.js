@@ -354,7 +354,10 @@ var arAkahukuUI = {
     menuitem
     = document.getElementById ("akahuku-statusbar-popup-external");
     if (menuitem) {
-      menuitem.disabled = !(arAkahukuBoard.isAbleToAddExternal ());
+      menuitem.disabled
+      = !(param == null
+          && arAkahukuBoard.isAbleToAddExternal
+          (document.commandDispatcher.focusedWindow.document));
     }
     menuitem
     = document.getElementById ("akahuku-statusbar-popup-respanel");
@@ -666,5 +669,22 @@ var arAkahukuUI = {
     }
         
     Akahuku.apply (targetDocument, true);
-  }
+  },
+
+  /**
+   * フォーカスのあるドキュメントを外部板に追加する
+   */
+  addFocusedToExternalBoards : function ()
+  {
+    var targetDocument
+    = document.commandDispatcher.focusedWindow.document;
+    if (Akahuku.getDocumentParam (targetDocument)) {
+      return;
+    }
+
+    if (arAkahukuBoard.isAbleToAddExternal (targetDocument)) {
+      arAkahukuBoard.addExternal (targetDocument);
+      Akahuku.apply (targetDocument, false);
+    }
+  },
 };
