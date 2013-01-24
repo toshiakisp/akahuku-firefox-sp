@@ -1726,6 +1726,13 @@ var arAkahukuReload = {
       + (dispdel ? "\u96A0\u3059" : "\u898B\u308B") + "</span><br>";
       var bq
         = targetDocument.getElementById ("akahuku_thread_text");
+      if (bq.nextSibling
+          && "id" in bq.nextSibling
+          && bq.nextSibling.id == "akahuku_preview_container") {
+        // 直後にプレビューコンテナがある場合
+        // 後ろへ挿入位置をずらさないとプレビューを消せなくなる
+        bq = bq.nextSibling;
+      }
       if (bq.nextSibling) {
         bq.parentNode.insertBefore (ddel, bq.nextSibling);
       }

@@ -3639,6 +3639,7 @@ var arAkahukuLink = {
         var node2 = node.firstChild;
         while (node2) {
           if (node2
+              && node2.nodeType == Node.ELEMENT_NODE
               && node2.getAttribute ("dummyhref")
               == target.getAttribute ("dummyhref")) {
             forceCancelImageLoad (node2);
