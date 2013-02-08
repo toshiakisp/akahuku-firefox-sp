@@ -461,7 +461,7 @@ arAkahukuReloadParam.prototype = {
         bstream.setInputStream (istream);
         var bindata = bstream.readBytes (descriptor.dataSize);
         bstream.close ();
-        istream.close ();
+        // istream.close (); // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
         descriptor.close ();
         
         var cont = function (self, bindata) {
@@ -1627,7 +1627,7 @@ var arAkahukuReload = {
     
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
     // ステータス表示有無に関わらず最新レス番号更新
-    arAkahukuThread.updateNewestNum (info, lastReply.num);
+    arAkahukuBoard.updateNewestNum (info, lastReply.num);
     node
     = targetDocument.getElementById
     ("akahuku_bottom_status_expire_num");
@@ -1726,6 +1726,13 @@ var arAkahukuReload = {
       + (dispdel ? "\u96A0\u3059" : "\u898B\u308B") + "</span><br>";
       var bq
         = targetDocument.getElementById ("akahuku_thread_text");
+      if (bq.nextSibling
+          && "id" in bq.nextSibling
+          && bq.nextSibling.id == "akahuku_preview_container") {
+        // 直後にプレビューコンテナがある場合
+        // 後ろへ挿入位置をずらさないとプレビューを消せなくなる
+        bq = bq.nextSibling;
+      }
       if (bq.nextSibling) {
         bq.parentNode.insertBefore (ddel, bq.nextSibling);
       }

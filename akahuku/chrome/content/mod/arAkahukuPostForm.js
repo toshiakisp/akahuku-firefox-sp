@@ -5,7 +5,7 @@
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuFile,
  *          arAkahukuP2P, arAkahukuReload, arAkahukuScroll,
  *          arAkahukuStyle, arAkahukuSound, arAkahukuThread,
- *          arAkahukuUI, arAkahukuWindow
+ *          arAkahukuUI, arAkahukuWindow, arAkahukuBoard
  */
 
 /**
@@ -1951,7 +1951,6 @@ var arAkahukuPostForm = {
   setFormHidden : function (targetDocument, postform, hide) {
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
-    postform.style.overflow = "hidden";
     param.formHidden = hide;
     var oe = targetDocument.getElementById ("oe3");
     var commentbox
@@ -1959,6 +1958,7 @@ var arAkahukuPostForm = {
     || targetDocument.getElementById ("ftxa");
     
     if (hide) {
+      postform.style.overflow = "hidden";
       if (oe) {
         oe.style.visibility = "hidden";
       }
@@ -1968,6 +1968,7 @@ var arAkahukuPostForm = {
       postform.style.padding = "0px";
     }
     else {
+      postform.style.overflow = "";
       if (oe) {
         if (commentbox) {
           if (commentbox.style.visibility == "hidden") {
@@ -3815,6 +3816,28 @@ var arAkahukuPostForm = {
             oebtn.addEventListener
               ("click",
                (function (targetDocument) {
+                 if (targetDocument.getElementById ("akahuku_floatpostform_container")) {
+                   // フォームを固定で手書きを表示する場合に
+                   // テーブルサイズが oe3 のサイズを反映するようにする
+                   return function () {
+                     var oe = targetDocument.getElementById ("oe3");
+                     var textarea
+                       = targetDocument.getElementById ("akahuku_commentbox")
+                       || targetDocument.getElementById ("ftxa");
+                     if (oe && textarea) {
+                       if (oe.style.visibility == "visible") {
+                         oe.style.width = "";
+                         oe.style.height = "";
+                         oe.style.position = "relative";
+                         textarea.style.display = "none";
+                       }
+                       else {
+                         oe.style.position = "absolute";
+                         textarea.style.display = "";
+                       }
+                     }
+                   };
+                 }
                  return function () {
                    var oe = targetDocument.getElementById ("oe3");
                    if (oe) {
@@ -4007,19 +4030,19 @@ var arAkahukuPostForm = {
           if (nodes2 [i].innerHTML.match
               (/\u3053\u306E\u677F\u306E\u4FDD\u5B58\u6570\u306F([0-9]+)\u4EF6\u3067\u3059/)) {
             var name = info.server + ":" + info.dir;
-            if (!(name in arAkahukuMaxNum)) {
+            if (!arAkahukuBoard.knows (name)) {
               Akahuku.debug.log
                 ("Unknown server (" + name 
                  + ") \u306E\u4FDD\u5B58\u6570" + RegExp.$1);
             }
-            else if (arAkahukuMaxNum [name] != RegExp.$1) {
+            else if (arAkahukuBoard.getMaxNum (name) != RegExp.$1) {
               Akahuku.debug.log
-                (arAkahukuServerName [name]
+                (arAkahukuBoard.getServerName (name)
                  + "(" + name + ")"
                  + "\u306E\u4FDD\u5B58\u6570 "
-                 + arAkahukuMaxNum [name] + " => " + RegExp.$1);
+                 + arAkahukuBoard.getMaxNum (name) + " => " + RegExp.$1);
             }
-            arAkahukuMaxNum [name] = parseInt (RegExp.$1);
+            arAkahukuBoard.setMaxNum (name, parseInt (RegExp.$1));
             break;
           }
         }

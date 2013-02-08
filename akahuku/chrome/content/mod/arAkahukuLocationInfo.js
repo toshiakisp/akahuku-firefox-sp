@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile, arAkahukuServerName,
+ * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile,
  *          arAkahukuTitle
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
@@ -277,9 +277,9 @@ arAkahukuLocationInfo.prototype = {
       this.isOnline = true;
     }
         
-    if ((this.server + ":" + this.dir) in arAkahukuServerTrueName) {
+    if (arAkahukuBoard.knows (this)) {
       this.board3
-      = arAkahukuServerTrueName [this.server + ":" + this.dir];
+      = arAkahukuBoard.getServerName (this, "true");
     }
     else  {
       if (this.isMht) {
@@ -1120,7 +1120,7 @@ arAkahukuLocationInfo.prototype = {
       .createInstance (Components.interfaces.nsISupportsString);  
     subject.data = arAkahukuJSON.encode (this);
     observerService.notifyObservers
-      (subject, "akahuku-location-info-updated", text); 
+      (subject, "arakahuku-location-info-changed", text);
   },
 };
 

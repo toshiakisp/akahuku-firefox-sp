@@ -297,7 +297,10 @@ var arAkahukuTitle = {
       ];
     var tmp = new Object ();
         
-    var nodes = Akahuku.getMessageBQ (targetDocument);
+    var nodes = [];
+    if (!info.isCatalog) {
+      nodes = Akahuku.getMessageBQ (targetDocument);
+    }
     if (nodes.length == 0) {
       for (var i = 0; i < names.length; i ++) {
         var n = names [i];
@@ -329,7 +332,7 @@ var arAkahukuTitle = {
       text
       = arAkahukuConverter.unescapeEntity
       (info.format (arAkahukuTitle.format));
-     }
+    }
 
     if (nodes.length == 0) {
       for (var i = 0; i < names.length; i ++) {

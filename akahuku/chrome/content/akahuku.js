@@ -42,6 +42,20 @@ arAkahukuThreadManager.ThreadType.prototype = {
 };
 */
 
+// arAkahukuJSON のロード
+try {
+  Components.utils.import("resource://akahuku/json.jsm");
+}
+catch (e) {
+  // JavaScript Code Module が使えない環境(Fx3より前)では
+  // 従来通りに赤福実装をロード
+  var loader
+    = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
+    .getService (Components.interfaces.mozIJSSubScriptLoader);
+  loader.loadSubScript
+    ("chrome://akahuku/content/mod/arAkahukuJSON.js");
+}
+
 /**
  * 本体
  */
@@ -94,7 +108,10 @@ var Akahuku = {
         .createInstance (Components.interfaces.nsIScriptError);
       scriptError.init
         (this.prefix + message,
-         stack.filename, null, stack.lineNumber, null,
+         "filename" in stack ? stack.filename : null,
+         null,
+         "lineNumber" in stack ?  stack.lineNumber : null,
+         null,
          Components.interfaces.nsIScriptError.warningFlag,
          null);
       this._consoleService.logMessage (scriptError);
@@ -107,7 +124,10 @@ var Akahuku = {
         .createInstance (Components.interfaces.nsIScriptError);
       scriptError.init
         (this.prefix + message,
-         stack.filename, null, stack.lineNumber, null,
+         "filename" in stack ? stack.filename : null,
+         null,
+         "lineNumber" in stack ?  stack.lineNumber : null,
+         null,
          Components.interfaces.nsIScriptError.errorFlag,
          null);
       this._consoleService.logMessage (scriptError);
@@ -118,19 +138,17 @@ var Akahuku = {
       //Components.utils.reportError (error);
       for (var frame = Components.stack.caller;
           frame && frame.filename; frame = frame.caller) {
-        message
-          += "\n    "
-          + frame.filename + " (" + frame.lineNumber + ")";
-        if (frame.name) {
-          message += " " + frame.name + "()";
-        }
+        message += "\n    " + frame.toString ();
       }
       var scriptError
         = Components.classes ["@mozilla.org/scripterror;1"]
         .createInstance (Components.interfaces.nsIScriptError);
       scriptError.init
         (this.prefix + message,
-         error.filename, null, error.lineNumber, null,
+         "fileName" in error ? error.fileName : null,
+         null,
+         "lineNumber" in error ?  error.lineNumber : null,
+         "columnNumber" in error ?  error.columnNumber : null,
          Components.interfaces.nsIScriptError.warningFlag,
          null);
       this._consoleService.logMessage (scriptError);
@@ -828,13 +846,16 @@ var Akahuku = {
       return;
     }
     
-    bqnodes = bqnodes || Akahuku.getMessageBQ (targetDocument);
     Akahuku.addDocumentParam (targetDocument);
     Akahuku.getDocumentParam (targetDocument).location_info
     = info;
-    /* キャッシュ手動設定 (DOM変更を検知しない) */
-    Akahuku.getDocumentParam (targetDocument)._messageBQCache
-    = bqnodes;
+
+    if (info.isReply || info.isNormal) {
+      bqnodes = bqnodes || Akahuku.getMessageBQ (targetDocument);
+      /* キャッシュ手動設定 (DOM変更を検知しない) */
+      Akahuku.getDocumentParam (targetDocument)._messageBQCache
+      = bqnodes;
+    }
 
     targetWindow.addEventListener
     ("unload",
@@ -863,8 +884,10 @@ var Akahuku = {
     arAkahukuReload.apply (targetDocument, info);       ticlog+="\n  arAkahukuReload.apply "+tic.toc();
     arAkahukuScroll.apply (targetDocument, info, targetWindow);ticlog+="\n  arAkahukuScroll.apply "+tic.toc();
     arAkahukuWheel.apply (targetDocument, info);        ticlog+="\n  arAkahukuWheel.apply "+tic.toc();
-    /* 手動でキャッシュを削除 */
-    Akahuku.getDocumentParam (targetDocument)._messageBQCache = null;
+    if (info.isReply || info.isNormal) {
+      /* 手動でキャッシュを削除 */
+      Akahuku.getDocumentParam (targetDocument)._messageBQCache = null;
+    }
     Akahuku.getDocumentParam (targetDocument).wasApplied = true;
     Akahuku.runContextTasks (targetDocument);           ticlog+="\n  runContextTasks "+tic.toc();
     var t = total_tic.toc();
@@ -1103,7 +1126,12 @@ var Akahuku = {
       if (info.isNotFound) {
         return;
       }
-            
+    }
+    else {
+      return;
+    }
+
+    if (info.isReply) {
       if (arAkahukuTitle.enable) {
         arAkahukuTitle.setTitle (targetDocument, info);
       }
@@ -1282,8 +1310,8 @@ var Akahuku = {
       if (documentParam
           && "_messageBQCache" in documentParam) {
         documentParam._messageBQCache = null;
-        return;
       }
+      return;
     }
     if (!Akahuku.enableBQCache) {
       return;
@@ -1333,9 +1361,10 @@ var Akahuku = {
         }
         observer.disconnect ();
       });
-      var target
-        = arAkahukuDOM.findParentNode (nodes [0], "form")
-        || documentParam.targetDocument.body;
+      var target = documentParam.targetDocument.body;
+      if (nodes.length > 0) {
+        target = arAkahukuDOM.findParentNode (nodes [0], "form");
+      }
       observer.observe (target, {childList: true, subtree: true});
     }
     documentParam._messageBQCache = nodes.slice (0);

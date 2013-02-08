@@ -6,6 +6,7 @@ overlay chrome://navigator/content/navigatorOverlay.xul   chrome://akahuku/conte
 overlay chrome://multiviews/content/navigatorOverlay.xul  chrome://akahuku/content/akahuku.xul
 overlay chrome://browser/content/pageinfo/pageInfo.xul    chrome://akahuku/content/pageInfo.xul
 
+resource akahuku modules/
 
 component   {87501060-b014-4b67-9a53-aa5e5af9d52c} components/arAkahukuContentPolicy.js
 contract    @unmht.org/akahuku-content-policy;1 {87501060-b014-4b67-9a53-aa5e5af9d52c}

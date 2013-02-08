@@ -2235,7 +2235,7 @@ var arAkahukuMHT = {
         // キャッシュ破損?
       }
       bstream.close ();
-      istream.close ();
+      // istream.close (); // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
             
       fileData.originalContent = bindata;
       fileData.content = btoa (fileData.originalContent);
@@ -4043,7 +4043,7 @@ var arAkahukuMHT = {
    *         アドレスの情報
    */
   apply : function (targetDocument, info) {
-    if (info.isNotFound || info.isTsumanne) {
+    if (info.isNotFound || info.isTsumanne || info.isCatalog) {
       return;
     }
         
