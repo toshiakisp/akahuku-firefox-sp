@@ -2235,7 +2235,7 @@ var arAkahukuMHT = {
         // キャッシュ破損?
       }
       bstream.close ();
-      istream.close ();
+      // istream.close (); // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
             
       fileData.originalContent = bindata;
       fileData.content = btoa (fileData.originalContent);

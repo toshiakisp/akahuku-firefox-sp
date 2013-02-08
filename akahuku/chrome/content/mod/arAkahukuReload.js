@@ -461,7 +461,7 @@ arAkahukuReloadParam.prototype = {
         bstream.setInputStream (istream);
         var bindata = bstream.readBytes (descriptor.dataSize);
         bstream.close ();
-        istream.close ();
+        // istream.close (); // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
         descriptor.close ();
         
         var cont = function (self, bindata) {
