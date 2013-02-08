@@ -2178,7 +2178,8 @@ var arAkahukuLink = {
    */
   saveLink : function () {
     saveURL (document.popupNode.getAttribute ("dummyhref"),
-             null, null, true, false, null);
+             null, null, true, false, null,
+             document.popupNode.ownerDocument);
   },
     
   /**
@@ -2437,7 +2438,7 @@ var arAkahukuLink = {
         window.open (href, "_blank");
         break;
       case 3:
-        saveURL (href, null, null, true, false, null);
+        saveURL (href, null, null, true, false, null, targetDocument);
         break;
     }
   },
