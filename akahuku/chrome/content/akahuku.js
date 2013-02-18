@@ -1362,7 +1362,7 @@ var Akahuku = {
       });
       var target = documentParam.targetDocument.body;
       if (nodes.length > 0) {
-        target = arAkahukuDOM.findParentNode (nodes [0], "form");
+        target = arAkahukuDOM.findParentNode (nodes [0], "form") || target;
       }
       observer.observe (target, {childList: true, subtree: true});
     }
