@@ -447,10 +447,9 @@ var Akahuku = {
     /* 画像鯖では保存場所を覚えさせないハック (Fx 7.0 以降) */
     try {
       Components.utils.import
-        ("resource://gre/modules/DownloadLastDir.jsm");
+        ("resource://gre/modules/Services.jsm");
       if (Akahuku.enableDownloadLastDirHack
-          && gDownloadLastDir
-          && typeof gDownloadLastDir.getFile == "function") {
+          && Services.vc.compare (Services.appinfo.platformVersion, "7.0") >= 0) {
         /* 保存する直前/直後を捉える方法がわからないので、やっつけ */
         gBrowser.addEventListener
           ("pageshow", Akahuku.onImageDocumentActivity, true);
@@ -1673,14 +1672,7 @@ var Akahuku = {
 
     try {
       Components.utils.import
-        ("resource://gre/modules/DownloadLastDir.jsm");
-      Components.utils.import
         ("resource://gre/modules/Services.jsm");
-      var pbsvc = null;
-      if ("@mozilla.org/privatebrowsing;1" in Components.classes) {
-        pbsvc = Components.classes ["@mozilla.org/privatebrowsing;1"]
-        .getService (Components.interfaces.nsIPrivateBrowsingService);
-      }
       var aURI = doc.documentURIObject;
       try {
         var host = aURI.host;
@@ -1690,8 +1682,21 @@ var Akahuku = {
 
       if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd)\.2chan\.net$/
           .test (host)) { /* 画像鯖 */
-        if (pbsvc && pbsvc.privateBrowsingEnabled) {
-          /* プライベートブラウジングモード */
+        var doFake = false;
+        if (Services.vc.compare (Services.appinfo.platformVersion, "9.0") < 0) {
+          // 9.0より前はPBモード時の処理が特殊 (参考:Bug 684107)
+          var pbsvc = null;
+          if ("@mozilla.org/privatebrowsing;1" in Components.classes) {
+            pbsvc = Components.classes ["@mozilla.org/privatebrowsing;1"]
+            .getService (Components.interfaces.nsIPrivateBrowsingService);
+          }
+          if (pbsvc && pbsvc.privateBrowsingEnabled) {
+            doFake = true;
+          }
+        }
+        if (doFake) {
+          Components.utils.import
+            ("resource://gre/modules/DownloadLastDir.jsm");
           var lastdir = gDownloadLastDir.getFile ();
           var targetdir = gDownloadLastDir.getFile (aURI);
           if (lastdir && lastdir.path != targetdir.path) {
@@ -1703,10 +1708,18 @@ var Akahuku = {
           /* ContentPrefs から設定を消す */
           var LAST_DIR_PREF = "browser.download.lastDir";
           var group = Services.contentPrefs.grouper.group (aURI);
-          if (Services.contentPrefs.hasPref (group, LAST_DIR_PREF)) {
-            var saveddir
-              = Services.contentPrefs.getPref (group, LAST_DIR_PREF);
-            Services.contentPrefs.removePref (group, LAST_DIR_PREF)
+          var loadContext = null; // required for Firefox 19+
+          try {
+            loadContext
+              = doc.defaultView
+              .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+              .getInterface (Components.interfaces.nsIWebNavigation)
+              .QueryInterface (Components.interfaces.nsILoadContext);
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+          if (Services.contentPrefs.hasPref (group, LAST_DIR_PREF, loadContext)) {
+            Services.contentPrefs.removePref (group, LAST_DIR_PREF, loadContext);
           }
         }
       }
