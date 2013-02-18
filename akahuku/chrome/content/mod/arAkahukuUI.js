@@ -466,7 +466,7 @@ var arAkahukuUI = {
   openWebsite : function () {
     var tabbrowser = document.getElementById ("content");
     var newTab
-    = tabbrowser.addTab ("http://www.unmht.org/akahuku/");
+    = tabbrowser.addTab ("http://toshiakisp.github.com/akahuku-firefox-sp/");
     tabbrowser.selectedTab = newTab;
   },
     

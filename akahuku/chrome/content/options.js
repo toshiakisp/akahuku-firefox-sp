@@ -4346,7 +4346,7 @@ var AkahukuOptions = {
       chromeWindow.arAkahukuUI.openWebsite ();
     }
     else {
-      window.open ("http://www.unmht.org/akahuku/");
+      window.open ("http://toshiakisp.github.com/akahuku-firefox-sp/");
     }
   },
   
