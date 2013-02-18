@@ -2868,7 +2868,7 @@ var arAkahukuLink = {
       var target = null;
             
       if (arAkahukuLink.enableAutoLinkPreview
-          && (url.match (/^http:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?([^&]+&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
+          && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?([^&]+&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
@@ -2899,7 +2899,7 @@ var arAkahukuLink = {
             && !url.match
             (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
-            (/^http:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
+            (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
             && !url.match (/\.(jpe?g|gif|png|bmp)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
@@ -3293,11 +3293,11 @@ var arAkahukuLink = {
       image.setAttribute ("allowFullScreen", "true");
       image.setAttribute ("allowScriptAccess", "never");
     }
-    else if (uri.match (/^http:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]+&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
+    else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]+&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
       var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
-      if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s/)) {
+      if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s?/)) {
         t = parseInt (RegExp.$3)
           + parseInt (RegExp.$2 || 0) * 60
           + parseInt (RegExp.$1 || 0) * 3600;
