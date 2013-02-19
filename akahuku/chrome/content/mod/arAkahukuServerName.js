@@ -414,6 +414,12 @@ var arAkahukuServerData = {
     "\u6771\u65B9",
     3000, true
     ],
+  "dec:55" : [ /* 東方裏 */
+    "\u6771\u65B9\u88CF",
+    "\u6771\u65B9\u88CF",
+    "\u6771\u65B9\u88CF",
+    3000, true
+    ],
   "zip:p" : [ /* お絵かき */
     "\u304A\u7D75\u304B\u304D",
     "\u304A\u7D75\u304B\u304D",
@@ -461,7 +467,7 @@ var arAkahukuServerData = {
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
-    2000, true
+    500, true
     ],
 
 };
