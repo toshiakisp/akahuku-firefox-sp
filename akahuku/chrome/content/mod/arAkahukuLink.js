@@ -227,16 +227,6 @@ arAkahukuLinkExtListener.prototype = {
   extNode : null,        /* HTMLElement  拡張子のノード */
   content : "" ,         /* String  ファイルのデータ */
 
-  // nsILoadContext
-  associatedWindow : null,
-  isContent : false,
-  topWindow : null,
-  isAppOfType : function (appType) {
-    // docShell ではないのでこの程度でいい？
-    return (appType ===
-        Components.interfaces.nsIDocShell.APP_TYPE_UNKNOWN);
-  },
-
   // 初期化用関数
   init : function (targetDocument, targetNode, extNode) {
     if (!targetDocument || !targetNode) {
@@ -245,14 +235,6 @@ arAkahukuLinkExtListener.prototype = {
     this.targetDocument = targetDocument;
     this.targetNode = targetNode;
     this.extNode = extNode; // may be null
-
-    if (targetDocument.defaultView
-        instanceof Components.interfaces.nsIDOMWindow) {
-      this.associatedWindow = targetDocument.defaultView;
-      this.topWindow = this.associatedWindow.top;
-    }
-    this.isContent = !(this.associatedWindow 
-        instanceof Components.interfaces.nsIDOMXULElement);
   },
     
   /**
@@ -271,7 +253,6 @@ arAkahukuLinkExtListener.prototype = {
         || iid.equals (Components.interfaces.nsIInterfaceRequestor)
         || iid.equals (Components.interfaces.nsIHttpEventSink)
         || iid.equals (Components.interfaces.nsIStreamListener)
-        || iid.equals (Components.interfaces.nsILoadContext) // for webconsole
         || iid.equals (Components.interfaces.nsIRequestObserver)) {
       return this;
     }
@@ -290,6 +271,17 @@ arAkahukuLinkExtListener.prototype = {
    *         this
    */
   getInterface : function (iid) {
+    if (iid.equals (Components.interfaces.nsILoadContext)) {
+      try {
+        return this.targetDocument.defaultView
+          .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+          .getInterface (Components.interfaces.nsIWebNavigation)
+          .QueryInterface (Components.interfaces.nsILoadContext);
+      }
+      catch (e) { Akahuku.debug.exception (e)
+        throw Components.results.NS_NOINTERFACE;
+      }
+    }
     return this.QueryInterface (iid);
   },
     

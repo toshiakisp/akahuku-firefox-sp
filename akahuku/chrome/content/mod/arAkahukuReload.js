@@ -1142,17 +1142,8 @@ arAkahukuReloadParam.prototype = {
   {
     var LOAD_ONLY_IF_MODIFIED
       = Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
-    try {
-      // webconsole でモニタできるようにウィンドウを関連づける
-      if (Akahuku.isFx4 || !(this.reloadChannel.loadFlags & LOAD_ONLY_IF_MODIFIED))
-      // (Firefox 3.6 で LOAD_ONLY_IF_MODIFIED するとなぜかステータスが完了にならない)
-      this.reloadChannel.notificationCallbacks
-        = this.targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+
+    arAkahukuUtil.setChannelContext (this.reloadChannel, this.targetDocument);
 
     try {
       this.reloadChannel.asyncOpen (this, null);

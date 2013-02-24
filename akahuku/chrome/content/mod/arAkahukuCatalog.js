@@ -4,7 +4,7 @@
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuHistory,
  *          arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuSidebar,
- *          arAkahukuSound, arAkahukuBoard
+ *          arAkahukuSound, arAkahukuBoard, arAkahukuUtil
  */
 
 /**
@@ -4406,15 +4406,7 @@ var arAkahukuCatalog = {
       param.reloadChannel.loadFlags
         |= Components.interfaces.nsIRequest.INHIBIT_CACHING;
     }
-    try {
-      // webconsole でモニタできるようにウィンドウを関連づける
-      param.reloadChannel.notificationCallbacks
-        = targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    arAkahukuUtil.setChannelContext (param.reloadChannel, targetDocument);
         
     arAkahukuCatalog.setStatus
     ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)",
