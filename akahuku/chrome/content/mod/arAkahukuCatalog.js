@@ -2,9 +2,9 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuHistory,
+ *          arAkahukuDocumentParam, arAkahukuDOM,
  *          arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuSidebar,
- *          arAkahukuSound, arAkahukuBoard, arAkahukuUtil
+ *          arAkahukuSound, arAkahukuBoard, arAkahukuUtil, arAkahukuCompat
  */
 
 /**
@@ -249,15 +249,15 @@ arAkahukuCatalogPopupData.prototype =  {
                         
               anchor.style.position = "relative";
               anchor.href = this.popup.firstChild.href;
-              var uri
-                = Components
-                .classes ["@mozilla.org/network/standard-url;1"]
-                .createInstance (Components.interfaces.nsIURI);
-              uri.spec = anchor.href;
-              var visited = arAkahukuHistory.isVisited (uri);
-              if (visited) {
-                arAkahukuDOM.addClassName (anchor, "akahuku_visited");
-              }
+              var uri = arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument);
+              arAkahukuCompat.AsyncHistory.isURIVisited (uri, {
+                _target : anchor,
+                isVisited : function (uri, visited) {
+                  if (visited) {
+                    arAkahukuDOM.addClassName (this._target, "akahuku_visited");
+                  }
+                },
+              });
               this.popup.appendChild (anchor);
             }
             break;
@@ -1281,6 +1281,67 @@ arAkahukuMergeItem.prototype = {
   },
 };
 /**
+ * カタログの非同期履歴調査用
+ */
+function arAkahukuMergeItemVisitedCallback (mergeItem, list, id) {
+  this.wrappedObject = mergeItem;
+  this.id = id;
+  list.addCallback (this, id);
+  this.list = list;
+  this.isVisitedHandler = null;
+};
+arAkahukuMergeItemVisitedCallback.prototype = {
+  isVisited : function (uri, visited) {
+    if (this.isVisitedHandler) {
+      this.isVisitedHandler.apply (this, [uri, visited]);
+    }
+    else {
+      this.wrappedObject.visited = visited;
+    }
+    if (this.list) {
+      this.list.removeCallback (this.id);
+    }
+    this.id = null;
+    this.list = null;
+    this.wrappedObject = null;
+    this.isVisitedHandler = null;
+  },
+};
+function arAkahukuMergeItemCallbackList () {
+  this._id = 0;
+  this._list = {};
+  this.count = 0;
+  this.waiting = false;
+  this.callback = null;
+};
+arAkahukuMergeItemCallbackList.prototype = {
+  addCallback : function (callback, id) {
+    this._list [id] = callback;
+    this.count ++;
+  },
+  removeCallback : function (id) {
+    delete this._list [id];
+    this.count --;
+    if (this.waiting && this.count == 0) {
+      this.callback ();
+      this.waiting = false;
+      this.callback = null;
+    }
+  },
+  createVisitedCallback : function (item) {
+    return new arAkahukuMergeItemVisitedCallback (item, this, this._id ++);
+  },
+  asyncWaitRequests : function (callback) {
+    if (this.count == 0) {
+      callback ();
+    }
+    else {
+      this.waiting = true;
+      this.callback = callback;
+    }
+  },
+};
+/**
  * カタログ管理データ
  *   Inherits From: nsISHistoryListener,
  *                  nsIRequestObserver, nsIStreamListener
@@ -1320,6 +1381,8 @@ arAkahukuCatalogParam.prototype = {
 
   updateAgeTimerID : null,    /* Number  __age 属性更新のデバウンス用タイマ */
     
+  historyCallbacks : null,
+
   /**
    * データを開放する
    */
@@ -1348,6 +1411,7 @@ arAkahukuCatalogParam.prototype = {
     }
     this.targetDocument = null;
     this.oldTable = null;
+    this.historyCallbacks = null;
   },
     
   /**
@@ -2948,13 +3012,6 @@ var arAkahukuCatalog = {
         // 履歴調査済みなので属性から判断していい
         return arAkahukuDOM.hasClassName (anchor, "akahuku_visited");
       }
-      var uri
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-      uri.spec = anchor.href;
-                    
-      visited = arAkahukuHistory.isVisited (uri);
     }
     return visited;
   },
@@ -3621,6 +3678,8 @@ var arAkahukuCatalog = {
     var visited = false;
     var nums = Object ();
         
+    param.historyCallbacks = new arAkahukuMergeItemCallbackList ();
+
     /**
      * 古いテーブルのマージ用のデータを取得する
      *
@@ -3661,6 +3720,18 @@ var arAkahukuCatalog = {
             oldCells [i].getAttribute ("__is_new") == "true",
             oldCells [i].getAttribute ("__overflowed") == "true",
             oldCells [i].getAttribute ("class")));
+
+        if (arAkahukuCatalog.enableReorderVisited) {
+          try {
+            var anchor
+              = arAkahukuDOM.getFirstElementByNames (oldCells [i], "a");
+            arAkahukuCompat.AsyncHistory.isURIVisited
+              (arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument),
+               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
       }
       return mergedItems;
     }
@@ -3697,13 +3768,8 @@ var arAkahukuCatalog = {
         max = 10000;
       }
             
+      visited = false;
       var cells = arAkahukuCatalog.lastCells [name];
-      if (arAkahukuCatalog.enableReorderVisited) {
-        var uri
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-      }
       for (var i = 0; i < cells.length; i ++) {
         var cell = cells [i];
         if (cell.threadId in nums) {
@@ -3711,13 +3777,6 @@ var arAkahukuCatalog = {
         }
         if (cell.threadId < newestId - max) {
           continue;
-        }
-                
-        visited = false;
-        if (arAkahukuCatalog.enableReorderVisited) {
-          uri.spec = cell.href;
-                        
-          visited = arAkahukuHistory.isVisited (uri);
         }
             
         mergedItems.push
@@ -3732,9 +3791,36 @@ var arAkahukuCatalog = {
             false,
             true,
             cell.className));
+
+        if (arAkahukuCatalog.enableReorderVisited) {
+          try {
+            arAkahukuCompat.AsyncHistory.isURIVisited
+              (arAkahukuUtil.newURIViaDocument (cell.href, targetDocument),
+               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
       }
     }
         
+    if (mergedItems.length > 0) {
+      if (param.historyCallbacks.count > 0) {
+        param.historyCallbacks.asyncWaitRequests
+          (function () {
+            param.historyCallbacks = null;
+            arAkahukuCatalog._onReorderClickCore2
+              (targetDocument, param, oldTable, mergedItems, target_id);
+          });
+      }
+      else {
+        param.historyCallbacks = null;
+        arAkahukuCatalog._onReorderClickCore2
+          (targetDocument, param, oldTable, mergedItems, target_id);
+      }
+    }
+  },
+  _onReorderClickCore2 : function (targetDocument, param, oldTable, mergedItems, target_id) {
     if (mergedItems.length > 0) {
       param.columns
       = arAkahukuCatalog.reorder (mergedItems,
@@ -3843,7 +3929,6 @@ var arAkahukuCatalog = {
     }
                             
     var responseText = param.responseText;
-    var update = false;
         
     if (responseText != "") {
       var info
@@ -3875,57 +3960,30 @@ var arAkahukuCatalog = {
       arAkahukuReload.updateAd (responseText,
                                 targetDocument);
             
+      param.historyCallbacks = new arAkahukuMergeItemCallbackList ();
+
       var mergedItems
         = arAkahukuCatalog.mergeCellNodes (targetDocument,
                                            responseText);
       if (mergedItems.length > 0) {
-        param.columns
-          = arAkahukuCatalog.reorder (mergedItems, "",
-                                      param);
-        arAkahukuCatalog.replaceTable
-          (oldTable,
-           mergedItems,
-           targetDocument,
-           param);
-        arAkahukuCatalog.setStatus
-          ("\u5B8C\u4E86\u3057\u307E\u3057\u305F",
-           false, targetDocument);
-                                    
-        var tmpNode
-          = targetDocument.getElementById
-          ("akahuku_catalog_reload_undo");
-        if (tmpNode) {
-          tmpNode.style.display = "";
+        if (param.historyCallbacks.count > 0) {
+          param.historyCallbacks.asyncWaitRequests
+            (function () {
+              param.historyCallbacks = null;
+              arAkahukuCatalog._update2
+                (targetDocument, oldTable, mergedItems, param);
+            });
         }
-        tmpNode
-          = targetDocument.getElementById
-          ("akahuku_catalog_reload_undo2");
-        if (tmpNode) {
-          tmpNode.style.display = "";
+        else {
+          param.historyCallbacks = null;
+          arAkahukuCatalog._update2
+            (targetDocument, oldTable, mergedItems, param);
         }
-        tmpNode
-          = targetDocument.getElementById
-          ("akahuku_catalog_reload_redo");
-        if (tmpNode) {
-          tmpNode.style.display = "none";
-        }
-        tmpNode
-          = targetDocument.getElementById
-          ("akahuku_catalog_reload_redo2");
-        if (tmpNode) {
-          tmpNode.style.display = "none";
-        }
-                                    
-        var info
-          = Akahuku.getDocumentParam (targetDocument)
-          .location_info;
-        arAkahukuSidebar.apply (targetDocument, info);
-                
-        update = true;
       }
       else {
         arAkahukuCatalog.setStatus ("\u6E80\u54E1\u3067\u3059",
                                     false, targetDocument);
+        arAkahukuSound.playCatalogReload ();
       }
     }
     else {
@@ -3936,47 +3994,48 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableReloadTimestamp) {
       arAkahukuCatalog.setTimeStamp (targetDocument);
     }
-        
-    /* HttpChannel がキャッシュを制御するので不要
-    if (update && arAkahukuCatalog.enableReloadUpdateCache) {
-      if (param.writer == null) {
-        param.writer = new arAkahukuCatalogCacheWriter ();
-      }
-            
-      if (param.writer.setText (responseText)) {
-        param.writer.responseHead = param.responseHead;
-                
-        var cacheService
-        = Components.classes ["@mozilla.org/network/cache-service;1"]
-        .getService (Components.interfaces.nsICacheService);
-        var httpCacheSession;
-        httpCacheSession
-        = cacheService
-        .createSession ("HTTP",
-                        Components.interfaces.nsICache.STORE_ANYWHERE,
-                        true);
-        httpCacheSession.doomEntriesIfExpired = false;
-        httpCacheSession
-        .asyncOpenCacheEntry (targetDocument.location.href,
-                              Components.interfaces.nsICache
-                              .ACCESS_WRITE,
-                              param.writer);
-      }
-    }
-    */
-        
-    /* 二重処理のため不要
-    arAkahukuCatalog.updateVisited (targetDocument);
-    */
     
     param.reloadChannel = null;
         
     param.responseText = "";
     param.stream = null;
-        
-    arAkahukuSound.playCatalogReload ();
   },
     
+  _update2 : function (targetDocument, oldTable, mergedItems, param)
+  {
+    param.columns
+      = arAkahukuCatalog.reorder (mergedItems, "",param);
+    arAkahukuCatalog.replaceTable
+      (oldTable, mergedItems, targetDocument, param);
+    arAkahukuCatalog.setStatus
+      ("\u5B8C\u4E86\u3057\u307E\u3057\u305F", //"完了しました"
+       false, targetDocument);
+
+    var tmpNode = targetDocument.getElementById ("akahuku_catalog_reload_undo");
+    if (tmpNode) {
+      tmpNode.style.display = "";
+    }
+    tmpNode = targetDocument.getElementById ("akahuku_catalog_reload_undo2");
+    if (tmpNode) {
+      tmpNode.style.display = "";
+    }
+    tmpNode = targetDocument.getElementById ("akahuku_catalog_reload_redo");
+    if (tmpNode) {
+      tmpNode.style.display = "none";
+    }
+    tmpNode = targetDocument.getElementById ("akahuku_catalog_reload_redo2");
+    if (tmpNode) {
+      tmpNode.style.display = "none";
+    }
+
+    var info
+      = Akahuku.getDocumentParam (targetDocument)
+      .location_info;
+    arAkahukuSidebar.apply (targetDocument, info);
+
+    arAkahukuSound.playCatalogReload ();
+  },
+
   /**
    * タテログ用のタイマ
    *
@@ -4153,31 +4212,21 @@ var arAkahukuCatalog = {
             false,
             oldCells [threadId].getAttribute ("class")));
                 
+        if (arAkahukuCatalog.enableReorderVisited) {
+          try {
+            var anchor
+              = arAkahukuDOM.getFirstElementByNames (oldCells [threadId], "a");
+            arAkahukuCompat.AsyncHistory.isURIVisited
+              (arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument),
+               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
+
         delete oldCells [threadId];
       }
       else {
-        if (arAkahukuCatalog.enableReorderVisited
-            || arAkahukuCatalog.enableVisited) {
-          // 新しいスレの既読判定が必要な場合
-          if (currentTdText.match (/href=['"]?([^\s'"]+)/)) {
-            var path = RegExp.$1;
-                            
-            var baseDir
-            = Components
-            .classes ["@mozilla.org/network/standard-url;1"]
-            .createInstance (Components.interfaces.nsIURI);
-            baseDir.spec = targetDocument.location.href;
-                            
-            var uri
-            = Components
-            .classes ["@mozilla.org/network/standard-url;1"]
-            .createInstance (Components.interfaces.nsIURI);
-            uri.spec = baseDir.resolve (path);
-                            
-            visited = arAkahukuHistory.isVisited (uri);
-          }
-        }
-                    
         nums [parseInt (threadId)] = true;
         if (newestId < parseInt (threadId)) {
           newestId = parseInt (threadId);
@@ -4194,6 +4243,21 @@ var arAkahukuCatalog = {
                            parseInt (threadId) > param.latestThread,
                            false,
                            className));
+
+        if (arAkahukuCatalog.enableReorderVisited
+            || arAkahukuCatalog.enableVisited) {
+          // 新しいスレに既読判定が必要な場合
+          if (currentTdText.match (/href=['"]?([^\s'"]+)/)) {
+            var path = RegExp.$1;
+            try {
+              arAkahukuCompat.AsyncHistory.isURIVisited
+                (arAkahukuUtil.newURIViaDocument (path, targetDocument),
+                 param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
+            }
+            catch (e) { Akahuku.debug.exception (e);
+            }
+          }
+        }
       }
     }
         
@@ -4234,6 +4298,18 @@ var arAkahukuCatalog = {
           false,
           true,
           oldCells [threadId].getAttribute ("class")));
+
+        if (arAkahukuCatalog.enableReorderVisited) {
+          try {
+            var anchor
+              = arAkahukuDOM.getFirstElementByNames (oldCells [threadId], "a");
+            arAkahukuCompat.AsyncHistory.isURIVisited
+              (arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument),
+               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
       }
       // カタログ順になることを保証させる
       overflowedItems.sort (function (x, y) {
@@ -4263,12 +4339,7 @@ var arAkahukuCatalog = {
         max = 10000;
       }
             
-      if (arAkahukuCatalog.enableReorderVisited) {
-        var uri
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-      }
+      visited = false;
       var cells = arAkahukuCatalog.lastCells [name];
       for (i = 0; i < cells.length; i ++) {
         var cell = cells [i];
@@ -4277,13 +4348,6 @@ var arAkahukuCatalog = {
         }
         if (cell.threadId < newestId - max) {
           continue;
-        }
-                
-        visited = false;
-        if (arAkahukuCatalog.enableReorderVisited) {
-          uri.spec = cell.href;
-                        
-          visited = arAkahukuHistory.isVisited (uri);
         }
                 
         mergedItems.push
@@ -4298,6 +4362,16 @@ var arAkahukuCatalog = {
             false,
             true,
             cell.className));
+
+        if (arAkahukuCatalog.enableReorderVisited) {
+          try {
+            arAkahukuCompat.AsyncHistory.isURIVisited
+              (arAkahukuUtil.newURIViaDocument (cell.href, targetDocument),
+               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
       }
     }
         
@@ -4898,21 +4972,35 @@ var arAkahukuCatalog = {
       }
       
       var nodes = table.getElementsByTagName ("a");
-      var uri
-      = Components
-      .classes ["@mozilla.org/network/standard-url;1"]
-      .createInstance (Components.interfaces.nsIURI);
+      var uri;
       
-      var visited;
+      var historyCallbacks = new arAkahukuMergeItemCallbackList ();
+      var callback;
       for (var i = 0; i < nodes.length; i ++) {
-        uri.spec = nodes [i].href;
-        visited = !clear && arAkahukuHistory.isVisited (uri);
-        if (visited) {
-          arAkahukuDOM.addClassName (nodes [i], "akahuku_visited");
-        }
-        else {
+        if (clear) {
           arAkahukuDOM.removeClassName (nodes [i], "akahuku_visited");
         }
+        else {
+          uri = arAkahukuUtil.newURIViaDocument (nodes [i].href, targetDocument);
+          // customize for node operations
+          callback = historyCallbacks.createVisitedCallback (nodes [i]);
+          callback.isVisitedHandler = function (uri, visited) {
+            if (visited) {
+              arAkahukuDOM.addClassName (this.wrappedObject, "akahuku_visited");
+            }
+            else {
+              arAkahukuDOM.removeClassName (this.wrappedObject, "akahuku_visited");
+            }
+          };
+          arAkahukuCompat.AsyncHistory.isURIVisited (uri, callback);
+        }
+      }
+
+      if (historyCallbacks.count > 0) {
+        historyCallbacks.asyncWaitRequests
+          (function () {
+            historyCallbacks = null;
+          });
       }
     }
   },

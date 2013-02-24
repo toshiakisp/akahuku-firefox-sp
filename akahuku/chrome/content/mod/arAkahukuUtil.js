@@ -41,5 +41,18 @@ var arAkahukuUtil = new function () {
     }
   };
 
+  this.newURIViaDocument = function (path, doc) {
+    var ios = Cc ["@mozilla.org/network/io-service;1"]
+      .getService (Ci.nsIIOService);
+    var baseuri = null;
+    if ("documentURIObject" in doc) {
+      baseuri = doc.documentURIObject;
+    }
+    else {
+      baseuri = ios.newURI (doc.documentURI, null, null);
+    }
+    return ios.newURI (path, null, baseuri);
+  };
+
 };
 

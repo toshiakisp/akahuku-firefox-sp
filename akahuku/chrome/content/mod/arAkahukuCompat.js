@@ -11,6 +11,10 @@ var arAkahukuCompat = new function () {
     return defaultValue;
   }
 
+  const Ci = Components.interfaces;
+  const Cc = Components.classes;
+  const Cr = Components.results;
+
   this.WebBrowserPersist = {
     saveURI : function (webBrowserPersist, args)
     {
@@ -85,6 +89,48 @@ var arAkahukuCompat = new function () {
         }
       }, Components.interfaces.nsIThread.DISPATCH_NORMAL);
     };
+  };
+
+  this.AsyncHistory = new function () {
+    // 履歴の調査を非同期的なAPIに統一する
+    // mozIAsyncHistory.isURIVisited
+    if ("@mozilla.org/browser/history;1" in Cc) {
+      var asyncHistory
+        = Cc ["@mozilla.org/browser/history;1"]
+        .getService (Ci.mozIAsyncHistory);
+      if ("isURIVisited" in asyncHistory) { // Gecko 11.0+
+        this.isURIVisited = asyncHistory.isURIVisited;
+      }
+      else {
+        asyncHistory = null;
+      }
+    }
+    if (!asyncHistory) {
+      // async compatibles using sync interfaces
+      if ("@mozilla.org/browser/global-history;2" in Cc) {
+        var gh2 = Cc ["@mozilla.org/browser/global-history;2"]
+          .getService (Ci.nsIBrowserHistory);
+        this.isURIVisited = function (uri, callback) {
+          callback.isVisited (uri, gh2.isVisited (uri));
+        };
+      }
+      else if ("@mozilla.org/browser/global-history;1" in Cc) {
+        var gh1
+          = Cc ["@mozilla.org/browser/global-history;1"]
+          .getService (Ci.nsIBrowserHistory);
+        this.isURIVisited = function (uri, callback) {
+          callback.isVisited (uri, gh1.isVisited (uri.spec));
+        };
+      }
+      else {
+        // dummy definition
+        this.isURIVisited = function (uri, callback) {
+          if (callback && "isVisited" in callback) {
+            callback.isVisited (uri, false);
+          }
+        };
+      }
+    }
   };
 
 };
