@@ -216,7 +216,7 @@ arAkahukuLinkifyResult.prototype = {
 };
 /**
  * 拡張子自動認識のリスナ
- *   Inherits From: nsIInterfaceRequestor, nsIHttpEventSink,
+ *   Inherits From: nsIInterfaceRequestor, nsIChannelEventSink,
  *                  nsIStreamListener, nsIRequestObserver
  */
 function arAkahukuLinkExtListener () {
@@ -251,7 +251,7 @@ arAkahukuLinkExtListener.prototype = {
     if (iid.equals (Components.interfaces.nsISupports)
         || iid.equals (Components.interfaces.nsISupportsWeakReference)
         || iid.equals (Components.interfaces.nsIInterfaceRequestor)
-        || iid.equals (Components.interfaces.nsIHttpEventSink)
+        || iid.equals (Components.interfaces.nsIChannelEventSink)
         || iid.equals (Components.interfaces.nsIStreamListener)
         || iid.equals (Components.interfaces.nsIRequestObserver)) {
       return this;
@@ -287,26 +287,29 @@ arAkahukuLinkExtListener.prototype = {
     
   /**
    * リダイレクトのイベント
-   *   nsIHttpEventSink.onRedirect
-   *
-   * @param  nsIHttpChannel httpChannel
-   *         現在のリクエスト
-   * @param  nsIChannel newChannel
-   *         新しいリクエスト
+   *   nsIChannelEventSink.asyncOnChannelRedirect
    */
-  onRedirect : function (httpChannel, newChannel) {
+  asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
     try {
       if (newChannel.URI.spec.match (/s[usapq][0-9]+\.([_a-zA-Z0-9]+)/)) {
         var ext = RegExp.$1;
-        arAkahukuLink.setExt2 (ext,
-                               this.targetDocument, this.targetNode,
-                               this.extNode);
+        arAkahukuLink.setExt2
+          (ext, this.targetDocument, this.targetNode, this.extNode);
       }
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-        
-    newChannel.cancel (Components.results.NS_BINDING_ABORTED || 0x80020006);
+    if (callback) {
+      callback.onRedirectVerifyCallback (Components.results.NS_BINDING_ABORTED);
+    }
+  },
+
+  /**
+   * nsIChannelEventSink.onChannelRedirect (Obsolete since Gecko 2.0)
+   */
+  onChannelRedirect : function (oldChannel, newChannel, flags) {
+    this.asyncOnChannelRedirect (oldChannel, newChannel, flags, null);
+    newChannel.cancel (Components.results.NS_BINDING_ABORTED);
   },
 
   /**
