@@ -67,7 +67,6 @@ var Akahuku = {
                                   *   最近使ったドキュメントごとの情報 */
     
   isOld : false,                 /* Boolean  古い Mozilla Suite か */
-  isFx36 : false,                /* Boolean  Firefox 3.6 以降か */
   isFx4 : false,                 /* Boolean  Firefox 4.0 以降か */
     
   initialized : false,           /* Boolean  初期化フラグ */
@@ -291,17 +290,6 @@ var Akahuku = {
       Akahuku.isOld = true;
     }
     
-    try {
-      var faviconService
-      = Components.classes ["@mozilla.org/browser/favicon-service;1"]
-      .getService (Components.interfaces.nsIFaviconService);
-      if ("expireAllFavicons" in faviconService) {
-        Akahuku.isFx36 = true;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-
     try {
       Components.utils.import ("resource://gre/modules/Services.jsm");
       if (Services.vc.compare (Services.appinfo.platformVersion, "2.0") >= 0) {

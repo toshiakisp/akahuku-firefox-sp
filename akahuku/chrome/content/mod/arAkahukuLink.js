@@ -2414,17 +2414,12 @@ var arAkahukuLink = {
         }
         catch (e) { Akahuku.debug.exception (e);
         }
-        var newTab;
-        if (Akahuku.isFx36) {
-          newTab = tabbrowser.addTab (href, {
+        var newTab
+          = tabbrowser.addTab (href, {
             relatedToCurrent : true,
             // gBrowser.loadOneTab と同じロジックでタブを関連付ける
             ownerTab : (focus ? tabbrowser.selectedTab : null),
           });
-        }
-        else {
-          newTab = tabbrowser.addTab (href);
-        }
         if (focus) {
           tabbrowser.selectedTab = newTab;
         }
@@ -2812,8 +2807,8 @@ var arAkahukuLink = {
       arAkahukuLink.onAutoLinkOut (arguments [0]);
     }, false);
         
-    if (Akahuku.isFx36) {
-      /* ドラッグ可能にする */
+    if ("draggable" in targetNode) {
+      /* ドラッグ可能にする (Gecko 1.9.1+) */
       targetNode.draggable = true;
       targetNode.addEventListener
       ("dragstart",
