@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuConfig, arAkahukuDOM, arAkahukuHistory,
+ * Require: arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
  *          arAkahukuBoard
  */
 
@@ -1108,13 +1108,14 @@ var arAkahukuSidebar = {
     }
     board.validateThread (num);
         
-    arAkahukuSidebar.updateVisited (name);
-    arAkahukuSidebar.sort (name);
-    arAkahukuSidebar.update (name);
-    if (arAkahukuSidebar.enableMarked) {
-      arAkahukuSidebar.sort ("*_*");
-      arAkahukuSidebar.update ("*_*");
-    }
+    arAkahukuSidebar.asyncUpdateVisited (name, function () {
+      arAkahukuSidebar.sort (name);
+      arAkahukuSidebar.update (name);
+      if (arAkahukuSidebar.enableMarked) {
+        arAkahukuSidebar.sort ("*_*");
+        arAkahukuSidebar.update ("*_*");
+      }
+    });
   },
     
   /**
@@ -1122,9 +1123,14 @@ var arAkahukuSidebar = {
    *
    * @param  String name
    *         対象の板
+   * @param  Function callback
    */
-  updateVisited : function (name) {
-    var board, thread;
+  asyncUpdateVisited : function (name, callback) {
+    var board, thread, vc;
+    var cblist = new arAkahukuMergeItemCallbackList ();
+    var threadcb = function (uri, visited) {
+      this.wrappedObject.isVisited = visited;
+    };
         
     if (name in arAkahukuSidebar.boards) {
       board = arAkahukuSidebar.boards [name];
@@ -1136,11 +1142,13 @@ var arAkahukuSidebar = {
         
     for (var i = 0; i < board.threads.length; i ++) {
       thread = board.threads [i];
-            
-      var uri = thread.threadLinkURIObject;
-            
-      thread.isVisited = arAkahukuHistory.isVisited (uri);
+      vc = cblist.createVisitedCallback (thread);
+      vc.isVisitedHandler = threadcb;
+      arAkahukuCompat.AsyncHistory
+        .isURIVisited (thread.threadLinkURIObject, vc);
     }
+
+    cblist.asyncWaitRequests (callback);
   },
     
   /**
@@ -2058,9 +2066,10 @@ var arAkahukuSidebar = {
     var sidebarDocument = docs.sidebar;
     if (targetDocument.location.hash) {
       var name = targetDocument.location.hash.substr (1);
-      arAkahukuSidebar.updateVisited (name);
-      arAkahukuSidebar.sort (name);
-      arAkahukuSidebar.update (name, sidebarDocument);
+      arAkahukuSidebar.asyncUpdateVisited (name, function () {
+        arAkahukuSidebar.sort (name);
+        arAkahukuSidebar.update (name, sidebarDocument);
+      });
     }
   },
     
@@ -2093,36 +2102,25 @@ var arAkahukuSidebar = {
         arAkahukuSidebar.onCatalogLoad (targetDocument, name);
       }
             
-      arAkahukuSidebar.updateVisited (name);
-      arAkahukuSidebar.sort (name);
-      arAkahukuSidebar.update (name, sidebarDocument);
-            
-      /* 以下ではサイドバー以外にロードされた場合対応できない
-      var sidebar = arAkahukuSidebar.getSidebar ();
-      if (!sidebar.docShell) {
-        return;
-      }
-      var sidebarDocument;
-      try {
-        sidebarDocument = sidebar.contentDocument;
-      }
-      catch (e) {
-        sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
-      }
-      */
-      var button;
-      button
-        = sidebarDocument
-        .getElementById ("akahuku_sidebar_refresh_0_" + name);
-      if (button) {
-        button.removeAttribute ("disabled");
-      }
-      button
-        = sidebarDocument
-        .getElementById ("akahuku_sidebar_refresh_catalog_" + name);
-      if (button) {
-        button.removeAttribute ("disabled");
-      }
+      arAkahukuSidebar.asyncUpdateVisited (name, function () {
+        arAkahukuSidebar.sort (name);
+        arAkahukuSidebar.update (name, sidebarDocument);
+
+        var button;
+        button
+          = sidebarDocument
+          .getElementById ("akahuku_sidebar_refresh_0_" + name);
+        if (button) {
+          button.removeAttribute ("disabled");
+        }
+        button
+          = sidebarDocument
+          .getElementById ("akahuku_sidebar_refresh_catalog_" + name);
+        if (button) {
+          button.removeAttribute ("disabled");
+        }
+      });
+
       // DOMを解放する
       setTimeout (function () {
         targetDocument.location.href = "about:blank";
@@ -2708,16 +2706,15 @@ var arAkahukuSidebar = {
         }
       }
             
-      arAkahukuSidebar.updateVisited (name);
-            
-      arAkahukuSidebar.sort (name);
-            
-      arAkahukuSidebar.update (name, sidebarDocument);
-      if (arAkahukuSidebar.enableMarked) {
-        arAkahukuSidebar.updateMarked ();
-        arAkahukuSidebar.sort ("*_*");
-        arAkahukuSidebar.update ("*_*", sidebarDocument);
-      }
+      arAkahukuSidebar.asyncUpdateVisited (name, function () {
+        arAkahukuSidebar.sort (name);
+        arAkahukuSidebar.update (name, sidebarDocument);
+        if (arAkahukuSidebar.enableMarked) {
+          arAkahukuSidebar.updateMarked ();
+          arAkahukuSidebar.sort ("*_*");
+          arAkahukuSidebar.update ("*_*", sidebarDocument);
+        }
+      });
     }
   },
     
@@ -2825,14 +2822,14 @@ var arAkahukuSidebar = {
         arAkahukuSidebar.onCatalogLoad (targetDocument, name);
       }
             
-      arAkahukuSidebar.updateVisited (name);
-      arAkahukuSidebar.sort (name);
-      arAkahukuSidebar.update (name);
-            
-      if (arAkahukuSidebar.enableMarked) {
-        arAkahukuSidebar.sort ("*_*");
-        arAkahukuSidebar.update ("*_*");
-      }
+      arAkahukuSidebar.asyncUpdateVisited (name, function () {
+        arAkahukuSidebar.sort (name);
+        arAkahukuSidebar.update (name);
+        if (arAkahukuSidebar.enableMarked) {
+          arAkahukuSidebar.sort ("*_*");
+          arAkahukuSidebar.update ("*_*");
+        }
+      });
     }
   }
 };
