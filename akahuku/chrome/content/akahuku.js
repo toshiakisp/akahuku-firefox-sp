@@ -68,6 +68,8 @@ var Akahuku = {
     
   isOld : false,                 /* Boolean  古い Mozilla Suite か */
   isFx4 : false,                 /* Boolean  Firefox 4.0 以降か */
+  isFx7 : false,
+  isFx9 : false,
     
   initialized : false,           /* Boolean  初期化フラグ */
     
@@ -292,8 +294,12 @@ var Akahuku = {
     
     try {
       Components.utils.import ("resource://gre/modules/Services.jsm");
-      if (Services.vc.compare (Services.appinfo.platformVersion, "2.0") >= 0) {
-        Akahuku.isFx4 = true; // Firefox 4+/Gecko 2.0+
+      Akahuku.isFx4 = true;
+      if (Services.vc.compare (Services.appinfo.platformVersion, "7.0") >= 0) {
+        Akahuku.isFx7 = true;
+      }
+      if (Services.vc.compare (Services.appinfo.platformVersion, "9.0") >= 0) {
+        Akahuku.isFx9 = true;
       }
     }
     catch (e) {
@@ -433,10 +439,8 @@ var Akahuku = {
 
     /* 画像鯖では保存場所を覚えさせないハック (Fx 7.0 以降) */
     try {
-      Components.utils.import
-        ("resource://gre/modules/Services.jsm");
       if (Akahuku.enableDownloadLastDirHack
-          && Services.vc.compare (Services.appinfo.platformVersion, "7.0") >= 0) {
+          && Akahuku.isFx7) {
         /* 保存する直前/直後を捉える方法がわからないので、やっつけ */
         gBrowser.addEventListener
           ("pageshow", Akahuku.onImageDocumentActivity, true);
@@ -1670,7 +1674,7 @@ var Akahuku = {
       if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd)\.2chan\.net$/
           .test (host)) { /* 画像鯖 */
         var doFake = false;
-        if (Services.vc.compare (Services.appinfo.platformVersion, "9.0") < 0) {
+        if (Akahuku.isFx9) {
           // 9.0より前はPBモード時の処理が特殊 (参考:Bug 684107)
           var pbsvc = null;
           if ("@mozilla.org/privatebrowsing;1" in Components.classes) {
