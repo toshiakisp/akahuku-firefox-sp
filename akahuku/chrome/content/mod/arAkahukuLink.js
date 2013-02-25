@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
- *          arAkahukuHistory, arAkahukuImage, arAkahukuP2P,
+ *          arAkahukuImage, arAkahukuP2P, arAkahukuCompat
  *          arAkahukuClipboard
  */
 
@@ -2759,15 +2759,18 @@ var arAkahukuLink = {
     catch (e) { Akahuku.debug.exception (e);
       return;
     }
-    var flag = targetNode.getAttribute ("visited");
-        
-    var visited = arAkahukuHistory.isVisited (uri);
-    if (visited) {
-      targetNode.setAttribute ("visited", "true");
-    }
-    else {
-      targetNode.removeAttribute ("visited");
-    }
+
+    arAkahukuCompat.AsyncHistory.isURIVisited (uri, {
+      node : targetNode,
+      isVisited : function (uri, visited) {
+        if (visited) {
+          this.node.setAttribute ("visited", "true");
+        }
+        else {
+          this.node.removeAttribute ("visited");
+        }
+      }
+    });
   },
     
   /**
