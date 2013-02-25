@@ -92,6 +92,12 @@ var arAkahukuCompat = new function () {
   };
 
   this.AsyncHistory = new function () {
+    this.isURIVisited = function (uri, callback) {
+      this._lazyInit ();
+      return this.isURIVisited (uri, callback);
+    };
+  };
+  this.AsyncHistory._lazyInit = function () {
     // 履歴の調査を非同期的なAPIに統一する
     // mozIAsyncHistory.isURIVisited
     if ("@mozilla.org/browser/history;1" in Cc) {
