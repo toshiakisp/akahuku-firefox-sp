@@ -371,7 +371,6 @@ var Akahuku = {
     arAkahukuConverter.init ();
     arAkahukuConfig.init ();
     arAkahukuTab.init ();
-    arAkahukuHistory.init ();
     arAkahukuBloomer.init ();
     arAkahukuImage.init ();
     arAkahukuThread.init ();
