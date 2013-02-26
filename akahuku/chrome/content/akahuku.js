@@ -1674,7 +1674,7 @@ var Akahuku = {
       if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd)\.2chan\.net$/
           .test (host)) { /* 画像鯖 */
         var doFake = false;
-        if (Akahuku.isFx9) {
+        if (!Akahuku.isFx9) {
           // 9.0より前はPBモード時の処理が特殊 (参考:Bug 684107)
           var pbsvc = null;
           if ("@mozilla.org/privatebrowsing;1" in Components.classes) {
