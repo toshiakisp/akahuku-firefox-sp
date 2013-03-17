@@ -249,7 +249,7 @@ arAkahukuCatalogPopupData.prototype =  {
                         
               anchor.style.position = "relative";
               anchor.href = this.popup.firstChild.href;
-              var uri = arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument);
+              var uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
               arAkahukuCompat.AsyncHistory.isURIVisited (uri, {
                 _target : anchor,
                 isVisited : function (uri, visited) {
@@ -3726,7 +3726,7 @@ var arAkahukuCatalog = {
             var anchor
               = arAkahukuDOM.getFirstElementByNames (oldCells [i], "a");
             arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument),
+              (arAkahukuUtil.newURIViaNode (anchor.href, anchor),
                param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
           }
           catch (e) { Akahuku.debug.exception (e);
@@ -3795,7 +3795,7 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableReorderVisited) {
           try {
             arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaDocument (cell.href, targetDocument),
+              (arAkahukuUtil.newURIViaNode (cell.href, targetDocument),
                param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
           }
           catch (e) { Akahuku.debug.exception (e);
@@ -4217,7 +4217,7 @@ var arAkahukuCatalog = {
             var anchor
               = arAkahukuDOM.getFirstElementByNames (oldCells [threadId], "a");
             arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument),
+              (arAkahukuUtil.newURIViaNode (anchor.href, anchor),
                param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
           }
           catch (e) { Akahuku.debug.exception (e);
@@ -4251,7 +4251,7 @@ var arAkahukuCatalog = {
             var path = RegExp.$1;
             try {
               arAkahukuCompat.AsyncHistory.isURIVisited
-                (arAkahukuUtil.newURIViaDocument (path, targetDocument),
+                (arAkahukuUtil.newURIViaNode (path, targetDocument),
                  param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
             }
             catch (e) { Akahuku.debug.exception (e);
@@ -4304,7 +4304,7 @@ var arAkahukuCatalog = {
             var anchor
               = arAkahukuDOM.getFirstElementByNames (oldCells [threadId], "a");
             arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaDocument (anchor.href, targetDocument),
+              (arAkahukuUtil.newURIViaNode (anchor.href, anchor),
                param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
           }
           catch (e) { Akahuku.debug.exception (e);
@@ -4366,7 +4366,7 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableReorderVisited) {
           try {
             arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaDocument (cell.href, targetDocument),
+              (arAkahukuUtil.newURIViaNode (cell.href, targetDocument),
                param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
           }
           catch (e) { Akahuku.debug.exception (e);
@@ -4981,7 +4981,7 @@ var arAkahukuCatalog = {
           arAkahukuDOM.removeClassName (nodes [i], "akahuku_visited");
         }
         else {
-          uri = arAkahukuUtil.newURIViaDocument (nodes [i].href, targetDocument);
+          uri = arAkahukuUtil.newURIViaNode (nodes [i].href, nodes [i]);
           // customize for node operations
           callback = historyCallbacks.createVisitedCallback (nodes [i]);
           callback.isVisitedHandler = function (uri, visited) {

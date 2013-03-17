@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
- *          arAkahukuImage, arAkahukuP2P, arAkahukuCompat
+ *          arAkahukuImage, arAkahukuP2P, arAkahukuCompat, arAkahukuUtil
  *          arAkahukuClipboard
  */
 
@@ -734,11 +734,7 @@ var arAkahukuLink = {
       .replace (/\u2329/g, "&lang");
       
       try {
-        var testURL
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        testURL.spec = url;
+        arAkahukuUtil.newURIViaNode (url, null);
       }
       catch (e) { Akahuku.debug.exception (e);
         return false;
@@ -2362,16 +2358,9 @@ var arAkahukuLink = {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
       try {
         var contentLocation
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-        contentLocation.spec = href;
-                
+        = arAkahukuUtil.newURIViaNode (href, null);
         var requestOrigin
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-        requestOrigin.spec = targetDocument.location.href;
+        = arAkahukuUtil.newURIViaNode ("", targetDocument);
                 
         var uri
         = UnMHT.getMHTFileURI (contentLocation,
@@ -2454,14 +2443,7 @@ var arAkahukuLink = {
           var href = target.getAttribute ("dummyhref");
                     
           /* IDN や相対アドレスの解決 */
-          var ios
-            = Components.classes
-            ["@mozilla.org/network/io-service;1"]
-            .getService (Components.interfaces.nsIIOService);
-          var baseUri
-            = target.ownerDocument.baseURIObject
-            || ios.newURI (target.ownerDocument.baseURI, null, null);
-          var uri = ios.newURI (href, null, baseUri);
+          var uri = arAkahukuUtil.newURIViaNode (href, target.ownerDocument);
           href = uri.spec;
           try {
             /* 可能ならロケーションバーと同様に可読化 */
@@ -2749,12 +2731,9 @@ var arAkahukuLink = {
    *         対象のノード
    */
   updateAutoLinkVisitedCore : function (targetNode) {
-    var uri
-    = Components
-    .classes ["@mozilla.org/network/standard-url;1"]
-    .createInstance (Components.interfaces.nsIURI);
+    var href = targetNode.getAttribute ("dummyhref")
     try {
-      uri.spec = targetNode.getAttribute ("dummyhref");
+      var uri = arAkahukuUtil.newURIViaNode (href, null);
     }
     catch (e) { Akahuku.debug.exception (e);
       return;
@@ -3003,10 +2982,7 @@ var arAkahukuLink = {
       register : function (node, uriSpec)
       {
         this.targetNode = node;
-        this.targetURI
-          = Components.classes ["@mozilla.org/network/io-service;1"]
-          .getService (Components.interfaces.nsIIOService)
-          .newURI (uriSpec, null, null);
+        this.targetURI = arAkahukuUtil.newURIViaNode (uriSpec, null);
         if (!this.registered) {
           this.os
             = Components.classes ["@mozilla.org/observer-service;1"]
@@ -3342,14 +3318,9 @@ var arAkahukuLink = {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
       try {
         var contentLocation
-          = Components.classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        contentLocation.spec = uri;
-                
+        = arAkahukuUtil.newURIViaNode (uri, null);
         var requestOrigin
-          = Components.classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        requestOrigin.spec = targetDocument.location.href;
+        = arAkahukuUtil.newURIViaNode ("", targetDocument);
                 
         var uri2 = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
         if (uri2) {

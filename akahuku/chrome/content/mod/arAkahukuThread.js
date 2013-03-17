@@ -3,7 +3,8 @@
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuP2P,
- *          arAkahukuReload, arAkahukuWindow, arAkahukuBoard
+ *          arAkahukuReload, arAkahukuWindow, arAkahukuBoard,
+ *          arAkahukuUtil
  */
 
 /**
@@ -1448,16 +1449,9 @@ var arAkahukuThread = {
           /* サムネが mht 内に存在するかどうかチェック */
           try {
             var contentLocation
-              = Components
-              .classes ["@mozilla.org/network/standard-url;1"]
-              .createInstance (Components.interfaces.nsIURI);
-            contentLocation.spec = src;
-                            
+              = arAkahukuUtil.newURIViaNode (src, null);
             var requestOrigin
-              = Components
-              .classes ["@mozilla.org/network/standard-url;1"]
-              .createInstance (Components.interfaces.nsIURI);
-            requestOrigin.spec = targetDocument.location.href;
+              = arAkahukuUtil.newURIViaNode ("", targetDocument);
             
             var uri
               = UnMHT.getMHTFileURI (contentLocation,

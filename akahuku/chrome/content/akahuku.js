@@ -1161,13 +1161,7 @@ var Akahuku = {
     var wait = 0;
     if (text.match (/URL=([^\"]+)\"/)) {
       srcLocation = RegExp.$1;
-                            
-      var baseDir
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-      baseDir.spec = location;
-            
+      var baseDir = arAkahukuUtil.newURIViaNode (location, null);
       srcLocation = baseDir.resolve (srcLocation);
     }
     else if (text.match (/<script[ \t\r\n]+(language[ \t\r\n]*=[ \t\r\n]*[\"\']?JavaScript[\"\']?)>[ \t\r\n]*(<!--)?[ \t\r\n]*(.+)[ \t\r\n]*(\/\/-->)?[ \t\r\n]*<\/script>/)) {
