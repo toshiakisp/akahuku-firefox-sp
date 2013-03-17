@@ -915,7 +915,7 @@ var arAkahukuImage = {
       try {
         // required for Firefox 18.0+
         args.privacyContext
-          = targetDocument.defaultView
+          = target.ownerDocument.defaultView
           .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
           .getInterface (Components.interfaces.nsIWebNavigation)
           .QueryInterface (Components.interfaces.nsILoadContext);
