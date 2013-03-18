@@ -224,6 +224,59 @@ var Akahuku = {
     return null;
   },
 
+  /**
+   * URI に合致するドキュメントごとの情報を得る
+   * @param  nsIURI uri
+   *         対象のURI (Stringでも可)
+   * @return Array
+   *         [arAkahukuDocumentParam,...]
+   */
+  getDocumentParamsByURI : function (uri, optFirstOnly) {
+    var ret = [];
+    if (Akahuku.documentParams.length == 0) {
+      return ret;
+    }
+
+    if (!(uri instanceof Components.interfaces.nsIURI)) {
+      try {
+        uri = arAkahukuUtil.newURIViaNode (uri, null);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        return ret;
+      }
+    }
+
+    var checkURI;
+    if ("equalsExceptRef" in uri) { // requires Gecko 6.0+
+      checkURI = function (param, uri) {
+        return uri.equalsExceptRef (param.targetDocument.documentURIObject);
+      };
+    }
+    else {
+      checkURI = function (param, uri) {
+        if ("documentURIObject" in param.targetDocument) {
+          // requires Gecko 1.9+
+          return uri.equals (param.targetDocument.documentURIObject);
+        }
+        else {
+          return uri.spec === param.targetDocument.documentURI;
+        }
+      };
+    }
+
+    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
+      if (checkURI (Akahuku.documentParams [i], uri)) {
+        ret.push (Akahuku.documentParams [i]);
+        if (optFirstOnly) break;
+      }
+    }
+    return ret;
+  },
+
+  hasDocumentParamForURI : function (uri) {
+    return (Akahuku.getDocumentParamsByURI (uri, true).length > 0);
+  },
+
   /*
    * フォーカスされているドキュメントの情報を取得する
    * (フレーム内のドキュメントでも)
