@@ -1781,6 +1781,9 @@
               <checkbox id="catalog_observe_replynum" checked="false"
                         class="sp" tooltiptext="(デフォルト：無効) 返信モードでのレス数変化をカタログに即座に反映する"
                         label="レス数を即座に反映" />
+              <checkbox id="catalog_observe_opened" checked="false"
+                        class="sp" tooltiptext="(デフォルト：無効) 別タブ等で開いている返信モードのスレをマークして既読扱いにする"
+                        label="開いているスレをマーク" />
             </groupbox>
             <checkbox id="catalog_clickable" checked="false"
                       label="空白の本文を強制リンク" />
