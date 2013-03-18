@@ -1417,6 +1417,28 @@ var arAkahukuThread = {
       }
     }
     documentParam.respanel_param = null;
+
+    try {
+      var info = documentParam.location_info;
+      if (info.isReply) {
+        var os
+          = Components.classes ["@mozilla.org/observer-service;1"]
+          .getService (Components.interfaces.nsIObserverService);
+        var subject
+          = Components.classes ["@mozilla.org/supports-string;1"]
+          .createInstance (Components.interfaces.nsISupportsString);
+        subject.data
+          = arAkahukuJSON.encode ({
+            URL: targetDocument.location.href,
+            server: info.server,
+            dir: info.dir,
+            threadNumber: info.threadNumber,
+          });
+        os.notifyObservers (subject, "arakahuku-thread-unload", null);
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
   },
 
   /**
