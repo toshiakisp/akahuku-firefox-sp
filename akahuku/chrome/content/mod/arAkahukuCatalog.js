@@ -2614,8 +2614,7 @@ var arAkahukuCatalog = {
     }
         
     if (arAkahukuCatalog.enableReloadLeftBeforeSave
-        && info.isFutaba
-        && param.order == "akahuku_catalog_reorder_spec") {
+        && info.isFutaba) {
       /* 状態を保存 */
       var filename
       = arAkahukuFile.systemDirectory
