@@ -3858,8 +3858,17 @@ var arAkahukuCatalog = {
           continue;
         }
 
-        if (arAkahukuCatalog.enableObserveOpened) {
-          opened = arAkahukuCatalog.isOpened (cell.href);
+        var uri = null;
+        if (arAkahukuCatalog.enableReorderVisited
+            || arAkahukuCatalog.enableObserveOpened) {
+          try {
+            uri = arAkahukuUtil.newURIViaNode (cell.href, targetDocument);
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
+        if (arAkahukuCatalog.enableObserveOpened && uri) {
+          opened = arAkahukuCatalog.isOpened (uri);
         }
             
         mergedItems.push
@@ -3876,14 +3885,10 @@ var arAkahukuCatalog = {
              opened: opened,
             }));
 
-        if (arAkahukuCatalog.enableReorderVisited) {
-          try {
-            arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaNode (cell.href, targetDocument),
-               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
+        if (arAkahukuCatalog.enableReorderVisited && uri) {
+          arAkahukuCompat.AsyncHistory.isURIVisited
+            (uri, param.historyCallbacks.createVisitedCallback
+             (mergedItems [mergedItems.length-1]));
         }
       }
     }
@@ -4320,16 +4325,19 @@ var arAkahukuCatalog = {
           newestId = parseInt (threadId);
         }
         
+        var uri = null;
         if (arAkahukuCatalog.enableReorderVisited
             || arAkahukuCatalog.enableVisited
             || arAkahukuCatalog.enableObserveOpened) {
-          var href = "";
-          if (currentTdText.match (/href=['"]?([^\s'"]+)/)) {
-            href = RegExp.$1;
+          try {
+            var href = /href=['"]?([^\s'"]+)/.exec (currentTdText) [1];
+            uri = arAkahukuUtil.newURIViaNode (href, targetDocument);
+          }
+          catch (e) { Akahuku.debug.exception (e);
           }
         }
-        if (arAkahukuCatalog.enableObserveOpened) {
-          opened = href ? arAkahukuCatalog.isOpened (href) : false;
+        if (arAkahukuCatalog.enableObserveOpened && uri) {
+          opened = arAkahukuCatalog.isOpened (uri);
         }
 
         mergedItems.push
@@ -4350,13 +4358,9 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableReorderVisited
             || arAkahukuCatalog.enableVisited) {
           // 新しいスレに既読判定が必要な場合
-          try {
-            arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaNode (href, targetDocument),
-               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
+          arAkahukuCompat.AsyncHistory.isURIVisited
+            (uri, param.historyCallbacks.createVisitedCallback
+             (mergedItems [mergedItems.length-1]));
         }
       }
     }
@@ -4379,17 +4383,19 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableReorderVisited) {
           visited = arAkahukuCatalog.isVisitedCell (oldCells [threadId]);
         }
-        var uri;
+        var uri = null;
         if (arAkahukuCatalog.enableReorderVisited
             || arAkahukuCatalog.enableObserveOpened) {
           var anchor
             = arAkahukuDOM.getFirstElementByNames (oldCells [threadId], "a");
-          if (anchor && anchor.href) {
+          try {
             uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
           }
+          catch (e) { Akahuku.debug.exception (e);
+          }
         }
-        if (arAkahukuCatalog.enableObserveOpened) {
-          opened = uri ? arAkahukuCatalog.isOpened (uri) : false;
+        if (arAkahukuCatalog.enableObserveOpened && uri) {
+          opened = arAkahukuCatalog.isOpened (uri);
         }
             
         nums [parseInt (threadId)] = true;
@@ -4412,12 +4418,9 @@ var arAkahukuCatalog = {
           }));
 
         if (arAkahukuCatalog.enableReorderVisited) {
-          try {
-            arAkahukuCompat.AsyncHistory.isURIVisited
-              (uri, param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
+          arAkahukuCompat.AsyncHistory.isURIVisited
+            (uri, param.historyCallbacks.createVisitedCallback
+             (mergedItems [mergedItems.length-1]));
         }
       }
       // カタログ順になることを保証させる
@@ -4459,8 +4462,17 @@ var arAkahukuCatalog = {
           continue;
         }
 
-        if (arAkahukuCatalog.enableObserveOpened) {
-          opened = arAkahukuCatalog.isOpened (cell.href);
+        var uri = null;
+        if (arAkahukuCatalog.enableReorderVisited
+            || arAkahukuCatalog.enableObserveOpened) {
+          try {
+            uri = arAkahukuUtil.newURIViaNode (cell.href, targetDocument);
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
+        }
+        if (arAkahukuCatalog.enableObserveOpened && uri) {
+          opened = arAkahukuCatalog.isOpened (uri);
         }
                 
         mergedItems.push
@@ -4476,14 +4488,10 @@ var arAkahukuCatalog = {
              isNew: false, overflowed: true,
             }));
 
-        if (arAkahukuCatalog.enableReorderVisited) {
-          try {
-            arAkahukuCompat.AsyncHistory.isURIVisited
-              (arAkahukuUtil.newURIViaNode (cell.href, targetDocument),
-               param.historyCallbacks.createVisitedCallback (mergedItems [mergedItems.length-1]));
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
+        if (arAkahukuCatalog.enableReorderVisited && uri) {
+          arAkahukuCompat.AsyncHistory.isURIVisited
+            (uri, param.historyCallbacks.createVisitedCallback
+             (mergedItems [mergedItems.length-1]));
         }
       }
     }
@@ -5135,10 +5143,12 @@ var arAkahukuCatalog = {
     var nodes = table.getElementsByTagName ("td");
     for (var i = 0; i < nodes.length; i ++) {
       var a = arAkahukuDOM.getFirstElementByNames (nodes [i], "a");
-      if (a && a.href) {
+      try {
         var uri = arAkahukuUtil.newURIViaNode (a.href, a);
         var opened = arAkahukuCatalog.isOpened (uri);
         arAkahukuCatalog.setCellOpened (nodes [i], opened);
+      }
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
   },
