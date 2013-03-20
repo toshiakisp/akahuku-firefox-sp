@@ -651,7 +651,7 @@ var arAkahukuPopupQuote = {
                 
         switch (type) {
           case 0:
-            if (innerText.match (/^(&gt;)*[ \t\r\n]*(No\.)?([0-9]+)(\.[a-z]+)?\s*$/)) {
+            if (innerText.match (/^(&gt;)*[ \t\r\n]*([N\uFF2E][o\uFF4F][\.\uFF0E]|\u2116)?([0-9]+)(\.[a-z]+)?\s*$/)) {
               quotedNo = parseInt (RegExp.$3);
             }
             break;
@@ -923,7 +923,7 @@ var arAkahukuPopupQuote = {
           if (quoted.firstChild && quoted.firstChild
               .nodeType == quoted.TEXT_NODE
               && quotedNo == -1 // 番号が未探索かどうか
-              && /(?:No\.[1-9][0-9]*|[0-9]+\.[a-z]+)/
+              && /(?:(?:[N\uFF2E][o\uFF4F][\.\uFF0E]|\u2116)[1-9][0-9]*|[0-9]+\.[a-z]+)/
                  .test (originalQuotedText)) {
             quoted.normalize ();
             var original
