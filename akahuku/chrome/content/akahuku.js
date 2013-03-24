@@ -603,8 +603,6 @@ var Akahuku = {
     }
         
     if (href.match
-        (/^http:\/\/nijibox\.dyndns\.dk\/akahuku\/catalog\/dat\/(view.php\?mode=cat2?)/)
-        || href.match
         (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)
         || href.match
         (/^http:\/\/www\.nijibox4\.com\/akahuku\/catalog\/dat\/(view\.php\?mode=cat2?)/)

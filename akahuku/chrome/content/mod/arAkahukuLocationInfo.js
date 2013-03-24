@@ -163,15 +163,6 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/nijibox\.dyndns\.dk\/akahuku\/catalog\/dat\/(view.php\?mode=cat2?)/)) {
-      /* dat のタテログ */
-      this.server = "dat";
-      this.dir = "b";
-      this.isTatelog = true;
-      path = RegExp.$1;
-      this.isFutaba = true;
-    }
-    else if (location.match
              (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
       /* dat のタテログ */
       this.server = "dat";
