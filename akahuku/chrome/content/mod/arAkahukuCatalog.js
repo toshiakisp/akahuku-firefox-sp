@@ -8,65 +8,6 @@
  */
 
 /**
- * [最新に更新] のキャッシュ書き込み
- *   Inherits From: nsICacheListener
- */
-function arAkahukuCatalogCacheWriter () {
-}
-arAkahukuCatalogCacheWriter.prototype = {
-  responseHead : "", /* String  応答のヘッダ */
-  body : "",         /* String  キャッシュの内容 */
-  charset : "",      /* String  文字コード */
-    
-  /**
-   * キャッシュの各パートを構築する
-   *
-   * @param  String text
-   *         キャッシュの全体
-   * @return Boolean
-   *         構築できたか
-   */
-  setText : function (text) {
-    this.body = text;
-        
-    return true;
-  },
-            
-  /**
-   * キャッシュエントリが使用可能になったイベント
-   *   nsICacheListener.onCacheEntryAvailable
-   * 差分位置を取得する
-   *
-   * @param  nsICacheEntryDescriptor descriptor
-   *         キャッシュの情報
-   * @param  nsCacheAccessMode accessGranted
-   *         アクセス権限
-   * @param  nsresult status
-   *         不明
-   */
-  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
-    if (accessGranted == Components.interfaces.nsICache.ACCESS_WRITE) {
-      /* キャッシュの書き込み */
-            
-      descriptor.setExpirationTime (0);
-            
-      var ostream = descriptor.openOutputStream (0);
-      ostream.write (this.body, this.body.length);
-      ostream.flush ();
-      ostream.close ();
-            
-      descriptor.markValid ();
-            
-      descriptor.setMetaDataElement ("request-method", "GET");
-      descriptor.setMetaDataElement ("response-head",
-                                     this.responseHead);
-      descriptor.setMetaDataElement ("charset", this.charset);
-            
-      descriptor.close ();
-    }
-  }
-};
-/**
  * カタログのポップアップデータ
  *   Inherits From: arAkahukuPopupData
  *
@@ -1374,9 +1315,6 @@ arAkahukuCatalogParam.prototype = {
                            *   読み込むストリーム */
   responseHead : "",      /* String  応答のヘッダ */
   responseText : "",      /* String  応答のデータ */
-    
-  writer : null,          /* arAkahukuCatalogCacheWriter
-                           *   キャッシュ書き込み */
     
   addedLastCells : false, /* Boolean  最後のセルを追加したか */
 
