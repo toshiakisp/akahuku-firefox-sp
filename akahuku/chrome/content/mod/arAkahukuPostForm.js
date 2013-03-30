@@ -1388,12 +1388,18 @@ var arAkahukuPostForm = {
         error.style.borderWidth = "1px";
         error.style.fontSize = "9pt";
         error.style.overflow = "auto";
+        error.style.display = "none";
+        error.style.maxHeight = "130px";
                 
-        var s
-        = "\u4EE5\u4E0B\u306E\u5185\u5BB9\u3092\u5831\u544A\u3057\u3066\u9802\u3051\u308C\u3070\u5BFE\u5FDC\u3057\u307E\u3059\n\n"
-        + "<html>\n"
-        + iframe.contentDocument.documentElement.innerHTML
-        + "\n</html>";
+        var s = "";
+        if ("outerHTML" in iframe.contentDocument.documentElement) {
+          s = iframe.contentDocument.documentElement.outerHTML;
+        }
+        else {
+          s = "<html>\n"
+            + iframe.contentDocument.documentElement.innerHTML
+            + "\n</html>";
+        }
                 
         error.appendChild (targetDocument.createTextNode (s));
       }
