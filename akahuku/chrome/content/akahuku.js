@@ -611,6 +611,11 @@ var Akahuku = {
       /* dat のタテログ */
       return true;
     }
+
+    if (/^http:\/\/appsweets\.net\/tatelog\/(?:dat|img)\/thread\/[0-9]+$/.test (href)) {
+      // タテログのログ
+      return false; //まだ自動適用は無し
+    }
     
     if (href.match
         (/^http:\/\/tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
@@ -1277,6 +1282,22 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
+             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+          node = iterator.iterateNext ();
+          while (node) {
+            newNodes.push (node);
+            node = iterator.iterateNext ();
+          }
+        }
+        if (newNodes.length == 0) {
+          // タテログのログ対応 patch
+          var xpath = ".//div[count(ancestor::div[@class='thread'])=1]";
+          if (targetNode instanceof Document) {
+            xpath = ".//div[@class='thread']//div";
+          }
+          iterator =
+            doc.evaluate
+            (xpath,
              targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
           node = iterator.iterateNext ();
           while (node) {

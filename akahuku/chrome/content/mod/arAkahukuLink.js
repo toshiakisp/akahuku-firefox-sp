@@ -1179,6 +1179,10 @@ var arAkahukuLink = {
         .addRule ("div.t > a.akahuku_generated_link > "
                   + "font.akahuku_generated_link_child",
                   "color: #a060cc;")
+        // タテログのログ patch
+        .addRule (".thread div > a.akahuku_generated_link",
+                  "color: #0040ee;"
+                  + "text-decoration: underline;")
         /* ポップアップ内 */
         .addRule ("div.akahuku_popup_content_blockquote > "
                   + "a.akahuku_generated_link",
@@ -1218,6 +1222,10 @@ var arAkahukuLink = {
         .addRule ("div.t > a.akahuku_generated_link[visited]",
                   "color: #8040ee; "
                   + "text-decoration: underline;")
+        // タテログのログ patch
+        .addRule (".thread div > a.akahuku_generated_link[visited]",
+                  "color: #0040ee;"
+                  + "text-decoration: underline;")
         /* ポップアップ */
         .addRule ("div.akahuku_popup_content_blockquote[visited] > "
                   + "a.akahuku_generated_link",
@@ -1251,6 +1259,9 @@ var arAkahukuLink = {
         .addRule ("blockquote > small.akahuku_generated",
                   "color: #0040ee;")
         .addRule ("div.t > small.akahuku_generated",
+                  "color: #0040ee;")
+        // タテログのログ patch
+        .addRule (".thread div > small.akahuku_generated",
                   "color: #0040ee;")
         /* ポップアップ内 */
         .addRule ("div.akahuku_popup_content_blockquote > "
@@ -1294,6 +1305,11 @@ var arAkahukuLink = {
                     "display: block;")
         }
                 
+        // タテログのログ patch
+        style
+        .addRule (".thread > table td div.akahuku_preview_container",
+                  "margin: inherit ! important;")
+
         /* mht で保存用 */
         style
         .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link",
@@ -3306,6 +3322,13 @@ var arAkahukuLink = {
     if (!owner) {
       owner = arAkahukuDOM.findParentNodeByClassName (target, "re");
     }
+    // タテログのログ patch
+    if (!owner) {
+      owner = arAkahukuDOM.findParentNodeByClassName (target, "thread");
+      if (owner) {
+        owner = arAkahukuDOM.findParentNode (target, "div");
+      }
+    }
     if (!owner) {
       /* メル欄の場合 */
       owner = arAkahukuDOM.findParentNode (target, "font");
@@ -3355,6 +3378,13 @@ var arAkahukuLink = {
     }
     if (!blockquote) {
       blockquote = arAkahukuDOM.findParentNodeByClassName (target, "re");
+    }
+    // タテログのログ patch
+    if (!blockquote) {
+      blockquote = arAkahukuDOM.findParentNodeByClassName (target, "thread");
+      if (blockquote) {
+        blockquote = arAkahukuDOM.findParentNode (target, "div");
+      }
     }
     if (!blockquote) {
       /* メル欄の場合 */

@@ -163,6 +163,19 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
+             (/^http:\/\/appsweets\.net\/tatelog\/(dat|img)\/thread\/([0-9]+)$/)) {
+      // タテログのログ
+      this.server = "tatelog" + RegExp.$1;
+      this.dir = "tatelog";
+      this.isTatelog = true;
+      this.isTsumanne = true;
+      path = "";
+      this.isFutaba = false;
+      this.isReply = true;
+      this.threadNumber = parseInt (RegExp.$2) || 0;
+      this.mode = "\u8FD4\u4FE1";//"返信"
+    }
+    else if (location.match
              (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
       /* dat のタテログ */
       this.server = "dat";

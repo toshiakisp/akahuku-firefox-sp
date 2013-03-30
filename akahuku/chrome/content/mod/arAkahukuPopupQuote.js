@@ -775,6 +775,8 @@ var arAkahukuPopupQuote = {
           .replace (/[ \t\u3000\xa0]*$/, "");
           var originalQuotedText = quotedText;
           quotedText = quotedText.replace (/^(>|&gt;)/, "");
+          // タテログのログ patch (稀にある span > br 対策)
+          quotedText = quotedText.replace (/\n$/, "");
                     
           /* 引用全体を取得 */
           var lines
@@ -1028,6 +1030,11 @@ var arAkahukuPopupQuote = {
                      && targetNode.color == "#117743")) {
           /* 表示されたメル欄 */
           type = 1;
+        }
+        // タテログのログ patch
+        else if ("className" in targetNode
+                 && targetNode.className == "quote") {
+          type = 0; //引用
         }
         /* 避難所 patch */
         else if ("className" in targetNode
