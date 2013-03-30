@@ -2,7 +2,7 @@
 
 /**
  * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuTitle
+ *          arAkahukuTitle, arAkahukuUtil
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
  */
@@ -224,9 +224,20 @@ arAkahukuLocationInfo.prototype = {
         
     if (instant || this.isMht) {
       /* [掲示板に戻る] のリンクからサーバ名、ディレクトリ名を取得する */
-      nodes = targetDocument.getElementsByTagName ("a");
+      // (body > a なリンクのみを探査対象に)
+      nodes = targetDocument.body.children;
+      var uri = null;
       for (var i = 0; i < nodes.length; i ++) {
-        if (nodes [i].href.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+        if (nodes [i].nodeName.toLowerCase () !== "a") {
+          continue;
+        }
+        try { // 相対アドレスの解決
+          uri = arAkahukuUtil.newURIViaNode (nodes [i].href, nodes [i]);
+        }
+        catch (e) { Akahuku.debug.exception (e);
+          continue;
+        }
+        if (uri.spec.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
           this.isFutasuke = false;
           this.server = RegExp.$2;
           /* RegExp.$3: ポート番号 */
