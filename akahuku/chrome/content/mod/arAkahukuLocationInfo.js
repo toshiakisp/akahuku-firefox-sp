@@ -348,7 +348,23 @@ arAkahukuLocationInfo.prototype = {
       this.mode = "\u8FD4\u4FE1";
       this.isFutaba = false;
       
-      if (this.isMht) {
+      var tryUnMHT = this.isMht;
+      if (tryUnMHT) {
+        try {
+          var m = {};
+          Components.utils.import("resource://unmht/modules/UnMHTExtractor.jsm",m);
+          var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (location);
+          if (eFileInfo && part && part.startPart
+              && /^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
+              .test (part.startPart.contentLocation) ) {
+            this.isTsumanne = true;
+          }
+          tryUnMHT = false;
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
+      }
+      if (tryUnMHT) { // Old UnMHT
         try {
           var param = UnMHT.protocolHandler.getUnMHTURIParam (location);
           var extractor;
