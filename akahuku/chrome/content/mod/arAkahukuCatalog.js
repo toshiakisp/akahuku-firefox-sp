@@ -5107,10 +5107,66 @@ var arAkahukuCatalog = {
    * セルを開いているセルとしてマーク
    */
   setCellOpened : function (td, opened) {
-    if (opened)
-      td.setAttribute ("__opened", "true");
-    else
+    if (opened) {
+      if (!td.hasAttribute ("__opened")) {
+        td.setAttribute ("__opened", "true");
+        td.addEventListener ("click", this.onClickOpenedCell, true);
+      }
+    }
+    else if (td.hasAttribute ("__opened")) {
       td.removeAttribute ("__opened");
+      td.removeEventListener ("click", this.onClickOpenedCell, true);
+    }
+  },
+
+  onClickOpenedCell : function (event) {
+    if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+      return;
+    }
+    var anchor = arAkahukuDOM.findParentNode (event.target, "a");
+    if (!anchor || !anchor.href) {
+      return;
+    }
+    var uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
+
+    // 現在のWindowを最優先探索
+    var targetWindow = anchor.ownerDocument.defaultView;
+    var window = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+
+    targetWindow = arAkahukuWindow.focusAkahukuTabByURI (uri, window);
+    if (!targetWindow) {// 切替失敗時
+      return;
+    }
+
+    event.preventDefault ();
+    event.stopPropagation ();
+
+    // [続きを読む]が画面内なら押す
+    var doSync = false;
+    var doc = targetWindow.document;
+    var container = doc.getElementById ("akahuku_bottom_container");
+    var btn = doc.getElementById ("akahuku_reload_button");
+    if (!btn) {
+      btn = doc.getElementById ("akahuku_reload_syncbutton");
+      doSync = !!btn;
+    }
+    if (container && btn) {
+      var elem = container;
+      var offsetTop = elem.offsetTop|0;
+      while (elem.offsetParent) {
+        elem = elem.offsetParent;
+        offsetTop += elem.offsetTop|0;
+      }
+      var base = doc.body; //後方互換モード用
+      if (doc.compatMode != "BackCompat") {
+        base = doc.documentElement; //標準準拠モード用
+      }
+      if (offsetTop < base.scrollTop + base.clientHeight) {
+        // 続きを読ませる (強引?)
+        window = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+        window.arAkahukuReload.diffReloadCore (doc, doSync, false);
+      }
+    }
   },
     
   /**
