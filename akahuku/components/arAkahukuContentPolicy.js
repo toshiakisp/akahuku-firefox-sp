@@ -896,12 +896,6 @@ arAkahukuContentPolicy.prototype = {
           return this.ACCEPT;
         }
       }
-      if (contentLocation.host.indexOf ("nijibox.dyndns.dk") != -1
-          || contentLocation.host.indexOf ("akahuku.dw.land.to") != -1
-          || contentLocation.host.indexOf ("akahuku.s278.xrea.com") != -1) {
-        /* タテログ の場合チェックする */
-        needCheck = true;
-      }
             
       /** logch 停止 **/
       //if (contentLocation.host.indexOf ("logch.info") != -1) {

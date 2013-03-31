@@ -674,14 +674,6 @@ arAkahukuReloadParam.prototype = {
    *         終了コード
    */
   onStopRequest : function (request, context, statusCode) {
-    /* 取得できなかった場合に備えて適当に指定しておく */
-    /*
-    var httpStatus = 200;
-    var responseHead = "HTTP/1.1 200 OK\r\n"
-    + "Date: " + (new Date ()).toString () + "\r\n"
-    + "Server: unknown\r\n"
-    + "Content-Type: text/html; charset=Shift_JIS\r\n";
-    */
     // 取得できなかった場合に備えて load error となる値を指定しておく
     var httpStatus = 0;
     var responseHead = "";
@@ -704,16 +696,7 @@ arAkahukuReloadParam.prototype = {
       httpStatus
         = httpChannel.responseStatus;
             
-      /* 206 の場合表示がおかしくなるので、Date と Server のみ更新する */
-      /*
-      responseHead
-        = "HTTP/1.1 200 OK\r\n"
-        + "Date: "
-        + httpChannel.getResponseHeader ("Date") + "\r\n"
-        + "Server: "
-        + httpChannel.getResponseHeader ("Server") + "\r\n"
-        + "Content-Type: text/html; charset=Shift_JIS\r\n";
-      */
+      // キャッシュ書込用レスポンスヘッダーの作成
       // 本当の HTTP レスポンスを得るには少し手順が必要なので仮定して
       responseHead = "HTTP/1.1 "
         + httpChannel.responseStatus + " "
@@ -808,17 +791,6 @@ arAkahukuReloadParam.prototype = {
       return;
     }
     var info = param.location_info;
-    /* 実際のレスポンスを使うので特別扱いは不要
-    try {
-      if (info.isMonaca) {
-        responseHead
-          = responseHead.replace (/charset=Shift_JIS/,
-                                  "charset=EUC-JP");
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-    */
         
     if (this.reloadChannel == null) {
       return;
@@ -1142,17 +1114,8 @@ arAkahukuReloadParam.prototype = {
   {
     var LOAD_ONLY_IF_MODIFIED
       = Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
-    try {
-      // webconsole でモニタできるようにウィンドウを関連づける
-      if (Akahuku.isFx4 || !(this.reloadChannel.loadFlags & LOAD_ONLY_IF_MODIFIED))
-      // (Firefox 3.6 で LOAD_ONLY_IF_MODIFIED するとなぜかステータスが完了にならない)
-      this.reloadChannel.notificationCallbacks
-        = this.targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+
+    arAkahukuUtil.setChannelContext (this.reloadChannel, this.targetDocument);
 
     try {
       this.reloadChannel.asyncOpen (this, null);
@@ -3412,16 +3375,6 @@ var arAkahukuReload = {
         
     if (updateCache) {
       try {
-        /* Range request でもしなければ不要のはず
-        param.writer.viewer = info.viewer;
-        param.writer.expire
-        = arAkahukuConverter.convertToSJIS (info.expire, "");
-        param.writer.warning
-        = "<font color=\"#f00000\"><b>"
-        + arAkahukuConverter.convertToSJIS (info.expireWarning, "")
-        + "</b></font>";
-        */
-                
         var cacheService
         = Components.classes ["@mozilla.org/network/cache-service;1"]
         .getService (Components.interfaces.nsICacheService);

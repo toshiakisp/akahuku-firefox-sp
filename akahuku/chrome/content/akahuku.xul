@@ -27,8 +27,6 @@
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuFileName.js" />
   <script type="application/x-javascript"
-          src="chrome://akahuku/content/mod/arAkahukuHistory.js" />
-  <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuImage.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuJPEG.js" />
@@ -80,6 +78,8 @@
           src="chrome://akahuku/content/mod/arAkahukuClipboard.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuCompat.js" />
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/mod/arAkahukuUtil.js" />
 
   <script type="application/x-javascript"
           src="chrome://akahuku/content/akahuku.js" />

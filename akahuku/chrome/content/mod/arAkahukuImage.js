@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuP2P, arAkahukuSound
+ *          arAkahukuP2P, arAkahukuSound, arAkahukuUtil
  */
 
 /**
@@ -276,11 +276,7 @@ arAkahukuRedirectListener.prototype = {
         if (arAkahukuP2P.enable) {
           /* P2P の場合、キャッシュからの取得を試みる */
                     
-          var baseDir
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-          baseDir.spec = this.href;
+          var baseDir = arAkahukuUtil.newURIViaNode (this.href, null);
           this.href = baseDir.resolve ("../src/" + this.leafName);
         }
         else {
@@ -886,10 +882,7 @@ var arAkahukuImage = {
     }
     
     if (isRedirect) {
-      var uri
-        = Components.classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-      uri.spec = href;
+      var uri = arAkahukuUtil.newURIViaNode (href, null);
             
       var filename
         = arAkahukuFile.systemDirectory
@@ -922,7 +915,7 @@ var arAkahukuImage = {
       try {
         // required for Firefox 18.0+
         args.privacyContext
-          = targetDocument.defaultView
+          = target.ownerDocument.defaultView
           .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
           .getInterface (Components.interfaces.nsIWebNavigation)
           .QueryInterface (Components.interfaces.nsILoadContext);
@@ -998,10 +991,7 @@ var arAkahukuImage = {
       targetDirIndex = 0;
     }
 
-    var ios
-      = Components.classes ["@mozilla.org/network/io-service;1"]
-      .getService (Components.interfaces.nsIIOService);
-    var uri = ios.newURI (href, null, null);
+    var uri = arAkahukuUtil.newURIViaNode (href, null);
         
     var file;
         
@@ -1189,14 +1179,8 @@ var arAkahukuImage = {
           dir += "_";
         }
         href = arAkahukuP2P.deP2P (href);
-        var uri
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        uri.spec
-          = href
-          .replace (/\/[^\/]*$/, "/")
-          .replace (/\/(red|d)\//, "/src/");
+        var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
+        uri.path = uri.path.replace (/\/(red|d)\//, "/src/");
             
         var dirs = new Array ();
         dirs = uri.path.split (/\//);
@@ -1254,14 +1238,8 @@ var arAkahukuImage = {
     }
     else {
       href = arAkahukuP2P.deP2P (href);
-      var uri
-      = Components
-      .classes ["@mozilla.org/network/standard-url;1"]
-      .createInstance (Components.interfaces.nsIURI);
-      uri.spec
-      = href
-      .replace (/\/[^\/]*$/, "/")
-      .replace (/\/(red|d)\//, "/src/");
+      var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
+      uri.path = uri.path.replace (/\/(red|d)\//, "/src/");
       
       var dirs = new Array ();
       dirs = uri.path.split (/\//);

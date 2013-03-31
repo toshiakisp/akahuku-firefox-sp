@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
- *          arAkahukuHistory, arAkahukuImage, arAkahukuP2P,
+ *          arAkahukuImage, arAkahukuP2P, arAkahukuCompat, arAkahukuUtil
  *          arAkahukuClipboard
  */
 
@@ -216,7 +216,7 @@ arAkahukuLinkifyResult.prototype = {
 };
 /**
  * 拡張子自動認識のリスナ
- *   Inherits From: nsIInterfaceRequestor, nsIHttpEventSink,
+ *   Inherits From: nsIInterfaceRequestor, nsIChannelEventSink,
  *                  nsIStreamListener, nsIRequestObserver
  */
 function arAkahukuLinkExtListener () {
@@ -227,16 +227,6 @@ arAkahukuLinkExtListener.prototype = {
   extNode : null,        /* HTMLElement  拡張子のノード */
   content : "" ,         /* String  ファイルのデータ */
 
-  // nsILoadContext
-  associatedWindow : null,
-  isContent : false,
-  topWindow : null,
-  isAppOfType : function (appType) {
-    // docShell ではないのでこの程度でいい？
-    return (appType ===
-        Components.interfaces.nsIDocShell.APP_TYPE_UNKNOWN);
-  },
-
   // 初期化用関数
   init : function (targetDocument, targetNode, extNode) {
     if (!targetDocument || !targetNode) {
@@ -245,14 +235,6 @@ arAkahukuLinkExtListener.prototype = {
     this.targetDocument = targetDocument;
     this.targetNode = targetNode;
     this.extNode = extNode; // may be null
-
-    if (targetDocument.defaultView
-        instanceof Components.interfaces.nsIDOMWindow) {
-      this.associatedWindow = targetDocument.defaultView;
-      this.topWindow = this.associatedWindow.top;
-    }
-    this.isContent = !(this.associatedWindow 
-        instanceof Components.interfaces.nsIDOMXULElement);
   },
     
   /**
@@ -269,9 +251,8 @@ arAkahukuLinkExtListener.prototype = {
     if (iid.equals (Components.interfaces.nsISupports)
         || iid.equals (Components.interfaces.nsISupportsWeakReference)
         || iid.equals (Components.interfaces.nsIInterfaceRequestor)
-        || iid.equals (Components.interfaces.nsIHttpEventSink)
+        || iid.equals (Components.interfaces.nsIChannelEventSink)
         || iid.equals (Components.interfaces.nsIStreamListener)
-        || iid.equals (Components.interfaces.nsILoadContext) // for webconsole
         || iid.equals (Components.interfaces.nsIRequestObserver)) {
       return this;
     }
@@ -290,31 +271,45 @@ arAkahukuLinkExtListener.prototype = {
    *         this
    */
   getInterface : function (iid) {
+    if (iid.equals (Components.interfaces.nsILoadContext)) {
+      try {
+        return this.targetDocument.defaultView
+          .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+          .getInterface (Components.interfaces.nsIWebNavigation)
+          .QueryInterface (Components.interfaces.nsILoadContext);
+      }
+      catch (e) { Akahuku.debug.exception (e)
+        throw Components.results.NS_NOINTERFACE;
+      }
+    }
     return this.QueryInterface (iid);
   },
     
   /**
    * リダイレクトのイベント
-   *   nsIHttpEventSink.onRedirect
-   *
-   * @param  nsIHttpChannel httpChannel
-   *         現在のリクエスト
-   * @param  nsIChannel newChannel
-   *         新しいリクエスト
+   *   nsIChannelEventSink.asyncOnChannelRedirect
    */
-  onRedirect : function (httpChannel, newChannel) {
+  asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
     try {
       if (newChannel.URI.spec.match (/s[usapq][0-9]+\.([_a-zA-Z0-9]+)/)) {
         var ext = RegExp.$1;
-        arAkahukuLink.setExt2 (ext,
-                               this.targetDocument, this.targetNode,
-                               this.extNode);
+        arAkahukuLink.setExt2
+          (ext, this.targetDocument, this.targetNode, this.extNode);
       }
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-        
-    newChannel.cancel (Components.results.NS_BINDING_ABORTED || 0x80020006);
+    if (callback) {
+      callback.onRedirectVerifyCallback (Components.results.NS_BINDING_ABORTED);
+    }
+  },
+
+  /**
+   * nsIChannelEventSink.onChannelRedirect (Obsolete since Gecko 2.0)
+   */
+  onChannelRedirect : function (oldChannel, newChannel, flags) {
+    this.asyncOnChannelRedirect (oldChannel, newChannel, flags, null);
+    newChannel.cancel (Components.results.NS_BINDING_ABORTED);
   },
 
   /**
@@ -370,109 +365,6 @@ arAkahukuLinkExtListener.prototype = {
     this.targetDocument = null;
     this.targetNode = null;
     this.extNode = null;
-  },
-    
-  /**
-   * データ到着のイベント
-   *   nsIStreamListener.onDataAvailable
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  nsIInputStream inputStream
-   *         データを取得するストリーム
-   * @param  PRUint32 offset
-   *         データの位置
-   * @param  PRUint32 count 
-   *         データの長さ
-   */
-  onDataAvailable : function (request, context, inputStream, offset, count) {
-    var bstream
-    = Components.classes ["@mozilla.org/binaryinputstream;1"]
-    .createInstance (Components.interfaces.nsIBinaryInputStream);
-    bstream.setInputStream (inputStream);
-        
-    this.content += bstream.readBytes (count);
-  }
-};
-/**
- * リモートファイル読み込み
- * とりあえず作っておく
- *   Inherits From: nsIInterfaceRequestor
- *                  nsIStreamListener, nsIRequestObserver
- */
-function arAkahukuLinkLoader () {
-}
-arAkahukuLinkLoader.prototype = {
-  content : "" ,         /* String  ファイルのデータ */
-  callback : null,       /* Function  コールバック関数 */
-    
-  /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsIStreamListener
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsISupportsWeakReference)
-        || iid.equals (Components.interfaces.nsIInterfaceRequestor)
-        || iid.equals (Components.interfaces.nsIStreamListener)
-        || iid.equals (Components.interfaces.nsIRequestObserver)) {
-      return this;
-    }
-        
-    throw Components.results.NS_NOINTERFACE;
-  },
-    
-  /**
-   * インターフェースの取得
-   *   nsIInterfaceRequestor.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsIStreamListener
-   *         this
-   */
-  getInterface : function (iid) {
-    return this.QueryInterface (iid);
-  },
-    
-  /**
-   * リクエスト開始のイベント
-   *   nsIRequestObserver.onStartRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   */
-  onStartRequest : function (request, context) {
-    this.content = "";
-  },
-    
-  /**
-   * リクエスト終了のイベント
-   *   nsIRequestObserver.onStopRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  Number statusCode
-   *         終了コード
-   */
-  onStopRequest : function (request, context, statusCode) {
-    this.callback (this);
-        
-    this.content = "";
-    this.callback = null;
   },
     
   /**
@@ -739,11 +631,7 @@ var arAkahukuLink = {
       .replace (/\u2329/g, "&lang");
       
       try {
-        var testURL
-          = Components
-          .classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        testURL.spec = url;
+        arAkahukuUtil.newURIViaNode (url, null);
       }
       catch (e) { Akahuku.debug.exception (e);
         return false;
@@ -1291,6 +1179,10 @@ var arAkahukuLink = {
         .addRule ("div.t > a.akahuku_generated_link > "
                   + "font.akahuku_generated_link_child",
                   "color: #a060cc;")
+        // タテログのログ patch
+        .addRule (".thread div > a.akahuku_generated_link",
+                  "color: #0040ee;"
+                  + "text-decoration: underline;")
         /* ポップアップ内 */
         .addRule ("div.akahuku_popup_content_blockquote > "
                   + "a.akahuku_generated_link",
@@ -1330,6 +1222,10 @@ var arAkahukuLink = {
         .addRule ("div.t > a.akahuku_generated_link[visited]",
                   "color: #8040ee; "
                   + "text-decoration: underline;")
+        // タテログのログ patch
+        .addRule (".thread div > a.akahuku_generated_link[visited]",
+                  "color: #0040ee;"
+                  + "text-decoration: underline;")
         /* ポップアップ */
         .addRule ("div.akahuku_popup_content_blockquote[visited] > "
                   + "a.akahuku_generated_link",
@@ -1363,6 +1259,9 @@ var arAkahukuLink = {
         .addRule ("blockquote > small.akahuku_generated",
                   "color: #0040ee;")
         .addRule ("div.t > small.akahuku_generated",
+                  "color: #0040ee;")
+        // タテログのログ patch
+        .addRule (".thread div > small.akahuku_generated",
                   "color: #0040ee;")
         /* ポップアップ内 */
         .addRule ("div.akahuku_popup_content_blockquote > "
@@ -1406,6 +1305,11 @@ var arAkahukuLink = {
                     "display: block;")
         }
                 
+        // タテログのログ patch
+        style
+        .addRule (".thread > table td div.akahuku_preview_container",
+                  "margin: inherit ! important;")
+
         /* mht で保存用 */
         style
         .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link",
@@ -2367,16 +2271,9 @@ var arAkahukuLink = {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
       try {
         var contentLocation
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-        contentLocation.spec = href;
-                
+        = arAkahukuUtil.newURIViaNode (href, null);
         var requestOrigin
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-        requestOrigin.spec = targetDocument.location.href;
+        = arAkahukuUtil.newURIViaNode ("", targetDocument);
                 
         var uri
         = UnMHT.getMHTFileURI (contentLocation,
@@ -2419,17 +2316,12 @@ var arAkahukuLink = {
         }
         catch (e) { Akahuku.debug.exception (e);
         }
-        var newTab;
-        if (Akahuku.isFx36) {
-          newTab = tabbrowser.addTab (href, {
+        var newTab
+          = tabbrowser.addTab (href, {
             relatedToCurrent : true,
             // gBrowser.loadOneTab と同じロジックでタブを関連付ける
             ownerTab : (focus ? tabbrowser.selectedTab : null),
           });
-        }
-        else {
-          newTab = tabbrowser.addTab (href);
-        }
         if (focus) {
           tabbrowser.selectedTab = newTab;
         }
@@ -2464,14 +2356,7 @@ var arAkahukuLink = {
           var href = target.getAttribute ("dummyhref");
                     
           /* IDN や相対アドレスの解決 */
-          var ios
-            = Components.classes
-            ["@mozilla.org/network/io-service;1"]
-            .getService (Components.interfaces.nsIIOService);
-          var baseUri
-            = target.ownerDocument.baseURIObject
-            || ios.newURI (target.ownerDocument.baseURI, null, null);
-          var uri = ios.newURI (href, null, baseUri);
+          var uri = arAkahukuUtil.newURIViaNode (href, target.ownerDocument);
           href = uri.spec;
           try {
             /* 可能ならロケーションバーと同様に可読化 */
@@ -2759,25 +2644,25 @@ var arAkahukuLink = {
    *         対象のノード
    */
   updateAutoLinkVisitedCore : function (targetNode) {
-    var uri
-    = Components
-    .classes ["@mozilla.org/network/standard-url;1"]
-    .createInstance (Components.interfaces.nsIURI);
+    var href = targetNode.getAttribute ("dummyhref")
     try {
-      uri.spec = targetNode.getAttribute ("dummyhref");
+      var uri = arAkahukuUtil.newURIViaNode (href, null);
     }
     catch (e) { Akahuku.debug.exception (e);
       return;
     }
-    var flag = targetNode.getAttribute ("visited");
-        
-    var visited = arAkahukuHistory.isVisited (uri);
-    if (visited) {
-      targetNode.setAttribute ("visited", "true");
-    }
-    else {
-      targetNode.removeAttribute ("visited");
-    }
+
+    arAkahukuCompat.AsyncHistory.isURIVisited (uri, {
+      node : targetNode,
+      isVisited : function (uri, visited) {
+        if (visited) {
+          this.node.setAttribute ("visited", "true");
+        }
+        else {
+          this.node.removeAttribute ("visited");
+        }
+      }
+    });
   },
     
   /**
@@ -2817,8 +2702,8 @@ var arAkahukuLink = {
       arAkahukuLink.onAutoLinkOut (arguments [0]);
     }, false);
         
-    if (Akahuku.isFx36) {
-      /* ドラッグ可能にする */
+    if ("draggable" in targetNode) {
+      /* ドラッグ可能にする (Gecko 1.9.1+) */
       targetNode.draggable = true;
       targetNode.addEventListener
       ("dragstart",
@@ -3010,10 +2895,7 @@ var arAkahukuLink = {
       register : function (node, uriSpec)
       {
         this.targetNode = node;
-        this.targetURI
-          = Components.classes ["@mozilla.org/network/io-service;1"]
-          .getService (Components.interfaces.nsIIOService)
-          .newURI (uriSpec, null, null);
+        this.targetURI = arAkahukuUtil.newURIViaNode (uriSpec, null);
         if (!this.registered) {
           this.os
             = Components.classes ["@mozilla.org/observer-service;1"]
@@ -3349,14 +3231,9 @@ var arAkahukuLink = {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
       try {
         var contentLocation
-          = Components.classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        contentLocation.spec = uri;
-                
+        = arAkahukuUtil.newURIViaNode (uri, null);
         var requestOrigin
-          = Components.classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (Components.interfaces.nsIURI);
-        requestOrigin.spec = targetDocument.location.href;
+        = arAkahukuUtil.newURIViaNode ("", targetDocument);
                 
         var uri2 = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
         if (uri2) {
@@ -3445,6 +3322,13 @@ var arAkahukuLink = {
     if (!owner) {
       owner = arAkahukuDOM.findParentNodeByClassName (target, "re");
     }
+    // タテログのログ patch
+    if (!owner) {
+      owner = arAkahukuDOM.findParentNodeByClassName (target, "thread");
+      if (owner) {
+        owner = arAkahukuDOM.findParentNode (target, "div");
+      }
+    }
     if (!owner) {
       /* メル欄の場合 */
       owner = arAkahukuDOM.findParentNode (target, "font");
@@ -3494,6 +3378,13 @@ var arAkahukuLink = {
     }
     if (!blockquote) {
       blockquote = arAkahukuDOM.findParentNodeByClassName (target, "re");
+    }
+    // タテログのログ patch
+    if (!blockquote) {
+      blockquote = arAkahukuDOM.findParentNodeByClassName (target, "thread");
+      if (blockquote) {
+        blockquote = arAkahukuDOM.findParentNode (target, "div");
+      }
     }
     if (!blockquote) {
       /* メル欄の場合 */

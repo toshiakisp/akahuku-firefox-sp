@@ -8,12 +8,12 @@
       <RDF:Seq>
         <RDF:li>
           <RDF:Description>
-            <em:version>5.2.90.sp_rev.11</em:version>
+            <em:version>5.2.90.sp_rev.12</em:version>
             <em:targetApplication>
               <RDF:Description>
                 <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
                 <em:minVersion>1.0</em:minVersion>
-                <em:maxVersion>20.0a2</em:maxVersion>
+                <em:maxVersion>21.0a2</em:maxVersion>
                 <em:updateLink>https://raw.github.com/toshiakisp/akahuku-firefox-sp/master/akahuku.xpi</em:updateLink>
                 <em:updateInfoURL>http://toshiakisp.github.com/akahuku-firefox-sp/updateinfo.xhtml</em:updateInfoURL>
               </RDF:Description>

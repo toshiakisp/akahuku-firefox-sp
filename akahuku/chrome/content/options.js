@@ -1087,6 +1087,7 @@ var AkahukuOptions = {
       ["int",  "catalog.sidebar.comment.length", 12],
       ["bool", "catalog.observe", false, "privatemod"],
       ["bool", "catalog.observe.replynum", false, "privatemod"],
+      ["bool", "catalog.observe.opened", false, "privatemod"],
       ["bool", "catalog.clickable", true],
       ["bool", "catalog.visited", true],
       ["bool", "catalog.red", false],
@@ -4082,6 +4083,7 @@ var AkahukuOptions = {
 
   checkCatalogObserve : function () {
     document.getElementById ("catalog_observe_replynum").disabled
+    document.getElementById ("catalog_observe_opened").disabled
     = !document.getElementById ("catalog_observe").checked;
   },
     

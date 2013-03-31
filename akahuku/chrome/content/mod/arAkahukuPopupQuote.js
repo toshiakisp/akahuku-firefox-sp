@@ -651,7 +651,7 @@ var arAkahukuPopupQuote = {
                 
         switch (type) {
           case 0:
-            if (innerText.match (/^(&gt;)*[ \t\r\n]*(No\.)?([0-9]+)(\.[a-z]+)?\s*$/)) {
+            if (innerText.match (/^(&gt;)*[ \t\r\n]*([N\uFF2E][o\uFF4F][\.\uFF0E]|\u2116)?([0-9]+)(\.[a-z]+)?\s*$/)) {
               quotedNo = parseInt (RegExp.$3);
             }
             break;
@@ -775,6 +775,8 @@ var arAkahukuPopupQuote = {
           .replace (/[ \t\u3000\xa0]*$/, "");
           var originalQuotedText = quotedText;
           quotedText = quotedText.replace (/^(>|&gt;)/, "");
+          // タテログのログ patch (稀にある span > br 対策)
+          quotedText = quotedText.replace (/\n$/, "");
                     
           /* 引用全体を取得 */
           var lines
@@ -923,7 +925,7 @@ var arAkahukuPopupQuote = {
           if (quoted.firstChild && quoted.firstChild
               .nodeType == quoted.TEXT_NODE
               && quotedNo == -1 // 番号が未探索かどうか
-              && /(?:No\.[1-9][0-9]*|[0-9]+\.[a-z]+)/
+              && /(?:(?:[N\uFF2E][o\uFF4F][\.\uFF0E]|\u2116)[1-9][0-9]*|[0-9]+\.[a-z]+)/
                  .test (originalQuotedText)) {
             quoted.normalize ();
             var original
@@ -1028,6 +1030,11 @@ var arAkahukuPopupQuote = {
                      && targetNode.color == "#117743")) {
           /* 表示されたメル欄 */
           type = 1;
+        }
+        // タテログのログ patch
+        else if ("className" in targetNode
+                 && targetNode.className == "quote") {
+          type = 0; //引用
         }
         /* 避難所 patch */
         else if ("className" in targetNode

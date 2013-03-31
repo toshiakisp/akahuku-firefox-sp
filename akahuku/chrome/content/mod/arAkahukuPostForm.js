@@ -1388,12 +1388,18 @@ var arAkahukuPostForm = {
         error.style.borderWidth = "1px";
         error.style.fontSize = "9pt";
         error.style.overflow = "auto";
+        error.style.display = "none";
+        error.style.maxHeight = "130px";
                 
-        var s
-        = "\u4EE5\u4E0B\u306E\u5185\u5BB9\u3092\u5831\u544A\u3057\u3066\u9802\u3051\u308C\u3070\u5BFE\u5FDC\u3057\u307E\u3059\n\n"
-        + "<html>\n"
-        + iframe.contentDocument.documentElement.innerHTML
-        + "\n</html>";
+        var s = "";
+        if ("outerHTML" in iframe.contentDocument.documentElement) {
+          s = iframe.contentDocument.documentElement.outerHTML;
+        }
+        else {
+          s = "<html>\n"
+            + iframe.contentDocument.documentElement.innerHTML
+            + "\n</html>";
+        }
                 
         error.appendChild (targetDocument.createTextNode (s));
       }
@@ -1553,12 +1559,15 @@ var arAkahukuPostForm = {
    */
   onResponseErrorClick : function (event) {
     var targetDocument = event.target.ownerDocument;
-    var param
-    = Akahuku.getDocumentParam (targetDocument).postform_param;
         
     var n = targetDocument.getElementById ("akahuku_response_error");
     if (n) {
-      n.style.display = "block";
+      if (n.style.display !== "none") {
+        n.style.display = "none";
+      }
+      else {
+        n.style.display = "block";
+      }
     }
   },
     
@@ -1956,6 +1965,10 @@ var arAkahukuPostForm = {
     var commentbox
     = targetDocument.getElementById ("akahuku_commentbox")
     || targetDocument.getElementById ("ftxa");
+    var status1
+    = targetDocument.getElementById ("akahuku_reply_status");
+    var status2
+    = targetDocument.getElementById ("akahuku_reply_status2");
     
     if (hide) {
       postform.style.overflow = "hidden";
@@ -1966,6 +1979,12 @@ var arAkahukuPostForm = {
       postform.style.height = "0px";
       postform.style.visibility = "hidden";
       postform.style.padding = "0px";
+      if (status1) {
+        status1.style.display = "none";
+      }
+      if (status2) {
+        status2.style.display = "none";
+      }
     }
     else {
       postform.style.overflow = "";
@@ -1981,6 +2000,12 @@ var arAkahukuPostForm = {
       postform.style.padding = "";
       postform.style.display = "block";
       postform.style.visibility = "visible";
+      if (status1) {
+        status1.style.display = "block";
+      }
+      if (status2) {
+        status2.style.display = "block";
+      }
     }
   },
     
@@ -2814,10 +2839,6 @@ var arAkahukuPostForm = {
       var postformFooterIcon
       = targetDocument
       .getElementById ("akahuku_floatpostform_footer_icon");
-      var status
-      = targetDocument.getElementById ("akahuku_reply_status");
-      var status2
-      = targetDocument.getElementById ("akahuku_reply_status2");
       var close
       = targetDocument.getElementById ("akahuku_floatpostform_close");
       var commentbox
@@ -2861,12 +2882,6 @@ var arAkahukuPostForm = {
           if (postformFooterContent) {
             postformFooterContent.style.display = "none";
           }
-          if (status) {
-            status.style.display = "none";
-          }
-          if (status2) {
-            status2.style.display = "none";
-          }
           if (postformContainer) {
             postformContainer.style.width = "27px";
           }
@@ -2883,12 +2898,6 @@ var arAkahukuPostForm = {
           }
           if (postformFooterContent) {
             postformFooterContent.style.display = "";
-          }
-          if (status) {
-            status.style.display = "block";
-          }
-          if (status2) {
-            status2.style.display = "block";
           }
           if (postformContainer) {
             postformContainer.style.width

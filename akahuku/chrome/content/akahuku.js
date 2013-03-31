@@ -67,8 +67,9 @@ var Akahuku = {
                                   *   最近使ったドキュメントごとの情報 */
     
   isOld : false,                 /* Boolean  古い Mozilla Suite か */
-  isFx36 : false,                /* Boolean  Firefox 3.6 以降か */
   isFx4 : false,                 /* Boolean  Firefox 4.0 以降か */
+  isFx7 : false,
+  isFx9 : false,
     
   initialized : false,           /* Boolean  初期化フラグ */
     
@@ -223,6 +224,59 @@ var Akahuku = {
     return null;
   },
 
+  /**
+   * URI に合致するドキュメントごとの情報を得る
+   * @param  nsIURI uri
+   *         対象のURI (Stringでも可)
+   * @return Array
+   *         [arAkahukuDocumentParam,...]
+   */
+  getDocumentParamsByURI : function (uri, optFirstOnly) {
+    var ret = [];
+    if (Akahuku.documentParams.length == 0) {
+      return ret;
+    }
+
+    if (!(uri instanceof Components.interfaces.nsIURI)) {
+      try {
+        uri = arAkahukuUtil.newURIViaNode (uri, null);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        return ret;
+      }
+    }
+
+    var checkURI;
+    if ("equalsExceptRef" in uri) { // requires Gecko 6.0+
+      checkURI = function (param, uri) {
+        return uri.equalsExceptRef (param.targetDocument.documentURIObject);
+      };
+    }
+    else {
+      checkURI = function (param, uri) {
+        if ("documentURIObject" in param.targetDocument) {
+          // requires Gecko 1.9+
+          return uri.equals (param.targetDocument.documentURIObject);
+        }
+        else {
+          return uri.spec === param.targetDocument.documentURI;
+        }
+      };
+    }
+
+    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
+      if (checkURI (Akahuku.documentParams [i], uri)) {
+        ret.push (Akahuku.documentParams [i]);
+        if (optFirstOnly) break;
+      }
+    }
+    return ret;
+  },
+
+  hasDocumentParamForURI : function (uri) {
+    return (Akahuku.getDocumentParamsByURI (uri, true).length > 0);
+  },
+
   /*
    * フォーカスされているドキュメントの情報を取得する
    * (フレーム内のドキュメントでも)
@@ -292,20 +346,13 @@ var Akahuku = {
     }
     
     try {
-      var faviconService
-      = Components.classes ["@mozilla.org/browser/favicon-service;1"]
-      .getService (Components.interfaces.nsIFaviconService);
-      if ("expireAllFavicons" in faviconService) {
-        Akahuku.isFx36 = true;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-
-    try {
       Components.utils.import ("resource://gre/modules/Services.jsm");
-      if (Services.vc.compare (Services.appinfo.platformVersion, "2.0") >= 0) {
-        Akahuku.isFx4 = true; // Firefox 4+/Gecko 2.0+
+      Akahuku.isFx4 = true;
+      if (Services.vc.compare (Services.appinfo.platformVersion, "7.0") >= 0) {
+        Akahuku.isFx7 = true;
+      }
+      if (Services.vc.compare (Services.appinfo.platformVersion, "9.0") >= 0) {
+        Akahuku.isFx9 = true;
       }
     }
     catch (e) {
@@ -383,7 +430,6 @@ var Akahuku = {
     arAkahukuConverter.init ();
     arAkahukuConfig.init ();
     arAkahukuTab.init ();
-    arAkahukuHistory.init ();
     arAkahukuBloomer.init ();
     arAkahukuImage.init ();
     arAkahukuThread.init ();
@@ -446,10 +492,8 @@ var Akahuku = {
 
     /* 画像鯖では保存場所を覚えさせないハック (Fx 7.0 以降) */
     try {
-      Components.utils.import
-        ("resource://gre/modules/Services.jsm");
       if (Akahuku.enableDownloadLastDirHack
-          && Services.vc.compare (Services.appinfo.platformVersion, "7.0") >= 0) {
+          && Akahuku.isFx7) {
         /* 保存する直前/直後を捉える方法がわからないので、やっつけ */
         gBrowser.addEventListener
           ("pageshow", Akahuku.onImageDocumentActivity, true);
@@ -559,8 +603,6 @@ var Akahuku = {
     }
         
     if (href.match
-        (/^http:\/\/nijibox\.dyndns\.dk\/akahuku\/catalog\/dat\/(view.php\?mode=cat2?)/)
-        || href.match
         (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)
         || href.match
         (/^http:\/\/www\.nijibox4\.com\/akahuku\/catalog\/dat\/(view\.php\?mode=cat2?)/)
@@ -568,6 +610,11 @@ var Akahuku = {
         (/^http:\/\/www\.nijibox\.com\/futaba\/catalog\/img\/(view\.php\?mode=cat2?)/)) {
       /* dat のタテログ */
       return true;
+    }
+
+    if (/^http:\/\/appsweets\.net\/tatelog\/(?:dat|img)\/thread\/[0-9]+$/.test (href)) {
+      // タテログのログ
+      return false; //まだ自動適用は無し
     }
     
     if (href.match
@@ -1170,13 +1217,7 @@ var Akahuku = {
     var wait = 0;
     if (text.match (/URL=([^\"]+)\"/)) {
       srcLocation = RegExp.$1;
-                            
-      var baseDir
-        = Components
-        .classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
-      baseDir.spec = location;
-            
+      var baseDir = arAkahukuUtil.newURIViaNode (location, null);
       srcLocation = baseDir.resolve (srcLocation);
     }
     else if (text.match (/<script[ \t\r\n]+(language[ \t\r\n]*=[ \t\r\n]*[\"\']?JavaScript[\"\']?)>[ \t\r\n]*(<!--)?[ \t\r\n]*(.+)[ \t\r\n]*(\/\/-->)?[ \t\r\n]*<\/script>/)) {
@@ -1241,6 +1282,22 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
+             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+          node = iterator.iterateNext ();
+          while (node) {
+            newNodes.push (node);
+            node = iterator.iterateNext ();
+          }
+        }
+        if (newNodes.length == 0) {
+          // タテログのログ対応 patch
+          var xpath = ".//div[count(ancestor::div[@class='thread'])=1]";
+          if (targetNode instanceof Document) {
+            xpath = ".//div[@class='thread']//div";
+          }
+          iterator =
+            doc.evaluate
+            (xpath,
              targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
           node = iterator.iterateNext ();
           while (node) {
@@ -1683,7 +1740,7 @@ var Akahuku = {
       if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd)\.2chan\.net$/
           .test (host)) { /* 画像鯖 */
         var doFake = false;
-        if (Services.vc.compare (Services.appinfo.platformVersion, "9.0") < 0) {
+        if (!Akahuku.isFx9) {
           // 9.0より前はPBモード時の処理が特殊 (参考:Bug 684107)
           var pbsvc = null;
           if ("@mozilla.org/privatebrowsing;1" in Components.classes) {

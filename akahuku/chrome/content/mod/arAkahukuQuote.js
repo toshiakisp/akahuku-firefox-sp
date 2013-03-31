@@ -754,13 +754,7 @@ var arAkahukuQuote = {
     = "http://www.google.com/images?hl=ja&q="
     + encodeURIComponent (s);
         
-    var newTab;
-    if (Akahuku.isFx36) {
-      newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
-    }
-    else {
-      newTab = tabbrowser.addTab (href);
-    }
+    var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
     if (arAkahukuQuote.enableFocus) {
       tabbrowser.selectedTab = newTab;
     }
@@ -782,13 +776,7 @@ var arAkahukuQuote = {
     = "http://ja.wikipedia.org/wiki/%E7%89%B9%E5%88%A5:Search?search="
     + encodeURIComponent (s) + "&go=%E8%A1%A8%E7%A4%BA";
         
-    var newTab;
-    if (Akahuku.isFx36) {
-      newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
-    }
-    else {
-      newTab = tabbrowser.addTab (href);
-    }
+    var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
     if (arAkahukuQuote.enableFocus) {
       tabbrowser.selectedTab = newTab;
     }

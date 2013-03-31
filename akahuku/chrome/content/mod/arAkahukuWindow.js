@@ -118,4 +118,36 @@ var arAkahukuWindow = {
     return parentWindow;
   },
 
+  focusAkahukuTabByURI : function (uri, optWindow, optNoEnumerate) {
+    var entries
+      = Components.classes
+      ["@mozilla.org/appshell/window-mediator;1"]
+      .getService (Components.interfaces.nsIWindowMediator)
+      .getEnumerator ("navigator:browser");
+    var window = optWindow;
+    if (!window && entries.hasMoreElements ()) {
+      window = entries.getNext ();
+    }
+    while (window) {
+      var params = window.Akahuku.getDocumentParamsByURI (uri);
+      if (params.length > 0) {
+        try {
+          var targetWindow = params [0].targetDocument.defaultView;
+          var tab = window.arAkahukuWindow.getTabForWindow (targetWindow);
+          window.focus ();
+          window.document.getElementById ("content").selectedTab = tab;
+          return targetWindow;
+        }
+        catch (e) { Components.utils.reportError (e);
+        }
+      }
+      if (!optNoEnumerate && entries.hasMoreElements ()) {
+        window = entries.getNext ();
+      }
+      else {
+        break;
+      }
+    }
+    return null;
+  },
 };

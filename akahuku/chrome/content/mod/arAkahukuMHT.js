@@ -231,22 +231,8 @@ arAkahukuMHTFileData.prototype = {
             .getService (Components.interfaces.nsIIOService);
             file.channel 
             = ios.newChannel (location, null, null);
-            try {
-              // webconsole でモニタできるようにウィンドウを関連づける
-              if (file.ownerDocument) {
-                file.channel.notificationCallbacks
-                  = file.ownerDocument.defaultView
-                  .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-                  .getInterface (Components.interfaces.nsIWebNavigation);
-              }
-              else {
-                Akahuku.debug.warn
-                  ("arAkahukuMHTFileData.getFile could not register a window to channel. (No owner documenet)"
-                   + " for " + location);
-              }
-            }
-            catch (e) { Akahuku.debug.exception (e);
-            }
+            arAkahukuUtil.setChannelContext (file.channel, file.ownerDocument);
+
             try {
               file.channel.asyncOpen (file, null);
             }

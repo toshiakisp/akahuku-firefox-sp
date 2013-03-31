@@ -2,7 +2,7 @@
 
 /**
  * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuTitle
+ *          arAkahukuTitle, arAkahukuUtil
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
  */
@@ -163,13 +163,17 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/nijibox\.dyndns\.dk\/akahuku\/catalog\/dat\/(view.php\?mode=cat2?)/)) {
-      /* dat のタテログ */
-      this.server = "dat";
-      this.dir = "b";
+             (/^http:\/\/appsweets\.net\/tatelog\/(dat|img)\/thread\/([0-9]+)$/)) {
+      // タテログのログ
+      this.server = "tatelog" + RegExp.$1;
+      this.dir = "tatelog";
       this.isTatelog = true;
-      path = RegExp.$1;
-      this.isFutaba = true;
+      this.isTsumanne = true;
+      path = "";
+      this.isFutaba = false;
+      this.isReply = true;
+      this.threadNumber = parseInt (RegExp.$2) || 0;
+      this.mode = "\u8FD4\u4FE1";//"返信"
     }
     else if (location.match
              (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
@@ -220,9 +224,20 @@ arAkahukuLocationInfo.prototype = {
         
     if (instant || this.isMht) {
       /* [掲示板に戻る] のリンクからサーバ名、ディレクトリ名を取得する */
-      nodes = targetDocument.getElementsByTagName ("a");
+      // (body > a なリンクのみを探査対象に)
+      nodes = targetDocument.body.children;
+      var uri = null;
       for (var i = 0; i < nodes.length; i ++) {
-        if (nodes [i].href.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+        if (nodes [i].nodeName.toLowerCase () !== "a") {
+          continue;
+        }
+        try { // 相対アドレスの解決
+          uri = arAkahukuUtil.newURIViaNode (nodes [i].href, nodes [i]);
+        }
+        catch (e) { Akahuku.debug.exception (e);
+          continue;
+        }
+        if (uri.spec.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
           this.isFutasuke = false;
           this.server = RegExp.$2;
           /* RegExp.$3: ポート番号 */
@@ -333,7 +348,23 @@ arAkahukuLocationInfo.prototype = {
       this.mode = "\u8FD4\u4FE1";
       this.isFutaba = false;
       
-      if (this.isMht) {
+      var tryUnMHT = this.isMht;
+      if (tryUnMHT) {
+        try {
+          var m = {};
+          Components.utils.import("resource://unmht/modules/UnMHTExtractor.jsm",m);
+          var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (location);
+          if (eFileInfo && part && part.startPart
+              && /^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
+              .test (part.startPart.contentLocation) ) {
+            this.isTsumanne = true;
+          }
+          tryUnMHT = false;
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
+      }
+      if (tryUnMHT) { // Old UnMHT
         try {
           var param = UnMHT.protocolHandler.getUnMHTURIParam (location);
           var extractor;
