@@ -4903,9 +4903,11 @@ var arAkahukuCatalog = {
    *         対象のドキュメント
    */
   onHideEntireThread : function (targetDocument) {
-    var param
-    = Akahuku.getDocumentParam (targetDocument)
-    .catalog_param;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (!param) {
+      return;
+    }
+    param = param.catalog_param;
         
     if (!arAkahukuCatalog.enableReorderFill) {
       return;
