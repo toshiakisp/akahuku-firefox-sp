@@ -4348,7 +4348,7 @@ var AkahukuOptions = {
       chromeWindow.arAkahukuUI.openWebsite ();
     }
     else {
-      window.open ("http://toshiakisp.github.com/akahuku-firefox-sp/");
+      window.open ("http://toshiakisp.github.io/akahuku-firefox-sp/");
     }
   },
   
