@@ -1236,15 +1236,15 @@ var arAkahukuMHT = {
       node.parentNode.removeChild (node);
     }
     else {
-      var chui = null;
-      nodes = form.getElementsByTagName ("td");
-      for (i = 0; i < nodes.length; i ++) {
-        if (arAkahukuDOM.hasClassName (nodes [i], "chui")) {
-          chui = nodes [i];
-        }
-      }
-      
       if (form) {
+        var chui = null;
+        nodes = form.getElementsByTagName ("td");
+        for (i = 0; i < nodes.length; i ++) {
+          if (arAkahukuDOM.hasClassName (nodes [i], "chui")) {
+            chui = nodes [i];
+          }
+        }
+      
         var viewer = targetDocument.createElement ("div");
         viewer.setAttribute ("style",
                              "text-align: center; font-size: 9pt;");
