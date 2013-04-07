@@ -1159,7 +1159,12 @@ var arAkahukuPostForm = {
         if (commentbox) {
           commentbox.value = "";
           commentbox.style.width = "100%";
-          commentbox.style.height = "";
+          if (arAkahukuPostForm.enableCommentboxSetRows) {
+            commentbox.style.height = "auto";
+          }
+          else {
+            commentbox.style.height = "";
+          }
         }
                 
         var filebox = targetDocument.getElementsByName ("upfile");
@@ -1478,7 +1483,12 @@ var arAkahukuPostForm = {
     if (commentbox) {
       commentbox.value = "";
       commentbox.style.width = "100%";
-      commentbox.style.height = "";
+      if (arAkahukuPostForm.enableCommentboxSetRows) {
+        commentbox.style.height = "auto";
+      }
+      else {
+        commentbox.style.height = "";
+      }
     }
         
     if (arAkahukuPostForm.enableMailboxClear) {
@@ -3463,7 +3473,12 @@ var arAkahukuPostForm = {
     || targetDocument.getElementById ("ftxa");
     if (commentbox) {
       commentbox.style.width = "100%";
-      commentbox.style.height = "";
+      if (arAkahukuPostForm.enableCommentboxSetRows) {
+        commentbox.style.height = "auto";
+      }
+      else {
+        commentbox.style.height = "";
+      }
     }
         
     var button
