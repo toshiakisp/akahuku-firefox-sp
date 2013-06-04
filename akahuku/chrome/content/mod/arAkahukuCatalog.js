@@ -1555,7 +1555,15 @@ arAkahukuCatalogParam.prototype = {
       return;
     }
         
-    if (httpStatus == 200) {
+    if (httpStatus == 200
+        && this.responseText.length < 100 && this.responseText.length >= 10
+        && this.responseText.substr (0, 10) == "\x96\x9e\x88\xf5\x82\xc5\x82\xb7\x81\x42") {
+      // 満員表示 (SJISで"満員です。"以下略)
+      arAkahukuCatalog.setStatus
+      ("load error: \u6E80\u54E1\u3067\u3059", //"満員です"
+       false, this.targetDocument);
+    }
+    else if (httpStatus == 200) {
       this.responseHead = responseHead;
             
       arAkahukuCatalog.setStatus ("\u66F4\u65B0\u4E2D",
