@@ -1737,7 +1737,7 @@ var Akahuku = {
         return; // ie. data scheme 
       }
 
-      if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd)\.2chan\.net$/
+      if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd|sv[a-f])\.2chan\.net$/
           .test (host)) { /* 画像鯖 */
         var doFake = false;
         if (!Akahuku.isFx9) {
