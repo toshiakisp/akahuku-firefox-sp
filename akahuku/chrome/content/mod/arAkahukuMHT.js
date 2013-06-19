@@ -1380,6 +1380,12 @@ var arAkahukuMHT = {
       }
     }
         
+    /* 右の広告スペースを消す */
+    node = arAkahukuDOM.getElementById (targetDocument, "div", "rightad");
+    if (node) {
+      node.parentNode.removeChild (node);
+    }
+
     /* 赤福、合間の追加したスタイルを消す */
     node = arAkahukuDOM.getElementById (targetDocument,
                                         "th",
