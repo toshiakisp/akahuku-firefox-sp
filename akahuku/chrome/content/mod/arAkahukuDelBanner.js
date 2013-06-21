@@ -460,6 +460,9 @@ var arAkahukuDelBanner = {
       var info = (param ? param.location_info : {isMht:false});
       this.deleteImage (node, info, false);
     }
+    else if (/^(?:DIV>)*IFRAME$/.test (branch)) {
+      node.parentNode.removeChild (node);
+    }
     else {
       context.setAttribute ("delete", text || "delete");
       node.style.display = "none";
