@@ -224,6 +224,12 @@ var arAkahukuServerData = {
     "\u30CD\u30C8\u30B2",
     8000, true
     ],
+  "dec:56" : [ /* ソシャゲ */
+    "\u30BD\u30B7\u30E3\u30B2",
+    "\u30BD\u30B7\u30E3\u30B2",
+    "\u30BD\u30FC\u30B7\u30E3\u30EB\u30B2\u30FC\u30E0",
+    6000, true
+    ],
   "dat:10" : [ /* ネットキャラ */
     "\u30CD\u30C3\u30C8\u30AD\u30E3\u30E9",
     "\u30CD\u30C3\u30C8\u30AD\u30E3\u30E9",
