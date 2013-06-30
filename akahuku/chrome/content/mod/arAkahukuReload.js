@@ -1512,15 +1512,7 @@ var arAkahukuReload = {
     }
         
     if (expireTime) {
-      /* 避難所 patch */
-      if (info.isMonaca) {
-        expireTime
-        = arAkahukuConverter.convertFromEUC (expireTime, "");
-      }
-      else {
-        expireTime
-        = arAkahukuConverter.convertFromSJIS (expireTime, "");
-      }
+      expireTime = arAkahukuReload._convertToUnicode (expireTime, info);
       info.expire = expireTime;
             
       var node
@@ -1761,15 +1753,8 @@ var arAkahukuReload = {
     }
     
     if (expireWarning) {
-      /* 避難所 patch */
-      if (info.isMonaca) {
-        expireWarning
-        = arAkahukuConverter.convertFromEUC (expireWarning, "");
-      }
-      else {
-        expireWarning
-        = arAkahukuConverter.convertFromSJIS (expireWarning, "");
-      }
+      expireWarning
+      = arAkahukuReload._convertToUnicode (expireWarning, info);
       info.expireWarning = expireWarning;
       info.isOld = true;
             
@@ -2166,15 +2151,8 @@ var arAkahukuReload = {
         /* レスの前の文字を反映する */
         var info
           = Akahuku.getDocumentParam (targetDocument).location_info;
-        /* 避難所 patch */
-        if (info.isMonaca) {
-          info.replyPrefix
-            = arAkahukuConverter.convertFromEUC (RegExp.$1, "");
-        }
-        else {
-          info.replyPrefix
-            = arAkahukuConverter.convertFromSJIS (RegExp.$1, "");
-        }
+        info.replyPrefix
+          = arAkahukuReload._convertToUnicode (RegExp.$1, info);
             
         var head = targetDocument
           .getElementById ("akahuku_bottom_container_head");
@@ -2202,15 +2180,8 @@ var arAkahukuReload = {
                .match (/<table><tr><th>([^<]+)<\/th><td>/)) {
         var info
           = Akahuku.getDocumentParam (targetDocument).location_info;
-        /* 避難所 patch */
-        if (info.isMonaca) {
-          info.replyPrefix
-            = arAkahukuConverter.convertFromEUC (RegExp.$1, "");
-        }
-        else {
-          info.replyPrefix
-            = arAkahukuConverter.convertFromSJIS (RegExp.$1, "");
-        }
+        info.replyPrefix
+          = arAkahukuReload._convertToUnicode (RegExp.$1, info);
             
         var head = targetDocument
           .getElementById ("akahuku_bottom_container_head");
@@ -2550,17 +2521,8 @@ var arAkahukuReload = {
                              endPosition
                              - (tagStopPosition + tagStop.length));
       
-      var currentReplyText;
-      /* 避難所 patch */
-      if (info.isMonaca) {
-        currentReplyText
-          = arAkahukuConverter.convertFromEUC (currentReplyTextTmp,
-                                               "");
-      }
-      else {
-        currentReplyText
-        = arAkahukuConverter.convertFromSJIS (currentReplyTextTmp, "");
-      }
+      var currentReplyText
+      = arAkahukuReload._convertToUnicode (currentReplyTextTmp, info);
             
       var num = 0;
       if (currentReplyText.match (/name=['"]?([0-9]+:)?([0-9]+)['"]?/)) {
@@ -3905,5 +3867,15 @@ var arAkahukuReload = {
         return;
       }
     }
-  }
+  },
+
+  _convertToUnicode : function (str, info) {
+    /* 避難所 patch */
+    if (info && info.isMonaca) {
+      return arAkahukuConverter.convertFromEUC (str, "");
+    }
+    else {
+      return arAkahukuConverter.convertFromSJIS (str, "");
+    }
+  },
 };
