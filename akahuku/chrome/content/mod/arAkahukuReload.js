@@ -2585,147 +2585,44 @@ var arAkahukuReload = {
                 }
                 
                 var bqs = Akahuku.getMessageBQ (currentContainer.main);
-                if (bqs.length) {
-                  var fonts = bqs [0].getElementsByTagName ("font");
-                  
-                  var c;
-                  var reds = [];
-                  for (var i = 0; i < fonts.length; i ++) {
-                    c = fonts [i].getAttribute ("color");
-                    if (c == "#f00000" || c == "#ff0000") {
-                      reds.push (fonts [i]);
+                var bqS = (bqs.length ? bqs [0] : null);
+                bqs = Akahuku.getMessageBQ (container.main);
+                var bqT = (bqs.length ? bqs [0] : null);
+                var syncdata
+                = arAkahukuReload._syncMessageBQ (bqS, bqT);
+                if (syncdata.red) {
+                  if (syncdata.deleted) {
+                    arAkahukuDOM.addClassName
+                      (container.main, "akahuku_deleted_reply2");
+                    if (dispdel) {
+                      container.nodes [0].style.display = replyDisplay;
+                    }
+                    arAkahukuDOM.addClassName
+                      (container.nodes [0], "deleted");
+                    if (arAkahukuReload.enableExtCacheImages) {
+                      Akahuku.Cache.enCacheURIForImages (container.main);
                     }
                   }
-
-                  var bs = bqs [0].getElementsByTagName ("b");
-                  for (var i = 0; i < bs.length; i ++) {
-                    if (bs [i].parentNode.nodeName.toLowerCase () == "font") {
-                      c = bs [i].parentNode.getAttribute ("color");
-                      if (c == "#f00000" || c == "#ff0000") {
-                        continue;
-                      }
-                    }
-                    reds.push (bs [i]);
+                  if (syncdata.redType === "deleted") {
+                    redDeletedReplies ++;
                   }
-                  
-                  var bqs2 = Akahuku.getMessageBQ (container.main);
-                  if (bqs2.length) {
-                    var fonts2 = bqs2 [0].getElementsByTagName ("font");
-                    var reds2 = [];
-                    for (var i = 0; i < fonts2.length; i ++) {
-                      c = fonts2 [i].getAttribute ("color");
-                      if (c == "#f00000" || c == "#ff0000") {
-                        if (("className" in fonts2 [i]
-                             && fonts2 [i].className
-                             == "akahuku_generated_link_child")
-                            || fonts2 [i].hasAttribute ("__akahuku_troll")) {
-                          continue;
-                        }
-                        reds2.push (fonts2 [i]);
-                      }
-                    }
-                    var bs2 = bqs2 [0].getElementsByTagName ("b");
-                    for (var i = 0; i < bs2.length; i ++) {
-                      if (bs2 [i].parentNode.nodeName.toLowerCase () == "font") {
-                        c = bs2 [i].parentNode.getAttribute ("color");
-                        if (c == "#f00000" || c == "#ff0000") {
-                          continue;
-                        }
-                      }
-                      reds2.push (bs2 [i]);
-                    }
-                    
-                    //追加された赤字を選別
-                    var oldRedTexts = [], newRedTexts = [];
-                    for (var i = 0; i < reds2.length; i ++) {
-                      var t = arAkahukuDOM.getInnerText (reds2 [i]);
-                      oldRedTexts.push (t);
-                    }
-                    for (var i = 0; i < reds.length; i ++) {
-                      var t = arAkahukuDOM.getInnerText (reds [i]);
-                      for (var j = 0; j < oldRedTexts.length; j ++) {
-                        if (oldRedTexts [j] == t) {
-                          oldRedTexts.splice (j, 1);
-                          t = null;
-                          break;
-                        }
-                      }
-                      if (t) {
-                        newRedTexts.push (t);
-                      }
-                    }
-                    
-                    if (newRedTexts.length > 0) {
-                      function deletedByRed () {
-                        arAkahukuDOM.addClassName
-                          (container.main, "akahuku_deleted_reply2");
-                        if (dispdel) {
-                          container.nodes [0].style.display = replyDisplay;
-                        }
-                        arAkahukuDOM.addClassName
-                          (container.nodes [0], "deleted");
-                        if (arAkahukuReload.enableExtCacheImages) {
-                          Akahuku.Cache.enCacheURIForImages (container.main);
-                        }
-                      }
-                      if (newRedTexts [0].lastIndexOf
-                          // "削除されました"
-                          ("\u524A\u9664\u3055\u308C\u307E\u3057\u305F") >= 0) {
-                        redDeletedReplies ++;
-                        deletedByRed ();
-                      }
-                      else if (newRedTexts [0] == "\u306A\u30FC") { //なー"
-                        redReplies ++;
-                        deletedByRed ();
-                      }
-                      else {
-                        redReplies ++;
-                      }
-                      for (var i = 0; i < reds2.length; i ++) {
-                        var br = arAkahukuDOM.findBR (reds2 [i].nextSibling);
-                        if (br) {
-                          br.parentNode.removeChild (br);
-                        }
-                        reds2 [i].parentNode.removeChild (reds2 [i]);
-                      }
-                      
-                      for (var i = reds.length - 1; i >= 0; i --) {
-                        var br = targetDocument.createElement ("br");
-                        if (bqs2 [0].firstChild) {
-                          bqs2 [0].insertBefore (br, bqs2 [0].firstChild);
-                        }
-                        else {
-                          bqs2 [0].appendChild (br);
-                        }
-                        
-                        var p = reds [i].previousSibling;
-                        var n = reds [i].nextSibling;
-                        if (n
-                            && n.nodeName.toLowerCase () == "#text") {
-                          bqs2 [0].insertBefore (n, bqs2 [0].firstChild);
-                        }
-                        bqs2 [0].insertBefore (reds [i], bqs2 [0].firstChild);
-                        if (p
-                            && p.nodeName.toLowerCase () == "#text") {
-                          bqs2 [0].insertBefore (p, bqs2 [0].firstChild);
-                        }
-                      }
-                    }
+                  else {
+                    redReplies ++;
+                  }
+                }
 
-                    if (!arAkahukuDOM.hasClassName
-                        (container.main, "akahuku_deleted_reply2")) {
-                      var thumb = Akahuku.getThumbnailFromBQ (bqs [0]);
-                      var thumb2 = Akahuku.getThumbnailFromBQ (bqs2 [0]);
-                      if (thumb2 && !thumb // 画像が削除された
-                          && !arAkahukuDOM.hasClassName
-                          (thumb2, "akahuku_deleted_reply2")) {
-                        deletedThumbnails ++;
-                        arAkahukuDOM.addClassName
-                          (thumb2, "akahuku_deleted_reply2");
-                        if (arAkahukuReload.enableExtCacheImages) {
-                          Akahuku.Cache.enCacheURIContext (thumb2);
-                        }
-                      }
+                if (bqT && bqS && !arAkahukuDOM.hasClassName
+                    (container.main, "akahuku_deleted_reply2")) {
+                  var thumbS = Akahuku.getThumbnailFromBQ (bqS);
+                  var thumbT = Akahuku.getThumbnailFromBQ (bqT);
+                  if (thumbT && !thumbS // 画像が削除された
+                      && !arAkahukuDOM.hasClassName
+                      (thumbT, "akahuku_deleted_reply2")) {
+                    deletedThumbnails ++;
+                    arAkahukuDOM.addClassName
+                      (thumbT, "akahuku_deleted_reply2");
+                    if (arAkahukuReload.enableExtCacheImages) {
+                      Akahuku.Cache.enCacheURIContext (thumbT);
                     }
                   }
                 }
@@ -3877,5 +3774,134 @@ var arAkahukuReload = {
     else {
       return arAkahukuConverter.convertFromSJIS (str, "");
     }
+  },
+
+  _syncMessageBQ : function (sourceBQ, targetBQ) {
+    var isRed = function (node) {
+      var c = node.getAttribute ("color");
+      return (c == "#f00000" || c == "#ff0000");
+    };
+    var getSiblingsUntilBR = function (node, backword) {
+      var sibling = (backword ? "previousSibling" : "nextSibling");
+      var ret = [];
+      while (node) {
+        if (node.nodeType === Node.ELEMENT_NODE &&
+            node.nodeName.toLowerCase () == "br") {
+          break;
+        }
+        ret.push (node);
+        node = node [sibling];
+      }
+      if (backword) ret.reverse ();
+      return ret;
+    };
+    var getSiblingsInLine = function (node) {
+      var nodes = getSiblingsUntilBR (node, true);
+      return nodes.concat (getSiblingsUntilBR (node.nextSibling));
+    };
+    var getTextOfNodes = function (nodes) {
+      var ret = "";
+      for (var i = 0; i < nodes.length; i ++) {
+        ret += arAkahukuDOM.getInnerText (nodes [i]);
+      }
+      return ret;
+    };
+    var RedData = function (node, bq) {
+      this.node = node;
+      while (node && bq && node.parentNode != bq) {
+        node = node.parentNode;
+      }
+      this.siblings = getSiblingsInLine (node);
+      this.text = getTextOfNodes (this.siblings);
+    };
+
+    var ret = {red: false, redType: "", deleted: false};
+
+    if ((sourceBQ instanceof Node && !Akahuku.isMessageBQ (sourceBQ))
+        || (targetBQ instanceof Node && !Akahuku.isMessageBQ (targetBQ))) {
+      return ret;
+    }
+
+    // 赤字を収集
+    var redsS = [];
+    var redsT = [];
+    var bqh = [sourceBQ, targetBQ];
+    var redsj = [redsS, redsT];
+    for (var h = 0; h < 2; h ++) {
+      var elms = bqh [h].getElementsByTagName ("font");
+      for (var i = 0; i < elms.length; i ++) {
+        if (isRed (elms [i])) {
+          if (("className" in elms [i]
+               && elms [i].className
+               == "akahuku_generated_link_child")
+              || elms [i].hasAttribute ("__akahuku_troll")) {
+            continue;
+          }
+          redsj [h].push (new RedData (elms[i], bqh [h]));
+        }
+      }
+      elms = bqh [h].getElementsByTagName ("b");
+      for (var i = 0; i < elms.length; i ++) {
+        if (elms [i].parentNode.nodeName.toLowerCase () == "font"
+            && isRed (elms [i].parentNode)) {
+          continue; // 追加済のはず
+        }
+        redsj [h].push (new RedData (elms[i], bqh [h]));
+      }
+    }
+
+    // 共通する赤字をリストから削除
+    // (新しい赤字と消えた赤字が残される)
+    for (var i = 0; i < redsS.length; i ++) {
+      for (var j = 0; j < redsT.length; j ++) {
+        if (redsT [j].text == redsS [i].text) {
+          redsS.splice (i, 1);
+          redsT.splice (j, 1);
+          break;
+        }
+      }
+    }
+
+    // 無くなった赤字行の削除
+    for (var i = 0; i < redsT.length; i ++) {
+      var next = null;
+      for (var j = 0; j < redsT [i].siblings.length; j ++) {
+        next = redsT [i].siblings [j].nextSibling;
+        targetBQ.removeChild (redsT [i].siblings [j]);
+      }
+      if (next) {// 続くBRも削除
+        targetBQ.removeChild (next);
+      }
+    }
+
+    // 新しい赤字行の追加
+    for (var i = redsS.length - 1; i >= 0; i --) {
+      var br = targetBQ.ownerDocument.createElement ("br");
+      if (targetBQ.firstChild) {
+        targetBQ.insertBefore (br, targetBQ.firstChild);
+      }
+      else {
+        targetBQ.appendChild (br);
+      }
+      for (var j = redsS [i].siblings.length - 1; j >= 0; j --) {
+        targetBQ.insertBefore (redsS [i].siblings [j], targetBQ.firstChild);
+      }
+    }
+
+    // 赤字変化を解析 (1番上のみ)
+    if (redsS.length > 0) {
+      ret.red = true;
+      if (redsS [0].text.lastIndexOf
+          // "削除されました"
+          ("\u524A\u9664\u3055\u308C\u307E\u3057\u305F") >= 0) {
+        ret.redType = "deleted";
+        ret.deleted = true;
+      }
+      else if (redsS [0].text == "\u306A\u30FC") { //なー"
+        ret.redType = "na";
+        ret.deleted = true;
+      }
+    }
+    return ret;
   },
 };
