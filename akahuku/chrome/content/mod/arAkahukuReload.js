@@ -3690,7 +3690,7 @@ var arAkahukuReload = {
         div.appendChild (textNode);
                 
         a = targetDocument.createElement ("a");
-        a.id = "akahuku_reload_allbutton";
+        a.id = "akahuku_reload_upbutton";
         a.appendChild (targetDocument.createTextNode
                        ("\u3082\u3046"
                         + Akahuku.partialUp
