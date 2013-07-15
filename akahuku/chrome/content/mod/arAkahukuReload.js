@@ -2050,7 +2050,7 @@ var arAkahukuReload = {
       bstream.setInputStream (istream);
       param.responseText = bstream.readBytes (dataSize);
       bstream.close ();
-      istream.close ();
+      try { istream.close (); } catch (e) {} // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
 
       if (arAkahukuReload.enableNolimit) {
         arAkahukuConfig.setTime (arAkahukuReload.limitTime);
@@ -2118,6 +2118,10 @@ var arAkahukuReload = {
           }
         });
       }
+    }
+    else {
+      // キャッシュが存在しなかった場合
+      arAkahukuReload.diffReloadCore (targetDocument, true, false);
     }
         
     event.preventDefault ();
