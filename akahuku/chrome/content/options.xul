@@ -1045,9 +1045,7 @@
                      value="件表示" />
             </box>
             <box class="sub" orient="vertical">
-              <label value="スレが消えた後に全件表示するには" class="warning" />
-              <label value="[スレが消えても表示できるようにする]" class="warning" />
-              <label value="が必要です" class="warning" />
+              <label value="(レスを全件表示せず省略する)"/>
               
               <box orient="horizontal" align="center">
                 <label id="reload_partial_up_label"
