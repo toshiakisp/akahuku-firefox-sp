@@ -259,7 +259,7 @@ arAkahukuReloadCacheWriter.prototype = {
   createFile : function (location) {
     try {
       var base
-      = arAkahukuFile.getURLSpecFromFilename
+      = arAkahukuFile.getURLSpecFromDirname
       (arAkahukuReload.extCacheFileBase);
       var path = location
       .replace (/^https?:\/\//, "");
@@ -2075,7 +2075,7 @@ var arAkahukuReload = {
             
       if (arAkahukuReload.enableExtCacheFile) {
         var base
-          = arAkahukuFile.getURLSpecFromFilename
+          = arAkahukuFile.getURLSpecFromDirname
           (arAkahukuReload.extCacheFileBase);
         var path = location
           .replace (/^https?:\/\//, "");
