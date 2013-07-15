@@ -2055,23 +2055,30 @@ var arAkahukuReload = {
       if (arAkahukuReload.enableNolimit) {
         arAkahukuConfig.setTime (arAkahukuReload.limitTime);
       }
-            
+
       param.reloadChannel = null;
       param.sync = true;
       param.replied = false;
       param.useRange = false;
       param.location = location;
 
-      setTimeout
-      (arAkahukuReload.update,
-       10,
-       targetDocument);
-    }
+      if (param.responseText.match (/^\x1f\x8b\x08/)) {
+        // gzip 圧縮されている場合
+        arAkahukuFile.gunzip
+          (param.responseText, function (data) {
+            param.responseText = data;
+            setTimeout (arAkahukuReload.update, 10, targetDocument);
+          });
+      }
+      else {
+        setTimeout (arAkahukuReload.update, 10, targetDocument);
+      }
+    };
+
+    var location = targetDocument.location.href;
 
     if (arAkahukuReload.enableExtCache) {
       param.responseText = "";
-            
-      var location = targetDocument.location.href;
             
       if (arAkahukuReload.enableExtCacheFile) {
         var base
@@ -2095,18 +2102,22 @@ var arAkahukuReload = {
             .createInstance (Components.interfaces.nsIFileInputStream);
           fstream.init (targetFile, 0x01, 292/*0444*/, 0);
           _loadCacheAndUpdate (fstream, targetFile.fileSize);
-        }
-        else {
-          // キャッシュが存在しなかった場合
-          arAkahukuReload.diffReloadCore (targetDocument, true, false);
+          location = null; // キャッシュ読み不要
         }
       }
       else {
-        var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-        finder.doomEntriesIfExpired = false;
-        finder.accessMode = Components.interfaces.nsICache.ACCESS_READ;
-        finder.init ();
-        finder.asyncOpen (location + ".backup", function (descriptor) {
+        // バックアップキャッシュを優先
+        location += ".backup";
+      }
+    }
+
+    if (location) {
+      var finder = new Akahuku.Cache.RedirectedCacheFinder ();
+      finder.doomEntriesIfExpired = false;
+      finder.accessMode = Components.interfaces.nsICache.ACCESS_READ;
+      finder.init ();
+      finder.asyncOpen (location, function (descriptor) {
+        try {
           if (descriptor) {
             var istream = descriptor.openInputStream (0);
             _loadCacheAndUpdate (istream, descriptor.dataSize);
@@ -2116,12 +2127,10 @@ var arAkahukuReload = {
             // キャッシュが存在しなかった場合
             arAkahukuReload.diffReloadCore (targetDocument, true, false);
           }
-        });
-      }
-    }
-    else {
-      // キャッシュが存在しなかった場合
-      arAkahukuReload.diffReloadCore (targetDocument, true, false);
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
+      });
     }
         
     event.preventDefault ();
