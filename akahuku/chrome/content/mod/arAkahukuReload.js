@@ -2524,6 +2524,8 @@ var arAkahukuReload = {
           = responseText.indexOf (">", threadEndPos);
         var threadBodyText
           = responseText.substring (startPosition, threadEndPos+1);
+        threadBodyText
+        = arAkahukuReload._convertToUnicode (threadBodyText, info);
 
         var bqs = Akahuku.getMessageBQ (targetDocument);
         var bqT = (bqs && bqs.length > 0 ? bqs [0] : null);
@@ -2533,6 +2535,17 @@ var arAkahukuReload = {
         var bqS = (bqs && bqs.length > 0 ? bqs [0] : null);
 
         if (bqS && bqT) {
+          // 赤字の同期
+          var syncdata
+            = arAkahukuReload._syncMessageBQ (bqS, bqT);
+          if (syncdata.red) {
+            if (syncdata.redType === "deleted") {
+              redDeletedReplies ++;
+            }
+            else {
+              redReplies ++;
+            }
+          }
           // ID同期
           if (arAkahukuReload.enableSyncMessageID) {
             var ret = arAkahukuReload._syncMessageID (bqS, bqT);
@@ -3951,6 +3964,7 @@ var arAkahukuReload = {
         if (redsT [j].text == redsS [i].text) {
           redsS.splice (i, 1);
           redsT.splice (j, 1);
+          i --; // splice した分の調整
           break;
         }
       }
