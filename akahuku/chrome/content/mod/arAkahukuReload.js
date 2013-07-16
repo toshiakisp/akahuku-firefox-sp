@@ -1141,6 +1141,7 @@ var arAkahukuReload = {
   enableSyncButton : false,              /* Boolean  [同期] ボタン */
   enableSyncButtonNoDelete : false,      /* Boolean  削除されたレスを
                                           *   残す */
+  enableSyncMessageID : false,           /* Boolean  IDも同期する */
   enableRule : false,                    /* Boolean  区切り */
   enableRuleZeroHeight : false,          /* Boolean  ズレないようにする */
   enableRuleRandom : false,              /* Boolean  ランダム */
@@ -1308,6 +1309,9 @@ var arAkahukuReload = {
           .initPref ("bool",
                      "akahuku.reload.range.syncbutton.nodelete",
                      false);
+        arAkahukuReload.enableSyncMessageID
+          = arAkahukuConfig
+          .initPref ("bool", "akahuku.reload.range.syncbutton.id", true);
       }
       arAkahukuReload.enableRule
         = arAkahukuConfig
@@ -2342,6 +2346,41 @@ var arAkahukuReload = {
     var endPosition = 0;
     var redReplies = 0;
 
+    var idSyncResults = {
+      removed: 0,
+      appended: 0,
+      removedIDs: [],
+      appendedIDs: [],
+      removedIDsText: "",
+      appendedIDsText: "",
+    };
+    var countSyncIDResult = function (results, ret) {
+      var ids = null;
+      if (ret.op > 0) {
+        results.appended ++;
+        ids = results.appendedIDs;
+      }
+      else if (ret.op < 0) {
+        results.removed ++;
+        ids = results.removedIDs;
+      }
+      if (ids) {
+        for (var nId = 0; ids && nId < ids.length; nId ++) {
+          if (ids [nId] === ret.id) {
+            return;
+          }
+        }
+        ids.push (ret.id);
+        var s = (ids.length > 1 ? " ID:" : "ID:") + ret.id;
+        if (ret.op > 0) {
+          results.appendedIDsText += s;
+        }
+        else {
+          results.removedIDsText += s;
+        }
+      }
+    };
+
     var replyPrefix
     = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
         
@@ -2475,6 +2514,29 @@ var arAkahukuReload = {
             if (arAkahukuReload.enableExtCacheImages) {
               Akahuku.Cache.enCacheURIContext (thumbnail);
             }
+          }
+        }
+
+        var threadEndPos
+          = responseText.indexOf ("</blockquote>", startPosition);
+        if (threadEndPos < 0) throw "no pattrn '</blockquote>'";
+        threadEndPos
+          = responseText.indexOf (">", threadEndPos);
+        var threadBodyText
+          = responseText.substring (startPosition, threadEndPos+1);
+
+        var bqs = Akahuku.getMessageBQ (targetDocument);
+        var bqT = (bqs && bqs.length > 0 ? bqs [0] : null);
+        var div = targetDocument.createElement ("div");
+        div.innerHTML = threadBodyText;
+        bqs = Akahuku.getMessageBQ (div);
+        var bqS = (bqs && bqs.length > 0 ? bqs [0] : null);
+
+        if (bqS && bqT) {
+          // ID同期
+          if (arAkahukuReload.enableSyncMessageID) {
+            var ret = arAkahukuReload._syncMessageID (bqS, bqT);
+            countSyncIDResult (idSyncResults, ret);
           }
         }
       }
@@ -2637,6 +2699,11 @@ var arAkahukuReload = {
                     if (arAkahukuReload.enableExtCacheImages) {
                       Akahuku.Cache.enCacheURIContext (thumbT);
                     }
+                  }
+
+                  if (arAkahukuReload.enableSyncMessageID) {
+                    var ret = arAkahukuReload._syncMessageID (bqS, bqT);
+                    countSyncIDResult (idSyncResults, ret);
                   }
                 }
                 
@@ -2874,7 +2941,8 @@ var arAkahukuReload = {
         
     return new Array (newReplies, skippedReplies,
                       nodeletedReplies + deletedReplies,
-                      newNodes, addNodes, redReplies, deletedThumbnails);
+                      newNodes, addNodes, redReplies, deletedThumbnails,
+                      idSyncResults);
   },
     
   /**
@@ -3042,6 +3110,7 @@ var arAkahukuReload = {
       addNodes = array [4];
       var redReplies = array [5];
       var deletedThumbnails = array [6];
+      var idSyncResults = array [7];
             
       /* 避難所 patch */
       if (info.isMonaca) {
@@ -3153,6 +3222,18 @@ var arAkahukuReload = {
         if (redReplies > 0) {
           /* 赤字が変わったレスがあった場合 */
           s += ", \u8D64\u5B57\u5909\u5316: " + redReplies;
+          parm = true;
+        }
+        if (idSyncResults.appended > 0) {
+          // IDが新たに付いたレスがあった場合
+          s += ", ID\u4ED8\u52A0: " + idSyncResults.appended //", ID付加: "
+            + " (" + idSyncResults.appendedIDsText + ")";
+          parm = true;
+        }
+        if (idSyncResults.removed > 0) {
+          // IDが消えたレスがあった場合
+          s += ", ID\u524A\u9664: " + idSyncResults.removed //", ID削除: "
+            + " (" + idSyncResults.removedIDsText + ")";
           parm = true;
         }
       }
@@ -3916,5 +3997,59 @@ var arAkahukuReload = {
       }
     }
     return ret;
+  },
+
+  _syncMessageID : function (bqS, bqT)
+  {
+    var idS = Akahuku.getMessageID (bqS);
+    var idT = Akahuku.getMessageID (bqT);
+    var ret = {id: idT, op: 0, err:false};
+    if (idS == idT) {
+      return ret;
+    }
+    else if (idS && !idT) { // ID挿入
+      ret.err = !arAkahukuReload._insertMessageID (bqT, idS);
+      ret.op = 1;
+      ret.id = idS;
+    }
+    else if (!idS && idT) { // ID削除
+      ret.err = !arAkahukuReload._removeMessageID (bqT, idT);
+      ret.op = -1;
+    }
+    return ret;
+  },
+
+  _insertMessageID : function (bqnode, id) {
+    var regexpTimeNum = /^(.*[0-9]+\/[0-9]+\/[0-9]+\([^\)]+\)[0-9]+:[0-9]+(?::[0-9]+)?) (No\.[1-9][0-9]*.*)$/;
+    var node = bqnode.previousSibling;
+    while (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeValue.match (regexpTimeNum)) {
+          // 日付もNo.も含むテキストノード (標準)
+          node.nodeValue = RegExp.$1 + " ID:" + id + " " + RegExp.$2;
+          return true;
+        }
+      }
+      node = node.previousSibling;
+    }
+    return false;
+  },
+  _removeMessageID : function (bqnode, optId) {
+    var pattern = /^(.*)(\bID:[A-Za-z0-9.\/]{8}) ?(No\.[0-9]*)?$/;
+    if (optId) {
+      optId = optId.replace (/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
+      pattern = new RegExp ("^(.*)(\\bID:" + optId + ") ?(.*)$");
+    }
+    var node = bqnode.previousSibling;
+    while (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeValue.match (pattern)) {
+          node.nodeValue = RegExp.$1 + RegExp.$3;
+          return true;
+        }
+      }
+      node = node.previousSibling;
+    }
+    return false;
   },
 };
