@@ -344,6 +344,34 @@ var arAkahukuFile = {
         
     return url;
   },
+
+  /**
+   * ネイティブパスを file プロトコルに変換する
+   *
+   * @param  String dirname
+   *         ネイティブパス
+   * @return String
+   *         file プロトコル(末尾に"/"が付く)
+   */
+  getURLSpecFromDirname : function (dirname) {
+    var targetFile = arAkahukuFile.initFile (dirname);
+    var url = "";
+    var ph = arAkahukuFile.fileProtocolHandler;
+    try {
+      if ("getURLSpecFromDir" in ph) { // requires Gecko >= 1.9.2
+        url = ph.getURLSpecFromDir (targetFile);
+      }
+      else {
+        url = ph.getURLSpecFromFile (targetFile);
+        if (url.charAt (url.length - 1) != "/") {
+          url += "/";
+        }
+      }
+    }
+    catch (e) {
+    }
+    return url;
+  },
     
   /**
    * ファイルを file プロトコルに変換する

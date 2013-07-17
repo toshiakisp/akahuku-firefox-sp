@@ -1010,6 +1010,9 @@
             <box class="sub" orient="vertical">
               <checkbox id="reload_range_syncbutton_nodelete"
                         checked="false" label="削除されたレスを残す" />
+              <checkbox id="reload_range_syncbutton_id"
+                        class="sp" tooltiptext="(デフォルト：有効) 同期時に、スレ本文とレスのIDの付加＆消滅も現在の表示に反映されるようにします"
+                        checked="false" label="IDも同期する" />
             </box>
             <checkbox id="reload_rule" checked="false" label="区切り"
                       oncommand="AkahukuOptions.checkReloadRule ();" />
@@ -1045,9 +1048,7 @@
                      value="件表示" />
             </box>
             <box class="sub" orient="vertical">
-              <label value="スレが消えた後に全件表示するには" class="warning" />
-              <label value="[スレが消えても表示できるようにする]" class="warning" />
-              <label value="が必要です" class="warning" />
+              <label value="(レスを全件表示せず省略する)"/>
               
               <box orient="horizontal" align="center">
                 <label id="reload_partial_up_label"

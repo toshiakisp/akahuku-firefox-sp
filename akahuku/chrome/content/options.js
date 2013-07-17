@@ -692,6 +692,7 @@ var AkahukuOptions = {
       ["bool", "reload", true],
       ["bool", "reload.range.syncbutton", true],
       ["bool", "reload.range.syncbutton.nodelete", true],
+      ["bool", "reload.range.syncbutton.id", true, "privatemod"],
       ["bool", "reload.rule", true],
       ["bool", "reload.rule.zeroheight", false],
       ["bool", "reload.rule.random", true],
@@ -3668,6 +3669,7 @@ var AkahukuOptions = {
     document.getElementById ("reload_range_syncbutton").disabled
     = !document.getElementById ("reload").checked;
     document.getElementById ("reload_range_syncbutton_nodelete").disabled
+    = document.getElementById ("reload_range_syncbutton_id").disabled
     = !document.getElementById ("reload").checked
     || !document.getElementById ("reload_range_syncbutton").checked;
   },

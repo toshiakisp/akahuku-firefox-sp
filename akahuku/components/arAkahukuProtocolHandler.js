@@ -2956,7 +2956,7 @@ arAkahukuProtocolHandler.prototype = {
         .getMostRecentWindow ("navigator:browser");
 
       var base
-        = chromeWindow.arAkahukuFile.getURLSpecFromFilename
+        = chromeWindow.arAkahukuFile.getURLSpecFromDirname
         (chromeWindow.arAkahukuReload.extCacheFileBase);
       var param = this.getAkahukuURIParam (uri.spec);
       var path = param.original

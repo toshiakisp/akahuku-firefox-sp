@@ -243,7 +243,7 @@ Akahuku.Cache = new function () {
     // from arAkahukuReloadCacheWriter.createFile ()
     var path = originalUrl.replace (/^https?:\/\//, "");
     var base
-      = arAkahukuFile.getURLSpecFromFilename
+      = arAkahukuFile.getURLSpecFromDirname
       (arAkahukuReload.extCacheFileBase);
     path = arAkahukuFile.getFilenameFromURLSpec (base + path);
 
