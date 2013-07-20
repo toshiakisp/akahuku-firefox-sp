@@ -67,8 +67,6 @@ var Akahuku = {
                                   *   最近使ったドキュメントごとの情報 */
     
   isOld : false,                 /* Boolean  古い Mozilla Suite か */
-  isFx4 : false,                 /* Boolean  Firefox 4.0 以降か */
-  isFx7 : false,
   isFx9 : false,
     
   initialized : false,           /* Boolean  初期化フラグ */
@@ -345,18 +343,7 @@ var Akahuku = {
       Akahuku.isOld = true;
     }
     
-    try {
-      Components.utils.import ("resource://gre/modules/Services.jsm");
-      Akahuku.isFx4 = true;
-      if (Services.vc.compare (Services.appinfo.platformVersion, "7.0") >= 0) {
-        Akahuku.isFx7 = true;
-      }
-      if (Services.vc.compare (Services.appinfo.platformVersion, "9.0") >= 0) {
-        Akahuku.isFx9 = true;
-      }
-    }
-    catch (e) {
-    }
+    Akahuku.isFx9 = arAkahukuCompat.comparePlatformVersion ("8.*") > 0;
     
     if (typeof (XPathResult) != "undefined") {
       Akahuku.isXPathAvailable = true;
@@ -493,7 +480,7 @@ var Akahuku = {
     /* 画像鯖では保存場所を覚えさせないハック (Fx 7.0 以降) */
     try {
       if (Akahuku.enableDownloadLastDirHack
-          && Akahuku.isFx7) {
+          && arAkahukuCompat.comparePlatformVersion ("6.*") > 0) {
         /* 保存する直前/直後を捉える方法がわからないので、やっつけ */
         gBrowser.addEventListener
           ("pageshow", Akahuku.onImageDocumentActivity, true);

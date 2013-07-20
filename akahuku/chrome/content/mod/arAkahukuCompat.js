@@ -15,6 +15,20 @@ var arAkahukuCompat = new function () {
   const Cc = Components.classes;
   const Cr = Components.results;
 
+  this.comparePlatformVersion = function (v) {
+    try {
+      // Gecko 1.8+
+      var vc = Cc ["@mozilla.org/xpcom/version-comparator;1"]
+        .getService (Ci.nsIVersionComparator);
+      var ai = Cc ["@mozilla.org/xre/app-info;1"]
+        .getService (Ci.nsIXULAppInfo);
+      return vc.compare (ai.platformVersion, v);
+    }
+    catch (e) {
+      return -1; // 1.8より前ではやっつけ
+    }
+  };
+
   this.WebBrowserPersist = {
     saveURI : function (webBrowserPersist, args)
     {
