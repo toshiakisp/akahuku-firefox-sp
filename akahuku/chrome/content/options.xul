@@ -951,6 +951,7 @@
                      value="px" />
             </box>
             <checkbox id="postform_save_attachment" checked="false"
+                      disabled="true" tooltiptext="Firefox 3.5beta1 (Gecko 1.9.1b1) 以降は不要"
                       label="添付ファイルを再起動時に保持" />
             <checkbox id="postform_delform_hide" checked="false"
                       label="削除フォームを消す" />
