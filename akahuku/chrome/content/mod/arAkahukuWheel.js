@@ -26,6 +26,8 @@ var arAkahukuWheel = {
   count : 0,           /* Number  ホイールの操作回数 */
   timeoutID : null,       /* Number  最新のタイムアウトの ID */
     
+  withYASSExt : -1, /* Nmber  YASS拡張の存在フラグ (-1:未調査,0:無し,1:有り)*/
+
   /**
    * 設定を読み込む
    */
@@ -62,6 +64,22 @@ var arAkahukuWheel = {
         = arAkahukuConfig
         .initPref ("bool", "akahuku.wheel.reload.catalog.up", false);
     }
+
+    if (arAkahukuWheel.withYASSExt == -1) {
+      try {
+        // require Gecko 2.0
+        Components.utils.import ("resource://gre/modules/AddonManager.jsm");
+        AddonManager.getAddonByID ("yetanothersmoothscrolling@kataho", function (addon) {
+          if (addon && addon.isActive) {
+            arAkahukuWheel.withYASSExt = 1;
+            Akahuku.debug.log ("enable special support for YASS extension");
+          }
+        });
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        arAkahukuWheel.withYASSExt = 0;
+      }
+    }
   },
 
   /**
@@ -93,11 +111,25 @@ var arAkahukuWheel = {
       var status = document.getElementById ("statusbar-display");
             
       var wheelDelta = (event.type === "wheel" ? event.deltaY : event.detail);
+      var scrollY = targetWindow.scrollY;
       var ok = true;
       var up = false;
             
+      if (arAkahukuWheel.withYASSExt > 0) {
+        // Yet Another Smooth Scrolling 拡張の
+        // 画面端での跳ね返り機能に対する特別対処
+        var yass = targetDocument.getElementById ("yass_bottom_edge");
+        if (yass && yass.offsetHeight > 0) {
+          scrollY += yass.offsetHeight;
+        }
+        yass = targetDocument.getElementById ("yass_top_edge");
+        if (yass && yass.offsetHeight > 0) {
+          scrollY -= yass.offsetHeight;
+        }
+      }
+
       if (wheelDelta < 0
-          || targetWindow.scrollY < targetWindow.scrollMaxY) {
+          || scrollY < targetWindow.scrollMaxY) {
         /* ページ末尾以外、もしくは上方向 */
         ok = false;
       }
@@ -106,7 +138,7 @@ var arAkahukuWheel = {
           && ((info.isNormal && arAkahukuWheel.enableReloadLoop)
             || (info.isCatalog && arAkahukuWheel.enableReloadCatalogUp))
           && wheelDelta < 0
-          && targetWindow.scrollY == 0) {
+          && scrollY <= 0) {
         /* ループの場合上方向もアリ */
         up = true;
         ok = true;
