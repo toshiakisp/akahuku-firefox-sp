@@ -92,7 +92,7 @@ var arAkahukuWheel = {
       }
       var status = document.getElementById ("statusbar-display");
             
-      var wheelDelta = event.detail;
+      var wheelDelta = (event.type === "wheel" ? event.deltaY : event.detail);
       var ok = true;
       var up = false;
             
@@ -370,9 +370,13 @@ var arAkahukuWheel = {
       }
             
       if (ok) {
+        var wheelEventName = "DOMMouseScroll";
+        if ("onwheel" in targetDocument.createElement ("div")) {
+          wheelEventName = "wheel";
+        }
         if (targetDocument.body) {
           targetDocument.body.addEventListener
-          ("DOMMouseScroll",
+          (wheelEventName,
            function () {
             arAkahukuWheel.onWheel (arguments [0]);
           }, false);
