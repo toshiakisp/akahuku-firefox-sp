@@ -362,6 +362,55 @@ var arAkahukuWheel = {
     catch (e) { Akahuku.debug.exception (e);
     }
   },
+
+  /**
+   * サブフレーム上でのホイールイベントを拾うハンドラの生成
+   *
+   * @param  Document bindedDocument
+   *         関連づけられたドキュメント
+   */
+  _createWheelHandlerForFrames : function (bindedDocument) {
+    return function onWheelForSubFrames (event) {
+      var targetDocument = event.target.ownerDocument;
+      if (targetDocument == bindedDocument) {
+        return; //別に補足済みのはずなので処理不要
+      }
+      var isWheel = event.type === "wheel";
+      var targetWindow = targetDocument.defaultView;
+      var delta = (isWheel ? event.deltaY : event.detail);
+      var scrollY = targetWindow.scrollY;
+      if (!(delta > 0 && scrollY >= targetWindow.scrollMaxY)
+        && !(delta < 0 && scrollY <= 0)) {
+        return; // 上端でも下端でもない
+      }
+
+      // 親を探してイベント転送
+      var targetFrame = null;
+      while (targetWindow.frameElement) {
+        targetFrame = targetWindow.frameElement;
+        targetDocument = targetFrame.ownerDocument;
+        targetWindow = targetDocument.defaultView;
+        if (targetDocument == bindedDocument) {
+          break;
+        }
+      }
+      if (targetDocument != bindedDocument) {
+        Akahuku.debug.warn ("targetDocument shuld be a bindedDocument");
+        return;
+      }
+      var dummyEvent = {
+        type : event.type,
+        target : targetFrame,
+        deltaX : (isWheel ? event.deltaX : null),
+        deltaY : (isWheel ? event.deltaY : null),
+        detail : event.detail,
+        deltaMode : (isWheel ? event.deltaMode : null),
+        preventDefault : function () {},
+        stopPropagation : function () {}
+      }
+      arAkahukuWheel.onWheel (dummyEvent);
+    };
+  },
     
   /**
    * ページ末尾のホイールをフックする
@@ -407,10 +456,24 @@ var arAkahukuWheel = {
           wheelEventName = "wheel";
         }
         if (targetDocument.body) {
-          targetDocument.body.addEventListener
+          targetDocument.defaultView.addEventListener
           (wheelEventName,
            function () {
             arAkahukuWheel.onWheel (arguments [0]);
+          }, false);
+        }
+
+        // iframe内のホイールイベントも捕まえる
+        if (info) { // 赤福管理ページでのみ
+          var browser
+            = arAkahukuWindow.getBrowserForWindow
+            (targetDocument.defaultView);
+          var handler
+            = arAkahukuWheel._createWheelHandlerForFrames (targetDocument);
+          browser.addEventListener (wheelEventName, handler, false);
+          targetDocument.defaultView.addEventListener
+          ("unload", function () {
+            browser.removeEventListener (wheelEventName, handler, false);
           }, false);
         }
       }
