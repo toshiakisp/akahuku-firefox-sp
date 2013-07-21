@@ -683,6 +683,7 @@ var AkahukuOptions = {
       ["bool", "postform.bottom_formonly", false, "privatemod"],
       ["init",
        function (map) {
+          AkahukuOptions.checkFormCompatibility ();
           AkahukuOptions.checkFloatPostForm ();
           AkahukuOptions.checkPostFormBottom ();
           AkahukuOptions.checkPostFormPreview ();
@@ -3567,6 +3568,12 @@ var AkahukuOptions = {
     = !document.getElementById ("commentbox_shortcut").checked;
   },
     
+  checkFormCompatibility : function () {
+    if (arAkahukuCompat.comparePlatformVersion ("1.9.1b1") < 0) {
+      document.getElementById ("postform_save_attachment").disabled = false;
+    }
+  },
+
   checkFloatPostForm : function () {
     if (document.getElementById ("floatpostform").checked) {
       document.getElementById ("postform_bottom").checked = false;

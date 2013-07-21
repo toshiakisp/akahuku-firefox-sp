@@ -905,9 +905,12 @@ var arAkahukuPostForm = {
         .initPref ("int",  "akahuku.postform.preview.size", 250);
     }
         
-    arAkahukuPostForm.enableSaveAttachment
-    = arAkahukuConfig
-    .initPref ("bool", "akahuku.postform.save_attachment", false);
+    arAkahukuPostForm.enableSaveAttachment = false;
+    if (arAkahukuCompat.comparePlatformVersion ("1.9.1b1") < 0) {
+      arAkahukuPostForm.enableSaveAttachment
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.postform.save_attachment", false);
+    }
 
     arAkahukuPostForm.enableShimonkin
     = arAkahukuConfig

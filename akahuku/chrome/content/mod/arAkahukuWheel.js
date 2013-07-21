@@ -26,6 +26,8 @@ var arAkahukuWheel = {
   count : 0,           /* Number  ホイールの操作回数 */
   timeoutID : null,       /* Number  最新のタイムアウトの ID */
     
+  withYASSExt : -1, /* Nmber  YASS拡張の存在フラグ (-1:未調査,0:無し,1:有り)*/
+
   /**
    * 設定を読み込む
    */
@@ -62,6 +64,22 @@ var arAkahukuWheel = {
         = arAkahukuConfig
         .initPref ("bool", "akahuku.wheel.reload.catalog.up", false);
     }
+
+    if (arAkahukuWheel.withYASSExt == -1) {
+      try {
+        // require Gecko 2.0
+        Components.utils.import ("resource://gre/modules/AddonManager.jsm");
+        AddonManager.getAddonByID ("yetanothersmoothscrolling@kataho", function (addon) {
+          if (addon && addon.isActive) {
+            arAkahukuWheel.withYASSExt = 1;
+            Akahuku.debug.log ("enable special support for YASS extension");
+          }
+        });
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        arAkahukuWheel.withYASSExt = 0;
+      }
+    }
   },
 
   /**
@@ -92,12 +110,26 @@ var arAkahukuWheel = {
       }
       var status = document.getElementById ("statusbar-display");
             
-      var wheelDelta = event.detail;
+      var wheelDelta = (event.type === "wheel" ? event.deltaY : event.detail);
+      var scrollY = targetWindow.scrollY;
       var ok = true;
       var up = false;
             
+      if (arAkahukuWheel.withYASSExt > 0) {
+        // Yet Another Smooth Scrolling 拡張の
+        // 画面端での跳ね返り機能に対する特別対処
+        var yass = targetDocument.getElementById ("yass_bottom_edge");
+        if (yass && yass.offsetHeight > 0) {
+          scrollY += yass.offsetHeight;
+        }
+        yass = targetDocument.getElementById ("yass_top_edge");
+        if (yass && yass.offsetHeight > 0) {
+          scrollY -= yass.offsetHeight;
+        }
+      }
+
       if (wheelDelta < 0
-          || targetWindow.scrollY < targetWindow.scrollMaxY) {
+          || scrollY < targetWindow.scrollMaxY) {
         /* ページ末尾以外、もしくは上方向 */
         ok = false;
       }
@@ -106,7 +138,7 @@ var arAkahukuWheel = {
           && ((info.isNormal && arAkahukuWheel.enableReloadLoop)
             || (info.isCatalog && arAkahukuWheel.enableReloadCatalogUp))
           && wheelDelta < 0
-          && targetWindow.scrollY == 0) {
+          && scrollY <= 0) {
         /* ループの場合上方向もアリ */
         up = true;
         ok = true;
@@ -330,6 +362,55 @@ var arAkahukuWheel = {
     catch (e) { Akahuku.debug.exception (e);
     }
   },
+
+  /**
+   * サブフレーム上でのホイールイベントを拾うハンドラの生成
+   *
+   * @param  Document bindedDocument
+   *         関連づけられたドキュメント
+   */
+  _createWheelHandlerForFrames : function (bindedDocument) {
+    return function onWheelForSubFrames (event) {
+      var targetDocument = event.target.ownerDocument;
+      if (targetDocument == bindedDocument) {
+        return; //別に補足済みのはずなので処理不要
+      }
+      var isWheel = event.type === "wheel";
+      var targetWindow = targetDocument.defaultView;
+      var delta = (isWheel ? event.deltaY : event.detail);
+      var scrollY = targetWindow.scrollY;
+      if (!(delta > 0 && scrollY >= targetWindow.scrollMaxY)
+        && !(delta < 0 && scrollY <= 0)) {
+        return; // 上端でも下端でもない
+      }
+
+      // 親を探してイベント転送
+      var targetFrame = null;
+      while (targetWindow.frameElement) {
+        targetFrame = targetWindow.frameElement;
+        targetDocument = targetFrame.ownerDocument;
+        targetWindow = targetDocument.defaultView;
+        if (targetDocument == bindedDocument) {
+          break;
+        }
+      }
+      if (targetDocument != bindedDocument) {
+        Akahuku.debug.warn ("targetDocument shuld be a bindedDocument");
+        return;
+      }
+      var dummyEvent = {
+        type : event.type,
+        target : targetFrame,
+        deltaX : (isWheel ? event.deltaX : null),
+        deltaY : (isWheel ? event.deltaY : null),
+        detail : event.detail,
+        deltaMode : (isWheel ? event.deltaMode : null),
+        preventDefault : function () {},
+        stopPropagation : function () {}
+      }
+      arAkahukuWheel.onWheel (dummyEvent);
+    };
+  },
     
   /**
    * ページ末尾のホイールをフックする
@@ -370,11 +451,29 @@ var arAkahukuWheel = {
       }
             
       if (ok) {
+        var wheelEventName = "DOMMouseScroll";
+        if ("onwheel" in targetDocument.createElement ("div")) {
+          wheelEventName = "wheel";
+        }
         if (targetDocument.body) {
-          targetDocument.body.addEventListener
-          ("DOMMouseScroll",
+          targetDocument.defaultView.addEventListener
+          (wheelEventName,
            function () {
             arAkahukuWheel.onWheel (arguments [0]);
+          }, false);
+        }
+
+        // iframe内のホイールイベントも捕まえる
+        if (info) { // 赤福管理ページでのみ
+          var browser
+            = arAkahukuWindow.getBrowserForWindow
+            (targetDocument.defaultView);
+          var handler
+            = arAkahukuWheel._createWheelHandlerForFrames (targetDocument);
+          browser.addEventListener (wheelEventName, handler, false);
+          targetDocument.defaultView.addEventListener
+          ("unload", function () {
+            browser.removeEventListener (wheelEventName, handler, false);
           }, false);
         }
       }

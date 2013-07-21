@@ -4035,16 +4035,40 @@ var arAkahukuReload = {
 
   _insertMessageID : function (bqnode, id) {
     var regexpTimeNum = /^(.*[0-9]+\/[0-9]+\/[0-9]+\([^\)]+\)[0-9]+:[0-9]+(?::[0-9]+)?) (No\.[1-9][0-9]*.*)$/;
+    var nextToNum = false;
+    var lastText = "";
     var node = bqnode.previousSibling;
     while (node) {
+      var text = "";
       if (node.nodeType === Node.TEXT_NODE) {
+        text = node.nodeValue;
+        if (nextToNum) { //No.を含むノードの前のテキストノード末尾に
+          node.nodeValue = text.replace
+            (/ ?$/, " ID:" + id + (/^ /.test (lastText) ? "" : " "));
+          return;
+        }
         if (node.nodeValue.match (regexpTimeNum)) {
           // 日付もNo.も含むテキストノード (標準)
           node.nodeValue = RegExp.$1 + " ID:" + id + " " + RegExp.$2;
           return true;
         }
       }
+      else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (/^br$/i.test (node.nodeName)) {
+          lastText = "";
+        }
+        else if (!(/^(font|b|a)$/i.test (node.nodeName))) {
+          text = arAkahukuDOM.getInnerText (node);
+        }
+      }
+      if (text.length > 0) {
+        lastText = text + lastText;
+        nextToNum = nextToNum || /\bNo\.[1-9][0-9]*/.test (lastText);
+      }
       node = node.previousSibling;
+    }
+    if (Akahuku.debug.enabled) {
+      Akahuku.debug.warn ("_insertMessageID failed: '" + lastText + "'");
     }
     return false;
   },
