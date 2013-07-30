@@ -521,6 +521,11 @@ var arAkahukuPopupQuote = {
               continue;
             }
           }
+          else if (nodeName == "div"
+                   && arAkahukuDOM.hasClassName (node, "tue")) {
+            // スレ頭の広告バナー
+            continue;
+          }
           else {
             newNode = node.cloneNode (true);
           }
