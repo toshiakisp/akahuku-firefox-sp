@@ -1751,7 +1751,6 @@ var Akahuku = {
         else {
           /* ContentPrefs から設定を消す */
           var LAST_DIR_PREF = "browser.download.lastDir";
-          var group = Services.contentPrefs.grouper.group (aURI);
           var loadContext = null; // required for Firefox 19+
           try {
             loadContext
@@ -1762,8 +1761,18 @@ var Akahuku = {
           }
           catch (e) { Akahuku.debug.exception (e);
           }
-          if (Services.contentPrefs.hasPref (group, LAST_DIR_PREF, loadContext)) {
-            Services.contentPrefs.removePref (group, LAST_DIR_PREF, loadContext);
+          if ("nsIContentPrefService2" in Components.interfaces) {
+            var cps2
+              = Components.classes ["@mozilla.org/content-pref/service;1"]
+              .getService (Components.interfaces.nsIContentPrefService2);
+            cps2.removeByDomainAndName (aURI.spec, LAST_DIR_PREF, loadContext);
+          }
+          else {
+            // nsIContentPrefService has been deprecated scince Gecko 20
+            var group = Services.contentPrefs.grouper.group (aURI);
+            if (Services.contentPrefs.hasPref (group, LAST_DIR_PREF, loadContext)) {
+              Services.contentPrefs.removePref (group, LAST_DIR_PREF, loadContext);
+            }
           }
         }
       }
