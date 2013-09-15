@@ -14,13 +14,13 @@ var arAkahukuServerData = {
     "\u767A\u96FB",
     "\u767A\u96FB",
     "\u767A\u96FB",
-    10000, true
+    300, true
     ],
   "dec:52" : [ /* 東日本大震災 */
     "\u6771\u65E5\u672C\u5927\u9707\u707D",
     "\u6771\u65E5\u672C\u5927\u9707\u707D",
     "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    10000, true
+    300, true
     ],
   "zip:1" : [ /* 野球 */
     "\u91CE\u7403",
@@ -106,7 +106,7 @@ var arAkahukuServerData = {
     "\u4E8C\u8F2A",
     "\u4E8C\u8F2A",
     "\u4E8C\u8F2A",
-    1000, true
+    500, true
     ],
   "nov:37" : [ /* 自転車 */
     "\u81EA\u8EE2\u8ECA",
@@ -228,7 +228,7 @@ var arAkahukuServerData = {
     "\u30BD\u30B7\u30E3\u30B2",
     "\u30BD\u30B7\u30E3\u30B2",
     "\u30BD\u30FC\u30B7\u30E3\u30EB\u30B2\u30FC\u30E0",
-    6000, true
+    3000, true
     ],
   "dat:10" : [ /* ネットキャラ */
     "\u30CD\u30C3\u30C8\u30AD\u30E3\u30E9",
