@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuCatalog, arAkahukuConfig, arAkahukuReload,
- *          arAkahukuWheel, arAkahukuWindow
+ *          arAkahukuWheel, arAkahukuWindow, arAkahukuCompat
  */
 
 /**
@@ -108,7 +108,7 @@ var arAkahukuWheel = {
       if (documentParam) {
         info = documentParam.location_info;
       }
-      var status = document.getElementById ("statusbar-display");
+      var status = arAkahukuCompat.gBrowser.getStatusPanel ();
             
       var wheelDelta = (event.type === "wheel" ? event.deltaY : event.detail);
       var scrollY = targetWindow.scrollY;

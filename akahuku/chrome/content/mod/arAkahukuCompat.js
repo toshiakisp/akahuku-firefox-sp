@@ -153,5 +153,17 @@ var arAkahukuCompat = new function () {
     }
   };
 
+  this.gBrowser = new function () {
+    this.getStatusPanel = function () {
+      try {
+        // since Firefox 26.0a1 [Bug 821687 (mozilla.org)]
+        return gBrowser.getStatusPanel ();
+      }
+      catch (e) {
+      }
+      return document.getElementById ("statusbar-display");
+    };
+  };
+
 };
 

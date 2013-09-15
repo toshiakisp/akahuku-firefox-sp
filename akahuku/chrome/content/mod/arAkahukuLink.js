@@ -1797,14 +1797,14 @@ var arAkahukuLink = {
           ("akahuku.autolink.user.patterns2",
            escape (arAkahukuJSON.encode (list)));
         
-        var status = document.getElementById ("statusbar-display");
+        var status = arAkahukuCompat.gBrowser.getStatusPanel ();
         if (status) {
           status.label
             = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u8FFD\u52A0\u3057\u307E\u3057\u305F";
         }
       }
       else {
-        var status = document.getElementById ("statusbar-display");
+        var status = arAkahukuCompat.gBrowser.getStatusPanel ();
         if (status) {
           status.label
             = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u540C\u3058\u9805\u76EE\u304C\u3042\u308A\u307E\u3059";
@@ -2344,7 +2344,7 @@ var arAkahukuLink = {
   onAutoLinkOver : function (event) {
     clearTimeout (arAkahukuLink.mouseOutTimeoutId);
     arAkahukuLink.mouseOutTimeoutId = null;
-    var status = document.getElementById ("statusbar-display");
+    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
     if (status) {
       var target = event.target;
       if (target) {
@@ -2380,7 +2380,7 @@ var arAkahukuLink = {
    *         対象のイベント
    */
   onAutoLinkOut : function (event) {
-    var status = document.getElementById ("statusbar-display");
+    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
     /* Firefox4+ におけるステータスのポップアップにより
      * out/over の無限ループに陥ることを防ぐために少し待つ
      */
