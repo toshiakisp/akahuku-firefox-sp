@@ -1106,6 +1106,18 @@ arAkahukuReloadParam.prototype = {
             param.reloadChannel.loadFlags
               |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
           }
+
+          // nsIHttpChannel に頼らない条件付きリクエストの生成 (Fx27.0a1のバグ?対策)
+          param.reloadChannel.loadFlags
+            |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
+          if ("Last-Modified" in cacheStatus.header) {
+            param.reloadChannel.setRequestHeader
+              ("If-Modified-Since", cacheStatus.header ["Last-Modified"], false);
+          }
+          if ("Etag" in cacheStatus.header) {
+            param.reloadChannel.setRequestHeader
+              ("If-None-Match", cacheStatus.header ["Etag"], false);
+          }
           param._asyncOpenReloadChannel2 ();
          });
     }
