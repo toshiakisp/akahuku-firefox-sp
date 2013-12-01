@@ -245,6 +245,8 @@ var arAkahukuPostForm = {
     
   enableSaveAttachment : false, /* Boolean  添付ファイルを再起動時に保持 */
     
+  enablePasteImageFromClipboard : false, /* Boolean  クリップボードから添付画像貼り付け */
+
   enableShimonkin : false,   /* Boolean  送信ボタンを変える */
   shimonkinType : "shimon",  /* String  ボタンの種類 */
   enableDelformHide : false, /* Boolean  削除フォームを消す */
@@ -911,6 +913,10 @@ var arAkahukuPostForm = {
       = arAkahukuConfig
       .initPref ("bool", "akahuku.postform.save_attachment", false);
     }
+
+    arAkahukuPostForm.enablePasteImageFromClipboard
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.postform.paste_image_from_clipboard", false);
 
     arAkahukuPostForm.enableShimonkin
     = arAkahukuConfig
@@ -2727,6 +2733,69 @@ var arAkahukuPostForm = {
     }
   },
     
+  onPasteFromClipboard : function (event) {
+    if (!arAkahukuPostForm.enablePasteImageFromClipboard) {
+      return;
+    }
+    if (event.clipboardData.types.length != 0) {
+      var typesText = "";
+      for (var i=0; i < event.clipboardData.types.length; i ++) {
+        if (Akahuku.debug.enabled) {
+          typesText += event.clipboardData.types [i] + ",";
+        }
+        if (event.clipboardData.types [i] === "text/plain") {
+          return; // テキスト貼付け可能時は何もしない
+        }
+      }
+      if (Akahuku.debug.enabled) {
+        Akahuku.debug.log
+          ("clipboardData.types.length = "
+           + event.clipboardData.types.length+": "+typesText);
+      }
+    }
+
+    var targetDocument = event.target.ownerDocument;
+    var filebox = targetDocument.getElementsByName ("upfile")[0];
+    if (!filebox) {
+      return;
+    }
+    var flavor = "image/jpg";
+    var imageBin = arAkahukuClipboard.getImage (flavor);
+    if (imageBin === null) {
+      Akahuku.debug.warn ("no " + flavor + " data in clipboard");
+      return;
+    }
+
+    filebox.value = "";
+    if (arAkahukuPostForm.enablePreview) {
+      arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+    }
+
+    // 一時フォルダにユニークなファイル名で画像保存して添付する
+    var filename
+      = arAkahukuFile.getDirectory ("TmpD")
+      + arAkahukuFile.separator + "akahuku-clip.jpg";
+    var fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
+    var file = arAkahukuFile.getFileFromURLSpec (fileurl);
+    file.createUnique (file.NORMAL_FILE_TYPE, 420/* 0644 */);
+    filename = file.path;
+    fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
+    arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
+      if (!Components.isSuccessCode (code)) {
+        Akahuku.debug.error (arAkahukuUtil.resultCodeToString (code)
+          + "in saving " + filename);
+        return;
+      }
+      var filebox = targetDocument.getElementsByName ("upfile")[0];
+      if (filebox) {
+        filebox.value = fileurl;
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
+      }
+    });
+  },
+
   /**
    * 固定したフォームの [閉じる] ボタンのイベント
    *
@@ -4362,6 +4431,13 @@ var arAkahukuPostForm = {
         ("keypress",
          function () {
           arAkahukuPostForm.onCommentKeyPress (arguments [0]);
+        }, false);
+      }
+
+      if (commentbox) {
+        commentbox.addEventListener
+        ("paste", function () {
+          arAkahukuPostForm.onPasteFromClipboard (arguments [0]);
         }, false);
       }
             

@@ -113,13 +113,17 @@ var arAkahukuFile = {
    *          現在のユーザの Profile ディレクトリ
    */
   getProfileDirectory : function () {
+    return arAkahukuFile.getDirectory ("ProfD");
+  },
+
+  getDirectory : function (key) {
     var dirname;
         
     try {
       dirname
         = Components.classes ["@mozilla.org/file/directory_service;1"]
         .getService (Components.interfaces.nsIProperties)
-        .get ("ProfD", Components.interfaces.nsIFile).path;
+        .get (key, Components.interfaces.nsIFile).path;
     }
     catch (e) {
       dirname = "";
