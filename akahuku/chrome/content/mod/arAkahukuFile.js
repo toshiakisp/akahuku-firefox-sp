@@ -113,13 +113,17 @@ var arAkahukuFile = {
    *          現在のユーザの Profile ディレクトリ
    */
   getProfileDirectory : function () {
+    return arAkahukuFile.getDirectory ("ProfD");
+  },
+
+  getDirectory : function (key) {
     var dirname;
         
     try {
       dirname
         = Components.classes ["@mozilla.org/file/directory_service;1"]
         .getService (Components.interfaces.nsIProperties)
-        .get ("ProfD", Components.interfaces.nsIFile).path;
+        .get (key, Components.interfaces.nsIFile).path;
     }
     catch (e) {
       dirname = "";
@@ -205,6 +209,80 @@ var arAkahukuFile = {
       }
       catch (e) {
       }
+    }
+  },
+
+  /**
+   * ファイルを作成する(非同期)
+   *
+   * @param  String filename
+   *         ファイル名
+   * @param  String text
+   *         ファイルの内容
+   * @param  function callback
+   *         コールバック関数
+   */
+  asyncCreateFile : function (filename, text, callback) {
+    var fstream = null;
+    try {
+      var file
+        = Components.classes ["@mozilla.org/file/local;1"]
+        .createInstance (Components.interfaces.nsILocalFile);
+      file.initWithPath (filename);
+      if (!file.exists ()) {
+        file.create (0x00, 420/* 0644 */);
+      }
+      fstream
+      = Components.classes ["@mozilla.org/network/file-output-stream;1"]
+      .createInstance (Components.interfaces.nsIFileOutputStream);
+      fstream.init (file, 0x02 | 0x08 | 0x20, 420/* 0644 */, 0);
+    }
+    catch (e) {
+      fstream = null;
+    }
+
+    if (!fstream) {
+      if (typeof callback === "function") {
+        arAkahukuUtil.executeSoon
+          (callback, [Components.results.NS_ERROR_FAILURE]);
+      }
+      return;
+    }
+
+    if ("nsIAsyncStreamCopier" in Components.interfaces) {
+      var istream
+      = Components.classes ["@mozilla.org/io/string-input-stream;1"]
+      .createInstance (Components.interfaces.nsIStringInputStream);
+      istream.setData (text, text.length);
+      var copier
+      = Components.classes ["@mozilla.org/network/async-stream-copier;1"]
+      .createInstance (Components.interfaces.nsIAsyncStreamCopier);
+      copier.init (istream, fstream, null, true, false, 0x8000, true, true);
+      var observer = {
+        onStartRequest: function (r, c) {},
+        onStopRequest: function (r, c, statusCode) {
+          callback (statusCode);
+        }
+      }
+      copier.asyncCopy (observer, null);
+    }
+    else {
+      // 非対応環境で非同期呼び出しを模擬
+      arAkahukuUtil.executeSoon (function () {
+        try {
+          fstream.write (text, text.length);
+          fstream.close ();
+        }
+        catch (e if e instanceof Components.interfaces.nsIXPCException) {
+          callback.apply (null, [e.result]);
+          return;
+	}
+        catch (e) {
+          callback.apply (null, [Components.results.NS_ERROR_FAILURE]);
+          return;
+        }
+        callback.apply (null, [Components.results.NS_OK]);
+      });
     }
   },
     

@@ -677,18 +677,11 @@ arAkahukuReloadParam.prototype = {
     // 取得できなかった場合に備えて load error となる値を指定しておく
     var httpStatus = 0;
     var responseHead = "";
-    function statusToString (code) {
-      if (!Components.isSuccessCode (code)) {
-        for (var name in Components.results) {
-          if (code === Components.results [name]) {
-            return name;
-          }
-        }
-        return "[0x" + code.toString (16) + "]";
-      }
-      return "";
+    var errorStatus = "";
+
+    if (!Components.isSuccessCode (statusCode)) {
+      errorStatus = arAkahukuUtil.resultCodeToString (statusCode);
     }
-    var errorStatus = statusToString (statusCode);
         
     try {
       var httpChannel

@@ -128,6 +128,7 @@ var arAkahukuStyle = {
     var styleSheetService
     = Components.classes ["@mozilla.org/content/style-sheet-service;1"]
     .getService (Components.interfaces.nsIStyleSheetService);
+    var type = Components.interfaces.nsIStyleSheetService.USER_SHEET;
         
     var ios
     = Components.classes ["@mozilla.org/network/io-service;1"]
@@ -135,14 +136,6 @@ var arAkahukuStyle = {
     var uri
     = ios.newURI (arAkahukuFile
                   .getURLSpecFromFilename (filename), null, null);
-        
-    if (styleSheetService.sheetRegistered
-        (uri,
-         Components.interfaces.nsIStyleSheetService.USER_SHEET)) {
-      styleSheetService.unregisterSheet
-        (uri,
-         Components.interfaces.nsIStyleSheetService.USER_SHEET);
-    }
         
     if (register) {
       var style = new arAkahukuStyleData ();
@@ -160,11 +153,23 @@ var arAkahukuStyle = {
             
       style = null;
             
-      arAkahukuFile.createFile (filename, text);
+      arAkahukuFile.asyncCreateFile (filename, text, function (statusCode) {
+        if (!Components.isSuccessCode (statusCode)) {
+          Akahuku.debug.error ("Error in creating userContent.css: "
+           + arAkahukuUtil.resultCodeToString (statusCode));
+          return;
+        }
+        if (styleSheetService.sheetRegistered (uri, type)) {
+          styleSheetService.unregisterSheet (uri, type);
+        }
+        styleSheetService.loadAndRegisterSheet (uri, type);
+      });
             
-      styleSheetService.loadAndRegisterSheet
-      (uri,
-       Components.interfaces.nsIStyleSheetService.USER_SHEET);
+    }
+    else {
+      if (styleSheetService.sheetRegistered (uri, type)) {
+        styleSheetService.unregisterSheet (uri, type);
+      }
     }
   },
     

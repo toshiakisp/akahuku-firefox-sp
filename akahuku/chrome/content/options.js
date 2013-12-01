@@ -675,6 +675,7 @@ var AkahukuOptions = {
       ["bool", "postform.preview", false],
       ["int",  "postform.preview.size", 250],
       ["bool", "postform.save_attachment", false],
+      ["bool", "postform.paste_image_from_clipboard", false, "privatemod"],
       ["bool", "postform.delform.hide", false],
       ["bool", "postform.delform.left", false],
       ["bool", "postform.shimonkin", false],
