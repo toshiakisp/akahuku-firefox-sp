@@ -4050,7 +4050,7 @@ var arAkahukuReload = {
         if (nextToNum) { //No.を含むノードの前のテキストノード末尾に
           node.nodeValue = text.replace
             (/ ?$/, " ID:" + id + (/^ /.test (lastText) ? "" : " "));
-          return;
+          return true;
         }
         if (node.nodeValue.match (regexpTimeNum)) {
           // 日付もNo.も含むテキストノード (標準)
