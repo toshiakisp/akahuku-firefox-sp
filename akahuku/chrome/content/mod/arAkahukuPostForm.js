@@ -2746,6 +2746,22 @@ var arAkahukuPostForm = {
         if (event.clipboardData.types [i] === "text/plain") {
           return; // テキスト貼付け可能時は何もしない
         }
+        else if (event.clipboardData.types [i] === "application/x-moz-file") {
+          // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
+          var targetDocument = event.target.ownerDocument;
+          var filebox = targetDocument.getElementsByName ("upfile") [0];
+          var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
+          if (filebox && file instanceof Components.interfaces.nsIFile) {
+            var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
+            if (fileurl && /\.(?:jpg|jpeg|png|gif)$/i.test (fileurl) ) {
+              filebox.value = fileurl;
+              if (arAkahukuPostForm.enablePreview) {
+                arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+              }
+              return; // 貼り付け成功時はそこで終了
+            }
+          }
+        }
       }
       if (Akahuku.debug.enabled) {
         Akahuku.debug.log
