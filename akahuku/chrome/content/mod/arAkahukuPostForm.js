@@ -2796,6 +2796,43 @@ var arAkahukuPostForm = {
     });
   },
 
+  /*
+   * 要素への drop イベントで添付ファイルを設定する
+   */
+  onDropToAttatchFile : function (event) {
+    event.preventDefault ();
+    var targetDocument = event.target.ownerDocument;
+    var filebox = targetDocument.getElementsByName ("upfile") [0];
+    var file = event.dataTransfer.mozGetDataAt ("application/x-moz-file", 0);
+    if (filebox && file instanceof Components.interfaces.nsIFile) {
+      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
+      if (fileurl) {
+        filebox.value = fileurl;
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
+      }
+    }
+  },
+
+  checkForDropToAttatchFile : function (event) {
+    if (event.dataTransfer.types.contains ("application/x-moz-file")) {
+      event.preventDefault (); // ドロップ受け入れ
+    }
+  },
+
+  addDropEventsListenersTo : function (element) {
+    element.addEventListener ("dragover", function (event) {
+      arAkahukuPostForm.checkForDropToAttatchFile (event);
+    }, false);
+    element.addEventListener ("dragenter", function (event) {
+      arAkahukuPostForm.checkForDropToAttatchFile (event);
+    }, false);
+    element.addEventListener ("drop", function (event) {
+      arAkahukuPostForm.onDropToAttatchFile (event);
+    }, false);
+  },
+
   /**
    * 固定したフォームの [閉じる] ボタンのイベント
    *
@@ -3602,6 +3639,7 @@ var arAkahukuPostForm = {
       var container = targetDocument.createElement ("div");
       container.id = "akahuku_postform_preview_container";
       container.style.display = "none";
+      arAkahukuPostForm.addDropEventsListenersTo (container);
                     
       var preview = targetDocument.createElement ("img");
       preview.id = "akahuku_postform_preview";
@@ -4439,6 +4477,12 @@ var arAkahukuPostForm = {
         ("paste", function () {
           arAkahukuPostForm.onPasteFromClipboard (arguments [0]);
         }, false);
+      }
+
+      /* コメント欄へのファイルD&Dで添付 */
+      var filebox = targetDocument.getElementsByName ("upfile") [0];
+      if (commentbox && filebox) {
+        arAkahukuPostForm.addDropEventsListenersTo (commentbox);
       }
             
       /* コメント欄、メール欄を監視する */
