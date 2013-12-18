@@ -2816,10 +2816,19 @@ var arAkahukuPostForm = {
    * 要素への drop イベントで添付ファイルを設定する
    */
   onDropToAttatchFile : function (event) {
-    event.preventDefault ();
+    var type = "application/x-moz-file";
+    if (event.dataTransfer.types.contains (type)) {
+      event.preventDefault ();
+    }
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile") [0];
-    var file = event.dataTransfer.mozGetDataAt ("application/x-moz-file", 0);
+    var file = null;
+    for (var i=0; i < event.dataTransfer.types.length; i ++) {
+      if (event.dataTransfer.types [i] === type) {
+        file = event.dataTransfer.mozGetDataAt (type, i);
+        break;
+      }
+    }
     if (filebox && file instanceof Components.interfaces.nsIFile) {
       var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
       if (fileurl) {
