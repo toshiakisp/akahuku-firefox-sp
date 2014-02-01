@@ -603,42 +603,43 @@ var arAkahukuUI = {
                               text + " " + AkahukuVersion);
         }
       }
-      panel
-        = document
-        .getElementById ("akahuku-toolbarbutton-preferences");
-      if (panel) {
-        panel.setAttribute ("status", "enabled");
-        var text = panel.getAttribute ("tooltiptext");
-        if (text.indexOf (AkahukuVersion) == -1) {
-          panel.setAttribute ("tooltiptext",
-                              text + " " + AkahukuVersion);
-        }
-      }
-      panel
-        = document
-        .getElementById ("akahuku-toolbarbutton-preferences-image");
-      if (panel) {
-        panel.setAttribute ("status", "enabled");
-      }
+      this.setAttributeOfToolbarButton
+        ("akahuku-toolbarbutton-preferences", "status", "enabled");
+      this.setAttributeOfToolbarButton
+        ("akahuku-toolbarbutton-preferences", "tooltiptext",
+         "\u8D64\u798F "+ AkahukuVersion); // "赤福 "+
+      this.setAttributeOfToolbarButton
+        ("akahuku-toolbarbutton-preferences-image", "status", "enabled");
     }
     else {
-      panel
+      var panel
       = document
       .getElementById ("akahuku-statusbarpanel-preferences");
       if (panel) {
         panel.setAttribute ("status", "disabled");
       }
-      panel
-      = document
-      .getElementById ("akahuku-toolbarbutton-preferences");
-      if (panel) {
-        panel.setAttribute ("status", "disabled");
-      }
-      panel
-      = document
-      .getElementById ("akahuku-toolbarbutton-preferences-image");
-      if (panel) {
-        panel.setAttribute ("status", "disabled");
+      this.setAttributeOfToolbarButton
+        ("akahuku-toolbarbutton-preferences", "status", "disabled");
+      this.setAttributeOfToolbarButton
+        ("akahuku-toolbarbutton-preferences-image", "status", "disabled");
+    }
+  },
+
+  setAttributeOfToolbarButton : function (id, attr, value) {
+    var button = document.getElementById (id);
+    if (button) {
+      button.setAttribute (attr, value);
+    }
+    else if (typeof CustomizableUI != "undefined") {
+      // For Australis
+      var widgets = CustomizableUI.getWidget (id);
+      if (widgets) {
+        for (var i = 0; i < widgets.instances.length; i ++) {
+          button = widgets.instances [i].node;
+          if (button) {
+            button.setAttribute (attr, value);
+          }
+        }
       }
     }
   },
