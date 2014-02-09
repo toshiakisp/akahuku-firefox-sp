@@ -2746,6 +2746,22 @@ var arAkahukuPostForm = {
         if (event.clipboardData.types [i] === "text/plain") {
           return; // テキスト貼付け可能時は何もしない
         }
+        else if (event.clipboardData.types [i] === "application/x-moz-file") {
+          // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
+          var targetDocument = event.target.ownerDocument;
+          var filebox = targetDocument.getElementsByName ("upfile") [0];
+          var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
+          if (filebox && file instanceof Components.interfaces.nsIFile) {
+            var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
+            if (fileurl && /\.(?:jpg|jpeg|png|gif)$/i.test (fileurl) ) {
+              filebox.value = fileurl;
+              if (arAkahukuPostForm.enablePreview) {
+                arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+              }
+              return; // 貼り付け成功時はそこで終了
+            }
+          }
+        }
       }
       if (Akahuku.debug.enabled) {
         Akahuku.debug.log
@@ -2794,6 +2810,52 @@ var arAkahukuPostForm = {
         }
       }
     });
+  },
+
+  /*
+   * 要素への drop イベントで添付ファイルを設定する
+   */
+  onDropToAttatchFile : function (event) {
+    var type = "application/x-moz-file";
+    if (event.dataTransfer.types.contains (type)) {
+      event.preventDefault ();
+    }
+    var targetDocument = event.target.ownerDocument;
+    var filebox = targetDocument.getElementsByName ("upfile") [0];
+    var file = null;
+    for (var i=0; i < event.dataTransfer.types.length; i ++) {
+      if (event.dataTransfer.types [i] === type) {
+        file = event.dataTransfer.mozGetDataAt (type, i);
+        break;
+      }
+    }
+    if (filebox && file instanceof Components.interfaces.nsIFile) {
+      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
+      if (fileurl) {
+        filebox.value = fileurl;
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
+      }
+    }
+  },
+
+  checkForDropToAttatchFile : function (event) {
+    if (event.dataTransfer.types.contains ("application/x-moz-file")) {
+      event.preventDefault (); // ドロップ受け入れ
+    }
+  },
+
+  addDropEventsListenersTo : function (element) {
+    element.addEventListener ("dragover", function (event) {
+      arAkahukuPostForm.checkForDropToAttatchFile (event);
+    }, false);
+    element.addEventListener ("dragenter", function (event) {
+      arAkahukuPostForm.checkForDropToAttatchFile (event);
+    }, false);
+    element.addEventListener ("drop", function (event) {
+      arAkahukuPostForm.onDropToAttatchFile (event);
+    }, false);
   },
 
   /**
@@ -3602,6 +3664,7 @@ var arAkahukuPostForm = {
       var container = targetDocument.createElement ("div");
       container.id = "akahuku_postform_preview_container";
       container.style.display = "none";
+      arAkahukuPostForm.addDropEventsListenersTo (container);
                     
       var preview = targetDocument.createElement ("img");
       preview.id = "akahuku_postform_preview";
@@ -4439,6 +4502,12 @@ var arAkahukuPostForm = {
         ("paste", function () {
           arAkahukuPostForm.onPasteFromClipboard (arguments [0]);
         }, false);
+      }
+
+      /* コメント欄へのファイルD&Dで添付 */
+      var filebox = targetDocument.getElementsByName ("upfile") [0];
+      if (commentbox && filebox) {
+        arAkahukuPostForm.addDropEventsListenersTo (commentbox);
       }
             
       /* コメント欄、メール欄を監視する */

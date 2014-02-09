@@ -2741,7 +2741,7 @@ var arAkahukuLink = {
       var target = null;
             
       if (arAkahukuLink.enableAutoLinkPreview
-          && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?([^&]+&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
+          && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
@@ -3163,7 +3163,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowFullScreen", "true");
       image.setAttribute ("allowScriptAccess", "never");
     }
-    else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]+&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
+    else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
       var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;

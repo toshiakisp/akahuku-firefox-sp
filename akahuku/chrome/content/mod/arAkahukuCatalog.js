@@ -4545,6 +4545,9 @@ var arAkahukuCatalog = {
       // HttpChannel にキャッシュを更新させない
       param.reloadChannel.loadFlags
         |= Components.interfaces.nsIRequest.INHIBIT_CACHING;
+      // requred for Firefox 27.0 (maybe caused by Bug 925352)
+      param.reloadChannel.loadFlags
+        |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
     }
     arAkahukuUtil.setChannelContext (param.reloadChannel, targetDocument);
         
