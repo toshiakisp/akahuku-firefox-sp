@@ -2186,7 +2186,7 @@ var arAkahukuPostForm = {
         ]);
     }
         
-    index
+    var index
     = parseInt (Math.random () * overflow.length);
     if (index
         >= overflow.length) {
