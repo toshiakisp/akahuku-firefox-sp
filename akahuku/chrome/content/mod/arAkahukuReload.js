@@ -737,7 +737,7 @@ arAkahukuReloadParam.prototype = {
             // "接続できませんでした "
             arAkahukuReload.setStatus
             ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F "
-             + statusToString (ret),
+             + arAkahukuUtil.resultCodeToString (ret),
              true, targetDocument);
           }
           return;
