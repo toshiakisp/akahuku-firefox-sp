@@ -356,6 +356,7 @@ arAkahukuReloadCacheWriter.prototype = {
   onCacheEntryCheck : function (entry, appCache) {
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
+  mainThreadOnly : true,
 };
 /**
  * [続きを読む] 管理データ
@@ -513,6 +514,7 @@ arAkahukuReloadParam.prototype = {
   onCacheEntryCheck : function (entry, appCache) {
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
+  mainThreadOnly : true,
     
   /**
    * 戻るイベント

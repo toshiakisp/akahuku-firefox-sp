@@ -514,6 +514,7 @@ Akahuku.Cache = new function () {
             }
           }
         },
+        mainThreadOnly : true,
         onCacheEntryCheck : function (entry, appCache) {
           return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
         },

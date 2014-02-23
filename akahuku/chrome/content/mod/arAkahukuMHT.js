@@ -54,7 +54,11 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
             
       descriptor.close ();
     }
-  }
+  },
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+  },
+  mainThreadOnly : true,
 };
 /**
  * P2P キャッシュの情報
@@ -554,6 +558,10 @@ arAkahukuMHTFileData.prototype = {
       descriptor.close ();
     }
   },
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+  },
+  mainThreadOnly : true,
     
   /**
    * リクエスト開始のイベント
