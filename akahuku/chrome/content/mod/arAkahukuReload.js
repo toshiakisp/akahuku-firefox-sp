@@ -4,12 +4,12 @@
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuImage, arAkahukuLink,
  *          arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
- *          arAkahukuThread, arAkahukuTitle, Akahuku.Cache
+ *          arAkahukuThread, arAkahukuTitle, Akahuku.Cache, arAkahukuCompat
  */
 
 /**
  * [続きを読む] のキャッシュ書き込み
- *   Inherits From: nsICacheListener
+ *   Inherits From: nsICacheEntryOpenCallback
  */
 function arAkahukuReloadCacheWriter () {
 }
@@ -300,18 +300,17 @@ arAkahukuReloadCacheWriter.prototype = {
     
   /**
    * キャッシュエントリが使用可能になったイベント
-   *   nsICacheListener.onCacheEntryAvailable
+   *   nsICacheEntryOpenCallback.onCacheEntryAvailable
    * キャッシュを更新する
    *
-   * @param  nsICacheEntryDescriptor descriptor
+   * @param  nsICacheEntry descriptor
    *         キャッシュの情報
-   * @param  nsCacheAccessMode accessGranted
-   *         アクセス権限
+   * @param  boolean isNew
+   * @param  nsIApplicationCache appCache
    * @param  nsresult status
-   *         不明
    */
-  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
-    if (accessGranted == Components.interfaces.nsICache.ACCESS_WRITE) {
+  onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
+    if (descriptor) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime (0);
@@ -353,11 +352,14 @@ arAkahukuReloadCacheWriter.prototype = {
             
       descriptor.close ();
     }
-  }
+  },
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+  },
 };
 /**
  * [続きを読む] 管理データ
- *   Inherits From: nsICacheListener, nsISHistoryListener,
+ *   Inherits From: nsICacheEntryOpenCallback, nsISHistoryListener,
  *                  nsIRequestObserver, nsIStreamListener
  */
 function arAkahukuReloadParam () {
@@ -441,18 +443,17 @@ arAkahukuReloadParam.prototype = {
     
   /**
    * キャッシュエントリが使用可能になったイベント
-   *   nsICacheListener.onCacheEntryAvailable
+   *   nsICacheEntryOpenCallback.onCacheEntryAvailable
    * キャッシュ情報を収集, バックアップを作成する
    *
-   * @param  nsICacheEntryDescriptor descriptor
+   * @param  nsICacheEntry descriptor
    *         キャッシュの情報
-   * @param  nsCacheAccessMode accessGranted
-   *         アクセス権限
+   * @param  boolean isNew
+   * @param  nsIApplicationCache appCache
    * @param  nsresult status
-   *         不明
    */
-  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
-    if (accessGranted) {
+  onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
+    if (descriptor) {
       try {
         var istream = descriptor.openInputStream (0);
         var bstream
@@ -480,26 +481,8 @@ arAkahukuReloadParam.prototype = {
                 self.writer.createFile (self.location);
               }
               else {
-                try {
-                  var cacheService
-                  = Components.classes ["@mozilla.org/network/cache-service;1"]
-                  .getService (Components.interfaces.nsICacheService);
-                  var httpCacheSession;
-                  httpCacheSession
-                  = cacheService
-                  .createSession ("HTTP",
-                                  Components.interfaces.nsICache
-                                  .STORE_ANYWHERE,
-                                  true);
-                  httpCacheSession.doomEntriesIfExpired = false;
-                  httpCacheSession
-                  .asyncOpenCacheEntry (self.location + ".backup",
-                                        Components.interfaces.nsICache
-                                        .ACCESS_WRITE,
-                                        self.writer);
-                }
-                catch (e) { Akahuku.debug.exception (e);
-                }
+                Akahuku.Cache.asyncOpenCacheToWrite
+                  (self.location + ".backup", self.writer);
               }
             }
           }
@@ -526,6 +509,9 @@ arAkahukuReloadParam.prototype = {
         /* 既に閉じられている場合など */
       }
     }
+  },
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
     
   /**
@@ -2122,8 +2108,6 @@ var arAkahukuReload = {
 
     if (location) {
       var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-      finder.doomEntriesIfExpired = false;
-      finder.accessMode = Components.interfaces.nsICache.ACCESS_READ;
       finder.init ();
       finder.asyncOpen (location, function (descriptor) {
         try {
@@ -3345,39 +3329,17 @@ var arAkahukuReload = {
     }
         
     if (updateCache) {
-      try {
-        var cacheService
-        = Components.classes ["@mozilla.org/network/cache-service;1"]
-        .getService (Components.interfaces.nsICacheService);
-        var httpCacheSession;
-        httpCacheSession
-        = cacheService
-        .createSession ("HTTP",
-                        Components.interfaces.nsICache.STORE_ANYWHERE,
-                        true);
-        httpCacheSession.doomEntriesIfExpired = false;
-        httpCacheSession
-        .asyncOpenCacheEntry (param.location,
-                              Components.interfaces.nsICache
-                              .ACCESS_WRITE,
-                              param.writer);
-                
-        if (arAkahukuReload.enableExtCache) {
-          /* バックアップキャッシュを更新 */
-          if (arAkahukuReload.enableExtCacheFile) {
-            param.writer.createFile (param.location);
-          }
-          else {
-            httpCacheSession
-              .asyncOpenCacheEntry
-              (param.location + ".backup",
-               Components.interfaces.nsICache
-               .ACCESS_WRITE,
-               param.writer);
-          }
+      Akahuku.Cache.asyncOpenCacheToWrite
+        (param.location, param.writer);
+      if (arAkahukuReload.enableExtCache) {
+        /* バックアップキャッシュを更新 */
+        if (arAkahukuReload.enableExtCacheFile) {
+          param.writer.createFile (param.location);
         }
-      }
-      catch (e) { Akahuku.debug.exception (e);
+        else {
+          Akahuku.Cache.asyncOpenCacheToWrite
+            (param.location + ".backup", param.writer);
+        }
       }
     }
         
@@ -3566,26 +3528,11 @@ var arAkahukuReload = {
    *         [続きを読む] 管理データ
    */
   backupCache : function (location, param) {
-    var cacheService
-    = Components.classes ["@mozilla.org/network/cache-service;1"]
-    .getService (Components.interfaces.nsICacheService);
-    var httpCacheSession;
-    httpCacheSession
-    = cacheService
-    .createSession ("HTTP",
-                    Components.interfaces.nsICache.STORE_ANYWHERE,
-                    true);
-    httpCacheSession.doomEntriesIfExpired = false;
     param.location = location;
-        
     try {
-      httpCacheSession.asyncOpenCacheEntry
-        (location,
-         Components.interfaces.nsICache.ACCESS_READ,
-         param);
+      Akahuku.Cache.asyncOpenCacheToRead (location, param);
     }
-    catch (e) {
-      /* キャッシュが存在しなかった場合 */
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     
@@ -4095,4 +4042,5 @@ var arAkahukuReload = {
     }
     return false;
   },
+
 };
