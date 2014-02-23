@@ -25,9 +25,7 @@ const nsIStandardURL        = Components.interfaces.nsIStandardURL;
 const nsILocalFile           = Components.interfaces.nsILocalFile;
 const nsIFile                = Components.interfaces.nsIFile;
 const nsIWebProgressListener = Components.interfaces.nsIWebProgressListener;
-const nsICacheListener       = Components.interfaces.nsICacheListener;
 const nsICache               = Components.interfaces.nsICache;
-const nsICacheService        = Components.interfaces.nsICacheService;
 const nsIHttpChannel         = Components.interfaces.nsIHttpChannel;
 const nsIWebBrowserPersist   = Components.interfaces.nsIWebBrowserPersist;
 const nsIWindowMediator      = Components.interfaces.nsIWindowMediator;
@@ -833,11 +831,10 @@ arAkahukuJPEGThumbnailChannel.prototype = {
  *   Inherits From: nsIChannel, nsIRequest
  *                  nsICacheListener
  *
- * @param  String clientID
  * @param  String key
  * @param  nsIURI  uri
  */
-function arAkahukuCacheChannel (clientID, key, uri) {
+function arAkahukuCacheChannel (key, uri) {
   this._originalKey = new String (key);
   this._candidates = [
     this._originalKey,
@@ -848,18 +845,8 @@ function arAkahukuCacheChannel (clientID, key, uri) {
   this.name = uri.spec;
   this.originalURI = uri;
   this.URI = uri;
-
-  this._cacheSession
-    = Components.classes
-    ["@mozilla.org/network/cache-service;1"]
-    .getService (nsICacheService)
-    .createSession (clientID,
-                    nsICache.STORE_ANYWHERE,
-                    nsICache.STREAM_BASED);
-  this._cacheSession.doomEntriesIfExpired = false;
 }
 arAkahukuCacheChannel.prototype = {
-  _cacheSession : null,
   _isPending : false,
   _wasOpened : false,
   _canceled : false,
@@ -872,7 +859,7 @@ arAkahukuCacheChannel.prototype = {
     if (iid.equals (nsISupports)
         || iid.equals (nsIRequest)
         || iid.equals (nsIChannel)
-        || iid.equals (nsICacheListener)
+        || iid.equals (arAkahukuCompat.CacheStorageService.CallbackInterface)
         || iid.equals (nsIAsyncVerifyRedirectCallback)) {
       return this;
     }
@@ -930,9 +917,7 @@ arAkahukuCacheChannel.prototype = {
       throw this.status;
     }
     try {
-      // TODO: isStorageEnabled()
-      this._cacheSession.asyncOpenCacheEntry
-        (this._key, nsICache.ACCESS_READ, this);
+      this._asyncOpenCacheEntryToRead (this._key, this);
     }
     catch (e) { Components.utils.reportError (e);
       this._isPending = false;
@@ -982,14 +967,39 @@ arAkahukuCacheChannel.prototype = {
     this._streamConverter = null;
   },
 
+  _asyncOpenCacheEntryToRead : function (key, listener)
+  {
+    var loadContextInfo = arAkahukuCompat.LoadContextInfo.default;
+    try {
+      var pb = null;
+      if ("nsIPrivateBrowsingChannel" in Components.interfaces) {
+        pb = this.QueryInterface (Components.interfaces.nsIPrivateBrowsingChannel);
+      }
+      if (pb && pb.isChannelPrivate) {
+        loadContextInfo = arAkahukuCompat.LoadContextInfo.private;
+      }
+    }
+    catch (e) {
+    }
+    var ios
+      = Components.classes ["@mozilla.org/network/io-service;1"]
+      .getService (nsIIOService);
+    var uri = ios.newURI (key, null, null);
+    var flag = arAkahukuCompat.CacheStorage.OPEN_READONLY;
+    arAkahukuCompat.CacheStorageService
+      .diskCacheStorage (loadContextInfo, false)
+      .asyncOpenURI (uri, "", flag, this);
+  },
+
   /**
-   * nsICacheListener.onCacheEntryAvailable 
+   * nsICacheEntryOpenCallback.onCacheEntryAvailable
    *
-   * @param nsICacheEntryDescriptor descriptor
-   * @param nsCacheAccessMode accessGranted
-   * @param nsresult status
+   * @param nsICacheEntry descriptor (or nsICacheDescriptor)
+   * @param boolean isNew
+   * @param nsIApplicationCache appCache
+   * @param nsresult result
    */
-  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
+  onCacheEntryAvailable: function (descriptor, isNew, appCache, status) {
     if (this._canceled) {
       if (descriptor) descriptor.close ();
       this._close (Components.results.NS_BINDING_ABORTED);
@@ -997,8 +1007,7 @@ arAkahukuCacheChannel.prototype = {
     }
 
     var isValidCache = false;
-    if (Components.isSuccessCode (status)
-        && accessGranted & nsICache.ACCESS_READ) {
+    if (Components.isSuccessCode (status)) {
       try { // レスポンスヘッダー解析
         var text = descriptor.getMetaDataElement ("response-head");
         var headers = (text ? text.split ("\n") : ["no response-head"]);
@@ -1026,8 +1035,7 @@ arAkahukuCacheChannel.prototype = {
       if (nextKey) {
         this._key = nextKey;
         try {
-          this._cacheSession.asyncOpenCacheEntry
-            (this._key, nsICache.ACCESS_READ, this);
+          this._asyncOpenCacheEntryToRead (this._key, this);
         }
         catch (e) {
           if (e.result != Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
@@ -1093,6 +1101,13 @@ arAkahukuCacheChannel.prototype = {
       this._close (Components.results.NS_BINDING_FAILED);
     }
   },
+  /**
+   * nsICacheEntryOpenCallback.onCacheEntryCheck
+   */
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+  },
+  mainThreadOnly : true,
 
   onRedirectVerifyCallback : function (result)
   {
@@ -2941,8 +2956,7 @@ arAkahukuProtocolHandler.prototype = {
 
     if (!isFile) {
       var channel
-        = new arAkahukuCacheChannel
-        ("HTTP", param.original, uri);
+        = new arAkahukuCacheChannel (param.original, uri);
       return channel;
     }
 

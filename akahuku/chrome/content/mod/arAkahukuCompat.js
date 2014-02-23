@@ -14,6 +14,7 @@ var arAkahukuCompat = new function () {
   const Ci = Components.interfaces;
   const Cc = Components.classes;
   const Cr = Components.results;
+  const Cu = Components.utils;
 
   this.comparePlatformVersion = function (v) {
     try {
@@ -165,5 +166,103 @@ var arAkahukuCompat = new function () {
     };
   };
 
+  // Cache service v2
+  
+  var CacheStorage = {
+    // Constants of nsICacheStorage for compatiblility
+    OPEN_NORMALLY : 0,
+    OPEN_TRUNCATE : 1 << 0,
+    OPEN_READONLY : 1 << 1,
+    OPEN_PRIORITY : 1 << 2,
+    OPEN_BYPASS_IF_BUSY : 1 << 31,
+  };
+  if ("nsICacheStorage" in Ci) {
+    CacheStorage = Ci.nsICacheStorage;
+  }
+  this.CacheStorage = CacheStorage;
+  var CacheEntryOpenCallback = {
+    // Constants of nsICacheStorage for compatiblility
+    ENTRY_WANTED : 0,
+    ENTRY_NEEDS_REVALIDATION : 1,
+    ENTRY_NOT_WANTED : 2,
+  };
+  if ("nsICacheEntryOpenCallback" in Ci) {
+    CacheEntryOpenCallback = Ci.nsICacheEntryOpenCallback;
+  }
+  this.CacheEntryOpenCallback = CacheEntryOpenCallback;
+
+  // nsICacheSession を nsICacheStorage のようにラップする
+  var CacheSessionWrapper = function (session, loadContextInfo, lookupAppCache) {
+    this._session = session;
+    this._lcinfo = loadContextInfo;
+    this._lookup = lookupAppCache;
+  };
+  CacheSessionWrapper.prototype = {
+    asyncOpenURI : function (uri, id, flag, callback) {
+      var accessMode = Ci.nsICache.ACCESS_READ_WRITE;
+      if (flag & CacheStorage.OPEN_READONLY) {
+        accessMode = Ci.nsICache.ACCESS_READ;
+      }
+      else if (flag & CacheStorage.OPEN_TRUNCATE) {
+        accessMode = Ci.nsICache.ACCESS_WRITE;
+      }
+      var wrappedcb = {
+        // nsICacheListener.onCacheEntryAvailable 
+        onCacheEntryAvailable : function (descriptor, accessGranted, result) {
+          // nsICacheEntry と nsICacheDescriptor は等価と思っておく
+          var entry = descriptor;
+          var appCache = null;
+          var check = callback.onCacheEntryCheck (entry, appCache);
+          if (check === CacheEntryOpenCallback.ENTRY_WANTED) {
+            var isNew = (accessGranted == Ci.nsICache.ACCESS_WRITE); //OK?
+            callback.onCacheEntryAvailable (entry, isNew, appCache, result);
+          }
+        },
+      };
+      this._session.doomEntriesIfExpired = false;
+      this._session.asyncOpenCacheEntry (uri.spec, accessMode, wrappedcb);
+    },
+    // 
+  };
+
+  this.CacheStorageService = new function () {
+    if ("@mozilla.org/netwerk/cache-storage-service;1" in Cc) {
+      // Initialize for HTTP cache v2
+      this._version = 2;
+      this._cacheService
+        = Cc ["@mozilla.org/netwerk/cache-storage-service;1"]
+        .getService (Ci.nsICacheStorageService);
+      this.CallbackInterface = Ci.nsICacheEntryOpenCallback;
+    }
+    else {
+      this._version = 1;
+      this._cacheService
+        = Cc ["@mozilla.org/network/cache-service;1"]
+        .getService (Ci.nsICacheService);
+      this.CallbackInterface = Ci.nsICacheListener;
+    }
+
+    // v1: nsICacheSession nsICacheService.createSession を
+    // v2: nsICacheStorage nsICacheStorageService.diskCacheStorage
+    // のように見せかける
+    this.diskCacheStorage = function (loadContextInfo, lookupAppCache) {
+      if (this._version === 1) {
+        var session
+          = this._cacheService.createSession
+          ("HTTP", Ci.nsICache.STORE_ANYWHERE, Ci.nsICache.STREAM_BASED);
+        return new CacheSessionWrapper (session, loadContextInfo, lookupAppCache);
+      }
+      return this._cacheService.diskCacheStorage (loadContextInfo, lookupAppCache);
+    };
+  };
+
+  try {
+    var scope = {};
+    Cu.import ("resource://gre/modules/LoadContextInfo.jsm", scope);
+    this.LoadContextInfo = scope.LoadContextInfo;
+  }
+  catch (e) {
+    this.LoadContextInfo = { }; // dummy
+  }
 };
 
