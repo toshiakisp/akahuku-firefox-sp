@@ -678,16 +678,29 @@ arAkahukuP2PChannel.prototype = {
    */
   onStateChange : function (webProgress, request, stateFlags, status) {
     var httpStatus = 200;
+    var contentType = "";
     try {
-      httpStatus
-        = request.QueryInterface (nsIHttpChannel)
-        .responseStatus;
+      var httpChannel = request.QueryInterface (nsIHttpChannel);
+      httpStatus = httpChannel.responseStatus;
+      // レスポンスヘッダからContent-Typeを得る
+      httpChannel.visitResponseHeaders ({
+        // nsIHttpHeaderVisitor
+        visitHeader : function (name, value) {
+          if (name === "Content-Type") {
+            contentType = value;
+          }
+        }
+      });
     }
-    catch (e) {
+    catch (e) { Components.utils.reportError (e);
     }
         
     if (stateFlags
         & nsIWebProgressListener.STATE_STOP) {
+      var cacheFile
+      = Components.classes ["@mozilla.org/file/local;1"]
+      .createInstance (nsILocalFile);
+      cacheFile.initWithPath (this._cacheFileName);
       if (httpStatus < 400) {
         /* 転送が終了したら */
         try {
@@ -696,34 +709,11 @@ arAkahukuP2PChannel.prototype = {
           ["@unmht.org/akahuku-p2p-servant;2"]
           .getService (arIAkahukuP2PServant2);
                     
-          /* キャッシュから元のファイルを作成 */
-          var cacheFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (nsILocalFile);
-          cacheFile.initWithPath (this._cacheFileName);
-                    
-          var fstream
-          = Components
-          .classes ["@mozilla.org/network/file-input-stream;1"]
-          .createInstance (nsIFileInputStream);
-          fstream.init (cacheFile, 0x01, 0444, 0);
-          var bstream
-          = Components.classes
-          ["@mozilla.org/binaryinputstream;1"]
-          .createInstance
-          (Components.interfaces.nsIBinaryInputStream);
-          bstream.setInputStream (fstream);
-          var data = "";
-          while (fstream.available ()) {
-            data += bstream.readBytes (fstream.available ());
-          }
-          bstream.close ();
-          fstream.close ();
-                    
-          if (data.length > 1
-              && data.substr (0, 1) == "<") {
+          if (contentType.substr (5) == "text/") {
+            // エラーページの場合
           }
           else {
+            /* キャッシュから元のファイルを作成 */
             cacheFile.moveTo (null, this._targetFileLeafName);
                     
             /* ハッシュを作成 */
@@ -742,10 +732,6 @@ arAkahukuP2PChannel.prototype = {
         }
       }
             
-      var cacheFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (nsILocalFile);
-      cacheFile.initWithPath (this._cacheFileName);
       if (cacheFile.exists ()) {
         cacheFile.remove (true);
       }
