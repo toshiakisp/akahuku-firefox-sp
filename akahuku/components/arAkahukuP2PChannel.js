@@ -532,10 +532,10 @@ arAkahukuP2PChannel.prototype = {
     .createInstance (nsIPipe);
         
     if (this._isGecko19) {
-      pipe.init (true, true, 1024 * 1024, 1, null);
+      pipe.init (true, true, 0, 0xffffffff, null);
     }
     else {
-      pipe.init (false, false, 1024 * 1024, 1, null);
+      pipe.init (false, false, 0, 0xffffffff, null);
     }
         
     var inputStreamChannel
@@ -906,7 +906,7 @@ arAkahukuP2PChannel.prototype = {
              0, targetFile.fileSize);
         }
         else if (this._type == 2) {
-          if (targetFile.fileSize <= 1024 * 1024) {
+          if (targetFile.fileSize > 0) {
             var bstream
               = Components.classes
               ["@mozilla.org/binaryinputstream;1"]
