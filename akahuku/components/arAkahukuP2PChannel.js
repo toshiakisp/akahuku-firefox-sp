@@ -906,7 +906,27 @@ arAkahukuP2PChannel.prototype = {
              0, targetFile.fileSize);
         }
         else if (this._type == 2) {
-          if (targetFile.fileSize > 0) {
+          if ("nsIAsyncStreamCopier" in Components.interfaces) {
+            var copier
+              = Components.classes
+              ["@mozilla.org/network/async-stream-copier;1"]
+              .createInstance (Components.interfaces.nsIAsyncStreamCopier);
+            copier.init (fstream, this._outputStream, null, false, true, 4096, true, true);
+            var observer = {
+              _p2pch : null,
+              onStartRequest : function (r, c) {},
+              onStopRequest : function (r, c, statusCode) {
+                this._p2pch._listener = null;
+                this._p2pch._context = null;
+                this._p2pch._outputStream = null;
+                this._p2pch = null;
+              },
+            };
+            observer._p2pch = this;
+            copier.asyncCopy (observer, null);
+            return;
+          }
+          else {
             var bstream
               = Components.classes
               ["@mozilla.org/binaryinputstream;1"]
