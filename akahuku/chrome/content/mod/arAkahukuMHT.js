@@ -8,7 +8,7 @@
 
 /**
  * リダイレクトページのキャッシュ書き込み
- *   Inherits From: nsICacheListener
+ *   Inherits From: nsICacheEntryOpenCallback
  */
 function arAkahukuMHTRedirectCacheWriter () {
 }
@@ -17,18 +17,17 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
     
   /**
    * キャッシュエントリが使用可能になったイベント
-   *   nsICacheListener.onCacheEntryAvailable
+   *   nsICacheEntryOpenCallback.onCacheEntryAvailable
    * 差分位置を取得する
    *
-   * @param  nsICacheEntryDescriptor descriptor
+   * @param  nsICacheEntry descriptor
    *         キャッシュの情報
-   * @param  nsCacheAccessMode accessGranted
-   *         アクセス権限
+   * @param  boolean isNew
+   * @param  nsIApplicationCache appCache
    * @param  nsresult status
-   *         不明
    */
-  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
-    if (accessGranted == Components.interfaces.nsICache.ACCESS_WRITE) {
+  onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
+    if (descriptor) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime ((new Date ()).getTime () / 1000
@@ -55,7 +54,11 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
             
       descriptor.close ();
     }
-  }
+  },
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+  },
+  mainThreadOnly : true,
 };
 /**
  * P2P キャッシュの情報
@@ -121,7 +124,7 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
 };
 /**
  * mht ファイルデータ
- *   Inherits From: nsICacheListener
+ *   Inherits From: nsICacheEntryOpenCallback
  *                  nsIStreamListener, nsIRequestObserver
  */
 function arAkahukuMHTFileData () {
@@ -195,7 +198,7 @@ arAkahukuMHTFileData.prototype = {
    * @param  nsIIDRef iid
    *         インターフェース ID
    * @throws Components.results.NS_NOINTERFACE
-   * @return nsICacheListener
+   * @return nsICacheOpenCallback
    *         this
    */
   QueryInterface : function (iid) {
@@ -203,7 +206,7 @@ arAkahukuMHTFileData.prototype = {
         || iid.equals (Components.interfaces.nsISupportsWeakReference)
         || iid.equals (Components.interfaces.nsIStreamListener)
         || iid.equals (Components.interfaces.nsIRequestObserver)
-        || iid.equals (Components.interfaces.nsICacheListener)) {
+        || iid.equals (arAkahukuCompat.CacheStorageService.CallbackInterface)) {
       return this;
     }
         
@@ -215,13 +218,11 @@ arAkahukuMHTFileData.prototype = {
    *
    * @param  String location
    *         取得対象の URI
-   * @param  nsICacheSession httpCacheSession
-   *         キャッシュのセッション
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
    *         避難所用
    */
-  getFile : function (location, httpCacheSession, targetDocument) {
+  getFile : function (location, targetDocument) {
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
       setTimeout
       ((function (file, location) {
@@ -267,24 +268,7 @@ arAkahukuMHTFileData.prototype = {
           this.anchor_status
             = arAkahukuMHT.FILE_ANCHOR_STATUS_HTML;
           
-          if (!httpCacheSession) {
-            var cacheService
-              = Components.classes
-              ["@mozilla.org/network/cache-service;1"]
-              .getService (Components.interfaces.nsICacheService);
-            httpCacheSession
-              = cacheService
-              .createSession
-              ("HTTP",
-               Components.interfaces.nsICache.STORE_ANYWHERE,
-               true);
-            httpCacheSession.doomEntriesIfExpired = false;
-          }
-                    
-          httpCacheSession.doomEntriesIfExpired = false;
-                    
-          this.getFile (this.currentLocation, httpCacheSession,
-                        targetDocument);
+          this.getFile (this.currentLocation, targetDocument);
                     
           return;
         }
@@ -338,7 +322,7 @@ arAkahukuMHTFileData.prototype = {
         }
         var descriptor
           = new arAkahukuP2PCacheEntryDescriptor (targetFile);
-        this.onCacheEntryAvailable (descriptor, true, 0);
+        this.onCacheEntryAvailable (descriptor, false, null, 0);
         return;
       }
 
@@ -350,7 +334,7 @@ arAkahukuMHTFileData.prototype = {
         }
         else {
           this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-          this.getFile (location, null, targetDocument);
+          this.getFile (location, targetDocument);
         }
                 
         return;
@@ -375,28 +359,12 @@ arAkahukuMHTFileData.prototype = {
         }
       }
       
-      if (!httpCacheSession) {
-        var cacheService
-          = Components.classes
-          ["@mozilla.org/network/cache-service;1"]
-          .getService (Components.interfaces.nsICacheService);
-        httpCacheSession
-          = cacheService
-          .createSession
-          ("HTTP",
-           Components.interfaces.nsICache.STORE_ANYWHERE,
-           true);
-        httpCacheSession.doomEntriesIfExpired = false;
-      }
-      httpCacheSession
-      .asyncOpenCacheEntry (location,
-                            Components.interfaces.nsICache.ACCESS_READ,
-                            this);
+      Akahuku.Cache.asyncOpenCacheToRead (location, this);
     }
     catch (e) {
       /* キャッシュが存在しなかった場合 */
             
-      this.onCacheEntryAvailable (null, false, 0);
+      this.onCacheEntryAvailable (null, false, null, 0);
     }
   },
     
@@ -436,22 +404,7 @@ arAkahukuMHTFileData.prototype = {
             this.anchor_status
               = arAkahukuMHT.FILE_ANCHOR_STATUS_HTML;
                         
-            var cacheService
-              = Components.classes
-              ["@mozilla.org/network/cache-service;1"]
-              .getService (Components.interfaces
-                           .nsICacheService);
-            var httpCacheSession;
-            httpCacheSession
-              = cacheService
-              .createSession ("HTTP",
-                              Components.interfaces.nsICache
-                              .STORE_ANYWHERE,
-                              true);
-            httpCacheSession.doomEntriesIfExpired = false;
-                        
-            this.getFile (this.imageLocation, httpCacheSession,
-                          null);
+            this.getFile (this.imageLocation, null);
           }
           else {
             /* 対象が html ファイルであり
@@ -511,16 +464,15 @@ arAkahukuMHTFileData.prototype = {
     
   /**
    * キャッシュエントリが使用可能になったイベント
-   *   nsICacheListener.onCacheEntryAvailable
+   *   nsICacheEntryOpenCallback.onCacheEntryAvailable
    *
-   * @param  nsICacheEntryDescriptor descriptor
+   * @param  nsICacheEntry descriptor
    *         キャッシュの情報
-   * @param  nsCacheAccessMode accessGranted
-   *         アクセス権限
+   * @param  boolean isNew
+   * @param  nsIApplicationCache appCache
    * @param  nsresult status
-   *         不明
    */
-  onCacheEntryAvailable : function (descriptor, accessGranted, status) {
+  onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
     var httpStatus = 200;
     try {
       var text = (descriptor ? descriptor.getMetaDataElement ("response-head") : null);
@@ -532,7 +484,7 @@ arAkahukuMHTFileData.prototype = {
         /* リダイレクト */
         var location = RegExp.$1;
         this.status = arAkahukuMHT.FILE_STATUS_NA_CACHE;
-        this.getFile (location, null, null);
+        this.getFile (location, null);
         return;
       }
     }
@@ -540,8 +492,7 @@ arAkahukuMHTFileData.prototype = {
     }
     
     if (this.type == arAkahukuMHT.FILE_TYPE_IMG) {
-      if (accessGranted && httpStatus >= 200
-          && accessGranted && httpStatus <= 299) {
+      if (descriptor && httpStatus >= 200 && httpStatus <= 299) {
         /* アクセス権が取得できた場合 */
         
         arAkahukuMHT.getFileData (descriptor, this);
@@ -556,13 +507,12 @@ arAkahukuMHTFileData.prototype = {
         }
         else {
           this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-          this.getFile (this.location, null, null);
+          this.getFile (this.location, null);
         }
       }
     }
     else {
-      if (accessGranted && httpStatus >= 200
-          && accessGranted && httpStatus <= 299) {
+      if (descriptor && httpStatus >= 200 && httpStatus <= 299) {
         /* アクセス権が取得できた場合 */
         if (this.anchor_status
             == arAkahukuMHT.FILE_ANCHOR_STATUS_NA) {
@@ -587,23 +537,8 @@ arAkahukuMHTFileData.prototype = {
           this.status = arAkahukuMHT.FILE_STATUS_NA_CACHE_BACKUP;
           
           try {
-            var cacheService
-              = Components.classes
-              ["@mozilla.org/network/cache-service;1"]
-              .getService (Components.interfaces.nsICacheService);
-            var httpCacheSession;
-            httpCacheSession
-              = cacheService
-              .createSession
-              ("HTTP",
-               Components.interfaces.nsICache.STORE_ANYWHERE,
-               true);
-            httpCacheSession.doomEntriesIfExpired = false;
-            httpCacheSession
-              .asyncOpenCacheEntry
-              (this.location + ".backup",
-               Components.interfaces.nsICache.ACCESS_READ,
-               this);
+            Akahuku.Cache.asyncOpenCacheToRead
+              (this.location + ".backup", this);
           }
           catch (e) {
             this.status = arAkahukuMHT.FILE_STATUS_NG;
@@ -623,6 +558,10 @@ arAkahukuMHTFileData.prototype = {
       descriptor.close ();
     }
   },
+  onCacheEntryCheck : function (entry, appCache) {
+    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+  },
+  mainThreadOnly : true,
     
   /**
    * リクエスト開始のイベント
@@ -2815,24 +2754,12 @@ var arAkahukuMHT = {
       }
             
       /* キャッシュからファイルを探す */
-      var cacheService
-        = Components.classes ["@mozilla.org/network/cache-service;1"]
-        .getService (Components.interfaces.nsICacheService);
-            
-      var httpCacheSession;
-      httpCacheSession
-        = cacheService
-        .createSession ("HTTP",
-                        Components.interfaces.nsICache.STORE_ANYWHERE,
-                        true);
-      httpCacheSession.doomEntriesIfExpired = false;
-            
       for (i = 0; i < param.files.length; i ++) {
         if (param.files [i].status
             == arAkahukuMHT.FILE_STATUS_NA_CACHE) {
           param.files [i].delay = 500 + i * 500;
           param.files [i].getFile (param.files [i].currentLocation,
-                                   httpCacheSession, targetDocument);
+                                   targetDocument);
         }
       }
             
@@ -4050,23 +3977,8 @@ var arAkahukuMHT = {
       writer.body = sjis;
             
       try {
-        var cacheService
-          = Components.classes
-          ["@mozilla.org/network/cache-service;1"]
-          .getService (Components.interfaces.nsICacheService);
-        var httpCacheSession;
-        httpCacheSession
-          = cacheService
-          .createSession
-          ("HTTP",
-           Components.interfaces.nsICache.STORE_ANYWHERE,
-           true);
-        httpCacheSession.doomEntriesIfExpired = false;
-        httpCacheSession
-          .asyncOpenCacheEntry
-          (targetDocument.location.href + ".backup",
-           Components.interfaces.nsICache.ACCESS_WRITE,
-           writer);
+        Akahuku.Cache.asyncOpenCacheToWrite
+          (targetDocument.location.href + ".backup", writer);
       }
       catch (e) { Akahuku.debug.exception (e);
       }

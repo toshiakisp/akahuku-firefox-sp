@@ -532,10 +532,10 @@ arAkahukuP2PChannel.prototype = {
     .createInstance (nsIPipe);
         
     if (this._isGecko19) {
-      pipe.init (true, true, 1024 * 1024, 1, null);
+      pipe.init (true, true, 0, 0xffffffff, null);
     }
     else {
-      pipe.init (false, false, 1024 * 1024, 1, null);
+      pipe.init (false, false, 0, 0xffffffff, null);
     }
         
     var inputStreamChannel
@@ -678,16 +678,29 @@ arAkahukuP2PChannel.prototype = {
    */
   onStateChange : function (webProgress, request, stateFlags, status) {
     var httpStatus = 200;
+    var contentType = "";
     try {
-      httpStatus
-        = request.QueryInterface (nsIHttpChannel)
-        .responseStatus;
+      var httpChannel = request.QueryInterface (nsIHttpChannel);
+      httpStatus = httpChannel.responseStatus;
+      // レスポンスヘッダからContent-Typeを得る
+      httpChannel.visitResponseHeaders ({
+        // nsIHttpHeaderVisitor
+        visitHeader : function (name, value) {
+          if (name === "Content-Type") {
+            contentType = value;
+          }
+        }
+      });
     }
-    catch (e) {
+    catch (e) { Components.utils.reportError (e);
     }
         
     if (stateFlags
         & nsIWebProgressListener.STATE_STOP) {
+      var cacheFile
+      = Components.classes ["@mozilla.org/file/local;1"]
+      .createInstance (nsILocalFile);
+      cacheFile.initWithPath (this._cacheFileName);
       if (httpStatus < 400) {
         /* 転送が終了したら */
         try {
@@ -696,34 +709,11 @@ arAkahukuP2PChannel.prototype = {
           ["@unmht.org/akahuku-p2p-servant;2"]
           .getService (arIAkahukuP2PServant2);
                     
-          /* キャッシュから元のファイルを作成 */
-          var cacheFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (nsILocalFile);
-          cacheFile.initWithPath (this._cacheFileName);
-                    
-          var fstream
-          = Components
-          .classes ["@mozilla.org/network/file-input-stream;1"]
-          .createInstance (nsIFileInputStream);
-          fstream.init (cacheFile, 0x01, 0444, 0);
-          var bstream
-          = Components.classes
-          ["@mozilla.org/binaryinputstream;1"]
-          .createInstance
-          (Components.interfaces.nsIBinaryInputStream);
-          bstream.setInputStream (fstream);
-          var data = "";
-          while (fstream.available ()) {
-            data += bstream.readBytes (fstream.available ());
-          }
-          bstream.close ();
-          fstream.close ();
-                    
-          if (data.length > 1
-              && data.substr (0, 1) == "<") {
+          if (contentType.substr (5) == "text/") {
+            // エラーページの場合
           }
           else {
+            /* キャッシュから元のファイルを作成 */
             cacheFile.moveTo (null, this._targetFileLeafName);
                     
             /* ハッシュを作成 */
@@ -742,10 +732,6 @@ arAkahukuP2PChannel.prototype = {
         }
       }
             
-      var cacheFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (nsILocalFile);
-      cacheFile.initWithPath (this._cacheFileName);
       if (cacheFile.exists ()) {
         cacheFile.remove (true);
       }
@@ -906,7 +892,27 @@ arAkahukuP2PChannel.prototype = {
              0, targetFile.fileSize);
         }
         else if (this._type == 2) {
-          if (targetFile.fileSize <= 1024 * 1024) {
+          if ("nsIAsyncStreamCopier" in Components.interfaces) {
+            var copier
+              = Components.classes
+              ["@mozilla.org/network/async-stream-copier;1"]
+              .createInstance (Components.interfaces.nsIAsyncStreamCopier);
+            copier.init (fstream, this._outputStream, null, false, true, 4096, true, true);
+            var observer = {
+              _p2pch : null,
+              onStartRequest : function (r, c) {},
+              onStopRequest : function (r, c, statusCode) {
+                this._p2pch._listener = null;
+                this._p2pch._context = null;
+                this._p2pch._outputStream = null;
+                this._p2pch = null;
+              },
+            };
+            observer._p2pch = this;
+            copier.asyncCopy (observer, null);
+            return;
+          }
+          else {
             var bstream
               = Components.classes
               ["@mozilla.org/binaryinputstream;1"]

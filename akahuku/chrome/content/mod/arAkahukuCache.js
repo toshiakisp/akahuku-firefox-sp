@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig,
- *          arAkahukuReload, arAkahukuFile
+ *          arAkahukuReload, arAkahukuFile, arAkahukuCompat
  */
 
 /**
@@ -379,88 +379,94 @@ Akahuku.Cache = new function () {
    *   (エラー時は null をコールバックに通知)
    */
   this.RedirectedCacheFinder = function () {
-    this.session = null;
+    this.openFlag = arAkahukuCompat.CacheStorage.OPEN_READONLY;
+    this._storage = null;
     this._isPending = false;
-    this._lastDescriptor = null;
-    this._accessRequested = this.accessMode;
+    this._lastEntry = null;
     this._callback = null;
     this._redirected = 0;
-  }
+  };
   this.RedirectedCacheFinder.prototype = {
     maxRedirections : 10,
-    // cache session parameters used if no session specified
-    clientID : "HTTP",
-    storagePolicy : Components.interfaces.nsICache.STORE_ANYWHERE,
-    streamBased : Components.interfaces.nsICache.STREAM_BASED,
-    doomEntriesIfExpired : false,
-    // access mode for all entries (asyncOpenCacheEntry)
-    accessMode : Components.interfaces.nsICache.ACCESS_READ,
-    init : function (cacheSession)
+    init : function ()
     {
-      if (!cacheSession) {
-        cacheSession
-          = Components.classes
-          ["@mozilla.org/network/cache-service;1"]
-          .getService (Components.interfaces.nsICacheService)
-          .createSession (this.clientID,
-                          this.storagePolicy,
-                          this.streamBased);
-        cacheSession.doomEntriesIfExpired = this.doomEntriesIfExpired;
+      var Ci = Components.interfaces;
+      var loadContextInfo = null;
+      try {
+        if ("fromLoadContext" in arAkahukuCompat.LoadContextInfo) {
+          loadContextInfo =
+            arAkahukuCompat.LoadContextInfo.fromLoadContext
+            (window.QueryInterface (Ci.nsIInterfaceRequestor)
+             .getInterface (Ci.nsIWebNavigation)
+             .QueryInterface (Ci.nsILoadContext),
+             false);
+        }
       }
-      this.session = cacheSession;
+      catch (e) { Akahuku.debug.exception (e);
+      }
+      this._storage
+        = arAkahukuCompat.CacheStorageService
+        .diskCacheStorage (loadContextInfo, false);
     },
     isPending : function () { return this._isPending },
     cancel : function ()
     {
       this._isPending = false;
-      if (this._lastDescriptor)
-        this._lastDescriptor.close ();
+      if (this._lastEntry)
+        this._lastEntry.close ();
     },
     asyncOpen : function (key, callback)
     {
       this._redirected = 0;
       if (this._isPending)
         throw Components.results.NS_ERROR_IN_PROGRESS;
-      this.session.asyncOpenCacheEntry (key, this.accessMode, this);
-      this._accessRequested = this.accessMode;
+      var ios = Components.classes ["@mozilla.org/network/io-service;1"]
+        .getService (Components.interfaces.nsIIOService);
+      var uri = ios.newURI (key, null, null);
       this._callback = callback;
-      this._lastDescriptor = null;
+      this._lastEntry = null;
       this._isPending = true;
+      this._storage.asyncOpenURI (uri, "", this.openFlag, this);
     },
-    // for asyncOpen
-    onCacheEntryAvailable : function (descriptor, accessGranted, status)
+    // nsICacheEntryOpenCallback
+    mainThreadOnly : true,
+    onCacheEntryCheck : function (entry, appCache) {
+      return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+    },
+    onCacheEntryAvailable : function (entry, isNew, appCache, result)
     {
       if (!this._isPending) { // canceled
-        if (descriptor)
-          descriptor.close ();
-        if (this._lastDescriptor)
-          this._lastDescriptor.close ();
-        this._lastDescriptor = null;
+        if (entry)
+          entry.close ();
+        if (this._lastEntry)
+          this._lastEntry.close ();
+        this._lastEntry = null;
         this._callback = null;
         return;
       }
-      if (accessGranted == this._accessRequested
-          && Components.isSuccessCode (status)) {
-        if (this._lastDescriptor)
-          this._lastDescriptor.close ();
-        this._lastDescriptor = descriptor;
-        var dest = this._resolveRedirection (descriptor);
+      if (Components.isSuccessCode (result)) {
+        if (this._lastEntry)
+          this._lastEntry.close ();
+        this._lastEntry = entry;
+        var dest = this._resolveRedirection (entry);
         if (dest) {
-          this.session
-            .asyncOpenCacheEntry (dest, this.accessMode, this);
+          var ios = Components.classes ["@mozilla.org/network/io-service;1"]
+            .getService (Components.interfaces.nsIIOService);
+          var uri = ios.newURI (dest, null, null);
+          this._storage.asyncOpenURI (uri, "", this.openFlag, this);
           return; // dest の onCacheEntryAvailable を待つ
         }
       }
 
       if (this._callback) {
         try {
-          this._callback.apply (this, [this._lastDescriptor]);
+          this._callback.apply (this, [this._lastEntry]);
         }
         catch (e) { Akahuku.debug.exception (e);
         }
         this._callback = null;
       }
-      this._lastDescriptor = null;
+      this._lastEntry = null;
       this._isPending = false;
     },
 
@@ -496,38 +502,43 @@ Akahuku.Cache = new function () {
      * データを開放する
      */
     destruct : function () {
-      var cacheSession
-        = Components.classes
-        ["@mozilla.org/network/cache-service;1"]
-        .getService (Components.interfaces.nsICacheService)
-        .createSession ("HTTP",
-                        Components.interfaces.nsICache.STORE_ANYWHERE,
-                        Components.interfaces.nsICache.STREAM_BASED);
-      cacheSession.doomEntriesIfExpired = false;
-
       var CacheEtimeRestorer = function (t) {
         this.originalExpirationTime = t;
-        this.requestAccessMode
-          = Components.interfaces.nsICache.ACCESS_READ;
       };
       CacheEtimeRestorer.prototype = {
-        onCacheEntryAvailable : function (descriptor, accessGranted, status)
+        onCacheEntryAvailable : function (entry, isNew, appCache, status)
         {
-          if (accessGranted == this.requestAccessMode
-              && Components.isSuccessCode (status)) {
-            if (descriptor.expirationTime == 0xFFFFFFFF) {
-              descriptor.setExpirationTime (this.originalExpirationTime);
+          if (Components.isSuccessCode (status)) {
+            if (entry.expirationTime == 0xFFFFFFFF) {
+              entry.setExpirationTime (this.originalExpirationTime);
             }
           }
-        }
+        },
+        mainThreadOnly : true,
+        onCacheEntryCheck : function (entry, appCache) {
+          return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+        },
       };
+
+      var loadContextInfo = null;
+      try {
+        loadContextInfo = arAkahukuCompat.LoadContextInfo.default;
+      }
+      catch (e) {
+      }
+      var storage = arAkahukuCompat.CacheStorageService
+        .diskCacheStorage (loadContextInfo, false);
+
+      var flag = arAkahukuCompat.CacheStorage.OPEN_READONLY;
+      var ios = Components.classes ["@mozilla.org/network/io-service;1"]
+        .getService (Components.interfaces.nsIIOService);
 
       for (var i=0; i < this.keys.length; i++) {
         var t = this.originalExpireTimes [this.keys [i]];
         var listener = new CacheEtimeRestorer (t);
         try {
-          cacheSession.asyncOpenCacheEntry
-            (this.keys [i], listener.requestAccessMode, listener);
+          var uri = ios.newURI (this.keys [i], null, null);
+          storage.asyncOpenURI (uri, "", flag, listener);
         }
         catch (e) { Akahuku.debug.exception (e);
         }
@@ -565,6 +576,45 @@ Akahuku.Cache = new function () {
         descriptor.setExpirationTime (0xFFFFFFFF);
       }
     },
+  };
+
+  /**
+   * キャッシュを開く
+   */
+  this.asyncOpenCache = function (url, flag, callback) {
+    var Ci = Components.interfaces;
+    var loadContextInfo = null;
+    if ("fromLoadContext" in arAkahukuCompat.LoadContextInfo) {
+      try {
+        loadContextInfo =
+          arAkahukuCompat.LoadContextInfo.fromLoadContext
+          (window.QueryInterface (Ci.nsIInterfaceRequestor)
+           .getInterface (Ci.nsIWebNavigation)
+           .QueryInterface (Ci.nsILoadContext), false);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    try {
+      var cacheStorage
+        = arAkahukuCompat.CacheStorageService
+        .diskCacheStorage (loadContextInfo, false);
+      var ios = Components.classes
+        ["@mozilla.org/network/io-service;1"]
+        .getService (Ci.nsIIOService);
+      var uri = ios.newURI (url, null, null);
+      cacheStorage.asyncOpenURI (uri, "", flag, callback);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  };
+  this.asyncOpenCacheToWrite = function (url, callback) {
+    var flag = arAkahukuCompat.CacheStorage.OPEN_TRUNCATE;
+    this.asyncOpenCache (url, flag, callback);
+  };
+  this.asyncOpenCacheToRead = function (url, callback) {
+    var flag = arAkahukuCompat.CacheStorage.OPEN_READONLY;
+    this.asyncOpenCache (url, flag, callback);
   };
 
 };
