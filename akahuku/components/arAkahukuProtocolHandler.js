@@ -106,6 +106,7 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
 arAkahukuBypassChannel.prototype = {
   _listener : null,   /* nsIStreamListener  チャネルのリスナ */
   _realChannel : null,/* nsIChannel  実チャネル */
+  _redirectCallback : null,
   _observingHeaders : false, /* Boolean ヘッダーを監視しているか */
 
   /* 実チャネルに委譲しないプロパティ */
@@ -132,6 +133,10 @@ arAkahukuBypassChannel.prototype = {
         || iid.equals (nsIChannelEventSink)
         || iid.equals (nsIStreamListener)
         || iid.equals (nsIRequestObserver)) {
+      return this;
+    }
+    if ("nsIAsyncVerifyRedirectCallback" in Components.interfaces
+        && iid.equals (Components.interfaces.nsIAsyncVerifyRedirectCallback)) {
       return this;
     }
         
@@ -360,19 +365,20 @@ arAkahukuBypassChannel.prototype = {
    *   nsIChannelEventSink.asyncOnChannelRedirect
    */
   asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
-    try {
-      var sink
-        = this.notificationCallbacks
-        .getInterface (nsIChannelEventSink);
-    }
-    catch (e) {
-      /* リダイレクトを止める */
-      callback.onRedirectVerifyCallback
-        (Components.results.NS_ERROR_FAILURE);
-      return;
-    }
     newChannel = this.createRedirectedChannel (oldChannel, newChannel);
-    sink.asyncOnChannelRedirect (this, newChannel, flags, callback);
+    this._redirectCallback = callback;
+    // コールバックにリダイレクト発生を伝える
+    var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
+    verifyHelper.init
+      (this, newChannel, nsIChannelEventSink.REDIRECT_INTERNAL, this);
+  },
+  /**
+   * 非同期リダイレクトイベントの待ち受け
+   *   nsIAsyncVerifyRedirectCallback.onRedirectVerifyCallback
+   */
+  onRedirectVerifyCallback : function (result) {
+    this._redirectCallback.onRedirectVerifyCallback (result);
+    this._redirectCallback = null;
   },
 
   /**
@@ -400,6 +406,13 @@ arAkahukuBypassChannel.prototype = {
       newChannel = new arAkahukuBypassChannel (newChannel);
       /* リダイレクト時にはリファラを付与 */
       newChannel._realChannel.referrer = oldChannel.URI;
+      // 新しいリダイレクト用チャネルの asyncOpen は呼ばず
+      // ストリームリスナを数珠つなぎにする
+      newChannel._listener = this._listener;
+      this._listener = newChannel;
+      if (!(newChannel.loadFlags & nsIChannel.LOAD_DOCUMENT_URI)) {
+        newChannel.startHeadersBlocker ();
+      }
     }
     return newChannel;
   },
