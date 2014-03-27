@@ -4220,6 +4220,9 @@ var arAkahukuCatalog = {
           || currentTdText.match (/b\/([0-9]+)/)) {
         threadId = RegExp.$1;
       }
+      if (threadId == 0) {
+        continue;
+      }
                 
       var visited = false;
       var opened = false;
@@ -4300,8 +4303,8 @@ var arAkahukuCatalog = {
              opened: opened,
             }));
 
-        if (arAkahukuCatalog.enableReorderVisited
-            || arAkahukuCatalog.enableVisited) {
+        if (uri && (arAkahukuCatalog.enableReorderVisited
+            || arAkahukuCatalog.enableVisited)) {
           // 新しいスレに既読判定が必要な場合
           arAkahukuCompat.AsyncHistory.isURIVisited
             (uri, param.historyCallbacks.createVisitedCallback
