@@ -61,6 +61,26 @@ var arAkahukuDelBanner = {
   },
 
   /**
+   * ドキュメントのスタイルを設定する
+   *
+   * @param  arAkahukuStyleData style
+   *         スタイル
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   * @param  arAkahukuLocationInfo info
+   *         アドレス情報
+   */
+  setStyle : function (style, targetDocument, info) {
+    if (info.isNormal || info.isReply) {
+      style
+        .addRule
+        ("#akahuku_tailad_center > *",
+         "margin-right: auto ! important;"
+         + "margin-left: auto ! important;");
+    }
+  },
+
+  /**
    * 設定を読み込む
    */
   getConfig : function () {
@@ -358,32 +378,46 @@ var arAkahukuDelBanner = {
    *         対象のドキュメント
    */
   moveTailAd : function (targetDocument) {
-    var targetTable = null;
+    var target = null;
     
     /* 広告を探すので Akahuku.getMessageBQ は使わない */
     var nodes = targetDocument.getElementsByTagName ("blockquote");
     for (var i = nodes.length - 1; i >= 0; i --) {
       var table = arAkahukuDOM.findParentNode (nodes [i], "table");
       if (table && table.getAttribute ("border") == 1) {
-        targetTable = table;
+        target = table;
         break;
       }
       if (table && "className" in table
           && table.className == "ama") {
-        targetTable = table;
+        target = table;
         break;
       }
       table = arAkahukuDOM.findParentNode (nodes [i], "div");
       if (table
           && "className" in table
           && table.className == "ama") {
-        targetTable = table;
+        target = table;
+        break;
+      }
+      if (Akahuku.getMessageBQ (nodes [i].parentNode)) {
+        // 後ろから探してレスまでいったらもう探さない
         break;
       }
     }
-    
-    if (!targetTable) {
-      return;
+
+    var targetIsInContainer = false;
+    if (target && arAkahukuDelBanner.enableMoveTailAdAll
+        && target.parentNode.nodeName.toLowerCase () == "div"
+        && target.parentNode.align == "center") {
+      targetIsInContainer = true;
+    }
+    if (!target) {
+      target = arAkahukuDelBanner._getTailDivOfIframeAds (targetDocument);
+      if (!target) {
+        return;
+      }
+      targetIsInContainer = true;
     }
         
     nodes = targetDocument.getElementsByTagName ("hr");
@@ -399,7 +433,8 @@ var arAkahukuDelBanner = {
     div.style.width = "0px";
     div.style.height = "0px";
     div.style.position = "relative";
-    var div2 = targetDocument.createElement ("center");
+    var div2 = targetDocument.createElement ("div");
+    div2.id = "akahuku_tailad_center";
     div2.style.position = "absolute";
     div2.style.right = "0px";
     div2.style.bottom = "12px";
@@ -407,11 +442,10 @@ var arAkahukuDelBanner = {
         
     div.appendChild (div2);
         
-    var node = targetTable;
+    var node = target;
     if (arAkahukuDelBanner.enableMoveTailAdAll
-        && targetTable.parentNode.nodeName.toLowerCase () == "div"
-        && targetTable.parentNode.align == "center") {
-      node = targetTable.parentNode.firstChild;
+        && targetIsInContainer) {
+      node = target.parentNode.firstChild;
     }
     while (node) {
       var nextSibling = node.nextSibling;
@@ -420,6 +454,19 @@ var arAkahukuDelBanner = {
     }
         
     hr.parentNode.insertBefore (div, hr.nextSibling);
+  },
+
+  _getTailDivOfIframeAds : function (targetDocument)
+  {
+    if (!Akahuku.isXPathAvailable) {
+      return null;
+    }
+    var xpath = ".//form[@method='POST'][last()]/following-sibling::*/descendant-or-self::div[count(div[count(descendant::iframe)=1])>0]/div[count(descendant::iframe)=1][last()]";
+    var r = targetDocument.evaluate
+      (xpath, targetDocument, null,
+       XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    if (!r) return null;
+    return r.singleNodeValue;
   },
     
   /**
