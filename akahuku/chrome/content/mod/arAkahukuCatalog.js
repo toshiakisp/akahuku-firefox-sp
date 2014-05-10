@@ -1545,7 +1545,7 @@ arAkahukuCatalogParam.prototype = {
       if (info.isMonaca) {
         responseHead
           = responseHead.replace (/charset=Shift_JIS/,
-                                  "charset=EUC-JP");
+                                  "charset=" + (this.targetDocument.characterSet || "EUC-JP") );
       }
     }
     catch (e) { Akahuku.debug.exception (e);
@@ -4193,8 +4193,14 @@ var arAkahukuCatalog = {
             
       /* 避難所 patch */
       if (info.isMonaca) {
-        currentTdText
-          = arAkahukuConverter.convertFromEUC (currentTdText, "");
+        if (targetDocument.characterSet) {
+          currentTdText
+            = arAkahukuConverter.convert (currentTdText, targetDocument.characterSet);
+        }
+        else {
+          currentTdText
+            = arAkahukuConverter.convertFromEUC (currentTdText, "");
+        }
       }
       else {
         currentTdText
