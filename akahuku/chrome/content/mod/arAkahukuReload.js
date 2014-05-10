@@ -2883,10 +2883,11 @@ var arAkahukuReload = {
       while (nodesIndex < nodes.length) {
         /* 末尾に削除されたレスがある */
                 
+        var container = Akahuku.getMessageContainer (nodes [nodesIndex]);
+
         if (arAkahukuReload.enableSyncButtonNoDelete) {
           nodeletedReplies ++;
           
-          var container = Akahuku.getMessageContainer (nodes [nodesIndex]);
           arAkahukuDOM.addClassName
           (container.main, "akahuku_deleted_reply");
           
