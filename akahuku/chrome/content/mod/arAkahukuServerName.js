@@ -4,24 +4,6 @@
  * 板情報
  */
 var arAkahukuServerData = {
-  "ipv6:54" : [ /* IPv6 */
-    "IPv6",
-    "IPv6",
-    "IPv6",
-    1000, true
-    ],
-  "dec:53" : [ /* 発電 */
-    "\u767A\u96FB",
-    "\u767A\u96FB",
-    "\u767A\u96FB",
-    300, true
-    ],
-  "dec:52" : [ /* 東日本大震災 */
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    "\u6771\u65E5\u672C\u5927\u9707\u707D",
-    300, true
-    ],
   "zip:1" : [ /* 野球 */
     "\u91CE\u7403",
     "\u91CE\u7403",
@@ -74,7 +56,7 @@ var arAkahukuServerData = {
     ],
   "dat:49" : [ /* アクアリウム */
     "\u30A2\u30AF\u30A2\u30EA\u30A6\u30E0",
-    "\u30A2\u30AF\u30A2\u30EA\u30A6\u30E0",
+    "\u30A2\u30AF\u30A2",
     "\u30A2\u30AF\u30A2\u30EA\u30A6\u30E0",
     2000, true
     ],
@@ -106,7 +88,7 @@ var arAkahukuServerData = {
     "\u4E8C\u8F2A",
     "\u4E8C\u8F2A",
     "\u4E8C\u8F2A",
-    500, true
+    2000, true
     ],
   "nov:37" : [ /* 自転車 */
     "\u81EA\u8EE2\u8ECA",
@@ -181,24 +163,36 @@ var arAkahukuServerData = {
     "dec\u3066\u3059\u3068",
     100, true
     ],
-  "dat:23" : [ /* スピグラ */
-    "\u30B9\u30D4\u30B0\u30E9",
-    "\u30B9\u30D4\u30B0\u30E9",
-    "\u30B9\u30D4\u30B0\u30E9",
-    200, true
-    ],
   "may:id" : [ /* 二次元ID */
     "\u4E8C\u6B21\u5143\uFF29\uFF24",
     "\u4E8C\u6B21\u5143\uFF29\uFF24",
     "\u4E8C\u6B21\u5143\uFF29\uFF24",
     3000, true
     ],
+  "dat:23" : [ /* スピグラ */
+    "\u30B9\u30D4\u30B0\u30E9",
+    "\u30B9\u30D4\u30B0\u30E9",
+    "\u30B9\u30D4\u30B0\u30E9",
+    200, true
+    ],
+  "dec:58" : [ // 二次元転載不可
+    "\u4E8C\u6B21\u5143\u8EE2\u8F09\u4E0D\u53EF",
+    "\u8EE2\u8F09\u4E0D\u53EF",
+    "\u4E8C\u6B21\u5143\u8EE2\u8F09\u4E0D\u53EF",
+    3000, true
+    ],
+  "dec:59" : [ // 二次元転載可
+    "\u4E8C\u6B21\u5143\u8EE2\u8F09\u53EF",
+    "\u8EE2\u8F09\u53EF",
+    "\u4E8C\u6B21\u5143\u8EE2\u8F09\u53EF",
+    3000, true
+    ],
     
-  "dec:18" : [ /* 二次元実況 */
+  "dec:18" : [ // 二次元実況
     "\u4E8C\u6B21\u5143\u5B9F\u6CC1",
     "\u5B9F\u6CC1",
     "\u4E8C\u6B21\u5143\u5B9F\u6CC1",
-    30000, true
+    0, true
     ],
   "dat:16" : [ /* 二次元ネタ */
     "\u4E8C\u6B21\u5143\u30CD\u30BF",
@@ -377,6 +371,12 @@ var arAkahukuServerData = {
     "\u97D3\u56FD\u7D4C\u6E08",
     2000, true
     ],
+  "dec:57" : [ /* 韓国フェリー沈没事故 */
+    "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
+    "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
+    "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
+    3000, true
+    ],
   "cgi:f" : [ /* 軍 */
     "\u8ECD",
     "\u8ECD",
@@ -456,10 +456,28 @@ var arAkahukuServerData = {
     "\u30CB\u30E5\u30FC\u30B9\u8868",
     5000, false
     ],
+  "dec:53" : [ /* 発電 */
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    "\u767A\u96FB",
+    300, true
+    ],
+  "dec:52" : [ /* 東日本大震災 */
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    "\u6771\u65E5\u672C\u5927\u9707\u707D",
+    300, true
+    ],
   "img:9" : [ /* 雑談 */
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
+    1000, true
+    ],
+  "ipv6:54" : [ /* IPv6 */
+    "IPv6",
+    "IPv6",
+    "IPv6",
     1000, true
     ],
   "www:junbi" : [ /* 準備 */
