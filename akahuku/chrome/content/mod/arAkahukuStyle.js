@@ -227,6 +227,7 @@ var arAkahukuStyle = {
     arAkahukuThread.setStyle (style, targetDocument, info);
     arAkahukuThreadOperator.setStyle (style, targetDocument, info);
     arAkahukuTitle.setStyle (style, targetDocument, info);
+    arAkahukuDelBanner.setStyle (style, targetDocument, info);
         
     style.apply (targetDocument);
     style = null;

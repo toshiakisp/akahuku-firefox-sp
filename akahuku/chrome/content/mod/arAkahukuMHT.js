@@ -3743,9 +3743,9 @@ var arAkahukuMHT = {
             /* 避難所 patch */
             if (nodeName == "meta"
                 && name == "content"
-                && value.match (/EUC-JP/)) {
+                && value.match (/(EUC-JP|UTF-8)/)) {
               value
-                = value.replace (/EUC-JP/,
+                = value.replace (/(EUC-JP|UTF-8)/,
                                  "Shift_JIS");
             }
                         

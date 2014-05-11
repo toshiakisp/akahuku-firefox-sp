@@ -1568,6 +1568,12 @@ var arAkahukuImage = {
         }
       }
       
+      if (info.isMonaca && !node.nextSibling
+          && node.parentNode.nodeName.toLowerCase () == "span"
+          && node.parentNode.className == "s10") {
+        node = node.parentNode;
+      }
+
       node = node.nextSibling;
     }
     
@@ -1722,6 +1728,10 @@ var arAkahukuImage = {
         
     while (node
            && node.nodeName.toLowerCase () != "hr") {
+      if (info.isMonaca &&
+          node.nodeName.toLowerCase () == "span" && node.className == "s10" && node.lastChild) {
+        node = node.lastChild;
+      }
       if (node.nodeName.toLowerCase () == "a"
           && (node.href.match (/\/[^\/]+\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/)
               || (node.hasAttribute ("__unmht_href")
