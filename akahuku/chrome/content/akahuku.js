@@ -612,15 +612,22 @@ var Akahuku = {
         
     /* 避難所 patch */
     if (arAkahukuBoard.enableExternal) {
+      var href2 = href;
+      if (Akahuku.protocolHandler.isAkahukuURI (href)) {
+        var p = Akahuku.protocolHandler.getAkahukuURIParam (href);
+        if (p.type == "cache" || p.type == "filecache") {
+          href2 = p.original;
+        }
+      }
       for (var i = 0; i < arAkahukuBoard.externalList.length; i ++) {
         if (arAkahukuBoard.externalList [i].prefix) {
-          if (href.indexOf (arAkahukuBoard.externalList [i].pattern)
+          if (href2.indexOf (arAkahukuBoard.externalList [i].pattern)
               == 0) {
             return true;
           }
         }
         else {
-          if (href.match (arAkahukuBoard.externalList [i].pattern)) {
+          if (href2.match (arAkahukuBoard.externalList [i].pattern)) {
             return true;
           }
         }

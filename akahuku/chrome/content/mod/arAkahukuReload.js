@@ -33,10 +33,12 @@ arAkahukuReloadCacheWriter.prototype = {
    *
    * @param  String text
    *         キャッシュの全体
+   * @param  String charset
+   *         textの文字コード
    * @return Boolean
    *         構築できたか
    */
-  setText : function (text) {
+  setText : function (text, charset) {
     var start_pos, end_pos;
     start_pos = 0;
     end_pos = 0;
@@ -142,16 +144,7 @@ arAkahukuReloadCacheWriter.prototype = {
     return false;
   },
 
-  setTextMonaca : function (text) {
-    if (!this.charset) {
-      var re
-        = this.responseHead.match
-        (/^Content-Type:\s*[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
-      if (re) {
-        this.charset = re [1];
-      }
-    }
-
+  setTextMonaca : function (text, charset) {
     var start_pos, end_pos;
     start_pos = 0;
     end_pos = 0;
@@ -159,7 +152,7 @@ arAkahukuReloadCacheWriter.prototype = {
     var diffMode = /^<span id=time>/.test (text);
     
     // "id=viewer>現在" (EUC-JP)
-    var pat = new RegExp (arAkahukuReload._convertFromEUCJP ("id=viewer>(\xB8\xBD\xBA\xDF)?", this.charset));
+    var pat = new RegExp (arAkahukuReload._convertFromEUCJP ("id=viewer>(\xB8\xBD\xBA\xDF)?", charset));
     end_pos = text.search (pat, start_pos);
     if (end_pos != -1) {
       end_pos += 10 + (RegExp.$1 || "").length;
@@ -170,7 +163,7 @@ arAkahukuReloadCacheWriter.prototype = {
         end_pos = text.indexOf ("</span>", start_pos);
       }
       else {
-        end_pos = text.indexOf (arAkahukuReload._convertFromEUCJP ("\xBF\xCD", this.charset), start_pos); // "人" (EUC-JP)
+        end_pos = text.indexOf (arAkahukuReload._convertFromEUCJP ("\xBF\xCD", charset), start_pos); // "人" (EUC-JP)
       }
       if (end_pos != -1) {
         this.viewer = text.substr (start_pos, end_pos - start_pos);
@@ -344,20 +337,12 @@ arAkahukuReloadCacheWriter.prototype = {
           = "HTTP/1.1 200 OK\r\n"
           + "Date: " + (new Date ()).toString () + "\r\n"
           + "Server: unknown\r\n"
-          + "Content-Type: text/html; charset=Shift_JIS\r\n";
+          + "Content-Type: text/html; charset=" + this.charset + "\r\n";
       }
             
       descriptor.setMetaDataElement ("request-method", "GET");
       descriptor.setMetaDataElement ("response-head",
                                      this.responseHead);
-      if (!this.charset) {
-        var re
-          = this.responseHead.match
-          (/^Content-Type:\s*[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
-        if (re) {
-          this.charset = re [1];
-        }
-      }
       descriptor.setMetaDataElement ("charset", this.charset);
             
       descriptor.close ();
@@ -391,6 +376,7 @@ arAkahukuReloadParam.prototype = {
                                 *   読み込むストリーム */
   responseHead : "",           /* String  応答のヘッダ */
   responseText : "",           /* String  応答のデータ */
+  responseCharset : "",        /* String  応答の文字コード */
     
   location : "",               /* リロード中のアドレス */
     
@@ -466,6 +452,7 @@ arAkahukuReloadParam.prototype = {
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
     if (descriptor) {
       try {
+        var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
         var istream = descriptor.openInputStream (0);
         var bstream
         = Components.classes ["@mozilla.org/binaryinputstream;1"]
@@ -482,7 +469,7 @@ arAkahukuReloadParam.prototype = {
               self.writer = new arAkahukuReloadCacheWriter ();
             }
                 
-            if (!self.writer.setText (bindata)) {
+            if (!self.writer.setText (bindata, charset)) {
               return;
             }
                 
@@ -652,6 +639,7 @@ arAkahukuReloadParam.prototype = {
     = Components.classes ["@mozilla.org/scriptableinputstream;1"]
     .createInstance (Components.interfaces.nsIScriptableInputStream);
     this.responseText = "";
+    this.responseCharset = "";
         
     if (this.reloadChannel != null) {
       arAkahukuReload.setStatus
@@ -792,6 +780,14 @@ arAkahukuReloadParam.prototype = {
       case 200:
       case 206:
         this.responseHead = responseHead;
+        if ("Content-Type" in visitor.header) {
+          var re
+            = visitor.header ["Content-Type"]
+            .match (/^[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
+          if (re) {
+            this.responseCharset = re [1];
+          }
+        }
         if ("Last-Modified" in visitor.header) {
           this.lastModified
             = Date.parse (visitor.header ["Last-Modified"]);
@@ -1003,6 +999,7 @@ arAkahukuReloadParam.prototype = {
     this.reloadChannel = null;
         
     this.responseText = "";
+    this.responseCharset = "";
     this.sstream = null;
     
     /* HTML が正しく取得できなかった場合の音 */
@@ -1382,14 +1379,17 @@ var arAkahukuReload = {
    *         取得した差分
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  String optCharset
+   *         応答の文字コード
    */
-  updateViewersNumber : function (responseText, targetDocument) {
+  updateViewersNumber : function (responseText, targetDocument, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
         
     var viewersNumber = "";
     if (responseText.match
-        (/<li>\x8c\xbb\x8d\xdd([0-9]+|\?+)\x90\x6c/i)) {
+        (new RegExp (arAkahukuReload._convertFromSJIS ("<li>\x8c\xbb\x8d\xdd([0-9]+|\\?+)\x90\x6c"),"i"))) {
       /* <li>現在(xx)人 (Shift_JIS) */
       viewersNumber = RegExp.$1;
     }
@@ -1499,8 +1499,11 @@ var arAkahukuReload = {
    *         取得した差分
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  String optCharset
+   *         応答の文字コード
    */
-  updateExpireTime : function (responseText, targetDocument) {
+  updateExpireTime : function (responseText, targetDocument, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
         
@@ -1512,7 +1515,7 @@ var arAkahukuReload = {
     }
     /* 避難所 patch */
     if (info.isMonaca) {
-      var pat = new RegExp (arAkahukuReload._convertFromEUCJP ("id=expire>(([0-9]+\xc7\xaf)?([0-9]+\xb7\xee)?([0-9]+\xc6\xfc)?[0-9]+:[0-9]+)\xba\xa2\xbe\xc3\xa4\xa8\xa4\xde\xa4\xb9<\\/span>", targetDocument.characterSet));
+      var pat = new RegExp (arAkahukuReload._convertFromEUCJP ("id=expire>(([0-9]+\xc7\xaf)?([0-9]+\xb7\xee)?([0-9]+\xc6\xfc)?[0-9]+:[0-9]+)\xba\xa2\xbe\xc3\xa4\xa8\xa4\xde\xa4\xb9<\\/span>", responseCharset));
       /* id=expire>((xx日)?xx:xx)頃消えます</span> (EUC-JP) */
       if (responseText.match (pat)) {
         expireTime = RegExp.$1;
@@ -1520,7 +1523,7 @@ var arAkahukuReload = {
     }
         
     if (expireTime) {
-      expireTime = arAkahukuReload._convertToUnicode (expireTime, info, targetDocument.characterSet);
+      expireTime = arAkahukuConverter.convert (expireTime, responseCharset);
       info.expire = expireTime;
             
       var node
@@ -1740,8 +1743,11 @@ var arAkahukuReload = {
    *         取得した差分
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  String optCharset
+   *         応答の文字コード
    */
-  updateExpireWarning : function (responseText, targetDocument) {
+  updateExpireWarning : function (responseText, targetDocument, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
     
@@ -1755,7 +1761,7 @@ var arAkahukuReload = {
     /* 避難所 patch */
     if (info.isMonaca) {
       /* id=warning class=s6>(このスレは〜)</span> (EUC-JP) */
-      var pat = new RegExp (arAkahukuReload._convertFromEUCJP ("id=warning class=s6>(\xa4\xb3\xa4\xce\xa5\xb9\xa5\xec\xa4\xcf[^<]+)<\\/span>", targetDocument.characterSet));
+      var pat = new RegExp (arAkahukuReload._convertFromEUCJP ("id=warning class=s6>(\xa4\xb3\xa4\xce\xa5\xb9\xa5\xec\xa4\xcf[^<]+)<\\/span>", responseCharset));
       if (responseText.match (pat)) {
         expireWarning = RegExp.$1;
       }
@@ -1763,7 +1769,7 @@ var arAkahukuReload = {
     
     if (expireWarning) {
       expireWarning
-      = arAkahukuReload._convertToUnicode (expireWarning, info, targetDocument.characterSet);
+      = arAkahukuConverter.convert (expireWarning, responseCharset);
       info.expireWarning = expireWarning;
       info.isOld = true;
             
@@ -2152,10 +2158,13 @@ var arAkahukuReload = {
    *         対象のドキュメント
    * @param  Boolean isNotTable
    *         tableによる構造ではないかどうか
+   * @param  String optCharset
+   *         応答の文字コード
    * @return Object
    *         レスのコンテナ
    */
-  createContainer : function (responseText, targetDocument, isNotTable) {
+  createContainer : function (responseText, targetDocument, isNotTable, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var container = {};
     
     if (!isNotTable) {
@@ -2172,7 +2181,7 @@ var arAkahukuReload = {
         var info
           = Akahuku.getDocumentParam (targetDocument).location_info;
         info.replyPrefix
-          = arAkahukuReload._convertToUnicode (RegExp.$1, info, targetDocument.characterSet);
+          = arAkahukuConverter.convert (RegExp.$1, responseCharset);
             
         var head = targetDocument
           .getElementById ("akahuku_bottom_container_head");
@@ -2201,7 +2210,7 @@ var arAkahukuReload = {
         var info
           = Akahuku.getDocumentParam (targetDocument).location_info;
         info.replyPrefix
-          = arAkahukuReload._convertToUnicode (RegExp.$1, info, targetDocument.characterSet);
+          = arAkahukuConverter.convert (RegExp.$1, responseCharset);
             
         var head = targetDocument
           .getElementById ("akahuku_bottom_container_head");
@@ -2275,6 +2284,8 @@ var arAkahukuReload = {
    *         対象のドキュメント
    * @param  Boolean retNode
    *         BLOCKQUOTE のリストを返すか
+   * @param  String optCharset
+   *         応答の文字コード
    * @return Array
    *         [Number 新規のレス,
    *          Number 取得していなかったレス, Number 削除されたレス,
@@ -2282,7 +2293,8 @@ var arAkahukuReload = {
    *          Array 途中に追加したレスの BLOCKQUOTE のリスト]
    */
   appendNewReplies : function (responseText, terminator, sync,
-                               targetDocument, retNode) {
+                               targetDocument, retNode, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var newNodes = new Array ();
     var addNodes = new Array ();
     var documentParam = Akahuku.getDocumentParam (targetDocument);
@@ -2321,7 +2333,7 @@ var arAkahukuReload = {
     /* 避難所 patch */
     if (info.isMonaca) {
       checkColor = false;
-      replyStartTag = arAkahukuReload._convertFromEUCJP ("<th>\xa1\xc4</th><td", targetDocument.characterSet);
+      replyStartTag = arAkahukuReload._convertFromEUCJP ("<th>\xa1\xc4</th><td", responseCharset);
       /* <th>…</tr><th (EUC-JP) */
       tagStop = "<td>";
       replyNoInputAttr = "name=\"edit\\[\\]\" value=";
@@ -2528,7 +2540,7 @@ var arAkahukuReload = {
         var threadBodyText
           = responseText.substring (startPosition, threadEndPos+1);
         threadBodyText
-        = arAkahukuReload._convertToUnicode (threadBodyText, info, targetDocument.characterSet);
+        = arAkahukuConverter.convert (threadBodyText, responseCharset);
 
         var bqs = Akahuku.getMessageBQ (targetDocument);
         var bqT = (bqs && bqs.length > 0 ? bqs [0] : null);
@@ -2613,7 +2625,7 @@ var arAkahukuReload = {
                              - (tagStopPosition + tagStop.length));
       
       var currentReplyText
-      = arAkahukuReload._convertToUnicode (currentReplyTextTmp, info, targetDocument.characterSet);
+      = arAkahukuConverter.convert (currentReplyTextTmp, responseCharset);
             
       var num = 0;
       if (currentReplyText.match (/name=['"]?([0-9]+:)?([0-9]+)['"]?/)) {
@@ -2637,7 +2649,7 @@ var arAkahukuReload = {
           /* レスが無い時 */
           lastReply.container
           = arAkahukuReload.createContainer (responseText,
-                                             targetDocument, !isTable);
+                                             targetDocument, !isTable, responseCharset);
           replyPrefix
           = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
           lastReplyNumber = 0;
@@ -2969,8 +2981,11 @@ var arAkahukuReload = {
    *         応答の HTML
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @param  String optCharset
+   *         応答の文字コード
    */
-  updateAd : function (responseText, targetDocument) {
+  updateAd : function (responseText, targetDocument, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var startPosition = 0;
     var endPosition = 0;
     var heading = "<div class=\"ama\">";
@@ -3072,7 +3087,7 @@ var arAkahukuReload = {
     }
         
     if (adCell) {
-      adCell.innerHTML = arAkahukuConverter.convertFromSJIS (adText);
+      adCell.innerHTML = arAkahukuConverter.convert (adText, responseCharset);
     }
   },
   
@@ -3091,6 +3106,7 @@ var arAkahukuReload = {
         
     /* 応答を解析する */
     var responseText = param.responseText;
+    var responseCharset = param.responseCharset || targetDocument.characterSet || "Shift_JIS";
     
     var newReplies = 0;
     
@@ -3114,11 +3130,11 @@ var arAkahukuReload = {
                                           container,
                                           param.sync,
                                           targetDocument,
-                                          retNode);
+                                          retNode, responseCharset);
             
       /* 広告に反映する */
       arAkahukuReload.updateAd (responseText,
-                                targetDocument);
+                                targetDocument, responseCharset);
             
       newReplies = array [0];
       var skippedReplies = array [1];
@@ -3188,13 +3204,13 @@ var arAkahukuReload = {
             
       /* スレ消滅情報に反映する */
       arAkahukuReload.updateViewersNumber (responseText,
-                                           targetDocument);
+                                           targetDocument, responseCharset);
       arAkahukuReload.updateDeletedMessage (responseText,
                                            targetDocument);
       arAkahukuReload.updateExpireWarning (responseText,
-                                           targetDocument);
+                                           targetDocument, responseCharset);
       arAkahukuReload.updateExpireTime (responseText,
-                                        targetDocument);
+                                        targetDocument, responseCharset);
       
       arAkahukuReload.updateExpireDiffNum (targetDocument);
       if (arAkahukuThread.enableBottomStatus
@@ -3338,9 +3354,10 @@ var arAkahukuReload = {
       }
     }
         
-    if (param.writer.setText (responseText)) {
+    if (param.writer.setText (responseText, responseCharset)) {
       param.writer.responseHead = param.responseHead;
-      updateCache = true;
+      param.writer.charset = responseCharset;
+      updateCache = !param.useRange;
     }
         
     if (updateCache) {
@@ -3840,28 +3857,16 @@ var arAkahukuReload = {
     }
   },
 
-  _convertToUnicode : function (str, info, charset) {
-    if (charset) {
-      try {
-        arAkahukuConverter.converter.charset = charset;
-        return arAkahukuConverter.converter.ConvertToUnicode (str);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-    /* 避難所 patch */
-    if (info && info.isMonaca) {
-      return arAkahukuConverter.convertFromEUC (str, "");
-    }
-    else {
-      return arAkahukuConverter.convertFromSJIS (str, "");
-    }
-  },
-
   _convertFromEUCJP : function (text, charset) {
-    var unicodetext = arAkahukuConverter.convertFromEUC (text);
-    if (charset && charset != "EUC-JP") {
+    return arAkahukuReload._convert (text, "EUC-JP", charset);
+  },
+  _convertFromSJIS : function (text, charset) {
+    return arAkahukuReload._convert (text, "Shift_JIS", charset);
+  },
+  _convert : function (text, textCharset, charset) {
+    if (charset && charset != textCharset) {
       try {
+        var unicodetext = arAkahukuConverter.convert (text, textCharset);
         arAkahukuConverter.converter.charset = charset;
         return arAkahukuConverter.converter.ConvertFromUnicode (unicodetext);
       }
