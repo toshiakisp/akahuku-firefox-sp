@@ -315,7 +315,9 @@ var arAkahukuDelBanner = {
           var next = nodes [i].nextSibling;
           if (next
               && next.nodeName.toLowerCase () == "#text"
-              && next.nodeValue.match (/^[ \r\n\t]*$/)) {
+              && ((nodes [i].nodeName.toLowerCase () == "iframe" &&
+                next.nodeValue.match (/^[ \r\n\t\.]*$/))
+                || next.nodeValue.match (/^[ \r\n\t]*$/)) ) {
             nodes [i].parentNode.removeChild (next);
           }
           next = nodes [i].nextSibling;
