@@ -616,6 +616,16 @@ arAkahukuLocationInfo.prototype = {
               }
             }
           }
+          else if (this.isMonaca && node.nodeName.toLowerCase () == "span") {
+            var className = "className" in node ? node.className : "";
+            var propMap = {s1:"subject", s2:"name"};
+            if (className && propMap.hasOwnProperty (className)) {
+              var nodeText = arAkahukuDOM.getInnerText (node);
+              nodeText = nodeText.replace (/ $/, "");
+              nodeText = arAkahukuConverter.normalize (nodeText);
+              this [propMap [className]] = nodeText;
+            }
+          }
             
           node = prevNode;
         }
