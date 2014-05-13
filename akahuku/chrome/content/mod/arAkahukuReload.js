@@ -266,6 +266,9 @@ arAkahukuReloadCacheWriter.prototype = {
       (arAkahukuReload.extCacheFileBase);
       var path = location
       .replace (/^https?:\/\//, "");
+
+      // futaba.php?res=123 形式は res/123.htm と読み替える
+      path = path.replace (/\/[^\/]+\.php\?res=(\d+)$/, "/res/$1.htm");
                         
       path
       = arAkahukuFile.getFilenameFromURLSpec (base + path);
@@ -2101,6 +2104,9 @@ var arAkahukuReload = {
           (arAkahukuReload.extCacheFileBase);
         var path = location
           .replace (/^https?:\/\//, "");
+
+        // futaba.php?res=123 形式は res/123.htm と読み替える
+        path = path.replace (/\/[^\/]+\.php\?res=(\d+)$/, "/res/$1.htm");
                 
         path
           = arAkahukuFile.getFilenameFromURLSpec
@@ -3676,9 +3682,12 @@ var arAkahukuReload = {
         a = targetDocument.createElement ("a");
         a.id = "akahuku_cache_button";
         if (arAkahukuReload.enableExtCacheFile) {
+          var href = targetDocument.location.href;
+          // futaba.php?res=123 形式は res/123.htm と読み替える
+          href = href.replace (/\/[^\/]+\.php\?res=(\d+)$/, "/res/$1.htm");
           a.href
             = Akahuku.protocolHandler.enAkahukuURI
-            ("filecache", targetDocument.location.href);
+            ("filecache", href);
         }
         else {
           a.href
