@@ -1851,6 +1851,17 @@ var arAkahukuImage = {
       container.appendChild (textNode);
             
       linkNode.parentNode.insertBefore (container, linkNode);
+
+      if (info.isMonaca) {
+        textNode = container.previousSibling;
+        if (textNode && textNode.nodeType === Node.TEXT_NODE
+            && textNode.parentNode.nodeName.toLowerCase () == "span"
+            && textNode.parentNode.className == "s10" // 画像レス
+            && textNode.nodeValue == //"画像ファイル名："
+            "\u753B\u50CF\u30D5\u30A1\u30A4\u30EB\u540D\uFF1A") {
+          linkNode.parentNode.removeChild (textNode);
+        }
+      }
             
       var exists = false;
       var instantsrc = false;
