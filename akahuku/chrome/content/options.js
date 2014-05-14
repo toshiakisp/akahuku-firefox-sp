@@ -647,6 +647,7 @@ var AkahukuOptions = {
       ["bool", "commentbox.shortcut.modifiers.ctrl", false],
       ["bool", "commentbox.shortcut.modifiers.meta", true],
       ["bool", "commentbox.shortcut.modifiers.shift", true],
+      ["bool", "commentbox.submit_shortcut", false, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkSageButton ();

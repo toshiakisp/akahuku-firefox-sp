@@ -211,6 +211,8 @@ var arAkahukuPostForm = {
                                              *   の Meta */
   commentboxShortcutModifiersShift : false, /* Boolean  ショートカットキー
                                              *   の Shift */
+  enableCommentboxSubmitShortcut : false,   /* Boolean  コメント欄内から
+                                             *   Shift-Enterで送信 */
     
   enableNormalHide : false,         /* Boolean  フォームをデフォルトで
                                      *   閉じる */
@@ -836,6 +838,9 @@ var arAkahukuPostForm = {
                    "akahuku.commentbox.shortcut.modifiers.shift",
                    true);
     }
+    arAkahukuPostForm.enableCommentboxSubmitShortcut
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.commentbox.submit_shortcut", false);
         
     arAkahukuPostForm.enableNormalHide
     = arAkahukuConfig
@@ -2604,38 +2609,54 @@ var arAkahukuPostForm = {
    *         対象のイベント
    */
   onCommentKeyPress : function (event) {
-    try {
-      var targetDocument = event.target.ownerDocument;
-      var targetWindow = targetDocument.defaultView;
-      var scrolled = false;
-            
-      switch (event.keyCode) {
-        case Components.interfaces.nsIDOMKeyEvent.DOM_VK_PAGE_UP:
-          scrolled = true;
-          targetWindow.scrollByPages (-1);
-          break;
-        case Components.interfaces.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN:
-          scrolled = true;
-          targetWindow.scrollByPages (1);
-          break;
-        case Components.interfaces.nsIDOMKeyEvent.DOM_VK_HOME:
-          scrolled = true;
-          targetWindow.scrollTo (0, 0);
-          break;
-        case Components.interfaces.nsIDOMKeyEvent.DOM_VK_END:
-          scrolled = true;
-          targetWindow.scrollTo
-            (0, targetDocument.documentElement.scrollHeight);
-          break;
-      }
-            
-      if (scrolled) {
-        event.preventDefault ();
-        event.stopPropagation ();
+    var ke = Components.interfaces.nsIDOMKeyEvent;
+    if (arAkahukuPostForm.enableCommentboxSubmitShortcut) {
+      if (event.keyCode == ke.DOM_VK_RETURN && event.shiftKey) {
+        var targetDocument = event.target.ownerDocument;
+        if (arAkahukuPostForm.checkCommentbox (targetDocument, false)) {
+          return;
+        }
+        var info = Akahuku.getDocumentParam (targetDocument).location_info;
+        var form = arAkahukuDOM.findParentNode (event.target, "form");
+        if (form) {
+          arAkahukuPostForm.submit (form.id, "_self",
+                                    info, targetDocument);
+          event.preventDefault ();
+          event.stopPropagation ();
+          return;
+        }
       }
     }
-    catch (e) { Akahuku.debug.exception (e);
-      /* ドキュメントが閉じられた場合など */
+    if (arAkahukuPostForm.enableCommentboxScroll) {
+      try {
+        var targetDocument = event.target.ownerDocument;
+        var targetWindow = targetDocument.defaultView;
+        var scrolled = true;
+        switch (event.keyCode) {
+          case ke.DOM_VK_PAGE_UP:
+            targetWindow.scrollByPages (-1);
+            break;
+          case ke.DOM_VK_PAGE_DOWN:
+            targetWindow.scrollByPages (1);
+            break;
+          case ke.DOM_VK_HOME:
+            targetWindow.scrollTo (0, 0);
+            break;
+          case ke.DOM_VK_END:
+            targetWindow.scrollTo
+              (0, targetDocument.documentElement.scrollHeight);
+            break;
+          default:
+            scrolled = false;
+        }
+        if (scrolled) {
+          event.preventDefault ();
+          event.stopPropagation ();
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        /* ドキュメントが閉じられた場合など */
+      }
     }
   },
     
@@ -4488,8 +4509,9 @@ var arAkahukuPostForm = {
         commentbox = null;
       }
             
-      if (arAkahukuPostForm.enableCommentboxScroll
-          && commentbox) {
+      if (commentbox
+          && (arAkahukuPostForm.enableCommentboxScroll
+            || arAkahukuPostForm.enableCommentboxSubmitShortcut)) {
         commentbox.addEventListener
         ("keypress",
          function () {

@@ -844,6 +844,9 @@
                           label="Shift" />
               </box>
             </box>
+            <checkbox id="commentbox_submit_shortcut" checked="false"
+                      class="sp" tooltiptext="(デフォルト：無効) コメント欄内からショートカットキーShift-Enterでレスを送信する"
+                      label="Shift-Enterで送信" />
           </groupbox>
         </box>
         <groupbox orient="vertical">
