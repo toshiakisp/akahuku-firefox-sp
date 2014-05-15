@@ -4130,7 +4130,6 @@ var arAkahukuPostForm = {
         }
         var table
           = targetDocument.getElementById ("akahuku_posttable");
-        var param = Akahuku.getDocumentParam (targetDocument);
         if (ufm && table && param) {
           table.style.visibility = "hidden";
           table.style.position = "absolute";
@@ -4149,8 +4148,7 @@ var arAkahukuPostForm = {
           table.style.top
             = (ufm.ownerDocument.body.offsetTop + ufm.offsetTop) + "px";
           table.style.visibility = "visible"; //レイアウトを終えてから
-          param.postform_param
-          .bottomFormAlignTimerID
+          param.bottomFormAlignTimerID
             = setInterval
             (function (ufm, table) {
               /* サイズ変更を反映 */
