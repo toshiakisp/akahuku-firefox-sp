@@ -332,6 +332,7 @@ var arAkahukuPostForm = {
             = targetDocument.getElementById ("akahuku_commentbox")
             || targetDocument.getElementById ("ftxa");
           if (!target) {
+            Akahuku.debug.warn ("no commentbox found.");
             return;
           }
           
@@ -3906,6 +3907,13 @@ var arAkahukuPostForm = {
    */
   findUsrDelTable : function (targetDocument) {
     var delTable = null;
+    var info = Akahuku.getDocumentParam (targetDocument).location_info;
+    if (info.isMonaca) {
+      delTable = targetDocument.getElementById ("t1");
+      if (delTable) {
+        return delTable;
+      }
+    }
     var nodes = targetDocument.getElementsByName ("mode");
     for (var i = nodes.length - 1; i >= 0 ; i --) {
       if (nodes [i].value == "usrdel"
