@@ -133,6 +133,11 @@ var Akahuku = {
     },
     exception : function (error) {
       if (!this.enabled) return;
+      if (typeof error !== "object") {
+        error = new Error (String (error),
+          Components.stack.caller.filename,
+          Components.stack.caller.lineNumber);
+      }
       var message = 'exception: ' + error.message;
       //Components.utils.reportError (error);
       for (var frame = Components.stack.caller;

@@ -647,6 +647,7 @@ var AkahukuOptions = {
       ["bool", "commentbox.shortcut.modifiers.ctrl", false],
       ["bool", "commentbox.shortcut.modifiers.meta", true],
       ["bool", "commentbox.shortcut.modifiers.shift", true],
+      ["bool", "commentbox.submit_shortcut", false, "privatemod"],
       ["init",
        function (map) {
           AkahukuOptions.checkSageButton ();
@@ -2719,11 +2720,11 @@ var AkahukuOptions = {
     info.message2 = "\u304A\u3063\u3071\u3044\u301C\u3093";
     info.message8byte = "\u304A\u3063\u3071\u3044";
     info.entiremessage = "\u304A\u3063\u3071\u3044\u301C\u3093";
-    info.name = "";
-    info.mail = "";
-    info.subject = "";
-    info.ip = "";
-    info.id = "";
+    info.name = "\u3068\u3057\u3042\u304D";
+    info.mail = "sage";
+    info.subject = "\u7121\u5FF5";
+    info.ip = "127.0.0.1";
+    info.id = "XXXXXXXX";
     info.mode = "\u8FD4\u4FE1";
     
     info.viewer = "100";
