@@ -36,6 +36,7 @@ arAkahukuPostFormParam.prototype = {
   waitForFocus : 0,               /* Number  フォーカス待ちの遅延
                                    *   2: 半透明 */
   targetDocument : null,          /* HTMLDocument  対象のドキュメント */
+  commentboxId : null,            /* String  コメントボックスノードのID */
   targetURL : "",                 /* String  フォームの送信先の URL */
   added : false,                  /* Boolean  リスナに登録したか */
     
@@ -328,9 +329,7 @@ var arAkahukuPostForm = {
         var tabbrowser = document.getElementById ("content");
         if (tabbrowser.contentDocument) {
           var targetDocument = tabbrowser.contentDocument;
-          var target
-            = targetDocument.getElementById ("akahuku_commentbox")
-            || targetDocument.getElementById ("ftxa");
+          var target = arAkahukuPostForm.findCommentbox (targetDocument);
           if (!target) {
             Akahuku.debug.warn ("no commentbox found.");
             return;
@@ -1016,9 +1015,7 @@ var arAkahukuPostForm = {
       return;
     }
         
-    var commentbox
-    = targetDocument.getElementById ("akahuku_commentbox")
-    || targetDocument.getElementById ("ftxa");
+    var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
         
     var div = targetDocument.getElementById ("akahuku_reply_status");
     if (div) {
@@ -1169,8 +1166,7 @@ var arAkahukuPostForm = {
             
       if (target == "_blank") {
         var commentbox
-          = targetDocument.getElementById ("akahuku_commentbox")
-          || targetDocument.getElementById ("ftxa");
+          = arAkahukuPostForm.findCommentbox (targetDocument);
         if (commentbox) {
           commentbox.value = "";
           commentbox.style.width = "100%";
@@ -1492,9 +1488,7 @@ var arAkahukuPostForm = {
     arAkahukuReload.diffReloadCore (targetDocument, false, true);
         
     /* コメント欄を消す */
-    var commentbox
-    = targetDocument.getElementById ("akahuku_commentbox")
-    || targetDocument.getElementById ("ftxa");
+    var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
     if (commentbox) {
       commentbox.value = "";
       commentbox.style.width = "100%";
@@ -1987,9 +1981,7 @@ var arAkahukuPostForm = {
     = Akahuku.getDocumentParam (targetDocument).postform_param;
     param.formHidden = hide;
     var oe = targetDocument.getElementById ("oe3");
-    var commentbox
-    = targetDocument.getElementById ("akahuku_commentbox")
-    || targetDocument.getElementById ("ftxa");
+    var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
     var status1
     = targetDocument.getElementById ("akahuku_reply_status");
     var status2
@@ -2231,9 +2223,7 @@ var arAkahukuPostForm = {
       return false;
     }
         
-    var commentbox
-    = targetDocument.getElementById ("akahuku_commentbox")
-    || targetDocument.getElementById ("ftxa");
+    var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
     if (commentbox) {
       var now = new Date ().getTime ();
       if (arAkahukuPostForm.enableCommentboxPreview
@@ -2678,8 +2668,7 @@ var arAkahukuPostForm = {
                 
         if (arAkahukuPostForm.enableCommentboxStatus) {
           var commentbox
-            = targetDocument.getElementById ("akahuku_commentbox")
-            || targetDocument.getElementById ("ftxa");
+            = arAkahukuPostForm.findCommentbox (targetDocument);
           if (commentbox) {
             if (param.commentWatchTimerID == null) {
               param.blink = true;
@@ -2736,8 +2725,7 @@ var arAkahukuPostForm = {
             
       if (arAkahukuPostForm.enableCommentboxStatus) {
         var commentbox
-        = targetDocument.getElementById ("akahuku_commentbox")
-        || targetDocument.getElementById ("ftxa");
+          = arAkahukuPostForm.findCommentbox (targetDocument);
         if (commentbox) {
           if (param.commentWatchTimerID != null) {
             clearInterval (param.commentWatchTimerID);
@@ -3007,9 +2995,7 @@ var arAkahukuPostForm = {
       .getElementById ("akahuku_floatpostform_footer_icon");
       var close
       = targetDocument.getElementById ("akahuku_floatpostform_close");
-      var commentbox
-      = targetDocument.getElementById ("akahuku_commentbox")
-      || targetDocument.getElementById ("ftxa");
+      var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
       var info
       = Akahuku.getDocumentParam (targetDocument).location_info;
             
@@ -3079,8 +3065,7 @@ var arAkahukuPostForm = {
         }
                 
         var commentbox
-        = targetDocument.getElementById ("akahuku_commentbox")
-        || targetDocument.getElementById ("ftxa");
+          = arAkahukuPostForm.findCommentbox (targetDocument);
         if (commentbox) {
           commentbox.value = commentbox.value;
           commentbox.focus ();
@@ -3624,9 +3609,7 @@ var arAkahukuPostForm = {
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
         
-    var commentbox
-    = targetDocument.getElementById ("akahuku_commentbox")
-    || targetDocument.getElementById ("ftxa");
+    var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
     if (commentbox) {
       commentbox.style.width = "100%";
       if (arAkahukuPostForm.enableCommentboxSetRows) {
@@ -3930,6 +3913,21 @@ var arAkahukuPostForm = {
     }
     return delTable;
   },
+
+  /**
+   *  送信フォームのコメントボックスを取得する
+   */
+  findCommentbox : function (targetDocument) {
+    try {
+      var id
+        = Akahuku.getDocumentParam (targetDocument)
+        .postform_param.commentboxId
+      return targetDocument.getElementById (id);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      return null;
+    }
+  },
     
   /**
    * フォームを修正する
@@ -4010,8 +4008,7 @@ var arAkahukuPostForm = {
                    return function () {
                      var oe = targetDocument.getElementById ("oe3");
                      var textarea
-                       = targetDocument.getElementById ("akahuku_commentbox")
-                       || targetDocument.getElementById ("ftxa");
+                       = arAkahukuPostForm.findCommentbox (targetDocument);
                      if (oe && textarea) {
                        if (oe.style.visibility == "visible") {
                          oe.style.width = "";
@@ -4464,6 +4461,7 @@ var arAkahukuPostForm = {
         if (!commentbox.id) {
           commentbox.id = "akahuku_commentbox";
         }
+        param.commentboxId = commentbox.id;
         commentbox.style.width = "100%";
         if (arAkahukuPostForm.enableCommentboxSetRows) {
           commentbox.rows = arAkahukuPostForm.commentboxSetRowsCount;
