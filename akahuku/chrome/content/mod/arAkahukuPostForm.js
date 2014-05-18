@@ -2607,11 +2607,19 @@ var arAkahukuPostForm = {
         if (arAkahukuPostForm.checkCommentbox (targetDocument, false)) {
           return;
         }
-        var info = Akahuku.getDocumentParam (targetDocument).location_info;
         var form = arAkahukuDOM.findParentNode (event.target, "form");
         if (form) {
-          arAkahukuPostForm.submit (form.id, "_self",
-                                    info, targetDocument);
+          var submitter
+            = targetDocument.getElementById ("akahuku_postform_submitter");
+          if (submitter) {
+            var submitEvent = targetDocument.createEvent ("HTMLEvents");
+            submitEvent.initEvent ("submit", false, true);
+            form.dispatchEvent (submitEvent);
+          }
+          else {
+            var info = Akahuku.getDocumentParam (targetDocument).location_info;
+            arAkahukuPostForm.submit (form.id, "_self", info, targetDocument);
+          }
           event.preventDefault ();
           event.stopPropagation ();
           return;
