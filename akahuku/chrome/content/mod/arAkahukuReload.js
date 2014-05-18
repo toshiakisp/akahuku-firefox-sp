@@ -2572,6 +2572,7 @@ var arAkahukuReload = {
             var ret = arAkahukuReload._syncMessageID (bqS, bqT);
             countSyncIDResult (idSyncResults, ret);
           }
+          arAkahukuReload._syncMessageSod (bqS, bqT);
         }
       }
       catch (e) { Akahuku.debug.exception (e);
@@ -2739,6 +2740,7 @@ var arAkahukuReload = {
                     var ret = arAkahukuReload._syncMessageID (bqS, bqT);
                     countSyncIDResult (idSyncResults, ret);
                   }
+                  arAkahukuReload._syncMessageSod (bqS, bqT);
                 }
                 
                 if (arAkahukuThread.enableNumbering
@@ -4093,4 +4095,39 @@ var arAkahukuReload = {
     return false;
   },
 
+  _syncMessageSod : function (bqS, bqT) {
+    var getSod = function (elm) {
+      var ret = {elem:null, text:"", num:0};
+      while (elm) {
+        if ("className" in elm && elm.className == "sod") {
+          ret.elem = elm;
+          var t = arAkahukuDOM.getInnerText (elm);
+          var re = t.match (/\d+$/);
+          if (re) {
+            ret.num = parseInt (re [0]) || 0;
+            ret.text = t.substr (0, t.length - re [0].length);
+          }
+          else {
+            ret.text = t
+          }
+          return ret;
+        }
+        elm = elm.previousSibling;
+      }
+      return ret;
+    };
+
+    var sodS = getSod (bqS.previousSibling);
+    var sodT = getSod (bqT.previousSibling);
+    if (sodS.elem && sodT.elem) {
+      if (sodS.text != sodT.text
+          || sodS.num > sodT.num) {
+        // 投票後に数が巻き戻らないよう増加のみ反映
+        sodT.elem.innerHTML = sodS.elem.innerHTML;
+      }
+    }
+    else if (!sodS.elem && sodT.elem) {
+      sodT.elem.parentNode.removeChild (sodT.elem);
+    }
+  },
 };
