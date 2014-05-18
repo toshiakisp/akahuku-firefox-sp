@@ -303,6 +303,10 @@ var arAkahukuBoard = {
   knows : function (idOrInfo) {
     return this.boardList.contains (idOrInfo);
   },
+  knowsAsInternal : function (idOrInfo) {
+    var board = this.boardList.getBoardInfo (idOrInfo);
+    return (board && board.isInternal);
+  },
   getMaxNum : function (idOrInfo) {
     return this.boardList.getBoardProperty (idOrInfo, "maxNum");
   },

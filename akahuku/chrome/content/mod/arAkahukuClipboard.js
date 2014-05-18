@@ -101,21 +101,10 @@ var arAkahukuClipboard = {
       flavor = "image/jpg";
     }
 
+    var trans = arAkahukuClipboard.getTransferable (flavor);
+    if (!trans) return null;
+
     try {
-      var clipboard
-        = Components.classes ["@mozilla.org/widget/clipboard;1"]
-        .getService (Components.interfaces.nsIClipboard);
-
-      var trans
-        = Components.classes ["@mozilla.org/widget/transferable;1"]
-        .createInstance (Components.interfaces.nsITransferable);
-      if ("init" in trans) {
-        trans.init (null);
-      }
-      trans.addDataFlavor (flavor);
-
-      clipboard.getData (trans, clipboard.kGlobalClipboard);
-
       var data = {};
       var dataLen = {};
       try {
@@ -148,6 +137,43 @@ var arAkahukuClipboard = {
       }
       Akahuku.debug.warn
         ("unsupported instance "+image.toString ());
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+    return null;
+  },
+
+  getFile : function () {
+    var flavor = "application/x-moz-file";
+    var trans = arAkahukuClipboard.getTransferable (flavor);
+    var data = {};
+    try {
+      trans.getTransferData (flavor, data, {});
+      return data.value.QueryInterface (Components.interfaces.nsIFile);
+    }
+    catch (e if e.result == Components.results.NS_ERROR_FAILURE) {
+      Akahuku.debug.warn ("failed to obtain nsIFile from clipboard");
+      return null;
+    }
+  },
+
+  getTransferable : function (flavor) {
+    try {
+      var clipboard
+        = Components.classes ["@mozilla.org/widget/clipboard;1"]
+        .getService (Components.interfaces.nsIClipboard);
+
+      var trans
+        = Components.classes ["@mozilla.org/widget/transferable;1"]
+        .createInstance (Components.interfaces.nsITransferable);
+      if ("init" in trans) {
+        trans.init (null);
+      }
+      if (flavor) {
+        trans.addDataFlavor (flavor);
+      }
+      clipboard.getData (trans, clipboard.kGlobalClipboard);
+      return trans;
     }
     catch (e) { Akahuku.debug.exception (e);
     }

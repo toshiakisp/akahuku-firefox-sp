@@ -958,7 +958,7 @@
                       label="添付ファイルを再起動時に保持" />
             <checkbox id="postform_paste_image_from_clipboard" checked="false"
                       class="sp" tooltiptext="(デフォルト：無効) コメント欄内で、Ctrl-V等でクリップボードから画像が貼り付けられた際に、一時フォルダにJPEG画像として自動的に保存して添付Fileとする"
-                      label="クリップボードから画像を添付" />
+                      label="クリップボードから画像を添付 ([貼り付け] [クリア]ボタン)" />
             <checkbox id="postform_delform_hide" checked="false"
                       label="削除フォームを消す" />
             <checkbox id="postform_delform_left" checked="false"

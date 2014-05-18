@@ -630,6 +630,13 @@ var arAkahukuPostForm = {
                   + "color: #ff4000; "
                   + "background-color: #eeaa88;");
       }
+
+      style
+      .addRule ("a.akahuku_postform_upfile_extrabuttons, "
+                + "a.akahuku_postform_upfile_extrabuttons:hover",
+                "cursor: pointer; "
+                + "color: #0040ee; "
+                + "background-color: inherit;")
             
       /* 避難所 patch */
       if (info.isMonaca) {
@@ -2607,11 +2614,19 @@ var arAkahukuPostForm = {
         if (arAkahukuPostForm.checkCommentbox (targetDocument, false)) {
           return;
         }
-        var info = Akahuku.getDocumentParam (targetDocument).location_info;
         var form = arAkahukuDOM.findParentNode (event.target, "form");
         if (form) {
-          arAkahukuPostForm.submit (form.id, "_self",
-                                    info, targetDocument);
+          var submitter
+            = targetDocument.getElementById ("akahuku_postform_submitter");
+          if (submitter) {
+            var submitEvent = targetDocument.createEvent ("HTMLEvents");
+            submitEvent.initEvent ("submit", false, true);
+            form.dispatchEvent (submitEvent);
+          }
+          else {
+            var info = Akahuku.getDocumentParam (targetDocument).location_info;
+            arAkahukuPostForm.submit (form.id, "_self", info, targetDocument);
+          }
           event.preventDefault ();
           event.stopPropagation ();
           return;
@@ -2747,7 +2762,13 @@ var arAkahukuPostForm = {
     if (!arAkahukuPostForm.enablePasteImageFromClipboard) {
       return;
     }
-    if (event.clipboardData.types.length != 0) {
+    var targetDocument = event.target.ownerDocument;
+    var filebox = targetDocument.getElementsByName ("upfile")[0];
+    if (!filebox) {
+      return;
+    }
+    if ("clipboardData" in event
+        && event.clipboardData.types.length != 0) {
       var typesText = "";
       for (var i=0; i < event.clipboardData.types.length; i ++) {
         if (Akahuku.debug.enabled) {
@@ -2758,8 +2779,6 @@ var arAkahukuPostForm = {
         }
         else if (event.clipboardData.types [i] === "application/x-moz-file") {
           // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
-          var targetDocument = event.target.ownerDocument;
-          var filebox = targetDocument.getElementsByName ("upfile") [0];
           var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
           if (filebox && file instanceof Components.interfaces.nsIFile) {
             var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
@@ -2775,16 +2794,23 @@ var arAkahukuPostForm = {
       }
       if (Akahuku.debug.enabled) {
         Akahuku.debug.log
-          ("clipboardData.types.length = "
+          ("event.clipboardData.types.length = "
            + event.clipboardData.types.length+": "+typesText);
       }
     }
 
-    var targetDocument = event.target.ownerDocument;
-    var filebox = targetDocument.getElementsByName ("upfile")[0];
-    if (!filebox) {
-      return;
+    var file = arAkahukuClipboard.getFile ();
+    if (file instanceof Components.interfaces.nsIFile) {
+      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
+      if (fileurl && /\.(?:jpg|jpeg|png|gif)$/i.test (fileurl) ) {
+        filebox.value = fileurl;
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
+        return; // 貼り付け成功時はそこで終了
+      }
     }
+
     var flavor = "image/jpg";
     var imageBin = arAkahukuClipboard.getImage (flavor);
     if (imageBin === null) {
@@ -3769,6 +3795,39 @@ var arAkahukuPostForm = {
           }, 1000);
       }
     }
+  },
+
+  applyUpfileExtraButton : function (targetDocument, id, label, handler)
+  {
+    var filebox = targetDocument.getElementsByName ("upfile");
+    if (!filebox || !filebox [0]) {
+      filebox = targetDocument.getElementsByName ("up");
+    }
+    if (!filebox || !filebox [0]) {
+      return;
+    }
+    filebox = filebox [0];
+
+    var btn = targetDocument.getElementById (id);
+    if (btn) {
+      Akahuku.debug.warn ("#" + id + " alrady exist.");
+      return;
+    }
+
+    var container = targetDocument.createElement ("span");
+    container.id = id + "_container";
+    container.appendChild (targetDocument.createTextNode (" ["));
+
+    btn = targetDocument.createElement ("a");
+    btn.id = id;
+    btn.className = "akahuku_postform_upfile_extrabuttons";
+    btn.addEventListener ("click", handler, false);
+    btn.appendChild (targetDocument.createTextNode (label));
+    container.appendChild (btn);
+
+    container.appendChild (targetDocument.createTextNode ("]"));
+
+    filebox.parentNode.appendChild (container);
   },
   
   /**
@@ -5175,6 +5234,36 @@ var arAkahukuPostForm = {
             tbody.insertBefore (tr2, tr.nextSibling);
           }
         }
+      }
+
+      if (arAkahukuPostForm.enablePasteImageFromClipboard) {
+        arAkahukuPostForm.applyUpfileExtraButton
+          (targetDocument,
+           "akahuku_postform_pastebutton",
+           "\u8CBC\u308A\u4ED8\u3051", // 貼り付け
+           function () {
+             var targetDocument = arguments [0].target.ownerDocument;
+             var comment = arAkahukuPostForm.findCommentbox (targetDocument);
+             if (comment) {
+               var ev = targetDocument.createEvent ("HTMLEvents")
+               ev.initEvent ("paste", false, true);
+               comment.dispatchEvent (ev);
+             }
+           });
+        arAkahukuPostForm.applyUpfileExtraButton
+          (targetDocument,
+           "akahuku_postform_clearbutton",
+           "\u30AF\u30EA\u30A2", // クリア
+           function () {
+             var targetDocument = arguments [0].target.ownerDocument;
+             var filebox = targetDocument.getElementsByName ("upfile");
+             if (filebox && filebox [0]) {
+               filebox [0].value = "";
+               if (arAkahukuPostForm.enablePreview) {
+                 arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+               }
+             }
+           });
       }
             
       if (arAkahukuPostForm.enablePreview) {

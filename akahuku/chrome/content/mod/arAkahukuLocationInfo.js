@@ -292,7 +292,7 @@ arAkahukuLocationInfo.prototype = {
       this.isOnline = true;
     }
         
-    if (arAkahukuBoard.knows (this)) {
+    if (arAkahukuBoard.knowsAsInternal (this)) {
       this.board3
       = arAkahukuBoard.getServerName (this, "true");
     }
@@ -309,14 +309,17 @@ arAkahukuLocationInfo.prototype = {
         }
       }
       else {
-        if (targetDocument.title.match (/\uFF20\u3075\u305F\u3070/)) {
-          this.board3
-          = targetDocument.title
-          .replace (/\uFF20\u3075\u305F\u3070/,
-                    "");
+        node = arAkahukuTitle.getTitleElement (targetDocument, this);
+        if (node) {
+          this.board3 = arAkahukuDOM.getInnerText (node);
         }
-        else {
+        if (!this.board3) {
           this.board3 = targetDocument.title;
+        }
+        if (this.board3) {
+          this.board3
+            = this.board3.replace
+            (/\uFF20\u3075\u305F\u3070\s*$/, ""); // ＠ふたば
         }
       }
     }
