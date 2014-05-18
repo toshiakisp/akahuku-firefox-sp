@@ -345,6 +345,45 @@ var arAkahukuTitle = {
         
     targetDocument.title = text;
   },
+
+  /**
+   * ドキュメントのタイトル要素を得る
+   *
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   * @param  arAkahukuLocationInfo info
+   *         アドレスの情報
+   * @return HTMLElement
+   *         タイトル要素
+   */
+  getTitleElement : function (targetDocument, info) {
+    var pos = null;
+    var nodes2 = targetDocument.getElementsByTagName ("p");
+    if (nodes2.length >= 2 && nodes2[1].align == "center") {
+      var nodes3 = nodes2 [1].getElementsByTagName ("font");
+      if (nodes3.length >= 1) {
+        pos = nodes3 [0];
+      }
+      else {
+        pos = nodes2 [1];
+      }
+    }
+    /* 避難所 patch */
+    if (!pos) {
+      nodes2 = targetDocument.getElementsByTagName ("h1");
+      if (nodes2.length >= 1) {
+        pos = nodes2 [0];
+      }
+    }
+    /* hr基準のタイトル要素検索 */
+    if (!pos) {
+      nodes2 = targetDocument.getElementsByTagName ("hr");
+      if (nodes2.length >= 1) {
+        pos = nodes2 [0].previousSibling;
+      }
+    }
+    return pos;
+  },
     
   /**
    * ドキュメントのタイトルにサーバ名、状況などを追加する
@@ -371,33 +410,7 @@ var arAkahukuTitle = {
       var nodes = Akahuku.getMessageBQ (targetDocument);
             
       if (nodes.length != 0) {
-        var pos = null;
-                
-        var nodes2 = targetDocument.getElementsByTagName ("p");
-        if (nodes2.length >= 2 && nodes2[1].align == "center") {
-          var nodes3 = nodes2 [1].getElementsByTagName ("font");
-          if (nodes3.length >= 1) {
-            pos = nodes3 [0];
-          }
-          else {
-            pos = nodes2 [1];
-          }
-        }
-        /* 避難所 patch */
-        if (!pos) {
-          nodes2 = targetDocument.getElementsByTagName ("h1");
-          if (nodes2.length >= 1) {
-            pos = nodes2 [0];
-          }
-        }
-        /* hr基準のタイトル要素検索 */
-        if (!pos) {
-          nodes2 = targetDocument.getElementsByTagName ("hr");
-          if (nodes2.length >= 1) {
-            pos = nodes2 [0].previousSibling;
-          }
-        }
-                
+        var pos = arAkahukuTitle.getTitleElement (targetDocument, info);
         if (pos) {
           var newNode = targetDocument.createElement ("div");
           newNode.id = "akahuku_subtitle_container";
