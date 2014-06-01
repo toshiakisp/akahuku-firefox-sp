@@ -2,6 +2,11 @@
 
 var arAkahukuFileName = {
   defaultConvertList : [
+    ["&amp;", "&"],
+    ["&gt;", "\uFF1E"],
+    ["&lt;", "\uFF1C"],
+    ["&quot;", "\u201D"],
+    ["&apos;", "\u2019"],
     ["\\", "\uFFE5"],
     ["/", "\uFF0F"],
     [":", "\uFF1A"],

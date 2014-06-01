@@ -143,6 +143,10 @@ var arAkahukuTitle = {
     type = type ||  arAkahukuTitle.commentLengthType;
     var ret;
     var truncated = false;
+
+	//エスケープ文字がある場合にエスケープの途中で切ってしまったときXMLエラーが出ることへの対処
+	//切る前にアンエスケープしておく
+	text = text.replace(/&([^;]*)$/g, "&amp;$1").replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&quot;/g, "\"").replace(/&apos;/g, "'").replace(/&amp;/g, "&");
     if (type == 1) {
       // SJISバイト数単位の場合
       ret = arAkahukuConverter.getSubstrForSJISByteLength (text, length);
@@ -157,7 +161,8 @@ var arAkahukuTitle = {
     if (truncated && sign) {
       ret += sign;
     }
-    return ret;
+	//返す前にとりあえずエスケープしておく
+    return ret.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
   },
     
   /**
