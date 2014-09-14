@@ -454,18 +454,21 @@ arAkahukuReloadParam.prototype = {
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
     if (descriptor) {
-      try {
-        var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
-        var istream = descriptor.openInputStream (0);
-        var bstream
-        = Components.classes ["@mozilla.org/binaryinputstream;1"]
-        .createInstance (Components.interfaces.nsIBinaryInputStream);
-        bstream.setInputStream (istream);
-        var bindata = bstream.readBytes (descriptor.dataSize);
-        bstream.close ();
-        // istream.close (); // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
+      var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
+      var istream = descriptor.openInputStream (0);
+      var self = this;
+      arAkahukuUtil.asyncFetch (istream, descriptor.dataSize, function (binstream, result) {
+        if (!Components.isSuccessCode (result)) {
+          if (Akahuku.debug.enabled) {
+            Akahuku.debug.warn ("arAkahukuReloadParam.onCacheEntryAvailable" +
+              arAkahukuUtil.resultCodeToString (result) + " for " + url);
+          }
+          return;
+        }
+        var bindata = binstream.readBytes (binstream.available ());
+        binstream.close ();
         descriptor.close ();
-        
+
         var cont = function (self, bindata) {
           try {
             if (self.writer == null) {
@@ -500,15 +503,12 @@ arAkahukuReloadParam.prototype = {
                return function (bindata) {
                  cont (self, bindata);
                };
-             })(this, cont));
+             })(self, cont));
         }
         else {
-          cont (this, bindata);
+          cont (self, bindata);
         }
-      }
-      catch (e) { Akahuku.debug.exception(e);
-        /* 既に閉じられている場合など */
-      }
+      });
     }
   },
   onCacheEntryCheck : function (entry, appCache) {
@@ -2060,16 +2060,25 @@ var arAkahukuReload = {
         (param.partialNodes [i]);
     }
 
-    var _loadCacheAndUpdate = function (istream, dataSize) {
-      var bstream
-      = Components.classes ["@mozilla.org/binaryinputstream;1"]
-      .createInstance
-      (Components.interfaces.nsIBinaryInputStream);
-      bstream.setInputStream (istream);
-      param.responseText = bstream.readBytes (dataSize);
-      bstream.close ();
-      try { istream.close (); } catch (e) {} // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
-
+    var _asyncLoadCacheAndUpdate = function (istream, dataSize, callback) {
+      arAkahukuUtil.asyncFetch (istream, dataSize, function (binstream, result) {
+        if (Components.isSuccessCode (result)) {
+          param.responseText = binstream.readBytes (binstream.available ());
+          binstream.close ();
+          _updateCache ();
+        }
+        else {
+          if (Akahuku.debug.enabled) {
+            Akahuku.debug.warn ("_asyncLoadCacheAndUpdate resulted in " +
+              arAkahukuUtil.resultCodeToString (result) + " for " + url);
+          }
+        }
+        if (callback) {
+          callback (result);
+        }
+      });
+    };
+    var _updateCache = function () {
       if (arAkahukuReload.enableNolimit) {
         arAkahukuConfig.setTime (arAkahukuReload.limitTime);
       }
@@ -2122,7 +2131,7 @@ var arAkahukuReload = {
             .classes ["@mozilla.org/network/file-input-stream;1"]
             .createInstance (Components.interfaces.nsIFileInputStream);
           fstream.init (targetFile, 0x01, 292/*0444*/, 0);
-          _loadCacheAndUpdate (fstream, targetFile.fileSize);
+          _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize);
           location = null; // キャッシュ読み不要
         }
       }
@@ -2139,8 +2148,9 @@ var arAkahukuReload = {
         try {
           if (descriptor) {
             var istream = descriptor.openInputStream (0);
-            _loadCacheAndUpdate (istream, descriptor.dataSize);
-            descriptor.close ();
+            _asyncLoadCacheAndUpdate (istream, descriptor.dataSize, function () {
+              descriptor.close ();
+            });
           }
           else {
             // キャッシュが存在しなかった場合
