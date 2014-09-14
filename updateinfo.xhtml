@@ -1,16 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"> 
-<h4>sp_rev.27 (2014-05-18)</h4>
+<h4>sp_rev.28 (2014-09-14)</h4>
 <ul>
-  <li>「そうだね」の同期に対応</li>
-  <li>添付ファイルの[貼り付け]と[クリア]ボタンの追加 (フォームのオプション「クリップボードから画像を添付」有効時)</li>
-  <li>Shift-Enterでコメント送信オプションの挙動改善</li>
-  <li>外部の板で板名が取得できてなかった問題を修正</li>
-</ul>
-<h4>sp_rev.26 (2014-05-16)</h4>
-<ul>
-  <li>オプション追加：コメント入力欄でShift-Enterで送信</li>
-  <li>外部板(monaca.php)への対応改善：題名や名前の解析、コメント入力欄関係の機能</li>
-  <li>/b/futaba.php?res=1234のようなURLでも「スレをファイルに保存する」がそれっぽく機能するように</li>
+  <li>修正：新しいHTTPキャッシュ機構(v2)で「MHTで保存」時に画像等をキャッシュから拾い損ねる場合がある問題などを修正</li>
+  <li>修正：「画像を保存」などでの本文4文字で、"&amp;"や"&gt;"などを含む場合に失敗する場合がある問題を修正(yammabooさん報告感謝)</li>
+  <li>板情報を更新</li>
 </ul>
 </html>
