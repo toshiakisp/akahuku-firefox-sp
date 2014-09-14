@@ -2154,22 +2154,23 @@ var arAkahukuMHT = {
         
     if (descriptor) {
       var istream = descriptor.openInputStream (0);
-      var bstream
-      = Components.classes ["@mozilla.org/binaryinputstream;1"]
-      .createInstance (Components.interfaces.nsIBinaryInputStream);
-      var bindata = "";
-      try {
-        bstream.setInputStream (istream);
-        bindata = bstream.readBytes (descriptor.dataSize);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-        // キャッシュ破損?
-      }
-      bstream.close ();
-      // istream.close (); // Gecko20.0a2 throws NS_ERROR_NOT_AVAILABLE
-            
-      fileData.originalContent = bindata;
-      fileData.content = btoa (fileData.originalContent);
+      arAkahukuUtil.asyncFetch (istream, descriptor.dataSize, function (binstream, result) {
+        if (Components.isSuccessCode (result)) {
+          var bindata = binstream.readBytes (binstream.available ());
+          fileData.originalContent = bindata;
+          fileData.content = btoa (bindata);
+        }
+        else {
+          if (Akahuku.debug.enabled) {
+            Akahuku.debug.warn ("arAkahukuMHT.getFileData resulted in " +
+              arAkahukuUtil.resultCodeToString (result) + " for " + url);
+          }
+          fileData.originalContent = "";
+          fileData.content = "";
+        }
+        fileData.onGetFileData ();
+        }
+      });
     }
         
     fileData.onGetFileData ();
