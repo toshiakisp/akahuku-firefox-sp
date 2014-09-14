@@ -7,6 +7,7 @@ var arAkahukuUtil = new function () {
   const Cu = Components.utils;
   const Ci = Components.interfaces;
   const Cc = Components.classes;
+  const Cr = Components.results;
 
   /**
    * Channel に LoadContext を関連づける
@@ -85,6 +86,44 @@ var arAkahukuUtil = new function () {
       }
     }
     return codeName + codeInHex;
+  };
+
+  /*
+   * nsIFile等からデータをバッファに読み込む
+   * (NetUtil.jsmのasyncFetchライクに)
+   */
+  this.asyncFetch = function (istream, byteSize, callback) {
+    var pipeSize = byteSize;
+    var pumpSize = byteSize;
+    if (byteSize < 0) {
+      pipeSize = 0xffffffff;
+      pumpSize = -1;
+    }
+    var pipe = Cc ["@mozilla.org/pipe;1"]
+      .createInstance (Ci.nsIPipe);
+    pipe.init (true, true, 0, pipeSize, null);
+
+    var pump = Cc ["@mozilla.org/network/input-stream-pump;1"]
+      .createInstance (Ci.nsIInputStreamPump);
+    pump.init (istream, -1, pumpSize, 0, 0, true);
+
+    var listener = {
+      onDataAvailable : function (request, context, inputStream, offset, count) {
+        var writeCount = pipe.outputStream.writeFrom (inputStream, count);
+        if (writeCount == 0) {
+          throw Cr.NS_BASE_STREAM_CLOSED;
+        }
+      },
+      onStartRequest : function (request, context) {},
+      onStopRequest : function (request, context, statusCode) {
+        pipe.outputStream.close ();
+        var bistream = Cc ["@mozilla.org/binaryinputstream;1"]
+          .createInstance (Ci.nsIBinaryInputStream);
+        bistream.setInputStream (pipe.inputStream);
+        callback (bistream, statusCode);
+      },
+    };
+    pump.asyncRead (listener, null);
   };
 };
 

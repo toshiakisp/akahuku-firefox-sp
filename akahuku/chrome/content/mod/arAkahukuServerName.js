@@ -8,7 +8,7 @@ var arAkahukuServerData = {
     "\u91CE\u7403",
     "\u91CE\u7403",
     "\u91CE\u7403",
-    3000, true
+    1500, true
     ],
   "zip:12" : [ /* サッカー */
     "\u30B5\u30C3\u30AB\u30FC",
@@ -224,6 +224,18 @@ var arAkahukuServerData = {
     "\u30BD\u30FC\u30B7\u30E3\u30EB\u30B2\u30FC\u30E0",
     3000, true
     ],
+  "dec:60" : [ /* 艦コレ */
+    "\u8266\u30B3\u30EC",
+    "\u8266\u30B3\u30EC",
+    "\u8266\u30B3\u30EC",
+    10000, true
+    ],
+  "dec:61" : [ /* ソニー */
+    "\u30BD\u30CB\u30FC",
+    "\u30BD\u30CB\u30FC",
+    "\u30BD\u30CB\u30FC",
+    10000, true
+    ],
   "dat:10" : [ /* ネットキャラ */
     "\u30CD\u30C3\u30C8\u30AD\u30E3\u30E9",
     "\u30CD\u30C3\u30C8\u30AD\u30E3\u30E9",
@@ -375,7 +387,7 @@ var arAkahukuServerData = {
     "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
     "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
     "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
-    3000, true
+    0, true
     ],
   "cgi:f" : [ /* 軍 */
     "\u8ECD",
@@ -472,7 +484,7 @@ var arAkahukuServerData = {
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
     "\u96D1\u8AC7",
-    1000, true
+    500, true
     ],
   "ipv6:54" : [ /* IPv6 */
     "IPv6",

@@ -143,6 +143,7 @@ var arAkahukuTitle = {
     type = type ||  arAkahukuTitle.commentLengthType;
     var ret;
     var truncated = false;
+    text = arAkahukuConverter.unescapeEntity (text);
     if (type == 1) {
       // SJISバイト数単位の場合
       ret = arAkahukuConverter.getSubstrForSJISByteLength (text, length);
@@ -157,6 +158,7 @@ var arAkahukuTitle = {
     if (truncated && sign) {
       ret += sign;
     }
+    ret = arAkahukuConverter.escapeEntity (ret);
     return ret;
   },
     
