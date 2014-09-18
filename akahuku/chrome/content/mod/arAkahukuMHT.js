@@ -119,7 +119,12 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
    *   nsICacheEntryDescriptor.close
    */
   close : function () {
-    this.fstream.close ();
+    try {
+      this.fstream.close ();
+    }
+    catch (e) {
+      // 既に close 済みの場合など
+    }
   }
 };
 /**

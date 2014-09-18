@@ -144,7 +144,7 @@ arAkahukuLocationInfo.prototype = {
       }
     }
         
-    if (location.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+    if (location.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
       var prefix = RegExp.$1;
       this.server = RegExp.$2;
       /* RegExp.$3: ポート番号 */
@@ -237,7 +237,7 @@ arAkahukuLocationInfo.prototype = {
         catch (e) { Akahuku.debug.exception (e);
           continue;
         }
-        if (uri.spec.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+        if (uri.spec.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
           this.isFutasuke = false;
           this.server = RegExp.$2;
           /* RegExp.$3: ポート番号 */
@@ -1199,7 +1199,7 @@ var arAkahukuImageURL = {
       url = p.original;
     }
     
-    if (url.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src|red|d)\/([A-Za-z0-9]+)\.(jpg|png|gif|htm)(\?.*)?$/)) {
+    if (url.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src|red|d)\/([A-Za-z0-9]+)\.(jpg|png|gif|htm)(\?.*)?$/)) {
       uinfo = new arAkahukuImageURLInfo ();
       
       uinfo.prefix = RegExp.$1;
@@ -1276,7 +1276,7 @@ var arAkahukuImageURL = {
         uinfo.isAd = true;
       }
     }
-    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
+    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
       /* IP アドレスで画像鯖らしき場所が指定された場合 */
       uinfo = new arAkahukuImageURLInfo ();
             

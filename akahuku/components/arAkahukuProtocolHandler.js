@@ -1573,7 +1573,7 @@ arAkahukuP2PChannel.prototype = {
         || iid.equals (nsIWebProgressListener)
         || iid.equals (nsITimerCallback)
         || iid.equals (arIAkahukuP2PServantListener)
-        || iid.equals (arIAkahukuP2PChannel)) {
+        /*|| iid.equals (arIAkahukuP2PChannel) */) {
       return this;
     }
         
