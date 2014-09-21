@@ -92,20 +92,14 @@ var arAkahukuUtil = new function () {
    * nsIFile等からデータをバッファに読み込む
    * (NetUtil.jsmのasyncFetchライクに)
    */
-  this.asyncFetch = function (istream, byteSize, callback) {
-    var pipeSize = byteSize;
-    var pumpSize = byteSize;
-    if (byteSize < 0) {
+  this.asyncFetch = function (source, callback, optByteSize) {
+    var pipeSize = (optByteSize>>12)+1;
+    if (!(optByteSize > 0)) {
       pipeSize = 0xffffffff;
-      pumpSize = -1;
     }
     var pipe = Cc ["@mozilla.org/pipe;1"]
       .createInstance (Ci.nsIPipe);
-    pipe.init (true, true, 0, pipeSize, null);
-
-    var pump = Cc ["@mozilla.org/network/input-stream-pump;1"]
-      .createInstance (Ci.nsIInputStreamPump);
-    pump.init (istream, -1, pumpSize, 0, 0, true);
+    pipe.init (true, true, 1<<12, pipeSize, null);
 
     var listener = {
       onDataAvailable : function (request, context, inputStream, offset, count) {
@@ -117,13 +111,58 @@ var arAkahukuUtil = new function () {
       onStartRequest : function (request, context) {},
       onStopRequest : function (request, context, statusCode) {
         pipe.outputStream.close ();
-        var bistream = Cc ["@mozilla.org/binaryinputstream;1"]
-          .createInstance (Ci.nsIBinaryInputStream);
-        bistream.setInputStream (pipe.inputStream);
-        callback (bistream, statusCode);
+        callback (pipe.inputStream, statusCode, request);
       },
     };
-    pump.asyncRead (listener, null);
+
+    if (source instanceof Ci.nsIInputStream) {
+      var pump = Cc ["@mozilla.org/network/input-stream-pump;1"]
+        .createInstance (Ci.nsIInputStreamPump);
+      pump.init (source, -1, -1, 0, 0, true);
+      pump.asyncRead (listener, null);
+      return;
+    }
+
+    var channel = this.newChannel (source);
+    channel.asyncOpen (listener, null);
+  };
+  /*
+   * nsIURIかstringからnsIChannelを得る(NetUtil.newChannel互換)
+   */
+  this.newChannel = function (source, optCharset, optBaseURI) {
+    if (source instanceof Ci.nsIChannel) {
+      return source;
+    }
+    var uri = (source instanceof Ci.nsIURI ?
+        source : this.newURI (source, optCharset, optBaseURI));
+    var ios = Cc ["@mozilla.org/network/io-service;1"]
+      .getService (Ci.nsIIOService);
+    return ios.newChannelFromURI (uri);
+  };
+  /*
+   * nsIFileかstringからnsIURIを得る(NetUtil.newURI互換)
+   */
+  this.newURI = function (source, optCharset, optBaseURI) {
+    var ios = Cc ["@mozilla.org/network/io-service;1"]
+      .getService (Ci.nsIIOService);
+    if (source instanceof Ci.nsIFile) {
+      return ios.newFileURI (source);
+    }
+    return ios.newURI (source, optCharset, optBaseURI);
+  };
+  /*
+   * nsIFile等からデータをバッファに読み込む
+   */
+  this.asyncFetchBinary = function (source, byteSize, callback) {
+    this.asyncFetch (source, function (istream, statusCode, request) {
+      var bistream = null;
+      if (istream) {
+        bistream = Cc ["@mozilla.org/binaryinputstream;1"]
+          .createInstance (Ci.nsIBinaryInputStream);
+        bistream.setInputStream (istream);
+      }
+      callback (bistream, statusCode, request);
+    }, byteSize);
   };
 };
 

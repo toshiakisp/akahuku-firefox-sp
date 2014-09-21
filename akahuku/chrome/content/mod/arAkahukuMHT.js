@@ -2159,7 +2159,7 @@ var arAkahukuMHT = {
         
     if (descriptor) {
       var istream = descriptor.openInputStream (0);
-      arAkahukuUtil.asyncFetch (istream, descriptor.dataSize, function (binstream, result) {
+      arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
         if (Components.isSuccessCode (result)) {
           var bindata = binstream.readBytes (binstream.available ());
           binstream.close ();
