@@ -164,5 +164,62 @@ var arAkahukuUtil = new function () {
       callback (bistream, statusCode, request);
     }, byteSize);
   };
+
+  var URL2MIME = [
+    [/\.jpe?g(\?.*)?$/i, "image/jpeg"],
+    [/\.png(\?.*)?$/i, "image/png"],
+    [/\.gif(\?.*)?$/i, "image/gif"],
+    [/\.html?(\?.*)?$/i, "text/html"],
+    [/\/uua?count\.php(\?.*)?$/i, "image/gif"],
+    [/\.php(\?.*)?$/i, "text/html"],
+    [/\.css(\?.*)?$/i, "text/css"],
+    [/\.bmp(\?.*)?$/i, "image/bmp"],
+    [/\.psd(\?.*)?$/i, "image/x-photoshop"],
+    [/\.tiff?(\?.*)?$/i, "image/tiff"],
+    [/\.sai(\?.*)?$/i, "application/octet-stream"],
+    [/\.mht(\?.*)?$/i, "message/rfc822"],
+    [/\.lzh(\?.*)?$/i, "application/octet-stream"],
+    [/\.zip(\?.*)?$/i, "application/zip"],
+    [/\.7z(\?.*)?$/i, "application/x-7z-compressed"],
+    [/\.rar(\?.*)?$/i, "application/x-rar-compressed"],
+    [/\.gca(\?.*)?$/i, "application/x-gca-compressed"],
+    [/\.txt(\?.*)?$/i, "text/plain"],
+    [/\.swf(\?.*)?$/i, "application/x-shockwave-flash"],
+    [/\.flv(\?.*)?$/i, "video/x-flv"],
+    [/\.mid(\?.*)?$/i, "audio/mid"],
+    [/\.wav(\?.*)?$/i, "audio/x-wav"],
+    [/\.wma(\?.*)?$/i, "audio/x-ms-wma"],
+    [/\.wmv(\?.*)?$/i, "video/x-ms-wmv"],
+    [/\.mp3(\?.*)?$/i, "audio/mpeg"],
+    [/\.m4a(\?.*)?$/i, "audio/mp4"],
+    [/\.ogg(\?.*)?$/i, "application/ogg"],
+    [/\.aac(\?.*)?$/i, "audio/aac"],
+    [/\.aif(\?.*)?$/i, "audio/x-aiff"],
+    [/\.pls(\?.*)?$/i, "audio/mpegurl"],
+    [/\.asf(\?.*)?$/i, "video/x-la-asf"],
+    [/\.avi(\?.*)?$/i, "video/x-msvideo"],
+    [/\.mpg(\?.*)?$/i, "video/mpeg"],
+    [/\.doc(\?.*)?$/i, "application/msword"],
+    [/\.xls(\?.*)?$/i, "application/vnd.ms-excel"],
+    [/\.ppt(\?.*)?$/i, "application/vnd.ms-powerpoint"],
+    [/\.pdf(\?.*)?$/i, "application/pdf"],
+    [/\.rpy(\?.*)?$/i, "application/octet-stream"],
+  ];
+  this.getMIMETypeFromURI = function (url) {
+    try {
+      var uri = this.newURI (url);
+      for (var k = 0; k < URL2MIME.length; k ++) {
+        if (URL2MIME [k][0].test (uri.path)) {
+          return URL2MIME [k][1];
+        }
+      }
+      var mime = Cc ["@mozilla.org/mime;1"]
+        .getService (Ci.nsIMIMEService);
+      return mime.getTypeFromURI (uri);
+    }
+    catch (e) { Cu.reportError (e);
+    }
+    return "application/octet-stream";
+  };
 };
 
