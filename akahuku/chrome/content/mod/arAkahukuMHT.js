@@ -740,6 +740,12 @@ arAkahukuMHTFileData.prototype = {
       // cancel された場合
       this.channel = null;
       this.originalContent = "";
+      if (request instanceof Components.interfaces.nsIHttpChannel)
+        this.statusMessage = "Error (net):";
+      else
+        this.statusMessage = "Error (cache):";
+      this.statusMessage += arAkahukuUtil.resultCodeToString (statusCode);
+      this.onGetFileData (); // エラー処理のため
       return;
     }
     if (this.converting) {
