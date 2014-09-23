@@ -397,7 +397,7 @@ arAkahukuMHTFileData.prototype = {
           fileData.originalContent = bindata;
           fileData.content = btoa (bindata);
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
           result = e.result;
         }
       }
@@ -405,6 +405,12 @@ arAkahukuMHTFileData.prototype = {
         if (Akahuku.debug.enabled) {
           Akahuku.debug.warn ("arAkahukuMHTFileData.asyncGetFileData resulted in " +
             arAkahukuUtil.resultCodeToString (result) + " for " + url);
+        }
+        if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
+          && fileData.useNetwork) {
+          fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
+          fileData.getFile (fileData.location, null);
+          return;
         }
         fileData.originalContent = "";
         fileData.content = "";
