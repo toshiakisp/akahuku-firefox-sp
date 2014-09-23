@@ -120,7 +120,8 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
    */
   close : function () {
     try {
-      this.fstream.close ();
+      if (this.fstream)
+        this.fstream.close ();
     }
     catch (e) {
       // 既に close 済みの場合など
@@ -139,6 +140,7 @@ function arAkahukuMHTFileData () {
 }
 arAkahukuMHTFileData.prototype = {
   status : 0,            /* Number  ファイル取得の状況 */
+  statusMessage : "",    /* String  取得失敗結果詳細 */
   anchor_status : 0,     /* Number  a 要素での取得の進行状況 */
   type : 0,              /* Number  参照元のノードの種類 */
   node : null,           /* HTMLElement  参照元のノード */
@@ -189,6 +191,7 @@ arAkahukuMHTFileData.prototype = {
    */
   destruct : function () {
     this.status = arAkahukuMHT.FILE_STATUS_NG;
+    this.statusMessage = "";
         
     this.node = null;
     this.ownerDocument = null;
@@ -247,6 +250,7 @@ arAkahukuMHTFileData.prototype = {
               /* 状態を取得不可に設定する */
               file.channel = null;
               file.status = arAkahukuMHT.FILE_STATUS_NG;
+              file.statusMessage = "Error (net):" + e.message;
               file.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
             }
           };
@@ -335,6 +339,7 @@ arAkahukuMHTFileData.prototype = {
         if (!this.useNetwork) {
           /* 状態を取得不可に設定する */
           this.status = arAkahukuMHT.FILE_STATUS_NG;
+          this.statusMessage = "Not found in P2P cache";
           this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
         }
         else {
@@ -366,11 +371,57 @@ arAkahukuMHTFileData.prototype = {
       
       Akahuku.Cache.asyncOpenCacheToRead (location, this);
     }
-    catch (e) {
+    catch (e) { Akahuku.debug.exception (e);
       /* キャッシュが存在しなかった場合 */
             
-      this.onCacheEntryAvailable (null, false, null, 0);
+      if (!this.useNetwork) {
+        this.node.src = "";
+        this.status = arAkahukuMHT.FILE_STATUS_NG;
+        this.statusMessage = "Error (cache):" + e.message;
+      }
+      else {
+        this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
+        this.getFile (this.location, null);
+      }
     }
+  },
+
+  asyncGetFileData : function (source, byteSize) {
+    var fileData = this;
+    var url = (this.imageLocation ? this.imageLocation : this.location);
+    arAkahukuUtil.asyncFetchBinary (source, byteSize, function (binstream, result) {
+      if (Components.isSuccessCode (result)) {
+        try {
+          var bindata = binstream.readBytes (byteSize);
+          binstream.close ();
+          fileData.originalContent = bindata;
+          fileData.content = btoa (bindata);
+        }
+        catch (e) { Akahuku.debug.exception (e);
+          result = e.result;
+        }
+      }
+      if (!Components.isSuccessCode (result)) {
+        if (Akahuku.debug.enabled) {
+          Akahuku.debug.warn ("arAkahukuMHTFileData.asyncGetFileData resulted in " +
+            arAkahukuUtil.resultCodeToString (result) + " for " + url);
+        }
+        if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
+          && fileData.useNetwork) {
+          fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
+          fileData.getFile (fileData.location, null);
+          return;
+        }
+        fileData.originalContent = "";
+        fileData.content = "";
+        if (fileData.status == arAkahukuMHT.FILE_STATUS_NA_NET)
+          fileData.statusMessage = "Error (net):";
+        else
+          fileData.statusMessage = "Error (cache):";
+        fileData.statusMessage += arAkahukuUtil.resultCodeToString (result);
+      }
+      fileData.onGetFileData ();
+    });
   },
     
   /**
@@ -383,6 +434,8 @@ arAkahukuMHTFileData.prototype = {
         
         this.node.src = "";
         this.status = arAkahukuMHT.FILE_STATUS_NG;
+        if (!this.statusMessage)
+          this.statusMessage = "Data length is 0";
       }
       else {
         this.status = arAkahukuMHT.FILE_STATUS_OK;
@@ -418,6 +471,7 @@ arAkahukuMHTFileData.prototype = {
             /* 状態を取得不可に設定する */
             /* リンクの場合にはキャッシュのみなので即 NG */
             this.status = arAkahukuMHT.FILE_STATUS_NG;
+            this.statusMessage = "Not found in cache (link)";
             this.anchor_status
             = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
           }
@@ -434,6 +488,8 @@ arAkahukuMHTFileData.prototype = {
               this.node.src = "";
             }
             this.status = arAkahukuMHT.FILE_STATUS_NG;
+            if (!this.statusMessage)
+              this.statusMessage = "Data length is 0";
           }
           else {
             /* 状態を取得完了に設定する */
@@ -456,6 +512,8 @@ arAkahukuMHTFileData.prototype = {
             this.node.src = "";
           }
           this.status = arAkahukuMHT.FILE_STATUS_NG;
+          if (!this.statusMessage)
+            this.statusMessage = "Data length is 0";
         }
         else {
           /* 状態を取得完了に設定する */
@@ -468,21 +526,81 @@ arAkahukuMHTFileData.prototype = {
   },
     
   /**
+   * ファイル情報を取得する
+   *
+   * @param  nsICacheEntry entry
+   *         キャッシュの情報
+   */
+  asyncGetFileDataFromCacheEntry : function (entry) {
+    var url = (this.imageLocation ? this.imageLocation : this.location);
+    this.contentType = arAkahukuUtil.getMIMETypeFromURI (url);
+    this.encoding = "base64";
+
+    var head = "";
+    try {
+      head = entry.getMetaDataElement ("response-head");
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
+    if (head.match (/content-encoding[ \r\n\t]*:[ \r\n\t]*(compress|deflate|gzip|x-compress|x-gzip)/i)) {
+      var encoding = (RegExp.$1).toLowerCase ();
+
+      try {
+        var converter
+          = Components.classes
+          ["@mozilla.org/streamconv;1?from="
+           + encoding + "&to=uncompressed"]
+          .createInstance
+          (Components.interfaces.nsIStreamConverter);
+        converter.asyncConvertData (encoding, "uncompressed", this, null);
+
+        var listener
+          = converter.QueryInterface
+          (Components.interfaces.nsIStreamListener);
+        listener.onStartRequest (null, null);
+        var istream = entry.openInputStream (0);
+        listener.onDataAvailable (null, null, istream, 0, entry.dataSize);
+        istream.close ();
+        this.converting = true;
+        listener.onStopRequest (null, null, 0);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+        this.originalContent = "";
+        this.content = "";
+        this.statusMessage = "Error in deflate (cache):" + e.message;
+        this.onGetFileData ();
+      }
+      return;
+    }
+
+    var source = entry.openInputStream (0);
+    if (entry instanceof arAkahukuP2PCacheEntryDescriptor) {
+      // asyncGetFileData (arAkahukuUtil.asyncFetch) で
+      // ファイルを読み込むには nsIInputStream は問題ありのため
+      source = entry.targetFile;
+    }
+    this.asyncGetFileData (source, entry.dataSize);
+  },
+
+  /**
    * キャッシュエントリが使用可能になったイベント
    *   nsICacheEntryOpenCallback.onCacheEntryAvailable
    *
-   * @param  nsICacheEntry descriptor
+   * @param  nsICacheEntry entry
    *         キャッシュの情報
    * @param  boolean isNew
    * @param  nsIApplicationCache appCache
    * @param  nsresult status
    */
-  onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
+  onCacheEntryAvailable : function (entry, isNew, appCache, status) {
     var httpStatus = 200;
+    var httpStatusText = "";
     try {
-      var text = (descriptor ? descriptor.getMetaDataElement ("response-head") : null);
+      var text = (entry ? entry.getMetaDataElement ("response-head") : null);
       if (text && text.match (/HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/)) {
         httpStatus = parseInt (RegExp.$1);
+        httpStatusText = RegExp.$1 + " " + RegExp.$2;
       }
       
       if (text && text.match (/Location:[ \t]*([^\r\n]+)/)) {
@@ -496,11 +614,12 @@ arAkahukuMHTFileData.prototype = {
     catch (e) { Akahuku.debug.exception (e);
     }
     
+    try {
     if (this.type == arAkahukuMHT.FILE_TYPE_IMG) {
-      if (descriptor && httpStatus >= 200 && httpStatus <= 299) {
+      if (entry && httpStatus >= 200 && httpStatus <= 299) {
         /* アクセス権が取得できた場合 */
         
-        arAkahukuMHT.getFileData (descriptor, this);
+        this.asyncGetFileDataFromCacheEntry (entry);
       }
       else {
         /* アクセス権が取得できなかった場合 */
@@ -509,6 +628,16 @@ arAkahukuMHTFileData.prototype = {
           /* 状態を取得不可に設定する */
           this.node.src = "";
           this.status = arAkahukuMHT.FILE_STATUS_NG;
+          if (entry) {
+            this.statusMessage = "Found in cache but " + httpStatusText;
+          }
+          else {
+            this.statusMessage = "Not found in cache";
+            if (!Components.isSuccessCode (status)
+                && status != Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+              this.statusMessage += ":" + arAkahukuUtil.resultCodeToString (status);
+            }
+          }
         }
         else {
           this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
@@ -517,20 +646,20 @@ arAkahukuMHTFileData.prototype = {
       }
     }
     else {
-      if (descriptor && httpStatus >= 200 && httpStatus <= 299) {
+      if (entry && httpStatus >= 200 && httpStatus <= 299) {
         /* アクセス権が取得できた場合 */
         if (this.anchor_status
             == arAkahukuMHT.FILE_ANCHOR_STATUS_NA) {
                     
           /* a 要素のリンク対象の場合 */
                     
-          arAkahukuMHT.getFileData (descriptor, this);
+          this.asyncGetFileDataFromCacheEntry (entry);
         }
         else if (this.anchor_status
                  == arAkahukuMHT.FILE_ANCHOR_STATUS_HTML) {
           /* リフレッシュ先の場合 */
                     
-          arAkahukuMHT.getFileData (descriptor, this);
+          this.asyncGetFileDataFromCacheEntry (entry);
         }
       }
       else {
@@ -545,8 +674,9 @@ arAkahukuMHTFileData.prototype = {
             Akahuku.Cache.asyncOpenCacheToRead
               (this.location + ".backup", this);
           }
-          catch (e) {
+          catch (e) { Akahuku.debug.exception (e);
             this.status = arAkahukuMHT.FILE_STATUS_NG;
+            this.statusMessage = "Error (cache):" + e.message;
             this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
           }
         }
@@ -554,13 +684,31 @@ arAkahukuMHTFileData.prototype = {
           /* 状態を取得不可に設定する */
           /* リンクの場合にはキャッシュのみなので即 NG */
           this.status = arAkahukuMHT.FILE_STATUS_NG;
+          if (entry) {
+            this.statusMessage = "Found in cache but " + httpStatusText;
+          }
+          else {
+            this.statusMessage = "Not found in cache";
+            if (!Components.isSuccessCode (status)
+                && status != Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+              this.statusMessage += ":" + arAkahukuUtil.resultCodeToString (status);
+            }
+          }
           this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
         }
       }
     }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      this.status = arAkahukuMHT.FILE_STATUS_NG;
+      this.statusMessage = "Error (cache):" + e.message;
+      if (this.type != arAkahukuMHT.FILE_TYPE_IMG) {
+        this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
+      }
+    }
         
-    if (descriptor) {
-      descriptor.close ();
+    if (entry) {
+      entry.close ();
     }
   },
   onCacheEntryCheck : function (entry, appCache) {
@@ -598,6 +746,12 @@ arAkahukuMHTFileData.prototype = {
       // cancel された場合
       this.channel = null;
       this.originalContent = "";
+      if (request instanceof Components.interfaces.nsIHttpChannel)
+        this.statusMessage = "Error (net):";
+      else
+        this.statusMessage = "Error (cache):";
+      this.statusMessage += arAkahukuUtil.resultCodeToString (statusCode);
+      this.onGetFileData (); // エラー処理のため
       return;
     }
     if (this.converting) {
@@ -618,12 +772,25 @@ arAkahukuMHTFileData.prototype = {
       if (httpStatus >= 400) {
         /* エラーページ */
         this.originalContent = "";
+        this.statusMessage = "";
+        switch (this.status) {
+          case arAkahukuMHT.FILE_STATUS_NA_NET:
+            this.statusMessage = "Error (net): ";
+            break;
+          case arAkahukuMHT.FILE_STATUS_NA_CACHE:
+          case arAkahukuMHT.FILE_STATUS_NA_CACHE_BACKUP:
+            this.statusMessage = "Found in cache but ";
+            break;
+        }
+        this.statusMessage += httpStatus;
       }
             
       this.channel = null;
       this.content = btoa (this.originalContent);
             
-      arAkahukuMHT.getFileData (null, this);
+      var url = (this.imageLocation ? this.imageLocation : this.location);
+      this.contentType = arAkahukuUtil.getMIMETypeFromURI (url);
+      this.encoding = "base64";
       this.onGetFileData ();
     }
   },
@@ -1976,210 +2143,6 @@ var arAkahukuMHT = {
     return fileData;
   },
     
-  /**
-   * ファイル情報を取得する
-   *
-   * @param  nsICacheEntryDescriptor descriptor
-   *         キャッシュの情報
-   * @param  arAkahukuMHTFileData fileData
-   *         mht ファイルデータ
-   */
-  getFileData : function (descriptor, fileData) {
-    var url;
-    if (fileData.imageLocation) {
-      url = fileData.imageLocation;
-    }
-    else {
-      url = fileData.location;
-    }
-    if (url.match (/\.html?(\?.*)?$/i)) {
-      fileData.contentType = "text/html";
-    }
-    else if (url.match (/\.php(\?.*)?$/i)) {
-      fileData.contentType = "text/html";
-    }
-    else if (url.match (/\.css(\?.*)?$/i)) {
-      fileData.contentType = "text/css";
-    }
-    else if (url.match (/\.jpe?g(\?.*)?$/i)) {
-      fileData.contentType = "image/jpeg";
-    }
-    else if (url.match (/\.png(\?.*)?$/i)) {
-      fileData.contentType = "image/png";
-    }
-    else if (url.match (/\.gif(\?.*)?$/i)) {
-      fileData.contentType = "image/gif";
-    }
-    else if (url.match (/\.bmp(\?.*)?$/i)) {
-      fileData.contentType = "image/bmp";
-    }
-    else if (url.match (/\.psd(\?.*)?$/i)) {
-      fileData.contentType = "image/x-photoshop";
-    }
-    else if (url.match (/\.tiff?(\?.*)?$/i)) {
-      fileData.contentType = "image/tiff";
-    }
-    else if (url.match (/\.sai(\?.*)?$/i)) {
-      fileData.contentType = "application/octet-stream";
-    }
-    else if (url.match (/\.mht(\?.*)?$/i)) {
-      fileData.contentType = "message/rfc822";
-    }
-    else if (url.match (/\.lzh(\?.*)?$/i)) {
-      fileData.contentType = "application/octet-stream";
-    }
-    else if (url.match (/\.zip(\?.*)?$/i)) {
-      fileData.contentType = "application/zip";
-    }
-    else if (url.match (/\.7z(\?.*)?$/i)) {
-      fileData.contentType = "application/x-7z-compressed";
-    }
-    else if (url.match (/\.rar(\?.*)?$/i)) {
-      fileData.contentType = "application/x-rar-compressed";
-    }
-    else if (url.match (/\.gca(\?.*)?$/i)) {
-      fileData.contentType = "application/x-gca-compressed";
-    }
-    else if (url.match (/\.txt(\?.*)?$/i)) {
-      fileData.contentType = "text/plain";
-    }
-    else if (url.match (/\.swf(\?.*)?$/i)) {
-      fileData.contentType = "application/x-shockwave-flash";
-    }
-    else if (url.match (/\.flv(\?.*)?$/i)) {
-      fileData.contentType = "video/x-flv";
-    }
-    else if (url.match (/\.mid(\?.*)?$/i)) {
-      fileData.contentType = "audio/mid";
-    }
-    else if (url.match (/\.wav(\?.*)?$/i)) {
-      fileData.contentType = "audio/x-wav";
-    }
-    else if (url.match (/\.wma(\?.*)?$/i)) {
-      fileData.contentType = "audio/x-ms-wma";
-    }
-    else if (url.match (/\.wmv(\?.*)?$/i)) {
-      fileData.contentType = "video/x-ms-wmv";
-    }
-    else if (url.match (/\.mp3(\?.*)?$/i)) {
-      fileData.contentType = "audio/mpeg";
-    }
-    else if (url.match (/\.m4a(\?.*)?$/i)) {
-      fileData.contentType = "audio/mp4";
-    }
-    else if (url.match (/\.ogg(\?.*)?$/i)) {
-      fileData.contentType = "application/ogg";
-    }
-    else if (url.match (/\.aac(\?.*)?$/i)) {
-      fileData.contentType = "audio/aac";
-    }
-    else if (url.match (/\.aif(\?.*)?$/i)) {
-      fileData.contentType = "audio/x-aiff";
-    }
-    else if (url.match (/\.pls(\?.*)?$/i)) {
-      fileData.contentType = "audio/mpegurl";
-    }
-    else if (url.match (/\.asf(\?.*)?$/i)) {
-      fileData.contentType = "video/x-la-asf";
-    }
-    else if (url.match (/\.avi(\?.*)?$/i)) {
-      fileData.contentType = "video/x-msvideo";
-    }
-    else if (url.match (/\.mpg(\?.*)?$/i)) {
-      fileData.contentType = "video/mpeg";
-    }
-    else if (url.match (/\.doc(\?.*)?$/i)) {
-      fileData.contentType = "application/msword";
-    }
-    else if (url.match (/\.xls(\?.*)?$/i)) {
-      fileData.contentType = "application/vnd.ms-excel";
-    }
-    else if (url.match (/\.ppt(\?.*)?$/i)) {
-      fileData.contentType = "application/vnd.ms-powerpoint";
-    }
-    else if (url.match (/\.pdf(\?.*)?$/i)) {
-      fileData.contentType = "application/pdf";
-    }
-    else if (url.match (/\.rpy(\?.*)?$/i)) {
-      fileData.contentType = "application/octet-stream";
-    }
-    else if (url.match (/\.([A-Za-z0-9])(\?.*)?$/i)) {
-      var ext = RegExp.$1;
-      var mime = Components.classes ["@mozilla.org/mime;1"]
-      .getService (Components.interfaces.nsIMIMEService);
-      fileData.contentType = mime.getTypeFromExtension (ext);
-    }
-    else {
-      fileData.contentType = "application/octetstream";
-    }
-    fileData.encoding = "base64";
-        
-    if (descriptor
-        && "getMetaDataElement" in descriptor) {
-      var head = "";
-      try {
-        head = descriptor.getMetaDataElement ("response-head");
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-            
-      if (head.match (/content-encoding[ \r\n\t]*:[ \r\n\t]*(compress|deflate|gzip|x-compress|x-gzip)/i)) {
-        var encoding = (RegExp.$1).toLowerCase ();
-                
-        try {
-          var converter
-            = Components.classes
-            ["@mozilla.org/streamconv;1?from="
-             + encoding + "&to=uncompressed"]
-            .createInstance
-            (Components.interfaces.nsIStreamConverter);
-          converter.asyncConvertData (encoding, "uncompressed",
-                                      fileData, null);
-                    
-          var listener
-            = converter.QueryInterface
-            (Components.interfaces.nsIStreamListener);
-          listener.onStartRequest (null, null);
-          var istream = descriptor.openInputStream (0);
-          listener.onDataAvailable (null, null,
-                                    istream, 0, descriptor.dataSize);
-          istream.close ();
-          fileData.converting = true;
-          listener.onStopRequest (null, null, 0);
-                    
-          return;
-        }
-        catch (e) { Akahuku.debug.exception (e);
-          fileData.originalContent = "";
-          fileData.content = "";
-          fileData.onGetFileData ();
-        }
-      }
-    }
-        
-    if (descriptor) {
-      var istream = descriptor.openInputStream (0);
-      arAkahukuUtil.asyncFetch (istream, descriptor.dataSize, function (binstream, result) {
-        if (Components.isSuccessCode (result)) {
-          var bindata = binstream.readBytes (binstream.available ());
-          binstream.close ();
-          fileData.originalContent = bindata;
-          fileData.content = btoa (bindata);
-        }
-        else {
-          if (Akahuku.debug.enabled) {
-            Akahuku.debug.warn ("arAkahukuMHT.getFileData resulted in " +
-              arAkahukuUtil.resultCodeToString (result) + " for " + url);
-          }
-          fileData.originalContent = "";
-          fileData.content = "";
-        }
-        fileData.onGetFileData ();
-      });
-    }
-        
-    fileData.onGetFileData ();
-  },
     
   /**
    * mht 用のキャッシュを作成する
@@ -2990,7 +2953,7 @@ var arAkahukuMHT = {
           /* 取得できなかったファイルをリストアップ */
                     
           ng ++;
-          ignoreFiles.push (param.files [i].location);
+          ignoreFiles.push (param.files [i]);
         }
       }
             
@@ -3092,12 +3055,12 @@ var arAkahukuMHT = {
         for (i = 0; i < ignoreFiles.length; i ++) {
           var dup = false;
           for (j = 0; j < i; j ++) {
-            if (ignoreFiles [j] == ignoreFiles [i]) {
+            if (ignoreFiles [j].location == ignoreFiles [i].location) {
               dup = true;
             }
           }
           if (!dup) {
-            var uri = ignoreFiles [i];
+            var uri = ignoreFiles [i].location;
             if (arAkahukuLink.enableAutoLink) {
               var anchor = targetDocument.createElement ("a");
               anchor.className = "akahuku_generated_link";
@@ -3112,6 +3075,9 @@ var arAkahukuMHT = {
             else {
               div.appendChild (targetDocument.createTextNode
                                (uri));
+            }
+            if (Akahuku.debug.enabled && ignoreFiles [i].statusMessage) {
+              div.appendChild (targetDocument.createTextNode (" " + ignoreFiles [i].statusMessage));
             }
             div.appendChild (targetDocument.createElement
                              ("br"));
@@ -3259,6 +3225,7 @@ var arAkahukuMHT = {
         for (var i = 0; i < param.files.length; i ++) {
           try {
             param.files [i].status = arAkahukuMHT.FILE_STATUS_NG;
+            param.files [i].statusMessage = "";
             param.files [i].node = null;
             param.files [i].content = "";
             param.files [i].originalContent = "";
