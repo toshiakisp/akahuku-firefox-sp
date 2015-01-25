@@ -1150,12 +1150,18 @@ function NSGetModule (compMgr, fileSpec) {
   return arAkahukuP2PChannelModule;
 }
 
+/**
+ * Gecko 2.0 以降でのXPCOMコンポーネントのインタフェース
+ */
+var NSGetFactory;
 try {
   Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
   
   arAkahukuP2PChannel.prototype.classID
     = Components.ID ("{6f220dbc-d883-43e7-a3aa-7336153dd076}");
-  const NSGetFactory = XPCOMUtils.generateNSGetFactory ([arAkahukuP2PChannel]);
+  NSGetFactory = XPCOMUtils.generateNSGetFactory ([arAkahukuP2PChannel]);
 }
 catch (e) {
+  Components.utils.reportError (e);
 }
+

@@ -3315,6 +3315,10 @@ function NSGetModule (compMgr, fileSpec) {
   return arAkahukuProtocolHandlerModule;
 }
 
+/**
+ * Gecko 2.0 以降でのXPCOMコンポーネントのインタフェース
+ */
+var NSGetFactory;
 try {
   Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
   
@@ -3334,7 +3338,9 @@ try {
   }
   arAkahukuProtocolHandler.prototype.classID
     = Components.ID ("{65e9b537-0fa4-4e73-ac9c-77a75fdf2c9f}");
-  const NSGetFactory = XPCOMUtils.generateNSGetFactory ([arAkahukuProtocolHandler]);
+  NSGetFactory = XPCOMUtils.generateNSGetFactory ([arAkahukuProtocolHandler]);
 }
 catch (e) {
+  Components.utils.reportError (e);
 }
+

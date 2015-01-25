@@ -31,37 +31,51 @@ var arAkahukuCompat = new function () {
   };
 
   this.WebBrowserPersist = {
-    saveURI : function (webBrowserPersist, args)
-    {
+    _versionChecked : false,
+    _version3_6: false,
+    _version18 : false,
+    _version36 : false,
+
+    saveURI : function (webBrowserPersist, args) {
+      if (!this._versionChecked) {
+        this._versionChecked = true;
+        this._version36 = arAkahukuCompat.comparePlatformVersion ("35.*") > 0;
+        this._version18 = arAkahukuCompat.comparePlatformVersion ("17.*") > 0;
+        this._version3_6 = arAkahukuCompat.comparePlatformVersion ("3.5.*") > 0;
+      }
+
       var uri = _getArg (args, 'uri', null);
       var file = _getArg (args, 'file', null);
-      var err_args = Components.results.NS_ERROR_XPC_NOT_ENOUGH_ARGS;
-      try {
+      var postData = _getArg (args, 'postData', null);
+      var cacheKey = _getArg (args, 'cacheKey', null);
+      var referrer = _getArg (args, 'referrer', null);
+      var referrerPolicy = _getArg (args, 'referrerPolicy', 0); // REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE
+      var extraHeaders = _getArg (args, 'extraHeaders', null);
+      var privacyContext = _getArg (args, 'privacyContext', null);
+
+      if (this._version36) {
+        // Firefox 36
+        webBrowserPersist.saveURI
+          (uri, cacheKey, referrer, referrerPolicy, postData,
+           extraHeaders, file, privacyContext);
+      }
+      else if (this._version18) {
+        // Firefox 18.0+
+        webBrowserPersist.saveURI
+          (uri, cacheKey, referrer, postData,
+           extraHeaders, file, privacyContext);
+      }
+      else if (this._version3_6) {
+        // Firefox 3.6?-17.0
+        webBrowserPersist.saveURI
+          (uri, cacheKey, referrer, postData,
+           extraHeaders, file);
+      }
+      else {
         // oldest version?
-        var postData = _getArg (args, 'postData', null);
         webBrowserPersist.saveURI (uri, postData, file);
       }
-      catch (e if e.result == err_args) {
-        try {
-          // Firefox 3.6?-17.0
-          var cacheKey = _getArg (args, 'postData', null);
-          var referrer = _getArg (args, 'referrer', null);
-          var extraHeaders = _getArg (args, 'extraHeaders', null);
-          webBrowserPersist.saveURI
-            (uri, cacheKey, referrer,
-             postData, extraHeaders,
-             file);
-        }
-        catch (e if e.result == err_args) {
-          // Firefox 18.0+
-          var privacyContext = _getArg (args, 'privacyContext', null);
-          webBrowserPersist.saveURI
-            (uri, cacheKey, referrer,
-             postData, extraHeaders,
-             file, privacyContext);
-        }
-      }
-    }
+    },
   };
 
   this.FilePicker = new function () {
