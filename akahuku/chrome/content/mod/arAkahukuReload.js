@@ -457,7 +457,7 @@ arAkahukuReloadParam.prototype = {
       var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
       var istream = descriptor.openInputStream (0);
       var self = this;
-      arAkahukuUtil.asyncFetch (istream, descriptor.dataSize, function (binstream, result) {
+      arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
         if (!Components.isSuccessCode (result)) {
           if (Akahuku.debug.enabled) {
             Akahuku.debug.warn ("arAkahukuReloadParam.onCacheEntryAvailable" +
@@ -2061,7 +2061,7 @@ var arAkahukuReload = {
     }
 
     var _asyncLoadCacheAndUpdate = function (istream, dataSize, callback) {
-      arAkahukuUtil.asyncFetch (istream, dataSize, function (binstream, result) {
+      arAkahukuUtil.asyncFetchBinary (istream, dataSize, function (binstream, result) {
         if (Components.isSuccessCode (result)) {
           param.responseText = binstream.readBytes (binstream.available ());
           binstream.close ();
