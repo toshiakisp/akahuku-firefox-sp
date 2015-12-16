@@ -39,9 +39,9 @@ var arAkahukuConverter = {
    */
   unescapeExtra : function (text) {
     return text
-    .replace (/%(u[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])/g,
+    .replace (/%u([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])/g,
               function (match, part) {
-                return eval ("\"\\" + part + "\";");
+                return String.fromCharCode (parseInt (part, 16));
               });
   },
     

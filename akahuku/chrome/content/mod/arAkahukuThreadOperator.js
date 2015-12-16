@@ -1594,13 +1594,9 @@ var arAkahukuThreadOperator = {
       if (arAkahukuThreadOperator.enableThumbnailOnly
           || arAkahukuThreadOperator.enableThumbnail) {
         /* 遅延実行で負荷軽減 */
-		setTimeout
-		((function (doc) {
-			return function () {
-			  arAkahukuThreadOperator
-			  .onThumbnailClipperCheckCore (doc);
-			};
-		 })(targetDocument), 1000, false);
+        setTimeout (function (doc) {
+          arAkahukuThreadOperator.onThumbnailClipperCheckCore (doc);
+        }, 1000, targetDocument);
       }
             
       if (arAkahukuThreadOperator.enableClickOpen

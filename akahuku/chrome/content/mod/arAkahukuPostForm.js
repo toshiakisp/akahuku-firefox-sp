@@ -1206,7 +1206,7 @@ var arAkahukuPostForm = {
    */
   onIFrameLoad : function (iframe, targetDocument, forceStop) {
     if (!forceStop
-        && iframe.contentDocument.location.href == "about:blank") {
+        && /^about:blank/.test (iframe.contentDocument.location.href)) {
       return;
     }
         

@@ -1867,24 +1867,18 @@ var arAkahukuThread = {
               nodes [i].style.marginLeft
                 = (img.width + 40) + "px";
               nodes [i].style.display = "none";
-              setTimeout
-                ((function (node) {
-                    return function () {
-                      node.style.display = "";
-                    };
-                  })(nodes [i]), 10);
+              setTimeout (function (node) {
+                node.style.display = "";
+              }, 10, nodes [i]);
             }
           }
           else if (a && a.nodeName.toLowerCase () == "div") {
             /* オートリンクのプレビュー */
             nodes [i].style.marginLeft = a.offsetWidth + "px";
             nodes [i].style.display = "none";
-            setTimeout
-              ((function (node) {
-                  return function () {
-                    node.style.display = "";
-                  };
-                })(nodes [i]), 10);
+            setTimeout (function (node) {
+              node.style.display = "";
+            }, 10, nodes [i]);
           }
         }
       }

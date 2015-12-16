@@ -350,13 +350,12 @@ var arAkahukuImage = {
         var targetDocument = mainWindow.ownerDocument;
         var popupset = targetDocument.createElement ("popupset");
                 
-        var label, command;
-                
         popup = targetDocument.createElement ("popup");
         popup.id = "akahuku-saveimage-popup";
         popup.setAttribute ("position", "after_start");
-        popup.setAttribute ("onpopupshowing",
-                            "arAkahukuImage.setPopup ();");
+        popup.addEventListener ("popupshowing", function () {
+          arAkahukuImage.setPopup ();
+        }, false);
                 
         popupset.appendChild (popup);
                 
@@ -635,8 +634,6 @@ var arAkahukuImage = {
       else {
         label = arAkahukuImage.baseList [i].dir;
       }
-      command
-        = "arAkahukuImage.onSaveImageClick (null, " + i + ", true, true);";
       menuitem = document.createElement ("menuitem");
       if (arAkahukuImage.baseList [i].key) {
         menuitem.setAttribute ("accesskey",
@@ -647,7 +644,11 @@ var arAkahukuImage = {
       }
       menuitem.setAttribute ("label", label);
       menuitem.className = "__akahuku_saveimage";
-      menuitem.setAttribute ("oncommand", command);
+      menuitem.addEventListener ("command", (function (targetDirIndex) {
+        return function () {
+          arAkahukuImage.onSaveImageClick (null, targetDirIndex, true, true);
+        };
+      })(i), false);
       popup.insertBefore (menuitem, sep.nextSibling);
     }
   },
@@ -1271,7 +1272,7 @@ var arAkahukuImage = {
   setPopup : function () {
     var popup = document.getElementById ("akahuku-saveimage-popup");
         
-    var label, command, menuitem;
+    var label, menuitem;
         
     while (popup.firstChild) {
       popup.removeChild (popup.firstChild);
@@ -1284,8 +1285,6 @@ var arAkahukuImage = {
       else {
         label = arAkahukuImage.baseList [i].dir;
       }
-      command
-      = "arAkahukuImage.onSaveImageClick (null, " + i + ", true, false);";
       menuitem = document.createElement ("menuitem");
       if (arAkahukuImage.baseList [i].key) {
         menuitem.setAttribute ("accesskey",
@@ -1295,7 +1294,11 @@ var arAkahukuImage = {
         }
       }
       menuitem.setAttribute ("label", label);
-      menuitem.setAttribute ("oncommand", command);
+      menuitem.addEventListener ("command", (function (targetDirIndex) {
+        return function () {
+          arAkahukuImage.onSaveImageClick (null, targetDirIndex, true, false);
+        };
+      })(i), false);
       popup.appendChild (menuitem);
     }
   },

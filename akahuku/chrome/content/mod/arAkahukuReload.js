@@ -1691,7 +1691,8 @@ var arAkahukuReload = {
         dispdel = 1;
       }
       ddel.innerHTML 
-      = "\u524A\u9664\u3055\u308C\u305F\u8A18\u4E8B\u304C<span id=ddnum>0</span>\u4EF6\u3042\u308A\u307E\u3059.<span id=ddbut onclick=\"onddbut()\">"
+      = "\u524A\u9664\u3055\u308C\u305F\u8A18\u4E8B\u304C<span id=ddnum>0</span>\u4EF6\u3042\u308A\u307E\u3059."
+      + "<span id=ddbut onclick=\"onddbut()\">".toString ()
       + (dispdel ? "\u96A0\u3059" : "\u898B\u308B") + "</span><br>";
       var bq
         = targetDocument.getElementById ("akahuku_thread_text");

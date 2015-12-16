@@ -1499,7 +1499,7 @@ var arAkahukuP2P = {
         }
       }
       else if (targetDocument.location.href == originalURI) {
-        if (targetDocument.location.href == "about:blank"
+        if (/^about:blank/.test (targetDocument.location.href)
             || targetDocument.location.href
             .match (/\/(red|d)\/[0-9]+\.[a-z]+/)
             || targetDocument.location.href
