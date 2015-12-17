@@ -102,10 +102,12 @@ arAkahukuCatalogPopupData.prototype =  {
               that.targetSrc
                 = Akahuku.protocolHandler
                 .enAkahukuURI ("cache", that.targetSrc);
-              that.createTimerID
-                = setTimeout (that.createPopup,
-                              arAkahukuCatalog.zoomTimeout,
-                              param, that, targetDocument);
+              that.createTimerID = setTimeout (
+                function (param, self, targetDocument) {
+                  self.createPopup (param, self, targetDocument);
+                },
+                arAkahukuCatalog.zoomTimeout,
+                param, that, targetDocument);
              });
         }
                 
@@ -115,10 +117,12 @@ arAkahukuCatalogPopupData.prototype =  {
           timeout = 1000;
         }
             
-        this.createTimerID
-          = setTimeout (this.createPopup,
-                        timeout,
-                        param, this, targetDocument);
+        this.createTimerID = setTimeout (
+          function (param, self, targetDocument) {
+            self.createPopup (param, self, targetDocument);
+          },
+          timeout,
+          param, this, targetDocument);
         break;
       case 1:
         this.targetImage.style.opacity = 0;
@@ -802,10 +806,12 @@ arAkahukuCatalogCommentPopupData.prototype =  {
       case 0:
         var timeout = arAkahukuCatalog.zoomCommentTimeout;
                 
-        this.createTimerID
-          = setTimeout (this.createPopup,
-                        timeout,
-                        param, this, targetDocument);
+        this.createTimerID = setTimeout (
+          function (param, self, targetDocument) {
+            self.createPopup (param, self, targetDocument);
+          },
+          timeout,
+          param, this, targetDocument);
         break;
       case 1:
         this.lastTime = new Date ().getTime ();

@@ -232,29 +232,23 @@ arAkahukuMHTFileData.prototype = {
    */
   getFile : function (location, targetDocument) {
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
-      setTimeout
-      ((function (file, location) {
-          return function () {
-            var ios
-            = Components.classes ["@mozilla.org/network/io-service;1"]
-            .getService (Components.interfaces.nsIIOService);
-            file.channel 
-            = ios.newChannel (location, null, null);
-            arAkahukuUtil.setChannelContext (file.channel, file.ownerDocument);
+      setTimeout (function (file, location) {
+        var ios = Components.classes ["@mozilla.org/network/io-service;1"]
+              .getService (Components.interfaces.nsIIOService);
+        file.channel = ios.newChannel (location, null, null);
+        arAkahukuUtil.setChannelContext (file.channel, file.ownerDocument);
 
-            try {
-              file.channel.asyncOpen (file, null);
-            }
-            catch (e) {
-            
-              /* 状態を取得不可に設定する */
-              file.channel = null;
-              file.status = arAkahukuMHT.FILE_STATUS_NG;
-              file.statusMessage = "Error (net):" + e.message;
-              file.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
-            }
-          };
-        })(this, location), this.delay);
+        try {
+          file.channel.asyncOpen (file, null);
+        }
+        catch (e) {
+          /* 状態を取得不可に設定する */
+          file.channel = null;
+          file.status = arAkahukuMHT.FILE_STATUS_NG;
+          file.statusMessage = "Error (net):" + e.message;
+          file.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
+        }
+      }, this.delay, this, location);
             
       return;
     }

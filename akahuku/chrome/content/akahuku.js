@@ -354,6 +354,8 @@ var Akahuku = {
       Akahuku.isXPathAvailable = true;
     }
     
+    var evalFunc = window ["eval".toString ()];
+
     /* ScrapBook で akahuku の保存を有効にする
      * saver.js の 638 行目 */
     try {
@@ -361,7 +363,7 @@ var Akahuku = {
           && "download" in sbContentSaver
           && typeof (sbContentSaver.download) == "function") {
         sbContentSaver.download
-        = eval (("(" + sbContentSaver.download.toString () + ")")
+        = evalFunc (("(" + sbContentSaver.download.toString () + ")")
                 .replace (/\|\|[ \r\n\t]*aURL[ \r\n\t]*\.[ \r\n\t]*schemeIs[ \r\n\t]*\([ \r\n\t]*\"ftp\"[ \r\n\t]*\)/,
                           "|| aURL.schemeIs(\"ftp\") || aURL.schemeIs(\"akahuku\")"));
       }
@@ -385,7 +387,7 @@ var Akahuku = {
             });
         if (newfunc != origfunc) {
           ThumbnailZoomPlus.FilterService.getZoomImage
-          = eval ("(" + newfunc + ")");
+          = evalFunc ("(" + newfunc + ")");
         }
         else {
           Akahuku.debug.warn ("patch for ThumbnailZoomPuls failed.")

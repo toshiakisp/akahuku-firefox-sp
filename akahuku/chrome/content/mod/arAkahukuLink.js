@@ -2385,16 +2385,15 @@ var arAkahukuLink = {
      * out/over の無限ループに陥ることを防ぐために少し待つ
      */
     clearTimeout (arAkahukuLink.mouseOutTimeoutId);
-    arAkahukuLink.mouseOutTimeoutId
-    = setTimeout
-      ((function (status, oldLabel) {
-          return function () {
-            if (status && status.label == oldLabel) {
-              status.label = "";
-            }
-            arAkahukuLink.mouseOutTimeoutId = null;
-          };
-        })(status, status.label), 100);
+    var oldLabel = status.label;
+    arAkahukuLink.mouseOutTimeoutId = setTimeout (
+      function () {
+        if (status && status.label == oldLabel) {
+          status.label = "";
+        }
+        arAkahukuLink.mouseOutTimeoutId = null;
+      },
+      100);
   },
     
   /**
@@ -3010,12 +3009,9 @@ var arAkahukuLink = {
             }
             bq.style.marginLeft = div.offsetWidth + "px";
             bq.style.display = "none";
-            setTimeout
-              ((function (node) {
-                  return function () {
-                    node.style.display = "";
-                  };
-                })(bq), 10);
+            setTimeout (function (node) {
+              node.style.display = "";
+            }, 10, bq);
           }
         }
       }
