@@ -2810,22 +2810,6 @@ arAkahukuProtocolHandler.prototype = {
       uri.path = preamble + uri.path;
     }
     return uri;
-
-    // 必要？
-    var pos;
-    while ((pos = spec.indexOf ("akahuku://", 1)) > 0) {
-      /* Bazzacuda Image Saver が相対パスの連結に失敗する
-       * 先頭以外にプロトコル指定があれば以前を削除 */
-            
-      spec = spec.substr (pos);
-    }
-        
-    var uri
-    = Components.classes ["@mozilla.org/network/standard-url;1"]
-    .createInstance (nsIURI);
-    uri.spec = spec;
-        
-    return uri;
   },
     
   /**
