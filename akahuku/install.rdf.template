@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>{591c2cf0-0a6e-11da-8cd6-0800200c9a66}</em:id>
+    <em:version>__EXTENSION_VERSION__</em:version>
+    <em:type>2</em:type>
+    
+    <em:targetApplication>
+      <!-- Firefox -->
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>4.0</em:minVersion>
+        <em:maxVersion>__FX_MAX_VERSION__</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+      
+    <em:targetApplication>
+      <!-- SeaMonkey -->
+      <Description>
+        <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
+        <em:minVersion>2.1</em:minVersion>
+        <em:maxVersion>2.42.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+      
+    <em:name>赤福:非公式 Firefox 版</em:name>
+    <em:description>虹裏ライフを甘美にする 赤福:非公式 Firefox 版</em:description>
+    <em:creator>arai</em:creator>
+    <em:contributor>toshiaki</em:contributor>
+    <em:homepageURL>https://toshiakisp.github.io/akahuku-firefox-sp/</em:homepageURL>
+    
+    <em:updateURL>https://toshiakisp.github.io/akahuku-firefox-sp/update.rdf</em:updateURL>
+    
+    <em:optionsURL>chrome://akahuku/content/options.xul</em:optionsURL>
+    <em:iconURL>chrome://akahuku/content/images/icon.png</em:iconURL>
+    
+  </Description>
+  
+</RDF>
