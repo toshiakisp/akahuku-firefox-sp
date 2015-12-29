@@ -60,6 +60,12 @@ var arAkahukuServerData = {
     "\u30A2\u30AF\u30A2\u30EA\u30A6\u30E0",
     2000, true
     ],
+  "dat:49" : [ /* アウトドア */
+    "\u30A2\u30A6\u30C8\u30C9\u30A2",
+    "\u30A2\u30A6\u30C8\u30C9\u30A2",
+    "\u30A2\u30A6\u30C8\u30C9\u30A2",
+    10000, true
+    ],
   "dat:t" : [ /* 料理 */
     "\u6599\u7406",
     "\u6599\u7406",
@@ -224,11 +230,47 @@ var arAkahukuServerData = {
     "\u30BD\u30FC\u30B7\u30E3\u30EB\u30B2\u30FC\u30E0",
     3000, true
     ],
-  "dec:60" : [ /* 艦コレ */
-    "\u8266\u30B3\u30EC",
-    "\u8266\u30B3\u30EC",
-    "\u8266\u30B3\u30EC",
+  "dec:60" : [ /* 艦これ */
+    "\u8266\u3053\u308C",
+    "\u8266\u3053\u308C",
+    "\u8266\u3053\u308C",
     10000, true
+    ],
+  "dec:65" : [ /* 刀剣乱舞 */
+    "\u5200\u5263\u4E71\u821E",
+    "\u5200\u5263\u4E71\u821E",
+    "\u5200\u5263\u4E71\u821E",
+    10000, true
+    ],
+  "dec:64" : [ /* 占い */
+    "\u5360\u3044",
+    "\u5360\u3044",
+    "\u5360\u3044",
+    10000, true
+    ],
+  "dec:66" : [ /* ファッション */
+    "\u30D5\u30A1\u30C3\u30B7\u30E7\u30F3",
+    "\u30D5\u30A1\u30C3\u30B7\u30E7\u30F3",
+    "\u30D5\u30A1\u30C3\u30B7\u30E7\u30F3",
+    10000, true
+    ],
+  "dec:67" : [ /* 旅行 */
+    "\u65C5\u884C",
+    "\u65C5\u884C",
+    "\u65C5\u884C",
+    10000, true
+    ],
+  "dec:68" : [ /* 子育て */
+    "\u5B50\u80B2\u3066",
+    "\u5B50\u80B2\u3066",
+    "\u5B50\u80B2\u3066",
+    10000, true
+    ],
+  "may:webm" : [ /* webm */
+    "webm",
+    "webm",
+    "webm",
+    1000, true
     ],
   "dec:61" : [ /* ソニー */
     "\u30BD\u30CB\u30FC",
@@ -265,7 +307,7 @@ var arAkahukuServerData = {
     "\u5973\u88C5",
     "\u5973\u88C5",
     "\u5973\u88C5",
-    500, true
+    200, true
     ],
   "zip:15" : [ /* ばら */
     "\u3070\u3089",
@@ -283,7 +325,7 @@ var arAkahukuServerData = {
     "\u3084\u304A\u3044",
     "\u3084\u304A\u3044",
     "\u3084\u304A\u3044",
-    2000, true
+    500, true
     ],
   "cgi:o" : [ /* 二次元グロ */
     "\u4E8C\u6B21\u5143\u30B0\u30ED",
@@ -320,7 +362,13 @@ var arAkahukuServerData = {
     "\u308D\u307C",
     "\u308D\u307C",
     "\u308D\u307C",
-    1500, true
+    3000, true
+    ],
+  "dec:63" : [ /* 映画 */
+    "\u6620\u753B",
+    "\u6620\u753B",
+    "\u6620\u753B",
+    10000, true
     ],
   "dat:44" : [ /* おもちゃ */
     "\u304A\u3082\u3061\u3083",
@@ -492,7 +540,7 @@ var arAkahukuServerData = {
     "IPv6",
     1000, true
     ],
-  "www:junbi" : [ /* 準備 */
+  "jun:junbi" : [ /* 準備 */
     "\u6E96\u5099",
     "\u6E96\u5099",
     "\u6E96\u5099",
@@ -503,7 +551,7 @@ var arAkahukuServerData = {
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
     "\u30EC\u30A4\u30A2\u30A6\u30C8",
-    500, true
+    2000, true
     ],
 
 };
