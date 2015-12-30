@@ -1293,12 +1293,35 @@ arAkahukuAsyncRedirectVerifyHelper.prototype = {
       this._returnCallback (Components.results.NS_BINDING_ABORTED);
       return;
     }
-    var gsink
-      = Components.classes
-      ["@mozilla.org/netwerk/global-channel-event-sink;1"]
-      .getService (nsIChannelEventSink);
+
+    var gsink;
+    if ("@mozilla.org/contentsecuritymanager;1" in Components.classes) {
+      // Global channel event sink is deprecated since [Bug 1226909].
+      // Imitage nsIOService::AsyncOnChannelRedirect in netwerk/base/nsIOService.cpp
+      try {
+        gsink = Components.classes
+          ["@mozilla.org/contentsecuritymanager;1"]
+          .getService (nsIChannelEventSink);
+      }
+      catch (e if e.result == Components.results.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
+        // no nsIChannelEventSink (Gecko < 46)
+      }
+      catch (e) { Components.utils.reportError (e);
+      }
+    }
+    if (!gsink && "@mozilla.org/netwerk/global-channel-event-sink;1" in Components.classes) {
+      try {
+        gsink = Components.classes
+          ["@mozilla.org/netwerk/global-channel-event-sink;1"]
+          .getService (nsIChannelEventSink);
+      }
+      catch (e) { Components.utils.reportError (e);
+      }
+    }
+
     try {
-      this._delegateOnChannelRedirect (gsink);
+      if (gsink)
+        this._delegateOnChannelRedirect (gsink);
     } catch (e) { Components.utils.reportError (e);
       this._returnCallback (e.result);
       return;

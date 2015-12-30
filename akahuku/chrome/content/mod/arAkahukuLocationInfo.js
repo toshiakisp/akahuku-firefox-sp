@@ -412,6 +412,9 @@ arAkahukuLocationInfo.prototype = {
             
       this.mode = "\u8FD4\u4FE1";
     }
+    else if (this.isFutaba && this.dir == "bin") {
+      // IFRAME(広告)などのリソース
+    }
     else if (path.match (/^(([^\.]+)\.html?)?([#\?].*)?$/)) {
       this.isNormal = true;
       this.normalPageNumber = parseInt (RegExp.$1) || 0;

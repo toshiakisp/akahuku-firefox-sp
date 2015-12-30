@@ -17,6 +17,7 @@ arAkahukuImageListener.prototype = {
   leafName : "", /* String  保存元の本来のファイル名 */
   saveLeafName : "", /* String  保存先のファイル名 */
   normal : false, /* Boolean  保存中のボタンが通常のボタンか */
+  finished : false,
     
   /**
    * インターフェースの要求
@@ -86,7 +87,12 @@ arAkahukuImageListener.prototype = {
     }
     catch (e) {
     }
+    if (this.finished) {
+      // 既に保存済み
+      return;
+    }
         
+    try {
     if (stateFlags
         & Components.interfaces.nsIWebProgressListener.STATE_STOP) {
       if (httpStatus == 0) {
@@ -97,6 +103,7 @@ arAkahukuImageListener.prototype = {
             && this.file.fileSize > 0) {
           if (this.target.style.display == "none") {
             this.file.moveTo (null, this.saveLeafName);
+            this.finished = true;
             arAkahukuImage.onSave (this.target, true, "",
                                    this.leafName, this.normal);
           }
@@ -132,6 +139,7 @@ arAkahukuImageListener.prototype = {
         else {
           if (this.target.style.display == "none") {
             this.file.moveTo (null, this.saveLeafName);
+            this.finished = true;
             arAkahukuImage.onSave (this.target, true, "",
                                    this.leafName, this.normal);
           }
@@ -154,6 +162,9 @@ arAkahukuImageListener.prototype = {
                                  this.normal);
         }
       }
+    }
+    }
+    catch (e) { Akahuku.debug.exception (e);
     }
   },
     

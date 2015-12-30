@@ -44,6 +44,10 @@ arAkahukuPostFormParam.prototype = {
     
   bottomFormAlignTimerID : null,  /* Number  末尾位置フォームの整形タイマー ID */
     
+  attachableExt :
+    ["jpg","jpeg","png","gif"],   /* Array  添付可能拡張子のリスト */
+  attachableExtRegExp : null,     /* Regexp 添付可能拡張子かどうかの正規表現  */
+
   /**
    * データを開放する
    */
@@ -72,6 +76,23 @@ arAkahukuPostFormParam.prototype = {
     this.targetDocument = null;
   },
     
+  /**
+   * 添付可能ファイル拡張子かどうかの判定
+   */
+  testAttachableExt : function (filepath) {
+    if (!this.attachableExtRegExp) {
+      var pat = "\.(?:";
+      for (var i =0; i < this.attachableExt.length; i ++) {
+        if (i != 0)
+          pat += '|';
+        pat += this.attachableExt [i];
+      }
+      pat += ")$";
+      this.attachableExtRegExp = new RegExp (pat);
+    }
+    return this.attachableExtRegExp.test (filepath);
+  },
+
   /**
    * インターフェースの要求
    *   nsISupports.QueryInterface
@@ -2767,6 +2788,11 @@ var arAkahukuPostForm = {
     if (!filebox) {
       return;
     }
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (!param) { /* ドキュメントが閉じられた場合 */
+      return;
+    }
+    param = param.postform_param;
     if ("clipboardData" in event
         && event.clipboardData.types.length != 0) {
       var typesText = "";
@@ -2782,7 +2808,7 @@ var arAkahukuPostForm = {
           var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
           if (filebox && file instanceof Components.interfaces.nsIFile) {
             var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-            if (fileurl && /\.(?:jpg|jpeg|png|gif)$/i.test (fileurl) ) {
+            if (fileurl && param.testAttachableExt (fileurl) ) {
               filebox.value = fileurl;
               if (arAkahukuPostForm.enablePreview) {
                 arAkahukuPostForm.onPreviewChangeCore (targetDocument);
@@ -2802,7 +2828,7 @@ var arAkahukuPostForm = {
     var file = arAkahukuClipboard.getFile ();
     if (file instanceof Components.interfaces.nsIFile) {
       var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-      if (fileurl && /\.(?:jpg|jpeg|png|gif)$/i.test (fileurl) ) {
+      if (fileurl && param.testAttachableExt (fileurl) ) {
         filebox.value = fileurl;
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
@@ -4289,6 +4315,36 @@ var arAkahukuPostForm = {
           }
         }
                 
+        /* 添付可能を確認する */
+        var attachable = "";
+        for (i = 0; i < nodes2.length; i ++) {
+          if (nodes2 [i].innerHTML.match
+              (/^\u6DFB\u4ED8\u53EF\u80FD\uFF1A(.*)$/)) { // "添付可能："
+            attachable = RegExp.$1;
+            break;
+          }
+        }
+        if (attachable.length > 0) {
+          var attachable_ext = attachable.match(/[a-zA-Z0-9]+/g);
+          for (i = 0; i < attachable_ext.length; i ++) {
+            if (/^[0-9]+KB$/.test (attachable_ext [i]))
+              break; // 2000KB 等より後ろはもう形式ではない
+            switch (attachable_ext [i]) {
+              case "JPG":
+              case "GIF":
+              case "PNG":
+                // 標準の画像形式は既に許可済
+                break;
+              case "WEBM":
+                param.attachableExt.push ('webm');
+                break;
+              default:
+                Akahuku.debug.warn ("Unknwon format for attach: " + attachable_ext [i]);
+                param.attachableExt.push (attachable_ext [i].toLowerCase ());
+            }
+          }
+        }
+
         if ((hidePostForm || enableFloat)) {
           var div;
           
@@ -4304,7 +4360,7 @@ var arAkahukuPostForm = {
           for (i = 0; i < nodes2.length; i ++) {
             ul = nodes2 [i].parentNode;
             if (nodes2 [i].innerHTML.match
-                (/\u6DFB\u4ED8\u53EF\u80FD/)) {
+                (/\u6DFB\u4ED8\u53EF\u80FD/)) { // 添付可能
               try {
                 var nodes3
                   = nodes2 [i].getElementsByTagName ("a");
