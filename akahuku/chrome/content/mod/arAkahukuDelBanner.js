@@ -486,7 +486,7 @@ var arAkahukuDelBanner = {
     function isBlankNode (node) {
       return (node.offsetHeight == 0 || node.offsetWidth == 0);
     }
-    while (node.parentNode) {
+    while (node.parentNode && node.parentNode.nodeType != Node.DOCUMENT_NODE) {
       var blank = true;
       for (var i = 0; i < node.parentNode.children.length; i ++) {
         if (blank && node.parentNode.children [i] != context) {
