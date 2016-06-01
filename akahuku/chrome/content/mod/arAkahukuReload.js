@@ -390,6 +390,9 @@ arAkahukuReloadParam.prototype = {
     
   statusTimerID : null,        /* Number ステータスを消すタイマーID */
 
+  replyPattern : null,  // リロード後のレス書式解析パターン (appendNewRepliesで初期化)
+  dispdelDisplayStyleValue : "table", // "削除されたレスを*する"を表示するための値
+
   /**
    * データを開放する
    */
@@ -2182,70 +2185,72 @@ var arAkahukuReload = {
   createContainer : function (responseText, targetDocument, isNotTable, optCharset) {
     var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
     var container = {};
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
     
     if (!isNotTable) {
       var table = targetDocument.createElement ("table");
       var tbody = targetDocument.createElement ("tbody");
       var tr = targetDocument.createElement ("tr");
     
+      try {
+        for (var attrName in param.replyPattern.containerNodeAttrs) {
+          table [attrName] = param.replyPattern.containerAttrs [attrName];
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+
       table.appendChild (tbody);
       tbody.appendChild (tr);
         
-      if (responseText.match
-          (/<table [^>]*border=[\"\']?0[\"\']?[^>]*><tr><td[^>]*>([^<]+)<\/td><td bgcolor=[\"\']?(#[0-9A-Fa-f]+)[\"\']?/)) {
-        /* レスの前の文字を反映する */
-        var info
-          = Akahuku.getDocumentParam (targetDocument).location_info;
+      var info = documentParam.location_info;
+
+      var prefixNode = targetDocument.createElement ("td");
+      var mainNode = targetDocument.createElement ("td");
+
+      if (responseText.match (/<table[^>]*><tr><td[^>]*>([^<]+)<\/td><td[^>]*>/)) {
         info.replyPrefix
           = arAkahukuConverter.convert (RegExp.$1, responseCharset);
-            
-        var head = targetDocument
-          .getElementById ("akahuku_bottom_container_head");
-        if (head) {
-          var tmp = arAkahukuConverter.unescapeEntity (info.replyPrefix);
-          arAkahukuDOM.setText (head, tmp);
-        }
-      
-        /* HTML のソースから構築するので innerHTML を使用する  */
-        var td = targetDocument.createElement ("td");
-        td.innerHTML = info.replyPrefix;
-        td.noWrap = "nowrap";
-        td.align = "right";
-        td.vAlign = "top";
-        tr.appendChild (td);
-            
-        var td = targetDocument.createElement ("td");
-        td.bgColor = RegExp.$2 ? RegExp.$2 : "#F0E0D6";
-        tr.appendChild (td);
-      
-        container.main = td;
       }
       /* 避難所 patch */
       else if (responseText
                .match (/<table><tr><th>([^<]+)<\/th><td>/)) {
-        var info
-          = Akahuku.getDocumentParam (targetDocument).location_info;
         info.replyPrefix
           = arAkahukuConverter.convert (RegExp.$1, responseCharset);
-            
-        var head = targetDocument
-          .getElementById ("akahuku_bottom_container_head");
-        if (head) {
-          var tmp = arAkahukuConverter.unescapeEntity (info.replyPrefix);
-          arAkahukuDOM.setText (head, tmp);
-        }
-            
-        /* HTML のソースから構築するので innerHTML を使用する  */
-        var th = targetDocument.createElement ("th");
-        th.innerHTML = info.replyPrefix;
-        tr.appendChild (th);
-            
-        var td = targetDocument.createElement ("td");
-        tr.appendChild (td);
-      
-        container.main = td;
+
+        prefixNode = targetDocument.createElement ("th");
       }
-    
+            
+      /* レスの前の文字を反映する */
+      var head = targetDocument
+        .getElementById ("akahuku_bottom_container_head");
+      if (head && info.replyPrefix) {
+        var tmp = arAkahukuConverter.unescapeEntity (info.replyPrefix);
+        arAkahukuDOM.setText (head, tmp);
+      }
+
+      /* HTML のソースから構築するので innerHTML を使用する  */
+      prefixNode.innerHTML = info.replyPrefix;
+      try {
+        for (var attrName in param.replyPattern.prefixNodeAttrs) {
+          prefixNode [attrName] = param.replyPattern.prefixNodeAttrs [attrName];
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+      tr.appendChild (prefixNode);
+            
+      try {
+        for (var attrName in param.replyPattern.mainNodeAttrs) {
+          mainNode [attrName] = param.replyPattern.mainNodeAttrs [attrName];
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+      tr.appendChild (mainNode);
+      
+      container.main = mainNode;
       container.nodes = [table];
     }
     else {
@@ -2314,20 +2319,13 @@ var arAkahukuReload = {
     var newNodes = new Array ();
     var addNodes = new Array ();
     var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
     var info = documentParam.location_info;
     var isUpdated = false;
         
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
     
-    var replyStartTag = "<td bgcolor=";
-    var replyEndTag = "</td>";
-    var replyEndTag2 = null;
-    var tagStop = ">";
-    var checkColor = true;
-    var replyNoInputAttr = "name=";
-    var replyDisplay = "table";
     var dispdel = -1;
-    var isTable = true;
     try {
       var ddbut = targetDocument.getElementById ("ddbut");
       if (ddbut) {
@@ -2346,23 +2344,73 @@ var arAkahukuReload = {
     catch (e) { Akahuku.debug.exception (e);
     }
     
+    if (!param.replyPattern) {
+      // 解析パターンの初期化
+      param.replyPattern = {
+        startTag : "<td bgcolor=", // レスのコンテナの開始文字列
+        endTag : "</td>", // レスのコンテナの終端文字列(1)
+        endTag2 : null, // 終端文字列(1)の後にある真の終端文字列
+        tagStop : ">", //　レスコンテナのタグの終端文字列
+        checkBGColor : true, // コンテナの bgcolor の値まで判定するかどうか
+        inputTagAttrForNum : "name=", // スレ文&レス固有のinput要素を特定する属性のパターン
+        containerIsTable : true, // レスのコンテナの親が TABLE かどうか
+
+        prefixNodeAttrs : {
+          nowrap : "nowrap",
+          align : "right",
+          valign : "top"
+        },
+        mainNodeAttrs : {
+          bgColor : "#F0E0D6",
+        },
+        containerNodeAttr : {
+          border: "0",
+        },
+      };
+    }
     /* 避難所 patch */
     if (info.isMonaca) {
-      checkColor = false;
-      replyStartTag = arAkahukuReload._convertFromEUCJP ("<th>\xa1\xc4</th><td", responseCharset);
-      /* <th>…</tr><th (EUC-JP) */
-      tagStop = "<td>";
-      replyNoInputAttr = "name=\"edit\\[\\]\" value=";
+      param.replyPattern.checkBGColor = false;
+      param.replyPattern.startTag  = arAkahukuReload._convertFromEUCJP ("<th>\xa1\xc4</th><td", responseCharset);
+      /* <th>…</th><td (EUC-JP) */
+      param.replyPattern.tagStop = "<td>";
+      param.replyPattern.inputTagAttrForNum = "name=\"edit\\[\\]\" value=";
+      param.replyPattern.prefixNodeAttrs = {};
+      param.replyPattern.mainNodeAttrs = {};
+      param.replyPattern.containerNodeAttrs = {};
     }
-    else if (responseText.lastIndexOf (replyStartTag, 4096) == -1
-        && responseText.lastIndexOf ("<div class=t>", 4096) != -1) {
-      isTable = false;
-      checkColor = false;
-      replyStartTag = "<div class=r>";
-      tagStop = ">";
-      replyEndTag = "</div>";
-      replyEndTag2 = "</div>";
-      replyDisplay = "block";
+
+    var maxByteForTestSearch = 16*1024; // テスト検索の上限範囲
+
+    // 書式違いでレスが見つからない場合の対応
+    if (!info.isMonaca &&
+        responseText.lastIndexOf (param.replyPattern.startTag, maxByteForTestSearch) == -1) {
+      
+      if (responseText.lastIndexOf ("<td class=rtd>", maxByteForTestSearch) != -1) {
+        // 2016/05/31?～ レイアウト変更
+        param.replyPattern.startTag = "<td class=rtd>";
+        param.replyPattern.checkBGColor = false;
+        param.replyPattern.prefixNodeAttrs = {className : "rts"},
+        param.replyPattern.mainNodeAttrs =   {className : "rtd"};
+      }
+      else if (responseText.lastIndexOf ("<div class=t>", maxByteForTestSearch) != -1) {
+        // 旧仕様(table ではなくて divがコンテナに使われていた時代)
+        param.replyPattern.containerIsTable = false;
+        param.replyPattern.startTag = "<div class=r>";
+        param.replyPattern.checkBGColor = false;
+        param.replyPattern.tagStop = ">";
+        param.replyPattern.endTag = "</div>";
+        param.replyPattern.endTag2 = "</div>";
+        param.dispdelDisplayStyleValue = "block";
+      }
+      else {
+        Akahuku.debug.warn ("proper parsing rule was not found!");
+      }
+    }
+
+    var patternBGColor = null;
+    if (param.replyPattern.checkBGColor) {
+      patternBGColor = new RegExp ("^[^>]*\\sbgcolor=[\"']?" + param.replyPattern.mainNodeAttrs.bgColor,"i");
     }
     
     var lastReplyNumber = 0;
@@ -2519,8 +2567,8 @@ var arAkahukuReload = {
       try {
         startPosition 
           = responseText.search
-          (new RegExp ("<input\\s[^>]*" + replyNoInputAttr + "[\"']?[0-9]+","i"));
-        if (startPosition < 0) throw "no pattrn \"" + replyNoInputAttr + "\"";
+          (new RegExp ("<input\\s[^>]*" + param.replyPattern.inputTagAttrForNum + "[\"']?[0-9]+","i"));
+        if (startPosition < 0) throw "no pattrn \"" + param.replyPattern.inputTagAttrForNum + "\"";
         startPosition
           = responseText.lastIndexOf ("<", startPosition);
         if (startPosition < 0) throw "no pattrn last \"<\"";
@@ -2592,21 +2640,21 @@ var arAkahukuReload = {
     else {
       startPosition
       = responseText
-      .search (new RegExp (replyNoInputAttr + "[\"']?([0-9]+:)?" + lastReply.num + "[\"']?"));
+      .search (new RegExp (param.replyPattern.inputTagAttrForNum + "[\"']?([0-9]+:)?" + lastReply.num + "[\"']?"));
     }
     for (startPosition
-           = responseText.indexOf (replyStartTag, startPosition);
+           = responseText.indexOf (param.replyPattern.startTag, startPosition);
          startPosition >= 0;
          startPosition
-           = responseText.indexOf (replyStartTag, endPosition)) {
+           = responseText.indexOf (param.replyPattern.startTag, endPosition)) {
       var isDeleted = false;
-      if (checkColor) {
+      if (param.replyPattern.checkBGColor) {
         var s = responseText.substr (startPosition, 100);
-        if (!s.match (/^<td bgcolor=["']?#F0E0D6/i)) {
+        if (!s.match ( patternBGColor )) {
           endPosition = startPosition + 1;
           if (Akahuku.debug.enabled) {
             Akahuku.debug.warn
-              ("checkColor logic skips response text;\n" + s);
+              ("checkBGColor logic skips response text;\n" + s);
           }
           continue;
         }
@@ -2619,27 +2667,27 @@ var arAkahukuReload = {
         }
       }
       
-      endPosition = responseText.indexOf (replyEndTag, startPosition);
+      endPosition = responseText.indexOf (param.replyPattern.endTag, startPosition);
       if (endPosition < 0) {
         break;
       }
       
-      if (replyEndTag2) {
-        endPosition += replyEndTag.length;
-        endPosition = responseText.indexOf (replyEndTag2, endPosition);
+      if (param.replyPattern.endTag2) {
+        endPosition += param.replyPattern.endTag.length;
+        endPosition = responseText.indexOf (param.replyPattern.endTag2, endPosition);
         if (endPosition < 0) {
           break;
         }
       }
       
-      var tagStopPosition = responseText.indexOf (tagStop, startPosition);
+      var tagStopPosition = responseText.indexOf (param.replyPattern.tagStop, startPosition);
       if (tagStopPosition == -1) {
         break;
       }
       var currentReplyTextTmp
-      = responseText.substr (tagStopPosition + tagStop.length,
+      = responseText.substr (tagStopPosition + param.replyPattern.tagStop.length,
                              endPosition
-                             - (tagStopPosition + tagStop.length));
+                             - (tagStopPosition + param.replyPattern.tagStop.length));
       
       var currentReplyText
       = arAkahukuConverter.convert (currentReplyTextTmp, responseCharset);
@@ -2666,7 +2714,9 @@ var arAkahukuReload = {
           /* レスが無い時 */
           lastReply.container
           = arAkahukuReload.createContainer (responseText,
-                                             targetDocument, !isTable, responseCharset);
+                                             targetDocument,
+                                             !param.replyPattern.containerIsTable,
+                                             responseCharset);
           replyPrefix
           = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
           lastReplyNumber = 0;
@@ -2715,7 +2765,7 @@ var arAkahukuReload = {
                     arAkahukuDOM.addClassName
                       (container.main, "akahuku_deleted_reply2");
                     if (dispdel) {
-                      container.nodes [0].style.display = replyDisplay;
+                      container.nodes [0].style.display = param.dispdelDisplayStyleValue;
                     }
                     arAkahukuDOM.addClassName
                       (container.nodes [0], "deleted");
