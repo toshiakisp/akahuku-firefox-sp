@@ -427,6 +427,9 @@
                         label="番号で引用する時にコメント欄をクリア" />
               <checkbox id="quickquote_number_nocomment" checked="false"
                         label="本文なしの場合に番号にする" />
+              <checkbox id="quickquote_number_onlyquote" checked="false"
+                        class="sp" tooptiptext="(デフォルト：無効) メッセージ本文が引用文のみの場合にNo.+番号を引用する"
+                        label="メッセージが引用のみの場合に番号にする" />
             </box>
             <checkbox id="quickquote_clear" checked="false"
                       label="メニューから引用する時にコメント欄をクリア" />

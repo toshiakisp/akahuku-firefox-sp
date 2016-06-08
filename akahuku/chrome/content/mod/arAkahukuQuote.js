@@ -28,6 +28,7 @@ var arAkahukuQuote = {
                                     *   2: メッセージ */
   enableNumberClear : false,       /* Boolean  引用する時にコメント欄をクリア */
   enableNumberNoComment : false,   /* Boolean  本文なしの場合に番号にする */
+  enableNumberOnlyQuote : false,   /* Boolean  メッセージが引用のみの場合に番号にする */
   enableClear : false,             /* Boolean  メニューから引用する時に
                                     *   コメント欄をクリア */
   enableUntroll : false,           /* Boolean  芝刈りを解除する */
@@ -91,6 +92,10 @@ var arAkahukuQuote = {
         arAkahukuQuote.enableNumberNoComment
           = arAkahukuConfig
           .initPref ("bool", "akahuku.quickquote.number.nocomment",
+                     false);
+        arAkahukuQuote.enableNumberOnlyQuote
+          = arAkahukuConfig
+          .initPref ("bool", "akahuku.quickquote.number.onlyquote",
                      false);
       }
       arAkahukuQuote.enableClear
@@ -885,6 +890,13 @@ var arAkahukuQuote = {
           && (text.match (/^\uFF77\uFF80\u2501\u2501\u2501\u2501\u2501\u2501\(\uFF9F\u2200\uFF9F\)\u2501\u2501\u2501\u2501\u2501\u2501 !!!!![ \r\n]*$/)
               || text.match (/^\uFF77\uFF80\u2501\u2501\u2501\(\uFF9F\u2200\uFF9F\)\u2501\u2501\u2501!![ \r\n]*$/)
               || text.match (/^\u672C\u6587\u7121\u3057[ \r\n]*$/))) {
+        text = "No." + num;
+      }
+      else if (arAkahukuQuote.enableNumberOnlyQuote
+          && ((arAkahukuQuote.numberType == 3 && text.length == 0)
+            ||(arAkahukuQuote.numberType == 2
+              && /^>[^\r\n]*(\r?\n>[^\r\n]*)*$/.test (text))
+            )) {
         text = "No." + num;
       }
       
