@@ -3809,7 +3809,7 @@ var AkahukuOptions = {
     
   checkStyleIgnoreDefault : function () {
     document.getElementById ("style_ignore_default_font").disabled
-    document.getElementById ("style_ignore_default_minimum_res").disabled
+    = document.getElementById ("style_ignore_default_minimum_res").disabled
     = !document.getElementById ("style_ignore_default").checked;
         
     AkahukuOptions.checkStyleIgnoreDefaultFont ();
