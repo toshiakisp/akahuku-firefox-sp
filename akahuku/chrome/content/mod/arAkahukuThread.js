@@ -70,6 +70,53 @@ arAkahukuLastReplyInfo.prototype = {
   num : null        /* Number  最後のレスのレス番号 */
 };
 /**
+ * スレッド管理データ
+ */
+function arAkahukuThreadParam () {
+  this.stylesSaved = new Array ();
+}
+arAkahukuThreadParam.prototype = {
+  stylesSaved : null, /* String mht で保存する際に復帰させるスタイル */
+
+  saveStyle : function (styleNode)
+  {
+    var ss = {
+      type: styleNode.getAttribute ("type"),
+      media: styleNode.getAttribute ("media"),
+      title: styleNode.getAttribute ("title"),
+      disabled: styleNode.getAttribute ("disabled"),
+      text: styleNode.innerHTML,
+    };
+    this.stylesSaved.push (ss);
+  },
+  clearSavedStyles : function ()
+  {
+    this.stylesSaved.splice (0);
+  },
+  restoreSavedStyles : function (targetDocument)
+  {
+    var head = targetDocument.getElementsByTagName ("head") [0];
+    var ss, style;
+    while (this.stylesSaved.length > 0) {
+      ss = this.stylesSaved.shift ();
+      style = targetDocument.createElement ("style");
+      style.textContent = ss.text;
+      if (ss.type) style.setAttribute ("type", ss.type);
+      if (ss.media) style.setAttribute ("media", ss.media);
+      if (ss.title) style.setAttribute ("title", ss.title);
+      if (ss.disabled) style.setAttribute ("disabled", ss.disabled);
+      head.appendChild (style);
+    }
+  },
+
+  /**
+   * データを開放する
+   */
+  destruct : function () {
+    this.stylesSaved = null;
+  }
+};
+/**
  * スレッド管理
  *   [返信] リンクを新しいタブで開く]、[ページ末尾に [掲示板に戻る] を付ける]
  *   [[カタログ] リンクを新しいタブで開く]
@@ -113,9 +160,6 @@ var arAkahukuThread = {
     
   enableStyleIgnoreDefault : false,     /* Boolean  デフォルトのスタイルを
                                          *   無視する */
-  styleDefault : "",                    /* String デフォルトのスタイル
-                                         *   mht で保存する際に復帰する
-                                         *   設定ではなく動作中に取得する値 */
   enableStyleIgnoreDefaultFont : false, /* Boolean  文字のサイズを
                                          *   n pt にする */
   styleIgnoreDefaultFontSize : false,   /* Number n pt */
@@ -156,23 +200,25 @@ var arAkahukuThread = {
    *         アドレス情報
    */
   setStyle : function (style, targetDocument, info) {
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param;
+    if (!("thread_param" in documentParam)) {
+      documentParam.thread_param = new arAkahukuThreadParam ();
+    }
+    param = documentParam.thread_param;
     if (arAkahukuThread.enableStyleIgnoreDefault) {
       /* デフォルトのスタイルを無視する */
-      var s = "";
       var nodes = targetDocument.getElementsByTagName ("style");
       for (var i = 0; i < nodes.length;) {
         if (nodes [i].innerHTML.indexOf ("layer-background-color")
             == -1) {
           /* 双助の style 要素 */
-          s += nodes [i].innerHTML;
+          param.saveStyle (nodes [i]);
           nodes [i].parentNode.removeChild (nodes [i]);
         }
         else {
           i ++;
         }
-      }
-      if (arAkahukuThread.styleDefault == "") {
-        arAkahukuThread.styleDefault = s;
       }
             
       if (arAkahukuThread.enableStyleIgnoreDefaultFont) {
@@ -576,6 +622,23 @@ var arAkahukuThread = {
     arAkahukuThread.maxImageRetries
     = arAkahukuConfig
     .initPref ("int", "akahuku.ext.maximageretries", 1);
+  },
+
+  /**
+   * 無視したデフォルトのスタイルを復元する
+   * (enableStyleIgnoreDefault 設定)
+   *
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   * @param  HTMLDocument optAppendDocument
+   *         追加する対象のドキュメント(省略時はtargetDocumentに復元)
+   */
+  restoreIgnoredStyles : function (targetDocument, optAppendDocument)
+  {
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.thread_param;
+    param.restoreSavedStyles (optAppendDocument || targetDocument);
+    param.clearSavedStyles ();
   },
     
   /**
@@ -1408,6 +1471,16 @@ var arAkahukuThread = {
     catch (e) { Akahuku.debug.exception (e);
     }
         
+    param = documentParam.thread_param;
+    if (param) {
+      try {
+        param.destruct ();
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    documentParam.thread_param = null;
+
     param = documentParam.respanel_param;
     if (param) {
       try {
