@@ -576,6 +576,10 @@ var Akahuku = {
         || href.match
         (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
       /* ふたばの板 */
+      if (href.match (/\.2chan\.net(:[0-9]+)?\/bin\//)) {
+        // 広告用リソースなど
+        return false;
+      }
       return true;
     }
         
