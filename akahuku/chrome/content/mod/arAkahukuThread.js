@@ -163,6 +163,7 @@ var arAkahukuThread = {
   enableStyleIgnoreDefaultFont : false, /* Boolean  文字のサイズを
                                          *   n pt にする */
   styleIgnoreDefaultFontSize : false,   /* Number n pt */
+  enableStyleIgnoreDefaultMinumumRes : true, /* Boolean  最低限のレスのスタイルを追加 */
     
   enableReplyLimitWidth : false,     /* Boolean  横長のレスを途中で消す */
   enableReplyAvoidWrap : false,      /* Boolean  Firefox 3 で不要な折り返しを
@@ -227,6 +228,16 @@ var arAkahukuThread = {
                   "font-size:"
                   + arAkahukuThread.styleIgnoreDefaultFontSize
                   + "pt;");
+      }
+
+      if (arAkahukuThread.enableStyleIgnoreDefaultMinumumRes) {
+        // 2016/05/31レイアウトでは無視すると崩れすぎるレスのスタイルを追加
+        style
+        .addRule ("td.rtd",
+                  "background-color: #F0E0D6;")
+        .addRule ("td.rts",
+                  "text-align: right;"
+                  +"vertical-align: top;");
       }
             
       style.addRule ("a:hover",
@@ -599,6 +610,10 @@ var arAkahukuThread = {
           arAkahukuThread.styleIgnoreDefaultFontSize = 24;
         }
       }
+
+      arAkahukuThread.enableStyleIgnoreDefaultMinumumRes
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.style.ignore_default.minimum_res", true);
     }
         
     arAkahukuThread.enableReplyLimitWidth

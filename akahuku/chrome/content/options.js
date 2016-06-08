@@ -832,6 +832,7 @@ var AkahukuOptions = {
           }
           return value;
         }],
+      ["bool", "style.ignore_default.minimum_res", true, "privatemod"],
       ["bool", "showmail", true],
       ["bool", "showmail.popup", false],
       ["bool", "reply.limitwidth", true],
@@ -3806,8 +3807,7 @@ var AkahukuOptions = {
     
   checkStyleIgnoreDefault : function () {
     document.getElementById ("style_ignore_default_font").disabled
-    document.getElementById ("style_ignore_default_font").disabled
-    document.getElementById ("style_ignore_default_font").disabled
+    document.getElementById ("style_ignore_default_minimum_res").disabled
     = !document.getElementById ("style_ignore_default").checked;
         
     AkahukuOptions.checkStyleIgnoreDefaultFont ();

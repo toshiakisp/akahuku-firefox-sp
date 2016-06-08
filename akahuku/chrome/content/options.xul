@@ -1356,6 +1356,9 @@
                    control="style_ignore_default_font_size"
                    value="pt にする (8-24)" />
           </box>
+          <checkbox id="style_ignore_default_minimum_res" checked="false"
+                    class="sp" tooltiptext="(デフォルト:有効) レスの背景色と「…」の位置に関するスタイルを追加する"
+                    label="最低限のレスのスタイルを追加する" />
         </groupbox>
         <groupbox orient="vertical">
           <caption label="その他" />
