@@ -826,9 +826,16 @@ var arAkahukuQuote = {
     
     if (num != -1
         && (target.parentNode.nodeName.toLowerCase () == "td"
+          // td#text (レス)
+            || (target.parentNode.nodeName.toLowerCase () == "div"
+                && arAkahukuDOM.hasClassName (target.parentNode, "thre"))
+            // div.thre#text (スレ本文(2016/05/31~))
             || (target.parentNode.nodeName.toLowerCase () == "div"
                 && arAkahukuDOM.hasClassName (target.parentNode, "r"))
-            || target.parentNode.nodeName.toLowerCase () == "form")) {
+            // div.r#text (レス(layout == 2))
+            || target.parentNode.nodeName.toLowerCase () == "form"
+            // form#text (スレ本文(~2016/05/31))
+            )) {
       
       var targetWindow = arAkahukuQuote.getFocusedWindow ();
             
@@ -911,6 +918,10 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
             
       event.preventDefault ();
+    }
+    else if (num != -1) {
+      Akahuku.debug.warn ("arAkahukuQuote.onBodyClick: No." + num
+          + " is clicked but in an unsupported node.");
     }
   },
     
