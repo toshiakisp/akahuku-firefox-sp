@@ -842,6 +842,17 @@ var AkahukuOptions = {
       ["bool", "reply.nomargintop", false],
       ["bool", "reply.nomarginbottom", false],
       ["bool", "alertgif", false],
+      ["bool", "style.body_font", false, "privatemod"],
+      ["int",  "style.body_font.size", 12,
+       function (value) {
+          if (value < 8) {
+            value = 8;
+          }
+          else if (value > 24) {
+            value = 24;
+          }
+          return value;
+        }],
       ["init",
        function (map) {
           var defFormat = "\"\u3053\u3068\u308A\u3075\u3049\u3093\u3068\", \"\u3042\u304F\u3042\u30D5\u30A9\u30F3\u30C8\"";
@@ -849,6 +860,7 @@ var AkahukuOptions = {
           = "\u4F8B: " + defFormat;
           AkahukuOptions.checkCuteFont ();
           AkahukuOptions.checkStyleIgnoreDefault ();
+          AkahukuOptions.checkStyleBodyFont ();
         }]
       ],
     "autolink" : [
@@ -3821,6 +3833,18 @@ var AkahukuOptions = {
     .disabled
     = !document.getElementById ("style_ignore_default").checked
     || !document.getElementById ("style_ignore_default_font").checked;
+
+    // style_ignore_default_font* は style_body_font* と排他
+    document.getElementById ("style_body_font_size").disabled
+    = document.getElementById ("style_body_font_size_label").disabled
+    = document.getElementById ("style_body_font").disabled
+    = document.getElementById ("style_ignore_default").checked
+    && document.getElementById ("style_ignore_default_font").checked;
+  },
+
+  checkStyleBodyFont : function () {
+    document.getElementById ("style_body_font_size").disabled
+    = !document.getElementById ("style_body_font").checked;
   },
     
   checkHidetrolls : function () {

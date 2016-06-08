@@ -1344,12 +1344,26 @@
                     oncommand="AkahukuOptions.initCuteFont ();" />
           </box>
         </groupbox>
+        <box orient="horizontal" align="center"
+             tooltiptext="(デフォルト：無効) 基準となるbody要素の文字サイズを設定する。適用後リロード無しで設定反映。">
+          <checkbox id="style_body_font" checked="false"
+                    label="基準となる文字サイズを"
+                    oncommand="AkahukuOptions.checkStyleBodyFont ();" />
+          <textbox id="style_body_font_size" size="6" />
+          <label id="style_body_font_size_label"
+                 control="style_ignore_default_font_size"
+                 value="pt にする (8-24)" />
+          <label id="style_body_font_size_label_sp"
+                 value=".sp" class="sp"/>
+        </box>
         <groupbox orient="vertical">
           <caption>
             <checkbox id="style_ignore_default" checked="false"
                       label="デフォルトのスタイルを無視する"
                       oncommand="AkahukuOptions.checkStyleIgnoreDefault ();" />
           </caption>
+          <label id="style_ignore_default_warning"
+                 value="無視した結果はふたばのレイアウト次第です (非推奨)" class="warning" />
           <box orient="horizontal" align="center">
             <checkbox id="style_ignore_default_font" checked="false"
                       label="文字のサイズを"

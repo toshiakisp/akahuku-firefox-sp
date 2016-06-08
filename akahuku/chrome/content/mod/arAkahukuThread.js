@@ -173,6 +173,9 @@ var arAkahukuThread = {
   enableReplyNoMarginBottom : false, /* Boolean  レスの下のマージンを消す */
     
   enableAlertGIF : false, /* Boolean  GIF 画像を赤字で表示 */
+
+  enableStyleBodyFont : false, /* Boolean  基準となる文字のサイズを n pt にする */
+  styleBodyFontSize : false,   /* Number n pt */
     
   maxImageRetries : 0,  /* Number エラー画像の再試行回数 */
     
@@ -416,6 +419,11 @@ var arAkahukuThread = {
       style
         .addRule ("div.akahuku_popup_content_blockquote", s);
     }
+
+    if (arAkahukuThread.enableStyleBodyFont) {
+      s = "font-size:" + arAkahukuThread.styleBodyFontSize + "pt !important;"
+      style.addRule ("body", s);
+    }
         
     var s = "";
     if (arAkahukuThread.enableReplyMarginBottom) {
@@ -614,6 +622,25 @@ var arAkahukuThread = {
       arAkahukuThread.enableStyleIgnoreDefaultMinumumRes
         = arAkahukuConfig
         .initPref ("bool", "akahuku.style.ignore_default.minimum_res", true);
+    }
+
+    arAkahukuThread.enableStyleBodyFont
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.style.body_font", false);
+    if (arAkahukuThread.enableStyleBodyFont) {
+      arAkahukuThread.styleBodyFontSize
+        = arAkahukuConfig
+        .initPref ("int", "akahuku.style.body_font.size",
+                   12);
+      if (arAkahukuThread.styleBodyFontSize < 8) {
+        arAkahukuThread.styleBodyFontSize = 8;
+      }
+      if (arAkahukuThread.styleBodyFontSize > 24) {
+        arAkahukuThread.styleBodyFontSize = 24;
+      }
+    }
+    if (arAkahukuThread.enableStyleIgnoreDefaultFont) {
+      arAkahukuThread.enableStyleBodyFont = false;
     }
         
     arAkahukuThread.enableReplyLimitWidth
