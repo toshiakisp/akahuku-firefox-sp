@@ -28,6 +28,7 @@ var arAkahukuQuote = {
                                     *   2: メッセージ */
   enableNumberClear : false,       /* Boolean  引用する時にコメント欄をクリア */
   enableNumberNoComment : false,   /* Boolean  本文なしの場合に番号にする */
+  enableNumberOnlyQuote : false,   /* Boolean  メッセージが引用のみの場合に番号にする */
   enableClear : false,             /* Boolean  メニューから引用する時に
                                     *   コメント欄をクリア */
   enableUntroll : false,           /* Boolean  芝刈りを解除する */
@@ -91,6 +92,10 @@ var arAkahukuQuote = {
         arAkahukuQuote.enableNumberNoComment
           = arAkahukuConfig
           .initPref ("bool", "akahuku.quickquote.number.nocomment",
+                     false);
+        arAkahukuQuote.enableNumberOnlyQuote
+          = arAkahukuConfig
+          .initPref ("bool", "akahuku.quickquote.number.onlyquote",
                      false);
       }
       arAkahukuQuote.enableClear
@@ -826,9 +831,16 @@ var arAkahukuQuote = {
     
     if (num != -1
         && (target.parentNode.nodeName.toLowerCase () == "td"
+          // td#text (レス)
+            || (target.parentNode.nodeName.toLowerCase () == "div"
+                && arAkahukuDOM.hasClassName (target.parentNode, "thre"))
+            // div.thre#text (スレ本文(2016/05/31~))
             || (target.parentNode.nodeName.toLowerCase () == "div"
                 && arAkahukuDOM.hasClassName (target.parentNode, "r"))
-            || target.parentNode.nodeName.toLowerCase () == "form")) {
+            // div.r#text (レス(layout == 2))
+            || target.parentNode.nodeName.toLowerCase () == "form"
+            // form#text (スレ本文(~2016/05/31))
+            )) {
       
       var targetWindow = arAkahukuQuote.getFocusedWindow ();
             
@@ -880,6 +892,13 @@ var arAkahukuQuote = {
               || text.match (/^\u672C\u6587\u7121\u3057[ \r\n]*$/))) {
         text = "No." + num;
       }
+      else if (arAkahukuQuote.enableNumberOnlyQuote
+          && ((arAkahukuQuote.numberType == 3 && text.length == 0)
+            ||(arAkahukuQuote.numberType == 2
+              && /^>[^\r\n]*(\r?\n>[^\r\n]*)*$/.test (text))
+            )) {
+        text = "No." + num;
+      }
       
       target = targetDocument.getElementsByTagName ("textarea");
       if (target.length == 0) {
@@ -911,6 +930,10 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
             
       event.preventDefault ();
+    }
+    else if (num != -1) {
+      Akahuku.debug.warn ("arAkahukuQuote.onBodyClick: No." + num
+          + " is clicked but in an unsupported node.");
     }
   },
     

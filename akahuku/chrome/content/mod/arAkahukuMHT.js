@@ -2244,12 +2244,8 @@ var arAkahukuMHT = {
                             !arAkahukuMHT.enablePreview, true);
             
       /* デフォルトのスタイルを無視している場合適用する */
-      if (arAkahukuThread.enableStyleIgnoreDefault) {
-        var style = param.cloneDocument.createElement ("style");
-        style.appendChild (param.cloneDocument.createTextNode
-                           (arAkahukuThread.styleDefault));
-        cloneHead.appendChild (style);
-      }
+      arAkahukuThread.restoreIgnoredStyles
+        (targetDocument, param.cloneDocument);
             
       /* base 要素の値を img 要素、a 要素に適用する */
       var baseDir
@@ -3828,6 +3824,7 @@ var arAkahukuMHT = {
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
     arAkahukuMHT.cleanup (info, targetDocument, null, true, false);
+    arAkahukuThread.restoreIgnoredStyles (targetDocument);
     event.preventDefault ();
   },
     

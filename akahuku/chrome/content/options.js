@@ -431,6 +431,7 @@ var AkahukuOptions = {
       ["int",  "quickquote.number.type", 1],
       ["bool", "quickquote.number.clear", false],
       ["bool", "quickquote.number.nocomment", false],
+      ["bool", "quickquote.number.onlyquote", false, "privatemod"],
       ["bool", "quickquote.clear", false],
       ["bool", "quickquote.untroll", false],
       ["bool", "quickquote.focus", false],
@@ -832,6 +833,7 @@ var AkahukuOptions = {
           }
           return value;
         }],
+      ["bool", "style.ignore_default.minimum_res", true, "privatemod"],
       ["bool", "showmail", true],
       ["bool", "showmail.popup", false],
       ["bool", "reply.limitwidth", true],
@@ -840,6 +842,17 @@ var AkahukuOptions = {
       ["bool", "reply.nomargintop", false],
       ["bool", "reply.nomarginbottom", false],
       ["bool", "alertgif", false],
+      ["bool", "style.body_font", false, "privatemod"],
+      ["int",  "style.body_font.size", 12,
+       function (value) {
+          if (value < 8) {
+            value = 8;
+          }
+          else if (value > 24) {
+            value = 24;
+          }
+          return value;
+        }],
       ["init",
        function (map) {
           var defFormat = "\"\u3053\u3068\u308A\u3075\u3049\u3093\u3068\", \"\u3042\u304F\u3042\u30D5\u30A9\u30F3\u30C8\"";
@@ -847,6 +860,7 @@ var AkahukuOptions = {
           = "\u4F8B: " + defFormat;
           AkahukuOptions.checkCuteFont ();
           AkahukuOptions.checkStyleIgnoreDefault ();
+          AkahukuOptions.checkStyleBodyFont ();
         }]
       ],
     "autolink" : [
@@ -3381,6 +3395,7 @@ var AkahukuOptions = {
     document.getElementById ("quickquote_number_type").disabled
     = document.getElementById ("quickquote_number_clear").disabled
     = document.getElementById ("quickquote_number_nocomment").disabled
+    = document.getElementById ("quickquote_number_onlyquote").disabled
     = !document.getElementById ("quickquote").checked
     || !document.getElementById ("quickquote_number").checked;
   },
@@ -3806,8 +3821,7 @@ var AkahukuOptions = {
     
   checkStyleIgnoreDefault : function () {
     document.getElementById ("style_ignore_default_font").disabled
-    document.getElementById ("style_ignore_default_font").disabled
-    document.getElementById ("style_ignore_default_font").disabled
+    = document.getElementById ("style_ignore_default_minimum_res").disabled
     = !document.getElementById ("style_ignore_default").checked;
         
     AkahukuOptions.checkStyleIgnoreDefaultFont ();
@@ -3819,6 +3833,18 @@ var AkahukuOptions = {
     .disabled
     = !document.getElementById ("style_ignore_default").checked
     || !document.getElementById ("style_ignore_default_font").checked;
+
+    // style_ignore_default_font* は style_body_font* と排他
+    document.getElementById ("style_body_font_size").disabled
+    = document.getElementById ("style_body_font_size_label").disabled
+    = document.getElementById ("style_body_font").disabled
+    = document.getElementById ("style_ignore_default").checked
+    && document.getElementById ("style_ignore_default_font").checked;
+  },
+
+  checkStyleBodyFont : function () {
+    document.getElementById ("style_body_font_size").disabled
+    = !document.getElementById ("style_body_font").checked;
   },
     
   checkHidetrolls : function () {
