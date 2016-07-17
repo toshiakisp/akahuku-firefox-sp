@@ -120,14 +120,23 @@ Akahuku.Cache = new function () {
     var timestamp
       = "\u66F4\u65B0\u65E5\u6642:" //"更新日時"
       + lmday.toLocaleString ();
+    var text
+      = "\u30AD\u30E3\u30C3\u30B7\u30E5\u3092\u8868\u793A\u4E2D"
+      //"キャッシュを表示中 ("
+      + ": " + cacheStat.key + " (" + timestamp + ")";
+    var browser
+      = arAkahukuWindow.getBrowserForWindow
+      (targetDocument.defaultView);
+    Akahuku.Cache.showCacheNotification (browser, text);
+  };
+
+  this.showCacheNotification = function (browser, text) {
     try {
-      var box = getNotificationBox (targetDocument.defaultView);
+      var tabbrowser = document.getElementById ("content");
+      var box = tabbrowser.getNotificationBox (browser);
       var oldItem = box.getNotificationWithValue (Akahuku.Cache);
       box.appendNotification
-        ("\u30AD\u30E3\u30C3\u30B7\u30E5\u3092\u8868\u793A\u4E2D"
-         //"キャッシュを表示中 ("
-         + ": " + cacheStat.key
-         + " (" + timestamp + ")",
+        (text,
          Akahuku.Cache,
          "chrome://akahuku/content/images/icon_small.png",
          box.PRIORITY_WARNING_LOW,
@@ -138,7 +147,7 @@ Akahuku.Cache = new function () {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-  };
+  },
 
 
   /**
