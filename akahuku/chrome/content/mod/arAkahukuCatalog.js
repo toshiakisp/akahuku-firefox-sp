@@ -1237,12 +1237,15 @@ arAkahukuMergeItemVisitedCallback.prototype = {
     if (this.isVisitedHandler) {
       this.isVisitedHandler.apply (this, [uri, visited]);
     }
-    else {
+    else if (this.wrappedObject) {
       this.wrappedObject.visited = visited;
     }
     if (this.list) {
       this.list.removeCallback (this.id);
     }
+    this.destruct ();
+  },
+  destruct : function () {
     this.id = null;
     this.list = null;
     this.wrappedObject = null;
@@ -1280,6 +1283,13 @@ arAkahukuMergeItemCallbackList.prototype = {
     else {
       this.waiting = true;
       this.callback = callback;
+    }
+  },
+  abort : function () {
+    this.waiting = false;
+    for (var id in this._list) {
+      this._list [id].destruct ();
+      this.removeCallback (id);
     }
   },
 };
@@ -1497,6 +1507,7 @@ arAkahukuCatalogParam.prototype = {
     if (this.reloadChannel != null) {
       arAkahukuCatalog.setStatus
         ("\u30ED\u30FC\u30C9\u4E2D (\u30DC\u30C7\u30A3)",
+         // "ロード中 (ボディ)"
          true, this.targetDocument);
     }
   },
@@ -1566,6 +1577,7 @@ arAkahukuCatalogParam.prototype = {
     else if (httpStatus == 200) {
       this.responseHead = responseHead;
             
+      // "更新中"
       arAkahukuCatalog.setStatus ("\u66F4\u65B0\u4E2D",
                                   true, this.targetDocument);
             
@@ -4001,8 +4013,28 @@ var arAkahukuCatalog = {
                                            responseText);
       if (mergedItems.length > 0) {
         if (param.historyCallbacks.count > 0) {
+          arAkahukuCatalog.setStatus
+            ("\u66F4\u65B0\u4E2D (\u5C65\u6B74)", // "更新中 (履歴)"
+             true, targetDocument);
+          // asyncWaitRequests が長時間たっても終了しないなら強制終了
+          var asyncWaitMonitorTimerID =
+            targetDocument.defaultView
+            .setTimeout (function () {
+              param.historyCallbacks.abort ();
+              arAkahukuCatalog.setStatus // "更新中 (履歴 timeout)"
+              ("\u66F4\u65B0\u4E2D (\u5C65\u6B74 timeout)",
+               true, targetDocument);
+              targetDocument.defaultView.setTimeout (function () {
+                // 一時停止した後に更新を継続
+                param.historyCallbacks.callback ();
+              }, 500);
+            }, 5000);
           param.historyCallbacks.asyncWaitRequests
             (function () {
+              targetDocument.defaultView
+              .clearTimeout (asyncWaitMonitorTimerID);
+              arAkahukuCatalog.setStatus // "更新中"
+                ("\u66F4\u65B0\u4E2D", true, targetDocument);
               param.historyCallbacks = null;
               arAkahukuCatalog._update2
                 (targetDocument, oldTable, mergedItems, param);
@@ -4015,12 +4047,14 @@ var arAkahukuCatalog = {
         }
       }
       else {
+        // "満員です"
         arAkahukuCatalog.setStatus ("\u6E80\u54E1\u3067\u3059",
                                     false, targetDocument);
         arAkahukuSound.playCatalogReload ();
       }
     }
     else {
+      // "ロード失敗"
       arAkahukuCatalog.setStatus ("\u30ED\u30FC\u30C9\u5931\u6557",
                                   false, targetDocument);
     }
@@ -4519,6 +4553,7 @@ var arAkahukuCatalog = {
       param.reloadChannel = null;
       arAkahukuCatalog.setStatus
       ("\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F",
+       // "中断されました"
        false, targetDocument);
       return;
     }
@@ -4562,6 +4597,7 @@ var arAkahukuCatalog = {
         
     arAkahukuCatalog.setStatus
     ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)",
+     // "ロード中 (ヘッダ)"
      true, targetDocument);
         
     try {
@@ -4571,6 +4607,7 @@ var arAkahukuCatalog = {
       /* サーバに接続できなかった場合 */
       arAkahukuCatalog.setStatus
       ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F",
+       // "接続できませんでした"
        true, targetDocument);
     }
   },
