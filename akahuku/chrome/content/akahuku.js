@@ -88,6 +88,8 @@ var Akahuku = {
   partialCount : 100,            /* Number  n 件 */
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
 
+  useFrameScript : false,
+
   isXPathAvailable : false,
 
   enableBQCache : false,
@@ -185,9 +187,12 @@ var Akahuku = {
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
    */
-  addDocumentParam : function (targetDocument) {
+  addDocumentParam : function (targetDocument, info) {
     var documentParam = new arAkahukuDocumentParam ();
     documentParam.targetDocument = targetDocument;
+    if (info) {
+      documentParam.location_info = info;
+    }
     Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
   },
@@ -302,6 +307,10 @@ var Akahuku = {
     if (window == wnd || !wnd) {
       wnd = window.content;
     }
+    if (!wnd instanceof Components.interfaces.nsIDOMWindow
+        ||wnd instanceof Components.interfaces.nsIDOMChromeWindow) {
+      return null;
+    }
     return Akahuku.getDocumentParam (wnd.document);
   },
 
@@ -348,9 +357,17 @@ var Akahuku = {
     }
 
     try {
-      Akahuku.protocolHandler
-      = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-      .getService (Components.interfaces.arIAkahukuProtocolHandler);
+      if ("import" in Components.utils) {
+        // e10s-compatible method to share the singleton
+        var scope = {};
+        Components.utils.import ("resource://akahuku/protocol.jsm", scope);
+        Akahuku.protocolHandler = scope;
+      }
+      else {
+        Akahuku.protocolHandler
+          = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
+          .getService (Ci.arIAkahukuProtocolHandler);
+      }
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -466,9 +483,11 @@ var Akahuku = {
     arAkahukuUI.initForXUL ();
     arAkahukuSidebar.initForXUL ();
     
-    /* コンテンツのロードのイベントを監視 */
+    // コンテンツのロードのイベントを監視
+    // e10s: remote な browser では XUL には DOMContentLoaded
+    //       が飛ばないので Frame script で監視する
     var appcontent = document.getElementById ("appcontent");
-    if (appcontent) {
+    if (appcontent && !Akahuku.useFrameScript) {
       appcontent.addEventListener
         ("DOMContentLoaded",
          Akahuku.onDOMContentLoaded,
@@ -938,9 +957,7 @@ var Akahuku = {
       return;
     }
     
-    Akahuku.addDocumentParam (targetDocument);
-    Akahuku.getDocumentParam (targetDocument).location_info
-    = info;
+    Akahuku.addDocumentParam (targetDocument, info);
 
     if (info.isReply || info.isNormal) {
       bqnodes = bqnodes || Akahuku.getMessageBQ (targetDocument);
@@ -974,7 +991,7 @@ var Akahuku = {
     arAkahukuPopupQuote.apply (targetDocument, info);   ticlog+="\n  arAkahukuPopupQuote.apply "+tic.toc();
     arAkahukuMHT.apply (targetDocument, info);          ticlog+="\n  arAkahukuMHT.apply "+tic.toc();
     arAkahukuReload.apply (targetDocument, info);       ticlog+="\n  arAkahukuReload.apply "+tic.toc();
-    arAkahukuScroll.apply (targetDocument, info, targetWindow);ticlog+="\n  arAkahukuScroll.apply "+tic.toc();
+    arAkahukuScroll.apply (targetDocument, info);       ticlog+="\n  arAkahukuScroll.apply "+tic.toc();
     arAkahukuWheel.apply (targetDocument, info);        ticlog+="\n  arAkahukuWheel.apply "+tic.toc();
     if (info.isReply || info.isNormal) {
       /* 手動でキャッシュを削除 */
@@ -2032,21 +2049,3 @@ var Akahuku = {
   },
 };
 
-/* 古い Mozilla Suite では最初のイベントリスナが無視されるので 2 つ登録する */
-window.addEventListener ("load",
-                         function () {
-                           Akahuku.onLoad ();
-                         }, false);
-window.addEventListener ("load",
-                         function () {
-                           Akahuku.onLoad ();
-                         }, false);
-
-window.addEventListener ("unload",
-                         function () {
-                           Akahuku.onUnload ();
-                         }, false);
-window.addEventListener ("unload",
-                         function () {
-                           Akahuku.onUnload ();
-                         }, false);

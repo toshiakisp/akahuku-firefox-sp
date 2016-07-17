@@ -36,6 +36,8 @@
     
     <em:optionsURL>chrome://akahuku/content/options.xul</em:optionsURL>
     <em:iconURL>chrome://akahuku/content/images/icon.png</em:iconURL>
+
+	<em:multiprocessCompatible>true</em:multiprocessCompatible>
     
   </Description>
   

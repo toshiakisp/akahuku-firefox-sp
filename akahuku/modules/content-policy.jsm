@@ -205,10 +205,22 @@ arAkahukuContentPolicy.prototype = {
     try {
       if ("import" in Components.utils) {
         Components.utils.import("resource://akahuku/json.jsm");
+        Cu.import ("resource://akahuku/console.jsm");
+        this.console = new AkahukuConsole ();
       }
       else {
         loader.loadSubScript
           ("chrome://akahuku/content/mod/arAkahukuJSON.js");
+        var scope = {};
+        loader.loadSubScript ("resource://akahuku/console.jsm", scope);
+        this.console = new scope.AkahukuConsole ()
+      }
+      this.console.prefix = "Akahuku debug ContentPolicy";
+      var appinfo
+        = Cc ["@mozilla.org/xre/app-info;1"]
+        .getService (Ci.nsIXULRuntime);
+      if (appinfo.processType !== appinfo.PROCESS_TYPE_DEFAULT) {
+        this.console.prefix += "(child)";
       }
       if (typeof arAkahukuConfig === "undefined") {
         loader.loadSubScript
@@ -223,7 +235,18 @@ arAkahukuContentPolicy.prototype = {
     }
     catch (e) {
       Components.utils.reportError (e);
+      if (!this.console) {
+        // minimum equivalent
+        this.console = {
+          prefix : "Akahuku debug ContentPolicy: ",
+          log : function (e) {},
+          warn : function (e) { Cu.reportError (this.prefix+e); },
+          error : function (e) { Cu.reportError (this.prefix+e); },
+          exception : function (e) { Cu.reportError (e); },
+        };
+      }
     }
+    this.console.log ("initialized.");
 
     /* 設定を取得する */
     this._updateEnabled ();
@@ -529,47 +552,109 @@ arAkahukuContentPolicy.prototype = {
     return false;
   },
 
-  /** 
-   * ブラウザウィンドウを取得
+  /**
+   * context がトップレベルかどうか(タブで直接開いているか)を判定
    */
-  _getBrowserWindow : function ()
-  {
-    var wm
-      = Components.classes ["@mozilla.org/appshell/window-mediator;1"]
-      .getService (nsIWindowMediator);
-    return wm.getMostRecentWindow ("navigator:browser");
+  _checkToplevelContext : function (context) {
+    if (!(context instanceof Ci.nsIDOMChromeWindow)
+      && context instanceof Ci.nsIDOMWindow) {
+      // e10s, old-fx: context can be a Window
+      return true;
+    }
+    else if (context instanceof Ci.nsIDOMXULElement) {
+      if (/^(xul:)?browser/.test (context.nodeName)) {
+        // context can be a xul:browser
+        return true;
+      }
+    }
+    return false;
   },
 
-  /** 
-   * context に対するブラウザウィンドウを取得
+  /**
+   * context に対する Document を取得
    */
-  _getContextBrowserWindow : function (context)
-  {
-    if (context instanceof Components.interfaces.nsIDOMXULElement) {
-      return context.ownerDocument.defaultView.top;
+  _getDocumentForContext : function (context) {
+    var targetDocument = null;
+    if (!(context instanceof Ci.nsIDOMChromeWindow)
+      && context instanceof Ci.nsIDOMWindow) {
+      // e10s, old-fx: context can be a Window
+      targetDocument = context.document;
     }
-    else if (context instanceof Components.interfaces.nsIDOMNode) {
-      var contextDocument = context;
-      if (context.ownerDocument) {
-        contextDocument = context.ownerDocument;
+    else if (context instanceof Ci.nsIDOMXULElement) {
+      if (/^(xul:)?browser/.test (context.nodeName)) {
+        // context can be a xul:browser
+        targetDocument = context.contentDocument;
       }
-      if (contextDocument.defaultView) {
-        contextDocument = contextDocument.defaultView.top.document;
+    }
+    else if (context instanceof Ci.nsIDOMElement) {
+      targetDocument = context.ownerDocument;
+    }
+    else if (context instanceof Ci.nsIDOMDocument) {
+      targetDocument = context;
+    }
+
+    if (targetDocument
+        && !(targetDocument instanceof Ci.nsIDOMXULDocument)
+        && targetDocument instanceof Ci.nsIDOMDocument) {
+      return targetDocument;
+    }
+    else {
+      this.console.error ("no document from context = "+context);
+      return null;
+    }
+  },
+
+
+  /**
+   * context に対して操作できる Akahuku のスコープを取得
+   */
+  _getAkahukuScopeForContext : function (context)
+  {
+    if (context instanceof Ci.nsIDOMXULElement) {
+      // context can be a xul:browser for TYPE_DOCUMENT
+      var chromeWindow = context.ownerDocument.defaultView.top;
+      if ("Akahuku" in chromeWindow) {
+        return chromeWindow;
       }
-      var entries
-        = Components.classes
-        ["@mozilla.org/appshell/window-mediator;1"]
-        .getService (nsIWindowMediator)
-        .getEnumerator ("navigator:browser");
-      while (entries.hasMoreElements ()) {
-        var targetWindow = entries.getNext ();
-        var tabbrowser
-          = targetWindow.document.getElementById ("content");
-        if (tabbrowser.getBrowserForDocument (contextDocument)) {
-          return targetWindow;
+      this.console.error ("No Akahuku scope for " + context);
+      return null;
+    }
+
+    if (context instanceof Ci.nsIDOMWindow) {
+      // possible in e10s for TYPE_DOCUMENT
+      context = context.document;
+    }
+
+    if (context instanceof Ci.nsIDOMNode) {
+      var contentWindow = (context.ownerDocument || context).defaultView;
+      while (contentWindow.frameElement) {
+        contentWindow = contentWindow.frameElement.ownerDocument.defaultView;
+      }
+      var chromeEventHandler = contentWindow
+        .QueryInterface (Ci.nsIInterfaceRequestor)
+        .getInterface (Ci.nsIWebNavigation)
+        .QueryInterface (Ci.nsIDocShell)
+        .chromeEventHandler;
+      if (chromeEventHandler.parentNode) {
+        // non-e10s: xul:browser that locates in the XLU DOM tree
+        var chromeWindow = chromeEventHandler.ownerDocument.defaultView.top;
+        if ("Akahuku" in chromeWindow) {
+          return chromeWindow;
+        }
+      }
+      else { // e10s: WindowRoot that is the top of a content frame
+        // content-policy's process is the same with context,
+        // JSM Akahuku to be imported is identical.
+        var scope = {};
+        try {
+          Cu.import ("resource://akahuku/akahuku.jsm", scope);
+          return scope;
+        }
+        catch (e) { this.console.exception (e);
         }
       }
     }
+    this.console.error ("No Akahuku scope for " + context);
     return null;
   },
     
@@ -609,11 +694,12 @@ arAkahukuContentPolicy.prototype = {
         if (contentLocation.spec.match
             (/^akahuku:\/\/[^\/]*\/p2p\//)) {
           /* 全体が無効の場合には P2P なアドレスを元に戻す */
-          var targetWindow = this._getBrowserWindow ();
-          if (targetWindow) {
-            targetWindow.arAkahukuP2P.deP2PContext
-              (context,
-               contentLocation.spec);
+          try {
+            var scope = this._getAkahukuScopeForContext (context);
+            scope.arAkahukuP2P.deP2PContext
+              (context, contentLocation.spec);
+          }
+          catch (e) { this.console.exception (e);
           }
                     
           return this.REJECT_OTHER;
@@ -622,17 +708,19 @@ arAkahukuContentPolicy.prototype = {
     }
         
     if (contentLocation.scheme == "akahuku"
-        && context.nodeName
-        && context.nodeName.match (/(xul:)?browser/)
+        && this._checkToplevelContext (context)
         && contentLocation.spec.match
         (/^akahuku:\/\/[^\/]*\/p2p\//)) {
-      var targetWindow = this._getBrowserWindow ();
-      if (targetWindow) {
-        targetWindow.arAkahukuP2P.checkImage
+      try {
+        var scope = this._getAkahukuScopeForContext (context);
+        var contextDocument = this._getDocumentForContext (context);
+        scope.arAkahukuP2P.checkImage
           (context,
-           context.contentDocument.location.href,
+           contextDocument.location.href,
            contentLocation.spec,
            20, targetWindow, -1);
+      }
+      catch (e) { this.console.exception (e);
       }
             
       return this.ACCEPT;
@@ -734,20 +822,13 @@ arAkahukuContentPolicy.prototype = {
             return this.ACCEPT;
           }
                     
-          var entries
-          = Components.classes
-          ["@mozilla.org/appshell/window-mediator;1"]
-          .getService (nsIWindowMediator)
-          .getEnumerator ("navigator:browser");
-                        
           var reject = false;
-                    
-          if (entries.hasMoreElements ()) {
-            var targetWindow = entries.getNext ();
-            reject
-              = targetWindow.arAkahukuP2P.enP2PContext
-              (context,
-               contentLocation.spec);
+          try {
+            var scope = this._getAkahukuScopeForContext (context);
+            reject = scope.arAkahukuP2P.enP2PContext
+              (context, contentLocation.spec);
+          }
+          catch (e) { this.console.exception (e);
           }
                     
           if (reject) {
@@ -764,20 +845,13 @@ arAkahukuContentPolicy.prototype = {
           /* 塩粒の場合 */
           var ext = RegExp.$3;
                     
-          var entries
-          = Components.classes
-          ["@mozilla.org/appshell/window-mediator;1"]
-          .getService (nsIWindowMediator)
-          .getEnumerator ("navigator:browser");
-                        
           var reject = false;
-
-          if (entries.hasMoreElements ()) {
-            var targetWindow = entries.getNext ();
-            reject
-              = targetWindow.arAkahukuP2P.enP2PContext
-              (context,
-               contentLocation.spec);
+          try {
+            var scope = this._getAkahukuScopeForContext (context);
+            reject = scope.arAkahukuP2P.enP2PContext
+              (context, contentLocation.spec);
+          }
+          catch (e) { this.console.exception (e);
           }
                         
           if (reject) {
@@ -798,10 +872,10 @@ arAkahukuContentPolicy.prototype = {
         && /^\/(file)?cache\//.test (requestOrigin.path)) {
       if (!contentLocation.schemeIs ("akahuku")) {
         // 通常の画像読込を禁止し、必要なら cache に差し替える
-        var contextWindow = this._getContextBrowserWindow (context);
-        if (contextWindow) {
+        try {
+          var scope = this._getAkahukuScopeForContext (context);
           var decodedOriginSpec
-            = contextWindow.Akahuku.protocolHandler
+            = scope.Akahuku.protocolHandler
             .deAkahukuURI (requestOrigin.spec);
           var policy
             = Components.classes
@@ -816,28 +890,32 @@ arAkahukuContentPolicy.prototype = {
             return shouldLoad;
           }
           if (context instanceof Components.interfaces.nsIDOMElement) {
-            contextWindow.Akahuku.queueContextTask
-              (contextWindow.Akahuku.Cache,
+            scope.Akahuku.queueContextTask
+              (scope.Akahuku.Cache,
                "enCacheURIContext", context, contentLocation.spec);
           }
+        }
+        catch (e) { this.console.exception (e);
         }
         return this.REJECT_OTHER;
       }
       else {
         // 差し替えられた akahuku:///cache/ 画像は
         // 元URLに戻した上で残りの判定へ
-        var targetWindow = this._getBrowserWindow ();
-        if (targetWindow) {
+        try {
+          var scope = this._getAkahukuScopeForContext (context);
           var decodedLocationSpec
-            = targetWindow.Akahuku.protocolHandler
+            = scope.Akahuku.protocolHandler
             .deAkahukuURI (contentLocation.spec);
           contentLocation
             = this._ios.newURI (decodedLocationSpec, "UTF-8", null);
           var decodedOriginSpec
-            = targetWindow.Akahuku.protocolHandler
+            = scope.Akahuku.protocolHandler
             .deAkahukuURI (requestOrigin.spec);
           requestOrigin
             = this._ios.newURI (decodedOriginSpec, "UTF-8", null);
+        }
+        catch (e) { this.console.exception (e);
         }
       }
     }
@@ -943,12 +1021,14 @@ arAkahukuContentPolicy.prototype = {
           /* shouldLoad 内からの DOM 操作が許されない場合があるので
            * 後から適当なタイミングで操作するようタスク登録する */
           if (context instanceof Components.interfaces.nsIDOMElement) {
-            var contextWindow = this._getContextBrowserWindow (context);
-            if (contextWindow) {
-              contextWindow.Akahuku.queueContextTask
-                (contextWindow.arAkahukuDelBanner,
+            try {
+              var scope = this._getAkahukuScopeForContext (context);
+              scope.Akahuku.queueContextTask
+                (scope.arAkahukuDelBanner,
                  "deleteContextAfterBlock",
                  context, "deleteByContentPolicy");
+            }
+            catch (e) { this.console.exception (e);
             }
           }
                         
@@ -998,35 +1078,23 @@ arAkahukuContentPolicy.prototype = {
                 || contentLocation.path.indexOf ("?res=") != -1)) {
           /* レス送信モードの場合チェックする */
                     
-          var targetDocument = null;
+          var targetDocument = this._getDocumentForContext (context);
                     
-          if (this._old) {
-            targetDocument = context.document;
-          }
-          else {
-            targetDocument = context.contentDocument;
-          }
-                    
-          if (targetDocument.location.href == contentLocation.spec) {
+          if (targetDocument
+              && targetDocument.location.href == contentLocation.spec) {
             /* レス送信モードからのリロードの場合中断する */
                         
             var button = targetDocument
             .getElementById ("akahuku_reload_button");
             if (button) {
-              var entries
-                = Components.classes
-                ["@mozilla.org/appshell/window-mediator;1"]
-                .getService (nsIWindowMediator)
-                .getEnumerator ("navigator:browser");
-                            
-              while (entries.hasMoreElements ()) {
-                var targetWindow = entries.getNext ();
+              try {
+                var scope = this._getAkahukuScopeForContext (context);
                 var param
-                  = targetWindow.Akahuku.getDocumentParam
+                  = scope.Akahuku.getDocumentParam
                   (targetDocument);
                                 
                 if (param) {
-                  targetWindow.arAkahukuReload
+                  scope.arAkahukuReload
                     .diffReloadCore
                     (targetDocument,
                      this._enableReloadHookSync, false);
@@ -1034,6 +1102,11 @@ arAkahukuContentPolicy.prototype = {
                   return this.REJECT_OTHER;
                 }
               }
+              catch (e) { this.console.excption (e);
+              }
+            }
+            else {
+              this.console.warn ("no akahuku_reload_button in content document.");
             }
           }
         }
@@ -1044,40 +1117,33 @@ arAkahukuContentPolicy.prototype = {
                 .indexOf ("cat.htm") != -1)) {
           /* カタログモードの場合チェックする */
                     
-          var targetDocument = null;
+          var targetDocument = this._getDocumentForContext (context);
                     
-          if (this._old) {
-            targetDocument = context.document;
-          }
-          else {
-            targetDocument = context.contentDocument;
-          }
-                    
-          if (targetDocument.location.href == contentLocation.spec) {
+          if (targetDocument
+              && targetDocument.location.href == contentLocation.spec) {
             /* カタログモードのからのリロードの場合中断する */
                         
             var button = targetDocument
             .getElementById ("akahuku_catalog_reload_button");
             if (button) {
-              var entries
-                = Components.classes
-                ["@mozilla.org/appshell/window-mediator;1"]
-                .getService (nsIWindowMediator)
-                .getEnumerator ("navigator:browser");
-                            
-              while (entries.hasMoreElements ()) {
-                var targetWindow = entries.getNext ();
+              try {
+                var scope = this._getAkahukuScopeForContext (context);
                 var param
-                  = targetWindow.Akahuku.getDocumentParam
+                  = scope.Akahuku.getDocumentParam
                   (targetDocument);
                                 
                 if (param) {
-                  targetWindow.arAkahukuCatalog
+                  scope.arAkahukuCatalog
                     .reloadCore (targetDocument, button);
                                     
                   return this.REJECT_OTHER;
                 }
               }
+              catch (e) { this.console.exception (e);
+              }
+            }
+            else {
+              this.console.warn ("no akahuku_reload_button in content document.");
             }
           }
         }
