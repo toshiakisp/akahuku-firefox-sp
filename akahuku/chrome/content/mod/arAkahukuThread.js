@@ -184,7 +184,7 @@ var arAkahukuThread = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     /* タブの移動のイベントを監視 */
     window.addEventListener
     ("TabMove",

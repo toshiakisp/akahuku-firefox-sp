@@ -101,7 +101,6 @@ var arAkahukuWheel = {
       if (documentParam) {
         info = documentParam.location_info;
       }
-      var status = arAkahukuCompat.gBrowser.getStatusPanel ();
             
       var wheelDelta = (event.type === "wheel" ? event.deltaY : event.detail);
       var scrollY = targetWindow.scrollY;
@@ -156,24 +155,20 @@ var arAkahukuWheel = {
                 
         var text = "\u3061\u3087\u3063\u3068\u5F85\u3063\u3066\u306D";
                 
-        if (status) {
-          status.label = text;
-        }
+        arAkahukuUI.setStatusPanelText (text, "status");
                 
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
-          targetWindow.setTimeout (function (status, text) {
+          targetWindow.setTimeout (function (text) {
               try {
-                if (status.label == text) {
-                  status.label = "";
-                }
+                arAkahukuUI.clearStatusPanelText (text);
               }
               catch (e) { Akahuku.debug.exception (e);
               }
               arAkahukuWheel.timeoutID = null;
             }, Math.max (1000, lastReloadTime + 5000 - now),
-            status, text);
+            text);
                 
         return;
       }
@@ -284,9 +279,7 @@ var arAkahukuWheel = {
         else if (info.isReply) {
           if (arAkahukuReload.enable
               && documentParam.reload_param) {
-            if (status) {
-              status.label = "";
-            }
+            arAkahukuUI.clearStatusPanelText ();
             arAkahukuReload.diffReloadCore
               (targetDocument,
                arAkahukuWheel.enableReloadReplySync, false);
@@ -304,9 +297,7 @@ var arAkahukuWheel = {
         else if (info.isCatalog) {
           if (arAkahukuCatalog.enableReload
               && documentParam.catalog_param) {
-            if (status) {
-              status.label = "";
-            }
+            arAkahukuUI.clearStatusPanelText ();
             var anchor
               = targetDocument
               .getElementById ("akahuku_catalog_reload_button");
@@ -327,29 +318,25 @@ var arAkahukuWheel = {
       else {
         selectedBrowser.setAttribute ("__akahuku_wheel_count",
                                       wheelCount);
-        if (status) {
-          var text
-            = "\u30EA\u30ED\u30FC\u30C9\u3062\u304B\u3089: "
-            + parseInt (wheelCount * 100
-                        / Akahuku.reloadThreshold)
-            + "%";
-          status.label = text;
-                    
-          /* timeout が設定済みならリセットして再設定 */
-          targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
-          arAkahukuWheel.timeoutID =
-            targetWindow.setTimeout (function (status, text) {
-                try {
-                  if (status.label == text) {
-                    status.label = "";
-                  }
-                }
-                catch (e) { Akahuku.debug.exception (e);
-                }
-                arAkahukuWheel.timeoutID = null;
-              }, 1000, status, text);
-                
-        }
+
+        var text
+          // "リロードぢから: "
+          = "\u30EA\u30ED\u30FC\u30C9\u3062\u304B\u3089: "
+          + parseInt (wheelCount * 100
+                      / Akahuku.reloadThreshold)
+          + "%";
+        arAkahukuUI.setStatusPanelText (text, "status");
+        /* timeout が設定済みならリセットして再設定 */
+        targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
+        arAkahukuWheel.timeoutID =
+          targetWindow.setTimeout (function (text) {
+              try {
+                arAkahukuUI.clearStatusPanelText (text);
+              }
+              catch (e) { Akahuku.debug.exception (e);
+              }
+              arAkahukuWheel.timeoutID = null;
+            }, 1000, text);
       }
     }
     catch (e) { Akahuku.debug.exception (e);

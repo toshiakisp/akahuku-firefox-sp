@@ -178,9 +178,9 @@ var arAkahukuBoard = {
   /**
    * 外部板に追加できるか
    */
-  isAbleToAddExternal : function (targetDocument) {
+  isAbleToAddExternal : function (href) {
     try {
-      var base = targetDocument.location.href;
+      var base = String (href);
           
       base = base
       .replace (/\/res\/([0-9]+)\.html?$/, "/")

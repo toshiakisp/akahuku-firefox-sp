@@ -176,7 +176,13 @@ var arAkahukuCompat = new function () {
       }
       catch (e) {
       }
-      return document.getElementById ("statusbar-display");
+      if (typeof document !== "undefined"
+          && document instanceof Ci.nsIDOMXULDocument) {
+        return document.getElementById ("statusbar-display");
+      }
+      else {
+        return null;
+      }
     };
   };
 
@@ -206,6 +212,18 @@ var arAkahukuCompat = new function () {
       }
       return this.activeElement (targetDocument);
     }
+  };
+
+  this.losslessDecodeURI = function (uri) {
+    if (typeof window !== "undefined"
+        && "losslessDecodeURI" in window) {
+      try {
+        return window.losslessDecodeURI (uri);
+      }
+      catch (e) { Cu.reportError (e);
+      }
+    }
+    return uri.spec;
   };
 
   // Cache service v2

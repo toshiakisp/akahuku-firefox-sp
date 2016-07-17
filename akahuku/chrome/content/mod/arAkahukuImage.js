@@ -344,13 +344,7 @@ var arAkahukuImage = {
   /**
    * 初期化処理
    */
-  init : function () {
-    window.addEventListener
-    ("mousedown",
-     function () {
-      arAkahukuImage.onMouseDown (arguments [0]);
-    }, true);
-        
+  initForXUL : function () {
     var popup;
     popup = document.getElementById ("akahuku-saveimage-popup");
     if (!popup) {
@@ -547,31 +541,6 @@ var arAkahukuImage = {
       arAkahukuImage.enableLinkMenu
       = arAkahukuConfig
       .initPref ("bool", "akahuku.saveimage.linkmenu", false);
-
-      if (!arAkahukuImage.enableLinkMenu) {
-        var sep
-          = document
-          .getElementById ("akahuku-menuitem-content-separator9");
-        if (sep) {
-          sep.hidden = true;
-        }
-        var popup = document.getElementById ("contentAreaContextMenu");
-        
-        var menuitem;
-        
-        menuitem = popup.firstChild;
-        while (menuitem) {
-          if ("className" in menuitem
-              && menuitem.className == "__akahuku_saveimage") {
-            var tmp = menuitem;
-            menuitem = menuitem.nextSibling;
-            popup.removeChild (tmp);
-          }
-          else {
-            menuitem = menuitem.nextSibling;
-          }
-        }
-      }
     }
   },
     
@@ -583,13 +552,9 @@ var arAkahukuImage = {
    *         対象のイベント
    */
   setContextMenu : function (event) {
-    if (!arAkahukuImage.enableLinkMenu) {
-      return;
-    }
+    var popup = event.target;
         
-    var popup = document.getElementById ("contentAreaContextMenu");
-        
-    var label, command, menuitem;
+    var label, menuitem;
         
     menuitem = popup.firstChild;
     while (menuitem) {
@@ -613,8 +578,11 @@ var arAkahukuImage = {
     }
     sep.hidden = true;
         
-    var target = document.popupNode;
-    var linkNode = target;
+    if (!arAkahukuImage.enableLinkMenu) {
+      return;
+    }
+
+    var linkNode = gContextMenu.target;
     if (linkNode.nodeName.toLowerCase () != "a") {
       linkNode = arAkahukuDOM.findParentNode (linkNode, "a");
       if (!linkNode) {
@@ -646,19 +614,21 @@ var arAkahukuImage = {
       else {
         label = arAkahukuImage.baseList [i].dir;
       }
-      command
-        = "arAkahukuImage.onSaveImageClick (null, " + i + ", true, true);";
       menuitem = document.createElement ("menuitem");
       if (arAkahukuImage.baseList [i].key) {
         menuitem.setAttribute ("accesskey",
                                arAkahukuImage.baseList [i].key);
-        if (navigator.oscpu.indexOf ("Windows") == -1) {
+        if (!Akahuku.isRunningOnWindows) {
           label += " (" + arAkahukuImage.baseList [i].key + ")";
         }
       }
       menuitem.setAttribute ("label", label);
       menuitem.className = "__akahuku_saveimage";
-      menuitem.setAttribute ("oncommand", command);
+      menuitem.addEventListener ("command", (function (i) {
+        return function () {
+          arAkahukuImage.selectSaveImageDirFromXUL (i, false);
+        }
+      })(i), false);
       popup.insertBefore (menuitem, sep.nextSibling);
     }
   },
@@ -829,28 +799,10 @@ var arAkahukuImage = {
                 
         arAkahukuImage.currentTarget = target;
         arAkahukuImage.currentNormal = normal;
-        var popup = document.getElementById ("akahuku-saveimage-popup");
-                
-        if ("openPopup" in popup) {
-          document.popupNode = target;
-          popup.openPopup
-            (target,
-             "before_end",
-             -1, -1,
-             true, true);
-        }
-        else {
-          var parent = document.getElementById ("main-window");
-          var x, y;
-          x = event.screenX - parent.boxObject.screenX;
-          y = event.screenY - parent.boxObject.screenY;
-          document.popupNode = parent;
-          popup.showPopup
-          (parent,
-           x + 2,
-           y + 2, "popup", null, null);
-        }
-                
+
+        var rect = target.getBoundingClientRect ();
+        arAkahukuImage.openXULSaveImagePopup
+          (target, rect, event.screenX, event.screenY);
         return;
       }
     }
@@ -943,6 +895,42 @@ var arAkahukuImage = {
     }
   },
 
+  openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY) {
+    var popup = document.getElementById ("akahuku-saveimage-popup");
+
+    if (targetContentNode && "openPopup" in popup) {
+      popup.openPopup
+        (targetContentNode,
+         "before_end",
+         -1, -1,
+         true, true);
+    }
+    else if (rect && "openPopupAtScreenRect" in popup) {
+      popup.setAttribute ("position","after_start")
+      popup.openPopupAtScreenRect
+        ("after_start",
+         rect.x, rect.y,
+         rect.width, rect.height,
+         true, false);
+    }
+    else {
+      var parent = document.getElementById ("main-window");
+      var x, y;
+      x = screenX - parent.boxObject.screenX;
+      y = screenY - parent.boxObject.screenY;
+      document.popupNode = parent;
+      popup.showPopup
+      (parent,
+       x + 2,
+       y + 2, "popup", null, null);
+    }
+  },
+
+  selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu) {
+    arAkahukuImage.onSaveImageClick
+      (null, targetDirIndex, undefined, linkmenu);
+  },
+
   /**
    * 中段ボタンを押したイベント
    *
@@ -1016,23 +1004,11 @@ var arAkahukuImage = {
     }
         
     if (arAkahukuImage.baseList [targetDirIndex].dialog) {
-      var filePicker
-      = Components.classes ["@mozilla.org/filepicker;1"]
-      .createInstance (Components.interfaces.nsIFilePicker);
-      filePicker.init (target.ownerDocument.defaultView,
-                       "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
-                       Components.interfaces.nsIFilePicker.modeSave);
-      filePicker.defaultString = leafName;
-      filePicker.appendFilters (Components.interfaces.nsIFilePicker
-                                .filterAll);
-            
       try {
         var dir
           = Components.classes ["@mozilla.org/file/local;1"]
           .createInstance (Components.interfaces.nsILocalFile);
         dir.initWithPath (arAkahukuImage.baseList [targetDirIndex].dir);
-                
-        filePicker.displayDirectory = dir;
       }
       catch (e) {
         /* ベースのディレクトリが不正 */
@@ -1041,20 +1017,24 @@ var arAkahukuImage = {
          "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
         return;
       }
-            
-      if (!dir.exists ()) {
-        dir.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                    493/* 0755 */);
-      }
-            
-      arAkahukuCompat.FilePicker.open
-        (filePicker, function (ret) {
-      if (ret == Components.interfaces.nsIFilePicker.returnOK
-          || ret == Components.interfaces.nsIFilePicker.returnReplace) {
-        file = filePicker.file;
+
+      var browser
+        = arAkahukuWindow.getBrowserForWindow
+        (target.ownerDocument.defaultView);
+      arAkahukuImage.asyncOpenSaveImageFilePicker
+        (browser, leafName, dir.path, function (ret, file, dir) {
+
+        if (ret != Components.interfaces.nsIFilePicker.returnOK
+            && ret != Components.interfaces.nsIFilePicker.returnReplace) {
+          /* 中断 */
+          arAkahukuImage.onSave
+          (target, false,
+           "\u4E2D\u65AD\u3057\u307E\u3057\u305F", "", normal);
+          return;
+        }
                 
         if (arAkahukuImage.baseList [targetDirIndex].dialog_keep) {
-          var newBase = file.parent.path;
+          var newBase = dir.path;
                     
           arAkahukuImage.baseList [targetDirIndex].dir = newBase;
                     
@@ -1069,16 +1049,8 @@ var arAkahukuImage = {
             .createInstance (Components.interfaces.nsILocalFile);
           file.initWithPath (path);
         }
-      }
-      else {
-        /* 中断 */
-        arAkahukuImage.onSave
-        (target, false,
-         "\u4E2D\u65AD\u3057\u307E\u3057\u305F", "", normal);
-        return;
-      }
-      arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
-        });
+        arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
+      });
     }
     else {
       file
@@ -1096,8 +1068,7 @@ var arAkahukuImage = {
       }
             
       if (!file.exists ()) {
-        file.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                     493/* 0755 */);
+        arAkahukuFile.createDirectory (file.path);
       }
             
       ; /* インデント用 */
@@ -1115,13 +1086,54 @@ var arAkahukuImage = {
         file.appendRelativePath (dir);
       }
       if (!file.exists ()) {
-        file.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                     493/* 0755 */);
+        arAkahukuFile.createDirectory (file.path);
       }
             
       file.appendRelativePath (leafName);
       arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
     }
+  },
+  /**
+   * 保存先のファイルを選ぶ(要Chrome process)
+   */
+  asyncOpenSaveImageFilePicker : function (browser, leafName, dirname, callback) {
+    var chromeWindow = browser.ownerDocument.defaultView.top;
+    var filePicker
+      = Components.classes ["@mozilla.org/filepicker;1"]
+      .createInstance (Components.interfaces.nsIFilePicker);
+    filePicker.init (chromeWindow,
+        // "保存先のファイルを選んでください"
+        "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
+        Components.interfaces.nsIFilePicker.modeSave);
+    filePicker.defaultString = leafName;
+    filePicker.appendFilters (Components.interfaces.nsIFilePicker.filterAll);
+
+    try {
+      var dir
+        = Components.classes ["@mozilla.org/file/local;1"]
+        .createInstance (Components.interfaces.nsILocalFile);
+      dir.initWithPath (dirname);
+      if (!dir.exists ()) {
+        arAkahukuFile.createDirectory (dir.path);
+      }
+
+      filePicker.displayDirectory = dir;
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      /* ベースのディレクトリが不正 */
+    }
+
+    arAkahukuCompat.FilePicker.open
+      (filePicker, function (ret) {
+        var file = null;
+        var dir = null;
+        if (ret == Components.interfaces.nsIFilePicker.returnOK
+            || ret == Components.interfaces.nsIFilePicker.returnReplace) {
+          file = filePicker.file;
+          dir = file.parent;
+        }
+        callback.apply (null, [ret, file, dir]);
+      });
   },
 
   saveImageCore : function (target, file, uri, leafName, normal) {
@@ -1282,7 +1294,7 @@ var arAkahukuImage = {
   setPopup : function () {
     var popup = document.getElementById ("akahuku-saveimage-popup");
         
-    var label, command, menuitem;
+    var label, menuitem;
         
     while (popup.firstChild) {
       popup.removeChild (popup.firstChild);
@@ -1295,18 +1307,20 @@ var arAkahukuImage = {
       else {
         label = arAkahukuImage.baseList [i].dir;
       }
-      command
-      = "arAkahukuImage.onSaveImageClick (null, " + i + ", true, false);";
       menuitem = document.createElement ("menuitem");
       if (arAkahukuImage.baseList [i].key) {
         menuitem.setAttribute ("accesskey",
                                arAkahukuImage.baseList [i].key);
-        if (navigator.oscpu.indexOf ("Windows") == -1) {
+        if (!Akahuku.isRunningOnWindows) {
           label += " (" + arAkahukuImage.baseList [i].key + ")";
         }
       }
       menuitem.setAttribute ("label", label);
-      menuitem.setAttribute ("oncommand", command);
+      menuitem.addEventListener ("command", (function (i) {
+        return function () {
+          arAkahukuImage.selectSaveImageDirFromXUL (i, false);
+        }
+      })(i), false);
       popup.appendChild (menuitem);
     }
   },
@@ -1988,6 +2002,11 @@ var arAkahukuImage = {
       if (arAkahukuImage.enable) {
         arAkahukuImage.applySaveImage (targetDocument,
                                        targetDocument);
+
+        targetDocument.defaultView.addEventListener
+          ("mousedown", function (ev) {
+            arAkahukuImage.onMouseDown (ev);
+          }, true);
       }
     }
   }

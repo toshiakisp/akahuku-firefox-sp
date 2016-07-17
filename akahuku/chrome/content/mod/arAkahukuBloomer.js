@@ -20,7 +20,7 @@ var arAkahukuBloomer = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
@@ -63,16 +63,6 @@ var arAkahukuBloomer = {
         .initPref ("char", "akahuku.bloomer.file", "");
       arAkahukuBloomer.file
         = unescape (arAkahukuBloomer.file);
-      try {
-        var tmp
-          = arAkahukuFile.getURLSpecFromFilename
-          (arAkahukuBloomer.file);
-        if (tmp) {
-          arAkahukuBloomer.file = tmp;
-        }
-      }
-      catch (e) {
-      }
     }
   },
     
@@ -103,7 +93,16 @@ var arAkahukuBloomer = {
     if (Akahuku.enableAll
         && arAkahukuBloomer.enable) {
       var tabbrowser = document.getElementById ("content");
-      var newTab = tabbrowser.addTab (arAkahukuBloomer.file);
+
+      var targetLocation = "about:blank";
+      try {
+        targetLocation
+          = arAkahukuFile.getURLSpecFromFilename
+          (arAkahukuBloomer.file);
+      }
+      catch (e) {
+      }
+      var newTab = tabbrowser.addTab (targetLocation);
       tabbrowser.selectedTab = newTab;
     }
   }

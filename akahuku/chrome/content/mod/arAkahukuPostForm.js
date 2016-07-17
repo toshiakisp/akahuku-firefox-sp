@@ -284,7 +284,7 @@ var arAkahukuPostForm = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
@@ -746,10 +746,10 @@ var arAkahukuPostForm = {
         defCtrl = false;
         defMeta = false;
         defShift = false;
-        if (navigator.platform.match (/mac/i)) {
+        if (Akahuku.isRunningOnMac) {
           defCtrl = true;
         }
-        else if (navigator.platform.match (/win/i)) {
+        else if (Akahuku.isRunningOnWindows) {
           defAlt = true;
           defShift = true;
         }

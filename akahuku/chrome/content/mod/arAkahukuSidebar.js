@@ -215,7 +215,7 @@ var arAkahukuSidebar = {
   currentSidebarDocument : null, /* XULDocument  現在対象のサイドバーの
                                   *   ドキュメント */
     
-  boards : null, /* Object  板情報の配列
+  boards : new Object (), /* Object  板情報の配列
                   *   <String 板名, arAkahukuSidebarBoard> */
     
   enable : false,             /* Boolean  サイドバーを使用する */
@@ -248,14 +248,12 @@ var arAkahukuSidebar = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
       arAkahukuSidebar.onKeyDown (arguments [0]);
     }, true);
-        
-    arAkahukuSidebar.boards = new Object ();
         
     var board = new arAkahukuSidebarBoard ();
     arAkahukuSidebar.boards ["*_*"] = board;

@@ -42,6 +42,19 @@ var arAkahukuWindow = {
         
     return null;
   },
+
+  isContentWindowPrivate : function (targetWindow) {
+    try {
+      return targetWindow
+        .QueryInterface (Ci.nsIInterfaceRequestor)
+        .getInterface (Ci.nsIWebNavigation)
+        .QueryInterface (Ci.nsILoadContext)
+        .usePrivateBrowsing;
+    }
+    catch (e) {
+      return false;
+    }
+  },
     
   /**
    * 対象のウィンドウを持つ tab オブジェクトを取得する

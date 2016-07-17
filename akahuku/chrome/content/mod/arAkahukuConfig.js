@@ -22,6 +22,7 @@ var arAkahukuConfig = {
    * 初期化処理
    */
   init : function () {
+    arAkahukuConfig.loadPrefBranch ();
     arAkahukuConfig.prefBranch.setCharPref ("akahuku.version",
                                             AkahukuVersion);
         
@@ -50,6 +51,7 @@ var arAkahukuConfig = {
       arAkahukuLink.getConfig ();
       arAkahukuPopupQuote.getConfig ();
       arAkahukuCatalog.getConfig ();
+      arAkahukuUI.getConfig ();
             
       /* ダイアログからの設定の変更を監視する */
       arAkahukuConfig.prefBranch.addObserver ("akahuku.savepref",

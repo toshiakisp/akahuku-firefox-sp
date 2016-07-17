@@ -629,9 +629,10 @@ var arAkahukuQuote = {
    * @param  Boolean focusTextArea
    *         コメント欄にフォーカスを移すかどうか
    */
-  quote : function (addQuotePrefix, focusTextArea) {
-    var targetWindow = arAkahukuQuote.getFocusedWindow ();
-    var targetDocument = targetWindow.document;
+  quote : function (addQuotePrefix, focusTextArea, optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetDocument = target.ownerDocument;
+    var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
     var target = targetDocument.getElementsByTagName ("textarea");
@@ -671,9 +672,10 @@ var arAkahukuQuote = {
   /**
    * 選択文字列にプレフィックスを追加してコピーする
    */
-  copyToClipboard : function () {
-    var targetWindow = arAkahukuQuote.getFocusedWindow ();
-    var targetDocument = targetWindow.document;
+  copyToClipboard : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetDocument = target.ownerDocument;
+    var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
     var copytext = arAkahukuQuote.addPrefix (selection, ">");
@@ -691,9 +693,10 @@ var arAkahukuQuote = {
    * @param  Boolean focusMailBox
    *         メール欄にフォーカスを移すかどうか
    */
-  quoteToMailBox : function (focusMailBox) {
-    var targetWindow = arAkahukuQuote.getFocusedWindow ();
-    var targetDocument = targetWindow.document;
+  quoteToMailBox : function (focusMailBox, optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetDocument = target.ownerDocument;
+    var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
     var target = targetDocument.getElementsByName ("email");
@@ -720,9 +723,10 @@ var arAkahukuQuote = {
    * @param  Boolean focusNameBox
    *         名前欄にフォーカスを移すかどうか
    */
-  quoteToNameBox : function (focusNameBox) {
-    var targetWindow = arAkahukuQuote.getFocusedWindow ();
-    var targetDocument = targetWindow.document;
+  quoteToNameBox : function (focusNameBox, optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetDocument = target.ownerDocument;
+    var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
     var target = targetDocument.getElementsByName ("name");
@@ -746,43 +750,43 @@ var arAkahukuQuote = {
   /**
    * 選択文字列を Google Image で検索する
    */
-  googleImage : function () {
-    var targetWindow = arAkahukuQuote.getFocusedWindow ();
-    var targetDocument = targetWindow.document;
+  googleImage : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetWindow = target.ownerDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
     var s = arAkahukuQuote.addPrefix (selection, "");
     s = s.replace (/[\r\n]/, "");
         
-    var tabbrowser = document.getElementById ("content");
     var href
     = "http://www.google.com/images?hl=ja&q="
     + encodeURIComponent (s);
-        
-    var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
-    if (arAkahukuQuote.enableFocus) {
-      tabbrowser.selectedTab = newTab;
-    }
+
+    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus);
   },
     
   /**
    * 選択文字列を Wikipedia で検索する
    */
-  wikipedia : function () {
-    var targetWindow = arAkahukuQuote.getFocusedWindow ();
-    var targetDocument = targetWindow.document;
+  wikipedia : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetWindow = target.ownerDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
     var s = arAkahukuQuote.addPrefix (selection, "");
     s = s.replace (/[\r\n]/, "");
         
-    var tabbrowser = document.getElementById ("content");
     var href
     = "http://ja.wikipedia.org/wiki/%E7%89%B9%E5%88%A5:Search?search="
     + encodeURIComponent (s) + "&go=%E8%A1%A8%E7%A4%BA";
         
+    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus);
+  },
+
+  searchInNewTabXUL : function (href, focus) {
+    var tabbrowser = document.getElementById ("content");
     var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
-    if (arAkahukuQuote.enableFocus) {
+    if (focus) {
       tabbrowser.selectedTab = newTab;
     }
   },

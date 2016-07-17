@@ -73,10 +73,13 @@ var Akahuku = {
   latestParam : null,            /* arAkahukuDocumentParam
                                   *   最近使ったドキュメントごとの情報 */
     
-  isOld : false,                 /* Boolean  古い Mozilla Suite か */
   isFx9 : false,
+
+  isRunningOnWindows : false,
+  isRunningOnMac : false,
     
   initialized : false,           /* Boolean  初期化フラグ */
+  initializedForWindow : false,
     
   enableAll : false,             /* Boolean  全機能の ON／OFF */
   enableAddCheckboxID : false,   /* Boolean  チェックボックスに id を付ける */
@@ -337,28 +340,60 @@ var Akahuku = {
   },
     
   /**
-   * ウィンドウが開かれたイベント
+   * 初期化(XUL windowに依存しない部分)
    */
-  onLoad : function () {
+  init : function () {
     if (Akahuku.initialized) {
       return;
     }
-        
-    Akahuku.protocolHandler
-    = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-    .getService (Components.interfaces.arIAkahukuProtocolHandler);
-        
-    var s = navigator.productSub;
-    s = (s + "").substr (0, 8);
-    if (parseInt (s) <= 20030621) {
-      /* 古い Mozilla Suite の場合 */
-      Akahuku.isOld = true;
+
+    try {
+      Akahuku.protocolHandler
+      = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
+      .getService (Components.interfaces.arIAkahukuProtocolHandler);
     }
-    
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
     Akahuku.isFx9 = arAkahukuCompat.comparePlatformVersion ("8.*") > 0;
-    
+
+    try {
+      var xulRuntime
+        = Components.classes ["@mozilla.org/xre/app-info;1"]
+        .getService (Components.interfaces.nsIXULRuntime);
+      if (/^WIN/.test (xulRuntime.OS)) {
+        Akahuku.isRunningOnWindows = true;
+      }
+      else if (xulRuntime.OS == "Darwin") {
+        Akahuku.isRunningOnMac = true;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
     if ("nsIDOMXPathResult" in Components.interfaces) {
       Akahuku.isXPathAvailable = true;
+    }
+
+    // 各種サービスの初期化
+    arAkahukuFile.init ();
+    arAkahukuSound.init ();
+    arAkahukuLink.init ();
+    arAkahukuCatalog.init ();
+    arAkahukuConverter.init ();
+    arAkahukuConfig.init ();
+    arAkahukuStyle.init ();
+
+    this.initialized = true;
+  },
+
+  /**
+   * ウィンドウが開かれたイベント
+   */
+  onLoad : function () {
+    this.init ();
+    if (Akahuku.initializedForWindow) {
+      return;
     }
     
     /* ScrapBook で akahuku の保存を有効にする
@@ -419,25 +454,17 @@ var Akahuku = {
     catch (e) {
     }*/
     
-    /* 各種サービスの初期化 */
-    arAkahukuConfig.loadPrefBranch ();
-    arAkahukuP2P.init ();
-    arAkahukuFile.init ();
-    arAkahukuSound.init ();
-    arAkahukuLink.init ();
-    arAkahukuCatalog.init ();
-    arAkahukuConverter.init ();
-    arAkahukuConfig.init ();
-    arAkahukuStyle.init ();
-    arAkahukuTab.init ();
-    arAkahukuBloomer.init ();
-    arAkahukuImage.init ();
-    arAkahukuThread.init ();
-    arAkahukuMHT.init ();
-    arAkahukuPostForm.init ();
+    // XUL の window に対する初期設定(イベント登録など)
+    arAkahukuP2P.initForXUL ();
+    arAkahukuTab.initForXUL ();
+    arAkahukuBloomer.initForXUL ();
+    arAkahukuImage.initForXUL ();
+    arAkahukuThread.initForXUL ();
+    arAkahukuMHT.initForXUL ();
+    arAkahukuPostForm.initForXUL ();
         
-    arAkahukuUI.init ();
-    arAkahukuSidebar.init ();
+    arAkahukuUI.initForXUL ();
+    arAkahukuSidebar.initForXUL ();
     
     /* コンテンツのロードのイベントを監視 */
     var appcontent = document.getElementById ("appcontent");
@@ -510,8 +537,8 @@ var Akahuku = {
     catch (e) { Akahuku.debug.exception (e);
     }
             
-    Akahuku.initialized = true;
-    Akahuku.debug.log ("initialized");
+    Akahuku.initializedForWindow = true;
+    Akahuku.debug.log ("initialized for a XUL window");
   },
     
   /**
@@ -563,6 +590,7 @@ var Akahuku = {
     arAkahukuScroll.onBodyUnload (targetDocument, documentParam);
     arAkahukuThreadOperator.onBodyUnload (targetDocument, documentParam);
     arAkahukuThread.onBodyUnload (targetDocument, documentParam);
+    arAkahukuLink.onBodyUnload (targetDocument, documentParam);
     Akahuku.Cache.onBodyUnload (targetDocument, documentParam);
         
     Akahuku.deleteDocumentParam (targetDocument);

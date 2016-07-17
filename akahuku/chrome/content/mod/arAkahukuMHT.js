@@ -1061,7 +1061,7 @@ var arAkahukuMHT = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
@@ -3346,8 +3346,7 @@ var arAkahukuMHT = {
       }
             
       if (!dir.exists ()) {
-        dir.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                    493/*0755*/);
+        arAkahukuFile.createDirectory (dir.path);
       }
     }
     else {
@@ -3474,31 +3473,10 @@ var arAkahukuMHT = {
     else {
       /* ファイル選択ダイアログを表示する */
             
-      var filePicker
-      = Components.classes ["@mozilla.org/filepicker;1"]
-      .createInstance (Components.interfaces.nsIFilePicker);
-      filePicker.init (window,
-                       "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
-                       Components.interfaces.nsIFilePicker.modeSave);
-      filePicker.appendFilter ("MHT Files", "*.mht");
-      filePicker.defaultString = filename;
-      filePicker.appendFilters (Components.interfaces.nsIFilePicker
-                                .filterAll);
-            
-      try {
-        var dir
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        dir.initWithPath (dirname_base);
-                
-        filePicker.displayDirectory = dir;
-      }
-      catch (e) {
-        /* ベースのディレクトリが不正 */
-      }
-            
-      arAkahukuCompat.FilePicker.open
-        (filePicker, function (ret) {
+      var browser = arAkahukuWindow.getBrowserForWindow (window);
+      arAkahukuMHT.asyncOpenSaveMHTFilePicker
+        (browser, filename, dirname_base, function (ret, file, dir) {
+
       if (ret == Components.interfaces.nsIFilePicker.returnOK
           || ret == Components.interfaces.nsIFilePicker.returnReplace) {
         var text
@@ -3509,7 +3487,7 @@ var arAkahukuMHT = {
           arAkahukuDOM.setText (progress2, text);
         }
                 
-        param.file = filePicker.file;
+        param.file = file;
         if (!param.file.leafName.match (/\.mht$/)) {
           var path = param.file.path + ".mht";
           param.file
@@ -3523,7 +3501,7 @@ var arAkahukuMHT = {
         var tmpFileName
           = new Date ().getTime ()
           + "_" + Math.floor (Math.random () * 1000);
-        param.tmpFile.initWithFile (param.file.parent);
+        param.tmpFile.initWithPath (dir.path);
         param.tmpFile.appendRelativePath (tmpFileName);
                 
         window.setTimeout
@@ -3551,8 +3529,49 @@ var arAkahukuMHT = {
                 
         arAkahukuSound.playSaveMHTError ();
       }
-        });
+        });// asyncOpenSaveMHTFilePicker
     }
+  },
+  /**
+   * 保存先のファイルを選ぶ(要Chrome process)
+   */
+  asyncOpenSaveMHTFilePicker : function (browser, filename, dirname_base, callback) {
+    var chromeWindow = browser.ownerDocument.defaultView.top;
+    var filePicker
+    = Components.classes ["@mozilla.org/filepicker;1"]
+    .createInstance (Components.interfaces.nsIFilePicker);
+    filePicker.init
+      (chromeWindow,
+       // "保存先のファイルを選んでください"
+       "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
+       Components.interfaces.nsIFilePicker.modeSave);
+    filePicker.appendFilter ("MHT Files", "*.mht");
+    filePicker.defaultString = filename;
+    filePicker.appendFilters
+      (Components.interfaces.nsIFilePicker.filterAll);
+    try {
+      var dir
+        = Components.classes ["@mozilla.org/file/local;1"]
+        .createInstance (Components.interfaces.nsILocalFile);
+      dir.initWithPath (dirname_base);
+
+      filePicker.displayDirectory = dir;
+    }
+    catch (e) {
+      /* ベースのディレクトリが不正 */
+    }
+
+    arAkahukuCompat.FilePicker.open
+      (filePicker, function (ret) {
+        var file = null;
+        var dir = null;
+        if (ret == Components.interfaces.nsIFilePicker.returnOK
+            || ret == Components.interfaces.nsIFilePicker.returnReplace) {
+          file = filePicker.file;
+          dir = file.parent;
+        }
+        callback.apply (null, [ret, file, dir]);
+      });
   },
     
   /**

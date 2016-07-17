@@ -46,15 +46,15 @@ var arAkahukuJPEG = {
     var isThumbnailOpened = false;
                 
     if (arAkahukuJPEG.enableThumbnail) {
-      if (document.popupNode
-          && document.popupNode.nodeName.toLowerCase ()
+      if (gContextMenu.target
+          && gContextMenu.target.nodeName.toLowerCase ()
           == "img") {
-        if ("src" in document.popupNode) {
-          if (document.popupNode.src.match (/jpe?g$/)) {
+        if ("src" in gContextMenu.target) {
+          if (gContextMenu.target.src.match (/jpe?g$/)) {
             isJPEG = true;
           }
         }
-        if (document.popupNode
+        if (gContextMenu.target
             .getAttribute ("__akahuku_jpeg_thumbnail_opened")
             == "true") {
           isThumbnailOpened = true;
@@ -86,8 +86,8 @@ var arAkahukuJPEG = {
   /**
    * JPEG のサムネを表示する
    */
-  openThumbnail : function () {
-    var target = document.popupNode;
+  openThumbnail : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
         
     var uri
     = Akahuku.protocolHandler.enAkahukuURI ("jpeg", target.src);
@@ -120,8 +120,8 @@ var arAkahukuJPEG = {
   /**
    * JPEG のサムネを閉じる
    */
-  closeThumbnail : function () {
-    var target = document.popupNode;
+  closeThumbnail : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
         
     arAkahukuJPEG.closeThumbnailCore (target);
   },

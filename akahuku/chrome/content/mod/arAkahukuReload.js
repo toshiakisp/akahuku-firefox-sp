@@ -273,32 +273,16 @@ arAkahukuReloadCacheWriter.prototype = {
       path
       = arAkahukuFile.getFilenameFromURLSpec (base + path);
             
-      var targetFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-      targetFile.initWithPath (path);
-      if (!targetFile.exists ()) {
-        targetFile.create
-          (Components.interfaces.nsIFile.NORMAL_FILE_TYPE,
-           420/*0644*/);
-      }
-            
-      var fstream
-      = Components.classes
-      ["@mozilla.org/network/file-output-stream;1"]
-      .createInstance (Components.interfaces.nsIFileOutputStream);
-      fstream.init (targetFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
-            
-      fstream.write (this.head, this.head.length);
-      fstream.write (this.viewer, this.viewer.length);
-      fstream.write (this.head2, this.head2.length);
-      fstream.write (this.expire, this.expire.length);
-      fstream.write (this.head3, this.head3.length);
-      fstream.write (this.warning, this.warning.length);
-      fstream.write (this.body, this.body.length);
-      fstream.write (this.foot, this.foot.length);
-        
-      fstream.close ();
+      var text
+        = this.head
+        + this.viewer
+        + this.head2
+        + this.expire
+        + this.head3
+        + this.warning
+        + this.body
+        + this.foot;
+      arAkahukuFile.createFile (path, text);
     }
     catch (e) { Akahuku.debug.exception (e);
     }
