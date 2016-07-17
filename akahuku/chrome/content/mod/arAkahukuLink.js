@@ -2910,9 +2910,19 @@ var arAkahukuLink = {
           this.os
             = Components.classes ["@mozilla.org/observer-service;1"]
             .getService (Components.interfaces.nsIObserverService);
-          this.os.addObserver
-            (this, "http-on-examine-response", false);
-          this.registered = true;
+          try {
+            this.os.addObserver
+              (this, "http-on-examine-response", false);
+            this.registered = true;
+          }
+          catch (e if Components.results.NS_ERROR_NOT_IMPLEMENTED) {
+            // http-on-* observers only work in the parent process
+            Akahuku.debug.log
+              ("Can't monitor detail load errors of preview"
+               + " in a content process by observing http-on-*");
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
         }
       },
       unregister : function () {
