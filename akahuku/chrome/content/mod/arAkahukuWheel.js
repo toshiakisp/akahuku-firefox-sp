@@ -66,19 +66,16 @@ var arAkahukuWheel = {
     }
 
     if (arAkahukuWheel.withYASSExt == -1) {
-      try {
-        // require Gecko 2.0
-        Components.utils.import ("resource://gre/modules/AddonManager.jsm");
-        AddonManager.getAddonByID ("yetanothersmoothscrolling@kataho", function (addon) {
+      arAkahukuCompat.AddonManager.getAddonByID
+        ("yetanothersmoothscrolling@kataho", function (addon) {
           if (addon && addon.isActive) {
             arAkahukuWheel.withYASSExt = 1;
             Akahuku.debug.log ("enable special support for YASS extension");
           }
+          else {
+            arAkahukuWheel.withYASSExt = 0;
+          }
         });
-      }
-      catch (e) { Akahuku.debug.exception (e);
-        arAkahukuWheel.withYASSExt = 0;
-      }
     }
   },
 

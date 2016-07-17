@@ -226,6 +226,34 @@ var arAkahukuCompat = new function () {
     return uri.spec;
   };
 
+  this.AddonManager = new function () {
+    this.getAddonByID = function (id, callback) {
+      try {
+        var scope = {};
+        Cu.import ("resource://gre/modules/AddonManager.jsm", scope);
+        this.getAddonByID = scope.AddonManager.getAddonByID;
+        this.getAddonByID (id, callback);
+      }
+      catch (e) { Cu.reportError (e);
+        this.getAddonByID = function getAddonByIDCompat (id, callback) {
+          // obsolete gecko 2.0
+          var extMan = Cc ["@mozilla.org/extensions/manager;1"]
+            .getService (Ci.nsIExtensionManager);
+          var ext = extMan.getItemForID (id);
+          ext.QueryInterface (Ci.nsIUpdateItem);
+          var addon = { // only for Akahuku's neccessity
+            id: ext.id,
+            version: ext.version,
+            name: ext.name,
+            isActive: true,
+          };
+          callback (addon);
+        };
+      }
+    }
+  };
+
+
   // Cache service v2
   
   var CacheStorage = {
