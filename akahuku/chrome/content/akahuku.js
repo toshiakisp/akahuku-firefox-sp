@@ -571,6 +571,13 @@ var Akahuku = {
    *         適用するかどうか
    */
   getNeedApply : function (targetDocument, href) {
+    var frame = targetDocument.defaultView.frameElement;
+    if (frame && frame.nodeName.toLowerCase () == "iframe"
+        && !frame.hasAttribute ("src")) {
+      // src の無い iframe の中には適用しない
+      // (親ドキュメントの href と同じに見えてしまう)
+      return false;
+    }
     if (href.match
         (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
         || href.match
