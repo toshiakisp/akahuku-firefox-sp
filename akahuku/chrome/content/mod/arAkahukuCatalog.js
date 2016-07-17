@@ -93,7 +93,8 @@ arAkahukuCatalogPopupData.prototype =  {
           // Firefox にキャッシュされているかのチェック(非同期)
           var that = this;
           Akahuku.Cache.asyncGetHttpCacheStatus
-            (this.targetSrc, false,
+            ({url: this.targetSrc, triggeringNode: targetDocument},
+             false,
              function (cacheStatus) {
               if (!cacheStatus.isExist || that.state != 0) {
                 return;

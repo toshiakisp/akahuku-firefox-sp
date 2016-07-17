@@ -370,7 +370,8 @@ arAkahukuMHTFileData.prototype = {
         }
       }
       
-      Akahuku.Cache.asyncOpenCacheToRead (location, this);
+      Akahuku.Cache.asyncOpenCacheToRead
+        ({url: location, triggeringNode: targetDocument}, this);
     }
     catch (e) { Akahuku.debug.exception (e);
       /* キャッシュが存在しなかった場合 */
@@ -673,7 +674,9 @@ arAkahukuMHTFileData.prototype = {
           
           try {
             Akahuku.Cache.asyncOpenCacheToRead
-              (this.location + ".backup", this);
+              ({url: this.location + ".backup",
+                triggeringNode: this.ownerDocument},
+               this);
           }
           catch (e) { Akahuku.debug.exception (e);
             this.status = arAkahukuMHT.FILE_STATUS_NG;
@@ -3968,7 +3971,9 @@ var arAkahukuMHT = {
             
       try {
         Akahuku.Cache.asyncOpenCacheToWrite
-          (targetDocument.location.href + ".backup", writer);
+          ({url: targetDocument.location.href + ".backup",
+            triggeringNode: targetDocument},
+            writer);
       }
       catch (e) { Akahuku.debug.exception (e);
       }

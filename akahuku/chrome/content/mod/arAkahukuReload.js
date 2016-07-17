@@ -473,7 +473,9 @@ arAkahukuReloadParam.prototype = {
               }
               else {
                 Akahuku.Cache.asyncOpenCacheToWrite
-                  (self.location + ".backup", self.writer);
+                  ({url: self.location + ".backup",
+                    triggeringNode: self.targetDocument},
+                   self.writer);
               }
             }
           }
@@ -1072,7 +1074,8 @@ arAkahukuReloadParam.prototype = {
        true, this.targetDocument);
       var param = this;
       Akahuku.Cache.asyncGetHttpCacheStatus
-        (this.location, true,
+        ({url: this.location, triggeringNode: this.targetDocument},
+         true,
          function (cacheStatus) {
           var lmcache = NaN;
           if ("Last-Modified" in cacheStatus.header) {
@@ -2136,7 +2139,7 @@ var arAkahukuReload = {
 
     if (location) {
       var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-      finder.init ();
+      finder.init (targetDocument.defaultView);
       finder.asyncOpen (location, function (descriptor) {
         try {
           if (descriptor) {
@@ -3420,7 +3423,8 @@ var arAkahukuReload = {
         
     if (updateCache) {
       Akahuku.Cache.asyncOpenCacheToWrite
-        (param.location, param.writer);
+        ({url: param.location, triggeringNode: targetDocument},
+         param.writer);
       if (arAkahukuReload.enableExtCache) {
         /* バックアップキャッシュを更新 */
         if (arAkahukuReload.enableExtCacheFile) {
@@ -3428,7 +3432,9 @@ var arAkahukuReload = {
         }
         else {
           Akahuku.Cache.asyncOpenCacheToWrite
-            (param.location + ".backup", param.writer);
+            ({url: param.location  + ".backup",
+              triggeringNode: targetDocument},
+             param.writer);
         }
       }
     }
@@ -3620,7 +3626,10 @@ var arAkahukuReload = {
   backupCache : function (location, param) {
     param.location = location;
     try {
-      Akahuku.Cache.asyncOpenCacheToRead (location, param);
+      Akahuku.Cache.asyncOpenCacheToRead
+        ({url:location,
+          triggeringNode: param.targetDocument},
+         param);
     }
     catch (e) { Akahuku.debug.exception (e);
     }

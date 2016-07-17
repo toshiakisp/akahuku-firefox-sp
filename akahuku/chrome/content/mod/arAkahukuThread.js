@@ -2657,7 +2657,9 @@ var arAkahukuThread = {
     }
     var that = this;
     Akahuku.Cache.asyncGetHttpCacheStatus
-      (imageStatus.requestURI.spec, false,
+      ({url: imageStatus.requestURI.spec,
+        triggeringNode: event.target},
+       false,
        function (cacheStatus) {
         if (cacheStatus.isExist
             && cacheStatus.httpStatusCode [0] != "2") {
