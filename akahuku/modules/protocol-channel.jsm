@@ -99,6 +99,7 @@ arAkahukuBypassChannel.prototype = {
   _realChannel : null,/* nsIChannel  実チャネル */
   _redirectCallback : null,
   _observingHeaders : false, /* Boolean ヘッダーを監視しているか */
+  enableHeaderBlocker : true, /* Boolean  */
 
   /* 実チャネルに委譲しないプロパティ */
   name : "",
@@ -203,7 +204,8 @@ arAkahukuBypassChannel.prototype = {
    */
   asyncOpen : function (listener, context) {
     this._listener = listener;
-    if (!(this.loadFlags & this._realChannel.LOAD_DOCUMENT_URI)) {
+    if (this.enableHeaderBlocker
+        && !(this.loadFlags & this._realChannel.LOAD_DOCUMENT_URI)) {
       /* 埋め込み要素の場合 */
       this.startHeadersBlocker ();
     }
@@ -404,13 +406,16 @@ arAkahukuBypassChannel.prototype = {
   createRedirectedChannel : function (oldChannel, newChannel) {
     if (newChannel instanceof Ci.nsIHttpChannel) {
       newChannel = new arAkahukuBypassChannel (newChannel);
+      newChannel.loadFlags |= this.loadFlags;
+      newChannel.enableHeaderBlocker = this.enableHeaderBlocker;
       /* リダイレクト時にはリファラを付与 */
       newChannel._realChannel.referrer = oldChannel.URI;
       // 新しいリダイレクト用チャネルの asyncOpen は呼ばず
       // ストリームリスナを数珠つなぎにする
       newChannel._listener = this._listener;
       this._listener = newChannel;
-      if (!(newChannel.loadFlags & Ci.nsIChannel.LOAD_DOCUMENT_URI)) {
+      if (newChannel.enableHeaderBlocker
+          && !(newChannel.loadFlags & Ci.nsIChannel.LOAD_DOCUMENT_URI)) {
         newChannel.startHeadersBlocker ();
       }
     }

@@ -35,6 +35,15 @@ var arAkahukuProtocolHandlerKey = "";
  *   Inherits From: nsIProtocolHandler, arIAkahukuProtocolHandler
  */
 function arAkahukuProtocolHandler () {
+  this.inMainProcess = true;
+  try {
+    var appinfo
+      = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
+    this.inMainProcess
+      = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
+  }
+  catch (e) { Cu.reportError (e);
+  }
 }
 arAkahukuProtocolHandler.prototype = {
   scheme : "akahuku", /* String  プロトコルスキーム */
@@ -637,8 +646,19 @@ arAkahukuProtocolHandler.prototype = {
     var param = this.getAkahukuURIParam (uri.spec);
 
     if (!isFile) {
-      var channel
-        = new arAkahukuCacheChannel (param.original, uri);
+      if (this.inMainProcess) {
+        var channel
+          = new arAkahukuCacheChannel (param.original, uri);
+      }
+      else { // Content process (e10s)
+        // キャッシュストレージにアクセスしずらいので
+        // LOAD_FROM_CACHE を立てた nsIHttpChannel に任せる
+        // (arAkahukuBypassChannel でラップしてリダイレクトを解決)
+        var channel
+          = new arAkahukuBypassChannel (uri.spec, param.original);
+        channel.enableHeaderBlocker = false;
+        channel.loadFlags = Ci.nsIRequest.LOAD_FROM_CACHE;
+      }
       return channel;
     }
 
