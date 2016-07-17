@@ -1038,6 +1038,12 @@ arAkahukuCacheChannel.prototype = {
    * nsICacheEntryOpenCallback.onCacheEntryCheck
    */
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Cr.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,

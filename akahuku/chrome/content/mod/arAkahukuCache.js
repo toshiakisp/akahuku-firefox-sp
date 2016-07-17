@@ -204,7 +204,12 @@ Akahuku.Cache = new function () {
         status.lastModified = descriptor.lastModified * 1000; //[ms]
 
         // HTTP status
-        var text = descriptor.getMetaDataElement ("response-head");
+        try {
+          var text = descriptor.getMetaDataElement ("response-head");
+        }
+        catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+          text = "";
+        }
         if (text) {
           var headers = text.match (/[^\r\n]*\r\n/g);
           if (headers.length > 0) {
@@ -481,7 +486,12 @@ Akahuku.Cache = new function () {
 
     _resolveRedirection : function (descriptor)
     {
-      var head = descriptor.getMetaDataElement ("response-head");
+      try {
+        var head = descriptor.getMetaDataElement ("response-head");
+      }
+      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+        head = "";
+      }
       var httpStatusCode = "000";
       if (head && head.match (/^HTTP\/\d\.\d (\d{3}) ([^\r\n]+)/)) {
         httpStatusCode = RegExp.$1;

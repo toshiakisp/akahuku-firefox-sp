@@ -27,7 +27,7 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor) {
+    if (descriptor && Components.isSuccessCode (status)) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime ((new Date ()).getTime () / 1000
@@ -54,8 +54,20 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
             
       descriptor.close ();
     }
+    else if (Akahuku.debug.enabled) {
+      var errorStatus = arAkahukuUtil.resultCodeToString (status);
+      Akahuku.debug.warn
+        ("arAkahukuMHTRedirectCacheWriter.onCacheEntryAvailable: "
+         + "failed with " + errorStatus);
+    }
   },
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,
@@ -716,6 +728,12 @@ arAkahukuMHTFileData.prototype = {
     }
   },
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,

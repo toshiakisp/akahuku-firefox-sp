@@ -312,8 +312,9 @@ var arAkahukuCompat = new function () {
   var CacheEntryOpenCallback = {
     // Constants of nsICacheStorage for compatiblility
     ENTRY_WANTED : 0,
-    ENTRY_NEEDS_REVALIDATION : 1,
-    ENTRY_NOT_WANTED : 2,
+    RECHECK_AFTER_WRITE_FINISHED : 1,
+    ENTRY_NEEDS_REVALIDATION : 2,
+    ENTRY_NOT_WANTED : 3,
   };
   if ("nsICacheEntryOpenCallback" in Ci) {
     CacheEntryOpenCallback = Ci.nsICacheEntryOpenCallback;

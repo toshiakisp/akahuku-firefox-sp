@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
+ * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuImage, arAkahukuLink,
  *          arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
  *          arAkahukuThread, arAkahukuTitle, Akahuku.Cache, arAkahukuCompat
@@ -300,7 +300,7 @@ arAkahukuReloadCacheWriter.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor) {
+    if (descriptor && Components.isSuccessCode (status)) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime (0);
@@ -333,6 +333,12 @@ arAkahukuReloadCacheWriter.prototype = {
       descriptor.setMetaDataElement ("charset", this.charset);
             
       descriptor.close ();
+    }
+    else if (Akahuku.debug.enabled) {
+      var errorStatus = arAkahukuUtil.resultCodeToString (status);
+      Akahuku.debug.warn
+        ("arAkahukuReloadCacheWriter.onCacheEntryAvailable: "
+         + "failed with " + errorStatus);
     }
   },
   onCacheEntryCheck : function (entry, appCache) {
@@ -440,8 +446,13 @@ arAkahukuReloadParam.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor) {
-      var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
+    if (descriptor && Components.isSuccessCode (status)) {
+      try {
+        var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
+      }
+      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+        charset = "Shift_JIS";
+      }
       var istream = descriptor.openInputStream (0);
       var self = this;
       arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
@@ -499,8 +510,20 @@ arAkahukuReloadParam.prototype = {
         }
       });
     }
+    else if (Akahuku.debug.enabled) {
+      var errorStatus = arAkahukuUtil.resultCodeToString (status);
+      Akahuku.debug.warn
+        ("arAkahukuReloadParam.onCacheEntryAvailable: "
+         + "failed with " + errorStatus);
+    }
   },
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,
