@@ -232,7 +232,7 @@ var arAkahukuBoard = {
       var list = arAkahukuJSON.decode (unescape (tmp2));
       list.push (value);
       tmp2 = arAkahukuJSON.encode (list);
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
       ("akahuku.board_external.patterns2", tmp2);
     }
     else {
@@ -246,14 +246,14 @@ var arAkahukuBoard = {
       tmp += escape (base)
       + "&" + escape (flag);
           
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
       ("akahuku.board_external.patterns", tmp);
     }
         
     arAkahukuBoard.getConfig ();
         
     arAkahukuBoard.enableExternal = true;
-    arAkahukuConfig.prefBranch.setBoolPref
+    arAkahukuConfig.setBoolPref
     ("akahuku.board_external", true);
   },
 

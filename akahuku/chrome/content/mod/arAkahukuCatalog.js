@@ -3704,7 +3704,7 @@ var arAkahukuCatalog = {
     if (/^akahuku_catalog_reorder_save\d?$/.test (target_id)) {
       // 現在の並び順を記憶
       var type = arAkahukuCatalog.REORDER_TYPES [param.order];
-      arAkahukuConfig.prefBranch
+      arAkahukuConfig
         .setIntPref ("akahuku.catalog.reorder.save.type", type);
       arAkahukuCatalog.reorderSaveType = type;
       arAkahukuCatalog.updateReorderIndicator (targetDocument, param);

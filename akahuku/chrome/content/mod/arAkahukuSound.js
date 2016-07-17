@@ -66,33 +66,33 @@ var arAkahukuSound = {
     var ios = Components.classes ["@mozilla.org/network/io-service;1"]
     .getService (Components.interfaces.nsIIOService);
         
-    if (arAkahukuConfig.prefBranch.prefHasUserValue
+    if (arAkahukuConfig.prefHasUserValue
         ("akahuku.sound.reload")) {
       var value
-        = arAkahukuConfig.prefBranch.getBoolPref
+        = arAkahukuConfig.getBoolPref
         ("akahuku.sound.reload");
             
-      arAkahukuConfig.prefBranch.setBoolPref
+      arAkahukuConfig.setBoolPref
         ("akahuku.sound.reload.reply", value);
-      arAkahukuConfig.prefBranch.setBoolPref
+      arAkahukuConfig.setBoolPref
         ("akahuku.sound.reload.catalog", value);
             
-      arAkahukuConfig.prefBranch.clearUserPref
+      arAkahukuConfig.clearUserPref
         ("akahuku.sound.reload");
     }
         
-    if (arAkahukuConfig.prefBranch.prefHasUserValue
+    if (arAkahukuConfig.prefHasUserValue
         ("akahuku.sound.reload.file")) {
       var value
-      = arAkahukuConfig.prefBranch.getCharPref
+      = arAkahukuConfig.getCharPref
       ("akahuku.sound.reload.file");
             
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
       ("akahuku.sound.reload.reply.file", value);
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
       ("akahuku.sound.reload.catalog.file", value);
             
-      arAkahukuConfig.prefBranch.clearUserPref
+      arAkahukuConfig.clearUserPref
       ("akahuku.sound.reload.file");
     }
         

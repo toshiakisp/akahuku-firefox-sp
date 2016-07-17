@@ -1801,7 +1801,7 @@ var arAkahukuLink = {
         value.url = targetUrl;
         list.push (value);
         
-        arAkahukuConfig.prefBranch.setCharPref
+        arAkahukuConfig.setCharPref
           ("akahuku.autolink.user.patterns2",
            escape (arAkahukuJSON.encode (list)));
         

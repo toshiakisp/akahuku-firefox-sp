@@ -406,9 +406,9 @@ var arAkahukuUI = {
     Akahuku.enableAll
     = !arAkahukuConfig
     .initPref ("bool", "akahuku.all", true);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setBoolPref ("akahuku.all", Akahuku.enableAll);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
@@ -428,9 +428,9 @@ var arAkahukuUI = {
     arAkahukuP2P.enable
     = !arAkahukuConfig
     .initPref ("bool", "akahuku.p2p", false);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setBoolPref ("akahuku.p2p", arAkahukuP2P.enable);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
@@ -447,9 +447,9 @@ var arAkahukuUI = {
     = !arAkahukuConfig
     .initPref ("bool", "akahuku.p2p.statusbar", true);
         
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setBoolPref ("akahuku.p2p.statusbar", arAkahukuP2P.enableStatusbar);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
@@ -497,10 +497,10 @@ var arAkahukuUI = {
       var style = -1;
             
       var style = -1;
-      if (arAkahukuConfig.prefBranch
+      if (arAkahukuConfig
           .prefHasUserValue ("browser.chrome.toolbar_style")) {
         style
-          = arAkahukuConfig.prefBranch
+          = arAkahukuConfig
           .getIntPref ("browser.chrome.toolbar_style");
       }
       var navbar;

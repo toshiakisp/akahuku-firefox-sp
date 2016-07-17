@@ -1174,7 +1174,7 @@ var arAkahukuImage = {
   },
     
   saveBaseList : function () {
-    arAkahukuConfig.prefBranch.setCharPref
+    arAkahukuConfig.setCharPref
     ("akahuku.saveimage.base.list2",
      escape (arAkahukuJSON.encode (arAkahukuImage.baseList)));
   },

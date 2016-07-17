@@ -23,8 +23,7 @@ var arAkahukuConfig = {
    */
   init : function () {
     arAkahukuConfig.loadPrefBranch ();
-    arAkahukuConfig.prefBranch.setCharPref ("akahuku.version",
-                                            AkahukuVersion);
+    arAkahukuConfig.setCharPref ("akahuku.version", AkahukuVersion);
         
     if (typeof (arAkahukuConfig.prefBranch.addObserver) === "function") {
       /* 設定を取得する */
@@ -146,6 +145,31 @@ var arAkahukuConfig = {
     }
         
     return value;
+  },
+
+  setBoolPref : function (prefName, value) {
+    this.prefBranch.setBoolPref (prefName, value);
+  },
+  setCharPref : function (prefName, value) {
+    this.prefBranch.setCharPref (prefName, value);
+  },
+  setIntPref : function (prefName, value) {
+    this.prefBranch.setIntPref (prefName, value);
+  },
+  getBoolPref : function (prefName) {
+    return this.prefBranch.getBoolPref (prefName);
+  },
+  getCharPref : function (prefName) {
+    return this.prefBranch.getCharPref (prefName);
+  },
+  getIntPref : function (prefName) {
+    return this.prefBranch.getIntPref (prefName);
+  },
+  prefHasUserValue : function (prefName) {
+    return this.prefBranch.prefHasUserValue (prefName);
+  },
+  clearUserPref : function (prefName) {
+    this.prefBranch.clearUserPref (prefName);
   },
     
   /**

@@ -539,7 +539,7 @@ var arAkahukuP2P = {
    */
   updateAddress : function (address) {
     arAkahukuP2P.address = address;
-    arAkahukuConfig.prefBranch.setCharPref
+    arAkahukuConfig.setCharPref
     ("akahuku.p2p.address",
      address);
   },
@@ -712,7 +712,7 @@ var arAkahukuP2P = {
         /* AKA/0.6 の情報 */
         nodeList = nodeList2;
                 
-        arAkahukuConfig.prefBranch.clearUserPref
+        arAkahukuConfig.clearUserPref
           ("akahuku.p2p.nodelist2");
       }
       var added = false;
@@ -782,7 +782,7 @@ var arAkahukuP2P = {
         
     var nodeList = servant.getNodeList ();
     if (nodeList) {
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
         ("akahuku.p2p.nodelist",
          nodeList);
     }

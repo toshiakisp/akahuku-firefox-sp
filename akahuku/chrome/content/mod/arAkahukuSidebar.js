@@ -2667,14 +2667,14 @@ var arAkahukuSidebar = {
             
       if (type == 0) {
         arAkahukuSidebar.sortType = sorttype;
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setIntPref ("akahuku.sidebar.sort.type",
                        arAkahukuSidebar.sortType);
       }
       else if (type == 1) {
         arAkahukuSidebar.enableSortVisited
           = !arAkahukuSidebar.enableSortVisited;
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.sidebar.sort.visited",
                         arAkahukuSidebar.enableSortVisited);
       }
@@ -2682,13 +2682,13 @@ var arAkahukuSidebar = {
         arAkahukuSidebar.enableSortMarked
           = !arAkahukuSidebar.enableSortMarked;
                 
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.sidebar.sort.marked",
                         arAkahukuSidebar.enableSortMarked);
       }
       else if (type == 3) {
         arAkahukuSidebar.sortInvert = !arAkahukuSidebar.sortInvert;
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.sidebar.sort.invert",
                         arAkahukuSidebar.sortInvert);
       }

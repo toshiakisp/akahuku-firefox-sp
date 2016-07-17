@@ -3353,13 +3353,13 @@ var arAkahukuPostForm = {
         
     if (clipper) {
       if (info.isReply) {
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.postform.reply.hide",
                         clipper.checked);
         arAkahukuPostForm.enableReplyHide = clipper.checked;
       }
       else {
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.postform.normal.hide",
                         clipper.checked);
         arAkahukuPostForm.enableNormalHide = clipper.checked;
