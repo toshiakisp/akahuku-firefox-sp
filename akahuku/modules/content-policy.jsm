@@ -413,13 +413,40 @@ arAkahukuContentPolicy.prototype = {
         var obj = {
           count: 0,
           hostPattern : null,
+          urlPattern : null,
           URI : null,
           isURI : /^[a-z]*:\/\//.test (matched),
+          isFutaba : false,
         };
-        if (obj.isURI) {
+        if (matched.indexOf ("*") != -1) {
+          // ワイルドカード(*)によるURL指定
+          if (obj.isURI) {
+            var pat = matched.replace
+              (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
+              .replace (/\*/g, ".*");
+            obj.urlPattern = new RegExp ("^"+pat+"$");
+            obj.isURI = false;
+            if (/^[^:]*:\/\/[^\/]*\.2chan\.net\//.test (matched)) {
+              // http://*.2chan.net/some_file や
+              // http://www.2chan.net/ad/* などの場合は
+              // 2chan.net 内のURLに対しても評価する必要がある
+              list [type].includesFutaba = true;
+              obj.isFutaba = true;
+            }
+          }
+          else if (/\*\.[^*]+$/.test (matched)) {
+            // ホスト部のみのパターン
+            var pat = matched.replace
+              (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
+              .replace (/\*/g, ".*");
+            obj.hostPattern = new RegExp (pat+"$","i");
+          }
+        }
+        else if (obj.isURI) {
           obj.URI = ios.newURI (matched, "UTF-8", null);
           if (obj.URI && /\.2chan\.net$/i.test(obj.URI.host) ) {
             list [type].includesFutaba = true;
+            obj.isFutaba = true;
           }
         }
         else {
@@ -433,7 +460,7 @@ arAkahukuContentPolicy.prototype = {
           else {
           }
         }
-        if (obj.hostPattern || obj.URI) {
+        if (obj.hostPattern || obj.URI || obj.urlPattern) {
           list [type].push (obj);
         }
       }
@@ -887,9 +914,24 @@ arAkahukuContentPolicy.prototype = {
               break;
             }
           }
+          else if (list [i].urlPattern) {
+            // URLで判定(ワイルドカード展開)
+            //   *.2chan.net/* に対してはふたば内部向けパターン
+            //   のみを評価対象とする。
+            //   広範囲除外パターン(http://*等)でREJECTされないように。
+            if ((!/\.2chan\.net$/i.test (contentLocation.host)
+                  || list [i].isFutaba)
+                && list [i].urlPattern.test (contentLocation.spec)) {
+              reject = true;
+              list [i].count ++;
+              break;
+            }
+          }
           else {
-            /* ホスト名で判定 */
-            if (list [i].hostPattern.test (contentLocation.host) ) {
+            // ホスト名で判定
+            //   (*.2chan.netはホスト名レベルでは除外できない)
+            if (!/\.2chan\.net$/i.test (contentLocation.host)
+                && list [i].hostPattern.test (contentLocation.host) ) {
               reject = true;
               list [i].count ++;
               break;
