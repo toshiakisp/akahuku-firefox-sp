@@ -661,26 +661,53 @@ arAkahukuProtocolHandler.prototype = {
       }
       return channel;
     }
-
     try {
-      var mediator
-        = Cc ["@mozilla.org/appshell/window-mediator;1"]
-        .getService (Ci.nsIWindowMediator);
-      var chromeWindow
-        = mediator
-        .getMostRecentWindow ("navigator:browser");
+      // from arAkahukuReload.js
+      var extCacheFileBase = "";
+      var prefName = "akahuku.reload.extcache.file.base";
+      var prefBranch
+        = Cc ["@mozilla.org/preferences-service;1"]
+        .getService (Ci.nsIPrefBranch2 ? Ci.nsIPrefBranch2 : Ci.nsIPrefBranch);
+      if (prefBranch.prefHasUserValue (prefName)) {
+        extCacheFileBase = unescape (prefBranch.getCharPref (prefName));
+      }
 
-      var base
-        = chromeWindow.arAkahukuFile.getURLSpecFromDirname
-        (chromeWindow.arAkahukuReload.extCacheFileBase);
-      var param = this.getAkahukuURIParam (uri.spec);
+      var targetFile
+        = Cc ["@mozilla.org/file/local;1"]
+        .createInstance (Ci.nsILocalFile);
+      targetFile.initWithPath (extCacheFileBase);
+
+      var fileProtocolHandler
+        = Cc ["@mozilla.org/network/io-service;1"]
+        .getService (Ci.nsIIOService)
+        .getProtocolHandler ("file")
+        .QueryInterface (Ci.nsIFileProtocolHandler);
+      var base = fileProtocolHandler.getURLSpecFromFile (targetFile);
       var path = param.original
         .replace (/^https?:\/\//, "");
 
-      path
-        = chromeWindow.arAkahukuFile.getFilenameFromURLSpec
-        (base + path);
 
+      if (this.inMainProcess) {
+        path = fileProtocolHandler.getFileFromURLSpec (base + path).path;
+        // create nsIInputStreamChannel directly
+        return this._createThreadCacheFileChannel (uri, path);
+      }
+      else { // in content process
+        // Require Firefox 29 (OS.Path.fromFileURI)
+        var scope = {};
+        Cu.import ("resource://gre/modules/osfile.jsm",scope);
+        path = scope.OS.Path.fromFileURI (base + path);
+        return this._createThreadCacheDOMFileChannel (uri, path);
+      }
+    }
+    catch (e) {
+      // 想定外のエラーが起きた場合
+      Cu.reportError (e);
+      return this._createThreadCacheFailChannel (uri);
+    }
+  },
+  _createThreadCacheFileChannel : function (uri, path) {
+    try {
       var targetFile
         = Cc ["@mozilla.org/file/local;1"]
         .createInstance (Ci.nsILocalFile);
@@ -714,6 +741,25 @@ arAkahukuProtocolHandler.prototype = {
       Cu.reportError (e);
       return this._createThreadCacheFailChannel (uri);
     }
+  },
+  _createThreadCacheDOMFileChannel : function (uri, path) {
+    try {
+      Cu.importGlobalProperties (["File"]);
+      var file = new File (path);
+    }
+    catch (e) {
+      var file
+        = Cc ["@mozilla.org/file/local;1"]
+        .createInstance (Ci.nsILocalFile);
+      file.initWithPath (path);
+      if (!file.exists ()) {
+        return this._createThreadCacheFailChannel (uri);
+      }
+    }
+
+    var channel = new arAkahukuDOMFileChannel (uri, file);
+    channel.contentType = "text/html";
+    return channel;
   },
     
   /**

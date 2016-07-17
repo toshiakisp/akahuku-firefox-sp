@@ -9,6 +9,7 @@ var EXPORTED_SYMBOLS = [
   "arAkahukuJPEGThumbnailChannel",
   "arAkahukuCacheChannel",
   "arAkahukuAsyncRedirectVerifyHelper",
+  "arAkahukuDOMFileChannel",
 ];
 
 const Ci = Components.interfaces;
@@ -1361,6 +1362,160 @@ arAkahukuAsyncRedirectVerifyHelper.Event.prototype = {
       return this;
     }
     throw Cr.NS_ERROR_NO_INTERFACE;
+  },
+};
+
+
+/**
+ * ファイル読み込みチャンネル
+ * (require Gecko 8.0: new File)
+ * [e10s] File と FileReader はコンテントプロセスでも使える
+ */
+function arAkahukuDOMFileChannel (uri, file) {
+  Cu.importGlobalProperties (["File"]);
+  if (file instanceof File) {
+    this._domFile = file;
+  }
+  else if (file instanceof Ci.nsIFile) {
+    this._domFile = new File (file);
+  }
+  else {
+    throw Components.Exception
+      ("file must be a DOM File or a nsIFile",
+       Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
+  }
+  this._reader = null;
+  this._listener = null;
+  this._context = null;
+  this._isPending = false;
+  this._isOpened = false;
+  this._isStarted = false;
+
+  this.URI = uri.clone ();
+  this.originalURI = this.URI.clone ();
+}
+arAkahukuDOMFileChannel.prototype = {
+  QueryInterface : function (iid) {
+    if (iid.equals (Ci.nsISupports)
+        || iid.equals (Ci.nsIChannel)) {
+      return this;
+    }
+    throw Cr.NS_ERROR_NO_INTERFACE;
+  },
+  // nsIRequest
+  loadFlags : 0,
+  loadGroup : null,
+  name : "arAkahukuDOMFileChannel",
+  status : Cr.NS_OK,
+  // nsIChannel
+  contentCharset : "",
+  contentLength : -1,
+  contentType : "",
+  notificationCallbacks : null,
+  originalURI : null,
+  owner : null,
+  securityInfo : null,
+  URI : null,
+
+  cancel : function (status) {
+    if (this._reader) {
+      this._reader.abort ();
+    }
+    this.status = status;
+    this._isPending = false;
+    this._listener = null;
+    this._context = null;
+    this._reader = null;
+  },
+  isPending : function () {return this._isPending},
+  resume : function () { throw Cr.NS_ERROR_NOT_IMPLEMENTED; },
+  suspend : function () {throw Cr.NS_ERROR_NOT_IMPLEMENTED; },
+  open : function () { throw Cr.NS_ERROR_NOT_IMPLEMENTED; },
+  asyncOpen : function (listener, context) {
+    if (this._isPending) {
+      throw Components.Exception
+        ("arAkahukuDOMFileChannel is in progress",
+         Cr.NS_ERROR_IN_PROGRESS, Components.stack.caller);
+    }
+    if (this._isOpened) {
+      throw Components.Exception
+        ("arAkahukuDOMFileChannel is already opened",
+         Cr.NS_ERROR_ALREADY_OPENED, Components.stack.caller);
+    }
+    this._listener = listener;
+    this._context = context;
+
+    var reader = new FileReader ();
+    reader.onloadstart = (function (channel) {
+      return function (event) {
+        channel._onReaderLoadStart (event.target);
+      };
+    })(this);
+    reader.onload = (function (channel) {
+      return function (event) {
+        channel._onReaderLoaded (event);
+      };
+    })(this);
+    reader.onerror = (function (channel) {
+      return function (event) {
+        channel._onReaderError (event);
+      };
+    })(this);
+    reader.readAsArrayBuffer (this._domFile);
+    this._reader = reader;
+    this._isPending = true;
+    this._isOpened = true;
+  },
+  _onReaderLoadStart : function (reader) {
+    if (!this._isStarted) {
+      this._listener.onStartRequest (this, this._context);
+    }
+    this._isStarted = true;
+  },
+  _onReaderLoaded : function (event) {
+    var reader = event.target;
+    var dataLength = reader.result.byteLength;
+    var istream
+      = Cc ["@mozilla.org/io/arraybuffer-input-stream;1"]
+      .createInstance (Ci.nsIArrayBufferInputStream);
+    istream.setData (reader.result, 0, reader.result.byteLength);
+    this.contentLength = dataLength;
+
+    var inputStream ;
+    try {
+      this._listener.onDataAvailable
+        (this, this._context, istream, 0, istream.available ());
+      this._isPending = false;
+      this._listener.onStopRequest (this, this._context, Cr.NS_OK);
+    }
+    catch (e) { Cu.reportError (e);
+      this._isPending = false;
+    }
+
+    this._listener = null;
+    this._context = null;
+  },
+  _onReaderError : function (event) {
+    this.status = Cr.NS_BINDING_FAILED;
+    if (event.target.error.name) { // DOMError (Gecko 13.0)
+      Cu.reportError ("arAkahukuDOMFileChannel: FileReader.onerror => "
+          + event.target.error.name);
+    }
+    else if (event.target.error.code) { // FileError
+      Cu.reportError ("arAkahukuDOMFileChannel: FileReader.onerror => "
+          + "error.code = " + event.target.error.code);
+    }
+    try {
+      if (!this._isStarted) {
+        this._listener.onStartRequest (this, this._context);
+      }
+      this._listener.onStopRequest (this, this._context, this.status);
+    }
+    catch (e) { Cu.reportError (e);
+      this._isPending = false;
+    }
+    this._listener = null;
+    this._context = null;
   },
 };
 
