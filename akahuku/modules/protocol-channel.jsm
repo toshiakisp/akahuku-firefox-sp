@@ -70,6 +70,9 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
       this._realChannel = ios.newChannel (originalURI, null, null);
     }
     this.originalURI = ios.newURI (uri, null, null);
+    // hide a real channel's originalURI
+    // to bypass ScriptSecurityManager's CheckLoadURI
+    this.URI = this.originalURI.clone ();
   }
   this.name = uri;
   /* 通知をフィルタリングする */
@@ -79,7 +82,6 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
   if (contentType) {
     this.contentType = contentType;
   }
-  this.loadFlags |= this._realChannel.LOAD_REPLACE;
 }
 arAkahukuBypassChannel.prototype = {
   _listener : null,   /* nsIStreamListener  チャネルのリスナ */
