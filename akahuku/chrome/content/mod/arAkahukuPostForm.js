@@ -1135,10 +1135,10 @@ var arAkahukuPostForm = {
         param.targetURL = formElement.action;
         param.added = true;
                 
-        var browser
-          = arAkahukuWindow.getBrowserForWindow
+        var webProgress
+          = arAkahukuWindow.getWebProgressForWindow
           (targetDocument.defaultView);
-        browser.webProgress.addProgressListener
+        webProgress.addProgressListener
           (param, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
       }
             
@@ -3159,7 +3159,8 @@ var arAkahukuPostForm = {
       }
       param = param.postform_param;
             
-      if (gContextMenu != null && arAkahukuUI.contextMenuShown) {
+      if ((typeof gContextMenu !== "undefined" && gContextMenu != null)
+          && arAkahukuUI.contextMenuShown) {
         /* コンテキストメニューが表示されていたら何もしない */
         return;
       }

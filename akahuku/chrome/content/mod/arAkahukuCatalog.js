@@ -5205,7 +5205,7 @@ var arAkahukuCatalog = {
     if (params.length > 0) {
       // 現 Akahuku 管理下に対象のスレッドがある場合
       targetWindow = params [0].targetDocument.defaultView;
-      arAkahukuWindow.focusTabByWindow (targetWindow);
+      arAkahukuWindow.focusTabForWindow (targetWindow);
       reloader = arAkahukuReload;
     }
     else {
