@@ -82,6 +82,16 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
   if (contentType) {
     this.contentType = contentType;
   }
+
+  this.inMainProcess = true;
+  try {
+    var appinfo
+      = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
+    this.inMainProcess
+      = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
+  }
+  catch (e) { Cu.reportError (e);
+  }
 }
 arAkahukuBypassChannel.prototype = {
   _listener : null,   /* nsIStreamListener  チャネルのリスナ */
@@ -315,6 +325,15 @@ arAkahukuBypassChannel.prototype = {
   startHeadersBlocker : function () {
     if (this._observingHeaders
         || !(this._realChannel instanceof Ci.nsIHttpChannel)) {
+      return;
+    }
+    if (typeof Ci.nsIRequest.LOAD_ANONYMOUS != "undefined") {
+      // cookie-less requests (Gecko 1.9.1)
+      this.loadFlags |= Ci.nsIRequest.LOAD_ANONYMOUS;
+      return;
+    }
+    if (!this.inMainProcess) {
+      // http-on-* observers only work in the parent process
       return;
     }
     var observerService
