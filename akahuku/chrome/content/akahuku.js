@@ -1,5 +1,12 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
+/**
+ * Require: arAkahukuConfig,
+ *          arAkahukuDocumentParam, arAkahukuLocationInfo,
+ *          arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
+ *          arAkahukuBoard,
+ */
+
 /*
 var arAkahukuThreadManager = {
   withThread: function(func) {
@@ -350,7 +357,7 @@ var Akahuku = {
     
     Akahuku.isFx9 = arAkahukuCompat.comparePlatformVersion ("8.*") > 0;
     
-    if (typeof (XPathResult) != "undefined") {
+    if ("nsIDOMXPathResult" in Components.interfaces) {
       Akahuku.isXPathAvailable = true;
     }
     
@@ -1275,13 +1282,14 @@ var Akahuku = {
     var newNodes = new Array ();
 
     /* 可能なら XPath による高速取得を試みる */
-    if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath) {
-      var doc = targetNode.ownerDocument || targetNode;
+    var doc = targetNode.ownerDocument || targetNode;
+    if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath
+        && doc.defaultView) {
       try {
         var iterator =
           doc.evaluate
           (".//blockquote[count(ancestor::center)=0][count(ancestor::table[@border='1' or @class='ama'])=0][count(ancestor::div[@id='akahuku_respanel_content' or @class='ama'])=0]",
-           targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+           targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         var node = iterator.iterateNext ();
         while (node) {
           newNodes.push (node);
@@ -1292,7 +1300,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
-             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);
@@ -1308,7 +1316,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (xpath,
-             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);

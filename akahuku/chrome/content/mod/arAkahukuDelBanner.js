@@ -469,7 +469,7 @@ var arAkahukuDelBanner = {
     var xpath = ".//form[@method='POST'][last()]/following-sibling::*/descendant-or-self::div[count(div[count(descendant::iframe)=1])>0]/div[count(descendant::iframe)=1][last()]";
     var r = targetDocument.evaluate
       (xpath, targetDocument, null,
-       XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+       targetDocument.defaultView.XPathResult.FIRST_ORDERED_NODE_TYPE, null);
     if (!r) return null;
     return r.singleNodeValue;
   },
