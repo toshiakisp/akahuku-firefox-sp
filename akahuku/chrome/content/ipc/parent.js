@@ -11,6 +11,39 @@ var arAkahukuCacheIPCWrapper = {
     };
     Akahuku.Cache.asyncGetHttpCacheStatus (sourceObj, noRedirect, callback);
   },
+
+  asyncOpenCache : function (source, flag, callback)
+  {
+    var browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
+    var sourceObj = {
+      url: source,
+      contextWindow: browser.ownerDocument.defaultView.top,
+    };
+    var wrappedCallback = {
+      onCacheEntryCheck : function (entry, appCache) {
+        // (how can I send sync IPC command to a content process?)
+        try {
+          entry.dataSize;
+        }
+        catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+          return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+        }
+        return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
+      },
+      onCacheEntryAvailable : function (entry, isNew, appCache, status) {
+        if (entry) {
+          Cu.import ("resource://akahuku/ipc-cache.jsm");
+          var entryP = new arCacheEntryParent (entry);
+          entryP.attachIPCMessageManager (browser.messageManager);
+          entry = entryP.createIPCTransferable ();
+        }
+        callback.onCacheEntryAvaiable (entry, isNew, appCache, status);
+      },
+      mainThreadOnly : true,
+    };
+    Akahuku.Cache.asyncOpenCache (sourceObj, flag, wrappedCallback);
+  },
+
   showCacheNotification : function (browser, text) {
     browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
     Akahuku.Cache.showCacheNotification (browser, text);
@@ -24,6 +57,11 @@ arAkahukuIPCRoot.defineProc
   (arAkahukuCacheIPCWrapper,
    "Cache", "showCacheNotification",
    {async: true, callback: 0, frame: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuCacheIPCWrapper,
+   "Cache", "asyncOpenCache",
+   {async: true, callback: 3, frame: true,
+     callbackObjectMethod: ["onCacheEntryCheck","onCacheEntryAvaiable"]});
 
 
 

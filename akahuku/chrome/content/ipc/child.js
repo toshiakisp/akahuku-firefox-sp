@@ -28,6 +28,44 @@ Akahuku.Cache.showCacheNotification = function (browser, text) {
     ("Cache/showCacheNotification", [null, text],
      contentWindow);
 };
+Akahuku.Cache._asyncOpenCache
+  = Akahuku.Cache.asyncOpenCache;
+Akahuku.Cache.asyncOpenCache = function (source, flag, callback) {
+  if (arAkahukuIPC.inMainProcess) {
+    Akahuku.Cache._asyncOpenCache (source, flag, callback);
+    return;
+  }
+  // in content process
+  var contextWindow = null;
+  if (typeof source == "object") {
+    if (source.contextWindow) {
+      contextWindow = source.contextWindow;
+    }
+    else if (source.triggeringNode) {
+      var doc = source.triggeringNode.ownerDocument || source.triggeringNode;
+      contextWindow = doc.defaultView;
+    }
+    source = source.url;// simplify for tranfering
+  }
+
+  var callbackWrapper = {
+    originalCallback: callback,
+    messageManager:
+      arAkahukuIPC.getContentFrameMessageManager (contextWindow),
+    onCacheEntryAvaiable : function (entry, isNew, appCache, status) {
+      if (entry) {
+        Cu.import ("resource://akahuku/ipc-cache.jsm");
+        entry = new arCacheEntryChild (entry);
+        entry.attachIPCMessageManager (this.messageManager);
+      }
+      this.originalCallback
+        .onCacheEntryAvailable (entry, isNew, appCache, status);
+    },
+  };
+  arAkahukuIPC.sendAsyncCommand
+    ("Cache/asyncOpenCache", [source, flag, callbackWrapper],
+     contextWindow);
+};
 
 
 
