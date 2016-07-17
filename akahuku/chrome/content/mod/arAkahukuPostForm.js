@@ -2813,9 +2813,8 @@ var arAkahukuPostForm = {
           // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
           var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
           if (filebox && file instanceof Components.interfaces.nsIFile) {
-            var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-            if (fileurl && param.testAttachableExt (fileurl) ) {
-              filebox.value = fileurl;
+            if (param.testAttachableExt (file.path)) {
+              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
               if (arAkahukuPostForm.enablePreview) {
                 arAkahukuPostForm.onPreviewChangeCore (targetDocument);
               }
@@ -2832,10 +2831,9 @@ var arAkahukuPostForm = {
     }
 
     var file = arAkahukuClipboard.getFile ();
-    if (file instanceof Components.interfaces.nsIFile) {
-      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-      if (fileurl && param.testAttachableExt (fileurl) ) {
-        filebox.value = fileurl;
+    if (file) {
+      if (param.testAttachableExt (file.path)) {
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
         }
@@ -2859,11 +2857,10 @@ var arAkahukuPostForm = {
     var filename
       = arAkahukuFile.getDirectory ("TmpD")
       + arAkahukuFile.separator + "akahuku-clip.jpg";
-    var fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
-    var file = arAkahukuFile.getFileFromURLSpec (fileurl);
+    var file = arAkahukuFile.initFile (filename);
     file.createUnique (file.NORMAL_FILE_TYPE, 420/* 0644 */);
     filename = file.path;
-    fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
+    var fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
     arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
       if (!Components.isSuccessCode (code)) {
         Akahuku.debug.error (arAkahukuUtil.resultCodeToString (code)
@@ -2872,7 +2869,7 @@ var arAkahukuPostForm = {
       }
       var filebox = targetDocument.getElementsByName ("upfile")[0];
       if (filebox) {
-        filebox.value = fileurl;
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
         }
@@ -2891,19 +2888,30 @@ var arAkahukuPostForm = {
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile") [0];
     var file = null;
-    for (var i=0; i < event.dataTransfer.types.length; i ++) {
-      if (event.dataTransfer.types [i] === type) {
-        file = event.dataTransfer.mozGetDataAt (type, i);
-        break;
+    for (var n=0; n < event.dataTransfer.mozItemCount && !file; n ++) {
+      var types = event.dataTransfer.mozTypesAt (n);
+      for (var i=0; i < types.length && !file; i ++) {
+        if (types [i] === type) {
+          file = event.dataTransfer.mozGetDataAt (types [i], n);
+          try {
+            file = file.QueryInterface (Components.interfaces.nsIFile);
+          }
+          catch (e) { // this may cause in a content process (e10s)
+            file = null;
+          }
+        }
+        else if (types [i] === "text/x-moz-url") {
+          // fail safe for e10s
+          var url = event.dataTransfer.mozGetDataAt (types [i], n);
+          file = arAkahukuFile.initFile
+            (arAkahukuFile.getFilenameFromURLSpec (url));
+        }
       }
     }
-    if (filebox && file instanceof Components.interfaces.nsIFile) {
-      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-      if (fileurl) {
-        filebox.value = fileurl;
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
+    if (filebox && file) {
+      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
+      if (arAkahukuPostForm.enablePreview) {
+        arAkahukuPostForm.onPreviewChangeCore (targetDocument);
       }
     }
   },

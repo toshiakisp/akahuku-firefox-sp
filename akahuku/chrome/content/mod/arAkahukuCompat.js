@@ -213,6 +213,47 @@ var arAkahukuCompat = new function () {
       return this.activeElement (targetDocument);
     }
   };
+  this.HTMLInputElement = {
+    /**
+     * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]
+     * required for e10s content process
+     *
+     * @param file  a url string or nsIFile
+     *              (no support for nsIDOMFile and Array)
+     */
+    mozSetFile : function (filebox, file) {
+      if (!(filebox instanceof Ci.nsIDOMHTMLInputElement
+          && filebox.type == "file")) {
+        throw Components.Exception (
+            "must be called for nsIDOMHTMLInputElement type=file",
+            Cr.NS_ERROR_NO_INTERFACE, Components.stack.caller)
+      }
+      if (!file) {
+        filebox.value = "";
+      }
+      else {
+        if (typeof file == "string") {
+          file = arAkahukuFile.initFile (
+              arAkahukuFile.getFilenameFromURLSpec (file));
+        }
+        if ("mozSetFileArray" in filebox) { // since Firefox 38 [Bug 1068838]
+          if (typeof File == "undefined") {
+            // necessary for frame scripts, requiring Firefox 28 and up
+            Components.utils.importGlobalProperties (["File"]);
+          }
+          if (!(file instanceof File)) {
+            file = new File (file); // Gecko 6.0
+          }
+          filebox.mozSetFileArray ([file]);
+        }
+        else {
+          // classic way
+          filebox.value = arAkahukuFile.getURLSpecFromFile (file);
+        }
+      }
+    },
+  };
+
 
   this.losslessDecodeURI = function (uri) {
     if (typeof window !== "undefined"
