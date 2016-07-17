@@ -51,10 +51,6 @@ var arAkahukuConfig = {
       arAkahukuPopupQuote.getConfig ();
       arAkahukuCatalog.getConfig ();
             
-      if (Akahuku.enableAll) {
-        arAkahukuStyle.modifyStyleFile (true);
-      }
-            
       /* ダイアログからの設定の変更を監視する */
       arAkahukuConfig.prefBranch.addObserver ("akahuku.savepref",
                                               arAkahukuConfig,
@@ -193,12 +189,7 @@ var arAkahukuConfig = {
       arAkahukuUI.showPanel ();
       arAkahukuUI.setPanelStatus ();
             
-      if (Akahuku.enableAll) {
-        arAkahukuStyle.modifyStyleFile (true);
-      }
-      else {
-        arAkahukuStyle.modifyStyleFile (false);
-      }
+      arAkahukuStyle.onPrefChanged ();
             
       arAkahukuP2P.update ();
     }

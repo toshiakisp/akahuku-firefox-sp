@@ -1,9 +1,10 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuCatalog, arAkahukuDelBanner, arAkahukuFile,
+ * Require: Akahuku, arAkahukuFile, arAkahukuUtil,
+ *          arAkahukuCatalog, arAkahukuDelBanner,
  *          arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
- *          arAkahukuReload, arAkahukuScroll, arAkahukuStyle,
+ *          arAkahukuReload, arAkahukuScroll,
  *          arAkahukuThread, arAkahukuTitle
  */
 
@@ -80,6 +81,24 @@ arAkahukuStyleData.prototype = {
  * スタイル管理
  */
 var arAkahukuStyle = {
+  /**
+   * 初期化処理
+   */
+  init : function () {
+    if (Akahuku.enableAll) {
+      this.modifyStyleFile (true);
+    }
+  },
+
+  onPrefChanged : function () {
+    if (Akahuku.enableAll) {
+      arAkahukuStyle.modifyStyleFile (true);
+    }
+    else {
+      arAkahukuStyle.modifyStyleFile (false);
+    }
+  },
+
   /**
    * フォーム等を固定する際のスタイルを取得する
    *

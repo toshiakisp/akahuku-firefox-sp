@@ -180,6 +180,34 @@ var arAkahukuCompat = new function () {
     };
   };
 
+  this.Document = new function () {
+    /**
+     * Document.activeElement [LS]
+     * (Basic support at Firefox 3.0 (Gecko 1.9.0))
+     */
+    function activeElementReal (targetDocument) {
+      return targetDocument.activeElement;
+    }
+    function activeElementCompat (targetDocument) {
+      // Note: this code requires running in XUL browser.
+      var focusedElement = document.commandDispatcher.focusedElement;
+      if (focusedElement && focusedElement.ownerDocument === targetDocument) {
+        return focusedElement;
+      }
+      return targetDocument;
+    }
+    this.activeElement = function (targetDocument) {
+      // on-demand initialization
+      if (arAkahukuCompat.comparePlatformVersion ("1.9.0") >= 0) {
+        this.activeElement = activeElementReal;
+      }
+      else {
+        this.activeElement = activeElementCompat;
+      }
+      return this.activeElement (targetDocument);
+    }
+  };
+
   // Cache service v2
   
   var CacheStorage = {

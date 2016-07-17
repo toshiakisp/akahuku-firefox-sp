@@ -231,8 +231,9 @@ arAkahukuMHTFileData.prototype = {
    *         避難所用
    */
   getFile : function (location, targetDocument) {
+    var window = this.ownerDocument.defaultView;
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
-      setTimeout
+      window.setTimeout
       ((function (file, location) {
           return function () {
             var ios
@@ -821,10 +822,11 @@ arAkahukuMHTFileData.prototype = {
 /**
  * mht ファイル作成管理データ
  */
-function arAkahukuMHTParam () {
+function arAkahukuMHTParam (targetDocument) {
   this.files = new Array ();
   this.previewSaveUrls = new Object ();
   this.previewTotalUrls = new Object ();
+  this.targetDocument = targetDocument;
 }
 arAkahukuMHTParam.prototype = {
   isBusy : false,        /* Boolean  保存中かどうか */
@@ -840,10 +842,11 @@ arAkahukuMHTParam.prototype = {
    * データを開放する
    */
   destruct : function () {
-    if (this.checkTimerID != null) {
-      clearInterval (this.checkTimerID);
-      this.checkTimerID = null;
+    var window = this.targetDocument.defaultView;
+    if (window && this.checkTimerID != null) {
+      window.clearInterval (this.checkTimerID);
     }
+    this.checkTimerID = null;
         
     for (var i = 0; i < this.files.length; i ++) {
       try {
@@ -2198,6 +2201,7 @@ var arAkahukuMHT = {
    */
   saveMHTCore : function (param) {
     var targetDocument = param.targetDocument;
+    var window = targetDocument.defaultView;
         
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
@@ -2730,7 +2734,7 @@ var arAkahukuMHT = {
             
       /* 取得状況チェックを開始する */
       param.checkTimerID
-        = setInterval (arAkahukuMHT.checkFiles,
+        = window.setInterval (arAkahukuMHT.checkFiles,
                        100,
                        param, button, button2, progress, progress2);
     }
@@ -2826,7 +2830,8 @@ var arAkahukuMHT = {
     if (button2) {
       button2.style.display = "none";
     }
-    clearInterval (param.checkTimerID);
+    var window = param.targetDocument.defaultView;
+    window.clearInterval (param.checkTimerID);
     param.checkTimerID = null;
         
     text
@@ -2842,7 +2847,7 @@ var arAkahukuMHT = {
       arAkahukuDOM.setText (progress2, text2);
     }
         
-    setTimeout
+    window.setTimeout
     (arAkahukuMHT.createMHTFile,
      100,
      param);
@@ -3177,6 +3182,7 @@ var arAkahukuMHT = {
    *         別名で保存
    */
   saveMHT : function (targetDocument, saveas) {
+    var window = targetDocument.defaultView;
     var param
     = Akahuku.getDocumentParam (targetDocument).mht_param;
         
@@ -3194,7 +3200,6 @@ var arAkahukuMHT = {
     = targetDocument.getElementById ("akahuku_throp_savemht_status");
         
     param.cloneDocument = null;
-    param.targetDocument = null;
         
     if (param.isBusy) {
       arAkahukuDOM.setText (button, "MHT \u3067\u4FDD\u5B58");
@@ -3215,7 +3220,7 @@ var arAkahukuMHT = {
             
       try {
         if (param.checkTimerID != null) {
-          clearInterval (param.checkTimerID);
+          window.clearInterval (param.checkTimerID);
           param.checkTimerID = null;
         }
         for (var i = 0; i < param.files.length; i ++) {
@@ -3252,8 +3257,6 @@ var arAkahukuMHT = {
     if (arAkahukuMHT.enableNolimit) {
       arAkahukuConfig.setTime (arAkahukuMHT.limitTime);
     }
-        
-    param.targetDocument = targetDocument;
         
     if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
@@ -3433,8 +3436,6 @@ var arAkahukuMHT = {
             (button2, "\u5225\u540D\u3067 MHT \u3067\u4FDD\u5B58");
         }
                 
-        param.targetDocument = null;
-                
         param.isBusy = false;
         if (arAkahukuMHT.enableNolimit) {
           arAkahukuConfig.restoreTime ();
@@ -3465,7 +3466,7 @@ var arAkahukuMHT = {
       param.tmpFile.initWithFile (param.file.parent);
       param.tmpFile.appendRelativePath (tmpFileName);
             
-      setTimeout
+      window.setTimeout
       (arAkahukuMHT.saveMHTCore,
        100,
        param);
@@ -3525,7 +3526,7 @@ var arAkahukuMHT = {
         param.tmpFile.initWithFile (param.file.parent);
         param.tmpFile.appendRelativePath (tmpFileName);
                 
-        setTimeout
+        window.setTimeout
           (arAkahukuMHT.saveMHTCore,
            100,
            param);
@@ -3542,7 +3543,6 @@ var arAkahukuMHT = {
           arAkahukuDOM.setText (progress2,
                                 "\u4E2D\u65AD\u3057\u307E\u3057\u305F");
         }
-        param.targetDocument = null;
                 
         param.isBusy = false;
         if (arAkahukuMHT.enableNolimit) {
@@ -3836,6 +3836,7 @@ var arAkahukuMHT = {
    */
   onUseP2PClick : function (event) {
     var targetDocument = event.target.ownerDocument;
+    var window = targetDocument.defaultView;
     event.preventDefault ();
         
     var result = arAkahukuP2P.applyP2P (targetDocument,
@@ -3864,7 +3865,7 @@ var arAkahukuMHT = {
     var progress
     = targetDocument.getElementById ("akahuku_savemht_progress");
     arAkahukuDOM.setText (progress, text);
-    setTimeout (function (progress) {
+    window.setTimeout (function (progress) {
         arAkahukuDOM.setText (progress, null);
       }, 3000, progress);        
   },
@@ -3983,7 +3984,7 @@ var arAkahukuMHT = {
       }
             
       if (info.isOnline && arAkahukuMHT.enable && !info.isTsumanne) {
-        var param = new arAkahukuMHTParam ();
+        var param = new arAkahukuMHTParam (targetDocument);
         Akahuku.getDocumentParam (targetDocument).mht_param = param;
                 
         var container = targetDocument.createElement ("div");

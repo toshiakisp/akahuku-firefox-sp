@@ -299,7 +299,7 @@ arAkahukuRedirectListener.prototype = {
         }
       }
             
-      setTimeout
+      this.target.ownerDocument.defaultView.setTimeout
       (function (self) {
         arAkahukuImage.saveImage
         (self.target, self.index,
@@ -1019,7 +1019,7 @@ var arAkahukuImage = {
       var filePicker
       = Components.classes ["@mozilla.org/filepicker;1"]
       .createInstance (Components.interfaces.nsIFilePicker);
-      filePicker.init (window,
+      filePicker.init (target.ownerDocument.defaultView,
                        "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
                        Components.interfaces.nsIFilePicker.modeSave);
       filePicker.defaultString = leafName;
@@ -1488,7 +1488,7 @@ var arAkahukuImage = {
           target.style.display = "";
         }
                 
-        setTimeout
+        targetDocument.defaultView.setTimeout
           (function (messageNode) {
             arAkahukuDOM.setText (messageNode, null);
           }, 5000, messageNode);
@@ -1516,7 +1516,7 @@ var arAkahukuImage = {
         
     arAkahukuSound.playSaveImageError ();
         
-    setTimeout
+    targetDocument.defaultView.setTimeout
     (function (messageNode) {
       arAkahukuDOM.setText (messageNode, null);
     }, 5000, messageNode);
@@ -1866,7 +1866,7 @@ var arAkahukuImage = {
 
       if (info.isMonaca) {
         textNode = container.previousSibling;
-        if (textNode && textNode.nodeType === Node.TEXT_NODE
+        if (textNode && textNode.nodeType === textNode.TEXT_NODE
             && textNode.parentNode.nodeName.toLowerCase () == "span"
             && textNode.parentNode.className == "s10" // 画像レス
             && textNode.nodeValue == //"画像ファイル名："

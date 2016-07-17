@@ -1,6 +1,10 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
+ * Require: Akahuku
+ */
+
+/**
  * ウィンドウ管理
  */
 var arAkahukuWindow = {

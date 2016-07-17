@@ -417,7 +417,7 @@ arAkahukuReloadParam.prototype = {
     }
     catch (e) {
     }
-    clearTimeout (this.statusTimerID);
+    this.targetDocument.defaultView.clearTimeout (this.statusTimerID);
     this.statusTimerID = null;
     this.targetDocument = null;
   },
@@ -730,7 +730,7 @@ arAkahukuReloadParam.prototype = {
             arAkahukuReload.setStatus
             ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F "
              + arAkahukuUtil.resultCodeToString (ret),
-             true, targetDocument);
+             true, this.targetDocument);
           }
           return;
         }
@@ -899,10 +899,10 @@ arAkahukuReloadParam.prototype = {
                         
         }
         
-        setTimeout
-          (arAkahukuReload.update,
-           10,
-           this.targetDocument, this.replied);
+        this.targetDocument.defaultView
+          .setTimeout (function (targetDocument, replied) {
+            arAkahukuReload.update (targetDocument, replied);
+          }, 10, this.targetDocument, this.replied);
         return;
         break;
       case 304:
@@ -1959,9 +1959,9 @@ var arAkahukuReload = {
     if (!permanent && !arAkahukuReload.enableStatusHold) {
       var param
       = Akahuku.getDocumentParam (targetDocument).reload_param;
-      clearTimeout (param.statusTimerID);
+      targetDocument.defaultView.clearTimeout (param.statusTimerID);
       param.statusTimerID
-      = setTimeout
+      = targetDocument.defaultView.setTimeout
       (function (message) {
         for (var i = 0; i < ids.length; i++) {
           var node = targetDocument.getElementById (ids [i]);
@@ -2097,11 +2097,17 @@ var arAkahukuReload = {
         arAkahukuFile.gunzip
           (param.responseText, function (data) {
             param.responseText = data;
-            setTimeout (arAkahukuReload.update, 10, targetDocument);
+            targetDocument.defaultView
+              .setTimeout (function () {
+                arAkahukuReload.update (targetDocument);
+              }, 10);
           });
       }
       else {
-        setTimeout (arAkahukuReload.update, 10, targetDocument);
+        targetDocument.defaultView
+          .setTimeout (function () {
+            arAkahukuReload.update (targetDocument);
+          }, 10);
       }
     };
 
@@ -3521,7 +3527,7 @@ var arAkahukuReload = {
           nodes [i].src = nodes [i].src;
         }
         else if (request.imageStatus == 0) {
-          setTimeout
+          targetDocument.defaultView.setTimeout
             (function (node) {
               node.src = node.src;
             }, 100, nodes [i]);
@@ -3894,9 +3900,10 @@ var arAkahukuReload = {
           && info.isFutaba
           && !info.isFutasuke) {
         var location = targetDocument.location.href;
-        setTimeout (arAkahukuReload.backupCache,
-                    1000,
-                    location, param);
+        targetDocument.defaultView
+          .setTimeout (function () {
+            arAkahukuReload.backupCache (location, param);
+          }, 1000);
       }
     }
   },
@@ -3956,7 +3963,7 @@ var arAkahukuReload = {
       var sibling = (backword ? "previousSibling" : "nextSibling");
       var ret = [];
       while (node) {
-        if (node.nodeType === Node.ELEMENT_NODE &&
+        if (node.nodeType === node.ELEMENT_NODE &&
             node.nodeName.toLowerCase () == "br") {
           break;
         }
@@ -3988,8 +3995,10 @@ var arAkahukuReload = {
 
     var ret = {red: false, redType: "", deleted: false};
 
-    if ((sourceBQ instanceof Node && !Akahuku.isMessageBQ (sourceBQ))
-        || (targetBQ instanceof Node && !Akahuku.isMessageBQ (targetBQ))) {
+    if ((sourceBQ instanceof Components.interfaces.nsIDOMNode
+          && !Akahuku.isMessageBQ (sourceBQ))
+        || (targetBQ instanceof Components.interfaces.nsIDOMNode
+          && !Akahuku.isMessageBQ (targetBQ))) {
       return ret;
     }
 
@@ -4104,7 +4113,7 @@ var arAkahukuReload = {
     var node = bqnode.previousSibling;
     while (node) {
       var text = "";
-      if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeType === node.TEXT_NODE) {
         text = node.nodeValue;
         if (nextToNum) { //No.を含むノードの前のテキストノード末尾に
           node.nodeValue = text.replace
@@ -4117,7 +4126,7 @@ var arAkahukuReload = {
           return true;
         }
       }
-      else if (node.nodeType === Node.ELEMENT_NODE) {
+      else if (node.nodeType === node.ELEMENT_NODE) {
         if (/^br$/i.test (node.nodeName)) {
           lastText = "";
         }
@@ -4144,7 +4153,7 @@ var arAkahukuReload = {
     }
     var node = bqnode.previousSibling;
     while (node) {
-      if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeType === node.TEXT_NODE) {
         if (node.nodeValue.match (pattern)) {
           node.nodeValue = RegExp.$1 + RegExp.$3;
           return true;

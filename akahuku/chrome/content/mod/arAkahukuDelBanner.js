@@ -281,10 +281,10 @@ var arAkahukuDelBanner = {
               var child = parent.parentNode.childNodes [0];
               var valuableChildsLength = 0;
               while (child) {
-                if (child.nodeType === Node.ELEMENT_NODE) {
+                if (child.nodeType === child.ELEMENT_NODE) {
                   valuableChildsLength ++;
                 }
-                else if (child.nodeType === Node.TEXT_NODE
+                else if (child.nodeType === child.TEXT_NODE
                     && !(/^[ \r\n\t]*$/.test (child.nodeValue))) {
                   valuableChildsLength ++;
                 }

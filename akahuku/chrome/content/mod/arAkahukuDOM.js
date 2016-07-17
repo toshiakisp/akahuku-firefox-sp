@@ -597,10 +597,21 @@ arAkahukuDOM.Style = new function () {
 /**
  * factory of DOM Mutation Observer for DOM3/4
  */
-arAkahukuDOM.createMutationObserver = function (callback) {
+arAkahukuDOM.createMutationObserver = function (callback, optNode) {
+  if (optNode && optNode instanceof Components.interfaces.nsIDOMDocument
+      && "MutationObserver" in optNode.defaultView) {
+    return new optNode.defaultView
+      .MutationObserver (callback);
+  }
+  if (optNode && optNode instanceof Components.interfaces.nsIDOMElement
+      && "MutationObserver" in optNode.ownerDocument.defaultView) {
+    return new optNode.ownerDocumenet.defaultView
+      .MutationObserver (callback);
+  }
   if (typeof (MutationObserver) != "undefined") {
     return new MutationObserver (callback);
   }
+
   return new arAkahukuDOM.MutationObserverOnDOM3 (callback);
 };
 
@@ -655,7 +666,7 @@ arAkahukuDOM.MutationObserverOnDOM3.prototype = {
 
       if (!mo._timer) {
         mo._timer
-        = setTimeout
+        = target.ownerDocument.defaultView.setTimeout
         (function () {
           mo._timer = null;
           mo._applying = true;

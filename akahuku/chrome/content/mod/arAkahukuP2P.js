@@ -1204,7 +1204,9 @@ var arAkahukuP2P = {
     if (arAkahukuP2P.prefetchList.length > 0
         && arAkahukuP2P.prefetchTimer == null) {
       arAkahukuP2P.prefetchTimer
-      = setTimeout (arAkahukuP2P.prefetchNotify, 500);
+      = targetDocument.defaultView.setTimeout (function (targetWindow) {
+        arAkahukuP2P.prefetchNotify (targetWindow);
+      }, 500, targetDocument.defaultView);
     }
         
     return [found, saved, waiting, pushed];
@@ -1213,7 +1215,7 @@ var arAkahukuP2P = {
   /**
    * プリフェッチする
    */
-  prefetchNotify : function () {
+  prefetchNotify : function (targetWindow) {
     if (arAkahukuP2P.prefetchList.length > 0) {
       var path = arAkahukuP2P.prefetchList.shift ();
             
@@ -1226,7 +1228,9 @@ var arAkahukuP2P = {
         
     if (arAkahukuP2P.prefetchList.length > 0) {
       arAkahukuP2P.prefetchTimer
-      = setTimeout (arAkahukuP2P.prefetchNotify, 500);
+      = targetWindow.setTimeout (function () {
+        arAkahukuP2P.prefetchNotify (targetWindow);
+      }, 500);
     }
     else {
       arAkahukuP2P.prefetchTimer = null;

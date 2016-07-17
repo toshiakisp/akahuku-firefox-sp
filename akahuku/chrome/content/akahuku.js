@@ -428,6 +428,7 @@ var Akahuku = {
     arAkahukuCatalog.init ();
     arAkahukuConverter.init ();
     arAkahukuConfig.init ();
+    arAkahukuStyle.init ();
     arAkahukuTab.init ();
     arAkahukuBloomer.init ();
     arAkahukuImage.init ();
@@ -1310,7 +1311,7 @@ var Akahuku = {
         if (newNodes.length == 0) {
           // タテログのログ対応 patch
           var xpath = ".//div[count(ancestor::div[@class='thread'])=1]";
-          if (targetNode instanceof Document) {
+          if (targetNode instanceof Components.interfaces.nsIDOMDocument) {
             xpath = ".//div[@class='thread']//div";
           }
           iterator =
@@ -1434,7 +1435,7 @@ var Akahuku = {
           documentParam._messageBQCache = null;
         }
         observer.disconnect ();
-      });
+      }, documentParam.targetDocument);
       var target = documentParam.targetDocument.body;
       if (nodes.length > 0) {
         target = arAkahukuDOM.findParentNode (nodes [0], "form") || target;

@@ -3492,7 +3492,8 @@ var arAkahukuLink = {
         node.appendChild (anchor);
       }
       else {
-        if ("noscriptOverlay" in window) {
+        if (typeof window !== "undefined"
+            && "noscriptOverlay" in window) {
           setTimeout (function (node, image) {
               node.appendChild (image);
             }, 500, node, image);
@@ -3519,7 +3520,7 @@ var arAkahukuLink = {
         var node2 = node.firstChild;
         while (node2) {
           if (node2
-              && node2.nodeType == Node.ELEMENT_NODE
+              && node2.nodeType == node2.ELEMENT_NODE
               && node2.getAttribute ("dummyhref")
               == target.getAttribute ("dummyhref")) {
             forceCancelImageLoad (node2);

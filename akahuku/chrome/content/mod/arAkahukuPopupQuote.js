@@ -25,8 +25,9 @@ arAkahukuQuoteOriginal.prototype = {
 /**
  * 引用のポップアップ管理データ
  */
-function arAkahukuPopupQuoteParam () {
+function arAkahukuPopupQuoteParam (targetDocument) {
   this.popups = new Array ();
+  this.targetDocument = targetDocument;
 }
 arAkahukuPopupQuoteParam.prototype = {
   timerID : null,        /* Number  タイマーの ID */
@@ -46,10 +47,11 @@ arAkahukuPopupQuoteParam.prototype = {
    * データを開放する
    */
   destruct : function () {
-    if (this.timerID != null) {
-      clearInterval (this.timerID);
-      this.timerID = null;
+    var window = this.targetDocument.defaultView;
+    if (window && this.timerID != null) {
+      window.clearTimeout (this.timerID);
     }
+    this.timerID = null;
     this.target = null;
     this.popups = null;
     this.targetDocument = null;
@@ -267,18 +269,18 @@ var arAkahukuPopupQuote = {
           param.pageY = event.pageY;
           return;
         }
-        clearTimeout (param.timerID);
+        targetDocument.defaultView.clearTimeout (param.timerID);
         param.timerID = null;
       }
             
       param.target = event.explicitOriginalTarget;
-      param.targetDocument = param.target.ownerDocument;
       param.pageX = event.pageX;
       param.pageY = event.pageY;
       param.timerID
-      = setTimeout (arAkahukuPopupQuote.onPopupWaitTimeout,
-                    arAkahukuPopupQuote.delayShow,
-                    param);
+      = targetDocument.defaultView
+      .setTimeout (function (param) {
+        arAkahukuPopupQuote.onPopupWaitTimeout (param);
+      }, arAkahukuPopupQuote.delayShow, param);
     }
     catch (e) { Akahuku.debug.exception (e);
       /* ドキュメントが閉じられた場合など */
@@ -371,7 +373,7 @@ var arAkahukuPopupQuote = {
                 
         arAkahukuPopupQuote.removePopup (param);
                 
-        setTimeout
+        targetDocument.defaultView.setTimeout
           (function () {
             try {
               target.style.backgroundColor = "transparent";
@@ -1254,7 +1256,7 @@ var arAkahukuPopupQuote = {
     }
         
     if (arAkahukuPopupQuote.enable && info.isReply) {
-      var param = new arAkahukuPopupQuoteParam ();
+      var param = new arAkahukuPopupQuoteParam (targetDocument);
       Akahuku.getDocumentParam (targetDocument).popupquote_param = param;
             
       if (arAkahukuPopupQuote.enableClickHide) {

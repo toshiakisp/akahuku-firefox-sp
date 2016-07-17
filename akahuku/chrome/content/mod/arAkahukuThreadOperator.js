@@ -424,8 +424,9 @@ arAkahukuThumbnailPopupData.prototype = {
 /**
  * スレッド操作パネル管理のデータ
  */
-function arAkahukuThreadOperatorParam () {
-  this.popupParam = new arAkahukuPopupParam (10);
+function arAkahukuThreadOperatorParam (targetDocument) {
+  this.popupParam = new arAkahukuPopupParam (10, targetDocument);
+  this.targetDocument = targetDocument;
 }
 arAkahukuThreadOperatorParam.prototype = {
   popupParam : null,   /* arAkahukuPopupParam  ポップアップ
@@ -433,6 +434,7 @@ arAkahukuThreadOperatorParam.prototype = {
   thumbnailPopupData : null, /* arAkahukuThumbnailPopupData  サムネの
                               *   ポップアップデータ */
   thumbnailTimerID : null,   /* Number  サムネのポップアップのタイマー ID */
+  targetDocumenet : null,    /* HTMLDocument  対象のドキュメント */
     
   /**
    * データを開放する
@@ -449,9 +451,11 @@ arAkahukuThreadOperatorParam.prototype = {
     this.thumbnailPopupData = null;
         
     if (this.thumbnailTimerID != null) {
-      clearInterval (this.thumbnailTimerID);
+      var window = this.targetDocument.defaultView;
+      window.clearInterval (this.thumbnailTimerID);
       this.thumbnailTimerID = null;
     }
+    this.targetDocument = null;
   }
 };
 /**
@@ -877,6 +881,7 @@ var arAkahukuThreadOperator = {
       /* すでに unload されていた場合など */
       return;
     }
+    var window = targetDocument.defaultView;
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
     var param
@@ -948,7 +953,7 @@ var arAkahukuThreadOperator = {
         if (arAkahukuThreadOperator.enableThumbnailRoll) {
           arAkahukuThreadOperator.onThumbnailTimer (targetDocument);
           param.thumbnailTimerID
-            = setInterval
+            = window.setInterval
             (function () {
               arAkahukuThreadOperator.onThumbnailTimer
               (targetDocument);
@@ -960,7 +965,7 @@ var arAkahukuThreadOperator = {
       if (param.thumbnailPopupData) {
         param.thumbnailPopupData.run (3, param.popupParam);
         if (param.thumbnailTimerID) {
-          clearInterval (param.thumbnailTimerID);
+          window.clearInterval (param.thumbnailTimerID);
           param.thumbnailTimerID = null;
         }
       }
@@ -1093,8 +1098,10 @@ var arAkahukuThreadOperator = {
       return;
     }
         
+    var window = targetDocument.defaultView;
+
     if (info.isReply && arAkahukuThreadOperator.enable) {
-      var param = new arAkahukuThreadOperatorParam ();
+      var param = new arAkahukuThreadOperatorParam (targetDocument);
       Akahuku.getDocumentParam (targetDocument).threadoperator_param
       = param;
             
@@ -1594,7 +1601,7 @@ var arAkahukuThreadOperator = {
       if (arAkahukuThreadOperator.enableThumbnailOnly
           || arAkahukuThreadOperator.enableThumbnail) {
         /* 遅延実行で負荷軽減 */
-		setTimeout
+		window.setTimeout
 		((function (doc) {
 			return function () {
 			  arAkahukuThreadOperator

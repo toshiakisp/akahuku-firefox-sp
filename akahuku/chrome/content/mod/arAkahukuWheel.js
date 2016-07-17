@@ -93,14 +93,7 @@ var arAkahukuWheel = {
       var targetDocument = event.target.ownerDocument;
       var targetWindow = targetDocument.defaultView;
             
-      var tabbrowser = document.getElementById ("content");
-      var selectedBrowser;
-      if ("selectedBrowser" in tabbrowser) {
-        selectedBrowser = tabbrowser.selectedBrowser;
-      }
-      else {
-        selectedBrowser = tabbrowser;
-      }
+      var selectedBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
             
       var documentParam
       = Akahuku.getDocumentParam (targetDocument);
@@ -168,9 +161,9 @@ var arAkahukuWheel = {
         }
                 
         /* timeout が設定済みならリセットして再設定 */
-        clearTimeout (arAkahukuWheel.timeoutID);
+        targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
-          setTimeout (function (status, text) {
+          targetWindow.setTimeout (function (status, text) {
               try {
                 if (status.label == text) {
                   status.label = "";
@@ -343,9 +336,9 @@ var arAkahukuWheel = {
           status.label = text;
                     
           /* timeout が設定済みならリセットして再設定 */
-          clearTimeout (arAkahukuWheel.timeoutID);
+          targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
           arAkahukuWheel.timeoutID =
-            setTimeout (function (status, text) {
+            targetWindow.setTimeout (function (status, text) {
                 try {
                   if (status.label == text) {
                     status.label = "";

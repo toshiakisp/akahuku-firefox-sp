@@ -2,8 +2,8 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuP2P,
- *          arAkahukuReload, arAkahukuWindow, arAkahukuBoard,
+ *          (arAkahukuDocumentParam), arAkahukuDOM, arAkahukuP2P,
+ *          arAkahukuWindow, arAkahukuBoard,
  *          arAkahukuUtil
  */
 
@@ -1917,7 +1917,7 @@ var arAkahukuThread = {
                     function () {
                      var href = iframe.contentDocument.location.href;
                      if (href.match (/del\.php(\?guid=on)?$/)) {
-                       setTimeout
+                       targetDocument.defaultView.setTimeout
                          (function () {
                            state.div.parentNode.removeChild (state.div);
                            state.opened = false;
@@ -1951,6 +1951,7 @@ var arAkahukuThread = {
     if (info.isNotFound) {
       return;
     }
+    var targetDocument = targetNode.ownerDocument || targetNode;
         
     var node, nodes, tmp;
         
@@ -1982,7 +1983,7 @@ var arAkahukuThread = {
               nodes [i].style.marginLeft
                 = (img.width + 40) + "px";
               nodes [i].style.display = "none";
-              setTimeout
+              targetDocument.defaultView.setTimeout
                 ((function (node) {
                     return function () {
                       node.style.display = "";
@@ -1994,7 +1995,7 @@ var arAkahukuThread = {
             /* オートリンクのプレビュー */
             nodes [i].style.marginLeft = a.offsetWidth + "px";
             nodes [i].style.display = "none";
-            setTimeout
+            targetDocument.defaultView.setTimeout
               ((function (node) {
                   return function () {
                     node.style.display = "";

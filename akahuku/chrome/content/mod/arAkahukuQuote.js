@@ -842,8 +842,6 @@ var arAkahukuQuote = {
             // form#text (スレ本文(~2016/05/31))
             )) {
       
-      var targetWindow = arAkahukuQuote.getFocusedWindow ();
-            
       var text = "";
       switch (arAkahukuQuote.numberType) {
         case 0:
