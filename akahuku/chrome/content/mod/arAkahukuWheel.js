@@ -371,7 +371,9 @@ var arAkahukuWheel = {
    */
   _createWheelHandlerForFrames : function (bindedDocument) {
     return function onWheelForSubFrames (event) {
-      var targetDocument = event.target.ownerDocument;
+      // target: defaultView, Document, Element
+      var targetDocument = event.target.document
+        || event.target.ownerDocument || event.target;
       if (targetDocument == bindedDocument) {
         return; //別に補足済みのはずなので処理不要
       }
@@ -400,7 +402,7 @@ var arAkahukuWheel = {
       }
       var dummyEvent = {
         type : event.type,
-        target : targetFrame,
+        target : targetFrame || targetDocument.defaultView,
         deltaX : (isWheel ? event.deltaX : null),
         deltaY : (isWheel ? event.deltaY : null),
         detail : event.detail,
