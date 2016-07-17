@@ -5784,7 +5784,7 @@ var arAkahukuCatalog = {
       var targetDocument = Akahuku.documentParams [i].targetDocument;
       var td = arAkahukuCatalog.getThreadCell (targetDocument, id);
       if (td) {
-        arAkahukuCatalog.setCellVisited (td, true);
+        arAkahukuCatalog.setCellVisited (td, visited);
       }
     }
   },
