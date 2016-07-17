@@ -1019,11 +1019,11 @@ arAkahukuReloadParam.prototype = {
 
   _asyncOpenGetFromHead : function (channel) {
     try {
-      var ios
-        = Components.classes ["@mozilla.org/network/io-service;1"]
-        .getService (Components.interfaces.nsIIOService);
       var channel4GET
-        = ios.newChannelFromURI (channel.originalURI)
+        = arAkahukuUtil.newChannel ({
+          uri: channel.originalURI,
+          loadingNode: this.targetDocument,
+          contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
         .QueryInterface (Components.interfaces.nsIHttpChannel);
       channel4GET.requestMethod = "GET";
       channel4GET.loadFlags = channel.loadFlags;
@@ -3584,11 +3584,11 @@ var arAkahukuReload = {
       param.useRange = true;
     }
         
-    var ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService);
     param.reloadChannel
-    = ios.newChannel (location, null, null)
+    = arAkahukuUtil.newChannel ({
+      uri: location,
+      loadingNode: targetDocument,
+      contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
     .QueryInterface (Components.interfaces.nsIHttpChannel);
 
     if (param.requestMode == 0 //HEAD-GET

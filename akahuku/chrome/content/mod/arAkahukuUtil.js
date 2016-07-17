@@ -126,19 +126,103 @@ var arAkahukuUtil = new function () {
     var channel = this.newChannel (source);
     channel.asyncOpen (listener, null);
   };
+
   /*
-   * nsIURIかstringからnsIChannelを得る(NetUtil.newChannel互換)
+   * nsIChannel を作成する
+   * (NetUtil.newChannel の最小限版)
+   * source = {
+   *   uri: string, nsIURI, or nsIFile
+   *   loadingNode: DOMNode,
+   *   contentPolicyType: Ci.nsIContentPolicy.TYPE_* [optional]
+   *   }
+   * or
+   * source = {
+   *   uri: string, nsIURI, or nsIFile
+   *   loadUsingSystemPrincipal: true,
+   *   contentPolicyType: Ci.nsIContentPolicy.TYPE_* [optional]
+   *   }
    */
-  this.newChannel = function (source, optCharset, optBaseURI) {
+  this.newChannel = function (source) {
     if (source instanceof Ci.nsIChannel) {
       return source;
     }
-    var uri = (source instanceof Ci.nsIURI ?
-        source : this.newURI (source, optCharset, optBaseURI));
+
+    var uri;
+    var loadingNode = null;
+    var loadingPrincipal = null;
+    var triggeringPrincipal = null;
+    var securityFlags = 0;
+    var loadUsingSystemPrincipal = false;
+    var contentPolicyType = Ci.nsIContentPolicy.TYPE_OTHER;
+    if (typeof source == "string"
+        || source instanceof Ci.nsIURI
+        || source instanceof Ci.nsIFile) {
+      uri = (source instanceof Ci.nsIURI ?
+          source : this.newURI (source, null, null));
+      loadUsingSystemPrincipal = true;
+    }
+    else if (typeof source == "object") {
+      uri = source.uri;
+      if (!uri) {
+        throw Components.Exception (
+            "arAkahukuUtil.newChannel requires object with uri property",
+            Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
+      }
+      uri = (source.uri instanceof Ci.nsIURI ?
+          source.uri : this.newURI (source.uri, null, null));
+
+      if (source.loadUsingSystemPrincipal) {
+        loadUsingSystemPrincipal = true;
+      }
+      else if (source.loadingNode) {
+        loadUsingSystemPrincipal = false;
+        loadingNode = source.loadingNode;
+      }
+      else {
+        throw Components.Exception (
+            "arAkahukuUtil.newChannel requires object with uri property",
+            Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
+      }
+
+      if (source.contentPolicyType) {
+        contentPolicyType = source.contentPolicyType;
+      }
+    }
+    else {
+      throw Components.Exception (
+          "arAkahukuUtil.newChannel requires string, nsIURI, nsIFile, or object",
+          Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
+    }
+
     var ios = Cc ["@mozilla.org/network/io-service;1"]
       .getService (Ci.nsIIOService);
+
+    if ("newChannelFromURI2" in ios) {
+      if (loadUsingSystemPrincipal) {
+        loadingPrincipal = getSystemPrincipal ();
+        securityFlags = Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL;
+      }
+      else {
+        securityFlags = Ci.nsILoadInfo.SEC_NORMAL;
+      }
+      return ios.newChannelFromURI2 (uri,
+          loadingNode, loadingPrincipal, triggeringPrincipal,
+          securityFlags, contentPolicyType);
+    }
+
+    // newChannel, newChannelFromURI: Obsolete since Gecko 48
     return ios.newChannelFromURI (uri);
   };
+  function getSystemPrincipal () {
+    try {
+      return Cc ["@mozilla.org/scriptsecuritymanager;1"]
+        .getService (Ci.nsIScriptSecurityManager)
+        .getSystemPrincipal ();
+    }
+    catch (e) { Cu.reportError (e);
+    }
+    return null;
+  }
   /*
    * nsIFileかstringからnsIURIを得る(NetUtil.newURI互換)
    */

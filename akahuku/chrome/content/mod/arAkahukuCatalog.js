@@ -4544,12 +4544,12 @@ var arAkahukuCatalog = {
       tmpNode.style.display = "none";
     }
         
-    var ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService);
     param.reloadChannel
-    = ios.newChannel (targetDocument.location.href, null, null)
-    .QueryInterface (Components.interfaces.nsIHttpChannel);
+      = arAkahukuUtil.newChannel ({
+        uri: targetDocument.location.href,
+        loadingNode: targetDocument,
+        contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH,
+      }).QueryInterface (Components.interfaces.nsIHttpChannel);
     if (!arAkahukuCatalog.enableReloadUpdateCache) {
       // HttpChannel にキャッシュを更新させない
       param.reloadChannel.loadFlags
