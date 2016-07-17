@@ -5199,13 +5199,25 @@ var arAkahukuCatalog = {
     }
     var uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
 
-    // 現在のWindowを最優先探索
-    var targetWindow = anchor.ownerDocument.defaultView;
-    var window = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+    var targetWindow, reloader;
 
-    targetWindow = arAkahukuWindow.focusAkahukuTabByURI (uri, window);
-    if (!targetWindow) {// 切替失敗時
-      return;
+    var params = Akahuku.getDocumentParamsByURI (uri);
+    if (params.length > 0) {
+      // 現 Akahuku 管理下に対象のスレッドがある場合
+      targetWindow = params [0].targetDocument.defaultView;
+      arAkahukuWindow.focusTabByWindow (targetWindow);
+      reloader = arAkahukuReload;
+    }
+    else {
+      // XUL Window毎の検索
+      targetWindow = anchor.ownerDocument.defaultView;
+      var chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+      targetWindow = arAkahukuWindow.focusAkahukuTabByURI (uri, chromeWindow);
+      if (!targetWindow) {// 切替失敗時
+        return;
+      }
+      chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+      reloader = chromeWindow.arAkahukuReload;
     }
 
     event.preventDefault ();
@@ -5232,9 +5244,8 @@ var arAkahukuCatalog = {
         base = doc.documentElement; //標準準拠モード用
       }
       if (offsetTop < base.scrollTop + base.clientHeight) {
-        // 続きを読ませる (強引?)
-        window = arAkahukuWindow.getParentWindowInChrome (targetWindow);
-        window.arAkahukuReload.diffReloadCore (doc, doSync, false);
+        // 画面内に要素がある場合
+        reloader.diffReloadCore (doc, doSync, false);
       }
     }
   },

@@ -167,4 +167,15 @@ var arAkahukuWindow = {
     }
     return null;
   },
+
+  focusTabByWindow : function (targetWindow) {
+    var tab = arAkahukuWindow.getTabForWindow (targetWindow);
+    if (tab) {
+      document.getElementById ("content").selectedTab = tab;
+    }
+    else {
+      Akahuku.debug.warn ("arAkahukuWindow.focusTabByWindow: "
+          + "tab not found for window " + targetWindow);
+    }
+  },
 };
