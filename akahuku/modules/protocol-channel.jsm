@@ -14,6 +14,7 @@ var EXPORTED_SYMBOLS = [
 const Ci = Components.interfaces;
 const Cc = Components.classes;
 const Cr = Components.results;
+const Cu = Components.utils;
 
 var loader
 = Cc ["@mozilla.org/moz/jssubscript-loader;1"]
@@ -494,15 +495,11 @@ function arAkahukuJPEGThumbnailChannel (uri, originalURI, contentType) {
   this._originalURI = originalURI;
   this.contentType = contentType;
     
-  this.URI
-    = Cc ["@mozilla.org/network/standard-url;1"]
-    .createInstance (Ci.nsIURI);
-  this.URI.spec = uri;
-    
-  this.originalURI
-    = Cc ["@mozilla.org/network/standard-url;1"]
-    .createInstance (Ci.nsIURI);
-  this.originalURI.spec = uri;
+  var ios
+    = Cc ["@mozilla.org/network/io-service;1"]
+    .getService (Ci.nsIIOService);
+  this.URI = ios.newURI (uri, null, null);
+  this.originalURI = this.URI.clone ();
 }
 arAkahukuJPEGThumbnailChannel.prototype = {
   _originalURI : "",  /* String  本来の URI */
@@ -541,8 +538,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIChannel)
         || iid.equals (Ci.nsIRequest)
-        || iid.equals (Ci.nsITimerCallback)
-        || iid.equals (Ci.nsIWebProgressListener)) {
+        || iid.equals (Ci.nsIRequestObserver)) {
       return this;
     }
         
@@ -604,69 +600,25 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     this._listener = listener;
     this._context = context;
         
-    var uri
-    = Cc ["@mozilla.org/network/standard-url;1"]
-    .createInstance (Ci.nsIURI);
-    uri.spec = this._originalURI;
-        
-    var mediator
-    = Components.classes
-    ["@mozilla.org/appshell/window-mediator;1"]
-    .getService (Ci.nsIWindowMediator);
-    var chromeWindow
-    = mediator
-    .getMostRecentWindow ("navigator:browser");
-        
-    if (uri.scheme == "file") {
-      this._targetFile
-        = chromeWindow.arAkahukuFile.getFileFromURLSpec (uri.spec);
-            
-      /* asyncOpen 内で即応答するとおかしくなるので
-       * タイマを走らせて遅延を作る */
-      var timer
-        = Cc ["@mozilla.org/timer;1"]
-        .createInstance (Ci.nsITimer);
-      timer.initWithCallback (this, 10, Ci.nsITimer.TYPE_ONE_SHOT);
-      return;
+    var channel;
+    var ios
+      = Cc ["@mozilla.org/network/io-service;1"]
+      .getService (Ci.nsIIOService);
+    if ("newChannel2" in ios) {
+      var ssm
+        = Cc ["@mozilla.org/scriptsecuritymanager;1"]
+        .getService (Ci.nsIScriptSecurityManager);
+      channel = ios.newChannel2 (this._originalURI, null, null,
+          null,
+          ssm.getSystemPrincipal (),
+          null,
+          Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+          Ci.nsIContentPolicy.TYPE_OTHER);
     }
-        
-    var leafName
-    = new Date ().getTime ()
-    + "_" + Math.floor (Math.random () * 1000);
-        
-    var filename
-    = chromeWindow.arAkahukuFile.systemDirectory
-    + chromeWindow.arAkahukuFile.separator + leafName;
-        
-    this._targetFile
-    = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
-    this._targetFile.initWithPath (filename);
-        
-    var webBrowserPersist
-    = Components
-    .classes ["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"]
-    .createInstance (Ci.nsIWebBrowserPersist);
-    var flags = Ci.nsIWebBrowserPersist.PERSIST_FLAGS_NO_CONVERSION;
-    webBrowserPersist.persistFlags = flags;
-    webBrowserPersist.progressListener = this;
-    try {
-      arAkahukuCompat.WebBrowserPersist.saveURI
-        (webBrowserPersist, {uri: uri, file: this._targetFile});
+    else {
+      channel = ios.newChannel (this._originalURI, null, null);
     }
-    catch (e) { Components.utils.reportError (e);
-    }
-  },
-    
-  /**
-   * 時間経過イベント
-   *   nsITimerCallback.notify
-   *
-   * @param  nsITimer timer
-   *         呼び出し元のタイマ
-   */
-  notify : function (timer) {
-    this._onSave ();
+    channel.asyncOpen (this, null);
   },
     
   /**
@@ -679,101 +631,50 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
     
-  /**
-   * 監視ウィンドウのロケーションが変わった時のイベント
-   *   nsIWebProgressListener.onLocationChange
-   * 未使用
-   */
-  onLocationChange : function (webProgress, request, location) {
+  // nsIRequestObserver
+  onStartRequest : function (request, context) {
+    var pipeSize = 0xffffffff;
+    var pipe = Cc ["@mozilla.org/pipe;1"].createInstance (Ci.nsIPipe);
+    pipe.init (true, true, 1<<12, pipeSize, null);
+    this._pipe = pipe;
   },
     
-  /**
-   * 進行状況が変わった時のイベント
-   *   nsIWebProgressListener.onProgressChange
-   * 未使用
-   */
-  onProgressChange : function (webProgress , request,
-                               curSelfProgress, maxSelfProgress,
-                               curTotalProgress, maxTotalProgress) {
-  },
-    
-  /**
-   * プロトコルのセキュリティ設定が変わった時のイベント
-   *   nsIWebProgressListener.onSecurityChange
-   * 未使用
-   */
-  onSecurityChange : function (webProgress, request, state) {
-  },
-    
-  /**
-   * 状況が変わった時のイベント
-   *   nsIWebProgressListener.onStateChange
-   * 終了したらファイルを展開する
-   *
-   * @param  nsIWebProgress webProgress
-   *         呼び出し元
-   * @param  nsIRequest request
-   *         状況の変わったリクエスト
-   * @param  Number stateFlags
-   *         変わった状況のフラグ
-   * @param  nsresult status
-   *         エラーコード
-   */
-  onStateChange : function (webProgress, request, stateFlags, status) {
-    var httpStatus = 200;
-    try {
-      httpStatus
-        = request.QueryInterface (Ci.nsIHttpChannel)
-        .responseStatus;
-    }
-    catch (e) {
-    }
-        
-    if (stateFlags
-        & Ci.nsIWebProgressListener.STATE_STOP) {
-      if (httpStatus < 400) {
-        /* 転送が終了したら */
-        this._onSave ();
-        this._targetFile.remove (true);
-      }
-      else {
-        this._onFail ();
-        this._targetFile.remove (true);
-      }
-            
-      this._targetFile = null;
+  // nsIRequestObserver
+  onDataAvailable : function (request, context, inputStream, offset, count) {
+    var writeCount = this._pipe.outputStream.writeFrom (inputStream, count);
+    if (writeCount == 0) {
+      throw Cr.NS_BASE_STREAM_CLOSED;
     }
   },
     
-  /**
-   * ステータスバーに表示するメッセージが変わった時のイベント
-   *   nsIWebProgressListener.onStatusChange
-   * 未使用
-   */
-  onStatusChange : function (webProgress, request, status, message) {
+  // nsIRequestObserver
+  onStopRequest : function (request, context, statusCode) {
+    this._pipe.outputStream.close ();
+    this.status = statusCode;
+    if (Components.isSuccessCode (statusCode)) {
+      this._onSuccess ();
+    }
+    else {
+      this._pipe.inputStream.close ();
+      this._onFail ();
+    }
   },
-        
+
   /**
-   * ファイルの保存が完了したイベント
+   * 元データのバッファ完了
    */
-  _onSave : function () {
+  _onSuccess : function () {
     var bindata = "";
     try {
-      var fstream
-        = Components
-        .classes ["@mozilla.org/network/file-input-stream;1"]
-        .createInstance (Ci.nsIFileInputStream);
       var bstream
-        = Components
-        .classes ["@mozilla.org/binaryinputstream;1"]
+        = Cc ["@mozilla.org/binaryinputstream;1"]
         .createInstance (Ci.nsIBinaryInputStream);
-      fstream.init (this._targetFile, 0x01, 0444, 0);
-      bstream.setInputStream (fstream);
-      bindata = bstream.readBytes (this._targetFile.fileSize);
+      bstream.setInputStream (this._pipe.inputStream);
+      bindata = bstream.readBytes (this._pipe.inputStream.available ());
       bstream.close ();
-      fstream.close ();
+      this._pipe.inputStream.close ();
     }
-    catch (e) {
+    catch (e) { Cu.reportError (e);
       bindata = "";
     }
 
@@ -790,10 +691,14 @@ arAkahukuJPEGThumbnailChannel.prototype = {
         bindata = bindata.substr (start, end + 2 - start);
       }
     }
+
+    if (bindata.length == 0) {
+      this.status = Cr.NS_ERROR_NO_CONTENT;
+      this._onFail ();
+      return;
+    }
         
-    var pipe
-    = Cc ["@mozilla.org/pipe;1"]
-    .createInstance (Ci.nsIPipe);
+    var pipe = Cc ["@mozilla.org/pipe;1"].createInstance (Ci.nsIPipe);
         
     pipe.init (false, false, bindata.length, 1, null);
         
@@ -803,12 +708,10 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     this._isPending = true;
     try {
       this._listener.onStartRequest (this, this._context);
-      this._listener.onDataAvailable (this, this._context,
-                                      pipe.inputStream,
-                                      0, this._targetFile.fileSize);
+      this._listener.onDataAvailable
+        (this, this._context, pipe.inputStream, 0, bindata.length);
       this._isPending = false;
-      this._listener.onStopRequest (this, this._context,
-                                    Cr.NS_OK);
+      this._listener.onStopRequest (this, this._context, Cr.NS_OK);
     }
     catch (e) {
       this._isPending = false;
@@ -819,15 +722,14 @@ arAkahukuJPEGThumbnailChannel.prototype = {
   },
     
   /**
-   * ファイルの保存が失敗したイベント
+   * サムネイル取得失敗
    */
   _onFail : function () {
     this._isPending = true;
     try {
       this._listener.onStartRequest (this, this._context);
       this._isPending = false;
-      this._listener.onStopRequest (this, this._context,
-                                    Cr.NS_OK);
+      this._listener.onStopRequest (this, this._context, this.status);
     }
     catch (e) {
       this._isPending = false;
