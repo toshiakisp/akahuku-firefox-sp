@@ -2429,16 +2429,20 @@ var arAkahukuThread = {
   /**
    * レスパネルを表示
    */
-  showResPanel : function () {
+  showResPanel : function (targetDocument) {
     var frame, header, content, button, resizer, scroll, bar;
         
-    var params = Akahuku.getFocusedDocumentParam ();
+    if (targetDocument) {
+      params = Akahuku.getDocumentParam (targetDocument);
+    }
+    else {
+      params = Akahuku.getFocusedDocumentParam ();
+      targetDocument = params.targetDocument;
+    }
         
     if (!params) {
       return;
     }
-        
-    var targetDocument = params.targetDocument;
         
     if (!params.location_info.isReply) {
       /* レス送信モードではない */
