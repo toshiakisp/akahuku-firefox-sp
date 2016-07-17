@@ -338,7 +338,6 @@ var arAkahukuBoard = {
     scope.arAkahukuServerData = arAkahukuServerData;
   }
   catch (e) {
-    Components.utils.reportError ("no arAkahukuServerData");
     try {
       var loader
         = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
