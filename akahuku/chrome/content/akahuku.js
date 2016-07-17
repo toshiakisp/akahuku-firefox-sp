@@ -1847,13 +1847,18 @@ var Akahuku = {
       args.push (arguments [i]);
     }
     var param = Akahuku.getDocumentParam (contextDocument);
+    // traverse iframe ancestors to handle tasks from content policy
+    while (!param && contextDocument.defaultView.frameElement
+        && contextDocument.defaultView.frameElement.nodeName == "IFRAME") {
+      contextDocument = contextDocument.defaultView.frameElement.ownerDocument;
+      param = Akahuku.getDocumentParam (contextDocument);
+    }
     if (param && "wasApplied" in param && param.wasApplied) {
-      // DOMContentLoaded 後では直に呼び出す
-      try {
-        handlerOwner [handlerName].apply (handlerOwner, args);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
+      // DOMContentLoaded 後では直後に呼び出す
+      // (content-policyからでは直接では早すぎることがある)
+      arAkahukuUtil.executeSoon (function (owner, name, args){
+        owner [name].apply (owner, args);
+      }, [handlerOwner, handlerName, args]);
     }
     else {
       // DOMContentLoaded 前では後で実行するようリストに入れる

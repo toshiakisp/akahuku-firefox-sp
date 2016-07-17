@@ -25,6 +25,9 @@ var arAkahukuDelBanner = {
    */
   setStyleFile : function (style) {
     if (arAkahukuDelBanner.enable) {
+      style
+      .addRule ("*[__akahuku_contentpolicy_hide]",
+                "display: none ! important;");
       if (arAkahukuDelBanner.enableImage) {
         /* バナー広告の後の改行 */
         style
@@ -480,49 +483,122 @@ var arAkahukuDelBanner = {
       // 処理済みのノードは無視
       return;
     }
-    // 無駄な余白を生む祖先を辿る
     var branch = context.nodeName;
     var node = context;
+    var hiddenNode = null;
+    var hideAttr = "__akahuku_contentpolicy_hide";
+    var dontRemove = node.hasAttribute ("id");
     function isBlankNode (node) {
       return (node.offsetHeight == 0 || node.offsetWidth == 0);
     }
-    while (node.parentNode && node.parentNode.nodeType != Node.DOCUMENT_NODE) {
+
+    // ノードを非表示にしながら問題なさそうな所まで祖先にさかのぼる
+    while (node.parentNode) {
+      node.setAttribute (hideAttr, "1");
+      if (!isBlankNode (node)) {
+        // 別srcなiframe内では hideAttr で非表示にできないので
+        node.style.display = "none";
+      }
+      if (hiddenNode) {
+        hiddenNode.removeAttribute (hideAttr);
+      }
+      hiddenNode = node;
+
       var blank = true;
       for (var i = 0; i < node.parentNode.children.length; i ++) {
-        if (blank && node.parentNode.children [i] != context) {
-          blank = isBlankNode (node.parentNode.children [i]);
+        var brother = node.parentNode.children [i];
+        if (brother == node) continue; // 兄弟のみを走査
+        blank = blank && isBlankNode (brother);
+        dontRemove = dontRemove
+          || brother.hasAttribute ("id")
+          || brother.hasAttribute (hideAttr);
+      }
+      if (!blank) break; //空白ではない兄弟がいるならそこまで
+
+      node = node.parentNode;
+      branch = node.nodeName
+        + (node.hasAttribute ("id") ? "#" + node.getAttribute ("id") : "")
+        + (node.hasAttribute ("class") ? "." + node.getAttribute ("class") : "")
+        + ">" + branch;
+
+      if (node.parentNode && node.parentNode.nodeType == node.DOCUMENT_NODE) {
+        var frameElement = node.parentNode.defaultView.frameElement;
+        if (frameElement && frameElement.nodeName.toLowerCase () == "iframe") {
+          // iframeの中からは親ドキュメントへさかのぼる
+          branch = frameElement.nodeName
+            + (node.hasAttribute ("id") ? "#" + node.getAttribute ("id") : "")
+            + (node.hasAttribute ("class") ? "." + node.getAttribute ("class") : "")
+            + ">#document"
+            + (frameElement.hasAttribute ("src") ? "(" + frameElement.getAttribute ("src") + ")" : "")
+            + ">" + branch;
+          node = frameElement;
+          // iframe内のidは関係がないのでフラグリセット
+          dontRemove = false;
+        }
+        else {
+          break;
         }
       }
-      if (!blank) break; //空白ではない子供がいる親は刈らない
-      node = node.parentNode;
-      branch = node.nodeName + ">" + branch;
 
-      //(子孫は全て空白だが)自身が空白でないなら探索打ち切り
-      if (!isBlankNode (node)) break;
+      dontRemove = dontRemove || node.hasAttribute ("id");
     }
 
-    if (/^(?:DIV>)?A>IMG$/.test (branch)) {
+    var log = false;
+    if (/^(?:DIV(?:[\.#][^>]*)*>)?A(?:[\.#][^>]*)*>IMG(?:[\.#][^>]*)*$/.test (branch)) {
       // バナー広告のツリー構造は従来通りに削除処理
       context.parentNode.setAttribute ("delete", text || "delete");
       context.setAttribute ("__akahuku_banner", "true");
+      if (hiddenNode) {
+        hiddenNode.removeAttribute ("__akahuku_contentpolicy_hide");
+        hiddenNode = null;
+      }
       var param = Akahuku.getDocumentParam (context.ownerDocument);
       var info = (param ? param.location_info : {isMht:false});
       this.deleteImage (node, info, false);
+      node = null;
     }
-    else if (/^(?:DIV>)*IFRAME$/.test (branch)) {
-      node.parentNode.removeChild (node);
+    else if (/^(?:DIV(?:[\.#][^>]*)*>)*IFRAME(?:[\.#][^>]*)*($|>#document)/.test (branch)) {
+      // known ad pattern
     }
-    else {
-      context.setAttribute ("delete", text || "delete");
-      node.style.display = "none";
-      if (Akahuku.debug.enabled) {
-        var src
-          = context.getAttribute ("src")
-          || context.getAttribute ("href");
+    else if (/(^|>)DIV(?:#[^>]*)?\.thre(>|$)/.test (branch)) {
+      // for safe
+      if (hiddenNode) {
+        hiddenNode.removeAttribute ("__akahuku_contentpolicy_hide");
+        hiddenNode = null;
+      }
+      Akahuku.debug.warn
+        ("deleteContextAfterBlock avoids to "
+         + (dontRemove ? "hide " : "remove ")
+         + "(" + node.parentNode.nodeName + ">)" + branch + src
+         + "\n  " + context.ownerDocument.location);
+      node = null;
+    }
+    else { // unknown pattern
+      log = true;
+    }
+
+    if (node && node.parentNode) {
+      var parentNodeName = node.parentNode.nodeName;
+      if (dontRemove) {
+        // already hidden, just mark
+        context.setAttribute ("delete", text || "delete");
+        node.setAttribute ("delete", text || "delete");
+      }
+      else {
+        node.parentNode.removeChild (node);
+      }
+
+      if (log && Akahuku.debug.enabled) {
+        var src = context.getAttribute ("src") || "";
+        if (src.length) {
+          src = "[src=\"" + src.replace (/\?.*$/, "?...") + "\"]";
+        }
         Akahuku.debug.log
-          ("deleteContextAfterBlock hides a non-banner context "
-           + branch + " (" + src + ")"
-           + "\n" + context.ownerDocument.location);
+          ("deleteContextAfterBlock suspiciously "
+           + (dontRemove ? "hides " : "removes ")
+           + "(" + parentNodeName + ">)" + branch + src
+           + "\n  " + context.ownerDocument.location);
+
       }
     }
   },
