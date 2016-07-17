@@ -468,11 +468,11 @@ var Akahuku = {
         if (typeof Aima_Aimani != "undefined") {
           /* Aima_Aimani よりも先に動くために
            * イベントの順番を入れ替える */
-          appcontent.removeEventListener
+          sidebar.removeEventListener
             ("DOMContentLoaded",
              Aima_Aimani.onSidebarLoaded,
              false);
-          appcontent.addEventListener
+          sidebar.addEventListener
             ("DOMContentLoaded",
              Aima_Aimani.onSidebarLoaded,
              false);
