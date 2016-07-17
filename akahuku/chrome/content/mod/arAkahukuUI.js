@@ -238,7 +238,7 @@ var arAkahukuUI = {
    *         対象のイベント
    */
   setContextMenu : function (event) {
-    if (gContextMenu) {
+    if (gContextMenu && event.target.id == "contentAreaContextMenu") {
       arAkahukuLink.setContextMenu (event);
       arAkahukuImage.setContextMenu (event);
       arAkahukuQuote.setContextMenu (event);
