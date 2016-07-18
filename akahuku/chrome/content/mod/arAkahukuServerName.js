@@ -541,6 +541,12 @@ var arAkahukuServerData = {
     "\u96D1\u8AC7",
     500, true
     ],
+  "dec:70" : [ /* 新板提案 */
+    "\u65b0\u677f\u63d0\u6848",
+    "\u65b0\u677f\u63d0\u6848",
+    "\u65b0\u677f\u63d0\u6848",
+    10000, true
+    ],
   "ipv6:54" : [ /* IPv6 */
     "IPv6",
     "IPv6",
