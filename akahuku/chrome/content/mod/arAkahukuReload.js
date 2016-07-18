@@ -759,6 +759,20 @@ arAkahukuReloadParam.prototype = {
             // 条件付きリクエストの結果だろうから以降 304 Not Modified とみなす
             httpStatus = 304;
           }
+          else if (httpStatus == 304) {
+            // 別タブで更新した場合など意図せず304となった場合
+            // キャッシュされてるデータを読み直す
+            httpChannel.loadFlags =
+              Components.interfaces.nsIRequest.LOAD_FROM_CACHE;
+            httpChannel.notificationCallbacks = null; // 監視は不要
+            var ret = this._asyncOpenGetFromHead (httpChannel);
+            if (ret == Components.results.NS_OK) {
+              return;
+            }
+            httpStatus = - Math.abs (httpStatus);
+            errorStatus = "\u8AAD\u8FBC\u5931\u6557 "; // "読込失敗 "
+            errorStatus += arAkahukuUtil.resultCodeToString (statusCode);
+          }
           else {
             // 後の処理をエラーに流す
             httpStatus = - Math.abs (httpStatus);
