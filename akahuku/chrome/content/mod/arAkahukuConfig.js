@@ -22,8 +22,8 @@ var arAkahukuConfig = {
    * 初期化処理
    */
   init : function () {
-    arAkahukuConfig.prefBranch.setCharPref ("akahuku.version",
-                                            AkahukuVersion);
+    arAkahukuConfig.loadPrefBranch ();
+    arAkahukuConfig.setCharPref ("akahuku.version", AkahukuVersion);
         
     if (typeof (arAkahukuConfig.prefBranch.addObserver) === "function") {
       /* 設定を取得する */
@@ -50,10 +50,7 @@ var arAkahukuConfig = {
       arAkahukuLink.getConfig ();
       arAkahukuPopupQuote.getConfig ();
       arAkahukuCatalog.getConfig ();
-            
-      if (Akahuku.enableAll) {
-        arAkahukuStyle.modifyStyleFile (true);
-      }
+      arAkahukuUI.getConfig ();
             
       /* ダイアログからの設定の変更を監視する */
       arAkahukuConfig.prefBranch.addObserver ("akahuku.savepref",
@@ -149,6 +146,31 @@ var arAkahukuConfig = {
         
     return value;
   },
+
+  setBoolPref : function (prefName, value) {
+    this.prefBranch.setBoolPref (prefName, value);
+  },
+  setCharPref : function (prefName, value) {
+    this.prefBranch.setCharPref (prefName, value);
+  },
+  setIntPref : function (prefName, value) {
+    this.prefBranch.setIntPref (prefName, value);
+  },
+  getBoolPref : function (prefName) {
+    return this.prefBranch.getBoolPref (prefName);
+  },
+  getCharPref : function (prefName) {
+    return this.prefBranch.getCharPref (prefName);
+  },
+  getIntPref : function (prefName) {
+    return this.prefBranch.getIntPref (prefName);
+  },
+  prefHasUserValue : function (prefName) {
+    return this.prefBranch.prefHasUserValue (prefName);
+  },
+  clearUserPref : function (prefName) {
+    this.prefBranch.clearUserPref (prefName);
+  },
     
   /**
    * 設定の変更のイベント
@@ -193,12 +215,7 @@ var arAkahukuConfig = {
       arAkahukuUI.showPanel ();
       arAkahukuUI.setPanelStatus ();
             
-      if (Akahuku.enableAll) {
-        arAkahukuStyle.modifyStyleFile (true);
-      }
-      else {
-        arAkahukuStyle.modifyStyleFile (false);
-      }
+      arAkahukuStyle.onPrefChanged ();
             
       arAkahukuP2P.update ();
     }

@@ -87,6 +87,9 @@
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuCache.js" />
   
+  <script type="application/x-javascript"
+          src="chrome://akahuku/content/akahuku-init.js" />
+
   <menupopup id="menu_ToolsPopup">
     <menuitem id="akahuku-tools-preferences"
               label="赤福 設定"

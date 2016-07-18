@@ -1,5 +1,12 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
+/**
+ * Require: arAkahukuConfig,
+ *          arAkahukuDocumentParam, arAkahukuLocationInfo,
+ *          arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
+ *          arAkahukuBoard,
+ */
+
 /*
 var arAkahukuThreadManager = {
   withThread: function(func) {
@@ -66,10 +73,13 @@ var Akahuku = {
   latestParam : null,            /* arAkahukuDocumentParam
                                   *   最近使ったドキュメントごとの情報 */
     
-  isOld : false,                 /* Boolean  古い Mozilla Suite か */
   isFx9 : false,
+
+  isRunningOnWindows : false,
+  isRunningOnMac : false,
     
   initialized : false,           /* Boolean  初期化フラグ */
+  initializedForWindow : false,
     
   enableAll : false,             /* Boolean  全機能の ON／OFF */
   enableAddCheckboxID : false,   /* Boolean  チェックボックスに id を付ける */
@@ -77,6 +87,8 @@ var Akahuku = {
   enablePartial : false,         /* Boolean  デフォルトで最新 n 件表示 */
   partialCount : 100,            /* Number  n 件 */
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
+
+  useFrameScript : false,
 
   isXPathAvailable : false,
 
@@ -175,9 +187,12 @@ var Akahuku = {
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
    */
-  addDocumentParam : function (targetDocument) {
+  addDocumentParam : function (targetDocument, info) {
     var documentParam = new arAkahukuDocumentParam ();
     documentParam.targetDocument = targetDocument;
+    if (info) {
+      documentParam.location_info = info;
+    }
     Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
   },
@@ -292,6 +307,10 @@ var Akahuku = {
     if (window == wnd || !wnd) {
       wnd = window.content;
     }
+    if (!wnd instanceof Components.interfaces.nsIDOMWindow
+        ||wnd instanceof Components.interfaces.nsIDOMChromeWindow) {
+      return null;
+    }
     return Akahuku.getDocumentParam (wnd.document);
   },
 
@@ -330,28 +349,68 @@ var Akahuku = {
   },
     
   /**
-   * ウィンドウが開かれたイベント
+   * 初期化(XUL windowに依存しない部分)
    */
-  onLoad : function () {
+  init : function () {
     if (Akahuku.initialized) {
       return;
     }
-        
-    Akahuku.protocolHandler
-    = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-    .getService (Components.interfaces.arIAkahukuProtocolHandler);
-        
-    var s = navigator.productSub;
-    s = (s + "").substr (0, 8);
-    if (parseInt (s) <= 20030621) {
-      /* 古い Mozilla Suite の場合 */
-      Akahuku.isOld = true;
+
+    try {
+      if ("import" in Components.utils) {
+        // e10s-compatible method to share the singleton
+        var scope = {};
+        Components.utils.import ("resource://akahuku/protocol.jsm", scope);
+        Akahuku.protocolHandler = scope;
+      }
+      else {
+        Akahuku.protocolHandler
+          = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
+          .getService (Ci.arIAkahukuProtocolHandler);
+      }
     }
-    
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
     Akahuku.isFx9 = arAkahukuCompat.comparePlatformVersion ("8.*") > 0;
-    
-    if (typeof (XPathResult) != "undefined") {
+
+    try {
+      var xulRuntime
+        = Components.classes ["@mozilla.org/xre/app-info;1"]
+        .getService (Components.interfaces.nsIXULRuntime);
+      if (/^WIN/.test (xulRuntime.OS)) {
+        Akahuku.isRunningOnWindows = true;
+      }
+      else if (xulRuntime.OS == "Darwin") {
+        Akahuku.isRunningOnMac = true;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
+    if ("nsIDOMXPathResult" in Components.interfaces) {
       Akahuku.isXPathAvailable = true;
+    }
+
+    // 各種サービスの初期化
+    arAkahukuFile.init ();
+    arAkahukuSound.init ();
+    arAkahukuLink.init ();
+    arAkahukuCatalog.init ();
+    arAkahukuConverter.init ();
+    arAkahukuConfig.init ();
+    arAkahukuStyle.init ();
+
+    this.initialized = true;
+  },
+
+  /**
+   * ウィンドウが開かれたイベント
+   */
+  onLoad : function () {
+    this.init ();
+    if (Akahuku.initializedForWindow) {
+      return;
     }
     
     /* ScrapBook で akahuku の保存を有効にする
@@ -412,28 +471,23 @@ var Akahuku = {
     catch (e) {
     }*/
     
-    /* 各種サービスの初期化 */
-    arAkahukuConfig.loadPrefBranch ();
-    arAkahukuP2P.init ();
-    arAkahukuFile.init ();
-    arAkahukuSound.init ();
-    arAkahukuLink.init ();
-    arAkahukuCatalog.init ();
-    arAkahukuConverter.init ();
-    arAkahukuConfig.init ();
-    arAkahukuTab.init ();
-    arAkahukuBloomer.init ();
-    arAkahukuImage.init ();
-    arAkahukuThread.init ();
-    arAkahukuMHT.init ();
-    arAkahukuPostForm.init ();
+    // XUL の window に対する初期設定(イベント登録など)
+    arAkahukuP2P.initForXUL ();
+    arAkahukuTab.initForXUL ();
+    arAkahukuBloomer.initForXUL ();
+    arAkahukuImage.initForXUL ();
+    arAkahukuThread.initForXUL ();
+    arAkahukuMHT.initForXUL ();
+    arAkahukuPostForm.initForXUL ();
         
-    arAkahukuUI.init ();
-    arAkahukuSidebar.init ();
+    arAkahukuUI.initForXUL ();
+    arAkahukuSidebar.initForXUL ();
     
-    /* コンテンツのロードのイベントを監視 */
+    // コンテンツのロードのイベントを監視
+    // e10s: remote な browser では XUL には DOMContentLoaded
+    //       が飛ばないので Frame script で監視する
     var appcontent = document.getElementById ("appcontent");
-    if (appcontent) {
+    if (appcontent && !Akahuku.useFrameScript) {
       appcontent.addEventListener
         ("DOMContentLoaded",
          Akahuku.onDOMContentLoaded,
@@ -468,11 +522,11 @@ var Akahuku = {
         if (typeof Aima_Aimani != "undefined") {
           /* Aima_Aimani よりも先に動くために
            * イベントの順番を入れ替える */
-          appcontent.removeEventListener
+          sidebar.removeEventListener
             ("DOMContentLoaded",
              Aima_Aimani.onSidebarLoaded,
              false);
-          appcontent.addEventListener
+          sidebar.addEventListener
             ("DOMContentLoaded",
              Aima_Aimani.onSidebarLoaded,
              false);
@@ -502,8 +556,8 @@ var Akahuku = {
     catch (e) { Akahuku.debug.exception (e);
     }
             
-    Akahuku.initialized = true;
-    Akahuku.debug.log ("initialized");
+    Akahuku.initializedForWindow = true;
+    Akahuku.debug.log ("initialized for a XUL window");
   },
     
   /**
@@ -555,6 +609,7 @@ var Akahuku = {
     arAkahukuScroll.onBodyUnload (targetDocument, documentParam);
     arAkahukuThreadOperator.onBodyUnload (targetDocument, documentParam);
     arAkahukuThread.onBodyUnload (targetDocument, documentParam);
+    arAkahukuLink.onBodyUnload (targetDocument, documentParam);
     Akahuku.Cache.onBodyUnload (targetDocument, documentParam);
         
     Akahuku.deleteDocumentParam (targetDocument);
@@ -571,6 +626,13 @@ var Akahuku = {
    *         適用するかどうか
    */
   getNeedApply : function (targetDocument, href) {
+    var frame = targetDocument.defaultView.frameElement;
+    if (frame && frame.nodeName.toLowerCase () == "iframe"
+        && !frame.hasAttribute ("src")) {
+      // src の無い iframe の中には適用しない
+      // (親ドキュメントの href と同じに見えてしまう)
+      return false;
+    }
     if (href.match
         (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
         || href.match
@@ -895,9 +957,7 @@ var Akahuku = {
       return;
     }
     
-    Akahuku.addDocumentParam (targetDocument);
-    Akahuku.getDocumentParam (targetDocument).location_info
-    = info;
+    Akahuku.addDocumentParam (targetDocument, info);
 
     if (info.isReply || info.isNormal) {
       bqnodes = bqnodes || Akahuku.getMessageBQ (targetDocument);
@@ -931,7 +991,7 @@ var Akahuku = {
     arAkahukuPopupQuote.apply (targetDocument, info);   ticlog+="\n  arAkahukuPopupQuote.apply "+tic.toc();
     arAkahukuMHT.apply (targetDocument, info);          ticlog+="\n  arAkahukuMHT.apply "+tic.toc();
     arAkahukuReload.apply (targetDocument, info);       ticlog+="\n  arAkahukuReload.apply "+tic.toc();
-    arAkahukuScroll.apply (targetDocument, info, targetWindow);ticlog+="\n  arAkahukuScroll.apply "+tic.toc();
+    arAkahukuScroll.apply (targetDocument, info);       ticlog+="\n  arAkahukuScroll.apply "+tic.toc();
     arAkahukuWheel.apply (targetDocument, info);        ticlog+="\n  arAkahukuWheel.apply "+tic.toc();
     if (info.isReply || info.isNormal) {
       /* 手動でキャッシュを削除 */
@@ -1268,13 +1328,14 @@ var Akahuku = {
     var newNodes = new Array ();
 
     /* 可能なら XPath による高速取得を試みる */
-    if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath) {
-      var doc = targetNode.ownerDocument || targetNode;
+    var doc = targetNode.ownerDocument || targetNode;
+    if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath
+        && doc.defaultView) {
       try {
         var iterator =
           doc.evaluate
           (".//blockquote[count(ancestor::center)=0][count(ancestor::table[@border='1' or @class='ama'])=0][count(ancestor::div[@id='akahuku_respanel_content' or @class='ama'])=0]",
-           targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+           targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
         var node = iterator.iterateNext ();
         while (node) {
           newNodes.push (node);
@@ -1285,7 +1346,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
-             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);
@@ -1295,13 +1356,13 @@ var Akahuku = {
         if (newNodes.length == 0) {
           // タテログのログ対応 patch
           var xpath = ".//div[count(ancestor::div[@class='thread'])=1]";
-          if (targetNode instanceof Document) {
+          if (targetNode instanceof Components.interfaces.nsIDOMDocument) {
             xpath = ".//div[@class='thread']//div";
           }
           iterator =
             doc.evaluate
             (xpath,
-             targetNode, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);
@@ -1419,7 +1480,7 @@ var Akahuku = {
           documentParam._messageBQCache = null;
         }
         observer.disconnect ();
-      });
+      }, documentParam.targetDocument);
       var target = documentParam.targetDocument.body;
       if (nodes.length > 0) {
         target = arAkahukuDOM.findParentNode (nodes [0], "form") || target;
@@ -1847,13 +1908,18 @@ var Akahuku = {
       args.push (arguments [i]);
     }
     var param = Akahuku.getDocumentParam (contextDocument);
+    // traverse iframe ancestors to handle tasks from content policy
+    while (!param && contextDocument.defaultView.frameElement
+        && contextDocument.defaultView.frameElement.nodeName == "IFRAME") {
+      contextDocument = contextDocument.defaultView.frameElement.ownerDocument;
+      param = Akahuku.getDocumentParam (contextDocument);
+    }
     if (param && "wasApplied" in param && param.wasApplied) {
-      // DOMContentLoaded 後では直に呼び出す
-      try {
-        handlerOwner [handlerName].apply (handlerOwner, args);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
+      // DOMContentLoaded 後では直後に呼び出す
+      // (content-policyからでは直接では早すぎることがある)
+      arAkahukuUtil.executeSoon (function (owner, name, args){
+        owner [name].apply (owner, args);
+      }, [handlerOwner, handlerName, args]);
     }
     else {
       // DOMContentLoaded 前では後で実行するようリストに入れる
@@ -1983,21 +2049,3 @@ var Akahuku = {
   },
 };
 
-/* 古い Mozilla Suite では最初のイベントリスナが無視されるので 2 つ登録する */
-window.addEventListener ("load",
-                         function () {
-                           Akahuku.onLoad ();
-                         }, false);
-window.addEventListener ("load",
-                         function () {
-                           Akahuku.onLoad ();
-                         }, false);
-
-window.addEventListener ("unload",
-                         function () {
-                           Akahuku.onUnload ();
-                         }, false);
-window.addEventListener ("unload",
-                         function () {
-                           Akahuku.onUnload ();
-                         }, false);

@@ -1,6 +1,10 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
+ * Require: Akahuku
+ */
+
+/**
  * クリップボード処理
  */
 var arAkahukuClipboard = {
@@ -39,7 +43,7 @@ var arAkahukuClipboard = {
     if ("init" in trans) {
       // API changes since Firefox 16
       var loadContext = null;
-      if (aDocument instanceof Document) {
+      if (aDocument instanceof Components.interfaces.nsIDOMDocument) {
         loadContext
           = aDocument.defaultView
           .getInterface (Components.interfaces.nsIWebNavigation)

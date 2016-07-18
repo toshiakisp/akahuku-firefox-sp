@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
+ * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuFile,
  *          arAkahukuP2P, arAkahukuReload, arAkahukuScroll,
  *          arAkahukuStyle, arAkahukuSound, arAkahukuThread,
@@ -12,7 +12,8 @@
  * 送信フォーム管理のデータ
  *   Inherits From: nsIWebProgressListener
  */
-function arAkahukuPostFormParam () {
+function arAkahukuPostFormParam (doc) {
+  this.targetDocument = doc;
 }
 arAkahukuPostFormParam.prototype = {
   submitterLockingTimerID : null, /* Number  送信ボタンをロックする
@@ -52,24 +53,25 @@ arAkahukuPostFormParam.prototype = {
    * データを開放する
    */
   destruct : function () {
+    var window = this.targetDocument.defaultView;
     if (this.submitterLockingTimerID != null) {
-      clearInterval (this.submitterLockingTimerID);
+      window.clearInterval (this.submitterLockingTimerID);
       this.submitterLockingTimerID = null;
     }
     if (this.busyTimerID != null) {
-      clearInterval (this.busyTimerID);
+      window.clearInterval (this.busyTimerID);
       this.busyTimerID = null;
     }
     if (this.commentWatchTimerID != null) {
-      clearInterval (this.commentWatchTimerID);
+      window.clearInterval (this.commentWatchTimerID);
       this.commentWatchTimerID = null;
     }
     if (this.changeTimerID != null) {
-      clearInterval (this.changeTimerID);
+      window.clearInterval (this.changeTimerID);
       this.changeTimerID = null;
     }
     if (this.bottomFormAlignTimerID != null) {
-      clearInterval (this.bottomFormAlignTimerID);
+      window.clearInterval (this.bottomFormAlignTimerID);
       this.bottomFormAlignTimerID = null;
     }
         
@@ -282,7 +284,7 @@ var arAkahukuPostForm = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
@@ -744,10 +746,10 @@ var arAkahukuPostForm = {
         defCtrl = false;
         defMeta = false;
         defShift = false;
-        if (navigator.platform.match (/mac/i)) {
+        if (Akahuku.isRunningOnMac) {
           defCtrl = true;
         }
-        else if (navigator.platform.match (/win/i)) {
+        else if (Akahuku.isRunningOnWindows) {
           defAlt = true;
           defShift = true;
         }
@@ -1130,14 +1132,13 @@ var arAkahukuPostForm = {
       var param
       = Akahuku.getDocumentParam (targetDocument).postform_param;
       if (!param.added) {
-        param.targetDocument = targetDocument;
         param.targetURL = formElement.action;
         param.added = true;
                 
-        var browser
-          = arAkahukuWindow.getBrowserForWindow
+        var webProgress
+          = arAkahukuWindow.getWebProgressForWindow
           (targetDocument.defaultView);
-        browser.webProgress.addProgressListener
+        webProgress.addProgressListener
           (param, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
       }
             
@@ -1231,6 +1232,7 @@ var arAkahukuPostForm = {
       return;
     }
         
+    var window = targetDocument.defaultView;
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
     
@@ -1240,10 +1242,10 @@ var arAkahukuPostForm = {
     }
     var oe = targetDocument.getElementById ("oe3");
     if (oe) {
-      setTimeout
+      window.setTimeout
         (function (oe) {
           oe.style.display = "none";
-          setTimeout
+          window.setTimeout
             (function (oe) {
               oe.style.display = "";
             }, 100, oe);
@@ -1252,7 +1254,7 @@ var arAkahukuPostForm = {
     
     if (param.busyTimerID != null) {
       /* 送信完了したので応答待ちのタイマーを解除する */
-      clearTimeout (param.busyTimerID);
+      window.clearTimeout (param.busyTimerID);
       param.busyTimerID = null;
     }
         
@@ -1315,7 +1317,7 @@ var arAkahukuPostForm = {
         arAkahukuDOM.setText (preview, null);
       }
             
-      setTimeout
+      window.setTimeout
       (arAkahukuPostForm.diffReloadAfterIFrameLoad,
        1000,
        targetDocument, iframe);
@@ -1461,7 +1463,7 @@ var arAkahukuPostForm = {
         arAkahukuPostForm.unlockSubmitter (targetDocument, 2);
       }
       else {
-        setTimeout (function (targetDocument) {
+        window.setTimeout (function (targetDocument) {
             arAkahukuPostForm.unlockSubmitter
             (targetDocument, 2);
           }, 5000, targetDocument);
@@ -1470,7 +1472,7 @@ var arAkahukuPostForm = {
             
       arAkahukuPostForm.ensureDispPostForm (targetDocument);
             
-      setTimeout
+      window.setTimeout
       (arAkahukuPostForm.removeIFrame,
        1000,
        targetDocument, iframe);
@@ -1478,7 +1480,7 @@ var arAkahukuPostForm = {
       arAkahukuSound.playReplyFail ();
     }
         
-    setTimeout (function (targetDocument) {
+    window.setTimeout (function (targetDocument) {
         try {
           var history
           = targetDocument.defaultView
@@ -1627,6 +1629,7 @@ var arAkahukuPostForm = {
    *         サーバの応答をチェックするか
    */
   lockSubmitter : function (targetDocument, checkBusy) {
+    var window = targetDocument.defaultView;
     var submitter
     = targetDocument.getElementById ("akahuku_postform_submitter");
     if (submitter) {
@@ -1634,12 +1637,12 @@ var arAkahukuPostForm = {
       var param
         = Akahuku.getDocumentParam (targetDocument).postform_param;
       param.submitterLockingTimerID
-        = setTimeout (arAkahukuPostForm.unlockSubmitter,
+        = window.setTimeout (arAkahukuPostForm.unlockSubmitter,
                       1000 * 15,
                       targetDocument, 0);
       if (checkBusy) {
         param.busyTimerID
-          = setTimeout (arAkahukuPostForm.unlockSubmitter,
+          = window.setTimeout (arAkahukuPostForm.unlockSubmitter,
                         1000 * 120,
                         targetDocument, 1);
       }
@@ -1661,6 +1664,7 @@ var arAkahukuPostForm = {
    *           2: 送信失敗した
    */
   unlockSubmitter : function (targetDocument, type) {
+    var window = targetDocument.defaultView;
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
         
@@ -1678,12 +1682,12 @@ var arAkahukuPostForm = {
     }
     if (param.submitterLockingTimerID != null) {
       /* 送信失敗して一定時間前に解除された場合、タイマーも解除する */
-      clearTimeout (param.submitterLockingTimerID);
+      window.clearTimeout (param.submitterLockingTimerID);
       param.submitterLockingTimerID = null;
     }
     if (param.busyTimerID != null) {
       /* 送信失敗して一定時間前に解除された場合、タイマーも解除する */
-      clearTimeout (param.busyTimerID);
+      window.clearTimeout (param.busyTimerID);
       param.busyTimerID = null;
     }
     if (type == 1) {
@@ -2639,7 +2643,12 @@ var arAkahukuPostForm = {
         if (form) {
           var submitter
             = targetDocument.getElementById ("akahuku_postform_submitter");
-          if (submitter) {
+          if (submitter && submitter.hasAttribute ("onclick")) {
+            var clickEvent = targetDocument.createEvent ("MouseEvents");
+            clickEvent.initEvent ("click", true, true);
+            submitter.dispatchEvent (clickEvent);
+          }
+          else if (submitter) {
             var submitEvent = targetDocument.createEvent ("HTMLEvents");
             submitEvent.initEvent ("submit", false, true);
             form.dispatchEvent (submitEvent);
@@ -2699,6 +2708,7 @@ var arAkahukuPostForm = {
           && event.target
           && event.target.ownerDocument) {
         var targetDocument = event.target.ownerDocument;
+        var window = targetDocument.defaultView;
         var param
         = Akahuku.getDocumentParam (targetDocument).postform_param;
                 
@@ -2712,7 +2722,7 @@ var arAkahukuPostForm = {
                                                  false);
                             
               param.commentWatchTimerID
-                = setInterval
+                = window.setInterval
                 (function () {
                   arAkahukuPostForm.checkCommentbox
                   (targetDocument, false);
@@ -2736,6 +2746,7 @@ var arAkahukuPostForm = {
   onCommentBlur : function  (event) {
     try {
       var targetDocument = event.target.ownerDocument;
+      var window = targetDocument.defaultView;
       var param
       = Akahuku.getDocumentParam (targetDocument).postform_param;
             
@@ -2764,7 +2775,7 @@ var arAkahukuPostForm = {
           = arAkahukuPostForm.findCommentbox (targetDocument);
         if (commentbox) {
           if (param.commentWatchTimerID != null) {
-            clearInterval (param.commentWatchTimerID);
+            window.clearInterval (param.commentWatchTimerID);
             param.commentWatchTimerID = null;
             param.blink = true;
                         
@@ -2807,9 +2818,8 @@ var arAkahukuPostForm = {
           // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
           var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
           if (filebox && file instanceof Components.interfaces.nsIFile) {
-            var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-            if (fileurl && param.testAttachableExt (fileurl) ) {
-              filebox.value = fileurl;
+            if (param.testAttachableExt (file.path)) {
+              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
               if (arAkahukuPostForm.enablePreview) {
                 arAkahukuPostForm.onPreviewChangeCore (targetDocument);
               }
@@ -2826,10 +2836,9 @@ var arAkahukuPostForm = {
     }
 
     var file = arAkahukuClipboard.getFile ();
-    if (file instanceof Components.interfaces.nsIFile) {
-      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-      if (fileurl && param.testAttachableExt (fileurl) ) {
-        filebox.value = fileurl;
+    if (file) {
+      if (param.testAttachableExt (file.path)) {
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
         }
@@ -2853,11 +2862,10 @@ var arAkahukuPostForm = {
     var filename
       = arAkahukuFile.getDirectory ("TmpD")
       + arAkahukuFile.separator + "akahuku-clip.jpg";
-    var fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
-    var file = arAkahukuFile.getFileFromURLSpec (fileurl);
+    var file = arAkahukuFile.initFile (filename);
     file.createUnique (file.NORMAL_FILE_TYPE, 420/* 0644 */);
     filename = file.path;
-    fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
+    var fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
     arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
       if (!Components.isSuccessCode (code)) {
         Akahuku.debug.error (arAkahukuUtil.resultCodeToString (code)
@@ -2866,7 +2874,7 @@ var arAkahukuPostForm = {
       }
       var filebox = targetDocument.getElementsByName ("upfile")[0];
       if (filebox) {
-        filebox.value = fileurl;
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
         }
@@ -2885,19 +2893,30 @@ var arAkahukuPostForm = {
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile") [0];
     var file = null;
-    for (var i=0; i < event.dataTransfer.types.length; i ++) {
-      if (event.dataTransfer.types [i] === type) {
-        file = event.dataTransfer.mozGetDataAt (type, i);
-        break;
+    for (var n=0; n < event.dataTransfer.mozItemCount && !file; n ++) {
+      var types = event.dataTransfer.mozTypesAt (n);
+      for (var i=0; i < types.length && !file; i ++) {
+        if (types [i] === type) {
+          file = event.dataTransfer.mozGetDataAt (types [i], n);
+          try {
+            file = file.QueryInterface (Components.interfaces.nsIFile);
+          }
+          catch (e) { // this may cause in a content process (e10s)
+            file = null;
+          }
+        }
+        else if (types [i] === "text/x-moz-url") {
+          // fail safe for e10s
+          var url = event.dataTransfer.mozGetDataAt (types [i], n);
+          file = arAkahukuFile.initFile
+            (arAkahukuFile.getFilenameFromURLSpec (url));
+        }
       }
     }
-    if (filebox && file instanceof Components.interfaces.nsIFile) {
-      var fileurl = arAkahukuFile.getURLSpecFromFilename (file.path);
-      if (fileurl) {
-        filebox.value = fileurl;
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
+    if (filebox && file) {
+      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
+      if (arAkahukuPostForm.enablePreview) {
+        arAkahukuPostForm.onPreviewChangeCore (targetDocument);
       }
     }
   },
@@ -2955,6 +2974,7 @@ var arAkahukuPostForm = {
    *         遅延 [ms]
    */
   changeFloatPostFormStatus : function (targetDocument, show, alpha, delay) {
+    var window = targetDocument.defaultView;
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
         
@@ -2965,7 +2985,7 @@ var arAkahukuPostForm = {
         /* 同じ状態への遅延はキャンセルする */
         return;
       }
-      clearInterval (param.changeTimerID);
+      window.clearInterval (param.changeTimerID);
       param.changeTimerID = null;
     }
         
@@ -2977,7 +2997,7 @@ var arAkahukuPostForm = {
 
     var commentFocused = false;
         
-    var focusedElement = document.commandDispatcher.focusedElement;
+    var focusedElement = arAkahukuCompat.Document.activeElement (targetDocument);
     var form = arAkahukuDOM.findParentNode (focusedElement, "form");
     if (form
         && "id" in form
@@ -3013,7 +3033,7 @@ var arAkahukuPostForm = {
       param.changeShow = show;
       param.changeAlpha = alpha;
       param.changeTimerID
-      = setTimeout (arAkahukuPostForm.changeFloatPostFormStatus,
+      = window.setTimeout (arAkahukuPostForm.changeFloatPostFormStatus,
                     delay,
                     targetDocument, show, alpha, 0);
             
@@ -3144,7 +3164,8 @@ var arAkahukuPostForm = {
       }
       param = param.postform_param;
             
-      if (gContextMenu != null && arAkahukuUI.contextMenuShown) {
+      if ((typeof gContextMenu !== "undefined" && gContextMenu != null)
+          && arAkahukuUI.contextMenuShown) {
         /* コンテキストメニューが表示されていたら何もしない */
         return;
       }
@@ -3346,13 +3367,13 @@ var arAkahukuPostForm = {
         
     if (clipper) {
       if (info.isReply) {
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.postform.reply.hide",
                         clipper.checked);
         arAkahukuPostForm.enableReplyHide = clipper.checked;
       }
       else {
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.postform.normal.hide",
                         clipper.checked);
         arAkahukuPostForm.enableNormalHide = clipper.checked;
@@ -3711,6 +3732,7 @@ var arAkahukuPostForm = {
    *         塩辛瓶か
    */
   applyPreview : function (targetDocument, sio) {
+    var window = targetDocument.defaultView;
     var filebox = targetDocument.getElementsByName ("upfile");
     if (!filebox || !filebox [0]) {
       filebox = targetDocument.getElementsByName ("up");
@@ -3803,7 +3825,7 @@ var arAkahukuPostForm = {
         form.addEventListener
         ("reset",
          function () {
-           setTimeout
+           window.setTimeout
            (function () {
               arAkahukuPostForm.onPreviewChange (arguments [0]);
            }, 100, arguments [0]);
@@ -3815,7 +3837,7 @@ var arAkahukuPostForm = {
           (targetDocument);
       }
       else {
-        setTimeout (function () {
+        window.setTimeout (function () {
             arAkahukuPostForm.onPreviewChangeCore
             (targetDocument);
           }, 1000);
@@ -4026,6 +4048,7 @@ var arAkahukuPostForm = {
     if (info.isNotFound) {
       return;
     }
+    var window = targetDocument.defaultView;
     
     if (info.isReply) {
       if (arAkahukuPostForm.enableNormalPurgeHistory) {
@@ -4039,7 +4062,7 @@ var arAkahukuPostForm = {
           delete browser.__akahuku_create_thread;
           browser.removeAttribute ("__akahuku_create_thread");
                     
-          setTimeout (function (targetDocument) {
+          window.setTimeout (function (targetDocument) {
               try {
                 var history
                   = targetDocument.defaultView
@@ -4064,7 +4087,7 @@ var arAkahukuPostForm = {
       }
     }
     if (info.isNormal || info.isReply) {
-      var param = new arAkahukuPostFormParam ();
+      var param = new arAkahukuPostFormParam (targetDocument);
       Akahuku.getDocumentParam (targetDocument).postform_param = param;
             
       var form = null;
@@ -4081,7 +4104,7 @@ var arAkahukuPostForm = {
         }
       }
       
-      setTimeout (function (targetDocument) {
+      window.setTimeout (function (targetDocument) {
           var oebtn = targetDocument.getElementById ("oebtn");
           if (oebtn) {
             oebtn.addEventListener
@@ -4224,7 +4247,7 @@ var arAkahukuPostForm = {
           table.style.visibility = "hidden";
           table.style.position = "absolute";
         }
-        setTimeout
+        window.setTimeout
         (function (ufm, table, param){
           /* 全 apply 処理の後でレイアウトを決定する */
           if (!ufm || !table || !param) {
@@ -4239,7 +4262,7 @@ var arAkahukuPostForm = {
             = (ufm.ownerDocument.body.offsetTop + ufm.offsetTop) + "px";
           table.style.visibility = "visible"; //レイアウトを終えてから
           param.bottomFormAlignTimerID
-            = setInterval
+            = window.setInterval
             (function (ufm, table) {
               /* サイズ変更を反映 */
               if (table.offsetTop != ufm.offsetTop) {
@@ -4315,6 +4338,28 @@ var arAkahukuPostForm = {
           }
         }
                 
+        // 最低保持時間を更新する
+        // "1スレッド最大2000レス,最低1時間保持テスト中."
+        nodes2 = form.getElementsByTagName ("li");
+        for (i = 0; i < nodes2.length; i ++) {
+          if (nodes2 [i].innerHTML.match
+              (/\u6700\u4f4e([0-9]+)\u6642\u9593\u4fdd\u6301/)) {
+            // /最低([0-9]+)時間保持/
+            var name = info.server + ":" + info.dir;
+            var min = 60*parseInt (RegExp.$1);
+            var minOld = arAkahukuBoard.getPreserveMin (name);
+            if (min != minOld) {
+              arAkahukuBoard.setPreserveMin (name, min);
+              Akahuku.debug.log
+                ("PreserveMin of "
+                 + arAkahukuBoard.getServerName (name)
+                 + "(" + name + ")"
+                 + " changes " + minOld + " => " + min);
+            }
+            break;
+          }
+        }
+
         /* 添付可能を確認する */
         var attachable = "";
         for (i = 0; i < nodes2.length; i ++) {

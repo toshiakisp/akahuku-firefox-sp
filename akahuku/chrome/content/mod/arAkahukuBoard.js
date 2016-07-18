@@ -11,6 +11,7 @@ function arAkahukuBoardInfo (id) {
   this.trueName = "";
   this.newestNum = 0;
   this.maxNum = 0;
+  this.preserveMin = -1; // 最低保持時間(分)
   this.hasCatalog = false;
   this.isInternal = false;
 };
@@ -178,9 +179,9 @@ var arAkahukuBoard = {
   /**
    * 外部板に追加できるか
    */
-  isAbleToAddExternal : function (targetDocument) {
+  isAbleToAddExternal : function (href) {
     try {
-      var base = targetDocument.location.href;
+      var base = String (href);
           
       base = base
       .replace (/\/res\/([0-9]+)\.html?$/, "/")
@@ -232,7 +233,7 @@ var arAkahukuBoard = {
       var list = arAkahukuJSON.decode (unescape (tmp2));
       list.push (value);
       tmp2 = arAkahukuJSON.encode (list);
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
       ("akahuku.board_external.patterns2", tmp2);
     }
     else {
@@ -246,14 +247,14 @@ var arAkahukuBoard = {
       tmp += escape (base)
       + "&" + escape (flag);
           
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
       ("akahuku.board_external.patterns", tmp);
     }
         
     arAkahukuBoard.getConfig ();
         
     arAkahukuBoard.enableExternal = true;
-    arAkahukuConfig.prefBranch.setBoolPref
+    arAkahukuConfig.setBoolPref
     ("akahuku.board_external", true);
   },
 
@@ -325,6 +326,13 @@ var arAkahukuBoard = {
   hasCatalog : function (idOrInfo) {
     return this.boardList.getBoardProperty (idOrInfo, "hasCatalog");
   },
+  // スレの最低保持時間
+  getPreserveMin : function (idOrInfo) {
+    return this.boardList.getBoardProperty (idOrInfo, "preserveMin");
+  },
+  setPreserveMin : function (idOrInfo, value) {
+    this.boardList.setBoardProperty (idOrInfo, "preserveMin", value);
+  },
 
   getBoardIDs : function (optType) {
     return this.boardList.getIDs (optType);
@@ -338,7 +346,6 @@ var arAkahukuBoard = {
     scope.arAkahukuServerData = arAkahukuServerData;
   }
   catch (e) {
-    Components.utils.reportError ("no arAkahukuServerData");
     try {
       var loader
         = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
@@ -362,6 +369,12 @@ var arAkahukuBoard = {
     }
     if (scope.arAkahukuServerData [id][4]) {
       board.hasCatalog = (scope.arAkahukuServerData [id][4] == true);
+    }
+    if (scope.arAkahukuServerData [id].length > 5) {
+      var extra = scope.arAkahukuServerData [id][5];
+      for (var prop in extra) {
+        board [prop] = extra [prop];
+      }
     }
     arAkahukuBoard.boardList.addBoardInfo (id, board);
   }

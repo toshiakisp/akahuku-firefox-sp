@@ -2,7 +2,8 @@
 
 /**
  * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuTitle, arAkahukuUtil
+ *          arAkahukuFileName, arAkahukuConverter, arAkahukuJSON,
+ *          arAkahukuTitle, arAkahukuUtil, arAkahukuP2P
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
  */

@@ -176,9 +176,124 @@ var arAkahukuCompat = new function () {
       }
       catch (e) {
       }
-      return document.getElementById ("statusbar-display");
+      if (typeof document !== "undefined"
+          && document instanceof Ci.nsIDOMXULDocument) {
+        return document.getElementById ("statusbar-display");
+      }
+      else {
+        return null;
+      }
     };
   };
+
+  this.Document = new function () {
+    /**
+     * Document.activeElement [LS]
+     * (Basic support at Firefox 3.0 (Gecko 1.9.0))
+     */
+    function activeElementReal (targetDocument) {
+      return targetDocument.activeElement;
+    }
+    function activeElementCompat (targetDocument) {
+      // Note: this code requires running in XUL browser.
+      var focusedElement = document.commandDispatcher.focusedElement;
+      if (focusedElement && focusedElement.ownerDocument === targetDocument) {
+        return focusedElement;
+      }
+      return targetDocument;
+    }
+    this.activeElement = function (targetDocument) {
+      // on-demand initialization
+      if (arAkahukuCompat.comparePlatformVersion ("1.9.0") >= 0) {
+        this.activeElement = activeElementReal;
+      }
+      else {
+        this.activeElement = activeElementCompat;
+      }
+      return this.activeElement (targetDocument);
+    }
+  };
+  this.HTMLInputElement = {
+    /**
+     * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]
+     * required for e10s content process
+     *
+     * @param file  a url string or nsIFile
+     *              (no support for nsIDOMFile and Array)
+     */
+    mozSetFile : function (filebox, file) {
+      if (!(filebox instanceof Ci.nsIDOMHTMLInputElement
+          && filebox.type == "file")) {
+        throw Components.Exception (
+            "must be called for nsIDOMHTMLInputElement type=file",
+            Cr.NS_ERROR_NO_INTERFACE, Components.stack.caller)
+      }
+      if (!file) {
+        filebox.value = "";
+      }
+      else {
+        if (typeof file == "string") {
+          file = arAkahukuFile.initFile (
+              arAkahukuFile.getFilenameFromURLSpec (file));
+        }
+        if ("mozSetFileArray" in filebox) { // since Firefox 38 [Bug 1068838]
+          if (typeof File == "undefined") {
+            // necessary for frame scripts, requiring Firefox 28 and up
+            Components.utils.importGlobalProperties (["File"]);
+          }
+          if (!(file instanceof File)) {
+            file = new File (file); // Gecko 6.0
+          }
+          filebox.mozSetFileArray ([file]);
+        }
+        else {
+          // classic way
+          filebox.value = arAkahukuFile.getURLSpecFromFile (file);
+        }
+      }
+    },
+  };
+
+
+  this.losslessDecodeURI = function (uri) {
+    if (typeof window !== "undefined"
+        && "losslessDecodeURI" in window) {
+      try {
+        return window.losslessDecodeURI (uri);
+      }
+      catch (e) { Cu.reportError (e);
+      }
+    }
+    return uri.spec;
+  };
+
+  this.AddonManager = new function () {
+    this.getAddonByID = function (id, callback) {
+      try {
+        var scope = {};
+        Cu.import ("resource://gre/modules/AddonManager.jsm", scope);
+        this.getAddonByID = scope.AddonManager.getAddonByID;
+        this.getAddonByID (id, callback);
+      }
+      catch (e) { Cu.reportError (e);
+        this.getAddonByID = function getAddonByIDCompat (id, callback) {
+          // obsolete gecko 2.0
+          var extMan = Cc ["@mozilla.org/extensions/manager;1"]
+            .getService (Ci.nsIExtensionManager);
+          var ext = extMan.getItemForID (id);
+          ext.QueryInterface (Ci.nsIUpdateItem);
+          var addon = { // only for Akahuku's neccessity
+            id: ext.id,
+            version: ext.version,
+            name: ext.name,
+            isActive: true,
+          };
+          callback (addon);
+        };
+      }
+    }
+  };
+
 
   // Cache service v2
   
@@ -197,8 +312,9 @@ var arAkahukuCompat = new function () {
   var CacheEntryOpenCallback = {
     // Constants of nsICacheStorage for compatiblility
     ENTRY_WANTED : 0,
-    ENTRY_NEEDS_REVALIDATION : 1,
-    ENTRY_NOT_WANTED : 2,
+    RECHECK_AFTER_WRITE_FINISHED : 1,
+    ENTRY_NEEDS_REVALIDATION : 2,
+    ENTRY_NOT_WANTED : 3,
   };
   if ("nsICacheEntryOpenCallback" in Ci) {
     CacheEntryOpenCallback = Ci.nsICacheEntryOpenCallback;

@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
+ * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
  *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuImage, arAkahukuLink,
  *          arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
  *          arAkahukuThread, arAkahukuTitle, Akahuku.Cache, arAkahukuCompat
@@ -273,32 +273,16 @@ arAkahukuReloadCacheWriter.prototype = {
       path
       = arAkahukuFile.getFilenameFromURLSpec (base + path);
             
-      var targetFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-      targetFile.initWithPath (path);
-      if (!targetFile.exists ()) {
-        targetFile.create
-          (Components.interfaces.nsIFile.NORMAL_FILE_TYPE,
-           420/*0644*/);
-      }
-            
-      var fstream
-      = Components.classes
-      ["@mozilla.org/network/file-output-stream;1"]
-      .createInstance (Components.interfaces.nsIFileOutputStream);
-      fstream.init (targetFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
-            
-      fstream.write (this.head, this.head.length);
-      fstream.write (this.viewer, this.viewer.length);
-      fstream.write (this.head2, this.head2.length);
-      fstream.write (this.expire, this.expire.length);
-      fstream.write (this.head3, this.head3.length);
-      fstream.write (this.warning, this.warning.length);
-      fstream.write (this.body, this.body.length);
-      fstream.write (this.foot, this.foot.length);
-        
-      fstream.close ();
+      var text
+        = this.head
+        + this.viewer
+        + this.head2
+        + this.expire
+        + this.head3
+        + this.warning
+        + this.body
+        + this.foot;
+      arAkahukuFile.createFile (path, text);
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -316,7 +300,7 @@ arAkahukuReloadCacheWriter.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor) {
+    if (descriptor && Components.isSuccessCode (status)) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime (0);
@@ -349,6 +333,12 @@ arAkahukuReloadCacheWriter.prototype = {
       descriptor.setMetaDataElement ("charset", this.charset);
             
       descriptor.close ();
+    }
+    else if (Akahuku.debug.enabled) {
+      var errorStatus = arAkahukuUtil.resultCodeToString (status);
+      Akahuku.debug.warn
+        ("arAkahukuReloadCacheWriter.onCacheEntryAvailable: "
+         + "failed with " + errorStatus);
     }
   },
   onCacheEntryCheck : function (entry, appCache) {
@@ -417,7 +407,7 @@ arAkahukuReloadParam.prototype = {
     }
     catch (e) {
     }
-    clearTimeout (this.statusTimerID);
+    this.targetDocument.defaultView.clearTimeout (this.statusTimerID);
     this.statusTimerID = null;
     this.targetDocument = null;
   },
@@ -456,15 +446,20 @@ arAkahukuReloadParam.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor) {
-      var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
+    if (descriptor && Components.isSuccessCode (status)) {
+      try {
+        var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
+      }
+      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+        charset = "Shift_JIS";
+      }
       var istream = descriptor.openInputStream (0);
       var self = this;
       arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
         if (!Components.isSuccessCode (result)) {
           if (Akahuku.debug.enabled) {
             Akahuku.debug.warn ("arAkahukuReloadParam.onCacheEntryAvailable" +
-              arAkahukuUtil.resultCodeToString (result) + " for " + url);
+              arAkahukuUtil.resultCodeToString (result) + " for " + descriptor.key);
           }
           return;
         }
@@ -489,7 +484,9 @@ arAkahukuReloadParam.prototype = {
               }
               else {
                 Akahuku.Cache.asyncOpenCacheToWrite
-                  (self.location + ".backup", self.writer);
+                  ({url: self.location + ".backup",
+                    triggeringNode: self.targetDocument},
+                   self.writer);
               }
             }
           }
@@ -513,8 +510,20 @@ arAkahukuReloadParam.prototype = {
         }
       });
     }
+    else if (Akahuku.debug.enabled) {
+      var errorStatus = arAkahukuUtil.resultCodeToString (status);
+      Akahuku.debug.warn
+        ("arAkahukuReloadParam.onCacheEntryAvailable: "
+         + "failed with " + errorStatus);
+    }
   },
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,
@@ -730,7 +739,7 @@ arAkahukuReloadParam.prototype = {
             arAkahukuReload.setStatus
             ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F "
              + arAkahukuUtil.resultCodeToString (ret),
-             true, targetDocument);
+             true, this.targetDocument);
           }
           return;
         }
@@ -749,6 +758,20 @@ arAkahukuReloadParam.prototype = {
               .LOAD_ONLY_IF_MODIFIED & request.loadFlags) {
             // 条件付きリクエストの結果だろうから以降 304 Not Modified とみなす
             httpStatus = 304;
+          }
+          else if (httpStatus == 304) {
+            // 別タブで更新した場合など意図せず304となった場合
+            // キャッシュされてるデータを読み直す
+            httpChannel.loadFlags =
+              Components.interfaces.nsIRequest.LOAD_FROM_CACHE;
+            httpChannel.notificationCallbacks = null; // 監視は不要
+            var ret = this._asyncOpenGetFromHead (httpChannel);
+            if (ret == Components.results.NS_OK) {
+              return;
+            }
+            httpStatus = - Math.abs (httpStatus);
+            errorStatus = "\u8AAD\u8FBC\u5931\u6557 "; // "読込失敗 "
+            errorStatus += arAkahukuUtil.resultCodeToString (statusCode);
           }
           else {
             // 後の処理をエラーに流す
@@ -899,10 +922,10 @@ arAkahukuReloadParam.prototype = {
                         
         }
         
-        setTimeout
-          (arAkahukuReload.update,
-           10,
-           this.targetDocument, this.replied);
+        this.targetDocument.defaultView
+          .setTimeout (function (targetDocument, replied) {
+            arAkahukuReload.update (targetDocument, replied);
+          }, 10, this.targetDocument, this.replied);
         return;
         break;
       case 304:
@@ -1019,11 +1042,11 @@ arAkahukuReloadParam.prototype = {
 
   _asyncOpenGetFromHead : function (channel) {
     try {
-      var ios
-        = Components.classes ["@mozilla.org/network/io-service;1"]
-        .getService (Components.interfaces.nsIIOService);
       var channel4GET
-        = ios.newChannelFromURI (channel.originalURI)
+        = arAkahukuUtil.newChannel ({
+          uri: channel.originalURI,
+          loadingNode: this.targetDocument,
+          contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
         .QueryInterface (Components.interfaces.nsIHttpChannel);
       channel4GET.requestMethod = "GET";
       channel4GET.loadFlags = channel.loadFlags;
@@ -1088,7 +1111,8 @@ arAkahukuReloadParam.prototype = {
        true, this.targetDocument);
       var param = this;
       Akahuku.Cache.asyncGetHttpCacheStatus
-        (this.location, true,
+        ({url: this.location, triggeringNode: this.targetDocument},
+         true,
          function (cacheStatus) {
           var lmcache = NaN;
           if ("Last-Modified" in cacheStatus.header) {
@@ -1959,9 +1983,9 @@ var arAkahukuReload = {
     if (!permanent && !arAkahukuReload.enableStatusHold) {
       var param
       = Akahuku.getDocumentParam (targetDocument).reload_param;
-      clearTimeout (param.statusTimerID);
+      targetDocument.defaultView.clearTimeout (param.statusTimerID);
       param.statusTimerID
-      = setTimeout
+      = targetDocument.defaultView.setTimeout
       (function (message) {
         for (var i = 0; i < ids.length; i++) {
           var node = targetDocument.getElementById (ids [i]);
@@ -2063,7 +2087,7 @@ var arAkahukuReload = {
         (param.partialNodes [i]);
     }
 
-    var _asyncLoadCacheAndUpdate = function (istream, dataSize, callback) {
+    var _asyncLoadCacheAndUpdate = function (istream, dataSize, url, callback) {
       arAkahukuUtil.asyncFetchBinary (istream, dataSize, function (binstream, result) {
         if (Components.isSuccessCode (result)) {
           param.responseText = binstream.readBytes (binstream.available ());
@@ -2097,11 +2121,17 @@ var arAkahukuReload = {
         arAkahukuFile.gunzip
           (param.responseText, function (data) {
             param.responseText = data;
-            setTimeout (arAkahukuReload.update, 10, targetDocument);
+            targetDocument.defaultView
+              .setTimeout (function () {
+                arAkahukuReload.update (targetDocument);
+              }, 10);
           });
       }
       else {
-        setTimeout (arAkahukuReload.update, 10, targetDocument);
+        targetDocument.defaultView
+          .setTimeout (function () {
+            arAkahukuReload.update (targetDocument);
+          }, 10);
       }
     };
 
@@ -2134,7 +2164,7 @@ var arAkahukuReload = {
             .classes ["@mozilla.org/network/file-input-stream;1"]
             .createInstance (Components.interfaces.nsIFileInputStream);
           fstream.init (targetFile, 0x01, 292/*0444*/, 0);
-          _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize);
+          _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize, path);
           location = null; // キャッシュ読み不要
         }
       }
@@ -2146,12 +2176,12 @@ var arAkahukuReload = {
 
     if (location) {
       var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-      finder.init ();
+      finder.init (targetDocument.defaultView);
       finder.asyncOpen (location, function (descriptor) {
         try {
           if (descriptor) {
             var istream = descriptor.openInputStream (0);
-            _asyncLoadCacheAndUpdate (istream, descriptor.dataSize, function () {
+            _asyncLoadCacheAndUpdate (istream, descriptor.dataSize, location, function () {
               descriptor.close ();
             });
           }
@@ -3430,7 +3460,8 @@ var arAkahukuReload = {
         
     if (updateCache) {
       Akahuku.Cache.asyncOpenCacheToWrite
-        (param.location, param.writer);
+        ({url: param.location, triggeringNode: targetDocument},
+         param.writer);
       if (arAkahukuReload.enableExtCache) {
         /* バックアップキャッシュを更新 */
         if (arAkahukuReload.enableExtCacheFile) {
@@ -3438,7 +3469,9 @@ var arAkahukuReload = {
         }
         else {
           Akahuku.Cache.asyncOpenCacheToWrite
-            (param.location + ".backup", param.writer);
+            ({url: param.location  + ".backup",
+              triggeringNode: targetDocument},
+             param.writer);
         }
       }
     }
@@ -3521,7 +3554,7 @@ var arAkahukuReload = {
           nodes [i].src = nodes [i].src;
         }
         else if (request.imageStatus == 0) {
-          setTimeout
+          targetDocument.defaultView.setTimeout
             (function (node) {
               node.src = node.src;
             }, 100, nodes [i]);
@@ -3584,11 +3617,11 @@ var arAkahukuReload = {
       param.useRange = true;
     }
         
-    var ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService);
     param.reloadChannel
-    = ios.newChannel (location, null, null)
+    = arAkahukuUtil.newChannel ({
+      uri: location,
+      loadingNode: targetDocument,
+      contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
     .QueryInterface (Components.interfaces.nsIHttpChannel);
 
     if (param.requestMode == 0 //HEAD-GET
@@ -3630,7 +3663,10 @@ var arAkahukuReload = {
   backupCache : function (location, param) {
     param.location = location;
     try {
-      Akahuku.Cache.asyncOpenCacheToRead (location, param);
+      Akahuku.Cache.asyncOpenCacheToRead
+        ({url:location,
+          triggeringNode: param.targetDocument},
+         param);
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -3894,9 +3930,10 @@ var arAkahukuReload = {
           && info.isFutaba
           && !info.isFutasuke) {
         var location = targetDocument.location.href;
-        setTimeout (arAkahukuReload.backupCache,
-                    1000,
-                    location, param);
+        targetDocument.defaultView
+          .setTimeout (function () {
+            arAkahukuReload.backupCache (location, param);
+          }, 1000);
       }
     }
   },
@@ -3956,7 +3993,7 @@ var arAkahukuReload = {
       var sibling = (backword ? "previousSibling" : "nextSibling");
       var ret = [];
       while (node) {
-        if (node.nodeType === Node.ELEMENT_NODE &&
+        if (node.nodeType === node.ELEMENT_NODE &&
             node.nodeName.toLowerCase () == "br") {
           break;
         }
@@ -3988,8 +4025,10 @@ var arAkahukuReload = {
 
     var ret = {red: false, redType: "", deleted: false};
 
-    if ((sourceBQ instanceof Node && !Akahuku.isMessageBQ (sourceBQ))
-        || (targetBQ instanceof Node && !Akahuku.isMessageBQ (targetBQ))) {
+    if ((sourceBQ instanceof Components.interfaces.nsIDOMNode
+          && !Akahuku.isMessageBQ (sourceBQ))
+        || (targetBQ instanceof Components.interfaces.nsIDOMNode
+          && !Akahuku.isMessageBQ (targetBQ))) {
       return ret;
     }
 
@@ -4104,7 +4143,7 @@ var arAkahukuReload = {
     var node = bqnode.previousSibling;
     while (node) {
       var text = "";
-      if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeType === node.TEXT_NODE) {
         text = node.nodeValue;
         if (nextToNum) { //No.を含むノードの前のテキストノード末尾に
           node.nodeValue = text.replace
@@ -4117,7 +4156,7 @@ var arAkahukuReload = {
           return true;
         }
       }
-      else if (node.nodeType === Node.ELEMENT_NODE) {
+      else if (node.nodeType === node.ELEMENT_NODE) {
         if (/^br$/i.test (node.nodeName)) {
           lastText = "";
         }
@@ -4144,7 +4183,7 @@ var arAkahukuReload = {
     }
     var node = bqnode.previousSibling;
     while (node) {
-      if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeType === node.TEXT_NODE) {
         if (node.nodeValue.match (pattern)) {
           node.nodeValue = RegExp.$1 + RegExp.$3;
           return true;

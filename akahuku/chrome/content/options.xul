@@ -188,7 +188,9 @@
               <label value="ブロックリスト:"/>
               <box class="sub" orient="vertical">
                 <label value="ふたばのページからの読み込みをブロックさせたいURLやホスト名を空白区切りで入力する"/>
+                <label value="(ホスト名指定は後方一致、URL指定は完全一致だがワイルドカード(*)が使える)"/>
                 <label value="例: http://mushoku.com/banner.jpg munen.org "/>
+                <label value="例2: http://*.2chan.net/bin/radif.htm http://*.hoge.jp/fuga?*"/>
               </box>
             </tooltip>
             <box class="sub" orient="vertical">

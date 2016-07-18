@@ -16,6 +16,7 @@
  */
 function arAkahukuCatalogPopupData (targetImage) {
   this.targetImage = targetImage;
+  this.targetWindow = targetImage.ownerDocument.defaultView;
   this.targetSrc = targetImage.src.replace ("/cat/", "/thumb/");
 }
 arAkahukuCatalogPopupData.prototype =  {
@@ -45,13 +46,15 @@ arAkahukuCatalogPopupData.prototype =  {
     this.targetImage = null;
     this.popup = null;
     this.popupArea = null;
-    if (this.createTimerID) {
-      clearTimeout (this.createTimerID);
-      this.createTimerID = null;
+    if (this.targetWindow) {
+      this.targetWindow.clearTimeout (this.createTimerID);
+      this.targetWindow.clearTimeout (this.hideCursorTimerID);
     }
-    clearTimeout (this.hideCursorTimerID);
+    this.createTimerID = null;
+    this.hideCursorTimerID = null;
     this.targetImageGeometry = null;
     this.zoomImageGeometry = null;
+    this.targetWindow = null;
   },
     
   /**
@@ -67,7 +70,7 @@ arAkahukuCatalogPopupData.prototype =  {
     var targetDocument = param.targetDocument;
         
     if (this.createTimerID) {
-      clearTimeout (this.createTimerID);
+      this.targetWindow.clearTimeout (this.createTimerID);
       this.createTimerID = null;
     }
         
@@ -90,22 +93,23 @@ arAkahukuCatalogPopupData.prototype =  {
           // Firefox にキャッシュされているかのチェック(非同期)
           var that = this;
           Akahuku.Cache.asyncGetHttpCacheStatus
-            (this.targetSrc, false,
+            ({url: this.targetSrc, triggeringNode: targetDocument},
+             false,
              function (cacheStatus) {
               if (!cacheStatus.isExist || that.state != 0) {
                 return;
               }
               if (that.createTimerID) {
-                clearTimeout (that.createTimerID);
+                that.targetWindow.clearTimeout (that.createTimerID);
                 that.createTimerID = null;
               }
               that.targetSrc
                 = Akahuku.protocolHandler
                 .enAkahukuURI ("cache", that.targetSrc);
               that.createTimerID
-                = setTimeout (that.createPopup,
-                              arAkahukuCatalog.zoomTimeout,
-                              param, that, targetDocument);
+                = that.targetWindow.setTimeout (function () {
+                  that.createPopup (param, that, targetDocument);
+                }, arAkahukuCatalog.zoomTimeout);
              });
         }
                 
@@ -116,9 +120,9 @@ arAkahukuCatalogPopupData.prototype =  {
         }
             
         this.createTimerID
-          = setTimeout (this.createPopup,
-                        timeout,
-                        param, this, targetDocument);
+          = this.targetWindow.setTimeout (function (that) {
+            that.createPopup (param, that, targetDocument);
+          }, timeout, this);
         break;
       case 1:
         this.targetImage.style.opacity = 0;
@@ -639,10 +643,11 @@ arAkahukuCatalogPopupData.prototype =  {
     ("click", transferMouseEventsToCatalog, true);
     // ポップアップ保持エリアでは静止時マウスカーソルを隠す
     function onMouseMoveOnPopupArea () {
+      var targetWindow = self.popupArea.ownerDocument.defaultView;
       self.popupArea.style.removeProperty ("cursor");
-      clearTimeout (self.hideCursorTimerID);
+      targetWindow.clearTimeout (self.hideCursorTimerID);
       self.hideCursorTimerID
-      = setTimeout (function () {
+      = targetWindow.setTimeout (function () {
         self.hideCursorTimerID = null;
         if (self.popupArea) {
           self.popupArea.style.cursor = "none";
@@ -741,6 +746,7 @@ arAkahukuCatalogPopupData.prototype =  {
 function arAkahukuCatalogCommentPopupData (_thread, _baseNode) {
   this.thread = _thread;
   this.baseNode = _baseNode;
+  this.targetWindow = _baseNode.ownerDocument.defaultView;
 }
 arAkahukuCatalogCommentPopupData.prototype =  {
   state : 0,                  /* Number  ポップアップの状態
@@ -772,12 +778,13 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     this.baseNode = null;
     this.popup = null;
     this.container = null;
-    if (this.createTimerID) {
-      clearTimeout (this.createTimerID);
-      this.createTimerID = null;
+    if (this.targetWindow) {
+      this.targetWindow.clearTimeout (this.createTimerID);
     }
+    this.createTimerID = null;
     this.baseNodeGeometry = null;
     this.popupGeometry = null;
+    this.targetWindow = null;
   },
     
   /**
@@ -793,7 +800,7 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     var targetDocument = param.targetDocument;
         
     if (this.createTimerID) {
-      clearTimeout (this.createTimerID);
+      this.targetWindow.clearTimeout (this.createTimerID);
       this.createTimerID = null;
     }
         
@@ -803,9 +810,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
         var timeout = arAkahukuCatalog.zoomCommentTimeout;
                 
         this.createTimerID
-          = setTimeout (this.createPopup,
-                        timeout,
-                        param, this, targetDocument);
+          = this.targetWindow.setTimeout (function (that) {
+            that.createPopup (param, that, targetDocument);
+          }, timeout, this);
         break;
       case 1:
         this.lastTime = new Date ().getTime ();
@@ -1237,12 +1244,15 @@ arAkahukuMergeItemVisitedCallback.prototype = {
     if (this.isVisitedHandler) {
       this.isVisitedHandler.apply (this, [uri, visited]);
     }
-    else {
+    else if (this.wrappedObject) {
       this.wrappedObject.visited = visited;
     }
     if (this.list) {
       this.list.removeCallback (this.id);
     }
+    this.destruct ();
+  },
+  destruct : function () {
     this.id = null;
     this.list = null;
     this.wrappedObject = null;
@@ -1282,14 +1292,23 @@ arAkahukuMergeItemCallbackList.prototype = {
       this.callback = callback;
     }
   },
+  abort : function () {
+    this.waiting = false;
+    for (var id in this._list) {
+      this._list [id].destruct ();
+      this.removeCallback (id);
+    }
+  },
 };
 /**
  * カタログ管理データ
  *   Inherits From: nsISHistoryListener,
  *                  nsIRequestObserver, nsIStreamListener
  */
-function arAkahukuCatalogParam () {
+function arAkahukuCatalogParam (targetDocument) {
   this.order = "akahuku_catalog_reorder_default";
+  this.targetDocument = targetDocument;
+  this.targetWindow = targetDocument.defaultView;
 }
 arAkahukuCatalogParam.prototype = {
   tatelogSec : 0,         /* Number  タテログの残り時間 */
@@ -1344,11 +1363,12 @@ arAkahukuCatalogParam.prototype = {
     catch (e) {
     }
     this.unregisterObserver ();
-    if (this.updateAgeTimerID) {
-      clearTimeout (this.updateAgeTimerID);
-      this.updateAgeTimerID = null;
+    if (this.targetWindow) {
+      this.targetWindow.clearTimeout (this.updateAgeTimerID);
     }
+    this.updateAgeTimerID = null;
     this.targetDocument = null;
+    this.targetWindow = null;
     this.oldTable = null;
     this.historyCallbacks = null;
   },
@@ -1497,6 +1517,7 @@ arAkahukuCatalogParam.prototype = {
     if (this.reloadChannel != null) {
       arAkahukuCatalog.setStatus
         ("\u30ED\u30FC\u30C9\u4E2D (\u30DC\u30C7\u30A3)",
+         // "ロード中 (ボディ)"
          true, this.targetDocument);
     }
   },
@@ -1566,13 +1587,13 @@ arAkahukuCatalogParam.prototype = {
     else if (httpStatus == 200) {
       this.responseHead = responseHead;
             
+      // "更新中"
       arAkahukuCatalog.setStatus ("\u66F4\u65B0\u4E2D",
                                   true, this.targetDocument);
             
-      setTimeout
-      (arAkahukuCatalog.update,
-       10,
-       this.targetDocument);
+      this.targetWindow.setTimeout (function (that) {
+        arAkahukuCatalog.update (that.targetDocument);
+      }, 10, this);
       return;
     }
     else {
@@ -1697,9 +1718,9 @@ arAkahukuCatalogParam.prototype = {
     }
     // 「古いスレを赤くする」の再判定
     // (短時間に繰り返し実行しないようにデバウンス)
-    clearTimeout (this.updateAgeTimerID);
+    this.targetWindow.clearTimeout (this.updateAgeTimerID);
     this.updateAgeTimerID
-      = setTimeout (function (param, num) {
+      = this.targetWindow.setTimeout (function (param, num) {
         param.updateAgeTimerID = null;
         if (!param.targetDocument) return;
         var table = arAkahukuCatalog.getCatalogTable (param.targetDocument);
@@ -1707,6 +1728,7 @@ arAkahukuCatalogParam.prototype = {
         var nodes = table.getElementsByTagName ("td");
         for (var i = 0; i < nodes.length; i ++) {
           arAkahukuCatalog.updateCellAge (nodes [i], info, num);
+          arAkahukuCatalog.updateCellPreserve (nodes [i], info);
         }
       }, 100, this, newestNum.value);
   },
@@ -1725,7 +1747,7 @@ arAkahukuCatalogParam.prototype = {
       (this.targetDocument, threadInfo.threadNumber);
     if (td) {
       // unload 終了後にまだ開かれてるかの再判定
-      setTimeout (function (cell, url) {
+      this.targetWindow.setTimeout (function (cell, url) {
         var opened = arAkahukuCatalog.isOpened (url);
         arAkahukuCatalog.setCellOpened (cell, opened);
       }, 10, td, threadInfo.URL);
@@ -2009,10 +2031,17 @@ var arAkahukuCatalog = {
       // 古いスレを赤くする
       if (arAkahukuCatalog.enableRed) {
         style
-        .addRule ('td[__age="9"]',
+        // 赤字 (レス保存数残り1割)
+        .addRule ('td[__age="9"]:not([__preserved])',
                   "border-style: solid; "
                   + "border-color: #f00;")
-        .addRule ('td[__age="10"]',
+        // 赤字 (最低保持時間間近(レス保存数わずか))
+        .addRule ('td[__age="9"][__preserved="0"]'
+                  + ',td[__age="10"][__preserved="0"]',
+                  "border-style: solid; "
+                  + "border-color: #f00;")
+        // 消滅したはず
+        .addRule ('td[__age="10"]:not([__preserved])',
                   "border-style: dotted; "
                   + "border-color: #f00;")
         .addRule ('td[__age="-1"]',
@@ -2022,8 +2051,10 @@ var arAkahukuCatalog = {
         .addRule ('table[border="1"] td',
                   "border-width: 1px; "
                   + "padding: 1px;")
-        .addRule ('table[border="1"] td[__age="9"]'
-                  + ',table[border="1"] td[__age="10"]'
+        .addRule ('table[border="1"] td[__age="9"]:not([__preserved])'
+                  + ',table[border="1"] td[__age="9"][__preserved="0"]'
+                  + ',table[border="1"] td[__age="10"][__preserved="0"]'
+                  + ',table[border="1"] td[__age="10"]:not([__preserved])'
                   + ',table[border="1"] td[__age="-1"]',
                   "border-width: 2px; "
                   + "padding: 0px;")
@@ -2908,7 +2939,7 @@ var arAkahukuCatalog = {
     }
         
     if (!permanent  && !arAkahukuCatalog.enableReloadStatusHold) {
-      setTimeout
+      targetDocument.defaultView.setTimeout
       (function (message) {
         for (var i = 0; i < ids.length; i++) {
           var node = targetDocument.getElementById (ids [i]);
@@ -3287,6 +3318,7 @@ var arAkahukuCatalog = {
         
     if (arAkahukuCatalog.enableRed) {
       arAkahukuCatalog.updateCellAge (tdElement, info, latestNum);
+      arAkahukuCatalog.updateCellPreserve (tdElement, info);
     }
         
     if (arAkahukuCatalog.enableSidebar
@@ -3331,17 +3363,7 @@ var arAkahukuCatalog = {
    */
   updateCellAge : function (tdElement, info, latestNum) {
     var name = info.server + ":" + info.dir;
-    var num = parseInt (tdElement.getAttribute ("__thread_id"));
-    if (!num) {
-      var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
-      if (anchor) {
-        if (anchor.href.match (/res[\/=]([0-9]+)/)
-            || anchor.href.match (/2\/([0-9]+)/)
-            || anchor.href.match (/b\/([0-9]+)/)) {
-          num = parseInt (RegExp.$1);
-        }
-      }
-    }
+    var num = arAkahukuCatalog._getCellThreadId (tdElement);
     if (!num) {
       return;
     }
@@ -3369,6 +3391,58 @@ var arAkahukuCatalog = {
         tdElement.setAttribute ("__age", 10);
       }
     }
+  },
+
+  /**
+   * セルの最低保持時間フラグを更新
+   */
+  updateCellPreserve : function (tdElement, info) {
+    var preserveMin = arAkahukuBoard.getPreserveMin (info);
+    if (!(preserveMin > 0)) {
+      return; // this board has no preserveMin
+    }
+    var num = arAkahukuCatalog._getCellThreadId (tdElement);
+    var ctime = arAkahukuCatalog._getCellCreateTime (tdElement);
+    if (!num || ctime <= 0) {
+      return;
+    }
+    var now = Date.now ();
+    var reddenMin = 3; // 期限間近のあと何分で赤字化するか
+    if (now < ctime + 60*1000*(preserveMin - reddenMin)) {
+      tdElement.setAttribute ("__preserved", 1);
+    }
+    else if (now < ctime + 60*1000*preserveMin) {
+      // 最低保持期限間近
+      tdElement.setAttribute ("__preserved", 0);
+    }
+    else { // 最低保持期限切れ
+      tdElement.removeAttribute ("__preserved");
+    }
+  },
+
+  _getCellThreadId : function (tdElement) {
+    var num = parseInt (tdElement.getAttribute ("__thread_id"));
+    if (!num) {
+      var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
+      if (anchor) {
+        if (anchor.href.match (/res[\/=]([0-9]+)/)
+            || anchor.href.match (/2\/([0-9]+)/)
+            || anchor.href.match (/b\/([0-9]+)/)) {
+          num = parseInt (RegExp.$1);
+        }
+      }
+    }
+    return num;
+  },
+
+  _getCellCreateTime : function (td) {
+    var ctime = -1;
+    var img = td.getElementsByTagName ("img") [0];
+    if (img && img.src && img.src.match (/(\d+)s\.jpg$/i)) {
+      // 画像ファイル名の数字は投稿した日時に対応する
+      ctime = parseInt (RegExp.$1);
+    }
+    return ctime;
   },
 
   /**
@@ -3683,7 +3757,7 @@ var arAkahukuCatalog = {
     if (/^akahuku_catalog_reorder_save\d?$/.test (target_id)) {
       // 現在の並び順を記憶
       var type = arAkahukuCatalog.REORDER_TYPES [param.order];
-      arAkahukuConfig.prefBranch
+      arAkahukuConfig
         .setIntPref ("akahuku.catalog.reorder.save.type", type);
       arAkahukuCatalog.reorderSaveType = type;
       arAkahukuCatalog.updateReorderIndicator (targetDocument, param);
@@ -3985,8 +4059,9 @@ var arAkahukuCatalog = {
             = "\u3042\u3068 " + param.tatelogSec + " \u79D2";
           node.style.display = "";
                     
-          setTimeout (arAkahukuCatalog.tatelogTimer, 1000,
-                      targetDocument);
+          targetDocument.defaultView.setTimeout (function () {
+            arAkahukuCatalog.tatelogTimer (targetDocument);
+          }, 1000);
         }
       }
             
@@ -4001,8 +4076,28 @@ var arAkahukuCatalog = {
                                            responseText);
       if (mergedItems.length > 0) {
         if (param.historyCallbacks.count > 0) {
+          arAkahukuCatalog.setStatus
+            ("\u66F4\u65B0\u4E2D (\u5C65\u6B74)", // "更新中 (履歴)"
+             true, targetDocument);
+          // asyncWaitRequests が長時間たっても終了しないなら強制終了
+          var asyncWaitMonitorTimerID =
+            targetDocument.defaultView
+            .setTimeout (function () {
+              param.historyCallbacks.abort ();
+              arAkahukuCatalog.setStatus // "更新中 (履歴 timeout)"
+              ("\u66F4\u65B0\u4E2D (\u5C65\u6B74 timeout)",
+               true, targetDocument);
+              targetDocument.defaultView.setTimeout (function () {
+                // 一時停止した後に更新を継続
+                param.historyCallbacks.callback ();
+              }, 500);
+            }, 5000);
           param.historyCallbacks.asyncWaitRequests
             (function () {
+              targetDocument.defaultView
+              .clearTimeout (asyncWaitMonitorTimerID);
+              arAkahukuCatalog.setStatus // "更新中"
+                ("\u66F4\u65B0\u4E2D", true, targetDocument);
               param.historyCallbacks = null;
               arAkahukuCatalog._update2
                 (targetDocument, oldTable, mergedItems, param);
@@ -4015,12 +4110,14 @@ var arAkahukuCatalog = {
         }
       }
       else {
+        // "満員です"
         arAkahukuCatalog.setStatus ("\u6E80\u54E1\u3067\u3059",
                                     false, targetDocument);
         arAkahukuSound.playCatalogReload ();
       }
     }
     else {
+      // "ロード失敗"
       arAkahukuCatalog.setStatus ("\u30ED\u30FC\u30C9\u5931\u6557",
                                   false, targetDocument);
     }
@@ -4089,8 +4186,9 @@ var arAkahukuCatalog = {
           = "\u3042\u3068 " + param.tatelogSec + " \u79D2";
         param.tatelogSec --;
                 
-        setTimeout (arAkahukuCatalog.tatelogTimer, 1000,
-                    targetDocument);
+        targetDocument.defaultView.setTimeout (function () {
+          arAkahukuCatalog.tatelogTimer (targetDocument);
+        }, 1000);
       }
       else {
         remains.innerHTML = "\uFF01";
@@ -4488,7 +4586,7 @@ var arAkahukuCatalog = {
           nodes [i].src = nodes [i].src;
         }
         else if (request.imageStatus == 0) {
-          setTimeout
+          targetDocument.defaultView.setTimeout
             (function (node) {
               node.src = node.src;
             }, 100, nodes [i]);
@@ -4519,6 +4617,7 @@ var arAkahukuCatalog = {
       param.reloadChannel = null;
       arAkahukuCatalog.setStatus
       ("\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F",
+       // "中断されました"
        false, targetDocument);
       return;
     }
@@ -4544,12 +4643,12 @@ var arAkahukuCatalog = {
       tmpNode.style.display = "none";
     }
         
-    var ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService);
     param.reloadChannel
-    = ios.newChannel (targetDocument.location.href, null, null)
-    .QueryInterface (Components.interfaces.nsIHttpChannel);
+      = arAkahukuUtil.newChannel ({
+        uri: targetDocument.location.href,
+        loadingNode: targetDocument,
+        contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH,
+      }).QueryInterface (Components.interfaces.nsIHttpChannel);
     if (!arAkahukuCatalog.enableReloadUpdateCache) {
       // HttpChannel にキャッシュを更新させない
       param.reloadChannel.loadFlags
@@ -4562,6 +4661,7 @@ var arAkahukuCatalog = {
         
     arAkahukuCatalog.setStatus
     ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)",
+     // "ロード中 (ヘッダ)"
      true, targetDocument);
         
     try {
@@ -4571,6 +4671,7 @@ var arAkahukuCatalog = {
       /* サーバに接続できなかった場合 */
       arAkahukuCatalog.setStatus
       ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F",
+       // "接続できませんでした"
        true, targetDocument);
     }
   },
@@ -5151,13 +5252,25 @@ var arAkahukuCatalog = {
     }
     var uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
 
-    // 現在のWindowを最優先探索
-    var targetWindow = anchor.ownerDocument.defaultView;
-    var window = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+    var targetWindow, reloader;
 
-    targetWindow = arAkahukuWindow.focusAkahukuTabByURI (uri, window);
-    if (!targetWindow) {// 切替失敗時
-      return;
+    var params = Akahuku.getDocumentParamsByURI (uri);
+    if (params.length > 0) {
+      // 現 Akahuku 管理下に対象のスレッドがある場合
+      targetWindow = params [0].targetDocument.defaultView;
+      arAkahukuWindow.focusTabForWindow (targetWindow);
+      reloader = arAkahukuReload;
+    }
+    else {
+      // XUL Window毎の検索
+      targetWindow = anchor.ownerDocument.defaultView;
+      var chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+      targetWindow = arAkahukuWindow.focusAkahukuTabByURI (uri, chromeWindow);
+      if (!targetWindow) {// 切替失敗時
+        return;
+      }
+      chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+      reloader = chromeWindow.arAkahukuReload;
     }
 
     event.preventDefault ();
@@ -5184,9 +5297,8 @@ var arAkahukuCatalog = {
         base = doc.documentElement; //標準準拠モード用
       }
       if (offsetTop < base.scrollTop + base.clientHeight) {
-        // 続きを読ませる (強引?)
-        window = arAkahukuWindow.getParentWindowInChrome (targetWindow);
-        window.arAkahukuReload.diffReloadCore (doc, doSync, false);
+        // 画面内に要素がある場合
+        reloader.diffReloadCore (doc, doSync, false);
       }
     }
   },
@@ -5215,10 +5327,9 @@ var arAkahukuCatalog = {
             || arAkahukuCatalog.enableObserve
             || arAkahukuCatalog.enableLeft)) {
             
-      var param = new arAkahukuCatalogParam ();
+      var param = new arAkahukuCatalogParam (targetDocument);
       Akahuku.getDocumentParam (targetDocument)
       .catalog_param = param;
-      param.targetDocument = targetDocument;
             
       var table = targetDocument.getElementsByTagName ("table") [1];
       if (!table) {
@@ -5428,8 +5539,7 @@ var arAkahukuCatalog = {
             
       /* ズーム用にマウスのイベントを検出する */
       if (arAkahukuCatalog.enableZoom) {
-        var param2 = new arAkahukuPopupParam (10);
-        param2.targetDocument = targetDocument;
+        var param2 = new arAkahukuPopupParam (10, targetDocument);
         Akahuku.getDocumentParam (targetDocument)
         .catalogpopup_param = param2;
                 
@@ -5784,7 +5894,7 @@ var arAkahukuCatalog = {
       var targetDocument = Akahuku.documentParams [i].targetDocument;
       var td = arAkahukuCatalog.getThreadCell (targetDocument, id);
       if (td) {
-        arAkahukuCatalog.setCellVisited (td, true);
+        arAkahukuCatalog.setCellVisited (td, visited);
       }
     }
   },

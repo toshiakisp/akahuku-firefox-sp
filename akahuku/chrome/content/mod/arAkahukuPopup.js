@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /** 
- * Require: arAkahukuCacheImageData, arAkahukuCatalog
+ * Require: arAkahukuCatalog
  */
 
 /**
@@ -136,12 +136,15 @@ arAkahukuPopupData.prototype = {
  *
  * @param  Number interval
  *         ポップアップを動かす間隔
+ * @param  HTMLDocument doc
+ *         対象のドキュメント
  */
-function arAkahukuPopupParam (interval) {
+function arAkahukuPopupParam (interval, doc) {
   this.cacheImageData = new arAkahukuCacheImageData ();
   this.popups = new Object ();
   this.effectors = new Object ();
   this.interval = interval;
+  this.targetDocument = doc;
 }
 arAkahukuPopupParam.prototype = {
   cacheImageData : null,   /* arAkahukuCacheImageData  画像のキャッシュ */
@@ -183,10 +186,11 @@ arAkahukuPopupParam.prototype = {
         
     this.effectors = null;
         
-    if (this.effectorsTimerID != null) {
-      clearInterval (this.effectorsTimerID);
-      this.effectorsTimerID = null;
+    var window = this.targetDocument.defaultView;
+    if (window && this.effectorsTimerID != null) {
+      window.clearInterval (this.effectorsTimerID);
     }
+    this.effectorsTimerID = null;
         
     this.targetDocument = null;
   }
@@ -213,8 +217,9 @@ var arAkahukuPopup = {
     param.effectors [popupdata.key] = [popupdata, effectFunc];
         
     if (!param.effectorsTimerID) {
+      var window = param.targetDocument.defaultView;
       param.effectorsTimerID
-        = setInterval (arAkahukuPopup.effectorTimer,
+        = window.setInterval (arAkahukuPopup.effectorTimer,
                        param.interval,
                        param);
     }
@@ -251,7 +256,8 @@ var arAkahukuPopup = {
             
       if (param.effectorsLength == 0
           && param.effectorsTimerID) {
-        clearInterval (param.effectorsTimerID);
+        var window = param.targetDocument.defaultView;
+        window.clearInterval (param.effectorsTimerID);
         param.effectorsTimerID = null;
       }
     }

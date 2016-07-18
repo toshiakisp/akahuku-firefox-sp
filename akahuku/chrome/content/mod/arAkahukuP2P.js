@@ -54,7 +54,7 @@ var arAkahukuP2P = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
@@ -389,15 +389,16 @@ var arAkahukuP2P = {
    */
   setContextMenu : function (event) {
     var menuitem;
+    var popupNode = gContextMenu.target;
             
     var isP2P = false;
         
     if (arAkahukuP2P.enable) {
-      if (document.popupNode
-          && document.popupNode.nodeName.toLowerCase ()
+      if (popupNode
+          && popupNode.nodeName.toLowerCase ()
           == "img") {
-        if ("src" in document.popupNode) {
-          if (document.popupNode.src.match
+        if ("src" in popupNode) {
+          if (popupNode.src.match
               (/^akahuku:\/\/[^\/]+\/p2p\//)) {
             isP2P = true;
           }
@@ -469,17 +470,18 @@ var arAkahukuP2P = {
   /**
    * P2P のキャッシュを削除する
    */
-  deleteCache : function () {
+  deleteCache : function (optTarget) {
     var isP2P = false;
     var src = "";
+    var target = optTarget || gContextMenu.target;
         
-    if (document.popupNode
-        && document.popupNode.nodeName.toLowerCase ()
+    if (target
+        && target.nodeName.toLowerCase ()
         == "img") {
-      if ("src" in document.popupNode) {
-        if (document.popupNode.src.match
+      if ("src" in target) {
+        if (target.src.match
             (/^akahuku:\/\/[^\/]+\/p2p\//)) {
-          src = document.popupNode.src;
+          src = target.src;
           isP2P = true;
         }
       }
@@ -505,6 +507,10 @@ var arAkahukuP2P = {
     + arAkahukuFile.separator
     + uinfo.leafNameExt;
         
+    arAkahukuP2P.deleteCacheFiles (targetFileName);
+  },
+    
+  deleteCacheFiles : function (targetFileName) {
     try {
       var file
         = Components.classes ["@mozilla.org/file/local;1"]
@@ -533,7 +539,7 @@ var arAkahukuP2P = {
    */
   updateAddress : function (address) {
     arAkahukuP2P.address = address;
-    arAkahukuConfig.prefBranch.setCharPref
+    arAkahukuConfig.setCharPref
     ("akahuku.p2p.address",
      address);
   },
@@ -706,7 +712,7 @@ var arAkahukuP2P = {
         /* AKA/0.6 の情報 */
         nodeList = nodeList2;
                 
-        arAkahukuConfig.prefBranch.clearUserPref
+        arAkahukuConfig.clearUserPref
           ("akahuku.p2p.nodelist2");
       }
       var added = false;
@@ -776,7 +782,7 @@ var arAkahukuP2P = {
         
     var nodeList = servant.getNodeList ();
     if (nodeList) {
-      arAkahukuConfig.prefBranch.setCharPref
+      arAkahukuConfig.setCharPref
         ("akahuku.p2p.nodelist",
          nodeList);
     }
@@ -1204,7 +1210,9 @@ var arAkahukuP2P = {
     if (arAkahukuP2P.prefetchList.length > 0
         && arAkahukuP2P.prefetchTimer == null) {
       arAkahukuP2P.prefetchTimer
-      = setTimeout (arAkahukuP2P.prefetchNotify, 500);
+      = targetDocument.defaultView.setTimeout (function (targetWindow) {
+        arAkahukuP2P.prefetchNotify (targetWindow);
+      }, 500, targetDocument.defaultView);
     }
         
     return [found, saved, waiting, pushed];
@@ -1213,7 +1221,7 @@ var arAkahukuP2P = {
   /**
    * プリフェッチする
    */
-  prefetchNotify : function () {
+  prefetchNotify : function (targetWindow) {
     if (arAkahukuP2P.prefetchList.length > 0) {
       var path = arAkahukuP2P.prefetchList.shift ();
             
@@ -1226,7 +1234,9 @@ var arAkahukuP2P = {
         
     if (arAkahukuP2P.prefetchList.length > 0) {
       arAkahukuP2P.prefetchTimer
-      = setTimeout (arAkahukuP2P.prefetchNotify, 500);
+      = targetWindow.setTimeout (function () {
+        arAkahukuP2P.prefetchNotify (targetWindow);
+      }, 500);
     }
     else {
       arAkahukuP2P.prefetchTimer = null;

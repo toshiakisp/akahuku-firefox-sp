@@ -97,12 +97,14 @@ Akahuku.Cache = new function () {
   this.apply = function (targetDocument, info) {
     if (info.isReply) {
       var documentParam = Akahuku.getDocumentParam (targetDocument);
-      documentParam.cachedimages = new CachedImageReserver ();
+      documentParam.cachedimages
+        = new CachedImageReserver (targetDocument.defaultView);
     }
 
     if (info.isCache) {
       Akahuku.Cache.asyncGetStatus
-        (targetDocument.location.href,
+        ({url: targetDocument.location.href,
+          triggeringNode: targetDocument},
          function (cacheStatus) {
           notifyCacheStatus (targetDocument, cacheStatus);
          });
@@ -118,14 +120,23 @@ Akahuku.Cache = new function () {
     var timestamp
       = "\u66F4\u65B0\u65E5\u6642:" //"更新日時"
       + lmday.toLocaleString ();
+    var text
+      = "\u30AD\u30E3\u30C3\u30B7\u30E5\u3092\u8868\u793A\u4E2D"
+      //"キャッシュを表示中 ("
+      + ": " + cacheStat.key + " (" + timestamp + ")";
+    var browser
+      = arAkahukuWindow.getBrowserForWindow
+      (targetDocument.defaultView);
+    Akahuku.Cache.showCacheNotification (browser, text);
+  };
+
+  this.showCacheNotification = function (browser, text) {
     try {
-      var box = getNotificationBox (targetDocument.defaultView);
+      var tabbrowser = document.getElementById ("content");
+      var box = tabbrowser.getNotificationBox (browser);
       var oldItem = box.getNotificationWithValue (Akahuku.Cache);
       box.appendNotification
-        ("\u30AD\u30E3\u30C3\u30B7\u30E5\u3092\u8868\u793A\u4E2D"
-         //"キャッシュを表示中 ("
-         + ": " + cacheStat.key
-         + " (" + timestamp + ")",
+        (text,
          Akahuku.Cache,
          "chrome://akahuku/content/images/icon_small.png",
          box.PRIORITY_WARNING_LOW,
@@ -136,17 +147,19 @@ Akahuku.Cache = new function () {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-  };
+  },
 
 
   /**
    * キャッシュの状態を調べる (非同期)
-   * @param  String url
+   * @param  String url or Object {url:"", contextWindow: DOMWindow}
    *         対象のURL
    * @param  Function callback
    *         状態(Object)を受け取るコールバック関数
    */
-  this.asyncGetStatus = function (url, callback) {
+  this.asyncGetStatus = function (source, callback) {
+    source = _ensureSourceObject (source);
+    var url = source.url;
     var p = Akahuku.protocolHandler.getAkahukuURIParam (url);
     if (p.type === "filecache") {
       var status = _getFilecacheStatus (p.original);
@@ -157,28 +170,33 @@ Akahuku.Cache = new function () {
         = function (status) {
           if ((!status.isExist || status.httpStatusCode === "404")
               && /\d+\.htm$/.test (url)) {
-            url = p.original + ".backup";
+            source.url = p.original + ".backup";
             Akahuku.Cache.asyncGetHttpCacheStatus
-              (url, false, callbackHttpCacheStatus);
+              (source, false, callbackHttpCacheStatus);
             return;
           }
           callback.apply (null, [status]);
         };
+      source.url = p.original;
       Akahuku.Cache.asyncGetHttpCacheStatus
-        (p.original, false, callbackHttpCacheStatus);
+        (source, false, callbackHttpCacheStatus);
     }
-    Akahuku.Cache.asyncGetHttpCacheStatus (url, false, callback);
+    else {
+      Akahuku.Cache.asyncGetHttpCacheStatus (source, false, callback);
+    }
   };
-  this.asyncGetHttpCacheStatus = function (key, noRedirect, callback) {
+  this.asyncGetHttpCacheStatus = function (source, noRedirect, callback) {
+    source = _ensureSourceObject (source);
+    var key = source.url;
     var status = new CacheStatus (key);
     var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-    finder.init ();
+    finder.init (source.contextWindow);
     if (noRedirect) {
       finder.maxRedirections = 0;
     }
     var callbackStatus = callback;
     if (!callbackStatus) {
-      Akahuku.debug.warning ("aborted by invalid callback");
+      Akahuku.debug.warn ("aborted by invalid callback");
       return;
     }
     try {
@@ -195,7 +213,12 @@ Akahuku.Cache = new function () {
         status.lastModified = descriptor.lastModified * 1000; //[ms]
 
         // HTTP status
-        var text = descriptor.getMetaDataElement ("response-head");
+        try {
+          var text = descriptor.getMetaDataElement ("response-head");
+        }
+        catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+          text = "";
+        }
         if (text) {
           var headers = text.match (/[^\r\n]*\r\n/g);
           if (headers.length > 0) {
@@ -388,7 +411,7 @@ Akahuku.Cache = new function () {
   };
   this.RedirectedCacheFinder.prototype = {
     maxRedirections : 10,
-    init : function ()
+    init : function (targetWindow)
     {
       var Ci = Components.interfaces;
       var loadContextInfo = null;
@@ -396,7 +419,7 @@ Akahuku.Cache = new function () {
         if ("fromLoadContext" in arAkahukuCompat.LoadContextInfo) {
           loadContextInfo =
             arAkahukuCompat.LoadContextInfo.fromLoadContext
-            (window.QueryInterface (Ci.nsIInterfaceRequestor)
+            (targetWindow.QueryInterface (Ci.nsIInterfaceRequestor)
              .getInterface (Ci.nsIWebNavigation)
              .QueryInterface (Ci.nsILoadContext),
              false);
@@ -472,7 +495,12 @@ Akahuku.Cache = new function () {
 
     _resolveRedirection : function (descriptor)
     {
-      var head = descriptor.getMetaDataElement ("response-head");
+      try {
+        var head = descriptor.getMetaDataElement ("response-head");
+      }
+      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+        head = "";
+      }
       var httpStatusCode = "000";
       if (head && head.match (/^HTTP\/\d\.\d (\d{3}) ([^\r\n]+)/)) {
         httpStatusCode = RegExp.$1;
@@ -493,9 +521,10 @@ Akahuku.Cache = new function () {
    * ページ内のキャッシュ済み画像を管理
    *   登録中はキャッシュの有効期限を最大に延ばす
    */
-  function CachedImageReserver () {
+  function CachedImageReserver (contextWindow) {
     this.keys = [];
     this.originalExpireTimes = {};
+    this.contextWindow = contextWindow;
   };
   CachedImageReserver.prototype = {
     /**
@@ -554,7 +583,7 @@ Akahuku.Cache = new function () {
       return function (event) {
         if (event.target.src != src) return;
         var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-        finder.init ();
+        finder.init (that.contextWindow);
         finder.asyncOpen
           (originalSrc,
            function (descriptor) {
@@ -581,14 +610,17 @@ Akahuku.Cache = new function () {
   /**
    * キャッシュを開く
    */
-  this.asyncOpenCache = function (url, flag, callback) {
+  this.asyncOpenCache = function (source, flag, callback) {
+    source = _ensureSourceObject (source);
+    var url = source.url;
     var Ci = Components.interfaces;
     var loadContextInfo = null;
+
     if ("fromLoadContext" in arAkahukuCompat.LoadContextInfo) {
       try {
         loadContextInfo =
           arAkahukuCompat.LoadContextInfo.fromLoadContext
-          (window.QueryInterface (Ci.nsIInterfaceRequestor)
+          (source.contextWindow.QueryInterface (Ci.nsIInterfaceRequestor)
            .getInterface (Ci.nsIWebNavigation)
            .QueryInterface (Ci.nsILoadContext), false);
       }
@@ -617,5 +649,31 @@ Akahuku.Cache = new function () {
     this.asyncOpenCache (url, flag, callback);
   };
 
+  function _ensureSourceObject (source)  {
+    if (typeof (source) == "string") {
+      source = {
+        url: source,
+        contextWindow: null,
+      };
+    }
+    if (!source.contextWindow) {
+      if ("triggeringNode" in source && source.triggeringNode !== null) {
+        if ("ownerDocument" in source.triggeringNode
+            && source.triggeringNode.ownerDocument) {
+          source.contextWindow
+            = source.triggeringNode.ownerDocument.defaultView;
+        }
+        else if ("defaultView" in source.triggeringNode
+            && source.triggeringNode.defaultView) {
+          source.contextWindow = source.triggeringNode.defaultView;
+        }
+      }
+    }
+    if (!source.contextWindow && typeof window !== "undefined") {
+      source.contextWindow = window;
+      Akahuku.debug.warn ("no valid triggeringNode, use XUL window");
+    }
+    return source;
+  }
 };
 

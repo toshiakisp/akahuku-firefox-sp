@@ -2,8 +2,8 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuP2P,
- *          arAkahukuReload, arAkahukuWindow, arAkahukuBoard,
+ *          (arAkahukuDocumentParam), arAkahukuDOM, arAkahukuP2P,
+ *          arAkahukuWindow, arAkahukuBoard,
  *          arAkahukuUtil
  */
 
@@ -184,7 +184,7 @@ var arAkahukuThread = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     /* タブの移動のイベントを監視 */
     window.addEventListener
     ("TabMove",
@@ -1572,9 +1572,7 @@ var arAkahukuThread = {
       if (thumbnail == null) {
         thumbnail = targetDocument.getElementById ("akahuku_thumbnail");
       }
-      var tab
-      = arAkahukuWindow.getTabForWindow (targetDocument.defaultView);
-      if (thumbnail && tab) {
+      if (thumbnail) {
         var src = thumbnail.src;
         try {
           src = arAkahukuP2P.deP2P (src);
@@ -1602,10 +1600,32 @@ var arAkahukuThread = {
         }
         
         src = arAkahukuP2P.tryEnP2P (src);
-                
-        var tabbrowser = document.getElementById ("content");
         
-        if (!info.isMht && "setIcon" in tabbrowser
+        arAkahukuThread.setTabIconForWindow
+          (targetDocument.defaultView, {
+            src: src,
+            thumbnailWidth: thumbnail.getAttribute ("width"),
+            thumbnailHeight: thumbnail.getAttribute ("height"),
+          });
+      }
+    }
+  },
+  setTabIconForWindow : function (targetWindow, prop) {
+    // shim for e10s
+    var targetBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
+    arAkahukuThread.setTabIconForBrowser (targetBrowser, prop);
+  },
+  setTabIconForBrowser : function (targetBrowser, prop) {
+    // run only in XUL overlay
+    var src = prop.src;
+    if (arAkahukuThread.enableTabIcon) {
+      var tab
+      = arAkahukuWindow.getTabForBrowser (targetBrowser);
+      if (tab) {
+        var tabbrowser
+          = targetBrowser.ownerDocument.getElementById ("content");
+        
+        if ("setIcon" in tabbrowser
             && arAkahukuThread.enableTabIconAsFavicon) {
           tabbrowser.setIcon (tab, src);
         }
@@ -1616,26 +1636,29 @@ var arAkahukuThread = {
         }
         else {
           tab.setAttribute ("image", src);
-          
-          tab.linkedBrowser.contentWindow.addEventListener
-            ("load", (function (tab, src) {
-                return function () {
-                  setTimeout(function () {
-                      tab.setAttribute ("image", src);
-                    }, 100);
-                  setTimeout(function () {
-                      tab.setAttribute ("image", src);
-                    }, 500);
-                };
-              })(tab, src), true);
+
+          // favicon.ico 等に上書きされてしまったら元に戻す
+          var tabIconUpdater = (function (tab, src, taburi) {
+            return function () {
+              if (tab.getAttribute ("image") == src) {
+                return;
+              }
+              tab.removeEventListener ("load", tabIconUpdater);
+              if (taburi !== tab.linkedBrowser.currentURI) {
+                return; // 別ページへ遷移した後
+              }
+              tab.setAttribute ("image", src);
+            };
+          })(tab, src, tab.linkedBrowser.currentURI);
+          tab.addEventListener ("load", tabIconUpdater, false);
         }
                     
         if (arAkahukuThread.enableTabIconSize) {
           var max = arAkahukuThread.tabIconSizeMax;
           var width
-            = parseInt (thumbnail.getAttribute ("width"));
+            = parseInt (prop.thumbnailWidth);
           var height
-            = parseInt (thumbnail.getAttribute ("height"));
+            = parseInt (prop.thumbnailHeight);
                         
           if (width > height) {
             height = max * height / width;
@@ -1651,7 +1674,7 @@ var arAkahukuThread = {
           }
                     
           var node
-            = document.getAnonymousElementByAttribute
+            = targetBrowser.ownerDocument.getAnonymousElementByAttribute
             (tab, "class", "tab-icon");
           var tabIcon = node;
           if (node) {
@@ -1670,7 +1693,7 @@ var arAkahukuThread = {
             }
           }
           node
-            = document.getAnonymousElementByAttribute
+            = targetBrowser.ownerDocument.getAnonymousElementByAttribute
             (tab, "class", "tab-icon-image");
           if (node) {
             if (tabIcon && node.parentNode == tabIcon) {
@@ -1683,7 +1706,8 @@ var arAkahukuThread = {
                */
               try {
                 var s, e;
-                style = window.getComputedStyle (node, "");
+                style = targetBrowser.ownerDocument.defaultView
+                  .getComputedStyle (node, "");
                 s = style.getPropertyCSSValue ("margin-left").getFloatValue (CSSPrimitiveValue.CSS_PX) + "px";
                 e = style.getPropertyCSSValue ("margin-right").getFloatValue (CSSPrimitiveValue.CSS_PX) + "px";
                 node.style.MozMarginStart = "0px";
@@ -1735,11 +1759,21 @@ var arAkahukuThread = {
    */
   resetTabIcon : function (targetDocument) {
     if (arAkahukuThread.enableTabIcon) {
+      arAkahukuThread.resetTabIconForWindow (targetDocument.defaultView);
+    }
+  },
+  resetTabIconForWindow : function (targetWindow) {
+    // shim for e10s
+    var targetBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
+    arAkahukuThread.resetTabIconForBrowser (targetBrowser);
+  },
+  resetTabIconForBrowser : function (targetBrowser) {
+    if (arAkahukuThread.enableTabIcon) {
       var tab
-      = arAkahukuWindow.getTabForWindow
-      (targetDocument.defaultView);
+      = arAkahukuWindow.getTabForBrowser (targetBrowser);
       if (tab) {
-        var tabbrowser = document.getElementById ("content");
+        var tabbrowser = targetBrowser.ownerDocument
+          .getElementById ("content");
         
         if ("setIcon" in tabbrowser) {
           tabbrowser.setIcon (tab, "");
@@ -1759,7 +1793,8 @@ var arAkahukuThread = {
                 
         if (arAkahukuThread.enableTabIconSize) {
           var node
-            = document.getAnonymousElementByAttribute
+            = targetBrowser.ownerDocument
+            .getAnonymousElementByAttribute
             (tab, "class", "tab-icon");
           if (node) {
             try {
@@ -1773,7 +1808,8 @@ var arAkahukuThread = {
             }
           }
           node
-            = document.getAnonymousElementByAttribute
+            = targetBrowser.ownerDocument
+            .getAnonymousElementByAttribute
             (tab, "class", "tab-icon-image");
           if (node) {
             try {
@@ -1917,7 +1953,7 @@ var arAkahukuThread = {
                     function () {
                      var href = iframe.contentDocument.location.href;
                      if (href.match (/del\.php(\?guid=on)?$/)) {
-                       setTimeout
+                       targetDocument.defaultView.setTimeout
                          (function () {
                            state.div.parentNode.removeChild (state.div);
                            state.opened = false;
@@ -1951,6 +1987,7 @@ var arAkahukuThread = {
     if (info.isNotFound) {
       return;
     }
+    var targetDocument = targetNode.ownerDocument || targetNode;
         
     var node, nodes, tmp;
         
@@ -1982,7 +2019,7 @@ var arAkahukuThread = {
               nodes [i].style.marginLeft
                 = (img.width + 40) + "px";
               nodes [i].style.display = "none";
-              setTimeout
+              targetDocument.defaultView.setTimeout
                 ((function (node) {
                     return function () {
                       node.style.display = "";
@@ -1994,7 +2031,7 @@ var arAkahukuThread = {
             /* オートリンクのプレビュー */
             nodes [i].style.marginLeft = a.offsetWidth + "px";
             nodes [i].style.display = "none";
-            setTimeout
+            targetDocument.defaultView.setTimeout
               ((function (node) {
                   return function () {
                     node.style.display = "";
@@ -2392,16 +2429,20 @@ var arAkahukuThread = {
   /**
    * レスパネルを表示
    */
-  showResPanel : function () {
+  showResPanel : function (targetDocument) {
     var frame, header, content, button, resizer, scroll, bar;
         
-    var params = Akahuku.getFocusedDocumentParam ();
+    if (targetDocument) {
+      params = Akahuku.getDocumentParam (targetDocument);
+    }
+    else {
+      params = Akahuku.getFocusedDocumentParam ();
+      targetDocument = params.targetDocument;
+    }
         
     if (!params) {
       return;
     }
-        
-    var targetDocument = params.targetDocument;
         
     if (!params.location_info.isReply) {
       /* レス送信モードではない */
@@ -2656,7 +2697,9 @@ var arAkahukuThread = {
     }
     var that = this;
     Akahuku.Cache.asyncGetHttpCacheStatus
-      (imageStatus.requestURI.spec, false,
+      ({url: imageStatus.requestURI.spec,
+        triggeringNode: event.target},
+       false,
        function (cacheStatus) {
         if (cacheStatus.isExist
             && cacheStatus.httpStatusCode [0] != "2") {

@@ -215,7 +215,7 @@ var arAkahukuSidebar = {
   currentSidebarDocument : null, /* XULDocument  現在対象のサイドバーの
                                   *   ドキュメント */
     
-  boards : null, /* Object  板情報の配列
+  boards : new Object (), /* Object  板情報の配列
                   *   <String 板名, arAkahukuSidebarBoard> */
     
   enable : false,             /* Boolean  サイドバーを使用する */
@@ -248,14 +248,12 @@ var arAkahukuSidebar = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
       arAkahukuSidebar.onKeyDown (arguments [0]);
     }, true);
-        
-    arAkahukuSidebar.boards = new Object ();
         
     var board = new arAkahukuSidebarBoard ();
     arAkahukuSidebar.boards ["*_*"] = board;
@@ -2669,14 +2667,14 @@ var arAkahukuSidebar = {
             
       if (type == 0) {
         arAkahukuSidebar.sortType = sorttype;
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setIntPref ("akahuku.sidebar.sort.type",
                        arAkahukuSidebar.sortType);
       }
       else if (type == 1) {
         arAkahukuSidebar.enableSortVisited
           = !arAkahukuSidebar.enableSortVisited;
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.sidebar.sort.visited",
                         arAkahukuSidebar.enableSortVisited);
       }
@@ -2684,13 +2682,13 @@ var arAkahukuSidebar = {
         arAkahukuSidebar.enableSortMarked
           = !arAkahukuSidebar.enableSortMarked;
                 
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.sidebar.sort.marked",
                         arAkahukuSidebar.enableSortMarked);
       }
       else if (type == 3) {
         arAkahukuSidebar.sortInvert = !arAkahukuSidebar.sortInvert;
-        arAkahukuConfig.prefBranch
+        arAkahukuConfig
           .setBoolPref ("akahuku.sidebar.sort.invert",
                         arAkahukuSidebar.sortInvert);
       }

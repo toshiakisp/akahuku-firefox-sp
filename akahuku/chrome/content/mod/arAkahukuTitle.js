@@ -1,7 +1,7 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuConfig, arAkahukuConverter, arAkahukuDOM, arAkahukuLink
+ * Require: arAkahukuConfig, arAkahukuConverter, arAkahukuDOM
  */
 
 /**

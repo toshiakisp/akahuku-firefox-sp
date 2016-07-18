@@ -323,10 +323,11 @@ var arAkahukuScroll = {
    * @param  arAkahukuLocationInfo info
    *         アドレスの情報
    */
-  apply : function (targetDocument, info, targetWindow) {
+  apply : function (targetDocument, info) {
     if (info.isNotFound) {
       return;
     }
+    var targetWindow = targetDocument.defaultView;
         
     var scrolled = false;
         
@@ -354,7 +355,7 @@ var arAkahukuScroll = {
         targetWindow.scrollTo
           (0,
            targetDocument.documentElement.scrollHeight);
-        setTimeout (function () {
+        targetWindow.setTimeout (function () {
             targetWindow.scrollTo
               (0,
                targetDocument.documentElement.scrollHeight);
@@ -386,7 +387,7 @@ var arAkahukuScroll = {
       if (browser) {
         if (targetWindow.scrollY > 0) {
           if (browser.__lastScrollY) {
-            targetWindow.scrollTo (window.scrollX,
+            targetWindow.scrollTo (targetWindow.scrollX,
                                    browser.__lastScrollY);
           }
         }

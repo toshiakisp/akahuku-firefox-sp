@@ -27,7 +27,7 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor) {
+    if (descriptor && Components.isSuccessCode (status)) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime ((new Date ()).getTime () / 1000
@@ -54,8 +54,20 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
             
       descriptor.close ();
     }
+    else if (Akahuku.debug.enabled) {
+      var errorStatus = arAkahukuUtil.resultCodeToString (status);
+      Akahuku.debug.warn
+        ("arAkahukuMHTRedirectCacheWriter.onCacheEntryAvailable: "
+         + "failed with " + errorStatus);
+    }
   },
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,
@@ -231,8 +243,9 @@ arAkahukuMHTFileData.prototype = {
    *         避難所用
    */
   getFile : function (location, targetDocument) {
+    var window = this.ownerDocument.defaultView;
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
-      setTimeout
+      window.setTimeout
       ((function (file, location) {
           return function () {
             var ios
@@ -369,7 +382,8 @@ arAkahukuMHTFileData.prototype = {
         }
       }
       
-      Akahuku.Cache.asyncOpenCacheToRead (location, this);
+      Akahuku.Cache.asyncOpenCacheToRead
+        ({url: location, triggeringNode: targetDocument}, this);
     }
     catch (e) { Akahuku.debug.exception (e);
       /* キャッシュが存在しなかった場合 */
@@ -672,7 +686,9 @@ arAkahukuMHTFileData.prototype = {
           
           try {
             Akahuku.Cache.asyncOpenCacheToRead
-              (this.location + ".backup", this);
+              ({url: this.location + ".backup",
+                triggeringNode: this.ownerDocument},
+               this);
           }
           catch (e) { Akahuku.debug.exception (e);
             this.status = arAkahukuMHT.FILE_STATUS_NG;
@@ -712,6 +728,12 @@ arAkahukuMHTFileData.prototype = {
     }
   },
   onCacheEntryCheck : function (entry, appCache) {
+    try {
+      entry.dataSize;
+    }
+    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
   mainThreadOnly : true,
@@ -821,10 +843,11 @@ arAkahukuMHTFileData.prototype = {
 /**
  * mht ファイル作成管理データ
  */
-function arAkahukuMHTParam () {
+function arAkahukuMHTParam (targetDocument) {
   this.files = new Array ();
   this.previewSaveUrls = new Object ();
   this.previewTotalUrls = new Object ();
+  this.targetDocument = targetDocument;
 }
 arAkahukuMHTParam.prototype = {
   isBusy : false,        /* Boolean  保存中かどうか */
@@ -840,10 +863,11 @@ arAkahukuMHTParam.prototype = {
    * データを開放する
    */
   destruct : function () {
-    if (this.checkTimerID != null) {
-      clearInterval (this.checkTimerID);
-      this.checkTimerID = null;
+    var window = this.targetDocument.defaultView;
+    if (window && this.checkTimerID != null) {
+      window.clearInterval (this.checkTimerID);
     }
+    this.checkTimerID = null;
         
     for (var i = 0; i < this.files.length; i ++) {
       try {
@@ -1058,7 +1082,7 @@ var arAkahukuMHT = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     window.addEventListener
     ("keydown",
      function () {
@@ -2198,6 +2222,7 @@ var arAkahukuMHT = {
    */
   saveMHTCore : function (param) {
     var targetDocument = param.targetDocument;
+    var window = targetDocument.defaultView;
         
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
@@ -2730,7 +2755,7 @@ var arAkahukuMHT = {
             
       /* 取得状況チェックを開始する */
       param.checkTimerID
-        = setInterval (arAkahukuMHT.checkFiles,
+        = window.setInterval (arAkahukuMHT.checkFiles,
                        100,
                        param, button, button2, progress, progress2);
     }
@@ -2826,7 +2851,8 @@ var arAkahukuMHT = {
     if (button2) {
       button2.style.display = "none";
     }
-    clearInterval (param.checkTimerID);
+    var window = param.targetDocument.defaultView;
+    window.clearInterval (param.checkTimerID);
     param.checkTimerID = null;
         
     text
@@ -2842,7 +2868,7 @@ var arAkahukuMHT = {
       arAkahukuDOM.setText (progress2, text2);
     }
         
-    setTimeout
+    window.setTimeout
     (arAkahukuMHT.createMHTFile,
      100,
      param);
@@ -3177,6 +3203,7 @@ var arAkahukuMHT = {
    *         別名で保存
    */
   saveMHT : function (targetDocument, saveas) {
+    var window = targetDocument.defaultView;
     var param
     = Akahuku.getDocumentParam (targetDocument).mht_param;
         
@@ -3194,7 +3221,6 @@ var arAkahukuMHT = {
     = targetDocument.getElementById ("akahuku_throp_savemht_status");
         
     param.cloneDocument = null;
-    param.targetDocument = null;
         
     if (param.isBusy) {
       arAkahukuDOM.setText (button, "MHT \u3067\u4FDD\u5B58");
@@ -3215,7 +3241,7 @@ var arAkahukuMHT = {
             
       try {
         if (param.checkTimerID != null) {
-          clearInterval (param.checkTimerID);
+          window.clearInterval (param.checkTimerID);
           param.checkTimerID = null;
         }
         for (var i = 0; i < param.files.length; i ++) {
@@ -3252,8 +3278,6 @@ var arAkahukuMHT = {
     if (arAkahukuMHT.enableNolimit) {
       arAkahukuConfig.setTime (arAkahukuMHT.limitTime);
     }
-        
-    param.targetDocument = targetDocument;
         
     if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
@@ -3343,8 +3367,7 @@ var arAkahukuMHT = {
       }
             
       if (!dir.exists ()) {
-        dir.create (Components.interfaces.nsIFile.DIRECTORY_TYPE,
-                    493/*0755*/);
+        arAkahukuFile.createDirectory (dir.path);
       }
     }
     else {
@@ -3433,8 +3456,6 @@ var arAkahukuMHT = {
             (button2, "\u5225\u540D\u3067 MHT \u3067\u4FDD\u5B58");
         }
                 
-        param.targetDocument = null;
-                
         param.isBusy = false;
         if (arAkahukuMHT.enableNolimit) {
           arAkahukuConfig.restoreTime ();
@@ -3465,7 +3486,7 @@ var arAkahukuMHT = {
       param.tmpFile.initWithFile (param.file.parent);
       param.tmpFile.appendRelativePath (tmpFileName);
             
-      setTimeout
+      window.setTimeout
       (arAkahukuMHT.saveMHTCore,
        100,
        param);
@@ -3473,31 +3494,10 @@ var arAkahukuMHT = {
     else {
       /* ファイル選択ダイアログを表示する */
             
-      var filePicker
-      = Components.classes ["@mozilla.org/filepicker;1"]
-      .createInstance (Components.interfaces.nsIFilePicker);
-      filePicker.init (window,
-                       "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
-                       Components.interfaces.nsIFilePicker.modeSave);
-      filePicker.appendFilter ("MHT Files", "*.mht");
-      filePicker.defaultString = filename;
-      filePicker.appendFilters (Components.interfaces.nsIFilePicker
-                                .filterAll);
-            
-      try {
-        var dir
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        dir.initWithPath (dirname_base);
-                
-        filePicker.displayDirectory = dir;
-      }
-      catch (e) {
-        /* ベースのディレクトリが不正 */
-      }
-            
-      arAkahukuCompat.FilePicker.open
-        (filePicker, function (ret) {
+      var browser = arAkahukuWindow.getBrowserForWindow (window);
+      arAkahukuMHT.asyncOpenSaveMHTFilePicker
+        (browser, filename, dirname_base, function (ret, file, dir) {
+
       if (ret == Components.interfaces.nsIFilePicker.returnOK
           || ret == Components.interfaces.nsIFilePicker.returnReplace) {
         var text
@@ -3508,7 +3508,7 @@ var arAkahukuMHT = {
           arAkahukuDOM.setText (progress2, text);
         }
                 
-        param.file = filePicker.file;
+        param.file = file;
         if (!param.file.leafName.match (/\.mht$/)) {
           var path = param.file.path + ".mht";
           param.file
@@ -3522,10 +3522,10 @@ var arAkahukuMHT = {
         var tmpFileName
           = new Date ().getTime ()
           + "_" + Math.floor (Math.random () * 1000);
-        param.tmpFile.initWithFile (param.file.parent);
+        param.tmpFile.initWithPath (dir.path);
         param.tmpFile.appendRelativePath (tmpFileName);
                 
-        setTimeout
+        window.setTimeout
           (arAkahukuMHT.saveMHTCore,
            100,
            param);
@@ -3542,7 +3542,6 @@ var arAkahukuMHT = {
           arAkahukuDOM.setText (progress2,
                                 "\u4E2D\u65AD\u3057\u307E\u3057\u305F");
         }
-        param.targetDocument = null;
                 
         param.isBusy = false;
         if (arAkahukuMHT.enableNolimit) {
@@ -3551,8 +3550,49 @@ var arAkahukuMHT = {
                 
         arAkahukuSound.playSaveMHTError ();
       }
-        });
+        });// asyncOpenSaveMHTFilePicker
     }
+  },
+  /**
+   * 保存先のファイルを選ぶ(要Chrome process)
+   */
+  asyncOpenSaveMHTFilePicker : function (browser, filename, dirname_base, callback) {
+    var chromeWindow = browser.ownerDocument.defaultView.top;
+    var filePicker
+    = Components.classes ["@mozilla.org/filepicker;1"]
+    .createInstance (Components.interfaces.nsIFilePicker);
+    filePicker.init
+      (chromeWindow,
+       // "保存先のファイルを選んでください"
+       "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
+       Components.interfaces.nsIFilePicker.modeSave);
+    filePicker.appendFilter ("MHT Files", "*.mht");
+    filePicker.defaultString = filename;
+    filePicker.appendFilters
+      (Components.interfaces.nsIFilePicker.filterAll);
+    try {
+      var dir
+        = Components.classes ["@mozilla.org/file/local;1"]
+        .createInstance (Components.interfaces.nsILocalFile);
+      dir.initWithPath (dirname_base);
+
+      filePicker.displayDirectory = dir;
+    }
+    catch (e) {
+      /* ベースのディレクトリが不正 */
+    }
+
+    arAkahukuCompat.FilePicker.open
+      (filePicker, function (ret) {
+        var file = null;
+        var dir = null;
+        if (ret == Components.interfaces.nsIFilePicker.returnOK
+            || ret == Components.interfaces.nsIFilePicker.returnReplace) {
+          file = filePicker.file;
+          dir = file.parent;
+        }
+        callback.apply (null, [ret, file, dir]);
+      });
   },
     
   /**
@@ -3836,6 +3876,7 @@ var arAkahukuMHT = {
    */
   onUseP2PClick : function (event) {
     var targetDocument = event.target.ownerDocument;
+    var window = targetDocument.defaultView;
     event.preventDefault ();
         
     var result = arAkahukuP2P.applyP2P (targetDocument,
@@ -3864,7 +3905,7 @@ var arAkahukuMHT = {
     var progress
     = targetDocument.getElementById ("akahuku_savemht_progress");
     arAkahukuDOM.setText (progress, text);
-    setTimeout (function (progress) {
+    window.setTimeout (function (progress) {
         arAkahukuDOM.setText (progress, null);
       }, 3000, progress);        
   },
@@ -3948,7 +3989,9 @@ var arAkahukuMHT = {
             
       try {
         Akahuku.Cache.asyncOpenCacheToWrite
-          (targetDocument.location.href + ".backup", writer);
+          ({url: targetDocument.location.href + ".backup",
+            triggeringNode: targetDocument},
+            writer);
       }
       catch (e) { Akahuku.debug.exception (e);
       }
@@ -3983,7 +4026,7 @@ var arAkahukuMHT = {
       }
             
       if (info.isOnline && arAkahukuMHT.enable && !info.isTsumanne) {
-        var param = new arAkahukuMHTParam ();
+        var param = new arAkahukuMHTParam (targetDocument);
         Akahuku.getDocumentParam (targetDocument).mht_param = param;
                 
         var container = targetDocument.createElement ("div");

@@ -392,6 +392,23 @@ arAkahukuLinkExtListener.prototype = {
   }
 };
 /**
+ * リンクのデータ
+ */
+function arAkahukuLinkParam (targetDocument) {
+  this.targetDocument = targetDocument;
+  this.mouseOutTimeoutId = null;  /* Number マウスアウトでステータスを消すタイマーID */
+}
+arAkahukuLinkParam.prototype = {
+  destruct : function () {
+    var contentWindow = this.targetDocument.defaultView;
+    if (contentWindow) {
+      contentWindow.clearTimeout (this.mouseOutTimeoutId);
+    }
+    this.mouseOutTimeoutId = null;
+    this.targetDocument = null;
+  },
+};
+/**
  * リンク管理
  *   [オートリンク]、[芝刈り]、[P2P]
  *   Inherits From: nsINavHistoryObserver
@@ -451,31 +468,27 @@ var arAkahukuLink = {
   trollsPattern : null,    /* arAkahukuMatchPattern  芝刈り機のリンク変換器 */
   P2PPattern : null,       /* arAkahukuMatchPattern  P2Pノード名のリンク変換器 */
     
-  mouseOutTimeoutId : null,  /* Number マウスアウトでステータスを消すタイマーID */
-    
+  historyService : null,   /* nsINavHistoryService */
+
   /**
    * 初期化処理
    */
   init : function () {
     this.targetLinks = new Object ();
     
-    var historyService
-    = Components.classes ["@mozilla.org/browser/nav-history-service;1"]
-    .getService (Components.interfaces.nsINavHistoryService);
-    historyService.addObserver (arAkahukuLink, false);
+    try {
+      var historyService
+        = Components.classes ["@mozilla.org/browser/nav-history-service;1"]
+        .getService (Components.interfaces.nsINavHistoryService);
+      historyService.addObserver (arAkahukuLink, false);
+      this.historyService = historyService;
+    }
+    catch (e if Components.results.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
+      // no error message; this can happens in content process (e10s)
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
     
-    /* オートリンク用に中ボタンクリックのイベントを監視 */
-    window.addEventListener
-    ("click",
-     function () {
-      arAkahukuLink.onAutolinkClick (arguments [0]);
-    }, true);
-    window.addEventListener
-    ("mousedown",
-     function () {
-      arAkahukuLink.onAutolinkMouseDown (arguments [0]);
-    }, true);
-        
     arAkahukuLink.initPatterns ();
   },
     
@@ -483,12 +496,10 @@ var arAkahukuLink = {
    * 終了処理
    */
   term : function () {
-    var historyService
-    = Components.classes ["@mozilla.org/browser/nav-history-service;1"]
-    .getService (Components.interfaces.nsINavHistoryService);
-    historyService.removeObserver (arAkahukuLink);
-    clearTimeout (arAkahukuLink.mouseOutTimeoutId);
-    arAkahukuLink.mouseOutTimeoutId = null;
+    if (this.historyService) {
+      this.historyService.removeObserver (arAkahukuLink);
+      this.historyService = null;
+    }
   },
   
   /**
@@ -1483,10 +1494,10 @@ var arAkahukuLink = {
     var isAutolink = false;
     var isNoExtAutolink = false;
     var isNoExtAutolinkAuto = false;
-    var node = document.popupNode;
+    var node = gContextMenu.target;
     if (node) {
       if (node.nodeName.toLowerCase () != "a") {
-        node = arAkahukuDOM.findParentNode (document.popupNode, "a");
+        node = arAkahukuDOM.findParentNode (gContextMenu.target, "a");
       }
       if (node) {
         if (node.nodeName.toLowerCase () == "a") {
@@ -1533,7 +1544,7 @@ var arAkahukuLink = {
     var isAsAutoLinkable = false;
         
     if (arAkahukuLink.enableAutoLinkAs) {
-      var targetDocument = document.popupNode.ownerDocument;
+      var targetDocument = gContextMenu.target.ownerDocument;
       var param
         = Akahuku.getDocumentParam (targetDocument);
       if (!param) {
@@ -1543,11 +1554,11 @@ var arAkahukuLink = {
         
     if (arAkahukuLink.enableAutoLink
         && arAkahukuLink.enableAutoLinkUser) {
-      if (document.popupNode
-          && document.popupNode.nodeName.toLowerCase ()
+      if (gContextMenu.target
+          && gContextMenu.target.nodeName.toLowerCase ()
           == "img") {
-        if ("src" in document.popupNode) {
-          if (document.popupNode.src.match
+        if ("src" in gContextMenu.target) {
+          if (gContextMenu.target.src.match
               (/^(.+\/)([^0-9\/]+)([0-9]+)\.(.+)$/)) {
             isUserLinkable = true;
           }
@@ -1625,8 +1636,8 @@ var arAkahukuLink = {
    * @param  String ext
    *         指定する拡張子
    */
-  setExt : function (type, ext) {
-    var targetNode = document.popupNode;
+  setExt : function (type, ext, optTarget) {
+    var targetNode = optTarget || gContextMenu.target;
     var targetDocument = targetNode.ownerDocument;
         
     if (targetNode.nodeName.toLowerCase () != "a") {
@@ -1743,8 +1754,8 @@ var arAkahukuLink = {
   /**
    * ユーザ指定文字列に追加する
    */
-  addUser : function () {
-    var target = document.popupNode;
+  addUser : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
         
     if (target.src.match
         (/^(.+\/)([^0-9\/]+)([0-9]+)\.(.+)$/)) {
@@ -1793,22 +1804,20 @@ var arAkahukuLink = {
         value.url = targetUrl;
         list.push (value);
         
-        arAkahukuConfig.prefBranch.setCharPref
+        arAkahukuConfig.setCharPref
           ("akahuku.autolink.user.patterns2",
            escape (arAkahukuJSON.encode (list)));
         
-        var status = arAkahukuCompat.gBrowser.getStatusPanel ();
-        if (status) {
-          status.label
-            = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u8FFD\u52A0\u3057\u307E\u3057\u305F";
-        }
+        // "赤福オートリンク：追加しました"
+        arAkahukuUI.setStatusPanelText
+          ("\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u8FFD\u52A0\u3057\u307E\u3057\u305F",
+           "status");
       }
       else {
-        var status = arAkahukuCompat.gBrowser.getStatusPanel ();
-        if (status) {
-          status.label
-            = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u540C\u3058\u9805\u76EE\u304C\u3042\u308A\u307E\u3059";
-        }
+        // "赤福オートリンク：同じ項目があります"
+        arAkahukuUI.setStatusPanelText
+          ("\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u540C\u3058\u9805\u76EE\u304C\u3042\u308A\u307E\u3059",
+           "status");
       }
     }
   },
@@ -2073,27 +2082,34 @@ var arAkahukuLink = {
   /**
    * オートリンクを新しいウィンドウで開く
    */
-  openLink : function () {
-    window.open (document.popupNode.getAttribute ("dummyhref"), "_blank");
+  openLink : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var isPrivate = arAkahukuWindow.isContentWindowPrivate
+      (target.ownerDocument.defaultView);
+    arAkahukuLink.openLinkInXUL (target.getAttribute ("dummyhref"), 2, //2=window.open
+        false, target.ownerDocument, isPrivate);
   },
     
   /**
    * オートリンクを保存する
    */
-  saveLink : function () {
-    saveURL (document.popupNode.getAttribute ("dummyhref"),
-             null, null, true, false, null,
-             document.popupNode.ownerDocument);
+  saveLink : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var isPrivate = arAkahukuWindow.isContentWindowPrivate
+      (target.ownerDocument.defaultView);
+    arAkahukuLink.openLinkInXUL (target.getAttribute ("dummyhref"), 3, // 3=saveURL
+        false, target.ownerDocument, isPrivate);
   },
     
   /**
    * オートリンクをコピーする
    */
-  copyLink : function () {
-    var copytext = document.popupNode.getAttribute ("dummyhref");
+  copyLink : function (optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var copytext = target.getAttribute ("dummyhref");
         
     try {
-      var targetDocument = document.popupNode.ownerDocument;
+      var targetDocument = target.ownerDocument;
       arAkahukuClipboard.copyString (copytext, targetDocument);
     }
     catch (e) { Akahuku.debug.exception (e)
@@ -2214,8 +2230,9 @@ var arAkahukuLink = {
    * @param  Event event
    *         対象のイベント
    */
-  openAsAutoLink : function (event) {
-    var targetDocument = document.popupNode.ownerDocument;
+  openAsAutoLink : function (event, optTarget) {
+    var target = optTarget || gContextMenu.target;
+    var targetDocument = target.ownerDocument;
     var selection = targetDocument.defaultView.getSelection ().toString ();
         
     var tmpNode = targetDocument.createElement ("div");
@@ -2257,7 +2274,6 @@ var arAkahukuLink = {
    *         フォーカスを移すか
    */
   openAutoLink : function (target, to, focus) {
-    var tabbrowser = document.getElementById ("content");
     var href = target.getAttribute ("dummyhref");
                 
     var targetDocument = target.ownerDocument;
@@ -2294,18 +2310,29 @@ var arAkahukuLink = {
     }
     
     arAkahukuLink.targetLinks [href] = new Date ().getTime ();
+
+    if (to == 0) {
+      targetDocument.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .loadURI (href, 0, null, null, null);
+    }
+    else {
+      var isPrivate = arAkahukuWindow.isContentWindowPrivate
+        (target.ownerDocument.defaultView);
+      arAkahukuLink.openLinkInXUL (href, to, focus, targetDocument, isPrivate);
+    }
+  },
     
+  openLinkInXUL : function (href, to, focus, targetDocument, isPrivate) {
     ; /* switch のインデント用 */
     switch (to) {
       case 0:
-        var nav
-          = targetDocument.defaultView
-          .QueryInterface (Components.interfaces
-                           .nsIInterfaceRequestor)
-          .getInterface (Components.interfaces.nsIWebNavigation)
-          .loadURI (href, 0, null, null, null);
+        throw Components.Exception
+          ("arAkahukuLink.openLinkInXUL: not supported 'to'== 0");
         break;
       case 1:
+        var tabbrowser = document.getElementById ("content");
         try {
           // ツリー型タブ アドオン対応 (0.12.2011060201+)
           // オートリンク先も通常リンク先同様に子タブにさせる
@@ -2330,7 +2357,8 @@ var arAkahukuLink = {
         window.open (href, "_blank");
         break;
       case 3:
-        saveURL (href, null, null, true, false, null, targetDocument);
+        saveURL (href, null, null, true, false, null,
+            targetDocument, isPrivate);
         break;
     }
   },
@@ -2342,34 +2370,26 @@ var arAkahukuLink = {
    *         対象のイベント
    */
   onAutoLinkOver : function (event) {
-    clearTimeout (arAkahukuLink.mouseOutTimeoutId);
-    arAkahukuLink.mouseOutTimeoutId = null;
-    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
-    if (status) {
-      var target = event.target;
-      if (target) {
-        if (target.nodeName.toLowerCase () != "a") {
-          target = arAkahukuDOM.findParentNode (target, "a");
-        }
-                
-        if (target) {
-          var href = target.getAttribute ("dummyhref");
-                    
-          /* IDN や相対アドレスの解決 */
-          var uri = arAkahukuUtil.newURIViaNode (href, target.ownerDocument);
-          href = uri.spec;
-          try {
-            /* 可能ならロケーションバーと同様に可読化 */
-            href = window.losslessDecodeURI (uri);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-                    
-          status.label
-            = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF: "
-            + href;
-        }
-      }
+    var targetDocument = event.target.ownerDocument;
+    var param = Akahuku.getDocumentParam (targetDocument).link_param;
+    targetDocument.defaultView
+      .clearTimeout (param.mouseOutTimeoutId);
+    param.mouseOutTimeoutId = null;
+    var target = event.target;
+    if (target.nodeName.toLowerCase () != "a") {
+      target = arAkahukuDOM.findParentNode (target, "a");
+    }
+    if (target) {
+      var href = target.getAttribute ("dummyhref");
+      // IDN や相対アドレスの解決
+      var uri = arAkahukuUtil.newURIViaNode (href, target.ownerDocument);
+      // 可能ならロケーションバーと同様に可読化
+      href = arAkahukuCompat.losslessDecodeURI (uri);
+      var text
+        = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF: "
+        // "赤福オートリンク:"
+        + href;
+      arAkahukuUI.setStatusPanelText (text, "overLink");
     }
   },
     
@@ -2380,21 +2400,23 @@ var arAkahukuLink = {
    *         対象のイベント
    */
   onAutoLinkOut : function (event) {
-    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
     /* Firefox4+ におけるステータスのポップアップにより
      * out/over の無限ループに陥ることを防ぐために少し待つ
      */
-    clearTimeout (arAkahukuLink.mouseOutTimeoutId);
-    arAkahukuLink.mouseOutTimeoutId
-    = setTimeout
-      ((function (status, oldLabel) {
+    var targetDocument = event.target.ownerDocument;
+    var param = Akahuku.getDocumentParam (targetDocument).link_param;
+    var statusLabel = arAkahukuUI.getStatusPanelText ();
+    targetDocument.defaultView
+      .clearTimeout (param.mouseOutTimeoutId);
+    param.mouseOutTimeoutId
+      = event.target.ownerDocument.defaultView
+      .setTimeout
+      ((function (oldLabel, param) {
           return function () {
-            if (status && status.label == oldLabel) {
-              status.label = "";
-            }
-            arAkahukuLink.mouseOutTimeoutId = null;
+            arAkahukuUI.clearStatusPanelText (oldLabel);
+            param.mouseOutTimeoutId = null;
           };
-        })(status, status.label), 100);
+        })(statusLabel, param), 100);
   },
     
   /**
@@ -2888,9 +2910,19 @@ var arAkahukuLink = {
           this.os
             = Components.classes ["@mozilla.org/observer-service;1"]
             .getService (Components.interfaces.nsIObserverService);
-          this.os.addObserver
-            (this, "http-on-examine-response", false);
-          this.registered = true;
+          try {
+            this.os.addObserver
+              (this, "http-on-examine-response", false);
+            this.registered = true;
+          }
+          catch (e if Components.results.NS_ERROR_NOT_IMPLEMENTED) {
+            // http-on-* observers only work in the parent process
+            Akahuku.debug.log
+              ("Can't monitor detail load errors of preview"
+               + " in a content process by observing http-on-*");
+          }
+          catch (e) { Akahuku.debug.exception (e);
+          }
         }
       },
       unregister : function () {
@@ -3492,7 +3524,8 @@ var arAkahukuLink = {
         node.appendChild (anchor);
       }
       else {
-        if ("noscriptOverlay" in window) {
+        if (typeof window !== "undefined"
+            && "noscriptOverlay" in window) {
           setTimeout (function (node, image) {
               node.appendChild (image);
             }, 500, node, image);
@@ -3519,7 +3552,7 @@ var arAkahukuLink = {
         var node2 = node.firstChild;
         while (node2) {
           if (node2
-              && node2.nodeType == Node.ELEMENT_NODE
+              && node2.nodeType == node2.ELEMENT_NODE
               && node2.getAttribute ("dummyhref")
               == target.getAttribute ("dummyhref")) {
             forceCancelImageLoad (node2);
@@ -3579,6 +3612,22 @@ var arAkahukuLink = {
         
     return false;
   },
+
+  /**
+   * body の unload イベント
+   * 各種データを削除する
+   */
+  onBodyUnload : function (targetDocument, documentParam) {
+    var param = documentParam.link_param;
+    if (param) {
+      try {
+        param.destruct ();
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    documentParam.link_param = null;
+  },
     
   /**
    * メル欄表示、オートリンクを適用する
@@ -3592,6 +3641,9 @@ var arAkahukuLink = {
     if (info.isNotFound) {
       return;
     }
+
+    var param = new arAkahukuLinkParam (targetDocument);
+    Akahuku.getDocumentParam (targetDocument).link_param = param;
     
     var now = new Date ().getTime ();
     if (now > arAkahukuLink.lastCleanuped + 60 * 1000) {
@@ -3621,6 +3673,18 @@ var arAkahukuLink = {
         arAkahukuLink.applyAutoLink (targetDocument,
                                      targetDocument);
       }
+    }
+
+    if (arAkahukuLink.enableAutoLink) {
+      /* オートリンク用に中ボタンクリックのイベントを監視 */
+      targetDocument.defaultView.addEventListener
+        ("click", function () {
+          arAkahukuLink.onAutolinkClick (arguments [0]);
+        }, true);
+      targetDocument.defaultView.addEventListener
+        ("mousedown", function () {
+          arAkahukuLink.onAutolinkMouseDown (arguments [0]);
+        }, true);
     }
   },
   

@@ -3,7 +3,8 @@
 /**
  * Require: Akahuku, arAkahukuBloomer, arAkahukuBoard, arAkahukuConfig,
  *          arAkahukuJPEG, arAkahukuLink, arAkahukuP2P, arAkahukuQuote,
- *          arAkahukuStyle, arAkahukuTab, arAkahukuClipboard
+ *          arAkahukuStyle, arAkahukuTab, arAkahukuClipboard,
+ *          arAkahukuCompat
  */
 
 /**
@@ -30,12 +31,9 @@ var arAkahukuUI = {
   /**
    * 初期化処理
    */
-  init : function () {
-    arAkahukuConfig.loadPrefBranch ();
-    arAkahukuUI.getConfig ();
-        
-    arAkahukuUI.setPanelStatus ();
+  initForXUL : function () {
     arAkahukuUI.showPanel ();
+    arAkahukuUI.setPanelStatus ();
         
     /* コンテキストメニューのイベントを監視 */
     var menu = document.getElementById ("contentAreaContextMenu");
@@ -238,7 +236,7 @@ var arAkahukuUI = {
    *         対象のイベント
    */
   setContextMenu : function (event) {
-    if (gContextMenu) {
+    if (gContextMenu && event.target.id == "contentAreaContextMenu") {
       arAkahukuLink.setContextMenu (event);
       arAkahukuImage.setContextMenu (event);
       arAkahukuQuote.setContextMenu (event);
@@ -345,29 +343,25 @@ var arAkahukuUI = {
       }
     }
         
-    var param = Akahuku.getFocusedDocumentParam ();
+    var info = arAkahukuUI.getFocusedDocumentInfo ();
     menuitem
     = document.getElementById ("akahuku-statusbar-popup-apply");
     if (menuitem) {
-      menuitem.disabled = (param != null);
+      menuitem.disabled = info.isAkahukuApplied;
     }
     menuitem
     = document.getElementById ("akahuku-statusbar-popup-external");
     if (menuitem) {
-      menuitem.disabled
-      = !(param == null
-          && arAkahukuBoard.isAbleToAddExternal
-          (document.commandDispatcher.focusedWindow.document));
+      menuitem.disabled = !info.isAbleToAddExternal;
     }
     menuitem
     = document.getElementById ("akahuku-statusbar-popup-respanel");
     if (menuitem) {
-      menuitem.disabled
-      = (!param || !param.location_info.isReply);
-      if (param && "respanel_param" in param && param.respanel_param) {
-        if (!param.respanel_param.frame.parentNode) {
+      menuitem.disabled = !info.isRespanelOpenable;
+      if (info.isRespanelOpened) {
+        if (info.isRespanelOrphaned) {
           /* レスパネルの要素が誰かに消されてる場合 */
-          arAkahukuThread.closeResPanel (param.targetDocument);
+          arAkahukuThread.closeResPanel (info.targetDocument);
           menuitem.removeAttribute ("checked");
         }
         else {
@@ -379,6 +373,31 @@ var arAkahukuUI = {
       }
     }
   },
+  getFocusedDocumentInfo : function () {
+    var param = Akahuku.getFocusedDocumentParam ();
+    var focusedWindow = document.commandDispatcher.focusedWindow;
+    var focusedDocument = null;
+    if (focusedWindow.content) {
+      focusedWindow = focusedWindow.content.defaultView;
+    }
+    focusedDocument = focusedWindow && focusedWindow.document || null;
+    var info = {
+      isAkahukuApplied: param != null,
+      isAbleToAddExternal: param == null && focusedDocument
+        && arAkahukuBoard.isAbleToAddExternal (focusedDocument.location.href),
+      isRespanelOpenable: param && param.location_info.isReply,
+      isRespanelOpened: param && param.respanel_param,
+      isRespanelOrphaned: false,
+      targetDocument: null,
+    };
+    if (info.isRespanelOpened
+        && !param.respanel_param.frame.parentNode) {
+      info.isRespanelOrphaned = true;
+      info.targetDocument = param.targetDocument;
+    }
+    return info;
+  },
+
     
   /**
    * 全機能の ON／OFF を切り替える
@@ -387,9 +406,9 @@ var arAkahukuUI = {
     Akahuku.enableAll
     = !arAkahukuConfig
     .initPref ("bool", "akahuku.all", true);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setBoolPref ("akahuku.all", Akahuku.enableAll);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
@@ -409,9 +428,9 @@ var arAkahukuUI = {
     arAkahukuP2P.enable
     = !arAkahukuConfig
     .initPref ("bool", "akahuku.p2p", false);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setBoolPref ("akahuku.p2p", arAkahukuP2P.enable);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
@@ -428,9 +447,9 @@ var arAkahukuUI = {
     = !arAkahukuConfig
     .initPref ("bool", "akahuku.p2p.statusbar", true);
         
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setBoolPref ("akahuku.p2p.statusbar", arAkahukuP2P.enableStatusbar);
-    arAkahukuConfig.prefBranch
+    arAkahukuConfig
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
@@ -478,10 +497,10 @@ var arAkahukuUI = {
       var style = -1;
             
       var style = -1;
-      if (arAkahukuConfig.prefBranch
+      if (arAkahukuConfig
           .prefHasUserValue ("browser.chrome.toolbar_style")) {
         style
-          = arAkahukuConfig.prefBranch
+          = arAkahukuConfig
           .getIntPref ("browser.chrome.toolbar_style");
       }
       var navbar;
@@ -605,9 +624,12 @@ var arAkahukuUI = {
       }
       this.setAttributeOfToolbarButton
         ("akahuku-toolbarbutton-preferences", "status", "enabled");
+      var text = "\u8D64\u798F " + AkahukuVersion; // "赤福 "
+      if (Akahuku.useFrameScript) {
+        text += " - e10s";
+      }
       this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences", "tooltiptext",
-         "\u8D64\u798F "+ AkahukuVersion); // "赤福 "+
+        ("akahuku-toolbarbutton-preferences", "tooltiptext", text);
       this.setAttributeOfToolbarButton
         ("akahuku-toolbarbutton-preferences-image", "status", "enabled");
     }
@@ -683,9 +705,50 @@ var arAkahukuUI = {
       return;
     }
 
-    if (arAkahukuBoard.isAbleToAddExternal (targetDocument)) {
+    if (arAkahukuBoard.isAbleToAddExternal (targetDocument.location.href)) {
       arAkahukuBoard.addExternal (targetDocument);
       Akahuku.apply (targetDocument, false);
     }
   },
+
+
+  /**
+   * マウスホバーで表示されるステータスを設定する
+   */
+  setStatusPanelText : function (text, type) {
+    if (type !== "overLink" && type !== "status") {
+      throw Components.Exception
+        ("type of statuspanel must be 'overLink' or 'status'",
+         Components.results.NS_ERROR_FAILURE,
+         Components.stack.caller);
+    }
+    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
+    if (!status) {
+      Akahuku.debug.warn ("no statuspanel found");
+      return;
+    }
+    if (status.tagName == "statuspanel") {
+      status.setAttribute ("previoustype", status.getAttribute ("type"));
+      status.setAttribute ("type", type);
+    }
+    status.label = text;
+    if (status.tagName == "statuspanel") {
+      status.setAttribute ("crop", type == "overLink" ? "center" : "end");
+    }
+  },
+  clearStatusPanelText : function (optText)
+  {
+    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
+    if (!status) {
+      Akahuku.debug.warn ("no statuspanel found");
+      return;
+    }
+    if (typeof optText == "undefined" || status.label == optText) {
+      status.label = "";
+    }
+  },
+  getStatusPanelText : function () {
+    var status = arAkahukuCompat.gBrowser.getStatusPanel ();
+    return status ? status.label : "";
+  }
 };

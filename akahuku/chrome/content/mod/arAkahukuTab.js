@@ -38,7 +38,7 @@ var arAkahukuTab = {
   /**
    * 初期化処理
    */
-  init : function () {
+  initForXUL : function () {
     var tabbrowser = document.getElementById ("content");
     var tabMenu
     = document.getAnonymousElementByAttribute (tabbrowser,
