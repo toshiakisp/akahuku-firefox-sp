@@ -624,9 +624,12 @@ var arAkahukuUI = {
       }
       this.setAttributeOfToolbarButton
         ("akahuku-toolbarbutton-preferences", "status", "enabled");
+      var text = "\u8D64\u798F " + AkahukuVersion; // "赤福 "
+      if (Akahuku.useFrameScript) {
+        text += " - e10s";
+      }
       this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences", "tooltiptext",
-         "\u8D64\u798F "+ AkahukuVersion); // "赤福 "+
+        ("akahuku-toolbarbutton-preferences", "tooltiptext", text);
       this.setAttributeOfToolbarButton
         ("akahuku-toolbarbutton-preferences-image", "status", "enabled");
     }
