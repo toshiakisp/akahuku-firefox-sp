@@ -459,7 +459,7 @@ arAkahukuReloadParam.prototype = {
         if (!Components.isSuccessCode (result)) {
           if (Akahuku.debug.enabled) {
             Akahuku.debug.warn ("arAkahukuReloadParam.onCacheEntryAvailable" +
-              arAkahukuUtil.resultCodeToString (result) + " for " + url);
+              arAkahukuUtil.resultCodeToString (result) + " for " + descriptor.key);
           }
           return;
         }
@@ -2073,7 +2073,7 @@ var arAkahukuReload = {
         (param.partialNodes [i]);
     }
 
-    var _asyncLoadCacheAndUpdate = function (istream, dataSize, callback) {
+    var _asyncLoadCacheAndUpdate = function (istream, dataSize, url, callback) {
       arAkahukuUtil.asyncFetchBinary (istream, dataSize, function (binstream, result) {
         if (Components.isSuccessCode (result)) {
           param.responseText = binstream.readBytes (binstream.available ());
@@ -2150,7 +2150,7 @@ var arAkahukuReload = {
             .classes ["@mozilla.org/network/file-input-stream;1"]
             .createInstance (Components.interfaces.nsIFileInputStream);
           fstream.init (targetFile, 0x01, 292/*0444*/, 0);
-          _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize);
+          _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize, path);
           location = null; // キャッシュ読み不要
         }
       }
@@ -2167,7 +2167,7 @@ var arAkahukuReload = {
         try {
           if (descriptor) {
             var istream = descriptor.openInputStream (0);
-            _asyncLoadCacheAndUpdate (istream, descriptor.dataSize, function () {
+            _asyncLoadCacheAndUpdate (istream, descriptor.dataSize, location, function () {
               descriptor.close ();
             });
           }
