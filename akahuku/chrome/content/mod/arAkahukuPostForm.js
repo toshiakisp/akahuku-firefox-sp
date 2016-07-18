@@ -4338,6 +4338,28 @@ var arAkahukuPostForm = {
           }
         }
                 
+        // 最低保持時間を更新する
+        // "1スレッド最大2000レス,最低1時間保持テスト中."
+        nodes2 = form.getElementsByTagName ("li");
+        for (i = 0; i < nodes2.length; i ++) {
+          if (nodes2 [i].innerHTML.match
+              (/\u6700\u4f4e([0-9]+)\u6642\u9593\u4fdd\u6301/)) {
+            // /最低([0-9]+)時間保持/
+            var name = info.server + ":" + info.dir;
+            var min = 60*parseInt (RegExp.$1);
+            var minOld = arAkahukuBoard.getPreserveMin (name);
+            if (min != minOld) {
+              arAkahukuBoard.setPreserveMin (name, min);
+              Akahuku.debug.log
+                ("PreserveMin of "
+                 + arAkahukuBoard.getServerName (name)
+                 + "(" + name + ")"
+                 + " changes " + minOld + " => " + min);
+            }
+            break;
+          }
+        }
+
         /* 添付可能を確認する */
         var attachable = "";
         for (i = 0; i < nodes2.length; i ++) {

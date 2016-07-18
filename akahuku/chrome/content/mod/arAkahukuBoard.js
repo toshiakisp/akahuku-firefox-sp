@@ -11,6 +11,7 @@ function arAkahukuBoardInfo (id) {
   this.trueName = "";
   this.newestNum = 0;
   this.maxNum = 0;
+  this.preserveMin = -1; // 最低保持時間(分)
   this.hasCatalog = false;
   this.isInternal = false;
 };
@@ -325,6 +326,13 @@ var arAkahukuBoard = {
   hasCatalog : function (idOrInfo) {
     return this.boardList.getBoardProperty (idOrInfo, "hasCatalog");
   },
+  // スレの最低保持時間
+  getPreserveMin : function (idOrInfo) {
+    return this.boardList.getBoardProperty (idOrInfo, "preserveMin");
+  },
+  setPreserveMin : function (idOrInfo, value) {
+    this.boardList.setBoardProperty (idOrInfo, "preserveMin", value);
+  },
 
   getBoardIDs : function (optType) {
     return this.boardList.getIDs (optType);
@@ -361,6 +369,12 @@ var arAkahukuBoard = {
     }
     if (scope.arAkahukuServerData [id][4]) {
       board.hasCatalog = (scope.arAkahukuServerData [id][4] == true);
+    }
+    if (scope.arAkahukuServerData [id].length > 5) {
+      var extra = scope.arAkahukuServerData [id][5];
+      for (var prop in extra) {
+        board [prop] = extra [prop];
+      }
     }
     arAkahukuBoard.boardList.addBoardInfo (id, board);
   }

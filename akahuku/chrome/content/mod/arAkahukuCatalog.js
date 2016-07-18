@@ -1728,6 +1728,7 @@ arAkahukuCatalogParam.prototype = {
         var nodes = table.getElementsByTagName ("td");
         for (var i = 0; i < nodes.length; i ++) {
           arAkahukuCatalog.updateCellAge (nodes [i], info, num);
+          arAkahukuCatalog.updateCellPreserve (nodes [i], info);
         }
       }, 100, this, newestNum.value);
   },
@@ -2030,10 +2031,17 @@ var arAkahukuCatalog = {
       // 古いスレを赤くする
       if (arAkahukuCatalog.enableRed) {
         style
-        .addRule ('td[__age="9"]',
+        // 赤字 (レス保存数残り1割)
+        .addRule ('td[__age="9"]:not([__preserved])',
                   "border-style: solid; "
                   + "border-color: #f00;")
-        .addRule ('td[__age="10"]',
+        // 赤字 (最低保持時間間近(レス保存数わずか))
+        .addRule ('td[__age="9"][__preserved="0"]'
+                  + ',td[__age="10"][__preserved="0"]',
+                  "border-style: solid; "
+                  + "border-color: #f00;")
+        // 消滅したはず
+        .addRule ('td[__age="10"]:not([__preserved])',
                   "border-style: dotted; "
                   + "border-color: #f00;")
         .addRule ('td[__age="-1"]',
@@ -2043,8 +2051,10 @@ var arAkahukuCatalog = {
         .addRule ('table[border="1"] td',
                   "border-width: 1px; "
                   + "padding: 1px;")
-        .addRule ('table[border="1"] td[__age="9"]'
-                  + ',table[border="1"] td[__age="10"]'
+        .addRule ('table[border="1"] td[__age="9"]:not([__preserved])'
+                  + ',table[border="1"] td[__age="9"][__preserved="0"]'
+                  + ',table[border="1"] td[__age="10"][__preserved="0"]'
+                  + ',table[border="1"] td[__age="10"]:not([__preserved])'
                   + ',table[border="1"] td[__age="-1"]',
                   "border-width: 2px; "
                   + "padding: 0px;")
@@ -3308,6 +3318,7 @@ var arAkahukuCatalog = {
         
     if (arAkahukuCatalog.enableRed) {
       arAkahukuCatalog.updateCellAge (tdElement, info, latestNum);
+      arAkahukuCatalog.updateCellPreserve (tdElement, info);
     }
         
     if (arAkahukuCatalog.enableSidebar
@@ -3352,17 +3363,7 @@ var arAkahukuCatalog = {
    */
   updateCellAge : function (tdElement, info, latestNum) {
     var name = info.server + ":" + info.dir;
-    var num = parseInt (tdElement.getAttribute ("__thread_id"));
-    if (!num) {
-      var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
-      if (anchor) {
-        if (anchor.href.match (/res[\/=]([0-9]+)/)
-            || anchor.href.match (/2\/([0-9]+)/)
-            || anchor.href.match (/b\/([0-9]+)/)) {
-          num = parseInt (RegExp.$1);
-        }
-      }
-    }
+    var num = arAkahukuCatalog._getCellThreadId (tdElement);
     if (!num) {
       return;
     }
@@ -3390,6 +3391,58 @@ var arAkahukuCatalog = {
         tdElement.setAttribute ("__age", 10);
       }
     }
+  },
+
+  /**
+   * セルの最低保持時間フラグを更新
+   */
+  updateCellPreserve : function (tdElement, info) {
+    var preserveMin = arAkahukuBoard.getPreserveMin (info);
+    if (!(preserveMin > 0)) {
+      return; // this board has no preserveMin
+    }
+    var num = arAkahukuCatalog._getCellThreadId (tdElement);
+    var ctime = arAkahukuCatalog._getCellCreateTime (tdElement);
+    if (!num || ctime <= 0) {
+      return;
+    }
+    var now = Date.now ();
+    var reddenMin = 3; // 期限間近のあと何分で赤字化するか
+    if (now < ctime + 60*1000*(preserveMin - reddenMin)) {
+      tdElement.setAttribute ("__preserved", 1);
+    }
+    else if (now < ctime + 60*1000*preserveMin) {
+      // 最低保持期限間近
+      tdElement.setAttribute ("__preserved", 0);
+    }
+    else { // 最低保持期限切れ
+      tdElement.removeAttribute ("__preserved");
+    }
+  },
+
+  _getCellThreadId : function (tdElement) {
+    var num = parseInt (tdElement.getAttribute ("__thread_id"));
+    if (!num) {
+      var anchor = arAkahukuDOM.getFirstElementByNames (tdElement, "a");
+      if (anchor) {
+        if (anchor.href.match (/res[\/=]([0-9]+)/)
+            || anchor.href.match (/2\/([0-9]+)/)
+            || anchor.href.match (/b\/([0-9]+)/)) {
+          num = parseInt (RegExp.$1);
+        }
+      }
+    }
+    return num;
+  },
+
+  _getCellCreateTime : function (td) {
+    var ctime = -1;
+    var img = td.getElementsByTagName ("img") [0];
+    if (img && img.src && img.src.match (/(\d+)s\.jpg$/i)) {
+      // 画像ファイル名の数字は投稿した日時に対応する
+      ctime = parseInt (RegExp.$1);
+    }
+    return ctime;
   },
 
   /**
