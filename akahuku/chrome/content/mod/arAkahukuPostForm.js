@@ -2643,7 +2643,12 @@ var arAkahukuPostForm = {
         if (form) {
           var submitter
             = targetDocument.getElementById ("akahuku_postform_submitter");
-          if (submitter) {
+          if (submitter && submitter.hasAttribute ("onclick")) {
+            var clickEvent = targetDocument.createEvent ("MouseEvents");
+            clickEvent.initEvent ("click", true, true);
+            submitter.dispatchEvent (clickEvent);
+          }
+          else if (submitter) {
             var submitEvent = targetDocument.createEvent ("HTMLEvents");
             submitEvent.initEvent ("submit", false, true);
             form.dispatchEvent (submitEvent);
