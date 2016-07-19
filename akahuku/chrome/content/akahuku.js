@@ -676,7 +676,7 @@ var Akahuku = {
     }
     
     if (href.match
-        (/^http:\/\/tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
+        (/^http:\/\/(?:[^\.\/]+\.)?tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
       /* サッチー */
       return true;
     }
