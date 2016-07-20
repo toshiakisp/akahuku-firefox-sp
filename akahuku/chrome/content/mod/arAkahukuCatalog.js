@@ -1353,6 +1353,7 @@ arAkahukuCatalogParam.prototype = {
   addedLastCells : false, /* Boolean  最後のセルを追加したか */
 
   updateAgeTimerID : null,    /* Number  __age 属性更新のデバウンス用タイマ */
+  hideEntireThreadDispatched : false,
     
   historyCallbacks : null,
 
@@ -5034,11 +5035,30 @@ var arAkahukuCatalog = {
     
   /**
    * 合間合間に でカタログのスレを無かった事にしたイベント
+   * を受け付ける(実際のDOM操作はまとめて後で)
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
    */
   onHideEntireThread : function (targetDocument) {
+    try {
+      var param = Akahuku.getDocumentParam (targetDocument);
+      param = param.catalog_param;
+    }
+    catch (e) {
+      return;
+    }
+    // デバウンス
+    if (!param.hideEntireThreadDispatched) {
+      param.hideEntireThreadDispatched = true;
+      arAkahukuUtil.executeSoon (function (doc, param) {
+        param.hideEntireThreadDispatched = false;
+        arAkahukuCatalog.onHideEntireThreadCore (doc);
+      }, [targetDocument, param]);
+    }
+  },
+
+  onHideEntireThreadCore : function (targetDocument) {
     var param = Akahuku.getDocumentParam (targetDocument);
     if (!param) {
       return;
