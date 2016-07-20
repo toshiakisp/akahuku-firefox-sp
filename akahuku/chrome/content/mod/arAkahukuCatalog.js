@@ -44,7 +44,13 @@ arAkahukuCatalogPopupData.prototype =  {
    */
   destruct : function () {
     this.targetImage = null;
+    if (this.popup && this.popup.parentNode) {
+      this.popup.parentNode.removeChild (this.popup);
+    }
     this.popup = null;
+    if (this.popupArea && this.popupArea.parentNode) {
+      this.popupArea.parentNode.removeChild (this.popupArea);
+    }
     this.popupArea = null;
     if (this.targetWindow) {
       this.targetWindow.clearTimeout (this.createTimerID);
@@ -566,6 +572,9 @@ arAkahukuCatalogPopupData.prototype =  {
    *         対象のドキュメント
    */
   createPopup : function (param, self, targetDocument) {
+    if (self.state != 0) {
+      return;
+    }
     var exists = false;
     for (var key in param.popups) {
       if (key == self.key) {
@@ -776,6 +785,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
   destruct : function () {
     this.thread = null;
     this.baseNode = null;
+    if (this.popup && this.popup.parentNode) {
+      this.popup.parentNode.removeChild (this.popup);
+    }
     this.popup = null;
     this.container = null;
     if (this.targetWindow) {
@@ -1123,6 +1135,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
    *         対象のドキュメント
    */
   createPopup : function (param, self, targetDocument) {
+    if (self.state != 0) {
+      return;
+    }
     var exists = false;
     for (var key in param.popups) {
       if (key == self.key) {
