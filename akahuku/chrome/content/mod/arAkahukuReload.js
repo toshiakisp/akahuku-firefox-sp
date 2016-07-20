@@ -719,7 +719,7 @@ arAkahukuReloadParam.prototype = {
         if ("Last-Modified" in visitor.header) {
           resLastMod = Date.parse (visitor.header ["Last-Modified"]);
         }
-        if (!resLastMod) {
+        if (!resLastMod && !visitor.header.hasOwnProperty ("Etag")) {
           // このページではもう HEAD リクエストをしない
           this.requestMode = -1; //GET(no-more-HEAD)
           Akahuku.debug.log
@@ -727,6 +727,9 @@ arAkahukuReloadParam.prototype = {
         }
         if (errorStatus) {
           httpStatus = - Math.abs (httpStatus);
+        }
+        else if (!resLastMod && httpStatus == 304) {
+          // Not Modified (条件付きリクエストは成功)
         }
         else if (this.lastModified && this.lastModified == resLastMod) {
           httpStatus = 304; // Not Modified
