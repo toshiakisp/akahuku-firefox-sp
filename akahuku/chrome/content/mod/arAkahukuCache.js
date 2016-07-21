@@ -454,6 +454,12 @@ Akahuku.Cache = new function () {
     // nsICacheEntryOpenCallback
     mainThreadOnly : true,
     onCacheEntryCheck : function (entry, appCache) {
+      try {
+        entry.dataSize;
+      }
+      catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
       return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
     },
     onCacheEntryAvailable : function (entry, isNew, appCache, result)
