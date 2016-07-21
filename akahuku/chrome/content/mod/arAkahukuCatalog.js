@@ -4854,9 +4854,11 @@ var arAkahukuCatalog = {
   onBodyMouseOver : function (event) {
     try {
       var targetDocument = event.target.ownerDocument;
-      var param
-      = Akahuku.getDocumentParam (targetDocument)
-      .catalogpopup_param;
+      var documentParam = Akahuku.getDocumentParam (targetDocument);
+      if (!documentParam) {
+        return; // document was closed
+      }
+      var param = documentParam.catalogpopup_param;
             
       var img = event.explicitOriginalTarget;
       if (img
