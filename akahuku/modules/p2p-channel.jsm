@@ -673,6 +673,9 @@ arAkahukuP2PChannel.prototype = {
    *         エラーコード
    */
   onStateChange : function (webProgress, request, stateFlags, status) {
+    if (!(stateFlags & Ci.nsIWebProgressListener.STATE_IS_REQUEST)) {
+      return;
+    }
     var httpStatus = 200;
     var contentType = "";
     try {
@@ -691,12 +694,13 @@ arAkahukuP2PChannel.prototype = {
     catch (e) { Components.utils.reportError (e);
     }
         
-    if (stateFlags
-        & Ci.nsIWebProgressListener.STATE_STOP) {
+    if (stateFlags & Ci.nsIWebProgressListener.STATE_STOP
+        && this._cacheFileName) {
       var cacheFile
       = Cc ["@mozilla.org/file/local;1"]
       .createInstance (Ci.nsILocalFile);
       cacheFile.initWithPath (this._cacheFileName);
+      this._cacheFileName = null; // to ensure 'run once'
       if (httpStatus < 400) {
         /* 転送が終了したら */
         try {
