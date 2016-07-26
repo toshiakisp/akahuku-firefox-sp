@@ -522,6 +522,10 @@ var arAkahukuDelBanner = {
         + ">" + branch;
 
       if (node.parentNode && node.parentNode.nodeType == node.DOCUMENT_NODE) {
+        if (!node.parentNode.defaultView) {
+          dontRemove = true;
+          break;
+        }
         var frameElement = node.parentNode.defaultView.frameElement;
         if (frameElement && frameElement.nodeName.toLowerCase () == "iframe") {
           // iframeの中からは親ドキュメントへさかのぼる
