@@ -117,7 +117,17 @@ arAkahukuImageListener.prototype = {
             this.file.remove (true);
           }
           if (this.target.style.display == "none") {
-            arAkahukuImage.onSave (this.target, false, "", "",
+            var msg = "";
+            if (this.httpStatusAtStart == 404) {
+              // "ファイルがないよ"
+              msg = "\u30D5\u30A1\u30A4\u30EB\u304C\u306A\u3044\u3088";
+            }
+            else if (this.httpStatusAtStart > 0) {
+              // 一度正常にスタートした後のエラー
+              msg = "\u4FDD\u5B58\u5931\u6557" // "保存失敗"
+                + "(HTTP " + this.httpStatusAtStart + ")";
+            }
+            arAkahukuImage.onSave (this.target, false, msg, "",
                                    this.normal);
           }
         }
@@ -163,6 +173,14 @@ arAkahukuImageListener.prototype = {
         }
       }
     }
+    else if (stateFlags
+        & Components.interfaces.nsIWebProgressListener.STATE_START) {
+      // 通信開始
+      if (httpStatus > 0) {
+        this.httpStatusAtStart = httpStatus
+      }
+    }
+
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -1521,7 +1539,7 @@ var arAkahukuImage = {
     }
         
     if (message == "") {
-      message = "\u30D5\u30A1\u30A4\u30EB\u304C\u306A\u3044\u3088";
+      message = "\u4FDD\u5B58\u5931\u6557"; // "保存失敗"
     }
         
     messageNode.style.color = "#ff0000";
