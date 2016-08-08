@@ -107,11 +107,43 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "readBinaryFile");
 arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "moveTo");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "remove");
+arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "createDirectory");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getFilenameFromURLSpec");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getFileFromURLSpec");
+var arAkahukuFileIPC = {
+  createFileOutputStream : function (file, ioFlags, perm, behaviorFlags) {
+    var fstream = arAkahukuFile.createFileOutputStream (file, ioFlags, perm, behaviorFlags);
+    if (fstream) {
+      Cu.import ("resource://akahuku/ipc-stream.jsm");
+      fstream = new arOutputStreamParent (fstream);
+      var mm = arAkahukuIPCRoot.messageTarget.messageManager;
+      fstream.attachIPCMessageManager (mm);
+      fstream = fstream.createIPCTransferable ();
+    }
+    return fstream;
+  },
+  createFileInputStream : function (file, ioFlags, perm, behaviorFlags) {
+    var fstream = arAkahukuFile.createFileInputStream (file, ioFlags, perm, behaviorFlags);
+    if (fstream) {
+      Cu.import ("resource://akahuku/ipc-stream.jsm");
+      fstream = new arInputStreamParent (fstream);
+      var mm = arAkahukuIPCRoot.messageTarget.messageManager;
+      fstream.attachIPCMessageManager (mm);
+      fstream = fstream.createIPCTransferable ();
+    }
+    return fstream;
+  },
+};
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFileIPC, "File", "createFileOutputStream", {frame: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFileIPC, "File", "createFileInputStream", {frame: true});
 
 
 

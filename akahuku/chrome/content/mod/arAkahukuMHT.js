@@ -79,10 +79,11 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
  * @param  nsILocalFile targetFile
  *         P2P のキャッシュファイル
  */
-function arAkahukuP2PCacheEntryDescriptor (targetFile) {
+function arAkahukuP2PCacheEntryDescriptor (targetFile, ownerDocument) {
   this.targetFile = targetFile;
   this.fstream = null;
   this.dataSize = this.targetFile.fileSize;
+  this.ownerDocument = ownerDocument;
 }
 arAkahukuP2PCacheEntryDescriptor.prototype = {
   targetFile : null,  /* nsILocalFile  P2P のキャッシュファイル */
@@ -105,10 +106,9 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
    */
   openInputStream : function (offset) {
     this.fstream
-    = Components
-    .classes ["@mozilla.org/network/file-input-stream;1"]
-    .createInstance (Components.interfaces.nsIFileInputStream);
-    this.fstream.init (this.targetFile, 0x01, 292/*0444*/, 0);
+    = arAkahukuFile.createFileInputStream
+    (this.targetFile, 0x01, 292/*0444*/, 0,
+     this.ownerDocument.defaultView);
         
     return this.fstream;
   },
@@ -138,6 +138,8 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
     catch (e) {
       // 既に close 済みの場合など
     }
+    this.targetFile = null;
+    this.ownerDocument = null;
   }
 };
 /**
@@ -343,7 +345,7 @@ arAkahukuMHTFileData.prototype = {
             = arAkahukuMHT.FILE_ANCHOR_STATUS_HTML;
         }
         var descriptor
-          = new arAkahukuP2PCacheEntryDescriptor (targetFile);
+          = new arAkahukuP2PCacheEntryDescriptor (targetFile, this.ownerDocument);
         this.onCacheEntryAvailable (descriptor, false, null, 0);
         return;
       }
@@ -2886,6 +2888,7 @@ var arAkahukuMHT = {
     try {
       var i, j;
       var targetDocument = param.targetDocument;
+      var targetWindow = targetDocument.defaultView;
             
       var button
         = targetDocument.getElementById ("akahuku_savemht_button");
@@ -2931,11 +2934,9 @@ var arAkahukuMHT = {
         .replace (/ \(.*\)$/, "");
             
       /* ファイルに書き込む */
-      var fstream
-        = Components.classes
-        ["@mozilla.org/network/file-output-stream;1"]
-        .createInstance (Components.interfaces.nsIFileOutputStream);
-      fstream.init (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
+      var fstream = arAkahukuFile.createFileOutputStream
+        (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0,
+         targetWindow);
             
       var data = "";
             
@@ -2984,7 +2985,7 @@ var arAkahukuMHT = {
       fstream.write (data, data.length);
       fstream.close ();
             
-      param.tmpFile.moveTo (null, param.file.leafName);
+      arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
             
       /* 完了のメッセージを表示する */
       var text = "\u4FDD\u5B58\u306B\u6210\u529F\u3057\u307E\u3057\u305F";

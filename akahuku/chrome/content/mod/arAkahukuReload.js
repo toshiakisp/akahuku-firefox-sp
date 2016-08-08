@@ -2162,11 +2162,9 @@ var arAkahukuReload = {
           .createInstance (Components.interfaces.nsILocalFile);
         targetFile.initWithPath (path);
         if (targetFile.exists ()) {
-          var fstream
-            = Components
-            .classes ["@mozilla.org/network/file-input-stream;1"]
-            .createInstance (Components.interfaces.nsIFileInputStream);
-          fstream.init (targetFile, 0x01, 292/*0444*/, 0);
+          var fstream = arAkahukuFile.createFileInputStream
+            (targetFile, 0x01, 292/*0444*/, 0,
+             targetDocument.defaultView);
           _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize, path);
           location = null; // キャッシュ読み不要
         }

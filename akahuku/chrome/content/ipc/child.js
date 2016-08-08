@@ -157,11 +157,42 @@ arAkahukuFile.createFile = function () {
 arAkahukuFile.asyncCreateFile = function () {
   arAkahukuIPC.sendAsyncCommand ("File/asyncCreateFile", arguments);
 };
+arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFlags, contentWindow) {
+  var fstream = arAkahukuIPC
+    .sendSyncCommand ("File/createFileOutputStream",
+        [file, ioFlags, perm, behaviorFlags], contentWindow);
+  if (fstream) {
+    Cu.import ("resource://akahuku/ipc-stream.jsm");
+    fstream = new arOutputStreamChild (fstream);
+    var mm = arAkahukuIPC.getContentFrameMessageManager (contentWindow);
+    fstream.attachIPCMessageManager (mm);
+  }
+  return fstream;
+};
 arAkahukuFile.readFile = function () {
   return arAkahukuIPC.sendSyncCommand ("File/readFile", arguments);
 };
 arAkahukuFile.readBinaryFile = function () {
   return arAkahukuIPC.sendSyncCommand ("File/readBinaryFile", arguments);
+};
+arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFlags, contentWindow) {
+  var fstream = arAkahukuIPC
+    .sendSyncCommand ("File/createFileInputStream",
+        [file, ioFlags, perm, behaviorFlags], contentWindow);
+  if (fstream) {
+    Cu.import ("resource://akahuku/ipc-stream.jsm");
+    var fstreamC = new arInputStreamChild (fstream);
+    var mm = arAkahukuIPC.getContentFrameMessageManager (contentWindow);
+    fstreamC.attachIPCMessageManager (mm);
+    fstream = fstreamC.inputStream;
+  }
+  return fstream;
+};
+arAkahukuFile.moveTo = function () {
+  arAkahukuIPC.sendSyncCommand ("File/moveTo", arguments);
+};
+arAkahukuFile.remove = function () {
+  arAkahukuIPC.sendSyncCommand ("File/remove", arguments);
 };
 arAkahukuFile.createDirectory = function () {
   arAkahukuIPC.sendSyncCommand ("File/createDirectory", arguments);
