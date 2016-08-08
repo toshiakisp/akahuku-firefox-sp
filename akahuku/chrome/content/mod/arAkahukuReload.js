@@ -2117,7 +2117,7 @@ var arAkahukuReload = {
       param.sync = true;
       param.replied = false;
       param.useRange = false;
-      param.location = location;
+      param.location = null; // キャッシュから読んだので更新させない
 
       if (param.responseText.match (/^\x1f\x8b\x08/)) {
         // gzip 圧縮されている場合
@@ -3458,7 +3458,7 @@ var arAkahukuReload = {
     if (param.writer.setText (responseText, responseCharset)) {
       param.writer.responseHead = param.responseHead;
       param.writer.charset = responseCharset;
-      updateCache = !param.useRange;
+      updateCache = !param.useRange && param.location;
     }
         
     if (updateCache) {
