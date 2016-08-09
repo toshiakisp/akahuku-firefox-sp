@@ -1986,11 +1986,20 @@ var Akahuku = {
   {
     for (var i = 0; i < Akahuku.contextTasksArray.length; i ++) {
       var tasks = Akahuku.contextTasksArray [i];
-      if (tasks.length > 0) {
-        if (tasks [0].context &&
+      try {
+        if (tasks.length > 0 &&
+            tasks [0].context &&
             tasks [0].context.ownerDocument === targetDocument) {
           return tasks;
         }
+      }
+      catch (e) {
+        // TypeError: can't access dead object
+        // などが起こったらそのエントリーは破棄
+        Akahuku.debug.warn
+          ("getContextTasks drops a errored tasklist; " + e.message);
+        Akahuku.contextTasksArray.splice (i, 1);
+        i --;
       }
     }
     return null;
@@ -2000,7 +2009,10 @@ var Akahuku = {
   {
     for (var i = 0; i < Akahuku.contextTasksArray.length; i ++) {
       var tasks = Akahuku.contextTasksArray [i];
-      if (tasks.length > 0) {
+      try {
+        if (tasks.length == 0) {
+          throw Error ("empty");
+        }
         if (tasks [0].context &&
             tasks [0].context.ownerDocument === targetDocument) {
           if (!optForce && Akahuku.debug.enabled) {
@@ -2013,7 +2025,11 @@ var Akahuku = {
           break;
         }
       }
-      else {
+      catch (e) {
+        if (tasks.length != 0) {
+          Akahuku.debug.warn
+            ("clearContextTasks drops a errored tasklist; " + e.message);
+        }
         Akahuku.contextTasksArray.splice (i, 1);
         i --;
       }
