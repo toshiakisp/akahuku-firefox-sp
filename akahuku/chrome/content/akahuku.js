@@ -801,6 +801,11 @@ var Akahuku = {
       
       if (needApply) {
         /* 対象であれば適用する */
+
+        // カスタムイベント: 赤福より前に動きたい他の拡張機能をトリガー
+        var ev = targetDocument.createEvent ("Events");
+        ev.initEvent ("AkahukuContentBeforeApplied", true, false);
+        targetDocument.dispatchEvent (ev);
         
         Akahuku.apply(targetDocument, false);
         /*
@@ -812,6 +817,11 @@ var Akahuku = {
               });
           });
         */
+
+        // カスタムイベント: 赤福より後に動きたい他の拡張機能をトリガー
+        ev = targetDocument.createEvent ("Events");
+        ev.initEvent ("AkahukuContentApplied", true, false);
+        targetDocument.dispatchEvent (ev);
       }
     }
         
