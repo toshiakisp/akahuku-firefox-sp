@@ -176,6 +176,10 @@ arAkahukuImage.selectSaveImageDirFromXUL = function () {
      arAkahukuImageIPC.popupFrame);
   arAkahukuImageIPC.popupFrame = null;
 };
+arAkahukuIPCRoot.defineProc
+  (arAkahukuImage,
+   "Image", "asyncSaveImageToFile",
+   {async: true, callback: 4});
 
 
 

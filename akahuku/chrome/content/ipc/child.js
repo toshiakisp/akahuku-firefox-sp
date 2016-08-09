@@ -227,6 +227,10 @@ arAkahukuImage.asyncOpenSaveImageFilePicker
      [null, filename, dirname, callback],
      contentWindow);
 };
+arAkahukuImage.asyncSaveImageToFile = function () {
+  arAkahukuIPC.sendAsyncCommand
+    ("Image/asyncSaveImageToFile", arguments);
+};
 arAkahukuIPC.defineProc
   (arAkahukuImage,
    "Image", "selectSaveImageDirFromXUL",

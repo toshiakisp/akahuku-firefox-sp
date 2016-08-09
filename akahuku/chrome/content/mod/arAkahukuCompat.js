@@ -53,17 +53,37 @@ var arAkahukuCompat = new function () {
       var extraHeaders = _getArg (args, 'extraHeaders', null);
       var privacyContext = _getArg (args, 'privacyContext', null);
 
+      var usePrivacyAware = false;
+      if (privacyContext == null && args.hasOwnProperty ("isPrivate")) {
+        var isPrivate = _getArg (args, 'isPrivate', false);
+        var usePrivacyAware = true;
+      }
+
       if (this._version36) {
         // Firefox 36
-        webBrowserPersist.saveURI
-          (uri, cacheKey, referrer, referrerPolicy, postData,
-           extraHeaders, file, privacyContext);
+        if (usePrivacyAware) {
+          webBrowserPersist.savePrivacyAwareURI
+            (uri, cacheKey, referrer, referrerPolicy, postData,
+             extraHeaders, file, isPrivate);
+        }
+        else {
+          webBrowserPersist.saveURI
+            (uri, cacheKey, referrer, referrerPolicy, postData,
+             extraHeaders, file, privacyContext);
+        }
       }
       else if (this._version18) {
         // Firefox 18.0+
-        webBrowserPersist.saveURI
-          (uri, cacheKey, referrer, postData,
-           extraHeaders, file, privacyContext);
+        if (usePrivacyAware) {
+          webBrowserPersist.savePrivacyAwareURI
+            (uri, cacheKey, referrer, postData,
+             extraHeaders, file, isPrivate);
+        }
+        else {
+          webBrowserPersist.saveURI
+            (uri, cacheKey, referrer, postData,
+             extraHeaders, file, privacyContext);
+        }
       }
       else if (this._version3_6) {
         // Firefox 3.6?-17.0
