@@ -77,6 +77,8 @@ arAkahukuIPCRoot.defineProc
      callbackObjectMethod: "isVisited",
    });
 arAkahukuIPCRoot.defineProc
+  (arAkahukuCompat, "Compat", "losslessDecodeURI");
+arAkahukuIPCRoot.defineProc
   (arAkahukuCompat.AddonManager,
    "CompatAddonManager", "getAddonByID",
    {async: true, callback: 2});

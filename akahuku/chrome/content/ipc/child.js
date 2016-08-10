@@ -114,6 +114,10 @@ arAkahukuCompat.AsyncHistory.isURIVisited = function () {
   arAkahukuIPC.sendAsyncCommand
     ("CompatAsyncHistory/isURIVisited", arguments);
 };
+arAkahukuCompat.losslessDecodeURI = function () {
+  return arAkahukuIPC.sendSyncCommand
+    ("Compat/losslessDecodeURI", arguments);
+};
 arAkahukuCompat.AddonManager.getAddonByID = function () {
   arAkahukuIPC.sendAsyncCommand
     ("CompatAddonManager/getAddonByID", arguments);
