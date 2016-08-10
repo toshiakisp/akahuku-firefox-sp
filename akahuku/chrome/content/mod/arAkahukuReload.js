@@ -2986,6 +2986,17 @@ var arAkahukuReload = {
           arAkahukuThread.fixBug (currentContainer.main, info);
           aimaHandler (currentContainer.main, targetDocument);
           aimaHandler2 (currentContainer.main, targetDocument);
+
+          // 連携したい他の拡張機能の支援(カスタムイベント)
+          var appendEvent = targetDocument.createEvent ("Events");
+          appendEvent.initEvent ("AkahukuContentAppend", true, true);
+          var appendCancelled
+            = !currentContainer.main.dispatchEvent (appendEvent);
+          // preventDefault された場合はレスを非表示にする
+          for (var i = 0; i < currentContainer.nodes.length; i ++) {
+            currentContainer.nodes [i].style.display
+              = (appendCancelled ? "none" : "");
+          }
                     
           if (retNode) {
             var nodes2
