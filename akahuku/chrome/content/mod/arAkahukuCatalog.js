@@ -2586,7 +2586,7 @@ var arAkahukuCatalog = {
         
     oldTable.parentNode.removeChild (oldTable);
     if (entire) {
-      arAkahukuCatalog.onHideEntireThread (targetDocument);
+      arAkahukuCatalog.onHideEntireThreadCore (targetDocument);
     }
 
     if (dispCreatetime) {
