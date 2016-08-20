@@ -389,35 +389,50 @@ var arAkahukuP2P = {
    */
   setContextMenu : function (event) {
     var menuitem;
-    var popupNode = gContextMenu.target;
             
-    var isP2P = false;
-        
-    if (arAkahukuP2P.enable) {
-      if (popupNode
-          && popupNode.nodeName.toLowerCase ()
-          == "img") {
-        if ("src" in popupNode) {
-          if (popupNode.src.match
-              (/^akahuku:\/\/[^\/]+\/p2p\//)) {
-            isP2P = true;
-          }
-        }
-      }
-    }
+    var c = arAkahukuP2P.getContextMenuContentData (gContextMenu.target);
         
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-separator8");
     if (menuitem) {
-      menuitem.hidden = !isP2P;
+      menuitem.hidden = !(c.isP2PImage && arAkahukuP2P.enable);
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-p2p-delete");
     if (menuitem) {
-      menuitem.hidden = !isP2P;
+      menuitem.hidden = !(c.isP2PImage && arAkahukuP2P.enable);
     }
+  },
+
+  lastContextMenuContentData : null,
+
+  setContextMenuContentData : function (data) {
+    arAkahukuP2P.lastContextMenuContentData = data;
+  },
+
+  getContextMenuContentData : function (targetNode) {
+    if (arAkahukuP2P.lastContextMenuContentData) {
+      // 事前にセットされていたらそれを使う (e10s)
+      return arAkahukuP2P.lastContextMenuContentData;
+    }
+
+    var data = {
+      isP2P : false,
+    };
+
+    if (!targetNode) {
+      return data;
+    }
+
+    if (targetNode.nodeName.toLowerCase () == "img") {
+      if (/^akahuku:\/\/[^\/]+\/p2p\//.test (targetNode.src)){
+        data.isP2P = true;
+      }
+    }
+
+    return data;
   },
   
   /**

@@ -433,26 +433,8 @@ var arAkahukuImage = {
       return;
     }
 
-    var linkNode = gContextMenu.target;
-    if (linkNode.nodeName.toLowerCase () != "a") {
-      linkNode = arAkahukuDOM.findParentNode (linkNode, "a");
-      if (!linkNode) {
-        return;
-      }
-    }
-    if (!linkNode.hasAttribute ("__akahuku_saveimage_id")) {
-      return;
-    }
-        
-    var id = linkNode.getAttribute ("__akahuku_saveimage_id");
-    var tabbrowser = document.getElementById ("content");
-    var targetDocument = tabbrowser.contentDocument;
-    arAkahukuImage.currentTarget
-    = targetDocument.getElementById ("akahuku_saveimage_button_" + id);
-    arAkahukuImage.currentNormal
-    = (linkNode.getAttribute ("__akahuku_saveimage_normal") == 1);
-        
-    if (arAkahukuImage.currentTarget.style.display == "none") {
+    var c = arAkahukuImage.getContextMenuContentData (gContextMenu.target);
+    if (!c.isSaveImageLink) {
       return;
     }
         
@@ -482,6 +464,45 @@ var arAkahukuImage = {
       })(i), false);
       popup.insertBefore (menuitem, sep.nextSibling);
     }
+  },
+
+  lastContextMenuContentData : null,
+
+  setContextMenuContentData : function (data) {
+    arAkahukuImage.lastContextMenuContentData = data;
+  },
+
+  getContextMenuContentData : function (targetNode) {
+    if (arAkahukuImage.lastContextMenuContentData) {
+      // 事前にセットされていたらそれを使う (e10s)
+      return arAkahukuImage.lastContextMenuContentData;
+    }
+
+    var data = {
+      isSaveImageLink : false,
+    };
+
+    if (!targetNode) {
+      return data;
+    }
+
+    var linkNode = targetNode;
+    if (linkNode.nodeName.toLowerCase () != "a") {
+      linkNode = arAkahukuDOM.findParentNode (linkNode, "a");
+    }
+    if (linkNode && linkNode.hasAttribute ("__akahuku_saveimage_id")) {
+      var id = linkNode.getAttribute ("__akahuku_saveimage_id");
+      var targetDocument = linkNode.ownerDocument;
+      arAkahukuImage.currentTarget
+      = targetDocument.getElementById ("akahuku_saveimage_button_" + id);
+      arAkahukuImage.currentNormal
+      = (linkNode.getAttribute ("__akahuku_saveimage_normal") == 1);
+      if (arAkahukuImage.currentTarget.style.display != "none") {
+        data.isSaveImageLink = true;
+      }
+    }
+
+    return data;
   },
     
   /**

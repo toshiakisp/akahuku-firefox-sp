@@ -201,6 +201,31 @@ Akahuku.addFrame = function addFrame (frame) {
 
 };
 
+
+/**
+ * Register notification observer for context menu items in e10s
+ * to get and send content-base data
+ */
+function handleContentContextMenu (subject) {
+  var target = subject.wrappedJSObject.event.target;
+  var data;
+  data = arAkahukuLink.getContextMenuContentData (target);
+  arAkahukuIPC.sendSyncCommand ("Link/setContextMenuContentData", [data]);
+  data = arAkahukuImage.getContextMenuContentData (target);
+  arAkahukuIPC.sendSyncCommand ("Image/setContextMenuContentData", [data]);
+  data = arAkahukuJPEG.getContextMenuContentData (target);
+  arAkahukuIPC.sendSyncCommand ("JPEG/setContextMenuContentData", [data]);
+  data = arAkahukuP2P.getContextMenuContentData (target);
+  arAkahukuIPC.sendSyncCommand ("P2P/setContextMenuContentData", [data]);
+};
+if (appinfo.PROCESS_TYPE_CONTENT
+    && appinfo.processType === appinfo.PROCESS_TYPE_CONTENT) {
+  var os = Cc ["@mozilla.org/observer-service;1"]
+    .getService (Ci.nsIObserverService);
+  os.addObserver (handleContentContextMenu, "content-contextmenu", false);
+}
+
+
 Akahuku.initialized = true;
 Akahuku.debug.log ("Akahuku is initialized for JSM.")
 

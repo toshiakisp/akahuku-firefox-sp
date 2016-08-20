@@ -182,6 +182,8 @@ arAkahukuIPCRoot.defineProc
   (arAkahukuImage,
    "Image", "asyncSaveImageToFile",
    {async: true, callback: 4});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuImage, "Image", "setContextMenuContentData");
 
 
 
@@ -197,6 +199,8 @@ arAkahukuJPEG.closeThumbnail = function () {
      [gContextMenu.target],
      gContextMenu.browser.messageManager);
 };
+arAkahukuIPCRoot.defineProc
+  (arAkahukuJPEG, "JPEG", "setContextMenuContentData");
 
 
 
@@ -234,6 +238,8 @@ arAkahukuLink.openAsAutoLink = function (event) {
 arAkahukuIPCRoot.defineProc
   (arAkahukuLink, "Link", "openLinkInXUL",
    {async: true, callback: 0, frame: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuLink, "Link", "setContextMenuContentData");
 
 
 
@@ -253,6 +259,8 @@ arAkahukuIPCRoot.defineProc
 
 
 
+arAkahukuIPCRoot.defineProc
+  (arAkahukuP2P, "P2P", "setContextMenuContentData");
 arAkahukuP2P.deleteCache = function (optTarget) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("P2P/deleteCache", [gContextMenu.target],
