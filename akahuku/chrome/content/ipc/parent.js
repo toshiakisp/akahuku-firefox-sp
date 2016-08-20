@@ -173,10 +173,13 @@ arAkahukuIPCRoot.defineProc
    "Image", "asyncOpenSaveImageFilePicker",
    {async: true, callback: 4, frame: true});
 arAkahukuImage.selectSaveImageDirFromXUL = function () {
+  var targetFrame = (gContextMenu
+      ? gContextMenu.browser.messageManager
+      : arAkahukuImageIPC.popupFrame);
+  arAkahukuImageIPC.popupFrame = null;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Image/selectSaveImageDirFromXUL", arguments,
-     arAkahukuImageIPC.popupFrame);
-  arAkahukuImageIPC.popupFrame = null;
+     targetFrame);
 };
 arAkahukuIPCRoot.defineProc
   (arAkahukuImage,
