@@ -87,7 +87,7 @@ var arAkahukuWheel = {
    */
   onWheel : function (event) {
     try {
-      var targetDocument = event.target.ownerDocument;
+      var targetDocument = event.target.ownerDocument || event.target;
       var targetWindow = targetDocument.defaultView;
             
       var selectedBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
