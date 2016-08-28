@@ -656,7 +656,7 @@ arAkahukuCatalogPopupData.prototype =  {
     // 念のため transitionend イベントが起きない場合へ対処
     var nowTime = new Date ().getTime ();
     if (nowTime > this.lastTime + duration_ms*1.2) {
-      Akahuku.debug.warn ("zoomTransitionEffect: timeout!");
+      Akahuku.debug.log ("zoomTransitionEffect: timeout!");
       this.run (nextState, param);
       return;
     }
