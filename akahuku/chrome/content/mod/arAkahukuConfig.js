@@ -23,6 +23,24 @@ var arAkahukuConfig = {
    */
   init : function () {
     arAkahukuConfig.loadPrefBranch ();
+    try {
+      var oldVersion = arAkahukuConfig.getCharPref ("akahuku.version");
+      if (arAkahukuCompat.compareVersion (String (AkahukuVersion), oldVersion) > 0) {
+        // バージョンアップ時
+        Akahuku.debug.log ("Version up detected from " + oldVersion + " to " + AkahukuVersion);
+
+        // reset in sp_rev.37
+        if (arAkahukuCompat.compareVersion (String (AkahukuVersion), "5.2.90.sp_rev.36") == 0) {
+          Akahuku.debug.log ("Reset akahuku.ext.maximageretries to  0");
+          arAkahukuConfig.setIntPref ("akahuku.ext.maximageretries", 0);
+        }
+      }
+      else {
+        Akahuku.debug.log ("Version " + oldVersion + " to " + AkahukuVersion);
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
     arAkahukuConfig.setCharPref ("akahuku.version", AkahukuVersion);
         
     if (typeof (arAkahukuConfig.prefBranch.addObserver) === "function") {

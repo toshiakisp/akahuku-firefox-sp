@@ -16,14 +16,23 @@ var arAkahukuCompat = new function () {
   const Cr = Components.results;
   const Cu = Components.utils;
 
-  this.comparePlatformVersion = function (v) {
+  this.compareVersion = function (v1, v2) {
     try {
       // Gecko 1.8+
       var vc = Cc ["@mozilla.org/xpcom/version-comparator;1"]
         .getService (Ci.nsIVersionComparator);
+      return vc.compare (v1, v2);
+    }
+    catch (e) {
+      return -1; // 1.8より前ではやっつけ
+    }
+  };
+  this.comparePlatformVersion = function (v) {
+    try {
+      // Gecko 1.8+
       var ai = Cc ["@mozilla.org/xre/app-info;1"]
         .getService (Ci.nsIXULAppInfo);
-      return vc.compare (ai.platformVersion, v);
+      return arAkahukuCompat.compareVersion (ai.platformVersion, v);
     }
     catch (e) {
       return -1; // 1.8より前ではやっつけ
