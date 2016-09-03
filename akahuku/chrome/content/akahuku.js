@@ -89,6 +89,7 @@ var Akahuku = {
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
 
   useFrameScript : false,
+  useCSSTransition : false,
 
   isXPathAvailable : false,
 
@@ -383,6 +384,13 @@ var Akahuku = {
       }
       else if (xulRuntime.OS == "Darwin") {
         Akahuku.isRunningOnMac = true;
+      }
+
+      // e10s 環境でのみ CSS Transition (requires Firefox 16)を有効化
+      if (arAkahukuCompat.comparePlatformVersion ("15.*") > 0) {
+        if (xulRuntime.processType !== xulRuntime.PROCESS_TYPE_DEFAULT) {
+          Akahuku.useCSSTransition = true;
+        }
       }
     }
     catch (e) { Akahuku.debug.exception (e);

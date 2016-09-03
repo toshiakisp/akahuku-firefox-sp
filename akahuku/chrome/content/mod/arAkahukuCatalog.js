@@ -135,7 +135,7 @@ arAkahukuCatalogPopupData.prototype =  {
         this.targetImage.style.opacity = 0;
         this.lastTime = new Date ().getTime ();
         var effect = this.zoominTransitionEffect;
-        if (arAkahukuCompat.comparePlatformVersion ("15.*") <= 0) {
+        if (!Akahuku.useCSSTransition) {
           effect = this.zoominEffect;
         }
         arAkahukuPopup.addEffector (param, this, effect);
@@ -225,7 +225,7 @@ arAkahukuCatalogPopupData.prototype =  {
         }
         this.lastTime = new Date ().getTime ();
         var effect = this.zoomoutTransitionEffect;
-        if (arAkahukuCompat.comparePlatformVersion ("15.*") <= 0) {
+        if (!Akahuku.useCSSTransition) {
           effect = this.zoomoutEffect;
         }
         arAkahukuPopup.addEffector (param, this, effect);
