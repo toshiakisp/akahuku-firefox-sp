@@ -663,7 +663,7 @@ var arAkahukuThread = {
     .initPref ("bool", "akahuku.alertgif", false);
     arAkahukuThread.maxImageRetries
     = arAkahukuConfig
-    .initPref ("int", "akahuku.ext.maximageretries", 1);
+    .initPref ("int", "akahuku.ext.maximageretries", 0);
   },
 
   /**
@@ -2713,6 +2713,10 @@ var arAkahukuThread = {
     var count = parseInt (event.target.getAttribute
         ("__akahuku_img_error") || 0);
     event.target.setAttribute ("__akahuku_img_error", ++count);
+    if (count > arAkahukuThread.maxImageRetries) {
+      // 上限数以上のエラーは無視する
+      return;
+    }
     if (Akahuku.debug.enabled) {
       Akahuku.debug.log
         ("captureImageErrorToReload takes care of "
@@ -2721,10 +2725,6 @@ var arAkahukuThread = {
          + " , count=" + count + ")"
          //+ "\n" + arAkahukuJSON.encode (imageStatus)
          + "\n" + event.target.ownerDocument.location.href);
-    }
-    if (count > arAkahukuThread.maxImageRetries) {
-      // 上限数以上のエラーは無視する
-      return;
     }
     try {
       event.target

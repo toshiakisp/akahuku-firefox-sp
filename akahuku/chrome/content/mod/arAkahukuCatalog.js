@@ -44,7 +44,13 @@ arAkahukuCatalogPopupData.prototype =  {
    */
   destruct : function () {
     this.targetImage = null;
+    if (this.popup && this.popup.parentNode) {
+      this.popup.parentNode.removeChild (this.popup);
+    }
     this.popup = null;
+    if (this.popupArea && this.popupArea.parentNode) {
+      this.popupArea.parentNode.removeChild (this.popupArea);
+    }
     this.popupArea = null;
     if (this.targetWindow) {
       this.targetWindow.clearTimeout (this.createTimerID);
@@ -73,6 +79,7 @@ arAkahukuCatalogPopupData.prototype =  {
       this.targetWindow.clearTimeout (this.createTimerID);
       this.createTimerID = null;
     }
+    this.transitionState = 0; // 状態変更毎にリセット
         
     this.state = state;
     switch (state) {
@@ -127,9 +134,11 @@ arAkahukuCatalogPopupData.prototype =  {
       case 1:
         this.targetImage.style.opacity = 0;
         this.lastTime = new Date ().getTime ();
-        arAkahukuPopup.addEffector (param,
-                                    this,
-                                    this.zoominEffect);
+        var effect = this.zoominTransitionEffect;
+        if (!Akahuku.useCSSTransition) {
+          effect = this.zoominEffect;
+        }
+        arAkahukuPopup.addEffector (param, this, effect);
         break;
       case 2:
         this.popup.style.display = "block"; //非表示解除を保証
@@ -215,9 +224,11 @@ arAkahukuCatalogPopupData.prototype =  {
           anchors [1].parentNode.removeChild (anchors [1]);
         }
         this.lastTime = new Date ().getTime ();
-        arAkahukuPopup.addEffector (param,
-                                    this,
-                                    this.zoomoutEffect);
+        var effect = this.zoomoutTransitionEffect;
+        if (!Akahuku.useCSSTransition) {
+          effect = this.zoomoutEffect;
+        }
+        arAkahukuPopup.addEffector (param, this, effect);
         break;
       case 4:
       default:
@@ -515,6 +526,141 @@ arAkahukuCatalogPopupData.prototype =  {
       this.run (2, param);
     }
   },
+
+  /**
+   * ポップアップの拡大・縮小効果
+   * (CSS Transition, Transform 利用版)
+   *
+   * @param  arAkahukuPopupParam param
+   *         ポップアップ管理データ
+   */
+  zoominTransitionEffect : function (param) {
+    this.zoomTransitionEffect (param, "in");
+  },
+  zoomoutTransitionEffect : function (param) {
+    this.zoomTransitionEffect (param, "out");
+  },
+  zoomTransitionEffect : function (param, mode) {
+    function getTransformToTarget (that) {
+      var scaleX = that.targetImageGeometry.width
+        / that.zoomImageGeometry.width;
+      var scaleY = that.targetImageGeometry.height
+        / that.zoomImageGeometry.height;
+      var diffX
+        = (that.targetImageGeometry.left + that.targetImageGeometry.width/2)
+        - (that.zoomImageGeometry.left + that.zoomImageGeometry.width/2);
+      var diffY
+        = (that.targetImageGeometry.top + that.targetImageGeometry.height/2)
+        - (that.zoomImageGeometry.top + that.zoomImageGeometry.height/2);
+      return "translate("
+        + Math.round (diffX) + "px,"
+        + Math.round (diffY) + "px) "
+        + "scale(" + scaleX + ", " + scaleY + ")";
+    }
+    var doZoomIn = (mode == "in");
+    var zoomState = (doZoomIn ? 1 : 3);
+    var nextState = (doZoomIn ? 2 : 4);
+    var duration_ms = 200;
+
+    if (this.state != zoomState) {
+      return;
+    }
+
+    if (arAkahukuCatalog.enableZoomNoAnim) {
+      this.zoomFactor = (doZoomIn ? 100 : 0);
+      this.updatePopupGeometry ();
+      this.run (nextState, param);
+      return;
+    }
+
+    if (this.transitionState == 0) {
+      // state変更後に初実行時
+      if (!this.zoomImageGeometry) {
+        // 準備完了を待たずに zoominEffect が開始された場合
+        // 画像サイズが取得できるのをしばらく待ってみる
+        var nowTime = new Date ().getTime ();
+        if (nowTime < this.lastTime + 3000) {
+          this.getImageGeometry (this.targetImage.ownerDocument);
+          if (!this.zoomImageGeometry) {
+            return;
+          }
+          this.lastTime = nowTime;
+        }
+        else {
+          Akahuku.debug.warn
+            ("zoomTransitionEffect: getImageGeometry timeout!");
+          this.run (nextState, param);
+          return;
+        }
+      }
+
+      if (doZoomIn) {
+        // 初期位置・サイズの設定
+        // (最終状態の位置・サイズより CSS transform で縮小)
+        this.popup.firstChild.firstChild.width
+          = this.zoomImageGeometry.width;
+        this.popup.firstChild.firstChild.height
+          = this.zoomImageGeometry.height;
+        this.popup.style.zIndex = 200;
+        this.popup.style.left
+          = this.zoomImageGeometry.left + "px";
+        this.popup.style.top
+          = this.zoomImageGeometry.top + "px";
+        this.popup.style.transformOrigin = "50% 50% 0";
+        this.popup.style.transform = getTransformToTarget (this);
+
+        // 準備完了につき非表示は解除
+        this.popup.style.display = "block";
+
+        // スタイルを反映させるために一度戻す
+        this.transitionState = 1;
+        return;
+      }
+      else { // zoom out
+        this.popup.style.display = "block";
+        this.transitionState = 1;
+      }
+    }
+
+    if (this.transitionState == 1) {
+      // CSS Transition を設定
+      this.popup.style.transition
+        = "transform "
+        + duration_ms + "ms "
+        + "cubic-bezier(0.333,-1,0.667,2)";
+
+      var self = this;
+      this.popup.addEventListener ("transitionend", function (event) {
+        self.popup.removeEventListener (event.type, arguments.callee);
+        if (self.state != zoomState) {
+          return;
+        }
+        self.popup.style.transition = "";
+        self.zoomFactor = (doZoomIn ? 100 : 0);
+        self.run (nextState, param);
+      }, false);
+
+      if (doZoomIn) {
+        this.popup.style.transform = "scale(1)";
+      }
+      else { // zoom out
+        this.popup.style.transform = getTransformToTarget (this);
+      }
+
+      this.lastTime = new Date ().getTime ();
+
+      this.transitionState = 2;
+      return;
+    }
+
+    // 念のため transitionend イベントが起きない場合へ対処
+    var nowTime = new Date ().getTime ();
+    if (nowTime > this.lastTime + duration_ms*1.2) {
+      Akahuku.debug.log ("zoomTransitionEffect: timeout!");
+      this.run (nextState, param);
+      return;
+    }
+  },
     
   /**
    * ポップアップの縮小
@@ -566,6 +712,9 @@ arAkahukuCatalogPopupData.prototype =  {
    *         対象のドキュメント
    */
   createPopup : function (param, self, targetDocument) {
+    if (self.state != 0) {
+      return;
+    }
     var exists = false;
     for (var key in param.popups) {
       if (key == self.key) {
@@ -776,6 +925,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
   destruct : function () {
     this.thread = null;
     this.baseNode = null;
+    if (this.popup && this.popup.parentNode) {
+      this.popup.parentNode.removeChild (this.popup);
+    }
     this.popup = null;
     this.container = null;
     if (this.targetWindow) {
@@ -1123,6 +1275,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
    *         対象のドキュメント
    */
   createPopup : function (param, self, targetDocument) {
+    if (self.state != 0) {
+      return;
+    }
     var exists = false;
     for (var key in param.popups) {
       if (key == self.key) {
@@ -1338,6 +1493,7 @@ arAkahukuCatalogParam.prototype = {
   addedLastCells : false, /* Boolean  最後のセルを追加したか */
 
   updateAgeTimerID : null,    /* Number  __age 属性更新のデバウンス用タイマ */
+  hideEntireThreadDispatched : false,
     
   historyCallbacks : null,
 
@@ -1915,6 +2071,8 @@ var arAkahukuCatalog = {
       /* 最新に更新 */
       if (arAkahukuCatalog.enableReload) {
         style
+        .addRule ("#akahuku_appending_container",
+                  "display: none; ")
         .addRule ("div.akahuku_cell",
                   "margin: 0; "
                   + "padding: 0; "
@@ -2396,6 +2554,10 @@ var arAkahukuCatalog = {
     var leftNum = 0;
     var diffAll = 0;
 
+    var appending_container
+      = targetDocument.getElementById ("akahuku_appending_container");
+    var tdCreated = false;
+
     if (arAkahukuCatalog.enableReloadLeftBeforeMore) {
       if (arAkahukuCatalog.reloadLeftBeforeMoreNum.match
           (/([0-9]+).*L/)) {
@@ -2483,6 +2645,7 @@ var arAkahukuCatalog = {
       }
             
       var td = null;
+      tdCreated = false;
       if (mergedItems [i].td) {
         td = mergedItems [i].td;
         if (mergedItems [i].oldReplyNumber >= 0) {
@@ -2503,6 +2666,7 @@ var arAkahukuCatalog = {
         td.setAttribute ("__original_index", mergedItems [i].index);
       }
       else {
+        tdCreated = true;
         td = targetDocument.createElement ("td");
         /* mergedItems [i].innerHTML には HTML が含まれるので
          * innerHTML を使用する */
@@ -2549,10 +2713,6 @@ var arAkahukuCatalog = {
         if (typeof Aima_Aimani != "undefined") {
           if (Aima_Aimani.hideNGNumberCatalogueHandler) {
             Aima_Aimani.hideNGNumberCatalogueHandler (td);
-            if (td.style.display == "none") {
-              entire = true;
-              leftNum ++;
-            }
           }
         }
       }
@@ -2562,6 +2722,29 @@ var arAkahukuCatalog = {
       if (mergedItems [i].currentReplyNumber >= 0)
       td.setAttribute ("__reply_number",
                        mergedItems [i].currentReplyNumber);
+
+      // 連携したい他の拡張機能の支援(カスタムイベント)
+      if (appending_container) {
+        appending_container.appendChild (td);
+        var appendEvent = targetDocument.createEvent ("Events");
+        var appendEventName = (tdCreated
+            ? "AkahukuContentAppend"
+            : "AkahukuContentReAppend");
+        appendEvent.initEvent (appendEventName, true, true);
+        if (!td.dispatchEvent (appendEvent)) {
+          // preventDefault時にはスレを表示しない
+          td.style.display = "none";
+        }
+        else {
+          td.style.display = "";// 表示する
+        }
+      }
+
+      if (td.style.display == "none") {
+        entire = true;
+        leftNum ++;
+      }
+
       tr.appendChild (td);
     }
         
@@ -2570,7 +2753,7 @@ var arAkahukuCatalog = {
         
     oldTable.parentNode.removeChild (oldTable);
     if (entire) {
-      arAkahukuCatalog.onHideEntireThread (targetDocument);
+      arAkahukuCatalog.onHideEntireThreadCore (targetDocument);
     }
 
     if (dispCreatetime) {
@@ -4838,9 +5021,11 @@ var arAkahukuCatalog = {
   onBodyMouseOver : function (event) {
     try {
       var targetDocument = event.target.ownerDocument;
-      var param
-      = Akahuku.getDocumentParam (targetDocument)
-      .catalogpopup_param;
+      var documentParam = Akahuku.getDocumentParam (targetDocument);
+      if (!documentParam) {
+        return; // document was closed
+      }
+      var param = documentParam.catalogpopup_param;
             
       var img = event.explicitOriginalTarget;
       if (img
@@ -5019,11 +5204,30 @@ var arAkahukuCatalog = {
     
   /**
    * 合間合間に でカタログのスレを無かった事にしたイベント
+   * を受け付ける(実際のDOM操作はまとめて後で)
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
    */
   onHideEntireThread : function (targetDocument) {
+    try {
+      var param = Akahuku.getDocumentParam (targetDocument);
+      param = param.catalog_param;
+    }
+    catch (e) {
+      return;
+    }
+    // デバウンス
+    if (!param.hideEntireThreadDispatched) {
+      param.hideEntireThreadDispatched = true;
+      arAkahukuUtil.executeSoon (function (doc, param) {
+        param.hideEntireThreadDispatched = false;
+        arAkahukuCatalog.onHideEntireThreadCore (doc);
+      }, [targetDocument, param]);
+    }
+  },
+
+  onHideEntireThreadCore : function (targetDocument) {
     var param = Akahuku.getDocumentParam (targetDocument);
     if (!param) {
       return;
@@ -5714,6 +5918,11 @@ var arAkahukuCatalog = {
         div.appendChild (span);
                 
         lastRule.parentNode.insertBefore (div, lastRule);
+
+        // 拡張間連携のための不可視の一時挿入場所
+        div = targetDocument.createElement ("div");
+        div.id = "akahuku_appending_container";
+        targetDocument.body.appendChild (div);
       }
 
       // スレッドの更新通知を待ち受ける

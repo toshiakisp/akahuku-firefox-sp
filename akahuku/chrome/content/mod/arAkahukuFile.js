@@ -289,6 +289,25 @@ var arAkahukuFile = {
       });
     }
   },
+
+  /**
+   * 書込用ファイルストリームを作成する
+   *
+   * @param  nsIFile file
+   * @param  long ioFlags
+   * @param  long perm
+   * @param  long behaviorFlags
+   * @param  Window contentWindow (e10s対応用)
+   * @return nsIFileOutputStream
+   */
+  createFileOutputStream : function (file, ioFlags, perm, behaviorFlags, contentWindow) {
+    var fstream
+      = Components.classes
+      ["@mozilla.org/network/file-output-stream;1"]
+      .createInstance (Components.interfaces.nsIFileOutputStream);
+    fstream.init (file, ioFlags, perm, behaviorFlags);
+    return fstream;
+  },
     
   /**
    * ファイルを読み込む
@@ -381,6 +400,46 @@ var arAkahukuFile = {
     }
         
     return bindata;
+  },
+
+  /**
+   * 読込用ファイルストリームを作成する
+   *
+   * @param  nsIFile file
+   * @param  long ioFlags
+   * @param  long perm
+   * @param  long behaviorFlags
+   * @param  Window contentWindow (e10s対応用)
+   * @return nsIFileInputStream
+   */
+  createFileInputStream : function (file, ioFlags, perm, behaviorFlags, contentWindow) {
+    var fstream
+      = Components.classes
+      ["@mozilla.org/network/file-input-stream;1"]
+      .createInstance (Components.interfaces.nsIFileInputStream);
+    fstream.init (file, ioFlags, perm, behaviorFlags);
+    return fstream;
+  },
+
+  /**
+   * ファイルを移動させる
+   *
+   * @param  nsIFile file
+   * @param  nsIFile newParentDir
+   * @param  string newName
+   */
+  moveTo : function (file, newParentDir, newName) {
+    file.moveTo (newParentDir, newName);
+  },
+
+  /**
+   * ファイルを削除する
+   *
+   * @param  nsIFile file
+   * @param  boolean recursive
+   */
+  remove : function (file, recursive) {
+    file.remove (recursive);
   },
     
   /**

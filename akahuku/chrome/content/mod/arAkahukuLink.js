@@ -1491,93 +1491,50 @@ var arAkahukuLink = {
   setContextMenu : function (event) {
     var menuitem;
         
-    var isAutolink = false;
-    var isNoExtAutolink = false;
-    var isNoExtAutolinkAuto = false;
-    var node = gContextMenu.target;
-    if (node) {
-      if (node.nodeName.toLowerCase () != "a") {
-        node = arAkahukuDOM.findParentNode (gContextMenu.target, "a");
-      }
-      if (node) {
-        if (node.nodeName.toLowerCase () == "a") {
-          if ("className" in node
-              && node.className == "akahuku_generated_link") {
-            isAutolink = true;
-            if (node.hasAttribute ("__akahuku_autolink_no_ext")) {
-              isNoExtAutolink = true;
-            }
-            if (node.hasAttribute
-                ("__akahuku_autolink_no_ext_auto")) {
-              isNoExtAutolinkAuto = true;
-            }
-          }
-        }
-      }
-    }
+    var c = arAkahukuLink.getContextMenuContentData (gContextMenu.target);
+
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-separator0");
     if (menuitem) {
-      menuitem.hidden = !isAutolink;
+      menuitem.hidden = !c.isAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-openlink");
     if (menuitem) {
-      menuitem.hidden = !isAutolink;
+      menuitem.hidden = !c.isAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-savelink");
     if (menuitem) {
-      menuitem.hidden = !isAutolink;
+      menuitem.hidden = !c.isAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-copylink");
     if (menuitem) {
-      menuitem.hidden = !isAutolink;
+      menuitem.hidden = !c.isAutolink;
     }
         
-    var isUserLinkable = false;
     var isAsAutoLinkable = false;
-        
     if (arAkahukuLink.enableAutoLinkAs) {
-      var targetDocument = gContextMenu.target.ownerDocument;
-      var param
-        = Akahuku.getDocumentParam (targetDocument);
-      if (!param) {
-        isAsAutoLinkable = gContextMenu.isTextSelected;
-      }
-    }
-        
-    if (arAkahukuLink.enableAutoLink
-        && arAkahukuLink.enableAutoLinkUser) {
-      if (gContextMenu.target
-          && gContextMenu.target.nodeName.toLowerCase ()
-          == "img") {
-        if ("src" in gContextMenu.target) {
-          if (gContextMenu.target.src.match
-              (/^(.+\/)([^0-9\/]+)([0-9]+)\.(.+)$/)) {
-            isUserLinkable = true;
-          }
-        }
-      }
+      isAsAutoLinkable = gContextMenu.isTextSelected && c.isAkahukuApplied;
     }
         
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-separator6");
     if (menuitem) {
-      menuitem.hidden = !isUserLinkable && !isAsAutoLinkable;
+      menuitem.hidden = !c.isUserLinkable && !isAsAutoLinkable;
     }
     menuitem
     = document
     .getElementById
     ("akahuku-menuitem-content-autolink-user-add");
     if (menuitem) {
-      menuitem.hidden = !isUserLinkable;
+      menuitem.hidden = !c.isUserLinkable;
     }
     menuitem
     = document
@@ -1591,38 +1548,103 @@ var arAkahukuLink = {
     = document
     .getElementById ("akahuku-menuitem-content-separator7");
     if (menuitem) {
-      menuitem.hidden = !isNoExtAutolink;
+      menuitem.hidden = !c.isNoExtAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-ext-auto");
     if (menuitem) {
-      menuitem.hidden = !isNoExtAutolink || !isNoExtAutolinkAuto;
+      menuitem.hidden = !c.isNoExtAutolink || !c.isNoExtAutolinkAuto;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-ext-jpg");
     if (menuitem) {
-      menuitem.hidden = !isNoExtAutolink;
+      menuitem.hidden = !c.isNoExtAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-ext-png");
     if (menuitem) {
-      menuitem.hidden = !isNoExtAutolink;
+      menuitem.hidden = !c.isNoExtAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-ext-gif");
     if (menuitem) {
-      menuitem.hidden = !isNoExtAutolink;
+      menuitem.hidden = !c.isNoExtAutolink;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-autolink-ext-input");
     if (menuitem) {
-      menuitem.hidden = !isNoExtAutolink;
+      menuitem.hidden = !c.isNoExtAutolink;
     }
+  },
+
+  lastContextMenuContentData : null,
+
+  setContextMenuContentData : function (data) {
+    arAkahukuLink.lastContextMenuContentData = data;
+  },
+
+  getContextMenuContentData : function (targetNode) {
+    if (arAkahukuLink.lastContextMenuContentData) {
+      // 事前にセットされていたらそれを使う (e10s)
+      return arAkahukuLink.lastContextMenuContentData;
+    }
+
+    var data = {
+      isAkahukuApplied : false,
+      isAutolink : false,
+      isNoExtAutolink : false,
+      isNoExtAutolinkAuto : false,
+      isUserLinkable : false,
+    };
+
+    if (!targetNode) {
+      return data;
+    }
+
+    var targetDocument = targetNode.ownerDocument;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (param) {
+      data.isAkahukuApplied = true;
+    }
+
+    var node = targetNode;
+    if (node.nodeName.toLowerCase () != "a") {
+      node = arAkahukuDOM.findParentNode (targetNode, "a");
+    }
+    if (node) {
+      if (node.nodeName.toLowerCase () == "a") {
+        if ("className" in node
+            && node.className == "akahuku_generated_link") {
+          data.isAutolink = true;
+          if (node.hasAttribute ("__akahuku_autolink_no_ext")) {
+            data.isNoExtAutolink = true;
+          }
+          if (node.hasAttribute
+              ("__akahuku_autolink_no_ext_auto")) {
+            data.isNoExtAutolinkAuto = true;
+          }
+        }
+      }
+    }
+
+    if (arAkahukuLink.enableAutoLink
+        && arAkahukuLink.enableAutoLinkUser) {
+      if (targetNode.nodeName.toLowerCase () == "img") {
+        if ("src" in targetNode) {
+          if (targetNode.src.match
+              (/^(.+\/)([^0-9\/]+)([0-9]+)\.(.+)$/)) {
+            data.isUserLinkable = true;
+          }
+        }
+      }
+    }
+
+    return data;
   },
     
   /**

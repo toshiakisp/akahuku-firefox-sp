@@ -904,6 +904,13 @@ AkahukuIPC.prototype = {
         ("AkahukuIPC: command is for remote requests; " + command,
          Cr.NS_ERROR_FAILURE, Components.stack.caller);
     }
+    if (entry.def.frame
+        && !(optContentWindow
+          && optContentWindow instanceof Ci.nsIDOMWindow)) {
+      throw Components.Exception
+        ("AkahukuIPC: command requires an additional argument of the content window; " + command,
+         Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
+    }
 
     var request = new AkahukuIPCSendingRequest ();
     request.init (entry, args, optContentWindow);
@@ -990,7 +997,9 @@ AkahukuIPC.prototype = {
         ("AkahukuIPC: command is for syncronus requests; " + command,
          Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
     }
-    if (entry.def.frame && !optContentWindow) {
+    if (entry.def.frame
+        && !(optContentWindow
+          && optContentWindow instanceof Ci.nsIDOMWindow)) {
       throw Components.Exception
         ("AkahukuIPC: command requires an additional argument of the content window; " + command,
          Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);

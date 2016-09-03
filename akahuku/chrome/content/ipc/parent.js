@@ -77,6 +77,8 @@ arAkahukuIPCRoot.defineProc
      callbackObjectMethod: "isVisited",
    });
 arAkahukuIPCRoot.defineProc
+  (arAkahukuCompat, "Compat", "losslessDecodeURI");
+arAkahukuIPCRoot.defineProc
   (arAkahukuCompat.AddonManager,
    "CompatAddonManager", "getAddonByID",
    {async: true, callback: 2});
@@ -107,11 +109,43 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "readBinaryFile");
 arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "moveTo");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "remove");
+arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "createDirectory");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getFilenameFromURLSpec");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getFileFromURLSpec");
+var arAkahukuFileIPC = {
+  createFileOutputStream : function (file, ioFlags, perm, behaviorFlags) {
+    var fstream = arAkahukuFile.createFileOutputStream (file, ioFlags, perm, behaviorFlags);
+    if (fstream) {
+      Cu.import ("resource://akahuku/ipc-stream.jsm");
+      fstream = new arOutputStreamParent (fstream);
+      var mm = arAkahukuIPCRoot.messageTarget.messageManager;
+      fstream.attachIPCMessageManager (mm);
+      fstream = fstream.createIPCTransferable ();
+    }
+    return fstream;
+  },
+  createFileInputStream : function (file, ioFlags, perm, behaviorFlags) {
+    var fstream = arAkahukuFile.createFileInputStream (file, ioFlags, perm, behaviorFlags);
+    if (fstream) {
+      Cu.import ("resource://akahuku/ipc-stream.jsm");
+      fstream = new arInputStreamParent (fstream);
+      var mm = arAkahukuIPCRoot.messageTarget.messageManager;
+      fstream.attachIPCMessageManager (mm);
+      fstream = fstream.createIPCTransferable ();
+    }
+    return fstream;
+  },
+};
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFileIPC, "File", "createFileOutputStream", {frame: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFileIPC, "File", "createFileInputStream", {frame: true});
 
 
 
@@ -139,11 +173,20 @@ arAkahukuIPCRoot.defineProc
    "Image", "asyncOpenSaveImageFilePicker",
    {async: true, callback: 4, frame: true});
 arAkahukuImage.selectSaveImageDirFromXUL = function () {
+  var targetFrame = (gContextMenu
+      ? gContextMenu.browser.messageManager
+      : arAkahukuImageIPC.popupFrame);
+  arAkahukuImageIPC.popupFrame = null;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Image/selectSaveImageDirFromXUL", arguments,
-     arAkahukuImageIPC.popupFrame);
-  arAkahukuImageIPC.popupFrame = null;
+     targetFrame);
 };
+arAkahukuIPCRoot.defineProc
+  (arAkahukuImage,
+   "Image", "asyncSaveImageToFile",
+   {async: true, callback: 4});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuImage, "Image", "setContextMenuContentData");
 
 
 
@@ -159,6 +202,8 @@ arAkahukuJPEG.closeThumbnail = function () {
      [gContextMenu.target],
      gContextMenu.browser.messageManager);
 };
+arAkahukuIPCRoot.defineProc
+  (arAkahukuJPEG, "JPEG", "setContextMenuContentData");
 
 
 
@@ -196,6 +241,8 @@ arAkahukuLink.openAsAutoLink = function (event) {
 arAkahukuIPCRoot.defineProc
   (arAkahukuLink, "Link", "openLinkInXUL",
    {async: true, callback: 0, frame: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuLink, "Link", "setContextMenuContentData");
 
 
 
@@ -215,6 +262,8 @@ arAkahukuIPCRoot.defineProc
 
 
 
+arAkahukuIPCRoot.defineProc
+  (arAkahukuP2P, "P2P", "setContextMenuContentData");
 arAkahukuP2P.deleteCache = function (optTarget) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("P2P/deleteCache", [gContextMenu.target],

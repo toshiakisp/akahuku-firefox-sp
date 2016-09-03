@@ -359,6 +359,13 @@ var arAkahukuTitle = {
    *         タイトル要素
    */
   getTitleElement : function (targetDocument, info) {
+    if (info.isFutaba) {
+      // 2016? 新レイアウト
+      var tit = targetDocument.getElementById ("tit");
+      if (tit) {
+        return tit;
+      }
+    }
     var pos = null;
     var nodes2 = targetDocument.getElementsByTagName ("p");
     if (nodes2.length >= 2 && nodes2[1].align == "center") {
@@ -383,6 +390,33 @@ var arAkahukuTitle = {
       if (nodes2.length >= 1) {
         pos = nodes2 [0].previousSibling;
       }
+    }
+    return pos;
+  },
+
+  /**
+   * ドキュメントのサブタイトルを挿入する直前要素を得る
+   *
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   * @param  arAkahukuLocationInfo info
+   *         アドレスの情報
+   * @return HTMLElement
+   */
+  getSubTitlePos : function (targetDocument, info) {
+    // 新レイアウト
+    if (info.isFutaba) {
+      // 2016? 新レイアウト
+      var hdp = targetDocument.getElementById ("hdp");
+      if (hdp) {
+        return hdp;
+      }
+    }
+    // hr基準
+    var pos;
+    var nodes2 = targetDocument.getElementsByTagName ("hr");
+    if (nodes2.length >= 1) {
+      pos = nodes2 [0].previousSibling;
     }
     return pos;
   },
@@ -412,7 +446,7 @@ var arAkahukuTitle = {
       var nodes = Akahuku.getMessageBQ (targetDocument);
             
       if (nodes.length != 0) {
-        var pos = arAkahukuTitle.getTitleElement (targetDocument, info);
+        var pos = arAkahukuTitle.getSubTitlePos (targetDocument, info);
         if (pos) {
           var newNode = targetDocument.createElement ("div");
           newNode.id = "akahuku_subtitle_container";

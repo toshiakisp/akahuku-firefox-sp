@@ -42,45 +42,68 @@ var arAkahukuJPEG = {
   setContextMenu : function (event) {
     var menuitem;
             
-    var isJPEG = false;
-    var isThumbnailOpened = false;
-                
-    if (arAkahukuJPEG.enableThumbnail) {
-      if (gContextMenu.target
-          && gContextMenu.target.nodeName.toLowerCase ()
-          == "img") {
-        if ("src" in gContextMenu.target) {
-          if (gContextMenu.target.src.match (/jpe?g$/)) {
-            isJPEG = true;
-          }
-        }
-        if (gContextMenu.target
-            .getAttribute ("__akahuku_jpeg_thumbnail_opened")
-            == "true") {
-          isThumbnailOpened = true;
-        }
-      }
-    }
-                
+    var c = arAkahukuJPEG.getContextMenuContentData (gContextMenu.target);
+
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-separator5");
     if (menuitem) {
-      menuitem.hidden = !isJPEG && !isThumbnailOpened;
+      menuitem.hidden = !c.isJPEG && !c.isThumbnailOpened;
     }
     menuitem
     = document
     .getElementById ("akahuku-menuitem-content-jpeg-thumbnail");
     if (menuitem) {
-      menuitem.hidden = !isJPEG || isThumbnailOpened;
+      menuitem.hidden = !c.isJPEG || c.isThumbnailOpened;
     }
     menuitem
     = document
     .getElementById
     ("akahuku-menuitem-content-jpeg-thumbnail-close");
     if (menuitem) {
-      menuitem.hidden = !isThumbnailOpened;
+      menuitem.hidden = !c.isThumbnailOpened;
     }
+  },
+
+  lastContextMenuContentData : null,
+
+  setContextMenuContentData : function (data) {
+    arAkahukuJPEG.lastContextMenuContentData = data;
+  },
+
+  getContextMenuContentData : function (targetNode) {
+    if (arAkahukuJPEG.lastContextMenuContentData) {
+      // 事前にセットされていたらそれを使う (e10s)
+      return arAkahukuJPEG.lastContextMenuContentData;
+    }
+
+    var data = {
+      isJPEG : false,
+      isThumbnailOpened : false,
+    };
+
+    if (!targetNode) {
+      return data;
+    }
+
+    if (arAkahukuJPEG.enableThumbnail) {
+      if (targetNode
+          && targetNode.nodeName.toLowerCase ()
+          == "img") {
+        if ("src" in targetNode) {
+          if (targetNode.src.match (/jpe?g$/)) {
+            data.isJPEG = true;
+          }
+        }
+        if (targetNode
+            .getAttribute ("__akahuku_jpeg_thumbnail_opened")
+            == "true") {
+          data.isThumbnailOpened = true;
+        }
+      }
+    }
+
+    return data;
   },
     
   /**

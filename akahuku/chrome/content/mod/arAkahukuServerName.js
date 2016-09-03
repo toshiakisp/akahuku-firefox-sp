@@ -567,6 +567,12 @@ var arAkahukuServerData = {
     2000, true
     ],
 
+  "www:hinan" : [ /* 避難所 */
+    "\u907F\u96E3\u6240",
+    "\u907F\u96E3\u6240",
+    "\u907F\u96E3\u6240",
+    10000, true,
+    ],
 };
 
 var arAkahukuServerName = new Object ();

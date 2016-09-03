@@ -30,8 +30,8 @@ Cu.import ("resource://akahuku/ipc-proxy.jsm");
  * 対応する id の arInputStreamChild にIPCメッセージで転送する
  */
 function arInputStreamParent (stream) {
-  if (!(stream instanceof Ci.nsIAsyncInputStream)) {
-    throw CE ("arInputStreamParent: nsIAsyncInputStream must be given",
+  if (!(stream instanceof Ci.nsIInputStream)) {
+    throw CE ("arInputStreamParent: nsIInputStream must be given",
         Cr.NS_ERROR_INVALID_VALUE, Components.stack.caller);
   }
   this.mInputStream = stream;
@@ -68,8 +68,13 @@ arInputStreamParent.prototype = {
 
   _destruct : function (optStatus) {
     try {
-      if (this.mInputStream)
+      if (this.mInputStream
+          && this.mInputStream instanceof Ci.nsIAsyncInputStream) {
         this.mInputStream.closeWithStatus (optStatus || Cr.NS_OK);
+      }
+      else if (this.mInputStream) {
+        this.mInputStream.close ();
+      }
     }
     catch (e) {
       Cu.reportError (e);

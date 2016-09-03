@@ -16,14 +16,23 @@ var arAkahukuCompat = new function () {
   const Cr = Components.results;
   const Cu = Components.utils;
 
-  this.comparePlatformVersion = function (v) {
+  this.compareVersion = function (v1, v2) {
     try {
       // Gecko 1.8+
       var vc = Cc ["@mozilla.org/xpcom/version-comparator;1"]
         .getService (Ci.nsIVersionComparator);
+      return vc.compare (v1, v2);
+    }
+    catch (e) {
+      return -1; // 1.8より前ではやっつけ
+    }
+  };
+  this.comparePlatformVersion = function (v) {
+    try {
+      // Gecko 1.8+
       var ai = Cc ["@mozilla.org/xre/app-info;1"]
         .getService (Ci.nsIXULAppInfo);
-      return vc.compare (ai.platformVersion, v);
+      return arAkahukuCompat.compareVersion (ai.platformVersion, v);
     }
     catch (e) {
       return -1; // 1.8より前ではやっつけ
@@ -53,17 +62,37 @@ var arAkahukuCompat = new function () {
       var extraHeaders = _getArg (args, 'extraHeaders', null);
       var privacyContext = _getArg (args, 'privacyContext', null);
 
+      var usePrivacyAware = false;
+      if (privacyContext == null && args.hasOwnProperty ("isPrivate")) {
+        var isPrivate = _getArg (args, 'isPrivate', false);
+        var usePrivacyAware = true;
+      }
+
       if (this._version36) {
         // Firefox 36
-        webBrowserPersist.saveURI
-          (uri, cacheKey, referrer, referrerPolicy, postData,
-           extraHeaders, file, privacyContext);
+        if (usePrivacyAware) {
+          webBrowserPersist.savePrivacyAwareURI
+            (uri, cacheKey, referrer, referrerPolicy, postData,
+             extraHeaders, file, isPrivate);
+        }
+        else {
+          webBrowserPersist.saveURI
+            (uri, cacheKey, referrer, referrerPolicy, postData,
+             extraHeaders, file, privacyContext);
+        }
       }
       else if (this._version18) {
         // Firefox 18.0+
-        webBrowserPersist.saveURI
-          (uri, cacheKey, referrer, postData,
-           extraHeaders, file, privacyContext);
+        if (usePrivacyAware) {
+          webBrowserPersist.savePrivacyAwareURI
+            (uri, cacheKey, referrer, postData,
+             extraHeaders, file, isPrivate);
+        }
+        else {
+          webBrowserPersist.saveURI
+            (uri, cacheKey, referrer, postData,
+             extraHeaders, file, privacyContext);
+        }
       }
       else if (this._version3_6) {
         // Firefox 3.6?-17.0

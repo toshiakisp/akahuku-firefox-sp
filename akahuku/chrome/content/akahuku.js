@@ -89,6 +89,7 @@ var Akahuku = {
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
 
   useFrameScript : false,
+  useCSSTransition : false,
 
   isXPathAvailable : false,
 
@@ -384,6 +385,13 @@ var Akahuku = {
       else if (xulRuntime.OS == "Darwin") {
         Akahuku.isRunningOnMac = true;
       }
+
+      // e10s 環境でのみ CSS Transition (requires Firefox 16)を有効化
+      if (arAkahukuCompat.comparePlatformVersion ("15.*") > 0) {
+        if (xulRuntime.processType !== xulRuntime.PROCESS_TYPE_DEFAULT) {
+          Akahuku.useCSSTransition = true;
+        }
+      }
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -636,7 +644,7 @@ var Akahuku = {
     if (href.match
         (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
         || href.match
-        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
+        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi|hinan)\//)) {
       /* ふたばの板 */
       if (href.match (/\.2chan\.net(:[0-9]+)?\/bin\//)) {
         // 広告用リソースなど
@@ -653,7 +661,7 @@ var Akahuku = {
         if (href2.match
             (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
             || href2.match
-            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi)\//)) {
+            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi|hinan)\//)) {
           /* ふたばの板のキャッシュ */
           return true;
         }
@@ -676,7 +684,7 @@ var Akahuku = {
     }
     
     if (href.match
-        (/^http:\/\/tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
+        (/^http:\/\/(?:[^\.\/]+\.)?tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
       /* サッチー */
       return true;
     }
@@ -801,6 +809,11 @@ var Akahuku = {
       
       if (needApply) {
         /* 対象であれば適用する */
+
+        // カスタムイベント: 赤福より前に動きたい他の拡張機能をトリガー
+        var ev = targetDocument.createEvent ("Events");
+        ev.initEvent ("AkahukuContentBeforeApplied", true, false);
+        targetDocument.dispatchEvent (ev);
         
         Akahuku.apply(targetDocument, false);
         /*
@@ -812,6 +825,11 @@ var Akahuku = {
               });
           });
         */
+
+        // カスタムイベント: 赤福より後に動きたい他の拡張機能をトリガー
+        ev = targetDocument.createEvent ("Events");
+        ev.initEvent ("AkahukuContentApplied", true, false);
+        targetDocument.dispatchEvent (ev);
       }
     }
         
@@ -1976,11 +1994,20 @@ var Akahuku = {
   {
     for (var i = 0; i < Akahuku.contextTasksArray.length; i ++) {
       var tasks = Akahuku.contextTasksArray [i];
-      if (tasks.length > 0) {
-        if (tasks [0].context &&
+      try {
+        if (tasks.length > 0 &&
+            tasks [0].context &&
             tasks [0].context.ownerDocument === targetDocument) {
           return tasks;
         }
+      }
+      catch (e) {
+        // TypeError: can't access dead object
+        // などが起こったらそのエントリーは破棄
+        Akahuku.debug.warn
+          ("getContextTasks drops a errored tasklist; " + e.message);
+        Akahuku.contextTasksArray.splice (i, 1);
+        i --;
       }
     }
     return null;
@@ -1990,7 +2017,10 @@ var Akahuku = {
   {
     for (var i = 0; i < Akahuku.contextTasksArray.length; i ++) {
       var tasks = Akahuku.contextTasksArray [i];
-      if (tasks.length > 0) {
+      try {
+        if (tasks.length == 0) {
+          throw Error ("empty");
+        }
         if (tasks [0].context &&
             tasks [0].context.ownerDocument === targetDocument) {
           if (!optForce && Akahuku.debug.enabled) {
@@ -2003,7 +2033,11 @@ var Akahuku = {
           break;
         }
       }
-      else {
+      catch (e) {
+        if (tasks.length != 0) {
+          Akahuku.debug.warn
+            ("clearContextTasks drops a errored tasklist; " + e.message);
+        }
         Akahuku.contextTasksArray.splice (i, 1);
         i --;
       }

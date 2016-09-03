@@ -87,7 +87,7 @@ var arAkahukuWheel = {
    */
   onWheel : function (event) {
     try {
-      var targetDocument = event.target.ownerDocument;
+      var targetDocument = event.target.ownerDocument || event.target;
       var targetWindow = targetDocument.defaultView;
             
       var selectedBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
@@ -354,16 +354,17 @@ var arAkahukuWheel = {
       if (targetDocument == bindedDocument) {
         return; //別に補足済みのはずなので処理不要
       }
+      var isScrolling = false;
       var isWheel = event.type === "wheel";
       var targetWindow = targetDocument.defaultView;
       var delta = (isWheel ? event.deltaY : event.detail);
       var scrollY = targetWindow.scrollY;
       if (!(delta > 0 && scrollY >= targetWindow.scrollMaxY)
         && !(delta < 0 && scrollY <= 0)) {
-        return; // 上端でも下端でもない
+        isScrolling = true; // 上端でも下端でもない
       }
 
-      // 親を探してイベント転送
+      // 親を探す
       var targetFrame = null;
       while (targetWindow.frameElement) {
         targetFrame = targetWindow.frameElement;
@@ -377,6 +378,14 @@ var arAkahukuWheel = {
         Akahuku.debug.warn ("targetDocument shuld be a bindedDocument");
         return;
       }
+      if (targetFrame.scrolling && targetFrame.scrolling == "no") {
+        isScrolling = false;
+      }
+      if (isScrolling) {
+        return;
+      }
+      // それ以上フレーム内はスクロールしないため
+      // ページのホイール処理へイベント転送
       var dummyEvent = {
         type : event.type,
         target : targetFrame || targetDocument.defaultView,

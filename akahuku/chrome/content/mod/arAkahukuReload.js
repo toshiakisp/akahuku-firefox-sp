@@ -719,7 +719,7 @@ arAkahukuReloadParam.prototype = {
         if ("Last-Modified" in visitor.header) {
           resLastMod = Date.parse (visitor.header ["Last-Modified"]);
         }
-        if (!resLastMod) {
+        if (!resLastMod && !visitor.header.hasOwnProperty ("Etag")) {
           // このページではもう HEAD リクエストをしない
           this.requestMode = -1; //GET(no-more-HEAD)
           Akahuku.debug.log
@@ -727,6 +727,9 @@ arAkahukuReloadParam.prototype = {
         }
         if (errorStatus) {
           httpStatus = - Math.abs (httpStatus);
+        }
+        else if (!resLastMod && httpStatus == 304) {
+          // Not Modified (条件付きリクエストは成功)
         }
         else if (this.lastModified && this.lastModified == resLastMod) {
           httpStatus = 304; // Not Modified
@@ -2114,7 +2117,7 @@ var arAkahukuReload = {
       param.sync = true;
       param.replied = false;
       param.useRange = false;
-      param.location = location;
+      param.location = null; // キャッシュから読んだので更新させない
 
       if (param.responseText.match (/^\x1f\x8b\x08/)) {
         // gzip 圧縮されている場合
@@ -2159,11 +2162,9 @@ var arAkahukuReload = {
           .createInstance (Components.interfaces.nsILocalFile);
         targetFile.initWithPath (path);
         if (targetFile.exists ()) {
-          var fstream
-            = Components
-            .classes ["@mozilla.org/network/file-input-stream;1"]
-            .createInstance (Components.interfaces.nsIFileInputStream);
-          fstream.init (targetFile, 0x01, 292/*0444*/, 0);
+          var fstream = arAkahukuFile.createFileInputStream
+            (targetFile, 0x01, 292/*0444*/, 0,
+             targetDocument.defaultView);
           _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize, path);
           location = null; // キャッシュ読み不要
         }
@@ -2985,6 +2986,17 @@ var arAkahukuReload = {
           arAkahukuThread.fixBug (currentContainer.main, info);
           aimaHandler (currentContainer.main, targetDocument);
           aimaHandler2 (currentContainer.main, targetDocument);
+
+          // 連携したい他の拡張機能の支援(カスタムイベント)
+          var appendEvent = targetDocument.createEvent ("Events");
+          appendEvent.initEvent ("AkahukuContentAppend", true, true);
+          var appendCancelled
+            = !currentContainer.main.dispatchEvent (appendEvent);
+          // preventDefault された場合はレスを非表示にする
+          for (var i = 0; i < currentContainer.nodes.length; i ++) {
+            currentContainer.nodes [i].style.display
+              = (appendCancelled ? "none" : "");
+          }
                     
           if (retNode) {
             var nodes2
@@ -3455,7 +3467,7 @@ var arAkahukuReload = {
     if (param.writer.setText (responseText, responseCharset)) {
       param.writer.responseHead = param.responseHead;
       param.writer.charset = responseCharset;
-      updateCache = !param.useRange;
+      updateCache = !param.useRange && param.location;
     }
         
     if (updateCache) {

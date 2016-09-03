@@ -214,17 +214,32 @@ var arAkahukuTab = {
         data.tab = tab;
         data.group = group;
                 
+        var browser = tabbrowser.getBrowserForTab (tab);
         documentParam
-          = Akahuku.getDocumentParam
-          (tabbrowser.getBrowserForTab (tab).contentDocument, false);
-        if (documentParam) {
+          = (browser && browser.contentDocument
+              ? Akahuku.getDocumentParam (browser.contentDocument)
+              : null);
+        if (documentParam && documentParam.location_info) {
           data.info = documentParam.location_info;
         }
         else {
           // documentParam が得られない場合 (pending タブ含む)
-          data.info
-            = new arAkahukuLocationInfo
-            (tabbrowser.getBrowserForTab (tab).contentDocument);
+          var targetDocument = browser.contentDocument;
+          if (!targetDocument) {
+            targetDocument = { // dummy
+              location : {href: "about:blank"},
+              title : "", body : null,
+              getElementById : function () {return null},
+              getElementsByTagName : function () {return []},
+            };
+            try {
+              targetDocument.location.href
+                = browser.webNavigation.currentURI.spec;
+            }
+            catch (e) { Akahuku.debug.exception (e);
+            }
+          }
+          data.info = new arAkahukuLocationInfo (targetDocument);
           if (!data.info.isFutaba) {
             delete data.info;
           }

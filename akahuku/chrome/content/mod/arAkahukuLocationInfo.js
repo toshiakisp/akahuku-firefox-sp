@@ -204,7 +204,7 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
+             (/^http:\/\/(?:[^\.\/]+\.)?(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
       /* サッチー */
       this.server = RegExp.$1;
       this.dir = RegExp.$1;
@@ -359,7 +359,7 @@ arAkahukuLocationInfo.prototype = {
           Components.utils.import("resource://unmht/modules/UnMHTExtractor.jsm",m);
           var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (location);
           if (eFileInfo && part && part.startPart
-              && /^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
+              && /^http:\/\/(?:[^\.\/]+\.)?(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
               .test (part.startPart.contentLocation) ) {
             this.isTsumanne = true;
           }
