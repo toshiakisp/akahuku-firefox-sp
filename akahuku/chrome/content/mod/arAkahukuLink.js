@@ -506,7 +506,14 @@ var arAkahukuLink = {
    * パターン初期化
    */
   initPatterns : function () {
-    function _getAttachmentOnTsumanne (targetDocument, name) {
+    function _getAttachmentOnTsumanne (targetDocument, name, refs) {
+      // 本文中にリンクがあった場合を考慮
+      for (var i = 0; i < refs.length; i ++) {
+        if (refs [i].text === name) {
+          return refs [i].href;
+        }
+      }
+      // ページ末尾に保存画像が羅列されている場合
       var attachment = targetDocument.getElementById ("attachment");
       if (attachment) {
         var nodes = attachment.getElementsByTagName ("a");
@@ -772,7 +779,7 @@ var arAkahukuLink = {
       return 0;
     },
      function (targetNode, nextNode,
-               parens, targetDocument) {
+               parens, targetDocument, refs) {
       var scheme = targetDocument.location.protocol.replace (/:$/, "");
       var url;
       url = scheme + "://dec.2chan.net/up/";
@@ -783,7 +790,7 @@ var arAkahukuLink = {
       if (param) {
         var info = param.location_info;
         if (info && info.isTsumanne) {
-          url = _getAttachmentOnTsumanne (targetDocument, parens [2]) || url;
+          url = _getAttachmentOnTsumanne (targetDocument, parens [2], refs) || url;
         }
       }
       
@@ -828,7 +835,7 @@ var arAkahukuLink = {
       return 0;
     },
      function (targetNode, nextNode,
-               parens, targetDocument) {
+               parens, targetDocument, refs) {
       var scheme = targetDocument.location.protocol.replace (/:$/, "");
       var url;
       url = scheme + "://dec.2chan.net/up2/";
@@ -838,7 +845,7 @@ var arAkahukuLink = {
       if (param) {
         var info = param.location_info;
         if (info && info.isTsumanne) {
-          url = _getAttachmentOnTsumanne (targetDocument, parens [2]) || url;
+          url = _getAttachmentOnTsumanne (targetDocument, parens [2], refs) || url;
         }
       }
       
@@ -883,7 +890,7 @@ var arAkahukuLink = {
       return 0;
     },
      function (targetNode, nextNode,
-               parens, targetDocument) {
+               parens, targetDocument, refs) {
       var linkToRedirect = false;
       var url;
       url = "http://www.nijibox2.com/futabafiles/";
@@ -919,7 +926,7 @@ var arAkahukuLink = {
       if (param) {
         var info = param.location_info;
         if (info && info.isTsumanne && parens [3]) {
-          var url2 = _getAttachmentOnTsumanne (targetDocument, parens [2]);
+          var url2 = _getAttachmentOnTsumanne (targetDocument, parens [2], refs);
           if (url2) {
             url = url2;
             linkToRedirect = false;
@@ -1862,7 +1869,7 @@ var arAkahukuLink = {
    * @param  Boolean mail
    *         メール欄
    */
-  linkify : function (targetDocument, node, normal, trolls, user, mail) {
+  linkify : function (targetDocument, node, normal, trolls, user, mail, refs) {
     var nextNode = node.nextSibling;
         
     var tmpResult = new Object ();
@@ -1970,7 +1977,7 @@ var arAkahukuLink = {
           = nearestPattern
           .createReplacement (tmpNode, node,
                               nearestResult.parens,
-                              targetDocument);
+                              targetDocument, refs);
         if (!result) {
           node.parentNode.insertBefore (tmpNode, node);
         }
@@ -2537,9 +2544,12 @@ var arAkahukuLink = {
    *         対象のドキュメント
    * @param  HTMLElement targetNode
    *         対象のノード
+   * @return Array
+   *         解除したアンカーの情報 [{text:"", href:""},...]
    */
   textize : function (targetDocument, targetNode) {
     var node;
+    var refs = [];
         
     var nodes = targetNode.getElementsByTagName ("a");
     while (nodes.length) {
@@ -2550,6 +2560,14 @@ var arAkahukuLink = {
           text += node.nodeValue;
         }
         node = node.nextSibling;
+      }
+
+      // リンク先を保存
+      if (text.length > 0 && nodes [0].hasAttribute ("href")) {
+        refs.push ({
+          text: text,
+          href: nodes [0].href, // 絶対アドレス
+        });
       }
             
       if (nodes [0].previousSibling
@@ -2584,6 +2602,7 @@ var arAkahukuLink = {
                                            nodes [0]);
       }
     }
+    return refs;
   },
     
   /**
@@ -2603,11 +2622,27 @@ var arAkahukuLink = {
    *         メール欄
    */
   applyAutoLinkCore : function (targetDocument, targetNode,
-                                normal, trolls, user, mail) {
+                                normal, trolls, user, mail, refs) {
     var node;
     var nodeName;
         
-    arAkahukuLink.textize (targetDocument, targetNode);
+    var newRefs = arAkahukuLink.textize (targetDocument, targetNode);
+
+    // 再帰呼び出し中の場合 newRefs は不要
+    refs = (refs ? refs : newRefs);
+
+    var preserveLinks = false;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (param && param.location_info) {
+      if (param.location_info.isTsumanne) {
+        // 本文中に保存画像へのアンカーを張ってるケースのため
+        // 保存したアンカー情報を利用
+      }
+      else {
+        // 解除したアンカーの情報を参照しない
+        refs = [];
+      }
+    }
         
     node = targetNode.firstChild;
         
@@ -2616,12 +2651,12 @@ var arAkahukuLink = {
       if (nodeName == "font"
           || nodeName == "span") {
         arAkahukuLink.applyAutoLinkCore (targetDocument, node,
-                                         normal, trolls, user, mail);
+                                         normal, trolls, user, mail, refs);
         node = node.nextSibling;
       }
       else if (nodeName == "#text") {
         node = arAkahukuLink.linkify (targetDocument, node,
-                                      normal, trolls, user, mail);
+                                      normal, trolls, user, mail, refs);
       }
       else {
         node = node.nextSibling;
