@@ -86,6 +86,8 @@ var arAkahukuWheel = {
    *         対象のイベント
    */
   onWheel : function (event) {
+    // "status" では min-width があり余白が出る
+    var STATUSPANEL_TYPE = "overLink";
     try {
       var targetDocument = event.target.ownerDocument || event.target;
       var targetWindow = targetDocument.defaultView;
@@ -152,7 +154,7 @@ var arAkahukuWheel = {
                 
         var text = "\u3061\u3087\u3063\u3068\u5F85\u3063\u3066\u306D";
                 
-        arAkahukuUI.setStatusPanelText (text, "status");
+        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE);
                 
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
@@ -322,7 +324,7 @@ var arAkahukuWheel = {
           + parseInt (wheelCount * 100
                       / Akahuku.reloadThreshold)
           + "%";
-        arAkahukuUI.setStatusPanelText (text, "status");
+        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE);
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
