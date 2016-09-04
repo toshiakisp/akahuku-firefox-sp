@@ -2086,7 +2086,7 @@ var arAkahukuSidebar = {
       return;
     }
     if (targetDocument.location.href.match
-        (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\/(.*)$/)) {
+        (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\/(.*)$/)) {
       var server = RegExp.$2;
       var dir = RegExp.$4;
       var name = server + "_" + dir;

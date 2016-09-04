@@ -708,8 +708,8 @@ var arAkahukuImage = {
     
     var isRedirect = false;
     if (href.match (/\/(red|d)\//)
-        && !href.match (/^http:\/\/up\.2chan\.net\/d\//)
-        && !href.match (/^http:\/\/[a-z]+\.2chan\.net\/up\/d\//)) {
+        && !href.match (/^https?:\/\/up\.2chan\.net\/d\//)
+        && !href.match (/^https?:\/\/[a-z]+\.2chan\.net\/up\/d\//)) {
       isRedirect = true;
       if (href.match (/up\.2chan\.net\/d\/src\//)) {
         isRedirect = false;
@@ -1611,7 +1611,7 @@ var arAkahukuImage = {
       if (arAkahukuP2P.enable
           && uinfo && uinfo.isImage && !uinfo.isIp) {
         url
-          = "http://" + uinfo.server + ".2chan.net" + uinfo.port
+          = uinfo.scheme + "://" + uinfo.server + ".2chan.net" + uinfo.port
           + "/" + uinfo.dir + "/" + uinfo.type
           + "/" + uinfo.leafNameExt;
         url = arAkahukuP2P.enP2P (url);

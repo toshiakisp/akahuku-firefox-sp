@@ -248,7 +248,7 @@ arAkahukuP2PChannel.prototype = {
         
     this._targetFileServer = "";
     if (this._webURI.match
-        (/^http:\/\/([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
+        (/^https?:\/\/([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
       /* サーバ名、ディレクトリ名、種類、ファイル名を取得 */
       this._targetFileServer = RegExp.$1;
       this._targetFilePort = RegExp.$2;

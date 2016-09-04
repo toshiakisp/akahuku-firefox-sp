@@ -808,7 +808,7 @@ arAkahukuContentPolicy.prototype = {
         }
 
         if (contentLocation.spec.match
-            (/^http:\/\/dec\.2chan\.net\/up\/src\//)) {
+            (/^https?:\/\/dec\.2chan\.net\/up\/src\//)) {
           /* あぷでは動かさない */
           return this.ACCEPT;
         }

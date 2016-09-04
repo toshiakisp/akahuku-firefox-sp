@@ -54,6 +54,7 @@ arAkahukuLocationInfo.prototype = {
     
   replyPrefix : "",             /* String  返信のテーブルの最初の文字 */
     
+  scheme : "",
   server : "",                  /* String  サーバ名 */
   dir : "",                     /* String  ディレクトリ名 */
     
@@ -145,7 +146,7 @@ arAkahukuLocationInfo.prototype = {
       }
     }
         
-    if (location.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+    if (location.match (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
       var prefix = RegExp.$1;
       this.server = RegExp.$2;
       /* RegExp.$3: ポート番号 */
@@ -238,7 +239,7 @@ arAkahukuLocationInfo.prototype = {
         catch (e) { Akahuku.debug.exception (e);
           continue;
         }
-        if (uri.spec.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+        if (uri.spec.match (/^(?:https?):\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
           this.isFutasuke = false;
           this.server = RegExp.$2;
           /* RegExp.$3: ポート番号 */
@@ -289,8 +290,11 @@ arAkahukuLocationInfo.prototype = {
       }
     }
         
-    if (location.match (/^http:/)) {
-      this.isOnline = true;
+    if (location.match (/^([^:]+):/)) {
+      this.scheme = RegExp.$1;
+      if (/^https?/.test (this.scheme)) {
+        this.isOnline = true;
+      }
     }
         
     if (arAkahukuBoard.knowsAsInternal (this)) {
@@ -1176,7 +1180,8 @@ function arAkahukuImageURLInfo () {
 }
 arAkahukuImageURLInfo.prototype = {
   isIp : false,
-  isAd : false
+  isAd : false,
+  scheme : "",
 };
 var arAkahukuImageURL = {
   /**
@@ -1203,7 +1208,7 @@ var arAkahukuImageURL = {
       url = p.original;
     }
     
-    if (url.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src|red|d)\/([A-Za-z0-9]+)\.(jpg|png|gif|htm)(\?.*)?$/)) {
+    if (url.match (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src|red|d)\/([A-Za-z0-9]+)\.(jpg|png|gif|htm)(\?.*)?$/)) {
       uinfo = new arAkahukuImageURLInfo ();
       
       uinfo.prefix = RegExp.$1;
@@ -1315,6 +1320,10 @@ var arAkahukuImageURL = {
         /* 広告バナー */
         uinfo.isAd = true;
       }
+    }
+
+    if (uinfo && url.match (/^([^:]+):/)) {
+      uinfo.scheme = RegExp.$1;
     }
         
     return uinfo;

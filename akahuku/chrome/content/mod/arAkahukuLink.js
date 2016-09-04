@@ -773,8 +773,9 @@ var arAkahukuLink = {
     },
      function (targetNode, nextNode,
                parens, targetDocument) {
+      var scheme = targetDocument.location.protocol.replace (/:$/, "");
       var url;
-      url = "http://dec.2chan.net/up/";
+      url = scheme + "://dec.2chan.net/up/";
       var prefix = url;
       url += parens [3] ? ("src/" + parens [2]) : "up.htm";
       
@@ -828,8 +829,9 @@ var arAkahukuLink = {
     },
      function (targetNode, nextNode,
                parens, targetDocument) {
+      var scheme = targetDocument.location.protocol.replace (/:$/, "");
       var url;
-      url = "http://dec.2chan.net/up2/";
+      url = scheme + "://dec.2chan.net/up2/";
       var prefix = url;
       url += parens [3] ? ("src/" + parens [2]) : "up.htm";
       var param = Akahuku.getDocumentParam (targetDocument);
@@ -3174,6 +3176,7 @@ var arAkahukuLink = {
    */
   createImage : function (uri, targetDocument) {
     var image;
+    var scheme = targetDocument.location.protocol.replace (/:$/, "");
         
     if (uri.match (/\.(jpe?g|gif|png|bmp)$/i)) {
       image = targetDocument.createElement ("img");
@@ -3218,7 +3221,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowScriptAccess", "never");
     }
     else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
-      var youtubeUrl = "http://www.youtube.com/embed/" + RegExp.$1
+      var youtubeUrl = scheme + "://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
       if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s?/)) {

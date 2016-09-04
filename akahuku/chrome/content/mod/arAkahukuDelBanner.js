@@ -357,7 +357,7 @@ var arAkahukuDelBanner = {
           var href = bolds [i].firstChild.getAttribute ("href");
           if (href
               && (href.match (/http:\/\/www\.amazon\.co\.jp\//)
-                  || href.match (/http:\/\/www\.2chan\.net\/ktinv/))) {
+                  || href.match (/^https?:\/\/www\.2chan\.net\/ktinv/))) {
             continue;
           }
         }

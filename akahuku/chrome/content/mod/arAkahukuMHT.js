@@ -1731,7 +1731,7 @@ var arAkahukuMHT = {
       /* アクセスチェック ? を消す */
       var src = nodes [i].getAttribute ("dummysrc");
       if (src
-          && (src.match (/^http:\/\/[a-z]+\.2chan\.net\/s\.gif$/)
+          && (src.match (/^https?:\/\/[a-z]+\.2chan\.net\/s\.gif$/)
               || src.match (/^\/s\.gif$/)
               || src.match (/^\/c\.gif\/.+\.gif$/))) {
         var br = nodes [i].nextSibling;
@@ -2658,7 +2658,7 @@ var arAkahukuMHT = {
                   || url.match (/src\/([0-9]+)/)
                   || url.match (/r\.php\?r=([0-9]+)/))) {
             var imageNum = RegExp.$1;
-            if (url.match (/^http:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/src\/[0-9]+\.jpg\?$/)) {
+            if (url.match (/^https?:\/\/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/src\/[0-9]+\.jpg\?$/)) {
               /* ダミーなので削除 */
               nodes [i].parentNode.removeChild (nodes [i]);
               i --;

@@ -270,7 +270,7 @@ var arAkahukuP2P = {
    *         双助の URI
    */
   enP2P : function (uri) {
-    if (uri.indexOf ("http://") != 0) {
+    if (!/^https?:/.test (uri)) {
       return uri;
     }
     

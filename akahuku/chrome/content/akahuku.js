@@ -642,9 +642,9 @@ var Akahuku = {
       return false;
     }
     if (href.match
-        (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
+        (/^https?:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
         || href.match
-        (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi|hinan)\//)) {
+        (/^https?:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi|hinan)\//)) {
       /* ふたばの板 */
       if (href.match (/\.2chan\.net(:[0-9]+)?\/bin\//)) {
         // 広告用リソースなど
@@ -659,9 +659,9 @@ var Akahuku = {
           || p.type == "filecache") {
         var href2 = p.original;
         if (href2.match
-            (/^http:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
+            (/^https?:\/\/([^\/]+\/)?(tmp|up|img|cgi|zip|dat|may|nov|jun|dec|ipv6)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)
             || href2.match
-            (/^http:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi|hinan)\//)) {
+            (/^https?:\/\/([^\/]+\/)?(www)\.2chan\.net(:[0-9]+)?\/(h|oe|b|30|31|51|junbi|hinan)\//)) {
           /* ふたばの板のキャッシュ */
           return true;
         }
@@ -738,7 +738,7 @@ var Akahuku = {
           for (var i = 0; i < nodes.length; i ++) {
             if (nodes [i].getAttribute ("href")
                 && nodes [i].getAttribute ("href")
-                .match (/http:\/\/[^\.]+\.2chan\.net\/[^\/]+\//)) {
+                .match (/https?:\/\/[^\.]+\.2chan\.net\/[^\/]+\//)) {
               /* 赤福:非公式 Firefox 版の mht (Fx 3.1 以降) */
               return true;
             }
@@ -747,7 +747,7 @@ var Akahuku = {
           for (var i = 0; i < nodes.length; i ++) {
             if (nodes [i].getAttribute ("href")
                 && nodes [i].getAttribute ("href")
-                .match (/http:\/\/[^\.]+\.2chan\.net\/[^\/]+\//)) {
+                .match (/https?:\/\/[^\.]+\.2chan\.net\/[^\/]+\//)) {
               /* 赤福:非公式 Firefox 版の mht (Fx 3.1 以降) */
               return true;
             }

@@ -3818,7 +3818,6 @@ var arAkahukuReload = {
     }
         
     if (info.isReply && info.isOnline
-        && targetDocument.location.href.match (/^http:/)
         && arAkahukuReload.enable
         && !info.isTsumanne) {
       var param = new arAkahukuReloadParam ();
