@@ -1085,6 +1085,11 @@ arAkahukuCacheChannel.prototype = {
 
   _parseHeaders : function (headers)
   {
+    // forget previously parsed values
+    this.contentCharset = "";
+    this.contentType = "";
+    this._contentEncoding = "";
+
     if (!/^HTTP\/1\.[10] \d\d\d /.test (headers [0])) {
       return "";
     }
