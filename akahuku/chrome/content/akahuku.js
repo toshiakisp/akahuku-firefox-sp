@@ -805,7 +805,7 @@ var Akahuku = {
       }
       
       needApply = Akahuku.getNeedApply (targetDocument,
-                                        targetDocument.location.href);
+                                        targetDocument.documentURI);
       
       if (needApply) {
         /* 対象であれば適用する */
@@ -839,7 +839,7 @@ var Akahuku = {
     }
         
     if (Akahuku.enableAll) {
-      if (targetDocument.location.href.match
+      if (targetDocument.documentURI.match
           (/^http:\/\/www\.nijibox[256]\.com\/futabafiles\/(tubu|kobin|mid|001|003)\/((.+)\.html|$)/)) {
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.applyPreview (targetDocument, true);
