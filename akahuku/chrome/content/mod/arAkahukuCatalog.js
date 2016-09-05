@@ -4893,6 +4893,8 @@ var arAkahukuCatalog = {
 
     // 既読のマークを最新に更新
     arAkahukuCatalog.updateVisited (targetDocument);
+    // 開いているかを最新に更新
+    arAkahukuCatalog.updateOpened (targetDocument);
         
     if (undo) {
       var tmpNode
