@@ -453,6 +453,21 @@ arAkahukuReloadParam.prototype = {
       catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
         charset = "Shift_JIS";
       }
+      var responseHead = "";
+      try {
+        // バックアップ用には最低限だけ記録
+        var headerPattern = /^(HTTP\/|(Date|Content-Type|Last-Modified|Server):)/;
+        responseHead = descriptor.getMetaDataElement ("response-head");
+        var headers = responseHead.match (/[^\r\n]*\r\n/g);
+        responseHead = "";
+        for (var i = 0; i < headers.length; i ++) {
+          if (headerPattern.test (headers [i])) {
+            responseHead += headers [i];
+          }
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
       var istream = descriptor.openInputStream (0);
       var self = this;
       arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
@@ -476,6 +491,8 @@ arAkahukuReloadParam.prototype = {
             if (!self.writer.setText (bindata, charset)) {
               return;
             }
+            self.writer.charset = charset;
+            self.writer.responseHead = responseHead
                 
             if (arAkahukuReload.enableExtCache) {
               /* 現在のキャッシュをバックアップ */
