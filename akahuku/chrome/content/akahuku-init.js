@@ -4,7 +4,7 @@
 // This script runs after all Akahuku modules loaded
 
 try {
-  if (arAkahukuCompat.comparePlatformVersion ("48.*") > 0) { //49 or newer
+  if (arAkahukuCompat.comparePlatformVersion ("47.*") > 0) { //48 or newer
     // e10s-ready booting is activated if necessary
     Akahuku.useFrameScript
       = Components.classes ["@mozilla.org/xre/app-info;1"]
