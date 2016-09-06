@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
- *          arAkahukuDocumentParam, arAkahukuDOM,
+ *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuThread,
  *          arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuSidebar,
  *          arAkahukuSound, arAkahukuBoard, arAkahukuUtil, arAkahukuCompat
  */
@@ -3642,6 +3642,30 @@ var arAkahukuCatalog = {
       // レス数取得ミス時は更新できない
       return;
     }
+    var oldReplyNum
+      = parseInt (td.getAttribute ("__old_reply_number"));
+
+    var threadId = parseInt (td.getAttribute ("__thread_id"));
+    if (threadId) {
+      var doNotifyReplyNumber = false;
+      if (oldReplyNum != oldReplyNum) { // isNaN
+        // ページを開いた時やスレが new/up の時
+        doNotifyReplyNumber = true;
+      }
+      else { // [最新に更新]後など履歴がある場合
+        if (newReplyNum > oldReplyNum) {
+          doNotifyReplyNumber = true;
+        }
+      }
+      if (doNotifyReplyNumber) {
+        var param = Akahuku.getDocumentParam (td.ownerDocument);
+        var info = param.location_info;
+        arAkahukuThread.asyncNotifyReplyNumber (info, threadId, newReplyNum);
+      }
+    }
+    else {
+      Akahuku.debug.error ("td has no attr __thread_id");
+    }
 
     var fonts = td.getElementsByTagName ("font");
     if (fonts && fonts.length > 0) {
@@ -3672,8 +3696,6 @@ var arAkahukuCatalog = {
     var deltaText = null, className = null;
     if (arAkahukuCatalog.enableReloadReplyNumberDelta
         && !(td.getAttribute ("__overflowed") === "true")) {
-      var oldReplyNum
-        = parseInt (td.getAttribute ("__old_reply_number"));
       if (oldReplyNum >= 0) {
         var delta = newReplyNum - oldReplyNum;
         if (delta != 0) {

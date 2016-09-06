@@ -4,7 +4,7 @@
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
  *          (arAkahukuDocumentParam), arAkahukuDOM, arAkahukuP2P,
  *          arAkahukuWindow, arAkahukuBoard,
- *          arAkahukuUtil
+ *          arAkahukuUtil, arAkahukuTitle,
  */
 
 /**
@@ -72,11 +72,13 @@ arAkahukuLastReplyInfo.prototype = {
 /**
  * スレッド管理データ
  */
-function arAkahukuThreadParam () {
+function arAkahukuThreadParam (targetDocument) {
   this.stylesSaved = new Array ();
+  this.targetDocument = targetDocument;
 }
 arAkahukuThreadParam.prototype = {
   stylesSaved : null, /* String mht で保存する際に復帰させるスタイル */
+  targetDocument : null,
 
   saveStyle : function (styleNode)
   {
@@ -110,10 +112,74 @@ arAkahukuThreadParam.prototype = {
   },
 
   /**
+   * タブ間連携用オブザーバー登録
+   */
+  registerObserver : function () {
+    var os
+    = Components.classes ["@mozilla.org/observer-service;1"]
+    .getService (Components.interfaces.nsIObserverService);
+    os.addObserver (this, "arakahuku-thread-replynum-changed", false);
+    this._observing = true;
+  },
+  unregisterObserver : function () {
+    if (!this._observing) return;
+    try {
+      var os
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+      os.removeObserver (this, "arakahuku-thread-replynum-changed", false);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  },
+  /**
+   * nsIObserver.observe
+   */
+  observe : function (subject, topic, data) {
+    try {
+      switch (topic) {
+        case "arakahuku-thread-replynum-changed":
+          subject.QueryInterface (Components.interfaces.nsISupportsString);
+          var decoded = arAkahukuJSON.decode (subject.data);
+          this.onNotifiedThreadReplyNumChanged (decoded);
+          break;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  },
+  /**
+   * レス数変更通知
+   *   (see arAkahukuThread.asyncNotifyReplyNumber)
+   */
+  onNotifiedThreadReplyNumChanged : function (data) {
+    var param = Akahuku.getDocumentParam (this.targetDocument);
+    var info = param.location_info;
+    if (info.server != data.server ||
+        info.dir != data.dir ||
+        info.threadNumber != data.threadNumber) {
+      // 他のスレの通知
+      return;
+    }
+    if (info.replyCount < data.replyCount) {
+      var delta = (data.replyCount - info.replyCount);
+      if (info.incomingReply < delta) {
+        // レス増加数を更新しタイトル再設定
+        info.incomingReply = delta;
+        if (arAkahukuTitle.enable) {
+          arAkahukuTitle.setTitle (this.targetDocument, info);
+        }
+      }
+    }
+  },
+
+  /**
    * データを開放する
    */
   destruct : function () {
     this.stylesSaved = null;
+    this.targetDocument = null;
+    this.unregisterObserver ();
   }
 };
 /**
@@ -207,7 +273,7 @@ var arAkahukuThread = {
     var documentParam = Akahuku.getDocumentParam (targetDocument);
     var param;
     if (!("thread_param" in documentParam)) {
-      documentParam.thread_param = new arAkahukuThreadParam ();
+      documentParam.thread_param = new arAkahukuThreadParam (targetDocument);
     }
     param = documentParam.thread_param;
     if (arAkahukuThread.enableStyleIgnoreDefault) {
@@ -724,6 +790,12 @@ var arAkahukuThread = {
         
     var nodes = Akahuku.getMessageBQ (targetDocument);
     info.replyCount = info.replyFrom - 1 + nodes.length - 1;
+
+    // 新着レス数をリセット
+    info.incomingReply = 0;
+
+    // 他のタブに通知
+    arAkahukuThread.asyncNotifyReplyNumber (info, info.threadNumber, info.replyCount);
   },
 
   /**
@@ -1494,6 +1566,29 @@ var arAkahukuThread = {
         
     var newReplySP = suffixes [index];
     return newReplySP;
+  },
+
+  /**
+   * スレッドのレス数の変化を通知する(非同期)
+   *
+   * @param  arAkahukuLocationInfo
+   * @param  number スレ番号
+   * @param  number レス数
+   */
+  asyncNotifyReplyNumber : function (info, threadNum, replyNum) {
+    var data = {
+      server: info.server,
+      dir: info.dir,
+      threadNumber: parseInt (threadNum),
+      replyCount: parseInt (replyNum)};
+    var subject = Components.classes ["@mozilla.org/supports-string;1"]
+    .createInstance (Components.interfaces.nsISupportsString);
+    subject.data = arAkahukuJSON.encode (data);
+    arAkahukuUtil.executeSoon (function (subject) {
+      var os = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+      os.notifyObservers (subject, "arakahuku-thread-replynum-changed", null);
+    }, [subject]);
   },
     
   /**
@@ -2751,6 +2846,14 @@ var arAkahukuThread = {
       info.notifyUpdate ("thread-applied");
       return;
     }
+
+    if (info.isReply) {
+      var param = Akahuku.getDocumentParam (targetDocument);
+      if (!("thread_param" in param)) {
+        param.thread_param = new arAkahukuThreadParam (targetDocument);
+      }
+      param.thread_param.registerObserver ();
+    }
     
     if ((info.isNormal || info.isReply)) {
       if (arAkahukuThread.enableDelNewTab) {
@@ -2852,6 +2955,9 @@ var arAkahukuThread = {
                              isDel,
                              info.isReply));
           }
+
+          // レス数を他タブへ通知
+          arAkahukuThread.asyncNotifyReplyNumber (info, threadNumber, replyNumber);
         }
         else if (node) {
           /* レスが無い場合 */
