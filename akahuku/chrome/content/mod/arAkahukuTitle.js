@@ -20,6 +20,7 @@ var arAkahukuTitle = {
   enableCommentMultiLine : false, /* Boolean  複数行から */
   enableMode : false,       /* Boolean  [ページ n]、[返信] 等 */
   enableThreadInfo : false, /* Boolean  スレの消滅情報 */
+  enableIncomingReply : false,/* Boolean  スレの新着レス数 */
   format : "",              /* String  フォーマット */
     
   enableSubtitle : false,     /* Boolean レスの一部をサブタイトルにする */
@@ -69,6 +70,9 @@ var arAkahukuTitle = {
       arAkahukuTitle.enableThreadInfo
         = arAkahukuConfig
         .initPref ("bool", "akahuku.title.thread_info", false);
+      arAkahukuTitle.enableIncomingReply
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.title.incoming_reply", false);
       var defFormat
         = "%3Cold%3E%u53E4%20%3C/old%3E%3Cnijiura%3E%26server%3B%3C/nijiura%3E%3C_nijiura%3E%26board%3B%3C/_nijiura%3E%0A%3Cmessage%3E%20%26message%3B%3C/message%3E%3Cpage%3E%20%26page%3B%3C/page%3E%3Ccatalog%3E%20%u30AB%u30BF%u30ED%u30B0%3C/catalog%3E%0A%3Cexpire%3E%20%28%26expire%3B%29%3C/expire%3E";
       arAkahukuTitle.format
@@ -314,6 +318,11 @@ var arAkahukuTitle = {
     if (arAkahukuTitle.type == "simple") {
       if (arAkahukuTitle.enableThreadInfo && info.isOld) {
         text += "[\u53E4] ";
+      }
+
+      if (arAkahukuTitle.enableIncomingReply && info.isReply &&
+          info.incomingReply > 0) {
+        text += "(" + info.incomingReply + ") ";
       }
             
       text += info.board;

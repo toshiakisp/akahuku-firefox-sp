@@ -103,6 +103,11 @@
                         label="[ページ n]、[返信] 等" />
               <checkbox id="title_thread_info" checked="false"
                         label="スレの消滅情報" />
+              <box orient="horizontal">
+                <checkbox id="title_incoming_reply" checked="false"
+                          class="sp" tooltiptext="(デフォルト：無効) 新着レス数をタイトルの頭に (1) の用に付ける。新着レス数は他タブでのカタログやスレ等の観覧により判定されリアルタイムで更新される。"
+                          label="スレの新着レス数" />
+              </box>
             </box>
             <box id="title_type_deck_expert" orient="vertical" flex="1">
               <textbox id="title_format" multiline="true" rows="3"

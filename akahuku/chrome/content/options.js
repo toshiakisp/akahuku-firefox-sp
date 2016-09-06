@@ -176,6 +176,7 @@ var AkahukuOptions = {
       ["bool", "title.comment", false],
       ["bool", "title.mode", true],
       ["bool", "title.thread_info", false],
+      ["bool", "title.incoming_reply", false],
       ["func", "title.format", null,
        function (map) {
           var defFormat = "%3Cold%3E%u53E4%20%3C/old%3E%3Cnijiura%3E%26server%3B%3C/nijiura%3E%3C_nijiura%3E%26board%3B%3C/_nijiura%3E%0A%3Cmessage%3E%20%26message%3B%3C/message%3E%3Cpage%3E%20%26page%3B%3C/page%3E%3Ccatalog%3E%20%u30AB%u30BF%u30ED%u30B0%3C/catalog%3E%0A%3Cexpire%3E%20%28%26expire%3B%29%3C/expire%3E";
@@ -3239,6 +3240,7 @@ var AkahukuOptions = {
     = document.getElementById ("title_comment").disabled
     = document.getElementById ("title_mode").disabled
     = document.getElementById ("title_thread_info").disabled
+    = document.getElementById ("title_incoming_reply").disabled
     = document.getElementById ("title_format").disabled
     = !document.getElementById ("title").checked;
         
