@@ -1109,6 +1109,7 @@ var AkahukuOptions = {
       ["bool", "catalog.observe", false, "privatemod"],
       ["bool", "catalog.observe.replynum", false, "privatemod"],
       ["bool", "catalog.observe.opened", false, "privatemod"],
+      ["bool", "catalog.observe.opened.reload", true],
       ["bool", "catalog.clickable", true],
       ["bool", "catalog.visited", true],
       ["bool", "catalog.red", false],
@@ -4134,6 +4135,12 @@ var AkahukuOptions = {
     document.getElementById ("catalog_observe_replynum").disabled
     document.getElementById ("catalog_observe_opened").disabled
     = !document.getElementById ("catalog_observe").checked;
+    AkahukuOptions.checkCatalogObserveOpened ();
+  },
+
+  checkCatalogObserveOpened : function () {
+    document.getElementById ("catalog_observe_opened_reload").disabled
+    = !document.getElementById ("catalog_observe_opened").checked;
   },
     
   checkSidebar : function () {

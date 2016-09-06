@@ -1825,8 +1825,14 @@
                         class="sp" tooltiptext="(デフォルト：無効) 返信モードでのレス数変化をカタログに即座に反映する"
                         label="レス数を即座に反映" />
               <checkbox id="catalog_observe_opened" checked="false"
-					    class="sp" tooltiptext="(デフォルト：無効) 別タブ等で開いている返信モードのスレを判断してマーク(既読扱い&amp;枠スタイル変更)し、クリック時はそのタブへの遷移(&amp;ページ末尾付近なら[続きを読む])を行うようにする"
+					    class="sp" tooltiptext="(デフォルト：無効) 別タブ等で開いている返信モードのスレを判断してマーク(既読扱い&amp;枠スタイル変更)し、クリック時はそのスレのタブへフォーカスを切り替える。"
+                        oncommand="AkahukuOptions.checkCatalogObserveOpened ();"
                         label="既に開いているスレを配慮する" />
+              <box class="sub" orient="vertical">
+                <checkbox id="catalog_observe_opened_reload" checked="false"
+                          class="sp" tooltiptext="(デフォルト：有効) スレのタブへフォーカス切り替えと同時にリロードする。「続きを読む」が有効の場合は続きを読む。"
+                          label="開いているスレに移動後リロード" />
+              </box>
             </groupbox>
             <checkbox id="catalog_clickable" checked="false"
                       label="空白の本文を強制リンク" />

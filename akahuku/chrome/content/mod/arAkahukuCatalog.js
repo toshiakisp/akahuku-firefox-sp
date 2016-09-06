@@ -1963,6 +1963,7 @@ var arAkahukuCatalog = {
   enableObserve : false,        /* Boolean  通常・返信モードと連携 */
   enableObserveReplyNum : false,/* Boolean  レス数を即座に反映 */
   enableObserveOpened : false,  /* Boolean  開いているスレをマーク */
+  enableObserveOpenedReload : false,  /* Boolean  開いているスレに移動後リロード */
     
   enableClickable : false, /* Boolean  空白の本文を強制リンク */
   enableVisited : false,   /* Boolean  一度見たスレをマーク */
@@ -2447,6 +2448,10 @@ var arAkahukuCatalog = {
     = arAkahukuConfig
     .initPref ("bool", "akahuku.catalog.observe.opened", false)
     && arAkahukuCatalog.enableObserve;
+    arAkahukuCatalog.enableObserveOpenedReload
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.observe.opened.reload", true)
+    && arAkahukuCatalog.enableObserveOpened;
         
     arAkahukuCatalog.enableClickable
     = arAkahukuConfig
@@ -5488,8 +5493,7 @@ var arAkahukuCatalog = {
       targetWindow = params [0].targetDocument.defaultView;
       arAkahukuWindow.focusTabForWindow (targetWindow);
 
-      if (arAkahukuReload.enableOnDemand) {
-        // e10s: 別 Window でタブが切り替わらなくても reloadOnDemand する
+      if (arAkahukuCatalog.enableObserveOpenedReload) {
         arAkahukuUtil.executeSoon (function (scope) {
           arAkahukuReload.reloadOnDemand (targetWindow.document);
         });
@@ -5503,10 +5507,12 @@ var arAkahukuCatalog = {
       if (!targetWindow) {// 切替失敗時
         return;
       }
-      chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
-      arAkahukuUtil.executeSoon (function (scope) {
-        scope.arAkahukuReload.reloadOnDemand (targetWindow.document);
-      }, [chromeWindow]);
+      if (arAkahukuCatalog.enableObserveOpenedReload) {
+        chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+        arAkahukuUtil.executeSoon (function (scope) {
+          scope.arAkahukuReload.reloadOnDemand (targetWindow.document);
+        }, [chromeWindow]);
+      }
     }
 
     event.preventDefault ();
