@@ -490,8 +490,13 @@ arAkahukuProtocolHandler.prototype = {
         preamble = preamble.replace (/^\/filecache/,"/cache");
       }
     }
-    url.init
-      (Ci.nsIStandardURL.URLTYPE_AUTHORITY, -1, spec, charset, baseURI);
+    try {
+      url.init (Ci.nsIStandardURL.URLTYPE_AUTHORITY, -1, spec, charset, baseURI);
+    }
+    catch (e if e.result == Cr.NS_ERROR_MALFORMED_URI) {
+      // "akahuku:///"
+      url.init (Ci.nsIStandardURL.URLTYPE_NO_AUTHORITY, -1, spec, charset, baseURI);
+    }
     var uri = url.QueryInterface (Ci.nsIURI);
     if (preamble && uri.spec != spec) {
       // 相対アドレスが解決された後に preamble を戻す
