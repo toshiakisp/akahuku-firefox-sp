@@ -254,8 +254,10 @@ var arAkahukuWindow = {
           Components.stack.caller);
     }
     var xulDocument = targetBrowser.ownerDocument;
+    var chromeWindow = xulDocument.defaultView.top;
     var tab = arAkahukuWindow.getTabForBrowser (targetBrowser);
     if (tab) {
+      chromeWindow.focus ();
       xulDocument.getElementById ("content").selectedTab = tab;
     }
     else {

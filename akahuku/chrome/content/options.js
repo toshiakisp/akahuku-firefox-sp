@@ -705,6 +705,8 @@ var AkahukuOptions = {
       ["bool", "reload.reply.scroll", true],
       ["bool", "reload.hook", false],
       ["bool", "reload.hook.sync", false],
+      ["bool", "reload.ondemand", false],
+      ["bool", "reload.ondemand.sync", false],
       ["bool", "reload.status.random", true],
       ["bool", "reload.partial.on", false],
       ["int",  "reload.partial.count", 100],
@@ -3658,6 +3660,7 @@ var AkahukuOptions = {
     = document.getElementById ("reload_reply").disabled
     = document.getElementById ("reload_reply_scroll").disabled
     = document.getElementById ("reload_hook").disabled
+    = document.getElementById ("reload_ondemand").disabled
     = document.getElementById ("reload_status_random").disabled
     = document.getElementById ("reload_status_hold").disabled
     = document.getElementById ("reload_timestamp").disabled
@@ -3672,6 +3675,7 @@ var AkahukuOptions = {
     AkahukuOptions.checkReloadRangeSyncButton ();
     AkahukuOptions.checkReloadRule ();
     AkahukuOptions.checkReloadHook ();
+    AkahukuOptions.checkReloadOnDemand ();
     AkahukuOptions.checkReloadExtCache ();
   },
     
@@ -3711,6 +3715,12 @@ var AkahukuOptions = {
     document.getElementById ("reload_hook_sync").disabled
     = !document.getElementById ("reload").checked
     || !document.getElementById ("reload_hook").checked;
+  },
+
+  checkReloadOnDemand : function () {
+    document.getElementById ("reload_ondemand_sync").disabled
+    = !document.getElementById ("reload").checked
+    || !document.getElementById ("reload_ondemand").checked;
   },
     
   checkPartial : function () {

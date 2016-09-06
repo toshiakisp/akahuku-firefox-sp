@@ -1052,6 +1052,14 @@
               <checkbox id="reload_hook_sync" checked="false"
                         label="同期する" />
             </box>
+            <checkbox id="reload_ondemand" checked="false"
+                      label="必要に応じて自動的に続きを読む (Gecko 18~)"
+                      class="sp" tooltiptext="(デフォルト:無効) スレをフォーカスした時に自動的に続きを読む。スレッドの末尾まで表示している場合か、新着レスがあることわかっている場合に実行される。"
+                      oncommand="AkahukuOptions.checkReloadOnDemand ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="reload_ondemand_sync" checked="false"
+                        label="同期する" />
+            </box>
             <checkbox id="reload_status_random" checked="false"
                       label="スレが消えたときのメッセージをランダムに" />
             

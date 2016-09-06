@@ -5480,14 +5480,20 @@ var arAkahukuCatalog = {
     }
     var uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
 
-    var targetWindow, reloader;
+    var targetWindow;
 
     var params = Akahuku.getDocumentParamsByURI (uri);
     if (params.length > 0) {
       // 現 Akahuku 管理下に対象のスレッドがある場合
       targetWindow = params [0].targetDocument.defaultView;
       arAkahukuWindow.focusTabForWindow (targetWindow);
-      reloader = arAkahukuReload;
+
+      if (arAkahukuReload.enableOnDemand) {
+        // e10s: 別 Window でタブが切り替わらなくても reloadOnDemand する
+        arAkahukuUtil.executeSoon (function (scope) {
+          arAkahukuReload.reloadOnDemand (targetWindow.document);
+        });
+      }
     }
     else {
       // XUL Window毎の検索
@@ -5498,37 +5504,13 @@ var arAkahukuCatalog = {
         return;
       }
       chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
-      reloader = chromeWindow.arAkahukuReload;
+      arAkahukuUtil.executeSoon (function (scope) {
+        scope.arAkahukuReload.reloadOnDemand (targetWindow.document);
+      }, [chromeWindow]);
     }
 
     event.preventDefault ();
     event.stopPropagation ();
-
-    // [続きを読む]が画面内なら押す
-    var doSync = false;
-    var doc = targetWindow.document;
-    var container = doc.getElementById ("akahuku_bottom_container");
-    var btn = doc.getElementById ("akahuku_reload_button");
-    if (!btn) {
-      btn = doc.getElementById ("akahuku_reload_syncbutton");
-      doSync = !!btn;
-    }
-    if (container && btn) {
-      var elem = container;
-      var offsetTop = elem.offsetTop|0;
-      while (elem.offsetParent) {
-        elem = elem.offsetParent;
-        offsetTop += elem.offsetTop|0;
-      }
-      var base = doc.body; //後方互換モード用
-      if (doc.compatMode != "BackCompat") {
-        base = doc.documentElement; //標準準拠モード用
-      }
-      if (offsetTop < base.scrollTop + base.clientHeight) {
-        // 画面内に要素がある場合
-        reloader.diffReloadCore (doc, doSync, false);
-      }
-    }
   },
     
   /**

@@ -1200,6 +1200,8 @@ var arAkahukuReload = {
   enableHook : false,                    /* Boolean  リロードの代わりに
                                           *   続きを読む */
   enableHookSync : false,                /* Boolean  同期する */
+  enableOnDemand : false,                /* Boolean  必要に応じて自動的に続きを読む */
+  enableOnDemandSync : false,            /* Boolean    同期する */
   enableStatusRandom : false,            /* Boolean  スレが消えたときに
                                           *   ランダム */
   enableStatusHold : false,              /* Boolean  ステータスを
@@ -1388,6 +1390,13 @@ var arAkahukuReload = {
           = arAkahukuConfig
           .initPref ("bool", "akahuku.reload.hook.sync", false);
       }
+      arAkahukuReload.enableOnDemand
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.reload.ondemand", false);
+      arAkahukuReload.enableOnDemandSync
+        = arAkahukuReload.enableOnDemand &&
+        arAkahukuConfig
+        .initPref ("bool", "akahuku.reload.ondemand.sync", false);
       arAkahukuReload.enableStatusRandom
         = arAkahukuConfig
         .initPref ("bool", "akahuku.reload.status.random", true);
@@ -3700,6 +3709,93 @@ var arAkahukuReload = {
     catch (e) { Akahuku.debug.exception (e);
     }
   },
+
+  /**
+   * 必要なら続きを読むかリロードする
+   *
+   * @param  HTMLDocument
+   * @param  boolean 同期を優先するか
+   */
+  reloadOnDemand : function (doc, trySync) {
+    if (typeof doc === "undefined") { // dead object
+      return;
+    }
+
+    var param = Akahuku.getDocumentParam (doc);
+    if (!param) {
+      // 非管理ページはロード終了していたら普通にリロード
+      if (!doc.readyState || doc.readyState == "complete") {
+        doc.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .reload (Components.interfaces.nsIWebNavigation.LOAD_FLAGS_NONE);
+      }
+      return;
+    }
+
+    if (param.reload_param &&
+        param.reload_param.reloadChannel) {
+      // [続きを読む]が処理中ならなにもしない
+      return;
+    }
+
+    if (typeof trySync === "undefined") {
+      trySync = arAkahukuReload.enableOnDemandSync;
+    }
+
+    var doDiffReload = false;
+    if (param.location_info &&
+        param.location_info.incomingReply > 0) {
+      doDiffReload = true;
+    }
+    if (!doDiffReload) {
+      var elem = doc.getElementById ("akahuku_bottom_container");
+      if (elem) {
+        var offsetTop = elem.offsetTop|0; //as a number
+        while (elem.offsetParent) {
+          elem = elem.offsetParent;
+          offsetTop += elem.offsetTop|0;
+        }
+        var base = doc.body; //後方互換モード用
+        if (doc.compatMode != "BackCompat") {
+          base = doc.documentElement; //標準準拠モード用
+        }
+        if (offsetTop < base.scrollTop + base.clientHeight) {
+          // 画面内にボタンがある＝ページ末尾の場合
+          doDiffReload = true;
+        }
+      }
+    }
+
+    if (doDiffReload) {
+      arAkahukuReload.diffReloadCore (doc, trySync, false);
+    }
+  },
+
+  /**
+   * ドキュメントのタブ切替(visibilitychange)
+   */
+  onDocumentVisibilityChange : function (event) {
+    var targetDocument = event.target;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    var info = param.location_info;
+    if (targetDocument.visibilityState === "visible") {
+      // 必要に応じて続きを読む
+      if (arAkahukuReload.enableOnDemand &&
+          info.isReply && info.isOnline && !info.isNotFound) {
+        // 瞬間的なフォーカスでは動作しないようにタイマー処理
+        targetDocument.defaultView
+        .setTimeout (function () {
+          if (typeof targetDocument === "undefined") return; //dead obj
+          if (targetDocument.hasFocus ()) {
+            arAkahukuReload.reloadOnDemand (targetDocument);
+          }
+        }, 100);
+      }
+    }
+    else { // "hidden"
+    }
+  },
     
   /**
    * body の unload イベント
@@ -3962,6 +4058,14 @@ var arAkahukuReload = {
           .setTimeout (function () {
             arAkahukuReload.backupCache (location, param);
           }, 1000);
+      }
+
+      // タブ切替を検知 (Firefox 18~)
+      if ("visibilityState" in targetDocument) {
+        targetDocument
+        .addEventListener ("visibilitychange", function (event) {
+          arAkahukuReload.onDocumentVisibilityChange (event);
+        }, false);
       }
     }
   },
