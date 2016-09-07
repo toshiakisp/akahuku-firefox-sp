@@ -529,7 +529,7 @@ var arAkahukuLink = {
 
     arAkahukuLink.wikipediaPattern
     = new arAkahukuMatchPattern
-    (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/,
+    (/(https?:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/,
      /* $1: Wikipedia のアドレス
       * $2: クエリ文字列 */
      function (parens) {
