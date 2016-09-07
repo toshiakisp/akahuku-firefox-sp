@@ -595,14 +595,6 @@
           <checkbox id="saveimage_linkmenu" checked="false"
                     label="リンクのコンテキストメニューから保存" />
           <box orient="horizonaral" align="center">
-            <checkbox id="saveimage_limit" checked="false"
-                      label="最大サイズ指定" />
-            <textbox id="saveimage_limit_width" size="6" />
-            <label id="saveimage_limit_label"
-                   control="saveimage_limit_width" value="x" />
-            <textbox id="saveimage_limit_height" size="6" />
-          </box>
-          <box orient="horizonaral" align="center">
             <label id="saveimage_buttonsize_label"
                    control="saveimage_buttonsize"
                    value="ボタンサイズ指定" />
@@ -610,6 +602,29 @@
           </box>
           <checkbox id="saveimage_buttons" checked="false" class="ineffective"
                     label="メニューの代わりにボタンを表示する" />
+          <groupbox orient="vertical">
+            <caption>
+              <label value="保存した画像の表示 ([元画像]ボタン)" id="saveimage_local_label"/>
+            </caption>
+            <box orient="horizontal" align="center">
+              <checkbox id="saveimage_limit" checked="false"
+                        oncommand="AkahukuOptions.checkSaveImageLimit ();"
+                        label="最大サイズ指定" />
+              <textbox id="saveimage_limit_width" size="6"
+                       tooltiptext="幅(w)" type="number" min="0" increment="10"/>
+              <label id="saveimage_limit_label"
+                     control="saveimage_limit_height" value="×" />
+              <textbox id="saveimage_limit_height" size="6"
+                       tooltiptext="高さ(h)" type="number" min="0" increment="10"/>
+              <menulist id="saveimage_limit_unit"
+                        tooltiptext="(デフォルト:px) 幅と高さの単位。ビューポート相対(.sp)はドキュメント表示領域の幅と高さに対する相対値(%)で、画面、ウィンドウ、フレームのサイズで動的に決まる。">
+                <menupopup id="saveimage_limit_unit_menu">
+                  <menuitem value="px" label="ピクセル(px)" />
+                  <menuitem value="view" label="ビューポート相対(vw,vh)" />
+                </menupopup>
+              </menulist>
+            </box>
+          </groupbox>
         </groupbox>
       </box>
       <box flex="1" id="tab_saveimage2" orient="vertical">

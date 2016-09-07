@@ -514,6 +514,7 @@ var AkahukuOptions = {
       ["bool", "saveimage.limit", false],
       ["int",  "saveimage.limit.width", 1024],
       ["int",  "saveimage.limit.height", 1024],
+      ["char", "saveimage.limit.unit", "px"],
       ["char", "saveimage.buttonsize", "1em"],
       ["bool", "saveimage.buttons", false],
       ["init",
@@ -3507,10 +3508,8 @@ var AkahukuOptions = {
     document.getElementById ("saveimage_autolink_preview").disabled
     = document.getElementById ("saveimage_linkmenu").disabled
     
+    = document.getElementById ("saveimage_local_label").disabled
     = document.getElementById ("saveimage_limit").disabled
-    = document.getElementById ("saveimage_limit_label").disabled
-    = document.getElementById ("saveimage_limit_width").disabled
-    = document.getElementById ("saveimage_limit_height").disabled
         
     = document.getElementById ("saveimage_buttonsize").disabled
     = document.getElementById ("saveimage_buttonsize_label").disabled
@@ -3518,6 +3517,17 @@ var AkahukuOptions = {
     = document.getElementById ("saveimage_buttons").disabled
         
     = !document.getElementById ("saveimage").checked;
+
+    AkahukuOptions.checkSaveImageLimit ();
+  },
+
+  checkSaveImageLimit : function () {
+    document.getElementById ("saveimage_limit_label").disabled
+    = document.getElementById ("saveimage_limit_width").disabled
+    = document.getElementById ("saveimage_limit_height").disabled
+    = document.getElementById ("saveimage_limit_unit").disabled
+    = !document.getElementById ("saveimage_limit").checked ||
+      document.getElementById ("saveimage_limit").disabled;
   },
   
   checkSaveImageBaseSubdir : function () {

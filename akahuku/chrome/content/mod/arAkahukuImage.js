@@ -178,6 +178,7 @@ var arAkahukuImage = {
   enableLimit : false,            /* Boolean  最大サイズ指定 */
   limitWidth : 0,                 /* Boolean  最大サイズ (幅) */
   limitHeight : 0,                /* Boolean  最大サイズ (高さ) */
+  limitUnit : "px",               /* Boolean  単位 */
     
   buttonSize : "",                /* String  ボタンサイズ指定 */
     
@@ -378,6 +379,13 @@ var arAkahukuImage = {
         arAkahukuImage.limitHeight
           = arAkahukuConfig
           .initPref ("int",  "akahuku.saveimage.limit.height", 1024);
+        arAkahukuImage.limitUnit
+          = arAkahukuConfig
+          .initPref ("char",  "akahuku.saveimage.limit.unit", "px");
+        if (["px", "view"].indexOf (arAkahukuImage.limitUnit) == -1) {
+          // 不正な設定値の場合
+          arAkahukuImage.limitUnit = "px";
+        }
       }
             
       value
@@ -1600,8 +1608,14 @@ var arAkahukuImage = {
       srcImage.style.height = "";
             
       if (arAkahukuImage.enableLimit) {
-        srcImage.style.maxWidth = arAkahukuImage.limitWidth + "px";
-        srcImage.style.maxHeight = arAkahukuImage.limitHeight + "px";
+        var unitW = arAkahukuImage.limitUnit;
+        var unitH = unitW;
+        if (arAkahukuImage.limitUnit === "view") {
+          unitW = "vw";
+          unitH = "vh";
+        }
+        srcImage.style.maxWidth = arAkahukuImage.limitWidth + unitW;
+        srcImage.style.maxHeight = arAkahukuImage.limitHeight + unitH;
       }
             
       image.style.display = "none";
