@@ -176,6 +176,7 @@ var AkahukuOptions = {
       ["bool", "title.comment", false],
       ["bool", "title.mode", true],
       ["bool", "title.thread_info", false],
+      ["bool", "title.incoming_reply", false],
       ["func", "title.format", null,
        function (map) {
           var defFormat = "%3Cold%3E%u53E4%20%3C/old%3E%3Cnijiura%3E%26server%3B%3C/nijiura%3E%3C_nijiura%3E%26board%3B%3C/_nijiura%3E%0A%3Cmessage%3E%20%26message%3B%3C/message%3E%3Cpage%3E%20%26page%3B%3C/page%3E%3Ccatalog%3E%20%u30AB%u30BF%u30ED%u30B0%3C/catalog%3E%0A%3Cexpire%3E%20%28%26expire%3B%29%3C/expire%3E";
@@ -228,6 +229,7 @@ var AkahukuOptions = {
       ["bool", "delbanner.text", false],
       ["bool", "delbanner.movetailad", false],
       ["bool", "delbanner.movetailad.all", false, "privatemod"],
+      ["bool", "delbanner.monotonize", false],
       ["init",
        function (map) {
           AkahukuOptions.checkDelbanner ();
@@ -704,6 +706,8 @@ var AkahukuOptions = {
       ["bool", "reload.reply.scroll", true],
       ["bool", "reload.hook", false],
       ["bool", "reload.hook.sync", false],
+      ["bool", "reload.ondemand", false],
+      ["bool", "reload.ondemand.sync", false],
       ["bool", "reload.status.random", true],
       ["bool", "reload.partial.on", false],
       ["int",  "reload.partial.count", 100],
@@ -1106,6 +1110,7 @@ var AkahukuOptions = {
       ["bool", "catalog.observe", false, "privatemod"],
       ["bool", "catalog.observe.replynum", false, "privatemod"],
       ["bool", "catalog.observe.opened", false, "privatemod"],
+      ["bool", "catalog.observe.opened.reload", true],
       ["bool", "catalog.clickable", true],
       ["bool", "catalog.visited", true],
       ["bool", "catalog.red", false],
@@ -3239,6 +3244,7 @@ var AkahukuOptions = {
     = document.getElementById ("title_comment").disabled
     = document.getElementById ("title_mode").disabled
     = document.getElementById ("title_thread_info").disabled
+    = document.getElementById ("title_incoming_reply").disabled
     = document.getElementById ("title_format").disabled
     = !document.getElementById ("title").checked;
         
@@ -3287,6 +3293,7 @@ var AkahukuOptions = {
     = document.getElementById ("delbanner_contentpolicy_group_label").disabled
     = document.getElementById ("delbanner_text").disabled
     = document.getElementById ("delbanner_movetailad").disabled
+    = document.getElementById ("delbanner_monotonize").disabled
     = !document.getElementById ("delbanner").checked;
     
     AkahukuOptions.checkDelbannerImage ();
@@ -3656,6 +3663,7 @@ var AkahukuOptions = {
     = document.getElementById ("reload_reply").disabled
     = document.getElementById ("reload_reply_scroll").disabled
     = document.getElementById ("reload_hook").disabled
+    = document.getElementById ("reload_ondemand").disabled
     = document.getElementById ("reload_status_random").disabled
     = document.getElementById ("reload_status_hold").disabled
     = document.getElementById ("reload_timestamp").disabled
@@ -3670,6 +3678,7 @@ var AkahukuOptions = {
     AkahukuOptions.checkReloadRangeSyncButton ();
     AkahukuOptions.checkReloadRule ();
     AkahukuOptions.checkReloadHook ();
+    AkahukuOptions.checkReloadOnDemand ();
     AkahukuOptions.checkReloadExtCache ();
   },
     
@@ -3709,6 +3718,12 @@ var AkahukuOptions = {
     document.getElementById ("reload_hook_sync").disabled
     = !document.getElementById ("reload").checked
     || !document.getElementById ("reload_hook").checked;
+  },
+
+  checkReloadOnDemand : function () {
+    document.getElementById ("reload_ondemand_sync").disabled
+    = !document.getElementById ("reload").checked
+    || !document.getElementById ("reload_ondemand").checked;
   },
     
   checkPartial : function () {
@@ -4122,6 +4137,12 @@ var AkahukuOptions = {
     document.getElementById ("catalog_observe_replynum").disabled
     document.getElementById ("catalog_observe_opened").disabled
     = !document.getElementById ("catalog_observe").checked;
+    AkahukuOptions.checkCatalogObserveOpened ();
+  },
+
+  checkCatalogObserveOpened : function () {
+    document.getElementById ("catalog_observe_opened_reload").disabled
+    = !document.getElementById ("catalog_observe_opened").checked;
   },
     
   checkSidebar : function () {

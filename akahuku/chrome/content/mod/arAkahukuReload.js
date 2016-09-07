@@ -382,6 +382,7 @@ arAkahukuReloadParam.prototype = {
 
   replyPattern : null,  // リロード後のレス書式解析パターン (appendNewRepliesで初期化)
   dispdelDisplayStyleValue : "table", // "削除されたレスを*する"を表示するための値
+  showMessageInPanel : false, // ステータスパネルでもメッセージ表示するか
 
   /**
    * データを開放する
@@ -453,6 +454,21 @@ arAkahukuReloadParam.prototype = {
       catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
         charset = "Shift_JIS";
       }
+      var responseHead = "";
+      try {
+        // バックアップ用には最低限だけ記録
+        var headerPattern = /^(HTTP\/|(Date|Content-Type|Last-Modified|Server):)/;
+        responseHead = descriptor.getMetaDataElement ("response-head");
+        var headers = responseHead.match (/[^\r\n]*\r\n/g);
+        responseHead = "";
+        for (var i = 0; i < headers.length; i ++) {
+          if (headerPattern.test (headers [i])) {
+            responseHead += headers [i];
+          }
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
       var istream = descriptor.openInputStream (0);
       var self = this;
       arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
@@ -476,6 +492,8 @@ arAkahukuReloadParam.prototype = {
             if (!self.writer.setText (bindata, charset)) {
               return;
             }
+            self.writer.charset = charset;
+            self.writer.responseHead = responseHead
                 
             if (arAkahukuReload.enableExtCache) {
               /* 現在のキャッシュをバックアップ */
@@ -1183,6 +1201,8 @@ var arAkahukuReload = {
   enableHook : false,                    /* Boolean  リロードの代わりに
                                           *   続きを読む */
   enableHookSync : false,                /* Boolean  同期する */
+  enableOnDemand : false,                /* Boolean  必要に応じて自動的に続きを読む */
+  enableOnDemandSync : false,            /* Boolean    同期する */
   enableStatusRandom : false,            /* Boolean  スレが消えたときに
                                           *   ランダム */
   enableStatusHold : false,              /* Boolean  ステータスを
@@ -1371,6 +1391,13 @@ var arAkahukuReload = {
           = arAkahukuConfig
           .initPref ("bool", "akahuku.reload.hook.sync", false);
       }
+      arAkahukuReload.enableOnDemand
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.reload.ondemand", false);
+      arAkahukuReload.enableOnDemandSync
+        = arAkahukuReload.enableOnDemand &&
+        arAkahukuConfig
+        .initPref ("bool", "akahuku.reload.ondemand.sync", false);
       arAkahukuReload.enableStatusRandom
         = arAkahukuConfig
         .initPref ("bool", "akahuku.reload.status.random", true);
@@ -1982,10 +2009,25 @@ var arAkahukuReload = {
         arAkahukuDOM.setText (node, message);
       }
     }
+
+    var param = Akahuku.getDocumentParam (targetDocument).reload_param;
+
+    if (param.showMessageInPanel) {
+      // ステータス表示要素が画面内に無い状態から開始されていたら
+      // ステータスパネルでも状況を表示する
+      var statusText = (param.sync
+          ? "[\u540C\u671F] " // "[同期] "
+          : "[\u7D9A\u304D\u3092\u8AAD\u3080] " // "[続きを読む] "
+          ) + message;
+      arAkahukuUI.setStatusPanelText (statusText, "overLink");
+      // permanent フラグとは関係無く全てのメッセージを時間でクリア
+      targetDocument.defaultView
+      .setTimeout (function () {
+        arAkahukuUI.clearStatusPanelText (statusText);
+      }, 5000);
+    }
         
     if (!permanent && !arAkahukuReload.enableStatusHold) {
-      var param
-      = Akahuku.getDocumentParam (targetDocument).reload_param;
       targetDocument.defaultView.clearTimeout (param.statusTimerID);
       param.statusTimerID
       = targetDocument.defaultView.setTimeout
@@ -3594,11 +3636,28 @@ var arAkahukuReload = {
       return;
     }
         
-    if (!targetDocument
-        .getElementById ("akahuku_bottom_container")) {
+    if (!targetDocument.getElementById ("akahuku_bottom_container")) {
       return;
     }
-        
+
+    // この時点でステータス表示要素が無い or 非表示 or 見えないなら
+    // ステータスパネルにも表示させる
+    param.showMessageInPanel = false;
+    var isElementVisible = function (elem) {
+      return !!(elem.clientWidth || elem.clientHeight ||
+                elem.getClientRects ().length);
+    };
+    var elem = targetDocument.getElementById ("akahuku_reload_status");
+    if (!elem ||
+        !isElementVisible (elem) ||
+        !arAkahukuReload._checkElementYInScreen (elem, true)) {
+      elem = targetDocument.getElementById ("akahuku_throp_reload_status");
+      // trhop は fixed なのでスクリーン位置は不問
+      if (!elem || !isElementVisible (elem)) {
+        param.showMessageInPanel = true;
+      }
+    }
+
     if (arAkahukuReload.enableNolimit) {
       arAkahukuConfig.setTime (arAkahukuReload.limitTime);
     }
@@ -3681,6 +3740,126 @@ var arAkahukuReload = {
          param);
     }
     catch (e) { Akahuku.debug.exception (e);
+    }
+  },
+
+  /**
+   * 必要なら続きを読むかリロードする
+   *
+   * @param  HTMLDocument
+   * @param  boolean 同期を優先するか
+   */
+  reloadOnDemand : function (doc, trySync) {
+    if (typeof doc === "undefined") { // dead object
+      return;
+    }
+
+    var param = Akahuku.getDocumentParam (doc);
+    if (!param) {
+      // 非管理ページはロード終了していたら普通にリロード
+      if (!doc.readyState || doc.readyState == "complete") {
+        doc.defaultView
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .reload (Components.interfaces.nsIWebNavigation.LOAD_FLAGS_NONE);
+      }
+      return;
+    }
+
+    if (param.reload_param &&
+        param.reload_param.reloadChannel) {
+      // [続きを読む]が処理中ならなにもしない
+      return;
+    }
+
+    if (typeof trySync === "undefined") {
+      trySync = arAkahukuReload.enableOnDemandSync;
+    }
+
+    var doDiffReload = false;
+    if (param.location_info &&
+        param.location_info.incomingReply > 0) {
+      doDiffReload = true;
+    }
+    if (!doDiffReload) {
+      var elem = doc.getElementById ("akahuku_bottom_container");
+      if (elem) {
+        // 画面内Y軸に(少なくとも8px分)入っていれば
+        doDiffReload
+        = arAkahukuReload._checkElementYInScreen (elem, false, 8);
+      }
+    }
+
+    if (doDiffReload) {
+      arAkahukuReload.diffReloadCore (doc, trySync, false);
+    }
+  },
+
+  _checkElementYInScreen : function (targetNode, checkWhole, marginTop, marginBottom) {
+    var doc = targetNode.ownerDocument;
+
+    marginTop = parseFloat (marginTop);
+    marginBottom = parseFloat (marginBottom);
+    if (marginTop !== marginTop) { // isNaN
+      marginTop = 0;
+    }
+    if (marginBottom !== marginBottom) { // isNaN
+      marginBottom = marginTop;
+    }
+
+    var elem = targetNode;
+    var offsetTop = elem.offsetTop|0; //as a number
+    while (elem.offsetParent) {
+      elem = elem.offsetParent;
+      offsetTop += elem.offsetTop|0;
+    }
+    var offsetBottom = offsetTop
+      + (targetNode.offsetHeight || targetNode.clientHeight);
+
+    offsetTop += marginTop;
+    offsetBottom -= marginBottom;
+
+    var base = doc.body; //後方互換モード用
+    if (doc.compatMode != "BackCompat") {
+      base = doc.documentElement; //標準準拠モード用
+    }
+    var baseScrollBottom = base.scrollTop + base.clientHeight;
+
+    if (offsetTop > baseScrollBottom ||
+        offsetBottom < base.scrollTop) { // 完全にスクリーン外
+      return false;
+    }
+    else if (offsetTop < base.scrollTop) { //上端で一部隠れ
+      return (checkWhole ? false : true);
+    }
+    else if (baseScrollBottom < offsetBottom) { // 下端で一部隠れ
+      return (checkWhole ? false : true);
+    }
+    return true;
+  },
+
+  /**
+   * ドキュメントのタブ切替(visibilitychange)
+   */
+  onDocumentVisibilityChange : function (event) {
+    var targetDocument = event.target;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    var info = param.location_info;
+    if (targetDocument.visibilityState === "visible") {
+      // 必要に応じて続きを読む
+      if (arAkahukuReload.enableOnDemand &&
+          info.isReply && info.isOnline && !info.isNotFound) {
+        // 瞬間的なフォーカスでは動作しないようにタイマー処理
+        targetDocument.defaultView
+        .setTimeout (function () {
+          if (typeof targetDocument === "undefined") return; //dead obj
+          if (targetDocument.hasFocus ()) {
+            arAkahukuReload.reloadOnDemand (targetDocument);
+          }
+        }, 100);
+      }
+    }
+    else { // "hidden"
     }
   },
     
@@ -3945,6 +4124,14 @@ var arAkahukuReload = {
           .setTimeout (function () {
             arAkahukuReload.backupCache (location, param);
           }, 1000);
+      }
+
+      // タブ切替を検知 (Firefox 18~)
+      if ("visibilityState" in targetDocument) {
+        targetDocument
+        .addEventListener ("visibilitychange", function (event) {
+          arAkahukuReload.onDocumentVisibilityChange (event);
+        }, false);
       }
     }
   },

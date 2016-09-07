@@ -51,6 +51,7 @@ arAkahukuLocationInfo.prototype = {
   normalPageNumber : 0,         /* Number  ページ番号 */
   threadNumber : 0,             /* Number  スレ番号 */
   replyCount : 0,               /* Number  レス数 */
+  incomingReply : 0,            /* Number  レス増加通知数 */
     
   replyPrefix : "",             /* String  返信のテーブルの最初の文字 */
     
@@ -706,6 +707,7 @@ arAkahukuLocationInfo.prototype = {
       case "dir":
       case "page":
       case "thread":
+      case "incomingreply":
       case "message":
       case "message2":
       case "message8byte":
@@ -1065,6 +1067,7 @@ arAkahukuLocationInfo.prototype = {
           + "<page>" + this.normalPageNumber + "</page>"
           + "<thread>" + this.threadNumber + "</thread>"
           + "<replycount>" + this.replyCount + "</replycount>"
+          + "<incomingreply>" + this.incomingReply + "</incomingreply>"
           + "<message>" + this.message + "</message>"
           + "<message2>" + this.message2 + "</message2>"
           + "<message8byte>" + this.message8byte + "</message8byte>"
@@ -1101,6 +1104,7 @@ arAkahukuLocationInfo.prototype = {
           + (this.normalPageNumber ? "<check_page />" : "") 
           + (this.threadNumber ? "<check_thread />" : "") 
           + (this.replyCount ? "<check_replycount />" : "") 
+          + (this.incomingReply > 0 ? "<check_incomingreply />" : "")
           + (this.message ? "<check_message />" : "") 
           + (this.message2 ? "<check_message2 />" : "") 
           + (this.message8byte ? "<check_message8byte />" : "") 

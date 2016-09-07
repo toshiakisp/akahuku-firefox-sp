@@ -2,7 +2,7 @@
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
- *          arAkahukuDocumentParam, arAkahukuDOM,
+ *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuThread,
  *          arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuSidebar,
  *          arAkahukuSound, arAkahukuBoard, arAkahukuUtil, arAkahukuCompat
  */
@@ -1963,6 +1963,7 @@ var arAkahukuCatalog = {
   enableObserve : false,        /* Boolean  通常・返信モードと連携 */
   enableObserveReplyNum : false,/* Boolean  レス数を即座に反映 */
   enableObserveOpened : false,  /* Boolean  開いているスレをマーク */
+  enableObserveOpenedReload : false,  /* Boolean  開いているスレに移動後リロード */
     
   enableClickable : false, /* Boolean  空白の本文を強制リンク */
   enableVisited : false,   /* Boolean  一度見たスレをマーク */
@@ -2447,6 +2448,10 @@ var arAkahukuCatalog = {
     = arAkahukuConfig
     .initPref ("bool", "akahuku.catalog.observe.opened", false)
     && arAkahukuCatalog.enableObserve;
+    arAkahukuCatalog.enableObserveOpenedReload
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.observe.opened.reload", true)
+    && arAkahukuCatalog.enableObserveOpened;
         
     arAkahukuCatalog.enableClickable
     = arAkahukuConfig
@@ -3642,6 +3647,30 @@ var arAkahukuCatalog = {
       // レス数取得ミス時は更新できない
       return;
     }
+    var oldReplyNum
+      = parseInt (td.getAttribute ("__old_reply_number"));
+
+    var threadId = parseInt (td.getAttribute ("__thread_id"));
+    if (threadId) {
+      var doNotifyReplyNumber = false;
+      if (oldReplyNum != oldReplyNum) { // isNaN
+        // ページを開いた時やスレが new/up の時
+        doNotifyReplyNumber = true;
+      }
+      else { // [最新に更新]後など履歴がある場合
+        if (newReplyNum > oldReplyNum) {
+          doNotifyReplyNumber = true;
+        }
+      }
+      if (doNotifyReplyNumber) {
+        var param = Akahuku.getDocumentParam (td.ownerDocument);
+        var info = param.location_info;
+        arAkahukuThread.asyncNotifyReplyNumber (info, threadId, newReplyNum);
+      }
+    }
+    else {
+      Akahuku.debug.error ("td has no attr __thread_id");
+    }
 
     var fonts = td.getElementsByTagName ("font");
     if (fonts && fonts.length > 0) {
@@ -3672,8 +3701,6 @@ var arAkahukuCatalog = {
     var deltaText = null, className = null;
     if (arAkahukuCatalog.enableReloadReplyNumberDelta
         && !(td.getAttribute ("__overflowed") === "true")) {
-      var oldReplyNum
-        = parseInt (td.getAttribute ("__old_reply_number"));
       if (oldReplyNum >= 0) {
         var delta = newReplyNum - oldReplyNum;
         if (delta != 0) {
@@ -4893,6 +4920,8 @@ var arAkahukuCatalog = {
 
     // 既読のマークを最新に更新
     arAkahukuCatalog.updateVisited (targetDocument);
+    // 開いているかを最新に更新
+    arAkahukuCatalog.updateOpened (targetDocument);
         
     if (undo) {
       var tmpNode
@@ -5456,14 +5485,19 @@ var arAkahukuCatalog = {
     }
     var uri = arAkahukuUtil.newURIViaNode (anchor.href, anchor);
 
-    var targetWindow, reloader;
+    var targetWindow;
 
     var params = Akahuku.getDocumentParamsByURI (uri);
     if (params.length > 0) {
       // 現 Akahuku 管理下に対象のスレッドがある場合
       targetWindow = params [0].targetDocument.defaultView;
       arAkahukuWindow.focusTabForWindow (targetWindow);
-      reloader = arAkahukuReload;
+
+      if (arAkahukuCatalog.enableObserveOpenedReload) {
+        arAkahukuUtil.executeSoon (function (scope) {
+          arAkahukuReload.reloadOnDemand (targetWindow.document);
+        });
+      }
     }
     else {
       // XUL Window毎の検索
@@ -5473,38 +5507,16 @@ var arAkahukuCatalog = {
       if (!targetWindow) {// 切替失敗時
         return;
       }
-      chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
-      reloader = chromeWindow.arAkahukuReload;
+      if (arAkahukuCatalog.enableObserveOpenedReload) {
+        chromeWindow = arAkahukuWindow.getParentWindowInChrome (targetWindow);
+        arAkahukuUtil.executeSoon (function (scope) {
+          scope.arAkahukuReload.reloadOnDemand (targetWindow.document);
+        }, [chromeWindow]);
+      }
     }
 
     event.preventDefault ();
     event.stopPropagation ();
-
-    // [続きを読む]が画面内なら押す
-    var doSync = false;
-    var doc = targetWindow.document;
-    var container = doc.getElementById ("akahuku_bottom_container");
-    var btn = doc.getElementById ("akahuku_reload_button");
-    if (!btn) {
-      btn = doc.getElementById ("akahuku_reload_syncbutton");
-      doSync = !!btn;
-    }
-    if (container && btn) {
-      var elem = container;
-      var offsetTop = elem.offsetTop|0;
-      while (elem.offsetParent) {
-        elem = elem.offsetParent;
-        offsetTop += elem.offsetTop|0;
-      }
-      var base = doc.body; //後方互換モード用
-      if (doc.compatMode != "BackCompat") {
-        base = doc.documentElement; //標準準拠モード用
-      }
-      if (offsetTop < base.scrollTop + base.clientHeight) {
-        // 画面内に要素がある場合
-        reloader.diffReloadCore (doc, doSync, false);
-      }
-    }
   },
     
   /**

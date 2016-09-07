@@ -4,7 +4,7 @@
 // This script runs after all Akahuku modules loaded
 
 try {
-  if (arAkahukuCompat.comparePlatformVersion ("48.*") > 0) { //49 or newer
+  if (arAkahukuCompat.comparePlatformVersion ("47.*") > 0) { //48 or newer
     // e10s-ready booting is activated if necessary
     Akahuku.useFrameScript
       = Components.classes ["@mozilla.org/xre/app-info;1"]
@@ -52,6 +52,9 @@ if (Akahuku.useFrameScript) {
   // Load susbscripts that define IPC commands
   arAkahukuIPCRoot.loadSubScript
     ("chrome://akahuku/content/ipc/parent.js");
+  // Overwrite content-dependent methods
+  arAkahukuIPCRoot.loadSubScript
+    ("chrome://akahuku/content/ipc/parent_content.js");
 
   // Register the frame script
   // to load content-process Akahuku and to listen events
@@ -60,6 +63,21 @@ if (Akahuku.useFrameScript) {
 
 }
 else { // Boot as a classic XUL-overlay extension
+
+  if (arAkahukuCompat.comparePlatformVersion ("37.*") > 0) { //38 or newer
+    // Prepare IPC for compatiblility of akahuku.jsm in classic XUL mode
+    // (ipc message manager may be usable since Firefox 38)
+    try {
+      Components.utils.import ("resource://akahuku/ipc.jsm", this);
+      arAkahukuIPCRoot.init ();
+      arAkahukuIPCRoot.initSubScriptScope (this);
+      arAkahukuIPCRoot.loadSubScript
+        ("chrome://akahuku/content/ipc/parent.js");
+    }
+    catch (e) { Components.utils.reportError (e);
+    }
+  }
+  Akahuku.init ();
 
   // Add listeners for (chrome-)window opening and closing
   // to initialize Akahuku

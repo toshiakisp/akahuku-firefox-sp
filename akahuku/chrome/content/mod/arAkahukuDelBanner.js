@@ -16,6 +16,7 @@ var arAkahukuDelBanner = {
   enableText : false,        /* Boolean  テキスト広告 */
   enableMoveTailAd : false,  /* Boolean  末尾の広告を横に置く */
   enableMoveTailAdAll :false,/* Boolean  全て横に */
+  enableMonotonize : false,  /* Boolean  モノトーンに */
     
   /**
    * スタイルファイルのスタイルを設定する
@@ -41,6 +42,33 @@ var arAkahukuDelBanner = {
         .addRule
         ("form > b > a[href*=\"http://click.dtiserv2.com/\"]",
          "display: none;");
+      }
+
+      if (arAkahukuDelBanner.enableMonotonize) {
+        style
+        .addRule
+        ("img[__akahuku_banner='true']"
+         + ",iframe[__akahuku_banner='true']"
+         + ",object[__akahuku_banner='true']",
+         "filter: url(\"data:image/svg+xml;utf-8,"
+         + "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'>"
+         + "<defs><filter"
+         + " color-interpolation='sRGB' color-interpolation-filters='sRGB'"
+         + " color-rendering='optimizeSpeed' image-rendering='optimizeSpeed'"
+         + " id='f'>"
+         + "<feColorMatrix type='matrix' values='"
+         + " 0.093 0.314 0.032 0 0.502"
+         + " 0.187 0.628 0.063 0 0"
+         + " 0.178 0.600 0.061 0 0"
+         + " 0 0 0 1 0'/>"
+         + "<feConvolveMatrix preserveAlpha='true'"
+         + " order='3 3' kernelMatrix='0 -1 0 -1 20 -1 0 -1 0' divisor='16'/>"
+         + "</filter></defs></svg>#f\");")
+        .addRule
+        ("img[__akahuku_banner='true']:hover"
+         + ",iframe[__akahuku_banner='true']:hover"
+         + ",object[__akahuku_banner='true']:hover",
+         "filter: none;");
       }
     }
   },
@@ -112,6 +140,9 @@ var arAkahukuDelBanner = {
           = arAkahukuConfig
           .initPref ("bool", "akahuku.delbanner.movetailad.all", false);
       }
+      arAkahukuDelBanner.enableMonotonize
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.delbanner.monotonize", false);
     }
   },
     
@@ -138,6 +169,7 @@ var arAkahukuDelBanner = {
     if (arAkahukuDelBanner.enableImage
         || arAkahukuDelBanner.enableImage404
         || arAkahukuDelBanner.enableFlash
+        || arAkahukuDelBanner.enableMonotonize
         || all) {
       /* nodeName を比較用に取得 (表記法は文書内で同一と仮定) */
       if (images.length > 0)
@@ -630,6 +662,7 @@ var arAkahukuDelBanner = {
       }
       else if (info.isCatalog) {
         if (arAkahukuDelBanner.enableImage
+            || arAkahukuDelBanner.enableMonotonize
             || arAkahukuDelBanner.enableFlash) {
           arAkahukuDelBanner.deleteImage
           (targetDocument, info, false);
@@ -637,6 +670,7 @@ var arAkahukuDelBanner = {
       }
       else {
         if (arAkahukuDelBanner.enableImage
+            || arAkahukuDelBanner.enableMonotonize
             || arAkahukuDelBanner.enableFlash) {
           arAkahukuDelBanner.deleteImage
           (targetDocument, info, false);

@@ -331,11 +331,6 @@ arAkahukuBypassChannel.prototype = {
         || !(this._realChannel instanceof Ci.nsIHttpChannel)) {
       return;
     }
-    if (typeof Ci.nsIRequest.LOAD_ANONYMOUS != "undefined") {
-      // cookie-less requests (Gecko 1.9.1)
-      this.loadFlags |= Ci.nsIRequest.LOAD_ANONYMOUS;
-      return;
-    }
     if (!this.inMainProcess) {
       // http-on-* observers only work in the parent process
       return;
@@ -1090,6 +1085,11 @@ arAkahukuCacheChannel.prototype = {
 
   _parseHeaders : function (headers)
   {
+    // forget previously parsed values
+    this.contentCharset = "";
+    this.contentType = "";
+    this._contentEncoding = "";
+
     if (!/^HTTP\/1\.[10] \d\d\d /.test (headers [0])) {
       return "";
     }

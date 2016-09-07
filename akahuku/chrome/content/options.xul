@@ -103,6 +103,11 @@
                         label="[ページ n]、[返信] 等" />
               <checkbox id="title_thread_info" checked="false"
                         label="スレの消滅情報" />
+              <box orient="horizontal">
+                <checkbox id="title_incoming_reply" checked="false"
+                          class="sp" tooltiptext="(デフォルト：無効) 新着レス数をタイトルの頭に (1) の用に付ける。新着レス数は他タブでのカタログやスレ等の観覧により判定されリアルタイムで更新される。"
+                          label="スレの新着レス数" />
+              </box>
             </box>
             <box id="title_type_deck_expert" orient="vertical" flex="1">
               <textbox id="title_format" multiline="true" rows="3"
@@ -235,6 +240,9 @@
                       class="sp" tooltiptext="(デフォルト：無効) Amazon以外のバナーも全て横に置く"
                       label="全て横に" />
           </box>
+          <checkbox id="delbanner_monotonize" checked="false"
+                    class="sp" tooltiptext="(デフォルト：無効) 広告の見た目を CSS でモノトーンに色変換して表示する。CPU や GPU への負荷がかかるため注意。Firefox 35 以降が必要。"
+                    label="モノトーン化" />
         </groupbox>
       </box>
       <box flex="1" id="tab_wheel" orient="vertical">
@@ -1047,6 +1055,14 @@
               <checkbox id="reload_hook_sync" checked="false"
                         label="同期する" />
             </box>
+            <checkbox id="reload_ondemand" checked="false"
+                      label="必要に応じて自動的に続きを読む (Gecko 18~)"
+                      class="sp" tooltiptext="(デフォルト:無効) スレをフォーカスした時に自動的に続きを読む。スレッドの末尾まで表示している場合か、新着レスがあることわかっている場合に実行される。"
+                      oncommand="AkahukuOptions.checkReloadOnDemand ();" />
+            <box class="sub" orient="vertical">
+              <checkbox id="reload_ondemand_sync" checked="false"
+                        label="同期する" />
+            </box>
             <checkbox id="reload_status_random" checked="false"
                       label="スレが消えたときのメッセージをランダムに" />
             
@@ -1812,8 +1828,14 @@
                         class="sp" tooltiptext="(デフォルト：無効) 返信モードでのレス数変化をカタログに即座に反映する"
                         label="レス数を即座に反映" />
               <checkbox id="catalog_observe_opened" checked="false"
-					    class="sp" tooltiptext="(デフォルト：無効) 別タブ等で開いている返信モードのスレを判断してマーク(既読扱い&amp;枠スタイル変更)し、クリック時はそのタブへの遷移(&amp;ページ末尾付近なら[続きを読む])を行うようにする"
+					    class="sp" tooltiptext="(デフォルト：無効) 別タブ等で開いている返信モードのスレを判断してマーク(既読扱い&amp;枠スタイル変更)し、クリック時はそのスレのタブへフォーカスを切り替える。"
+                        oncommand="AkahukuOptions.checkCatalogObserveOpened ();"
                         label="既に開いているスレを配慮する" />
+              <box class="sub" orient="vertical">
+                <checkbox id="catalog_observe_opened_reload" checked="false"
+                          class="sp" tooltiptext="(デフォルト：有効) スレのタブへフォーカス切り替えと同時にリロードする。「続きを読む」が有効の場合は続きを読む。"
+                          label="開いているスレに移動後リロード" />
+              </box>
             </groupbox>
             <checkbox id="catalog_clickable" checked="false"
                       label="空白の本文を強制リンク" />
@@ -2307,6 +2329,10 @@
                 <label value="&amp;page; ページ番号" />
                 <label value="&amp;thread; スレの番号" />
                 <label value="&amp;replycount; レス数" />
+                <box orient="horizontal">
+                  <label value="&amp;incomingreply; 新着レス数" />
+                  <label value=".sp" class="sp" />
+                </box>
                 <label value="&amp;url; URL ([画像を保存] のみ)" />
               </column>
               <column flex="1">
