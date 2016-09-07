@@ -5464,10 +5464,13 @@ var arAkahukuCatalog = {
    */
   setCellOpened : function (td, opened) {
     if (opened) {
-      if (!td.hasAttribute ("__opened")) {
+      if (!td.hasAttribute ("__opened") ||
+          !td.getAttribute ("__opened") !== "true") {
         td.setAttribute ("__opened", "true");
-        td.addEventListener ("click", this.onClickOpenedCell, true);
       }
+      // undo/redo 後に GC がイベントリスナを削除する場合がある
+      // 同一リスナの多重登録は問題ないので都度登録する
+      td.addEventListener ("click", this.onClickOpenedCell, true);
     }
     else if (td.hasAttribute ("__opened")) {
       td.removeAttribute ("__opened");
