@@ -3281,6 +3281,8 @@ var arAkahukuLink = {
       image.setAttribute ("frameborder", "0");
       /* (Gecko 10.0+) moz HTML5 Fullscreen */
       image.setAttribute ("mozallowfullscreen", "true");
+      // Gecko 18.0+
+      image.setAttribute ("allowfullscreen", "true");
     }
     else {
       Akahuku.debug.warn ("Unknown preview uri pattern: "+uri);
