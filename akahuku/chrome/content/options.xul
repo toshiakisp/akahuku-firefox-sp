@@ -2329,6 +2329,10 @@
                 <label value="&amp;page; ページ番号" />
                 <label value="&amp;thread; スレの番号" />
                 <label value="&amp;replycount; レス数" />
+                <box orient="horizontal">
+                  <label value="&amp;incomingreply; 新着レス数" />
+                  <label value=".sp" class="sp" />
+                </box>
                 <label value="&amp;url; URL ([画像を保存] のみ)" />
               </column>
               <column flex="1">
