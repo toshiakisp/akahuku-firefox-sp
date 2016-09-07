@@ -229,6 +229,7 @@ var AkahukuOptions = {
       ["bool", "delbanner.text", false],
       ["bool", "delbanner.movetailad", false],
       ["bool", "delbanner.movetailad.all", false, "privatemod"],
+      ["bool", "delbanner.monotonize", false],
       ["init",
        function (map) {
           AkahukuOptions.checkDelbanner ();
@@ -3292,6 +3293,7 @@ var AkahukuOptions = {
     = document.getElementById ("delbanner_contentpolicy_group_label").disabled
     = document.getElementById ("delbanner_text").disabled
     = document.getElementById ("delbanner_movetailad").disabled
+    = document.getElementById ("delbanner_monotonize").disabled
     = !document.getElementById ("delbanner").checked;
     
     AkahukuOptions.checkDelbannerImage ();

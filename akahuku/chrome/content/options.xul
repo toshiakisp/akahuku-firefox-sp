@@ -240,6 +240,9 @@
                       class="sp" tooltiptext="(デフォルト：無効) Amazon以外のバナーも全て横に置く"
                       label="全て横に" />
           </box>
+          <checkbox id="delbanner_monotonize" checked="false"
+                    class="sp" tooltiptext="(デフォルト：無効) 広告の見た目を CSS でモノトーンに色変換して表示する。CPU や GPU への負荷がかかるため注意。Firefox 35 以降が必要。"
+                    label="モノトーン化" />
         </groupbox>
       </box>
       <box flex="1" id="tab_wheel" orient="vertical">
