@@ -1349,6 +1349,7 @@ function arAkahukuMergeItem (td, innerHTML, index, threadId, currentReplyNumber,
   this.visited = !!flags.visited;
   this.opened = ("opened" in flags ? !!flags.opened : false);
   this.isNew = !!flags.isNew;
+  this.isSticky = !!flags.isSticky;
   this.overflowed = !!flags.overflowed;
   this.className = className;
 }
@@ -1362,6 +1363,7 @@ arAkahukuMergeItem.prototype = {
   visited : false,        /* Boolean  既読かどうか */
   opened : false,         /* Boolean  開いているかどうか */
   isNew : false,          /* Boolean  新規かどうか */
+  isSticky : false,       /* Boolean  Sticky フラグ */
   overflowed : false      /* Boolean  オーバーフローしたか */
   ,
 
@@ -1929,6 +1931,7 @@ var arAkahukuCatalog = {
   },
   enableReorderVisited : false, /* Boolean  未読と既読で分ける */
   enableReorderNew : false,     /* Boolean  最新に更新で新規を分ける */
+  enableReorderSticky : true,   /* Boolean  Sticky フラグを分ける */
   enableReorderFill : false,    /* Boolean  合間合間に で消した分を詰める */
   enableReorderInfo : false,    /* Boolean  各行に情報を表示する */
     
@@ -2072,8 +2075,6 @@ var arAkahukuCatalog = {
       /* 最新に更新 */
       if (arAkahukuCatalog.enableReload) {
         style
-        .addRule ("#akahuku_appending_container",
-                  "display: none; ")
         .addRule ("div.akahuku_cell",
                   "margin: 0; "
                   + "padding: 0; "
@@ -2234,6 +2235,9 @@ var arAkahukuCatalog = {
       .addRule ('table:not([border="1"]) td[__opened]',
                 "border-style: outset;"
                 + "border-width: 1px;")
+      // 要素追加のカスタムイベント発行用
+      .addRule ("#akahuku_appending_container",
+                "display: none; ")
     }
   },
     
@@ -2535,6 +2539,9 @@ var arAkahukuCatalog = {
     var latestThread = parseInt (mergedItems [0].threadId);
         
     var doReorderToWidth = !(/_(?:default|page)$/.test (param.order));
+    var checkSticky
+    = arAkahukuCatalog.enableReorderSticky
+    && doReorderToWidth;
     var checkVisited
     = arAkahukuCatalog.enableReorderVisited
     && doReorderToWidth;
@@ -2548,20 +2555,18 @@ var arAkahukuCatalog = {
     = arAkahukuCatalog.enableReorderInfo
     && param.order === "akahuku_catalog_reorder_delta";
     var needHeader
-    = checkVisited || checkNew || dispCreatetime || dispDeltaHeaders;
+    = checkVisited || checkNew || dispCreatetime || dispDeltaHeaders ||
+      checkSticky;
     var isBackCompat = (targetDocument.compatMode == "BackCompat");
         
     var visitedState = (checkVisited ? 0 : 1);
     var newState = (checkNew ? 0 : 1);
+    var stickyState = (checkSticky ? 0 : 1);
     var diff = 0;
     var entire = false;
     var overflowedCount = 0;
     var leftNum = 0;
     var diffAll = 0;
-
-    var appending_container
-      = targetDocument.getElementById ("akahuku_appending_container");
-    var tdCreated = false;
 
     if (arAkahukuCatalog.enableReloadLeftBeforeMore) {
       if (arAkahukuCatalog.reloadLeftBeforeMoreNum.match
@@ -2587,9 +2592,35 @@ var arAkahukuCatalog = {
         tbody.appendChild (tr);
         createRowHeader (tr, (i - diff));
       }
-      if (checkNew
-          && newState == 0) {
+
+      if (checkSticky
+          && stickyState == 0) {
         if (i == 0) {
+          if (mergedItems [i].isSticky) {
+            setRowHeaderText (tr, "\u03C6"); // greece small letter phi
+          }
+          else {
+            stickyState = 1;
+          }
+        }
+        else if (!mergedItems [i].isSticky) {
+          stickyState = 1;
+          var diffSticky = (i - diff) % columns;
+          diff = i % columns;
+          diffAll = i;
+
+          if (diffSticky != 0) { // 改行
+            tr = targetDocument.createElement ("tr");
+            tbody.appendChild (tr);
+            createRowHeader (tr, (i - diff));
+          }
+        }
+      }
+
+      if (checkNew
+          && newState == 0
+          && stickyState != 0) {
+        if (i == diffAll) {
           if (!mergedItems [i].isNew) {
             newState = 1;
           }
@@ -2599,10 +2630,11 @@ var arAkahukuCatalog = {
         }
         else if (!mergedItems [i].isNew) {
           newState = 1;
+          var diffNew = (i - diff) % columns;
           diff = i % columns;
           diffAll = i;
                     
-          if (diff != 0) { // 改行
+          if (diffNew != 0) { // 改行
             tr = targetDocument.createElement ("tr");
             tbody.appendChild (tr);
             createRowHeader (tr, (i - diff));
@@ -2612,7 +2644,8 @@ var arAkahukuCatalog = {
             
       if (checkVisited
           && visitedState == 0
-          && newState != 0) {
+          && newState != 0
+          && stickyState != 0) {
         if (i == diffAll) {
           if (mergedItems [i].visited || mergedItems [i].opened) {
             setRowHeaderText (tr, "\u65E2\u8AAD"); // "既読"
@@ -2635,10 +2668,23 @@ var arAkahukuCatalog = {
         }
       }
 
-      if ((checkVisited || checkNew) //"未読"が必要か
-          && newState != 0 && visitedState != 0) {
+      // "未読"が必要か
+      if ((checkVisited || checkNew || checkSticky) &&
+          stickyState != 0 && newState != 0 && visitedState != 0) {
         if (i == diffAll) {
           setRowHeaderText (tr, "\u672A\u8AAD"); // "未読"
+          // Sticky のみの場合は空白ヘッダ
+          if (checkSticky && !checkVisited && !checkNew &&
+              !dispCreatetime && !dispDeltaHeaders) {
+            needHeader = false;
+            if (i == 0) {
+              tr.removeChild (tr.firstChild);
+            }
+            else {
+              setRowHeaderText (tr, "");
+              tr.firstChild.rowSpan = "0";
+            }
+          }
           // 新規・既読による端数も overflowed を残す分に含める
           leftNum += ((diffAll + overflowedCount) % columns);
           overflowedCount = 0;
@@ -2650,68 +2696,22 @@ var arAkahukuCatalog = {
       }
             
       var td = null;
-      tdCreated = false;
       if (mergedItems [i].td) {
         td = mergedItems [i].td;
-        if (mergedItems [i].oldReplyNumber >= 0) {
-          td.setAttribute ("__old_reply_number",
-                           mergedItems [i].oldReplyNumber);
-          td.removeAttribute ("__is_up");
-        }
                 
         var img = td.getElementsByTagName ("img");
-        if (img && img [0]) {
-          if (img [0].naturalWidth == 0) {
-            img [0].src = img [0].src;
-          }
+        if (img && img [0] &&
+            img [0].complete &&
+            img [0].naturalWidth == 0) {
+          // 読み込み失敗確定の画像を再読み込み
+          img [0].src = img [0].src;
         }
-        if (!mergedItems [i].isNew) {
-          td.removeAttribute ("__is_new");
-        }
-        td.setAttribute ("__original_index", mergedItems [i].index);
       }
       else {
-        tdCreated = true;
-        td = targetDocument.createElement ("td");
-        /* mergedItems [i].innerHTML には HTML が含まれるので
-         * innerHTML を使用する */
-        if (mergedItems [i].className
-            && mergedItems [i].className != "undefined"
-            && mergedItems [i].className != "null") {
-          td.className = mergedItems [i].className;
-        }
-        td.innerHTML = mergedItems [i].innerHTML;
-        // 必須の属性を updateCell より先に設定
-        td.setAttribute ("__original_index", mergedItems [i].index);
-        td.setAttribute ("__thread_id", mergedItems [i].threadId);
-        if (mergedItems [i].isNew) {
-          td.setAttribute ("__is_new", "true");
-        }
-        else {
-          td.setAttribute ("__is_up", "true");
-        }
-                
-        arAkahukuCatalog.updateCell (td, info);
-                
-        if (arAkahukuLink.enableHideTrolls
-            && !arAkahukuLink.enableHideTrollsNoCat) {
-          arAkahukuLink.applyHideTrolls (targetDocument, td);
-        }
-
-        // マークは生成時から (最適化)
-        if (arAkahukuCatalog.enableVisited) {
-          arAkahukuCatalog.setCellVisited (td, mergedItems [i].visited);
-        }
-        if (arAkahukuCatalog.enableObserveOpened) {
-          arAkahukuCatalog.setCellOpened (td, mergedItems [i].opened);
-        }
-      }
-            
-      if (mergedItems [i].overflowed) {
-        td.setAttribute ("__overflowed", "true");
-      }
-      else {
-        td.removeAttribute ("__overflowed");
+        Akahuku.debug.error ("TD should be created before; " +
+            "threadId=" + mergedItems [i].threadId);
+        // fail safe (カスタムイベント発行無し)
+        td = arAkahukuCatalog.createCell (mergedItems [i], targetDocument, info);
       }
             
       try {
@@ -2724,27 +2724,6 @@ var arAkahukuCatalog = {
       catch (e) { Akahuku.debug.exception (e);
       }
             
-      if (mergedItems [i].currentReplyNumber >= 0)
-      td.setAttribute ("__reply_number",
-                       mergedItems [i].currentReplyNumber);
-
-      // 連携したい他の拡張機能の支援(カスタムイベント)
-      if (appending_container) {
-        appending_container.appendChild (td);
-        var appendEvent = targetDocument.createEvent ("Events");
-        var appendEventName = (tdCreated
-            ? "AkahukuContentAppend"
-            : "AkahukuContentReAppend");
-        appendEvent.initEvent (appendEventName, true, true);
-        if (!td.dispatchEvent (appendEvent)) {
-          // preventDefault時にはスレを表示しない
-          td.style.display = "none";
-        }
-        else {
-          td.style.display = "";// 表示する
-        }
-      }
-
       if (td.style.display == "none") {
         entire = true;
         leftNum ++;
@@ -2899,6 +2878,141 @@ var arAkahukuCatalog = {
       arAkahukuFile.createFile (filename, newText);
             
     }
+  },
+
+  /**
+   * マージデータの挿入準備(要素生成,属性更新,カスタムイベント発行)
+   *
+   * @param  Array [arAkahukuMergeItem,...] mergedItems
+   *         カタログのマージ用のデータ
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   */
+  prepareMergeItems : function (mergedItems, targetDocument) {
+    var param = Akahuku.getDocumentParam (targetDocument);
+    var info = param.location_info;
+
+    var tdCreated = false;
+    var td;
+
+    var appending_container
+      = targetDocument.getElementById ("akahuku_appending_container");
+    if (!appending_container) {
+      // 拡張間連携のための不可視の一時挿入場所
+      appending_container = targetDocument.createElement ("div");
+      appending_container.id = "akahuku_appending_container";
+      targetDocument.body.appendChild (appending_container);
+    }
+
+    for (var i = 0; i < mergedItems.length; i ++) {
+      td = mergedItems [i].td;
+      if (td) {
+        // 既に td 要素があった場合
+        tdCreated = false;
+        if (mergedItems [i].oldReplyNumber >= 0) {
+          td.setAttribute ("__old_reply_number",
+                           mergedItems [i].oldReplyNumber);
+          td.removeAttribute ("__is_up");
+        }
+        if (!mergedItems [i].isNew) {
+          td.removeAttribute ("__is_new");
+        }
+        td.setAttribute ("__original_index", mergedItems [i].index);
+      }
+      else {
+        // td 要素が新たに必要になる場合
+        tdCreated = true;
+        td = arAkahukuCatalog.createCell
+        (mergedItems [i], targetDocument, info);
+        mergedItems [i].td = td;
+      }
+
+      if (mergedItems [i].overflowed) {
+        td.setAttribute ("__overflowed", "true");
+      }
+      else {
+        td.removeAttribute ("__overflowed");
+      }
+      if (mergedItems [i].currentReplyNumber >= 0) {
+        td.setAttribute ("__reply_number",
+            mergedItems [i].currentReplyNumber);
+      }
+
+      // 連携したい他の拡張機能の支援(カスタムイベント)
+      appending_container.appendChild (td);
+      var appendEvent = targetDocument.createEvent ("Events");
+      var appendEventName = (tdCreated
+          ? "AkahukuContentAppend"
+          : "AkahukuContentReAppend");
+      appendEvent.initEvent (appendEventName, true, true);
+      if (!td.dispatchEvent (appendEvent)) {
+        // preventDefault時にはスレを表示しない
+        td.style.display = "none";
+      }
+      else {
+        td.style.display = "";// 表示する
+      }
+
+      // イベントハンドラによるセルへの変更を内部情報へ反映
+      mergedItems [i].isSticky = arAkahukuCatalog.isStickyCell (td);
+
+      appending_container.removeChild (td);
+    }
+  },
+
+  /**
+   * セルの要素の生成
+   *
+   * @param  arAkahukuMergeItem mergedItem
+   *         カタログのマージ用のデータ
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   * @param  arAkahukuLocationInfo info
+   *         アドレスの情報
+   */
+  createCell : function (mergedItem, targetDocument, info) {
+    if (mergedItem.td) {
+      return mergedItem.td;
+    }
+
+    var td = targetDocument.createElement ("td");
+    /* mergedItem.innerHTML には HTML が含まれるので
+     * innerHTML を使用する */
+    td.innerHTML = mergedItem.innerHTML;
+
+    if (mergedItem.className
+        && mergedItem.className != "undefined"
+        && mergedItem.className != "null") {
+      td.className = mergedItem.className;
+    }
+
+    // 必須の属性を updateCell より先に設定
+    td.setAttribute ("__original_index", mergedItem.index);
+    td.setAttribute ("__thread_id", mergedItem.threadId);
+    if (mergedItem.isNew) {
+      td.setAttribute ("__is_new", "true");
+    }
+    else {
+      td.setAttribute ("__is_up", "true");
+    }
+
+    arAkahukuCatalog.updateCell (td, info);
+
+    // 芝刈り
+    if (arAkahukuLink.enableHideTrolls
+        && !arAkahukuLink.enableHideTrollsNoCat) {
+      arAkahukuLink.applyHideTrolls (targetDocument, td);
+    }
+
+    // マークは生成時から (最適化)
+    if (arAkahukuCatalog.enableVisited) {
+      arAkahukuCatalog.setCellVisited (td, mergedItem.visited);
+    }
+    if (arAkahukuCatalog.enableObserveOpened) {
+      arAkahukuCatalog.setCellOpened (td, mergedItem.opened);
+    }
+
+    return td;
   },
 
   /**
@@ -3249,6 +3363,13 @@ var arAkahukuCatalog = {
     return false;
   },
     
+  isStickyCell : function (cell) {
+    if (arAkahukuCatalog.enableReorderSticky) {
+      return cell.hasAttribute ("__sticky");
+    }
+    return false;
+  },
+
   /**
    * コメントを表示可能な状態にフォーマットする
    *
@@ -3834,6 +3955,14 @@ var arAkahukuCatalog = {
 
     // index順以外の共通評価関数
     function compareForReorderToWidth (x, y) {
+      if (arAkahukuCatalog.enableReorderSticky) {
+        if (x.isSticky && !y.isSticky) {
+          return -1;
+        }
+        else if (!x.isSticky && y.isSticky) {
+          return 1;
+        }
+      }
       if (arAkahukuCatalog.enableReorderNew) {
         if (x.isNew && !y.isNew) {
           return -1;
@@ -3866,6 +3995,7 @@ var arAkahukuCatalog = {
     }
     if (!arAkahukuCatalog.enableReloadLeftBefore
         && !arAkahukuCatalog.enableReorderNew
+        && !arAkahukuCatalog.enableReorderSticky
         && !arAkahukuCatalog.enableReorderVisited) {
       compareForReorderToWidth = function () {return 0};
     }
@@ -3979,6 +4109,7 @@ var arAkahukuCatalog = {
     var count = 0;
     var visited = false;
     var opened = false;
+    var isSticky = false;
     var nums = Object ();
         
     param.historyCallbacks = new arAkahukuMergeItemCallbackList ();
@@ -3999,12 +4130,16 @@ var arAkahukuCatalog = {
                 
         visited = false;
         opened = false;
+        isSticky = false;
                 
         if (arAkahukuCatalog.enableReorderVisited) {
           visited = arAkahukuCatalog.isVisitedCell (oldCells [i]);
         }
         if (arAkahukuCatalog.enableObserveOpened) {
           opened = arAkahukuCatalog.isOpenedCell (oldCells [i]);
+        }
+        if (arAkahukuCatalog.enableReorderSticky) {
+          isSticky = arAkahukuCatalog.isStickyCell (oldCells [i]);
         }
                 
         count ++;
@@ -4027,6 +4162,7 @@ var arAkahukuCatalog = {
             {visited: visited, opened: opened,
              isNew: oldCells [i].getAttribute ("__is_new") == "true",
              overflowed: oldCells [i].getAttribute ("__overflowed") == "true",
+             isSticky: isSticky,
             }));
 
         if (arAkahukuCatalog.enableReorderVisited) {
@@ -4140,6 +4276,7 @@ var arAkahukuCatalog = {
   },
   _onReorderClickCore2 : function (targetDocument, param, oldTable, mergedItems, target_id) {
     if (mergedItems.length > 0) {
+      arAkahukuCatalog.prepareMergeItems (mergedItems, targetDocument);
       param.columns
       = arAkahukuCatalog.reorder (mergedItems,
                                   target_id,
@@ -4344,6 +4481,7 @@ var arAkahukuCatalog = {
     
   _update2 : function (targetDocument, oldTable, mergedItems, param)
   {
+    arAkahukuCatalog.prepareMergeItems (mergedItems, targetDocument);
     param.columns
       = arAkahukuCatalog.reorder (mergedItems, "",param);
     arAkahukuCatalog.replaceTable
@@ -4540,6 +4678,7 @@ var arAkahukuCatalog = {
                 
       var visited = false;
       var opened = false;
+      var isSticky = false;
                 
       if (oldCells [threadId]) {
         if (arAkahukuCatalog.enableReorderVisited) {
@@ -4547,6 +4686,9 @@ var arAkahukuCatalog = {
         }
         if (arAkahukuCatalog.enableObserveOpened) {
           opened = arAkahukuCatalog.isOpenedCell (oldCells [threadId]);
+        }
+        if (arAkahukuCatalog.enableReorderSticky) {
+          isSticky = arAkahukuCatalog.isStickyCell (oldCells [threadId]);
         }
                 
         nums [parseInt (threadId)] = true;
@@ -4565,6 +4707,7 @@ var arAkahukuCatalog = {
             oldCells [threadId].getAttribute ("class"),
             {visited: visited, opened: opened,
              isNew: false, overflowed: false,
+             isSticky: isSticky,
             }));
                 
         if (arAkahukuCatalog.enableReorderVisited) {
@@ -4659,6 +4802,9 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableObserveOpened && uri) {
           opened = arAkahukuCatalog.isOpened (uri);
         }
+        if (arAkahukuCatalog.enableReorderSticky) {
+          isSticky = arAkahukuCatalog.isStickyCell (oldCells [threadId]);
+        }
             
         nums [parseInt (threadId)] = true;
         if (newestId < parseInt (threadId)) {
@@ -4677,6 +4823,7 @@ var arAkahukuCatalog = {
           oldCells [threadId].getAttribute ("class"),
           {visited: visited, opened: opened,
            isNew: false, overflowed: true,
+           isSticky: isSticky,
           }));
 
         if (arAkahukuCatalog.enableReorderVisited) {
