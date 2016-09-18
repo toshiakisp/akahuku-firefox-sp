@@ -2815,8 +2815,8 @@ var arAkahukuCatalog = {
         for (j = 0; j < nodes.length; j ++) {
           if (nodes [j].src.match (/(?:cat|thumb)\/([0-9]+)s\.jpg$/)) {
             imageLink = nodes [j].src;
-            imageWidth = nodes [j].width;
-            imageHeight = nodes [j].height;
+            imageWidth = nodes [j].getAttribute ("width");
+            imageHeight = nodes [j].getAttribute ("height");
             break;
           }
         }
