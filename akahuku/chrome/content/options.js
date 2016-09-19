@@ -1056,6 +1056,8 @@ var AkahukuOptions = {
       ["int",  "catalog.reorder.save.type", 0],
       ["bool", "catalog.reorder.visited", false],
       ["bool", "catalog.reorder.new", false],
+      ["bool", "catalog.reorder.stick-by-text.enable", false],
+      ["char", "catalog.reorder.stick-by-text.pattern", ""],
       ["bool", "catalog.reorder.fill", false],
       ["bool", "catalog.reorder.info", false, "privatemod"],
       ["bool", "catalog.zoom", false],
@@ -4060,6 +4062,7 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_reorder_width_label2").disabled
     = document.getElementById ("catalog_reorder_visited").disabled
     = document.getElementById ("catalog_reorder_new").disabled
+    = document.getElementById ("catalog_reorder_stick-by-text_enable").disabled
     = document.getElementById ("catalog_reorder_fill").disabled
     = document.getElementById ("catalog_reorder_misc_group_label").disabled
     = document.getElementById ("catalog_reorder_misc_label").disabled
@@ -4068,12 +4071,20 @@ var AkahukuOptions = {
     = !document.getElementById ("catalog_reorder").checked;
         
     AkahukuOptions.checkCatalogReorderSave ();
+    AkahukuOptions.checkCatalogReorderStickByText ();
   },
     
   checkCatalogReorderSave : function () {
     document.getElementById ("catalog_reorder_save_type").disabled
     = !document.getElementById ("catalog_reorder").checked
     || !document.getElementById ("catalog_reorder_save").checked
+  },
+
+  checkCatalogReorderStickByText : function () {
+    document.getElementById ("catalog_reorder_stick-by-text_pattern_label").disabled
+    = document.getElementById ("catalog_reorder_stick-by-text_pattern").disabled
+    = document.getElementById ("catalog_reorder_stick-by-text_enable").disabled
+    || !document.getElementById ("catalog_reorder_stick-by-text_enable").checked
   },
     
   checkCatalogZoom : function () {

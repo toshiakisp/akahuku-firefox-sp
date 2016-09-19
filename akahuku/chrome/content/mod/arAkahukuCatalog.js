@@ -1499,6 +1499,8 @@ arAkahukuCatalogParam.prototype = {
     
   historyCallbacks : null,
 
+  ageStickByTextPattern : 0,
+
   /**
    * データを開放する
    */
@@ -1934,6 +1936,11 @@ var arAkahukuCatalog = {
   enableReorderSticky : true,   /* Boolean  Sticky フラグを分ける */
   enableReorderFill : false,    /* Boolean  合間合間に で消した分を詰める */
   enableReorderInfo : false,    /* Boolean  各行に情報を表示する */
+
+  enableReorderStickByText : false, /* Boolean  本文で分ける */
+  patternsToStickByText : [], /* Array RegExp */
+  lastPatternStickByText : "",  /* String */
+  ageStickByTextPattern : 0,  /* Number */
     
   enableZoom : false,         /* Boolean  ズーム */
   enableZoomClick : false,    /* Boolean  クリックで開く */
@@ -2266,6 +2273,20 @@ var arAkahukuCatalog = {
       arAkahukuCatalog.enableReorderNew
         = arAkahukuConfig
         .initPref ("bool", "akahuku.catalog.reorder.new", false);
+      arAkahukuCatalog.enableReorderStickByText
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.catalog.reorder.stick-by-text.enable", false);
+      var value = arAkahukuConfig
+        .initPref ("char", "akahuku.catalog.reorder.stick-by-text.pattern", "");
+      if (!arAkahukuCatalog.enableReorderStickByText) {
+        value = "";
+      }
+      if (arAkahukuCatalog.lastPatternStickByText != value) {
+        arAkahukuCatalog.lastPatternStickByText = value;
+        arAkahukuCatalog.ageStickByTextPattern ++;
+        arAkahukuCatalog.patternsToStickByText
+          = arAkahukuCatalog.parseStickByTextPattern (unescape (value));
+      }
       arAkahukuCatalog.enableReorderFill
         = arAkahukuConfig
         .initPref ("bool", "akahuku.catalog.reorder.fill", false);
@@ -2469,6 +2490,71 @@ var arAkahukuCatalog = {
     arAkahukuCatalog.enableLeft
     = arAkahukuConfig
     .initPref ("bool", "akahuku.catalog.left", false);
+  },
+
+  /**
+   * 「本文で分ける」のパターン文字列を解析
+   *
+   * @parama String text コンマ区切りのパターン
+   * @return Array [{pattern: new RegExp(), label: ""},...]
+   */
+  parseStickByTextPattern : function (text) {
+    var ret = [];
+    // コンマ区切り(\,でエスケープ可)を分解
+    text.replace (/[\r\n]/g, "").replace (/,/g, "\n")
+    .replace (/\\\n/g, ",").split (/\n/g)
+    .forEach (function (token) {
+      // 前後の空白は除外
+      token = token.replace (/(^\s*|\s*$)/g, "");
+      if (!token) {
+        return;
+      }
+      var obj = {pattern: null, label: token};
+      var flags = "";
+      try {
+        if (token.match (/^\/(.*)\/([gimy]*)$/)) {
+          // "/asdf/" はそのまま正規表現に
+          pat = RegExp.$1;
+          flags = RegExp.$2;
+        }
+        else { // 文字列
+          flags = "i";
+          // 半角全角を区別しない ("a" => "[aａＡ]")
+          pat = token.replace (/[\u0021-\u007e]/g, // "!"-"~"
+            function (matched) {
+              var c = matched.charCodeAt (0);
+              if (c < 0xfee0) {
+                var ca = c;
+                var cw = c + 0xfee0; // 半角を全角へ
+              }
+              else {
+                var ca = c - 0xfee0; // 全角を半角へ
+                var cw = c;
+              }
+              if (0xff21 <= cw && cw <= 0xff3a) {// "Ａ"-"Ｚ"
+                var cw2 = cw + 0x0020; // 大文字を小文字へ
+              }
+              else if (0xff41 <= cw && cw <= 0xff5a) {// "ａ"-"ｚ"
+                var cw2 = cw - 0x0020; // 小文字を大文字へ
+              }
+              var s1 = String.fromCharCode (ca);
+              var s2 = String.fromCharCode (cw, cw2);
+              // 正規表現の特殊文字をエスケープ
+              s1 = s1.replace (/[\[\]\\]/g, "\\$&");
+              return "[" + s1 + s2 + "]";
+            });
+          // スペースは全角空白にもマッチさせる
+          pat = pat.replace (/ /g, "[ \u3000]");
+        }
+        if (pat) {
+          obj.pattern = new RegExp (pat, flags);
+          ret.push (obj);
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    });
+    return ret;
   },
     
   /**
@@ -2904,6 +2990,14 @@ var arAkahukuCatalog = {
       targetDocument.body.appendChild (appending_container);
     }
 
+    var checkAll4StickByText = false;
+    var age = "ageStickByTextPattern";
+    if (param.catalog_param [age] != arAkahukuCatalog [age]) {
+      // 設定変更があったため全セルをチェック
+      checkAll4StickByText = true;
+      param.catalog_param [age] = arAkahukuCatalog [age];
+    }
+
     for (var i = 0; i < mergedItems.length; i ++) {
       td = mergedItems [i].td;
       if (td) {
@@ -2938,6 +3032,11 @@ var arAkahukuCatalog = {
             mergedItems [i].currentReplyNumber);
       }
 
+      if ((arAkahukuCatalog.enableReorderStickByText && tdCreated) ||
+          checkAll4StickByText) {
+        arAkahukuCatalog.checkCell4StickByText (td, checkAll4StickByText);
+      }
+
       // 連携したい他の拡張機能の支援(カスタムイベント)
       appending_container.appendChild (td);
       var appendEvent = targetDocument.createEvent ("Events");
@@ -2957,6 +3056,33 @@ var arAkahukuCatalog = {
       mergedItems [i].isSticky = arAkahukuCatalog.isStickyCell (td);
 
       appending_container.removeChild (td);
+    }
+  },
+
+  checkCell4StickByText : function (td, optUnflag) {
+    if (!arAkahukuCatalog.enableReorderStickByText) {
+      if (optUnflag) {
+        arAkahukuCatalog.setCellSticky (td, false);
+      }
+      return;
+    }
+
+    var e1 = td.getElementsByClassName ("akahuku_comment") [0];
+    var text1 = (e1 ? e1.textContent : "");
+    var e2 = td.getElementsByClassName ("akahuku_native_comment") [0];
+    var text2 = (e2 ? e2.textContent : "");
+    // 長い方を検索対象に
+    var text = (text1.length > text2.length ? text1 : text2);
+
+    var pats = arAkahukuCatalog.patternsToStickByText;
+    for (var i = 0; i < pats.length; i ++) {
+      if (pats [i].pattern.test (text)) {
+        arAkahukuCatalog.setCellSticky (td, true, pats [i].label);
+        return;
+      }
+    }
+    if (optUnflag) {
+      arAkahukuCatalog.setCellSticky (td, false);
     }
   },
 
@@ -3368,6 +3494,16 @@ var arAkahukuCatalog = {
       return cell.hasAttribute ("__sticky");
     }
     return false;
+  },
+
+  setCellSticky : function (cell, isSticky, optValue) {
+    optValue = optValue || "sticky";
+    if (isSticky) {
+      cell.setAttribute ("__sticky", optValue);
+    }
+    else {
+      cell.removeAttribute ("__sticky");
+    }
   },
 
   /**
@@ -5767,6 +5903,10 @@ var arAkahukuCatalog = {
         }
                 
         arAkahukuCatalog.updateCell (nodes [i], info);
+
+        if (arAkahukuCatalog.enableReorderStickByText) {
+          arAkahukuCatalog.checkCell4StickByText (nodes [i]);
+        }
       }
       // 最新スレ番号を板の最新レス番号へ反映する
       arAkahukuBoard.updateNewestNum (info, param.latestThread);

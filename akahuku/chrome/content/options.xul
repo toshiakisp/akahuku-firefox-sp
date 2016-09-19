@@ -1706,6 +1706,19 @@
                       label="最新に更新で新規を分ける" />
             <checkbox id="catalog_reorder_fill" checked="false"
                       label="合間合間に で消した分を詰める" />
+              <checkbox id="catalog_reorder_stick-by-text_enable" checked="false"
+                        class="sp" tooltiptext="(デフォルト:無効) パターンに合致する本文のスレを最上段(φ)に分けて並べる。「～順に指定幅ずつ」でソートする必要あり。"
+                        oncommand="AkahukuOptions.checkCatalogReorderStickByText ();"
+                        label="本文で分ける" />
+              <box class="sub" orient="vertical">
+                <box orient="horizontal" align="center">
+                  <label id="catalog_reorder_stick-by-text_pattern_label"
+                         control="catalog_reorder_stick-by-text_pattern"
+                         value="パターン"/>
+                  <textbox id="catalog_reorder_stick-by-text_pattern" flex="1"
+                           tooltiptext="部分一致検索のための文字列か正規表現(/.../)をコンマ区切りで入力する。文字列では、半角英数記号は大文字小文字の区別無く全角にもマッチする。コンマ自体は\でエスケープ。 例: firefox, 赤福, a\,b, /^>/m, /\bs[upqz][1-9]/"/>
+                </box>
+              </box>
             </groupbox>
             <checkbox id="catalog_reorder_info" checked="false"
                       class="sp" tooltiptext="(デフォルト:無効) 各行にソート順に関する情報を表示する (スレの立った時間帯,増加数)"
