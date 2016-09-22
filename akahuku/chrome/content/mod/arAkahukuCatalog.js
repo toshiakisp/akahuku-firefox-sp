@@ -4582,10 +4582,9 @@ var arAkahukuCatalog = {
               arAkahukuCatalog.setStatus // "更新中 (履歴 timeout)"
               ("\u66F4\u65B0\u4E2D (\u5C65\u6B74 timeout)",
                true, targetDocument);
-              targetDocument.defaultView.setTimeout (function () {
-                // 一時停止した後に更新を継続
-                param.historyCallbacks.callback ();
-              }, 500);
+              // 一時停止した後に更新を継続
+              arAkahukuUtil.wait (500);
+              param.historyCallbacks.callback ();
             }, 5000);
           param.historyCallbacks.asyncWaitRequests
             (function () {
@@ -4594,6 +4593,7 @@ var arAkahukuCatalog = {
               arAkahukuCatalog.setStatus // "更新中"
                 ("\u66F4\u65B0\u4E2D", true, targetDocument);
               param.historyCallbacks = null;
+              arAkahukuUtil.wait (0); // draw now
               arAkahukuCatalog._update2
                 (targetDocument, oldTable, mergedItems, param);
             });
