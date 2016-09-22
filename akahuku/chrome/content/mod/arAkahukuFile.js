@@ -173,6 +173,7 @@ var arAkahukuFile = {
       file.initWithPath (filename);
     }
     catch (e) {
+      Components.utils.reportError (e.message);
     }
         
     return file;
@@ -187,31 +188,17 @@ var arAkahukuFile = {
    *         ファイルの内容
    */
   createFile : function (filename, text) {
-    var file = null;
-    try {
-      file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (filename);
-      if (!file.exists ()) {
-        file.create (0x00, 420/* 0644 */);
-      }
-    }
-    catch (e) {
-      file = null;
-    }
-        
+    var file = arAkahukuFile.initFile (filename);
     if (file) {
       try {
         var fstream
-        = Components
-        .classes ["@mozilla.org/network/file-output-stream;1"]
-        .createInstance (Components.interfaces.nsIFileOutputStream);
-        fstream.init (file, 0x02 | 0x08 | 0x20, 420/* 0644 */, 0);
+        = arAkahukuFile.createFileOutputStream
+        (file, 0x02 | 0x08 | 0x20, 420/* 0644 */, 0);
         fstream.write (text, text.length);
         fstream.close ();
       }
       catch (e) {
+        Components.utils.reportError (e.message);
       }
     }
   },
@@ -228,20 +215,14 @@ var arAkahukuFile = {
    */
   asyncCreateFile : function (filename, text, callback) {
     var fstream = null;
+    var file = arAkahukuFile.initFile (filename);
     try {
-      var file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (filename);
-      if (!file.exists ()) {
-        file.create (0x00, 420/* 0644 */);
-      }
       fstream
-      = Components.classes ["@mozilla.org/network/file-output-stream;1"]
-      .createInstance (Components.interfaces.nsIFileOutputStream);
-      fstream.init (file, 0x02 | 0x08 | 0x20, 420/* 0644 */, 0);
+      = arAkahukuFile.createFileOutputStream
+      (file, 0x02 | 0x08 | 0x20, 420/* 0644 */, 0);
     }
     catch (e) {
+      Components.utils.reportError (e.message);
       fstream = null;
     }
 
@@ -278,10 +259,12 @@ var arAkahukuFile = {
           fstream.close ();
         }
         catch (e if e instanceof Components.interfaces.nsIXPCException) {
+          Components.utils.reportError (e.message);
           callback.apply (null, [e.result]);
           return;
-	}
+        }
         catch (e) {
+          Components.utils.reportError (e.message);
           callback.apply (null, [Components.results.NS_ERROR_FAILURE]);
           return;
         }
@@ -319,36 +302,25 @@ var arAkahukuFile = {
    */
   readFile : function (filename) {
     var text = "";
-    var file = null;
-        
-    try {
-      file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (filename);
-    }
-    catch (e) {
-      file = null;
-    }
+    var file = arAkahukuFile.initFile (filename);
         
     if (file) {
       try {
         var fstream
-        = Components
-        .classes ["@mozilla.org/network/file-input-stream;1"]
-        .createInstance (Components.interfaces.nsIFileInputStream);
+        = arAkahukuFile.createFileInputStream
+        (file, 0x01, 292/* 0444 */, 0);
         var sstream
         = Components
         .classes ["@mozilla.org/scriptableinputstream;1"]
         .createInstance (Components.interfaces
                          .nsIScriptableInputStream);
-        fstream.init (file, 0x01, 292/* 0444 */, 0);
         sstream.init (fstream);
         text = sstream.read (-1);
         sstream.close ();
         fstream.close ();
       }
       catch (e) {
+        Components.utils.reportError (e.message);
         text = "";
       }
     }
@@ -366,35 +338,24 @@ var arAkahukuFile = {
    */
   readBinaryFile : function (filename) {
     var bindata = "";
-    var file = null;
-        
-    try {
-      file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (filename);
-    }
-    catch (e) {
-      file = null;
-    }
+    var file = arAkahukuFile.initFile (filename);
         
     if (file) {
       try {
         var fstream
-        = Components
-        .classes ["@mozilla.org/network/file-input-stream;1"]
-        .createInstance (Components.interfaces.nsIFileInputStream);
+        = arAkahukuFile.createFileInputStream
+        (file, 0x01, 292/* 0444 */, 0);
         var bstream
         = Components
         .classes ["@mozilla.org/binaryinputstream;1"]
         .createInstance (Components.interfaces.nsIBinaryInputStream);
-        fstream.init (file, 0x01, 292/* 0444 */, 0);
         bstream.setInputStream (fstream);
         bindata = bstream.readBytes (file.fileSize);
         bstream.close ();
         fstream.close ();
       }
       catch (e) {
+        Components.utils.reportError (e);
         bindata = "";
       }
     }
