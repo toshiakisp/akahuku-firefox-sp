@@ -571,11 +571,21 @@ arAkahukuMHTFileData.prototype = {
           (Components.interfaces.nsIStreamConverter);
         converter.asyncConvertData (encoding, "uncompressed", this, null);
 
+        var istream = entry.openInputStream (0);
+        if (istream.isNonBlocking ()) { // cache v2
+          var pump
+            = Components.classes
+            ["@mozilla.org/network/input-stream-pump;1"]
+            .createInstance (Components.interfaces.nsIInputStreamPump);
+          pump.init (istream, -1, -1, 0, 0, true);
+          pump.asyncRead (converter, null);
+          this.converting = true;
+          return;
+        }
         var listener
           = converter.QueryInterface
           (Components.interfaces.nsIStreamListener);
         listener.onStartRequest (null, null);
-        var istream = entry.openInputStream (0);
         listener.onDataAvailable (null, null, istream, 0, entry.dataSize);
         istream.close ();
         this.converting = true;
