@@ -4570,7 +4570,8 @@ var arAkahukuCatalog = {
         = arAkahukuCatalog.mergeCellNodes (targetDocument,
                                            responseText);
       if (mergedItems.length > 0) {
-        if (param.historyCallbacks.count > 0) {
+        if (arAkahukuCatalog.enableReorderVisited &&
+            param.historyCallbacks.count > 0) {
           arAkahukuCatalog.setStatus
             ("\u66F4\u65B0\u4E2D (\u5C65\u6B74)", // "更新中 (履歴)"
              true, targetDocument);
