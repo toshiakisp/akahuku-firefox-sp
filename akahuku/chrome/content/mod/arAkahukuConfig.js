@@ -25,18 +25,29 @@ var arAkahukuConfig = {
     arAkahukuConfig.loadPrefBranch ();
     try {
       var oldVersion = arAkahukuConfig.getCharPref ("akahuku.version");
-      if (arAkahukuCompat.compareVersion (String (AkahukuVersion), oldVersion) > 0) {
+      var cr = arAkahukuCompat.compareVersion (String (AkahukuVersion), oldVersion);
+      if (cr > 0) {
         // バージョンアップ時
         Akahuku.debug.log ("Version up detected from " + oldVersion + " to " + AkahukuVersion);
 
-        // reset in sp_rev.37
-        if (arAkahukuCompat.compareVersion (String (AkahukuVersion), "5.2.90.sp_rev.36") == 0) {
-          Akahuku.debug.log ("Reset akahuku.ext.maximageretries to  0");
+        // 対象バージョン以上への更新の判定
+        var updatedOver = function (v) {
+          var c = arAkahukuCompat.compareVersion;
+          return (c (oldVersion, v) < 0 && c (String (AkahukuVersion), v) >= 0);
+        };
+
+        if (updatedOver ("5.2.90.sp_rev.38")) {
+          Akahuku.debug.log ("Reset akahuku.ext.maximageretries to 0");
           arAkahukuConfig.setIntPref ("akahuku.ext.maximageretries", 0);
         }
       }
+      else if (cr < 0) {
+        // バージョンダウン
+        Akahuku.debug.log ("Version down detected from "
+            + oldVersion + " to " + AkahukuVersion);
+      }
       else {
-        Akahuku.debug.log ("Version " + oldVersion + " to " + AkahukuVersion);
+        // バージョン据え置き
       }
     }
     catch (e) { Akahuku.debug.exception (e);
