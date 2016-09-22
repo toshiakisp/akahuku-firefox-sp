@@ -1984,6 +1984,9 @@ var arAkahukuCatalog = {
                               *   <String server:dir, [Object セル情報]> */
   lastCellsText : "",        /* String  lastcells.txt の内容 */
     
+  // マークアップ属性
+  CLASSNAME_CATALOG_TABLE : "akahuku_markup_catalog_table",
+
   /**
    * 初期化処理
    */
@@ -2017,6 +2020,8 @@ var arAkahukuCatalog = {
   setStyle : function (style, targetDocument, info) {
     if (info.isCatalog) {
       /* カタログモード */
+
+      var cattable = "table." + arAkahukuCatalog.CLASSNAME_CATALOG_TABLE;
             
       /* ソート */
       if (arAkahukuCatalog.enableReorder) {
@@ -2215,20 +2220,20 @@ var arAkahukuCatalog = {
                   "border-style: dotted; "
                   + "border-color: #800;")
         // 赤くすることでセルのサイズが変化しないように
-        .addRule ('table[border="1"] td',
+        .addRule (cattable + '[border="1"] td',
                   "border-width: 1px; "
                   + "padding: 1px;")
-        .addRule ('table[border="1"] td[__age="9"]:not([__preserved])'
-                  + ',table[border="1"] td[__age="9"][__preserved="0"]'
-                  + ',table[border="1"] td[__age="10"][__preserved="0"]'
-                  + ',table[border="1"] td[__age="10"]:not([__preserved])'
-                  + ',table[border="1"] td[__age="-1"]',
+        .addRule (cattable + '[border="1"] td[__age="9"]:not([__preserved]),'
+                  + cattable + '[border="1"] td[__age="9"][__preserved="0"],'
+                  + cattable + '[border="1"] td[__age="10"][__preserved="0"],'
+                  + cattable + '[border="1"] td[__age="10"]:not([__preserved]),'
+                  + cattable + '[border="1"] td[__age="-1"]',
                   "border-width: 2px; "
                   + "padding: 0px;")
         // 枠無しのカタログでの赤枠 (ニュース表など)
-        .addRule ('table:not([border="1"]) td[__age="9"]'
-                  + ',table:not([border="1"]) td[__age="10"]'
-                  + ',table:not([border="1"]) td[__age="-1"]',
+        .addRule (cattable + ':not([border="1"]) td[__age="9"],'
+                  + cattable + ':not([border="1"]) td[__age="10"],'
+                  + cattable + ':not([border="1"]) td[__age="-1"]',
                   "border-width: 1px;")
       }
       // 更新前を残す
@@ -2236,10 +2241,10 @@ var arAkahukuCatalog = {
       .addRule ('td[__overflowed="true"]',
                 "background-color: #ddddcc;")
       // 開かれているスレ
-      .addRule ('table[border="1"] td[__opened]',
+      .addRule (cattable + '[border="1"] td[__opened]',
                 "border-style: outset;"
                 + "box-shadow: 1px 1px #d8b2b2;")
-      .addRule ('table:not([border="1"]) td[__opened]',
+      .addRule (cattable + ':not([border="1"]) td[__opened]',
                 "border-style: outset;"
                 + "border-width: 1px;")
       // 要素追加のカスタムイベント発行用
@@ -4001,10 +4006,25 @@ var arAkahukuCatalog = {
   },
 
   getCatalogTable : function (targetDocument) {
-    var table = targetDocument.getElementsByTagName ("table") [1];
+    var table = null;
+    var className = arAkahukuCatalog.CLASSNAME_CATALOG_TABLE;
+
+    // マーク済み
+    table = arAkahukuDOM.getFirstElementByNames (targetDocument,
+        "", className);
+    if (table) {
+      return table;
+    }
+
+    // 初回のノード探索
+    table = targetDocument.getElementsByTagName ("table") [1];
     if (!table) {
       /* 避難所 patch */
       table = targetDocument.getElementsByTagName ("table") [0];
+    }
+
+    if (table) {
+      arAkahukuDOM.addClassName (table, className);
     }
     return table;
   },

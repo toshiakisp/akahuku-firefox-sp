@@ -419,6 +419,13 @@ var arAkahukuDOM = {
    */
   getFirstElementByNames : function (targetElement, tagName, className) {
     var nodes, i;
+
+    if (!tagName) {
+      if (className) {
+        nodes = targetElement.getElementsByClassName (className);
+      }
+      return ((nodes && nodes.length > 0) ? nodes [0] : null);
+    }
         
     nodes = targetElement.getElementsByTagName (tagName);
     if (className) {
