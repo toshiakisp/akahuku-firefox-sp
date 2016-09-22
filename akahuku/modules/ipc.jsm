@@ -560,6 +560,11 @@ AkahukuIPC.prototype = {
 
   getContentFrameMessageManager : getContentFrameMessageManager,
 
+  getChildProcessMessageManager : function () {
+    return Cc ['@mozilla.org/childprocessmessagemanager;1']
+      .getService (Ci.nsISyncMessageSender);
+  },
+
   /**
    * IPCコマンドを実行中のみセットされる message.event
    */

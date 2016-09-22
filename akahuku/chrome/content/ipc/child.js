@@ -168,7 +168,9 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
   if (fstream) {
     Cu.import ("resource://akahuku/ipc-stream.jsm");
     fstream = new arOutputStreamChild (fstream);
-    var mm = arAkahukuIPC.getContentFrameMessageManager (contentWindow);
+    var mm = (contentWindow
+        ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
+        : arAkahukuIPC.getChildProcessMessageManager ());
     fstream.attachIPCMessageManager (mm);
   }
   return fstream;
@@ -186,7 +188,9 @@ arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFla
   if (fstream) {
     Cu.import ("resource://akahuku/ipc-stream.jsm");
     var fstreamC = new arInputStreamChild (fstream);
-    var mm = arAkahukuIPC.getContentFrameMessageManager (contentWindow);
+    var mm = (contentWindow
+        ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
+        : arAkahukuIPC.getChildProcessMessageManager ());
     fstreamC.attachIPCMessageManager (mm);
     fstream = fstreamC.inputStream;
   }

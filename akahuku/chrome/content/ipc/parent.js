@@ -128,6 +128,9 @@ var arAkahukuFileIPC = {
       Cu.import ("resource://akahuku/ipc-stream.jsm");
       fstream = new arOutputStreamParent (fstream);
       var mm = arAkahukuIPCRoot.messageTarget.messageManager;
+      if (!mm) { // via child process message manager
+        mm = arAkahukuIPCRoot.messageTarget;
+      }
       fstream.attachIPCMessageManager (mm);
       fstream = fstream.createIPCTransferable ();
     }
@@ -139,6 +142,9 @@ var arAkahukuFileIPC = {
       Cu.import ("resource://akahuku/ipc-stream.jsm");
       fstream = new arInputStreamParent (fstream);
       var mm = arAkahukuIPCRoot.messageTarget.messageManager;
+      if (!mm) { // via child process message manager
+        mm = arAkahukuIPCRoot.messageTarget;
+      }
       fstream.attachIPCMessageManager (mm);
       fstream = fstream.createIPCTransferable ();
     }
@@ -146,9 +152,9 @@ var arAkahukuFileIPC = {
   },
 };
 arAkahukuIPCRoot.defineProc
-  (arAkahukuFileIPC, "File", "createFileOutputStream", {frame: true});
+  (arAkahukuFileIPC, "File", "createFileOutputStream");
 arAkahukuIPCRoot.defineProc
-  (arAkahukuFileIPC, "File", "createFileInputStream", {frame: true});
+  (arAkahukuFileIPC, "File", "createFileInputStream");
 
 
 
