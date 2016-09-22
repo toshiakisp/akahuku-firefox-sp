@@ -2995,7 +2995,20 @@ var arAkahukuMHT = {
       fstream.write (data, data.length);
       fstream.close ();
             
-      arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      if (Akahuku.useFrameScript) {
+        // e10s hack: 親プロセスの処理を少し待たないと
+        // 続く moveTo が NS_ERROR_FILE_IS_LOCKED を投げる
+        // (100msが妥当な保証は無し)
+        arAkahukuUtil.wait (100);
+      }
+      try {
+        arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      }
+      catch (e if e.result === Components.results.NS_ERROR_FILE_IS_LOCKED) {
+        // ロックが解けるのを少し待ってリトライ
+        arAkahukuUtil.wait (300);
+        arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      }
             
       /* 完了のメッセージを表示する */
       var text = "\u4FDD\u5B58\u306B\u6210\u529F\u3057\u307E\u3057\u305F";

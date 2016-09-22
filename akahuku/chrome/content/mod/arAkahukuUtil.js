@@ -76,6 +76,22 @@ var arAkahukuUtil = new function () {
       (runnable, Ci.nsIThread.DISPATCH_NORMAL);
   };
 
+  /**
+   * 現スレッドのイベントループを回しながら指定時間経過を待つ
+   */
+  this.wait = function (millisedonds) {
+    var tm = Cc ["@mozilla.org/thread-manager;1"]
+      .getService (Ci.nsIThreadManager);
+    var timeout = false;
+    var timer = Cc ["@mozilla.org/timer;1"].createInstance (Ci.nsITimer);
+    timer.initWithCallback (function () {
+      timeout = true;
+    }, millisedonds, timer.TYPE_ONE_SHOT);
+    while (!timeout) {
+      tm.currentThread.processNextEvent (true);
+    }
+  };
+
   this.resultCodeToString = function (code) {
     var codeInHex = "(0x" + code.toString (16) + ")";
     var codeName = "";
