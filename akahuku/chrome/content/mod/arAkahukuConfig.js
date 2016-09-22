@@ -36,7 +36,7 @@ var arAkahukuConfig = {
           return (c (oldVersion, v) < 0 && c (String (AkahukuVersion), v) >= 0);
         };
 
-        if (updatedOver ("5.2.90.sp_rev.38")) {
+        if (updatedOver ("5.2.90.sp_rev.39")) {
           Akahuku.debug.log ("Reset akahuku.ext.maximageretries to 0");
           arAkahukuConfig.setIntPref ("akahuku.ext.maximageretries", 0);
         }
