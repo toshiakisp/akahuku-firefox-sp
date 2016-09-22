@@ -4316,13 +4316,9 @@ var arAkahukuCatalog = {
       return mergedItems;
     }
         
-    var oldTable = targetDocument.getElementsByTagName ("table") [1];
+    var oldTable = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!oldTable) {
-      /* 避難所 patch */
-      oldTable = targetDocument.getElementsByTagName ("table") [0];
-      if (!oldTable) {
-        return;
-      }
+      return;
     }
         
     var mergedItems = getMergedItems ();
@@ -4505,13 +4501,9 @@ var arAkahukuCatalog = {
     = Akahuku.getDocumentParam (targetDocument)
     .catalogpopup_param;
         
-    var oldTable = targetDocument.getElementsByTagName ("table") [1];
+    var oldTable = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!oldTable) {
-      /* 避難所 patch */
-      oldTable = targetDocument.getElementsByTagName ("table") [0];
-      if (!oldTable) {
-        return;
-      }
+      return;
     }
         
     /* ポップアップを消す */
@@ -4717,11 +4709,7 @@ var arAkahukuCatalog = {
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
         
-    var oldTable = targetDocument.getElementsByTagName ("table") [1];
-    if (!oldTable) {
-      /* 避難所 patch */
-      oldTable = targetDocument.getElementsByTagName ("table") [0];
-    }
+    var oldTable = arAkahukuCatalog.getCatalogTable (targetDocument);
         
     param.oldTable = oldTable.cloneNode (true);
     param.oldOrder = param.order;
@@ -5180,13 +5168,9 @@ var arAkahukuCatalog = {
     var param
     = Akahuku.getDocumentParam (targetDocument).catalog_param;
         
-    var oldTable = targetDocument.getElementsByTagName ("table") [1];
+    var oldTable = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!oldTable) {
-      /* 避難所 patch */
-      oldTable = targetDocument.getElementsByTagName ("table") [0];
-      if (!oldTable) {
-        return;
-      }
+      return;
     }
         
     oldTable.parentNode.replaceChild (param.oldTable, oldTable);
@@ -5555,13 +5539,9 @@ var arAkahukuCatalog = {
       return;
     }
 
-    var table = targetDocument.getElementsByTagName ("table") [1];
+    var table = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!table) {
-      /* 避難所 patch */
-      table = targetDocument.getElementsByTagName ("table") [0];
-      if (!table) {
-        return;
-      }
+      return;
     }
         
     var tbody = table.getElementsByTagName ("tbody");
@@ -5659,13 +5639,9 @@ var arAkahukuCatalog = {
    */
   updateVisited : function (targetDocument, clear) {
     if (arAkahukuCatalog.enableVisited) {
-      var table = targetDocument.getElementsByTagName ("table") [1];
+      var table = arAkahukuCatalog.getCatalogTable (targetDocument);
       if (!table) {
-        /* 避難所 patch */
-        table = targetDocument.getElementsByTagName ("table") [0];
-        if (!table) {
-          return;
-        }
+        return;
       }
       
       var nodes = table.getElementsByTagName ("a");
@@ -5833,13 +5809,9 @@ var arAkahukuCatalog = {
       Akahuku.getDocumentParam (targetDocument)
       .catalog_param = param;
             
-      var table = targetDocument.getElementsByTagName ("table") [1];
+      var table = arAkahukuCatalog.getCatalogTable (targetDocument);
       if (!table) {
-        /* 避難所 patch */
-        table = targetDocument.getElementsByTagName ("table") [0];
-        if (!table) {
-          return;
-        }
+        return;
       }
            
       if (arAkahukuCatalog.enableLeft) {
@@ -6034,13 +6006,9 @@ var arAkahukuCatalog = {
         }
       }
             
-      var table = targetDocument.getElementsByTagName ("table") [1];
+      var table = arAkahukuCatalog.getCatalogTable (targetDocument);
       if (!table) {
-        /* 避難所 patch */
-        table = targetDocument.getElementsByTagName ("table") [0];
-        if (!table) {
-          return;
-        }
+        return;
       }
             
       /* ズーム用にマウスのイベントを検出する */
