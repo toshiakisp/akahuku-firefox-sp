@@ -54,13 +54,13 @@ var arAkahukuDOM = {
    *         クラス名 もしくは ""
    */
   getClassName : function (node) {
-    if (node.getAttribute ("__class")) {
+    if (node.hasAttribute ("__class")) {
       return node.getAttribute ("__class");
     }
     if ("className" in node) {
       return node.className;
     }
-    if (node.getAttribute ("class")) {
+    if (node.hasAttribute ("class")) {
       return node.getAttribute ("class");
     }
     
@@ -78,29 +78,25 @@ var arAkahukuDOM = {
    *         クラス名を持つかどうか
    */
   hasClassName : function (node, className) {
-    var name = "";
-    if ("className" in node
-        && node.className) {
-      name = node.className;
+    var hasToken = function (node, attr, token) {
+      var value = node.getAttribute (attr);
+      value = value.replace (/^\s+|\s+$/g, "");
+      var tokens = value.split (/\s+/);
+      return (tokens.indexOf (token) !== -1);
+    };
+    if (!node.getAttribute) {
+      return false;
     }
-    else if ("getAttribute" in node) {
-      if (node.getAttribute ("class")) {
-        name = node.getAttribute ("class");
+    if (node.hasAttribute ("class")) {
+      if (node.classlist) {
+        // requires Gecko 1.9.2 (Firefox 3.6) or above
+        return node.classList.contains (className);
       }
-      else if (node.getAttribute ("__class")) {
-        name = node.getAttribute ("__class");
-      }
+      return hasToken (node, "class", className);
     }
-    
-    if (name) {
-      var names = name.split (/ +/);
-      for (var i = 0; i < names.length; i ++) {
-        if (names [i] == className) {
-          return true;
-        }
-      }
+    else if (node.hasAttribute ("__class")) {
+      return hasToken (node, "__class", className);
     }
-    
     return false;
   },
   
@@ -114,18 +110,15 @@ var arAkahukuDOM = {
    *         クラス名
    */
   addClassName : function (node, className) {
-    arAkahukuDOM.removeClassName (node, className);
-    
-    var name = "";
-    if ("className" in node) {
-      name = node.className;
+    if (node.classList) {
+      // requires Gecko 1.9.2 (Firefox 3.6) or above
+      node.classList.add (className);
+      return;
     }
-    
-    if (name) {
-      node.className = name + " " + className;
-    }
-    else {
-      node.className = className;
+
+    if (!arAkahukuDOM.hasClassName (node, className)) {
+      node.className
+        = (node.className ? node.className + " " : "") + className;
     }
   },
   
@@ -138,40 +131,32 @@ var arAkahukuDOM = {
    *         クラス名
    */
   removeClassName : function (node, className) {
-    var name;
-    
-    if ("className" in node) {
-      name = node.className;
-      var p = name.indexOf (className);
-      if (p != -1) {
-        name = name.substr (0, p) + name.substr (p + className.length);
+    var removeTokenFrom = function (node, attr, token) {
+      if (!node.hasAttribute (attr)) {
+        return;
       }
-      node.className = name;
+      var value = node.getAttribute (attr).replace (/^\s+|\s+$/g, "");
+      var tokens = value.split (/\s+/);
+      var index = tokens.indexOf (token);
+      if (index !== -1) {
+        tokens.splice (index, 1);
+        if (tokens.length > 0) {
+          node.setAttribute (attr, tokens.join (" "));
+        }
+        else {
+          node.removeAttribute (attr);
+        }
+      }
+    };
+
+    if (node.classList) {
+      // requires Gecko 1.9.2 (Firefox 3.6) or above
+      node.classList.remove (className);
     }
-    
-    name = node.getAttribute ("class");
-    if (name) {
-      var p = name.indexOf (className);
-      if (p != -1) {
-        name = name.substr (0, p) + name.substr (p + className.length);
-      }
-      if (name) {
-        node.setAttribute ("class", name);
-      } else {
-        node.removeAttribute ("class");
-      }
-    } else if (node.hasAttribute ("class")) {
-      node.removeAttribute ("class");
+    else {
+      removeTokenFrom (node, "class", className);
     }
-    
-    name = node.getAttribute ("__class");
-    if (name) {
-      p = name.indexOf (className);
-      if (p != -1) {
-        name = name.substr (0, p) + name.substr (p + className.length);
-      }
-      node.setAttribute ("__class", name);
-    }
+    removeTokenFrom (node, "__class", className);
   },
   
   /**
