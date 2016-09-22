@@ -155,12 +155,6 @@ arAkahukuConfig.restoreTime = function () {
 arAkahukuFile.getDirectory = function () {
   return arAkahukuIPC.sendSyncCommand ("File/getDirectory", arguments);
 };
-arAkahukuFile.createFile = function () {
-  arAkahukuIPC.sendSyncCommand ("File/createFile", arguments);
-};
-arAkahukuFile.asyncCreateFile = function () {
-  arAkahukuIPC.sendAsyncCommand ("File/asyncCreateFile", arguments);
-};
 arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFlags, contentWindow) {
   var fstream = arAkahukuIPC
     .sendSyncCommand ("File/createFileOutputStream",
@@ -172,6 +166,7 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
         : arAkahukuIPC.getChildProcessMessageManager ());
     fstream.attachIPCMessageManager (mm);
+    fstream = fstream.getBufferedOutputStream ();
   }
   return fstream;
 };
