@@ -324,8 +324,23 @@ arOutputStreamChild.prototype = {
     this.ipc.detachIPCMessageManager ();
   },
   flush : function () { this.ipc.flush (); },
+  MAX_TRANSFER_BYTES : 4096,
   write : function (aBuf, aCount) {
-    this.ipc.write (aBuf, aCount);
+    // 分割転送
+    var countWritten = 0;
+    var bufSub;
+    while (countWritten < aCount) {
+      var countLeft = aCount - countWritten;
+      var countSub = Math.min (countLeft, this.MAX_TRANSFER_BYTES);
+      if (countWritten == 0 && countSub == aCount) {
+        bufSub = aBuf;
+      }
+      else {
+        bufSub = aBuf.substr (countWritten, countSub);
+      }
+      countWritten += this.ipc.write (bufSub, countSub);
+    }
+    return countWritten;
   },
   writeFrom : function (aFromStream, aCount) {
     //nsIInputStream aFromStream (FIXME)
