@@ -418,6 +418,12 @@ var arAkahukuDOM = {
    *         見付かればその要素、見付からなければ null
    */
   getFirstElementByNames : function (targetElement, tagName, className) {
+    if (targetElement.querySelector) {
+      // requires Gecko 1.9.1 (Firefox 3.5) or above
+      var selector = (tagName || "") + (className ? "." + className : "");
+      return (selector ? targetElement.querySelector (selector) : null);
+    }
+
     var nodes, i;
 
     if (!tagName) {
