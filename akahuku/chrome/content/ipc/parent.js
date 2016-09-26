@@ -103,6 +103,11 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getDirectory");
 arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "createFile");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "asyncCreateFile",
+   {async: true, callback: 3});
+arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "readFile");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "readBinaryFile");

@@ -298,7 +298,6 @@ function arOutputStreamChild (streamT) {
   this.ipc = new arIPCProxyChild (arOutputStreamChild.prototype);
   this.ipc.parentId = streamT._id;
   this.id = streamT._id;
-  this.mBufferedOutputStream = null;
 }
 
 arOutputStreamChild.prototype = {
@@ -318,37 +317,11 @@ arOutputStreamChild.prototype = {
     throw Cr.NS_NOINTERFACE;
   },
 
-  getBufferedOutputStream : function () {
-    if (!this.mBufferedOutputStream) {
-      var pipe = Cc ["@mozilla.org/pipe;1"].createInstance (Ci.nsIPipe);
-      pipe.init (false, false, 0, PR_UINT32_MAX, null);
-
-      var copier = Cc ["@mozilla.org/network/async-stream-copier;1"]
-      .createInstance (Ci.nsIAsyncStreamCopier);
-      var tm = Cc ["@mozilla.org/thread-manager;1"]
-      .getService (Ci.nsIThreadManager);
-      // Note.1: run in main thread because _this_ is not thread-safe.
-      // Note.2: nsIPipe supports readSegments, but don't use it to avoid
-      //   EXCEPTION_ACCESS_VIOLATION_READ in copier with arOutputStream
-      //   that doesn't support writeSegments and is implemented in script.
-      copier.init (pipe.inputStream, this,
-          tm.mainThread, // Note.1
-          false, false, // Note.2
-          this.MAX_TRANSFER_BYTES, true, true);
-      copier.asyncCopy (null, null);
-
-      this.mBufferedOutputStream = pipe.outputStream;
-    }
-
-    return this.mBufferedOutputStream;
-  },
-
   // nsIOutputStream
 
   close : function () {
     this.ipc.close ();
     this.ipc.detachIPCMessageManager ();
-    this.mBufferedOutputStream = null;
   },
   flush : function () { this.ipc.flush (); },
   MAX_TRANSFER_BYTES : 4096,
