@@ -681,6 +681,22 @@ var arAkahukuImage = {
         arAkahukuImage.currentNormal = normal;
 
         var rect = target.getBoundingClientRect ();
+        // 要素のスクリーン座標をデバイスピクセル単位で得る
+        var view = target.ownerDocument.defaultView;
+        rect.x = rect.x + view.mozInnerScreenX;
+        rect.y = rect.y + view.mozInnerScreenY;
+        try {
+          var dwu = view
+            .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+            .getInterface (Components.interfaces.nsIDOMWindowUtils);
+          var scale = dwu.screenPixelsPerCSSPixel;
+          rect.x = Math.round (rect.x * scale);
+          rect.y = Math.round (rect.y * scale);
+          rect.width = Math.round (rect.width * scale);
+          rect.height = Math.round (rect.height * scale);
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
         arAkahukuImage.openXULSaveImagePopup
           (target, rect, event.screenX, event.screenY);
         return;
