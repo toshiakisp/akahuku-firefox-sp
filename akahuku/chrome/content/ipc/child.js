@@ -326,6 +326,12 @@ arAkahukuSound.init = function () {
 
 
 
+arAkahukuStyle.modifyStyleFile = function () {
+  // update css only in the Chrome process
+};
+
+
+
 arAkahukuThread.setTabIconForWindow = function (targetWindow, prop) {
   arAkahukuIPC.sendSyncCommand
     ("Thread/setTabIconForWindow",

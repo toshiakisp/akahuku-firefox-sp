@@ -140,6 +140,37 @@ var arAkahukuStyle = {
    *         false: 解除する
    */
   modifyStyleFile : function (register) {
+    if (!Akahuku.useFrameScript &&
+        arAkahukuCompat.comparePlatformVersion ("48.0") < 0) {
+      arAkahukuStyle._modifyStyleFileLegacy (register);
+      return;
+    }
+    try {
+      Components.utils.import ("resource://akahuku/css-injector.jsm");
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      arAkahukuStyle._modifyStyleFileLegacy (register);
+      return;
+    }
+
+    var uid = "Akahuku_userContent_css";
+    if (register) {
+      var style = new arAkahukuStyleData ();
+
+      arAkahukuDelBanner.setStyleFile (style);
+      arAkahukuPostForm.setStyleFile (style);
+      arAkahukuThread.setStyleFile (style);
+      arAkahukuReload.setStyleFile (style);
+      arAkahukuScroll.setStyleFile (style);
+
+      AkahukuCSSInjector
+        .register (uid, "domain(2chan.net)", style.toString ("\n"));
+    }
+    else {
+      AkahukuCSSInjector.unregister (uid);
+    }
+  },
+  _modifyStyleFileLegacy : function (register) {
     var filename
     = arAkahukuFile.systemDirectory
     + arAkahukuFile.separator + "userContent.css";
