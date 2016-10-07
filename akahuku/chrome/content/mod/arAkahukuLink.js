@@ -2823,7 +2823,7 @@ var arAkahukuLink = {
             
       if (arAkahukuLink.enableAutoLinkPreview
           && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
-            ||url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i))) {
+            ||url.match (/\.(jpe?g|gif|png|swf|bmp|webm|mp4)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
         
@@ -2854,7 +2854,7 @@ var arAkahukuLink = {
             (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
             (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
-            && !url.match (/\.(jpe?g|gif|png|bmp)(\?.*)?$/i)
+            && !url.match (/\.(jpe?g|gif|png|bmp|webm|mp4)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
           button.appendChild (targetDocument.createTextNode
@@ -2881,7 +2881,7 @@ var arAkahukuLink = {
         
       if (arAkahukuImage.enable
           && arAkahukuImage.enableAutoLinkPreview) {
-        if (url.match (/\.(jpe?g|gif|png|swf|bmp)(\?.*)?$/i)) {
+        if (url.match (/\.(jpe?g|gif|png|swf|bmp|webm|mp4)(\?.*)?$/i)) {
           arAkahukuImage.createSaveImageButton (targetDocument,
                                                 button, url,
                                                 linkNode);
@@ -3239,6 +3239,17 @@ var arAkahukuLink = {
          function () {
           observer.unregister ();
         }, false);
+    }
+    else if (/\.(webm|mp4)(\?.*)?$/i.test (uri)) {
+      image = targetDocument.createElement ("video");
+      image.style.maxWidth = "250px";
+      image.style.maxHeight = "250px";
+      image.preload = "auto";
+      // インライン再生と同様の設定
+      image.loop = true;
+      image.controls = true;
+      // サムネを確認してから再生するべきなので
+      image.autoplay = true;//false;
     }
     else if (uri.match (/\.(swf)(\?.*)?$/i)) {
       image = targetDocument.createElement ("embed");

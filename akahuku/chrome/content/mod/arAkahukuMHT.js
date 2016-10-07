@@ -2345,8 +2345,16 @@ var arAkahukuMHT = {
       var fileData;
       var dup;
       
-      /* img 要素を収集する */
-      nodes = param.cloneDocument.getElementsByTagName ("img");
+      /* img, video 要素を収集する */
+      nodes = [];
+      var imgs = param.cloneDocument.getElementsByTagName ("img");
+      for (i = 0; i < imgs.length; i ++) {
+        nodes.push (imgs [i])
+      }
+      var videos = param.cloneDocument.getElementsByTagName ("video");
+      for (i = 0; i < videos.length; i ++) {
+        nodes.push (videos[i])
+      }
       for (i = 0; i < nodes.length; i ++) {
         /* 非表示になった画像は取得しない */
         if ("style" in nodes [i]

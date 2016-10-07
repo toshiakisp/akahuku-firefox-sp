@@ -504,6 +504,13 @@ var arAkahukuPopupQuote = {
                     imgs [i].style.margin = "0px 4px";
                   }
                 }
+                else if (pv.nodeName.toLowerCase () == "video") {
+                  pv.style.maxWidth = parseFloat (pv.style.maxWidth) / s + "px";
+                  pv.style.maxHeight = parseFloat (pv.style.maxHeight) / s + "px";
+                  pv.style.margin = "0px 4px";
+                  // プレビューでは自動再生はしない
+                  pv.autoplay = false;
+                }
                 else if (arAkahukuPopupQuote.enablePreviewAll
                          && arAkahukuDOM.hasClassName
                               (pv, "akahuku_preview")) {
