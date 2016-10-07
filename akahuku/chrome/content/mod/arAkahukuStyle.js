@@ -162,6 +162,7 @@ var arAkahukuStyle = {
       arAkahukuThread.setStyleFile (style);
       arAkahukuReload.setStyleFile (style);
       arAkahukuScroll.setStyleFile (style);
+      arAkahukuCatalog.setStyleFile (style);
 
       AkahukuCSSInjector
         .register (uid, "domain(2chan.net)", style.toString ("\n"));
@@ -195,6 +196,7 @@ var arAkahukuStyle = {
       arAkahukuThread.setStyleFile (style);
       arAkahukuReload.setStyleFile (style);
       arAkahukuScroll.setStyleFile (style);
+      arAkahukuCatalog.setStyleFile (style);
             
       var text
       = "@-moz-document domain(2chan.net) {\n"

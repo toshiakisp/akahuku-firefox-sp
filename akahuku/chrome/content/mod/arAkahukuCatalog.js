@@ -287,14 +287,33 @@ arAkahukuCatalogPopupData.prototype =  {
       x += tmp.offsetLeft;
       y += tmp.offsetTop;
     }
+
+    var width = this.targetImage.width;
+    var height = this.targetImage.height;
+
+    var style = this.targetImage.ownerDocument.defaultView
+      .getComputedStyle (this.targetImage, null);
+    if (style.objectFit == "contain") {
+      // CSS3&4 object-fit で実際に表示されている画像の領域を予測
+      // (簡単のため中央揃えを仮定)
+      var ar = this.targetImage.naturalWidth / this.targetImage.naturalHeight;
+      if (ar > this.targetImage.width / this.targetImage.height) {
+        height = this.targetImage.width / ar;
+        y += (this.targetImage.height - height)/2;
+      }
+      else {
+        width = this.targetImage.height * ar;
+        x += (this.targetImage.width - width)/2;
+      }
+    }
         
     this.targetImageGeometry = new Object ();
     this.zoomImageGeometry = new Object ();
         
     this.targetImageGeometry.left = x - 1;
     this.targetImageGeometry.top = y - 1;
-    this.targetImageGeometry.width = this.targetImage.width;
-    this.targetImageGeometry.height = this.targetImage.height;
+    this.targetImageGeometry.width = width;
+    this.targetImageGeometry.height = height;
     this.targetImageGeometry.right
     = this.targetImageGeometry.left + this.targetImageGeometry.width;
     this.targetImageGeometry.bottom
@@ -1984,6 +2003,12 @@ var arAkahukuCatalog = {
   enableObserveReplyNum : false,/* Boolean  レス数を即座に反映 */
   enableObserveOpened : false,  /* Boolean  開いているスレをマーク */
   enableObserveOpenedReload : false,  /* Boolean  開いているスレに移動後リロード */
+
+  enableCellWidth : true,    /* Boolean スレの幅を固定 */
+  cellWidthNum : 50,         /* Number  サイズ(値) */
+  cellWidthUnit : "px",      /* String  サイズ(単位) */
+  enableCellWidthImg : true, /* Boolean   サムネ表示領域も */
+  cellWidthMaxLines : 2,     /* Number  本文は最大x行まで表示 */
     
   enableClickable : false, /* Boolean  空白の本文を強制リンク */
   enableVisited : false,   /* Boolean  一度見たスレをマーク */
@@ -2262,6 +2287,114 @@ var arAkahukuCatalog = {
                 "display: none; ")
     }
   },
+
+  /**
+   * スタイルファイルのスタイルを設定する
+   *
+   * @param  arAkahukuStyleData style
+   *         スタイル
+   */
+  setStyleFile : function (style) {
+    var cattable = "table." + arAkahukuCatalog.CLASSNAME_CATALOG_TABLE;
+    var catcell = cattable + '[border="1"] td';
+    var catimganchor = catcell + " > a:nth-of-type(1)";
+    var catimg = catimganchor + " > img";
+
+    if (arAkahukuCatalog.enableCellWidth) {
+      var w = arAkahukuCatalog.cellWidthNum
+        + arAkahukuCatalog.cellWidthUnit;
+      style
+      .addRule (catcell,
+                "width: " + w + ";")
+      .addRule (catcell + " .akahuku_native_comment,"
+                + catcell + " .akahuku_comment",
+                "display: inline-block;"
+                + "max-width: " + w + ";"
+                + "word-break: break-all;")
+
+      if (arAkahukuCatalog.cellWidthMaxLines >= 0) {
+        var lineHeight = 1.1;
+        var lines = arAkahukuCatalog.cellWidthMaxLines;
+        // akahuku_comment は字数制限が別にあるので行数制限をしない
+        style
+        .addRule (catcell + " .akahuku_native_comment",
+                  "line-height: " + lineHeight + ";"
+                  + "max-height: " + (lineHeight*lines) + "em;"
+                  + "overflow-y: auto;")
+      }
+
+      // 大きいサムネを縮小
+      style
+      .addRule (catimg,
+                "max-width: " + w + ";"
+                + "max-height: " + w + ";"
+                + "height: auto !important;"
+                + "width: auto !important;");
+
+      if (arAkahukuCatalog.enableCellWidthImg) {
+        if (arAkahukuCompat.comparePlatformVersion ("36.0") >= 0) {
+          style
+          .addRule (catimg,
+                    "object-fit: contain;"
+                    + "object-position: center center;"
+                    + "height: " + w + " !important;"
+                    + "width: " + w + " !important;");
+        }
+        else {
+          // サムネのコンテナのサイズを固定
+          style
+          .addRule (catimganchor,
+                    "width: " + w + " !important;"
+                    + "height: " + w + " !important;"
+                    + "overflow: hidden;");
+
+          // 縦横中央揃え(requires Firefox 20.0+)
+          // inline-flex の無い Firefox 20.0 より前の代替ルール
+          style
+          .addRule (catimganchor,
+                    "display: inline-block;"
+                    + "text-align: center;");
+          // requires Firefox 20.0+
+          style
+          .addRule (catimganchor,
+                    "display: inline-flex;"
+                    + "justify-content: center;"
+                    + "align-items: center;");
+
+          // Note: サムネサイズより小さな画像については
+          // CSSだけでは縦長・横長の判定が完全には出来ないが
+          // かなりの場合において以下のルールでなんとかなる
+          // (ただし縦横ともサムネサイズより小さい画像はカバーできず
+          //  アスペクト比固定できない)
+
+          // サムネ画像のサイズ一覧(50px以外)
+          var thumb_sizes = [75, 100, 125, 150, 175, 250];
+
+          // デフォルト: width 固定して拡大
+          style
+          .addRule (catimg,
+                    "height: auto !important;"
+                    + "width: " + w + " !important;");
+          // 縦長の画像: height 固定して拡大
+          //   高さがサムネサイズのいずれかに等しく
+          //   幅が(高さより大きな)サムネサイズに等しくない
+          var catimg_portrait = catimg + '[src*="/cat/"][height="50"]';
+          thumb_sizes.forEach (function (size) {
+            var sel2 = catimg + '[src*="/thumb/"][height="' + size + '"]';
+            thumb_sizes.forEach (function (size2) {
+              if (size2 <= size) return;
+              sel2 += ':not([width="' + size2 + '"])';
+            });
+            catimg_portrait += "," + sel2;
+          });
+          style
+          .addRule (catimg_portrait,
+                    "height: " + w + " !important;"
+                    + "width: auto !important;");
+        }
+      }
+    }
+  },
     
   /**
    * 設定を読み込む
@@ -2492,6 +2625,36 @@ var arAkahukuCatalog = {
     = arAkahukuConfig
     .initPref ("bool", "akahuku.catalog.observe.opened.reload", true)
     && arAkahukuCatalog.enableObserveOpened;
+
+    arAkahukuCatalog.enableCellWidth
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.cellwidth.enable", false);
+    arAkahukuCatalog.cellWidthNum
+    = parseFloat (arAkahukuConfig
+    .initPref ("char", "akahuku.catalog.cellwidth.num", "50.0"));
+    var cellWidthUnit
+    = arAkahukuConfig
+    .initPref ("char", "akahuku.catalog.cellwidth.unit", "px");
+    var isValidCellWidthUnit = false;
+    ["px", "vh", "vw", "rem"].forEach (function (u) {
+      if (u == cellWidthUnit) {
+        isValidCellWidthUnit = true;
+        return;
+      }
+    });
+    if (isValidCellWidthUnit) {
+      arAkahukuCatalog.cellWidthUnit = cellWidthUnit;
+    }
+    else {
+      Akahuku.debug.warn ("invalid value for arAkahukuCatalog.cellWidthUnit");
+      arAkahukuCatalog.cellWidthUnit = "px";
+    }
+    arAkahukuCatalog.cellWidthMaxLines
+    = parseFloat (arAkahukuConfig
+    .initPref ("char", "akahuku.catalog.cellwidth.max-lines", "2.0"));
+    arAkahukuCatalog.enableCellWidthImg
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.cellwidth.scale-thumb", true);
         
     arAkahukuCatalog.enableClickable
     = arAkahukuConfig
@@ -2819,6 +2982,9 @@ var arAkahukuCatalog = {
         if (typeof Aima_Aimani != "undefined") {
           if (Aima_Aimani.hideNGNumberCatalogueHandler) {
             Aima_Aimani.hideNGNumberCatalogueHandler (td);
+
+            // 古い合間合間にの挙動を修正 (enableCellWidth関係)
+            arAkahukuCatalog.fixAimaAimaniInlineStyle (td);
           }
         }
       }
@@ -3067,6 +3233,9 @@ var arAkahukuCatalog = {
         td.style.display = "";// 表示する
       }
 
+      // 古い合間合間にの挙動を修正 (enableCellWidth関係)
+      arAkahukuCatalog.fixAimaAimaniInlineStyle (td);
+
       // イベントハンドラによるセルへの変更を内部情報へ反映
       mergedItems [i].isSticky = arAkahukuCatalog.isStickyCell (td);
 
@@ -3098,6 +3267,23 @@ var arAkahukuCatalog = {
     }
     if (optUnflag) {
       arAkahukuCatalog.setCellSticky (td, false);
+    }
+  },
+
+  fixAimaAimaniInlineStyle : function (td) {
+    var nodes = td.querySelectorAll
+      ("small:not(.aima_aimani_generated)[style*='display'],"
+       + "small:not(.aima_aimani_warning)[style*='display'],"
+       + "div.akahuku_comment[style*='display'],"
+       + "img[style*='display'], a[style*='display']");
+    for (var j = 0; j < nodes.length; j ++) {
+      var displayToBeCleared
+        = (nodes [j].nodeName.toLowerCase () == "div"
+            ? "block"
+            : "inline");
+      if (nodes [j].style.display == displayToBeCleared) {
+        nodes [j].style.display = "";
+      }
     }
   },
 

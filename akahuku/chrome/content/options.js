@@ -1090,10 +1090,16 @@ var AkahukuOptions = {
           }
           return value;
         }],
+      ["bool", "catalog.cellwidth.enable", false],
+      ["char", "catalog.cellwidth.num", "50.0"],
+      ["char", "catalog.cellwidth.unit", "px"],
+      ["char", "catalog.cellwidth.max-lines", "2.0"],
+      ["bool", "catalog.cellwidth.scale-thumb", true],
       ["init",
        function (map) {
           AkahukuOptions.checkCatalogReorder ();
           AkahukuOptions.checkCatalogZoom ();
+          AkahukuOptions.checkCatalogCellWidth ();
         }]
       ],
     "catalog2" : [
@@ -4105,6 +4111,17 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_zoom_comment_delay_label1").disabled
     = document.getElementById ("catalog_zoom_comment_delay_label2").disabled
     = !document.getElementById ("catalog_zoom").checked;
+  },
+
+  checkCatalogCellWidth : function () {
+    document.getElementById ("catalog_cellwidth_num_label").disabled
+    = document.getElementById ("catalog_cellwidth_num").disabled
+    = document.getElementById ("catalog_cellwidth_unit").disabled
+    = document.getElementById ("catalog_cellwidth_max-lines").disabled
+    = document.getElementById ("catalog_cellwidth_max-lines_label1").disabled
+    = document.getElementById ("catalog_cellwidth_max-lines_label2").disabled
+    = document.getElementById ("catalog_cellwidth_scale-thumb").disabled
+    = !document.getElementById ("catalog_cellwidth_enable").checked;
   },
     
   checkCatalogReload : function () {
