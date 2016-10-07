@@ -3500,12 +3500,17 @@ var arAkahukuPostForm = {
       else if (filename.match (/\.png/i)) {
         mimeType = "image/png";
       }
+      else if (filename.match (/\.webm$/i)) {
+        mimeType = "video/webm";
+      }
             
       var container
       = targetDocument
       .getElementById ("akahuku_postform_preview_container");
       var preview
       = targetDocument.getElementById ("akahuku_postform_preview");
+      var previewV
+      = targetDocument.getElementById ("akahuku_postform_video_preview");
       var bytes
       = targetDocument.getElementById
       ("akahuku_postform_preview_status_bytes");
@@ -3560,12 +3565,23 @@ var arAkahukuPostForm = {
               height.style.display = "";
               slash.style.display = "";
                             
-              preview.style.display = "";
-              preview.style.maxWidth
+              var previewT = preview;
+              var previewO = previewV;
+              if (/^video/.test (mimeType)) {
+                previewT = previewV;
+                previewO = preview;
+              }
+
+              previewT.style.display = "";
+              previewO.style.display = "none";
+              previewO.removeAttribute ("src");
+
+              previewT.style.maxWidth
                 = arAkahukuPostForm.previewSize + "px";
-              preview.style.maxHeight
+              previewT.style.maxHeight
                 = arAkahukuPostForm.previewSize + "px";
-              preview.src
+
+              previewT.src
                 = Akahuku.protocolHandler.enAkahukuURI
                 ("preview",
                  arAkahukuFile.getURLSpecFromFilename
@@ -3578,6 +3594,9 @@ var arAkahukuPostForm = {
               slash.style.display = "none";
                             
               preview.style.display = "none";
+              preview.removeAttribute ("src");
+              previewV.style.display = "none";
+              previewV.removeAttribute ("src");
             }
             container.style.display = "";
             return;
@@ -3624,6 +3643,8 @@ var arAkahukuPostForm = {
             
       var preview
       = targetDocument.getElementById ("akahuku_postform_preview");
+      var previewV
+      = targetDocument.getElementById ("akahuku_postform_video_preview");
       var width
       = targetDocument.getElementById
       ("akahuku_postform_preview_status_width");
@@ -3636,12 +3657,13 @@ var arAkahukuPostForm = {
             
       var size = preview.getAttribute ("__size");
             
-      arAkahukuDOM.setText (width, preview.naturalWidth);
-      arAkahukuDOM.setText (height, preview.naturalHeight);
       arAkahukuDOM.setText (bytes, size);
             
-      if (preview.naturalWidth
+      if (event.target == preview
+          && preview.naturalWidth
           && preview.naturalHeight) {
+        arAkahukuDOM.setText (width, preview.naturalWidth);
+        arAkahukuDOM.setText (height, preview.naturalHeight);
         if (preview.naturalWidth < arAkahukuPostForm.previewSize
             && preview.naturalHeight < arAkahukuPostForm.previewSize) {
           preview.setAttribute ("width", preview.naturalWidth);
@@ -3663,6 +3685,11 @@ var arAkahukuPostForm = {
             preview.height = arAkahukuPostForm.previewSize;
           }
         }
+      }
+
+      if (event.target == previewV) {
+        arAkahukuDOM.setText (width, previewV.videoWidth);
+        arAkahukuDOM.setText (height, previewV.videoHeight);
       }
             
       arAkahukuPostForm.checkCommentbox (targetDocument, true);
@@ -3758,6 +3785,21 @@ var arAkahukuPostForm = {
         arAkahukuPostForm.onPreviewLoad (arguments [0]);
       }, false);
       container.appendChild (preview);
+
+      var previewV = targetDocument.createElement ("video");
+      previewV.id = "akahuku_postform_video_preview";
+      previewV.style.maxWidth
+      = arAkahukuPostForm.previewSize + "px";
+      previewV.style.maxHeight
+      = arAkahukuPostForm.previewSize + "px";
+      previewV.style.display = "none";
+      previewV.addEventListener
+      ("loadedmetadata",
+       function () {
+        arAkahukuPostForm.onPreviewLoad (arguments [0]);
+      }, false);
+
+      container.appendChild (previewV);
                     
       var br = targetDocument.createElement ("br");
       container.appendChild (br);
