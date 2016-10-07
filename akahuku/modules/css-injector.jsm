@@ -34,8 +34,9 @@ this.AkahukuCSSInjector = Object.freeze ({
   unregister : function (id, callback) {
     var entry = this._getEntryOfId (id);
     if (entry) {
+      var _this = this;
       entry.unregister (function () {
-        this._deleteEntryOfId (id);
+        _this._deleteEntryOfId (id);
         if (callback) {
           callback.call ();
         }
