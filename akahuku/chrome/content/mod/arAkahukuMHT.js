@@ -1699,8 +1699,14 @@ var arAkahukuMHT = {
         continue;
       }
       /* 画像を保存の大きい画像を削除する */
-      if (arAkahukuDOM.getClassName (nodes [i])
-          == "akahuku_saveimage_src") {
+      if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
+        var bq = nodes [i].parentNode;
+        while (bq) {
+          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
+          while (bq && bq.nodeType !== 1) { // nextElementSibling
+            bq = bq.nextSibling;
+          }
+        }
         nodes [i].parentNode.removeChild (nodes [i]);
         i --;
         continue;
