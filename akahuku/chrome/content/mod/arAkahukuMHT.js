@@ -1762,6 +1762,42 @@ var arAkahukuMHT = {
       }
       nodes [i].removeAttribute ("__akahuku_jpeg_thumbnail_opened");
     }
+
+    nodes = targetDocument.getElementsByTagName ("video");
+    for (i = 0; i < nodes.length; i ++) {
+      // webm のインライン再生ノードを削除する
+      if (arAkahukuDOM.hasClassName (nodes [i], "extendWebm")) {
+        var anchor = nodes [i].parentNode.nextSibling;
+        if (anchor && anchor.nodeName.toLowerCase () == "a" &&
+            /\bdisplay *: *none\b/i.test (anchor.getAttribute ("style"))) {
+          // 非表示化されたサムネを再表示
+          arAkahukuDOM.Style.removeProperty (anchor, "display");
+        }
+        nodes [i].parentNode.parentNode
+          .removeChild (nodes [i].parentNode);
+        i --;
+        continue;
+      }
+      // 画像を保存の大きい画像(video)を削除する
+      if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
+        var bq = nodes [i].parentNode;
+        while (bq) {
+          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
+          while (bq && bq.nodeType !== 1) { // nextElementSibling
+            bq = bq.nextSibling;
+          }
+        }
+        var hrefOriginal = nodes [i].parentNode
+          .getAttribute ("__akahuku_saveimage_href");
+        if (hrefOriginal) {
+          nodes [i].parentNode.setAttribute ("dummyhref", hrefOriginal);
+          nodes [i].parentNode.removeAttribute ("__akahuku_saveimage_href");
+        }
+        nodes [i].parentNode.removeChild (nodes [i]);
+        i --;
+        continue;
+      }
+    }
         
     nodes = Akahuku.getMessageBQ (targetDocument);
     for (i = 0; i < nodes.length; i ++) {
