@@ -60,7 +60,7 @@ var arAkahukuServerData = {
     "\u30A2\u30AF\u30A2\u30EA\u30A6\u30E0",
     2000, true
     ],
-  "dat:49" : [ /* アウトドア */
+  "dec:62" : [ /* アウトドア */
     "\u30A2\u30A6\u30C8\u30C9\u30A2",
     "\u30A2\u30A6\u30C8\u30C9\u30A2",
     "\u30A2\u30A6\u30C8\u30C9\u30A2",
@@ -314,7 +314,7 @@ var arAkahukuServerData = {
     "\u5973\u88C5",
     "\u5973\u88C5",
     "\u5973\u88C5",
-    200, true
+    100, true
     ],
   "zip:15" : [ /* ばら */
     "\u3070\u3089",
@@ -511,7 +511,7 @@ var arAkahukuServerData = {
     "\u843D\u66F8\u304D\u88CF",
     2000, true
     ],
-  "www:oe" : [ /* お絵sql */
+  "jun:oe" : [ /* お絵sql */
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",

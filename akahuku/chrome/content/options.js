@@ -514,6 +514,7 @@ var AkahukuOptions = {
       ["bool", "saveimage.limit", false],
       ["int",  "saveimage.limit.width", 1024],
       ["int",  "saveimage.limit.height", 1024],
+      ["char", "saveimage.limit.unit", "px"],
       ["char", "saveimage.buttonsize", "1em"],
       ["bool", "saveimage.buttons", false],
       ["init",
@@ -1055,6 +1056,8 @@ var AkahukuOptions = {
       ["int",  "catalog.reorder.save.type", 0],
       ["bool", "catalog.reorder.visited", false],
       ["bool", "catalog.reorder.new", false],
+      ["bool", "catalog.reorder.stick-by-text.enable", false],
+      ["char", "catalog.reorder.stick-by-text.pattern", ""],
       ["bool", "catalog.reorder.fill", false],
       ["bool", "catalog.reorder.info", false, "privatemod"],
       ["bool", "catalog.zoom", false],
@@ -1087,10 +1090,16 @@ var AkahukuOptions = {
           }
           return value;
         }],
+      ["bool", "catalog.cellwidth.enable", false],
+      ["char", "catalog.cellwidth.num", "50.0"],
+      ["char", "catalog.cellwidth.unit", "px"],
+      ["char", "catalog.cellwidth.max-lines", "2.0"],
+      ["bool", "catalog.cellwidth.scale-thumb", true],
       ["init",
        function (map) {
           AkahukuOptions.checkCatalogReorder ();
           AkahukuOptions.checkCatalogZoom ();
+          AkahukuOptions.checkCatalogCellWidth ();
         }]
       ],
     "catalog2" : [
@@ -1302,6 +1311,7 @@ var AkahukuOptions = {
       ["char", "sound.saveimage.error.file", "", "private"],
       ["init",
        function (map) {
+         AkahukuOptions.initSoundVolume ();
         }]
       ],
     "other" : [
@@ -2510,6 +2520,38 @@ var AkahukuOptions = {
       }
     }
   },
+
+  _soundVolumeTimerID : null,
+
+  onChangeSoundVolume : function (event) {
+    var scale = event.target;
+    var label = document.getElementById ("sound_volume_textshow");
+    label.value = scale.value + '%';
+
+    // デバウンスして値が落ち着いたら設定反映
+    window.clearTimeout (AkahukuOptions._soundVolumeTimerID);
+    AkahukuOptions._soundVolumeTimerID
+      = window.setTimeout (function () {
+        var volume = parseFloat (scale.value) / 100;
+        AkahukuOptions.prefBranch
+        .setCharPref ("media.default_volume", volume);
+      }, 100);
+  },
+
+  initSoundVolume : function () {
+    var prefName = "media.default_volume"; // Firefox 49+
+    try {
+      var volumeStr = AkahukuOptions.prefBranch.getCharPref (prefName);
+    }
+    catch (e) {
+      // 古いFirefox のため設定が無い
+      return;
+    }
+    var volume = parseFloat (volumeStr);
+    var scale = document.getElementById ("sound_volume");
+    scale.disabled = false;
+    scale.value = Math.round (100*volume);
+  },
     
   /**
    * カスタムのためのシステムディレクトリを開く
@@ -3507,10 +3549,8 @@ var AkahukuOptions = {
     document.getElementById ("saveimage_autolink_preview").disabled
     = document.getElementById ("saveimage_linkmenu").disabled
     
+    = document.getElementById ("saveimage_local_label").disabled
     = document.getElementById ("saveimage_limit").disabled
-    = document.getElementById ("saveimage_limit_label").disabled
-    = document.getElementById ("saveimage_limit_width").disabled
-    = document.getElementById ("saveimage_limit_height").disabled
         
     = document.getElementById ("saveimage_buttonsize").disabled
     = document.getElementById ("saveimage_buttonsize_label").disabled
@@ -3518,6 +3558,17 @@ var AkahukuOptions = {
     = document.getElementById ("saveimage_buttons").disabled
         
     = !document.getElementById ("saveimage").checked;
+
+    AkahukuOptions.checkSaveImageLimit ();
+  },
+
+  checkSaveImageLimit : function () {
+    document.getElementById ("saveimage_limit_label").disabled
+    = document.getElementById ("saveimage_limit_width").disabled
+    = document.getElementById ("saveimage_limit_height").disabled
+    = document.getElementById ("saveimage_limit_unit").disabled
+    = !document.getElementById ("saveimage_limit").checked ||
+      document.getElementById ("saveimage_limit").disabled;
   },
   
   checkSaveImageBaseSubdir : function () {
@@ -4050,6 +4101,7 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_reorder_width_label2").disabled
     = document.getElementById ("catalog_reorder_visited").disabled
     = document.getElementById ("catalog_reorder_new").disabled
+    = document.getElementById ("catalog_reorder_stick-by-text_enable").disabled
     = document.getElementById ("catalog_reorder_fill").disabled
     = document.getElementById ("catalog_reorder_misc_group_label").disabled
     = document.getElementById ("catalog_reorder_misc_label").disabled
@@ -4058,12 +4110,20 @@ var AkahukuOptions = {
     = !document.getElementById ("catalog_reorder").checked;
         
     AkahukuOptions.checkCatalogReorderSave ();
+    AkahukuOptions.checkCatalogReorderStickByText ();
   },
     
   checkCatalogReorderSave : function () {
     document.getElementById ("catalog_reorder_save_type").disabled
     = !document.getElementById ("catalog_reorder").checked
     || !document.getElementById ("catalog_reorder_save").checked
+  },
+
+  checkCatalogReorderStickByText : function () {
+    document.getElementById ("catalog_reorder_stick-by-text_pattern_label").disabled
+    = document.getElementById ("catalog_reorder_stick-by-text_pattern").disabled
+    = document.getElementById ("catalog_reorder_stick-by-text_enable").disabled
+    || !document.getElementById ("catalog_reorder_stick-by-text_enable").checked
   },
     
   checkCatalogZoom : function () {
@@ -4084,6 +4144,17 @@ var AkahukuOptions = {
     = document.getElementById ("catalog_zoom_comment_delay_label1").disabled
     = document.getElementById ("catalog_zoom_comment_delay_label2").disabled
     = !document.getElementById ("catalog_zoom").checked;
+  },
+
+  checkCatalogCellWidth : function () {
+    document.getElementById ("catalog_cellwidth_num_label").disabled
+    = document.getElementById ("catalog_cellwidth_num").disabled
+    = document.getElementById ("catalog_cellwidth_unit").disabled
+    = document.getElementById ("catalog_cellwidth_max-lines").disabled
+    = document.getElementById ("catalog_cellwidth_max-lines_label1").disabled
+    = document.getElementById ("catalog_cellwidth_max-lines_label2").disabled
+    = document.getElementById ("catalog_cellwidth_scale-thumb").disabled
+    = !document.getElementById ("catalog_cellwidth_enable").checked;
   },
     
   checkCatalogReload : function () {

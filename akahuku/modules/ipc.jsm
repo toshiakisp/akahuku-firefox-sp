@@ -560,6 +560,11 @@ AkahukuIPC.prototype = {
 
   getContentFrameMessageManager : getContentFrameMessageManager,
 
+  getChildProcessMessageManager : function () {
+    return Cc ['@mozilla.org/childprocessmessagemanager;1']
+      .getService (Ci.nsISyncMessageSender);
+  },
+
   /**
    * IPCコマンドを実行中のみセットされる message.event
    */
@@ -799,6 +804,7 @@ AkahukuIPC.prototype = {
     catch (e) {
       Cu.reportError (e);
       ret.message = e.message;
+      ret.value = e.result;
     }
     return ret;
   },
@@ -956,9 +962,9 @@ AkahukuIPC.prototype = {
         }
         else {
           throw Components.Exception
-            ("AkahukuIPC: error returned ("
-             + ret.success + ")" + command,
-             Cr.NS_ERROR_FAILURE, Components.stack.caller);
+            (ret.message + " (AkahukuIPC:" + command + ")",
+             ret.value || Cr.NS_ERROR_FAILURE,
+             Components.stack.caller);
         }
       }
       else {

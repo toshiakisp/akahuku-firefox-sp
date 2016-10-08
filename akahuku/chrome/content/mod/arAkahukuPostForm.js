@@ -600,6 +600,9 @@ var arAkahukuPostForm = {
       .addRule ("#akahuku_postform_preview_status_height",
                 "font-size: 10pt; "
                 + "vertical-align: text-bottom;")
+      .addRule ("#akahuku_postform_preview_status_appendix",
+                "font-size: 10pt; "
+                + "vertical-align: text-bottom;")
       .addRule ("#akahuku_postform_preview_status_bytes",
                 "font-size: 10pt; "
                 + "vertical-align: text-bottom;");
@@ -3500,12 +3503,31 @@ var arAkahukuPostForm = {
       else if (filename.match (/\.png/i)) {
         mimeType = "image/png";
       }
+      else if (filename.match (/\.webm$/i)) {
+        mimeType = "video/webm";
+      }
+
+      if (!param.testAttachableExt (filename)) {
+        // 添付可能なファイル以外はプレビュー無し
+        mimeType = "";
+      }
+      else if (!mimeType) {
+        // 添付可能判定だが想定外のファイルは適当に判断
+        if (/\.(mp4|m4v|ogg|ogv)$/i.test (filename)) {
+          mimeType = "video/*";
+        }
+        else if (/\.(bmp|ico|svg|svgz)$/i.test (filename)) {
+          mimeType = "image/*";
+        }
+      }
             
       var container
       = targetDocument
       .getElementById ("akahuku_postform_preview_container");
       var preview
       = targetDocument.getElementById ("akahuku_postform_preview");
+      var previewV
+      = targetDocument.getElementById ("akahuku_postform_video_preview");
       var bytes
       = targetDocument.getElementById
       ("akahuku_postform_preview_status_bytes");
@@ -3521,6 +3543,9 @@ var arAkahukuPostForm = {
       var slash
       = targetDocument.getElementById
       ("akahuku_postform_preview_status_slash");
+      var appendix
+      = targetDocument.getElementById
+      ("akahuku_postform_preview_status_appendix");
             
       if (container && preview && bytes) {
         if (documentParam && param) {
@@ -3539,9 +3564,12 @@ var arAkahukuPostForm = {
           container.style.display = "none";
           preview.removeAttribute ("__size");
           preview.removeAttribute ("src");
+          previewV.removeAttribute ("src");
+          previewV.load (); // リソース解放に必要
           arAkahukuDOM.setText (bytes, "");
           arAkahukuDOM.setText (width, "");
           arAkahukuDOM.setText (height, "");
+          arAkahukuDOM.setText (appendix, "");
           return;
         }
                     
@@ -3553,6 +3581,7 @@ var arAkahukuPostForm = {
             preview.setAttribute ("__size", readableSize);
                         
             arAkahukuDOM.setText (bytes, readableSize);
+            arAkahukuDOM.setText (appendix, "");
                         
             if (mimeType) {
               width.style.display = "";
@@ -3560,12 +3589,23 @@ var arAkahukuPostForm = {
               height.style.display = "";
               slash.style.display = "";
                             
-              preview.style.display = "";
-              preview.style.maxWidth
+              var previewT = preview;
+              var previewO = previewV;
+              if (/^video/.test (mimeType)) {
+                previewT = previewV;
+                previewO = preview;
+              }
+
+              previewT.style.display = "";
+              previewO.style.display = "none";
+              previewO.removeAttribute ("src");
+
+              previewT.style.maxWidth
                 = arAkahukuPostForm.previewSize + "px";
-              preview.style.maxHeight
+              previewT.style.maxHeight
                 = arAkahukuPostForm.previewSize + "px";
-              preview.src
+
+              previewT.src
                 = Akahuku.protocolHandler.enAkahukuURI
                 ("preview",
                  arAkahukuFile.getURLSpecFromFilename
@@ -3578,7 +3618,14 @@ var arAkahukuPostForm = {
               slash.style.display = "none";
                             
               preview.style.display = "none";
+              preview.removeAttribute ("src");
+              previewV.style.display = "none";
+              previewV.removeAttribute ("src");
+
+              // "添付不可?"
+              arAkahukuDOM.setText (appendix, " \u6DFB\u4ED8\u4E0D\u53EF?");
             }
+            previewV.load ();
             container.style.display = "";
             return;
           }
@@ -3624,6 +3671,8 @@ var arAkahukuPostForm = {
             
       var preview
       = targetDocument.getElementById ("akahuku_postform_preview");
+      var previewV
+      = targetDocument.getElementById ("akahuku_postform_video_preview");
       var width
       = targetDocument.getElementById
       ("akahuku_postform_preview_status_width");
@@ -3633,15 +3682,19 @@ var arAkahukuPostForm = {
       var bytes
       = targetDocument.getElementById
       ("akahuku_postform_preview_status_bytes");
+      var appendix
+      = targetDocument.getElementById
+      ("akahuku_postform_preview_status_appendix");
             
       var size = preview.getAttribute ("__size");
             
-      arAkahukuDOM.setText (width, preview.naturalWidth);
-      arAkahukuDOM.setText (height, preview.naturalHeight);
       arAkahukuDOM.setText (bytes, size);
             
-      if (preview.naturalWidth
+      if (event.target == preview
+          && preview.naturalWidth
           && preview.naturalHeight) {
+        arAkahukuDOM.setText (width, preview.naturalWidth);
+        arAkahukuDOM.setText (height, preview.naturalHeight);
         if (preview.naturalWidth < arAkahukuPostForm.previewSize
             && preview.naturalHeight < arAkahukuPostForm.previewSize) {
           preview.setAttribute ("width", preview.naturalWidth);
@@ -3663,6 +3716,26 @@ var arAkahukuPostForm = {
             preview.height = arAkahukuPostForm.previewSize;
           }
         }
+      }
+
+      if (event.target == previewV) {
+        arAkahukuDOM.setText (width, previewV.videoWidth);
+        arAkahukuDOM.setText (height, previewV.videoHeight);
+        var appendix_text = " \uFF0F "; // " ／ "
+        // 再生時間
+        var dur = previewV.duration;
+        // "00:00" のように0埋めする
+        var t_min = ("0" + Math.floor (dur / 60)).slice (-2);
+        var t_sec = ("0" + Math.round (dur % 60)).slice (-2);
+        appendix_text += t_min + ":" + t_sec;
+        // 音声の有無
+        if (typeof previewV.mozHasAudio === "undefined") {
+          appendix_text += " ?";
+        }
+        else if (previewV.mozHasAudio) {
+          appendix_text += " \u266A"; // " ♪"
+        }
+        arAkahukuDOM.setText (appendix, appendix_text);
       }
             
       arAkahukuPostForm.checkCommentbox (targetDocument, true);
@@ -3758,6 +3831,26 @@ var arAkahukuPostForm = {
         arAkahukuPostForm.onPreviewLoad (arguments [0]);
       }, false);
       container.appendChild (preview);
+
+      var previewV = targetDocument.createElement ("video");
+      previewV.id = "akahuku_postform_video_preview";
+      previewV.style.maxWidth
+      = arAkahukuPostForm.previewSize + "px";
+      previewV.style.maxHeight
+      = arAkahukuPostForm.previewSize + "px";
+      previewV.style.display = "none";
+      previewV.controls = true;
+      // 無音ループ再生でプレビュー
+      previewV.autoplay = true;
+      previewV.loop = true;
+      previewV.muted = true;
+      previewV.addEventListener
+      ("loadedmetadata",
+       function () {
+        arAkahukuPostForm.onPreviewLoad (arguments [0]);
+      }, false);
+
+      container.appendChild (previewV);
                     
       var br = targetDocument.createElement ("br");
       container.appendChild (br);
@@ -3799,6 +3892,10 @@ var arAkahukuPostForm = {
       span.className = "akahuku_status_suffix";
       span.appendChild (targetDocument.createTextNode
                         ("\u30D0\u30A4\u30C8"));
+      container.appendChild (span);
+
+      span = targetDocument.createElement ("span");
+      span.id = "akahuku_postform_preview_status_appendix";
       container.appendChild (span);
             
       var form = arAkahukuDOM.findParentNode (filebox, "form");

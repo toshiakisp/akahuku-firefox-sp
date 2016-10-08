@@ -1212,7 +1212,7 @@ var arAkahukuImageURL = {
       url = p.original;
     }
     
-    if (url.match (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src|red|d)\/([A-Za-z0-9]+)\.(jpg|png|gif|htm)(\?.*)?$/)) {
+    if (url.match (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(cat|thumb|src|red|d)\/([A-Za-z0-9]+)\.(jpg|png|gif|htm|webm|mp4)(\?.*)?$/)) {
       uinfo = new arAkahukuImageURLInfo ();
       
       uinfo.prefix = RegExp.$1;
@@ -1241,6 +1241,10 @@ var arAkahukuImageURL = {
             
       if (uinfo.type.match (/(cat|thumb|src)/)) {
         uinfo.isImage = true;
+        if (/^(webm|mp4)$/i.test (uinfo.ext)) {
+          uinfo.isImage = false;
+          uinfo.isVideo = true;
+        }
       }
       if (uinfo.type.match (/(red|d)/)) {
         uinfo.isRedirect = true;
@@ -1289,7 +1293,7 @@ var arAkahukuImageURL = {
         uinfo.isAd = true;
       }
     }
-    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
+    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif|webm|mp4)(\?.*)?$/)) {
       /* IP アドレスで画像鯖らしき場所が指定された場合 */
       uinfo = new arAkahukuImageURLInfo ();
             
@@ -1313,6 +1317,10 @@ var arAkahukuImageURL = {
       }
             
       uinfo.isImage = true;
+      if (/^(webm|mp4)$/i.test (uinfo.ext)) {
+        uinfo.isImage = false;
+        uinfo.isVideo = true;
+      }
       uinfo.isIp = true;
       
       if (akahukuParam) {

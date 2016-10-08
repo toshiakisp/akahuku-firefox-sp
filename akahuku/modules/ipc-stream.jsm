@@ -298,6 +298,7 @@ function arOutputStreamChild (streamT) {
   this.ipc = new arIPCProxyChild (arOutputStreamChild.prototype);
   this.ipc.parentId = streamT._id;
   this.id = streamT._id;
+  this.mBufferedOutputStream = null;
 }
 
 arOutputStreamChild.prototype = {
@@ -317,15 +318,72 @@ arOutputStreamChild.prototype = {
     throw Cr.NS_NOINTERFACE;
   },
 
+  getBufferedOutputStream : function () {
+    if (!this.mBufferedOutputStream) {
+      var pipe = Cc ["@mozilla.org/pipe;1"].createInstance (Ci.nsIPipe);
+      pipe.init (false, false, 0, PR_UINT32_MAX, null);
+
+      var streamCallback = { // nsIInputStreamCallback
+        _sink : this,
+        _requestedCount : this.MAX_TRANSFER_BYTES,
+        // Run in main thread because arOutputStream is not thread-safe.
+        _thread : Cc ["@mozilla.org/thread-manager;1"]
+          .getService (Ci.nsIThreadManager).mainThread,
+
+        onInputStreamReady : function (stream) {
+          try {
+            var count = stream.available ();
+          }
+          catch (e) { // stream is closed
+            this._sink.close ();
+            return;
+          }
+          if (count > 0) {
+            var bistream = Cc ["@mozilla.org/binaryinputstream;1"]
+              .createInstance (Ci.nsIBinaryInputStream);
+            bistream.setInputStream (stream);
+            var data = bistream.readBytes (count);
+            this._sink.write (data, count);
+          }
+          this.asyncWait (stream);
+        },
+        asyncWait : function (stream) {
+          stream.asyncWait (this, 0, this._requestedCount, this._thread);
+        }
+      };
+      streamCallback.asyncWait (pipe.inputStream);
+
+      this.mBufferedOutputStream = pipe.outputStream;
+    }
+
+    return this.mBufferedOutputStream;
+  },
+
   // nsIOutputStream
 
   close : function () {
     this.ipc.close ();
     this.ipc.detachIPCMessageManager ();
+    this.mBufferedOutputStream = null;
   },
   flush : function () { this.ipc.flush (); },
+  MAX_TRANSFER_BYTES : 4096,
   write : function (aBuf, aCount) {
-    this.ipc.write (aBuf, aCount);
+    // 分割転送
+    var countWritten = 0;
+    var bufSub;
+    while (countWritten < aCount) {
+      var countLeft = aCount - countWritten;
+      var countSub = Math.min (countLeft, this.MAX_TRANSFER_BYTES);
+      if (countWritten == 0 && countSub == aCount) {
+        bufSub = aBuf;
+      }
+      else {
+        bufSub = aBuf.substr (countWritten, countSub);
+      }
+      countWritten += this.ipc.write (bufSub, countSub);
+    }
+    return countWritten;
   },
   writeFrom : function (aFromStream, aCount) {
     //nsIInputStream aFromStream (FIXME)

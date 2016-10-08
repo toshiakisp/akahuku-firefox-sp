@@ -155,12 +155,6 @@ arAkahukuConfig.restoreTime = function () {
 arAkahukuFile.getDirectory = function () {
   return arAkahukuIPC.sendSyncCommand ("File/getDirectory", arguments);
 };
-arAkahukuFile.createFile = function () {
-  arAkahukuIPC.sendSyncCommand ("File/createFile", arguments);
-};
-arAkahukuFile.asyncCreateFile = function () {
-  arAkahukuIPC.sendAsyncCommand ("File/asyncCreateFile", arguments);
-};
 arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFlags, contentWindow) {
   var fstream = arAkahukuIPC
     .sendSyncCommand ("File/createFileOutputStream",
@@ -168,8 +162,11 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
   if (fstream) {
     Cu.import ("resource://akahuku/ipc-stream.jsm");
     fstream = new arOutputStreamChild (fstream);
-    var mm = arAkahukuIPC.getContentFrameMessageManager (contentWindow);
+    var mm = (contentWindow
+        ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
+        : arAkahukuIPC.getChildProcessMessageManager ());
     fstream.attachIPCMessageManager (mm);
+    fstream = fstream.getBufferedOutputStream ();
   }
   return fstream;
 };
@@ -186,7 +183,9 @@ arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFla
   if (fstream) {
     Cu.import ("resource://akahuku/ipc-stream.jsm");
     var fstreamC = new arInputStreamChild (fstream);
-    var mm = arAkahukuIPC.getContentFrameMessageManager (contentWindow);
+    var mm = (contentWindow
+        ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
+        : arAkahukuIPC.getChildProcessMessageManager ());
     fstreamC.attachIPCMessageManager (mm);
     fstream = fstreamC.inputStream;
   }
@@ -323,6 +322,12 @@ arAkahukuSound.init = function () {
       arAkahukuIPC.sendAsyncCommand ("Sound/play", arguments);
     },
   };
+};
+
+
+
+arAkahukuStyle.modifyStyleFile = function () {
+  // update css only in the Chrome process
 };
 
 

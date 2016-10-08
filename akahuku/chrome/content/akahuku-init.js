@@ -29,9 +29,6 @@ if (Akahuku.useFrameScript) {
   //     * each frames: listen events (DOMContentLoaded)
 
   // activate XUL-overlay Akahuku partially for IPC call
-  arAkahukuStyle.onPrefChanged = function (){};//no file update in XUL
-  arAkahukuStyle.init = function (){};//no file update in XUL
-
   Components.utils.import ("resource://akahuku/console.jsm", this);
   Akahuku.debug = new AkahukuConsole ();
   Akahuku.debug.prefix = "Akahuku debug(xul#main)";

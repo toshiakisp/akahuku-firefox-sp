@@ -595,14 +595,6 @@
           <checkbox id="saveimage_linkmenu" checked="false"
                     label="リンクのコンテキストメニューから保存" />
           <box orient="horizonaral" align="center">
-            <checkbox id="saveimage_limit" checked="false"
-                      label="最大サイズ指定" />
-            <textbox id="saveimage_limit_width" size="6" />
-            <label id="saveimage_limit_label"
-                   control="saveimage_limit_width" value="x" />
-            <textbox id="saveimage_limit_height" size="6" />
-          </box>
-          <box orient="horizonaral" align="center">
             <label id="saveimage_buttonsize_label"
                    control="saveimage_buttonsize"
                    value="ボタンサイズ指定" />
@@ -610,6 +602,29 @@
           </box>
           <checkbox id="saveimage_buttons" checked="false" class="ineffective"
                     label="メニューの代わりにボタンを表示する" />
+          <groupbox orient="vertical">
+            <caption>
+              <label value="保存した画像の表示 ([元画像]ボタン)" id="saveimage_local_label"/>
+            </caption>
+            <box orient="horizontal" align="center">
+              <checkbox id="saveimage_limit" checked="false"
+                        oncommand="AkahukuOptions.checkSaveImageLimit ();"
+                        label="最大サイズ指定" />
+              <textbox id="saveimage_limit_width" size="6"
+                       tooltiptext="幅(w)" type="number" min="0" increment="10"/>
+              <label id="saveimage_limit_label"
+                     control="saveimage_limit_height" value="×" />
+              <textbox id="saveimage_limit_height" size="6"
+                       tooltiptext="高さ(h)" type="number" min="0" increment="10"/>
+              <menulist id="saveimage_limit_unit"
+                        tooltiptext="(デフォルト:px) 幅と高さの単位。ビューポート相対(.sp)はドキュメント表示領域の幅と高さに対する相対値(%)で、画面、ウィンドウ、フレームのサイズで動的に決まる。">
+                <menupopup id="saveimage_limit_unit_menu">
+                  <menuitem value="px" label="ピクセル(px)" />
+                  <menuitem value="view" label="ビューポート相対(vw,vh)" />
+                </menupopup>
+              </menulist>
+            </box>
+          </groupbox>
         </groupbox>
       </box>
       <box flex="1" id="tab_saveimage2" orient="vertical">
@@ -1409,7 +1424,7 @@
                     label="レスの上のマージンを消す" />
           <checkbox id="reply_nomarginbottom" checked="false"
                     label="レスの下のマージンを消す" />
-          <checkbox id="alertgif" checked="false" label="GIF 画像を赤字で表示" />
+          <checkbox id="alertgif" checked="false" label="GIF 画像や動画を赤字で表示" />
         </groupbox>
       </box>
       <box flex="1" id="tab_autolink" orient="vertical">
@@ -1691,6 +1706,19 @@
                       label="最新に更新で新規を分ける" />
             <checkbox id="catalog_reorder_fill" checked="false"
                       label="合間合間に で消した分を詰める" />
+              <checkbox id="catalog_reorder_stick-by-text_enable" checked="false"
+                        class="sp" tooltiptext="(デフォルト:無効) パターンに合致する本文のスレを最上段(φ)に分けて並べる。「～順に指定幅ずつ」でソートする必要あり。"
+                        oncommand="AkahukuOptions.checkCatalogReorderStickByText ();"
+                        label="本文で分ける" />
+              <box class="sub" orient="vertical">
+                <box orient="horizontal" align="center">
+                  <label id="catalog_reorder_stick-by-text_pattern_label"
+                         control="catalog_reorder_stick-by-text_pattern"
+                         value="パターン"/>
+                  <textbox id="catalog_reorder_stick-by-text_pattern" flex="1"
+                           tooltiptext="部分一致検索のための文字列か正規表現(/.../)をコンマ区切りで入力する。文字列では、半角英数記号は大文字小文字の区別無く全角にもマッチする。コンマ自体は\でエスケープ。 例: firefox, 赤福, a\,b, /^>/m, /\bs[upqz][1-9]/"/>
+                </box>
+              </box>
             </groupbox>
             <checkbox id="catalog_reorder_info" checked="false"
                       class="sp" tooltiptext="(デフォルト:無効) 各行にソート順に関する情報を表示する (スレの立った時間帯,増加数)"
@@ -1749,6 +1777,50 @@
                      control="catalog_zoom_comment_delay" value="[ms]" />
             </box>
           </groupbox>
+        </box>
+        <box orient="horizontal">
+          <box orient="vertical">
+            <groupbox orient="vertical">
+              <caption>
+                <checkbox id="catalog_cellwidth_enable" checked="false"
+                          label="スレの幅を固定"
+                          class="sp" tooltiptext="(デフォルト: 無効) カタログでスレの幅を制限し、指定幅より大きいサムネや本文を幅に収める。このグループの設定変更はOK/適用すると既存タブにも即反映。"
+                          oncommand="AkahukuOptions.checkCatalogCellWidth ();" />
+              </caption>
+              <box orient="horizontal" align="center">
+                <label id="catalog_cellwidth_num_label"
+                       value="サイズ" control="catalog_cellwidth_num"/>
+                <textbox id="catalog_cellwidth_num" size="4"
+                         tooltiptext="(初期値: 50.0) 幅の値(CSSの長さ)"
+                         type="number" min="0" value="50" decimalplaces="1"/>
+                <menulist id="catalog_cellwidth_unit"
+                          tooltiptext="(初期値: px) 幅の単位(CSS)。vw, vh はFirefox 19以降が必要。">
+                  <menupopup id="catalog_cellwidth_unit_menu">
+                    <menuitem value="px" label="px (ピクセル数)"/>
+                    <menuitem value="vw" label="vw (ビューポート幅%)"/>
+                    <menuitem value="vh" label="vh (ビューポート高%)"/>
+                    <menuitem value="rem" label="rem (基準フォントサイズ比)"/>
+                  </menupopup>
+                </menulist>
+              </box>
+              <box class="sub" orient="vertical">
+                <checkbox id="catalog_cellwidth_scale-thumb" checked="false"
+                          tooltiptext="(初期値: 無効) サムネを表示する領域の縦横サイズもレス幅に揃え、その中央にサムネを表示する。サムネが小さい場合は拡大もする。Firefox 38以降が必要(それより前ではアスペクト比維持や中央揃えにやや難あり)。"
+                          label="サムネ表示領域も" />
+              </box>
+              <box orient="horizontal" align="center">
+                <label id="catalog_cellwidth_max-lines_label1"
+                       value="本文は最大" control="catalog_cellwidth_max-lines"/>
+                <textbox id="catalog_cellwidth_max-lines" size="2"
+                         tooltiptext="(初期値: 1.0) 本文表示領域の高さを行数で指定。収まりきらなかった分はスクロールで見られる。ある程度の大きさにするとFirefoxはスクロールバーを表示する。"
+                         type="number" min="0" decimalplaces="1"/>
+                <label id="catalog_cellwidth_max-lines_label2"
+                       value="行まで表示" control="catalog_cellwidth_max-lines"/>
+              </box>
+            </groupbox>
+          </box>
+          <box orient="vertical">
+          </box>
         </box>
       </box>
       <box flex="1" id="tab_catalog2" orient="vertical">
@@ -2216,6 +2288,23 @@
                     oncommand="AkahukuOptions.playFile ('sound_saveimage_error_file')" />
           </box>
         </groupbox>
+        <box orient="horizontal" align="center">
+          <groupbox orient="horizontal">
+            <caption label="ページ内メディアのデフォルト音量"/>
+            <box orient="vertical" align="center">
+              <box orient="horizontal" align="center" flex="1">
+                <scale orient="horizontal" value="100" min="0" max="100"
+                       id="sound_volume" disabled="true"
+                       onchange="AkahukuOptions.onChangeSoundVolume (event);"/>
+                <label id="sound_volume_textshow" value="100%"/>
+              </box>
+            </box>
+            <box orient="vertical">
+              <description>※Firefox 全体の設定です</description>
+              <description>("media.default_volume"に即反映)</description>
+            </box>
+          </groupbox>
+        </box>
       </box>
       <box flex="1" id="tab_other" orient="vertical">
         <groupbox orient="vertical">

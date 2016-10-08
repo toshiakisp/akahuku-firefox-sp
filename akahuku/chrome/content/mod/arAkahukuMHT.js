@@ -571,11 +571,21 @@ arAkahukuMHTFileData.prototype = {
           (Components.interfaces.nsIStreamConverter);
         converter.asyncConvertData (encoding, "uncompressed", this, null);
 
+        var istream = entry.openInputStream (0);
+        if (istream.isNonBlocking ()) { // cache v2
+          var pump
+            = Components.classes
+            ["@mozilla.org/network/input-stream-pump;1"]
+            .createInstance (Components.interfaces.nsIInputStreamPump);
+          pump.init (istream, -1, -1, 0, 0, true);
+          pump.asyncRead (converter, null);
+          this.converting = true;
+          return;
+        }
         var listener
           = converter.QueryInterface
           (Components.interfaces.nsIStreamListener);
         listener.onStartRequest (null, null);
-        var istream = entry.openInputStream (0);
         listener.onDataAvailable (null, null, istream, 0, entry.dataSize);
         istream.close ();
         this.converting = true;
@@ -1689,8 +1699,14 @@ var arAkahukuMHT = {
         continue;
       }
       /* 画像を保存の大きい画像を削除する */
-      if (arAkahukuDOM.getClassName (nodes [i])
-          == "akahuku_saveimage_src") {
+      if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
+        var bq = nodes [i].parentNode;
+        while (bq) {
+          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
+          while (bq && bq.nodeType !== 1) { // nextElementSibling
+            bq = bq.nextSibling;
+          }
+        }
         nodes [i].parentNode.removeChild (nodes [i]);
         i --;
         continue;
@@ -1751,6 +1767,42 @@ var arAkahukuMHT = {
         nodes [i].setAttribute ("style", s);
       }
       nodes [i].removeAttribute ("__akahuku_jpeg_thumbnail_opened");
+    }
+
+    nodes = targetDocument.getElementsByTagName ("video");
+    for (i = 0; i < nodes.length; i ++) {
+      // webm のインライン再生ノードを削除する
+      if (arAkahukuDOM.hasClassName (nodes [i], "extendWebm")) {
+        var anchor = nodes [i].parentNode.nextSibling;
+        if (anchor && anchor.nodeName.toLowerCase () == "a" &&
+            /\bdisplay *: *none\b/i.test (anchor.getAttribute ("style"))) {
+          // 非表示化されたサムネを再表示
+          arAkahukuDOM.Style.removeProperty (anchor, "display");
+        }
+        nodes [i].parentNode.parentNode
+          .removeChild (nodes [i].parentNode);
+        i --;
+        continue;
+      }
+      // 画像を保存の大きい画像(video)を削除する
+      if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
+        var bq = nodes [i].parentNode;
+        while (bq) {
+          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
+          while (bq && bq.nodeType !== 1) { // nextElementSibling
+            bq = bq.nextSibling;
+          }
+        }
+        var hrefOriginal = nodes [i].parentNode
+          .getAttribute ("__akahuku_saveimage_href");
+        if (hrefOriginal) {
+          nodes [i].parentNode.setAttribute ("dummyhref", hrefOriginal);
+          nodes [i].parentNode.removeAttribute ("__akahuku_saveimage_href");
+        }
+        nodes [i].parentNode.removeChild (nodes [i]);
+        i --;
+        continue;
+      }
     }
         
     nodes = Akahuku.getMessageBQ (targetDocument);
@@ -2335,8 +2387,16 @@ var arAkahukuMHT = {
       var fileData;
       var dup;
       
-      /* img 要素を収集する */
-      nodes = param.cloneDocument.getElementsByTagName ("img");
+      /* img, video 要素を収集する */
+      nodes = [];
+      var imgs = param.cloneDocument.getElementsByTagName ("img");
+      for (i = 0; i < imgs.length; i ++) {
+        nodes.push (imgs [i])
+      }
+      var videos = param.cloneDocument.getElementsByTagName ("video");
+      for (i = 0; i < videos.length; i ++) {
+        nodes.push (videos[i])
+      }
       for (i = 0; i < nodes.length; i ++) {
         /* 非表示になった画像は取得しない */
         if ("style" in nodes [i]
@@ -2985,7 +3045,20 @@ var arAkahukuMHT = {
       fstream.write (data, data.length);
       fstream.close ();
             
-      arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      if (Akahuku.useFrameScript) {
+        // e10s hack: 親プロセスの処理を少し待たないと
+        // 続く moveTo が NS_ERROR_FILE_IS_LOCKED を投げる
+        // (100msが妥当な保証は無し)
+        arAkahukuUtil.wait (100);
+      }
+      try {
+        arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      }
+      catch (e if e.result === Components.results.NS_ERROR_FILE_IS_LOCKED) {
+        // ロックが解けるのを少し待ってリトライ
+        arAkahukuUtil.wait (300);
+        arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      }
             
       /* 完了のメッセージを表示する */
       var text = "\u4FDD\u5B58\u306B\u6210\u529F\u3057\u307E\u3057\u305F";

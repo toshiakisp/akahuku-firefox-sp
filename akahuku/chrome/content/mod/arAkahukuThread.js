@@ -1967,7 +1967,7 @@ var arAkahukuThread = {
   },
     
   /**
-   * 対象のノード以下のメール欄を表示する
+   * 対象のノード以下のGIF画像or動画へのリンクを赤字で表示
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
@@ -1981,7 +1981,7 @@ var arAkahukuThread = {
         
     for (i = 0; i < nodes.length; i ++) {
       var text = arAkahukuDOM.getInnerText (nodes [i]);
-      if (text.match (/\.gif$/)) {
+      if (/\.(gif|webm|mp4)$/.test (text)) {
         nodes [i].style.color = "red";
         nodes [i].setAttribute ("__akahuku_alertgif", "true");
       }

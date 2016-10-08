@@ -16,6 +16,7 @@ arAkahukuImageListener.prototype = {
   saveLeafName : "", /* String  保存先のファイル名 */
   finished : false,
   callback : null,
+  expectedContentTypePattern : /^image\//,
     
   /**
    * インターフェースの要求
@@ -125,8 +126,8 @@ arAkahukuImageListener.prototype = {
         }
       }
       else if (httpSucceeded) {
-        if (request.contentType
-            && /^image\/.*$/.test (request.contentType)) {
+        if (this.expectedContentTypePattern &&
+            this.expectedContentTypePattern.test (request.contentType)) {
           this.file.moveTo (null, this.saveLeafName);
           this.finished = true;
           this.callback (true, this.file, "");
@@ -134,6 +135,8 @@ arAkahukuImageListener.prototype = {
         else {
           // 画像ではないがどうするかはコールバック次第
           this.finished = true;
+          Akahuku.debug.warn ("arAkahukuImageListener: "
+              + "Unexpected Content-Type: " + request.contentType);
           this.callback (false, this.file, "");
         }
       }
@@ -178,6 +181,7 @@ var arAkahukuImage = {
   enableLimit : false,            /* Boolean  最大サイズ指定 */
   limitWidth : 0,                 /* Boolean  最大サイズ (幅) */
   limitHeight : 0,                /* Boolean  最大サイズ (高さ) */
+  limitUnit : "px",               /* Boolean  単位 */
     
   buttonSize : "",                /* String  ボタンサイズ指定 */
     
@@ -378,6 +382,13 @@ var arAkahukuImage = {
         arAkahukuImage.limitHeight
           = arAkahukuConfig
           .initPref ("int",  "akahuku.saveimage.limit.height", 1024);
+        arAkahukuImage.limitUnit
+          = arAkahukuConfig
+          .initPref ("char",  "akahuku.saveimage.limit.unit", "px");
+        if (["px", "view"].indexOf (arAkahukuImage.limitUnit) == -1) {
+          // 不正な設定値の場合
+          arAkahukuImage.limitUnit = "px";
+        }
       }
             
       value
@@ -673,6 +684,22 @@ var arAkahukuImage = {
         arAkahukuImage.currentNormal = normal;
 
         var rect = target.getBoundingClientRect ();
+        // 要素のスクリーン座標をデバイスピクセル単位で得る
+        var view = target.ownerDocument.defaultView;
+        rect.x = rect.x + view.mozInnerScreenX;
+        rect.y = rect.y + view.mozInnerScreenY;
+        try {
+          var dwu = view
+            .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+            .getInterface (Components.interfaces.nsIDOMWindowUtils);
+          var scale = dwu.screenPixelsPerCSSPixel;
+          rect.x = Math.round (rect.x * scale);
+          rect.y = Math.round (rect.y * scale);
+          rect.width = Math.round (rect.width * scale);
+          rect.height = Math.round (rect.height * scale);
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
         arAkahukuImage.openXULSaveImagePopup
           (target, rect, event.screenX, event.screenY);
         return;
@@ -1057,6 +1084,10 @@ var arAkahukuImage = {
         function (success, savedFile, msg) {
           if (!success && savedFile) {
             arAkahukuFile.remove (savedFile, true);
+            if (!msg || msg.length == 0) {
+              // "保存失敗(Content-Type)"
+              msg = "\u4FDD\u5B58\u5931\u6557(Content-Type)";
+            }
           }
           if (target.style.display == "none") {
             arAkahukuImage.onSave
@@ -1084,6 +1115,26 @@ var arAkahukuImage = {
     listener.file = file;
     listener.saveLeafName = file.leafName;
     listener.callback = callback;
+
+    try {
+      var url = uri.QueryInterface (Components.interfaces.nsIURL);
+      switch (url.fileExtension.toLowerCase ()) {
+        case "jpg":
+        case "jpeg":
+        case "gif":
+        case "png":
+          listener.expectedContentTypePattern = /^image\//;
+          break;
+        case "webm":
+        case "mp4":
+          listener.expectedContentTypePattern = /^video\//;
+          break;
+        default:
+          listener.expectedContentTypePattern = null;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
         
     file.initWithPath (file.path
                        + "." + new Date ().getTime ()
@@ -1496,16 +1547,20 @@ var arAkahukuImage = {
         table.style.clear = "";
       }
     }
+
+    var attr_href2 = "__akahuku_saveimage_href";
+    var pattern = /\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/;
     
     var image = null;
     var blockquote = null
     var node = target.parentNode;
     while (node) {
       if (node.nodeName.toLowerCase () == "a"
-          && (node.href.match (/\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/)
+          && (pattern.test (node.href)
+              || pattern.test (node.getAttribute (attr_href2))
               || (node.hasAttribute ("__unmht_href")
                   && node.getAttribute ("__unmht_href").match (/\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/)))) {
-        var nodes = node.getElementsByTagName ("img");
+        var nodes = node.querySelectorAll ("img, .akahuku_saveimage_src");
         if (nodes.length > 0) {
           if (image == null) {
             image = nodes [0];
@@ -1543,10 +1598,20 @@ var arAkahukuImage = {
       anchor.href = href;
       anchor.setAttribute ("__akahuku_saveimage_anchor", "1");
             
-      image = targetDocument.createElement ("img");
-      image.setAttribute ("hspace", "20");
-      image.setAttribute ("border", "0");
-      image.setAttribute ("align", "left");
+      if (!uinfo.isVideo) {
+        image = targetDocument.createElement ("img");
+        image.setAttribute ("hspace", "20");
+        image.setAttribute ("border", "0");
+        image.setAttribute ("align", "left");
+      }
+      else {
+        image = targetDocument.createElement ("video");
+        image.style.cssFloat = "left";
+        image.style.marginLeft = "20px";
+        image.style.marginRight = "20px";
+        image.preload = "metadata";
+        image.controls = true;
+      }
             
       anchor.appendChild (image);
                                 
@@ -1570,6 +1635,13 @@ var arAkahukuImage = {
         (image.parentNode);
         return;
       }
+
+      // (video) 元の href を復元
+      var hrefOriginal = image.parentNode.getAttribute (attr_href2);
+      if (hrefOriginal) {
+        image.parentNode.setAttribute ("href", hrefOriginal);
+        image.parentNode.removeAttribute (attr_href2);
+      }
       
       var thumbImage = image.nextSibling;
             
@@ -1590,22 +1662,53 @@ var arAkahukuImage = {
          "akahuku_saveimage_defmargin");
       }
       
-      var srcImage = image.cloneNode (false);
-      srcImage.removeAttribute ("id");
+      var srcImage;
+      if (!uinfo.isVideo) {
+        srcImage = image.cloneNode (false);
+        srcImage.removeAttribute ("id");
+        srcImage.removeAttribute ("width");
+        srcImage.removeAttribute ("height");
+        srcImage.style.width = "";
+        srcImage.style.height = "";
+      }
+      else {
+        srcImage = targetDocument.createElement ("video");
+        if (image.align) {
+          srcImage.style.cssFloat = image.align;
+        }
+        if (image.hspace > 0) {
+          srcImage.style.marginLeft = image.hspace + "px";
+          srcImage.style.marginRight = image.hspace + "px";
+        }
+        srcImage.preload = "metadata";
+        srcImage.controls = true;
+        srcImage.addEventListener ('ended', function () {
+          // 再生後に巻き戻す (再生前と同じフレームを表示)
+          srcImage.currentTime = 0;
+        });
+      }
       srcImage.className = "akahuku_saveimage_src";
-      srcImage.removeAttribute ("width");
-      srcImage.removeAttribute ("height");
-            
-      srcImage.style.width = "";
-      srcImage.style.height = "";
             
       if (arAkahukuImage.enableLimit) {
-        srcImage.style.maxWidth = arAkahukuImage.limitWidth + "px";
-        srcImage.style.maxHeight = arAkahukuImage.limitHeight + "px";
+        var unitW = arAkahukuImage.limitUnit;
+        var unitH = unitW;
+        if (arAkahukuImage.limitUnit === "view") {
+          unitW = "vw";
+          unitH = "vh";
+        }
+        srcImage.style.maxWidth = arAkahukuImage.limitWidth + unitW;
+        srcImage.style.maxHeight = arAkahukuImage.limitHeight + unitH;
       }
             
       image.style.display = "none";
       image.setAttribute ("__akahuku_saveimage_thumb", "1");
+
+      if (uinfo.isVideo) {
+        // ふたばのインライン再生ハンドラを回避するため href を退避
+        var hrefOriginal = image.parentNode.getAttribute ("href");
+        image.parentNode.removeAttribute ("href");
+        image.parentNode.setAttribute (attr_href2, hrefOriginal);
+      }
             
       var url = "";
       if (arAkahukuP2P.enable
@@ -1656,7 +1759,7 @@ var arAkahukuImage = {
           srcImage.QueryInterface (Components.interfaces.nsIImageLoadingContent).getRequest (0).image.resetAnimation ();
           srcImage.QueryInterface (Components.interfaces.nsIImageLoadingContent).getRequest (0).image.startAnimation ();
         }
-        catch (e) {
+        catch (e) { Akahuku.debug.exception (e);
         }
       }, true);
       srcImage.src = url;
