@@ -5794,7 +5794,8 @@ var arAkahukuCatalog = {
     while (fromTr && toTr) {
       nextTd = td.nextSibling;
       var isHeader = td.nodeName.toLowerCase () == "th";
-      if (isHeader && td.firstChild) {
+      if (isHeader && arAkahukuDOM.hasClassName (td, "akahuku_header")) {
+        // 分ける種類(新規など)が切り替わった
         count = 0;
         toTr = fromTr;
       }
