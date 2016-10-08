@@ -2288,6 +2288,23 @@
                     oncommand="AkahukuOptions.playFile ('sound_saveimage_error_file')" />
           </box>
         </groupbox>
+        <box orient="horizontal" align="center">
+          <groupbox orient="horizontal">
+            <caption label="ページ内メディアのデフォルト音量"/>
+            <box orient="vertical" align="center">
+              <box orient="horizontal" align="center" flex="1">
+                <scale orient="horizontal" value="100" min="0" max="100"
+                       id="sound_volume" disabled="true"
+                       onchange="AkahukuOptions.onChangeSoundVolume (event);"/>
+                <label id="sound_volume_textshow" value="100%"/>
+              </box>
+            </box>
+            <box orient="vertical">
+              <description>※Firefox 全体の設定です</description>
+              <description>("media.default_volume"に即反映)</description>
+            </box>
+          </groupbox>
+        </box>
       </box>
       <box flex="1" id="tab_other" orient="vertical">
         <groupbox orient="vertical">

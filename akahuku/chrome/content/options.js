@@ -1311,6 +1311,7 @@ var AkahukuOptions = {
       ["char", "sound.saveimage.error.file", "", "private"],
       ["init",
        function (map) {
+         AkahukuOptions.initSoundVolume ();
         }]
       ],
     "other" : [
@@ -2518,6 +2519,38 @@ var AkahukuOptions = {
         sound.play (uri);
       }
     }
+  },
+
+  _soundVolumeTimerID : null,
+
+  onChangeSoundVolume : function (event) {
+    var scale = event.target;
+    var label = document.getElementById ("sound_volume_textshow");
+    label.value = scale.value + '%';
+
+    // デバウンスして値が落ち着いたら設定反映
+    window.clearTimeout (AkahukuOptions._soundVolumeTimerID);
+    AkahukuOptions._soundVolumeTimerID
+      = window.setTimeout (function () {
+        var volume = parseFloat (scale.value) / 100;
+        AkahukuOptions.prefBranch
+        .setCharPref ("media.default_volume", volume);
+      }, 100);
+  },
+
+  initSoundVolume : function () {
+    var prefName = "media.default_volume"; // Firefox 49+
+    try {
+      var volumeStr = AkahukuOptions.prefBranch.getCharPref (prefName);
+    }
+    catch (e) {
+      // 古いFirefox のため設定が無い
+      return;
+    }
+    var volume = parseFloat (volumeStr);
+    var scale = document.getElementById ("sound_volume");
+    scale.disabled = false;
+    scale.value = Math.round (100*volume);
   },
     
   /**
