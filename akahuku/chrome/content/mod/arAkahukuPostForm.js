@@ -3506,6 +3506,20 @@ var arAkahukuPostForm = {
       else if (filename.match (/\.webm$/i)) {
         mimeType = "video/webm";
       }
+
+      if (!param.testAttachableExt (filename)) {
+        // 添付可能なファイル以外はプレビュー無し
+        mimeType = "";
+      }
+      else if (!mimeType) {
+        // 添付可能判定だが想定外のファイルは適当に判断
+        if (/\.(mp4|m4v|ogg|ogv)$/i.test (filename)) {
+          mimeType = "video/*";
+        }
+        else if (/\.(bmp|ico|svg|svgz)$/i.test (filename)) {
+          mimeType = "image/*";
+        }
+      }
             
       var container
       = targetDocument
@@ -3607,6 +3621,9 @@ var arAkahukuPostForm = {
               preview.removeAttribute ("src");
               previewV.style.display = "none";
               previewV.removeAttribute ("src");
+
+              // "添付不可?"
+              arAkahukuDOM.setText (appendix, " \u6DFB\u4ED8\u4E0D\u53EF?");
             }
             previewV.load ();
             container.style.display = "";
