@@ -86,7 +86,7 @@ this.AkahukuCSSInjector = Object.freeze ({
     return this;
   },
   _deleteEntryOfId : function (id) {
-    if (this._entries.isOwnProperty (id)) {
+    if (this._entries.hasOwnProperty (id)) {
       delete this._entries [id];
       return true;
     }
