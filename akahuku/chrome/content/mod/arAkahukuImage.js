@@ -1759,7 +1759,7 @@ var arAkahukuImage = {
           srcImage.QueryInterface (Components.interfaces.nsIImageLoadingContent).getRequest (0).image.resetAnimation ();
           srcImage.QueryInterface (Components.interfaces.nsIImageLoadingContent).getRequest (0).image.startAnimation ();
         }
-        catch (e) { Akahuku.debug.exception (e);
+        catch (e) {
         }
       }, true);
       srcImage.src = url;

@@ -76,6 +76,21 @@ else { // Boot as a classic XUL-overlay extension
   }
   Akahuku.init ();
 
+  // Transfer old-ext handler calls for JSM to handler calls for XUL
+  // for compatibility of aima_aimani
+  try {
+    var jsm = {};
+    Components.utils.import ("resource://akahuku/akahuku.jsm", jsm);
+    jsm.Akahuku.onAima_Aimanied = function () {
+      Akahuku.onAima_Aimanied (arguments [0]);
+    }
+    jsm.Akahuku.onHideEntireThread = function () {
+      Akahuku.onHideEntireThread (arguments [0]);
+    }
+  }
+  catch (e) { Components.utils.reportError (e);
+  }
+
   // Add listeners for (chrome-)window opening and closing
   // to initialize Akahuku
   window.addEventListener

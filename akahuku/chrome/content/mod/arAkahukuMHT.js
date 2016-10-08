@@ -1700,11 +1700,11 @@ var arAkahukuMHT = {
       }
       /* 画像を保存の大きい画像を削除する */
       if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
-        var bq = nodes [i].parentNode;
-        while (bq) {
-          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
-          while (bq && bq.nodeType !== 1) { // nextElementSibling
-            bq = bq.nextSibling;
+        var container = Akahuku.getMessageContainer (nodes [i]);
+        if (container) {
+          var bq = Akahuku.getMessageBQ (container.main) [0];
+          if (bq) {
+            arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
           }
         }
         nodes [i].parentNode.removeChild (nodes [i]);
@@ -1786,11 +1786,11 @@ var arAkahukuMHT = {
       }
       // 画像を保存の大きい画像(video)を削除する
       if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
-        var bq = nodes [i].parentNode;
-        while (bq) {
-          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
-          while (bq && bq.nodeType !== 1) { // nextElementSibling
-            bq = bq.nextSibling;
+        var container = Akahuku.getMessageContainer (nodes [i]);
+        if (container) {
+          var bq = Akahuku.getMessageBQ (container.main) [0];
+          if (bq) {
+            arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
           }
         }
         var hrefOriginal = nodes [i].parentNode

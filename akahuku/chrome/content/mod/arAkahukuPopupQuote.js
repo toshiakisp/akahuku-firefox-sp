@@ -684,7 +684,7 @@ var arAkahukuPopupQuote = {
               var range = targetDocument.createRange ();
               if ("getBoundingClientRect" in range) {
                 /* Firefox4/Gecko2.0 : カーソル下の数字を非破壊で拾う */
-                var pattern = /(?:No\.)?(\d+)(?:\.(jpg|png|gif))?/g;
+                var pattern = /(?:No\.)?(\d+)(?:\.(jpg|png|gif|webm|mp4))?/g;
                 var cX = param.pageX - targetDocument.defaultView.scrollX;
                 var cY = param.pageY - targetDocument.defaultView.scrollY;
                 var match;
