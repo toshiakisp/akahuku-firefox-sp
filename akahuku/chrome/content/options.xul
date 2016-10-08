@@ -1424,7 +1424,7 @@
                     label="レスの上のマージンを消す" />
           <checkbox id="reply_nomarginbottom" checked="false"
                     label="レスの下のマージンを消す" />
-          <checkbox id="alertgif" checked="false" label="GIF 画像を赤字で表示" />
+          <checkbox id="alertgif" checked="false" label="GIF 画像や動画を赤字で表示" />
         </groupbox>
       </box>
       <box flex="1" id="tab_autolink" orient="vertical">
