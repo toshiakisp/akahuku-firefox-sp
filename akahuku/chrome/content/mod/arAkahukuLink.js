@@ -657,26 +657,7 @@ var arAkahukuLink = {
       
       var anchor = targetDocument.createElement ("a");
       url = arAkahukuP2P.tryEnP2P (url);
-      if (typeof (Components.interfaces.nsIIDNService) != "undefined") {
-        if (url.match (/^([A-Za-z0-9]+):\/\/([^\/]+)\/(.+)/)) {
-          var protocol2 = RegExp.$1;
-          var host = RegExp.$2;
-          var path = RegExp.$3;
-                    
-          var idn
-            = Components.classes
-            ["@mozilla.org/network/idn-service;1"].
-            getService (Components.interfaces.nsIIDNService);
-                    
-          try {
-            host = unescape (host);
-            host = idn.convertUTF8toACE (host);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-          url = protocol2 + "://" + host + "/" + path;
-        }
-      }
+      url = arAkahukuUtil.tryConvertIDNHostToAscii (url);
       anchor.setAttribute ("dummyhref", url);
       anchor.className = "akahuku_generated_link";
       arAkahukuLink.addAutoLinkEventHandlerCore (anchor);

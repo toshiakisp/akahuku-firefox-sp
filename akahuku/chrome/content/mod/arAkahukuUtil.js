@@ -56,6 +56,21 @@ var arAkahukuUtil = new function () {
     return ios.newURI (path, null, baseuri);
   };
 
+  this.tryConvertIDNHostToAscii = function (url) {
+    try {
+      var uri = this.newURIViaNode (url, null);
+      if (typeof uri.asciiHostPort !== "undefined" &&
+          uri.asciiHostPort !== uri.hostPort) {
+        url = uri.scheme + "://" +
+          (uri.userPass ? url += uri.userPass + "@" : "") +
+          uri.asciiHostPort + uri.path;
+      }
+    }
+    catch (e) { Cu.reportError (e);
+    }
+    return url;
+  };
+
   /*
    * 後で少し後で実行するように登録する
    */

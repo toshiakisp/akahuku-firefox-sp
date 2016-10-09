@@ -367,22 +367,7 @@ arAkahukuMHTFileData.prototype = {
     }
     
     try {
-      if (typeof (Components.interfaces.nsIIDNService) != "undefined") {
-        if (location.match (/^([A-Za-z0-9]+):\/\/([^\/]+)\/(.+)/)) {
-          var protocol = RegExp.$1;
-          var host = RegExp.$2;
-          var path = RegExp.$3;
-                    
-          var idn
-          = Components.classes
-          ["@mozilla.org/network/idn-service;1"].
-          getService (Components.interfaces.nsIIDNService);
-                
-          host = unescape (host);
-          host = idn.convertUTF8toACE (host);
-          location = protocol + "://" + host + "/" + path;
-        }
-      }
+      location = arAkahukuUtil.tryConvertIDNHostToAscii (location);
       
       Akahuku.Cache.asyncOpenCacheToRead
         ({url: location, triggeringNode: targetDocument}, this);
