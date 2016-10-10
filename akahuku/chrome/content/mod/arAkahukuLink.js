@@ -3082,12 +3082,11 @@ var arAkahukuLink = {
             }
             bq.style.marginLeft = div.offsetWidth + "px";
             bq.style.display = "none";
-            setTimeout
-              ((function (node) {
-                  return function () {
-                    node.style.display = "";
-                  };
-                })(bq), 10);
+            bq.ownerDocument.defaultView
+            .setTimeout
+              (function (node) {
+                node.style.display = "";
+              }, 10, bq);
           }
         }
       }
