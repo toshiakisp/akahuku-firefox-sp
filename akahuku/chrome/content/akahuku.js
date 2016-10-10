@@ -1380,6 +1380,16 @@ var Akahuku = {
       }
     }
 
+    if (targetNode.nodeType == targetNode.DOCUMENT_NODE &&
+        documentParam && documentParam.location_info &&
+        documentParam.location_info.isFutaba &&
+        documentParam.location_info.isReply) {
+      // ふたばで全BQ取得時には div.thre 内のみに対象が絞れる可能性
+      // (レイアウト 2016/05/31~)
+      var divThre = targetNode.querySelector ("body>form>div.thre");
+      targetNode = (divThre ? divThre : targetNode);
+    }
+
     var newNodes = new Array ();
 
     /* 可能なら XPath による高速取得を試みる */
