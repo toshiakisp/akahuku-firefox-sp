@@ -2802,6 +2802,8 @@ var arAkahukuReload = {
         (currentContainer.main, "akahuku_skipped_reply");
         arAkahukuDOM.removeClassName
         (currentContainer.main, "akahuku_deleted_reply");
+        arAkahukuDOM.removeClassName
+        (currentContainer.main, "akahuku_deleted_reply2");
         
         /* HTML のソースから構築するので innerHTML を使用する  */
         currentContainer.main.innerHTML = currentReplyText;
