@@ -1157,8 +1157,7 @@ var arAkahukuMHT = {
       = arAkahukuConfig
       .initPref ("char", "akahuku.savemht.default.format", defFormat);
       arAkahukuMHT.defaultFormat    
-      = arAkahukuConverter.unescapeExtra
-      (unescape (arAkahukuMHT.defaultFormat));
+      = unescape (arAkahukuMHT.defaultFormat);
             
       arAkahukuMHT.enableAuto
       = arAkahukuConfig

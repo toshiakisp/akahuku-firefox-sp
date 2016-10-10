@@ -344,7 +344,7 @@ arAkahukuLocationInfo.prototype = {
         
     if (path.match (/%/)) {
       try {
-        path = unescape (path);
+        path = decodeURIComponent (path);
       }
       catch (e) { Akahuku.debug.exception (e);
       }

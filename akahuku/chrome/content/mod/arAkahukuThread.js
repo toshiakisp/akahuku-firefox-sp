@@ -3108,11 +3108,6 @@ var arAkahukuThread = {
             else if (nodeName == "a") {
               var href;
               href = node.getAttribute ("href");
-              try {
-                href = unescape (href);
-              }
-              catch (e) { Akahuku.debug.exception (e);
-              }
                             
               if (href.match (/^(\/[^\/]+\/)?res\/([0-9]+)\.html?$/)
                   || href.match (/^(\/[^\/]+\/)?2\/([0-9]+)\.html?$/)

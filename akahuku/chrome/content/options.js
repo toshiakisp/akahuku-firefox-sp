@@ -184,8 +184,7 @@ var AkahukuOptions = {
           = AkahukuOptions
           .initPref (map, "char", "akahuku.title.format", defFormat);
           document.getElementById ("title_format").value
-          = AkahukuOptions
-          .unescapeExtra (unescape (value));
+          = unescape (value);
         },
        function (fstream, deletePath) {
          var value   = document.getElementById ("title_format").value;
@@ -465,7 +464,7 @@ var AkahukuOptions = {
           = AkahukuOptions
           .initPref (map, "char", "akahuku.savemht.default.format", defFormat);
           document.getElementById ("savemht_default_format").value
-          = AkahukuOptions.unescapeExtra (unescape (value));
+          = unescape (value);
         },
        function (fstream, deletePath) {
          var value   = document.getElementById ("savemht_default_format").value;
@@ -1974,22 +1973,6 @@ var AkahukuOptions = {
     else {
       return false;
     }
-  },
-    
-  /**
-   * 古い Mozilla Suite でエスケープ解除できない %uXXXX を解除する
-   *
-   * @param  String text
-   *         解除する文字列
-   * @return String
-   *         解除した文字列
-   */
-  unescapeExtra : function (text) {
-    return text
-    .replace (/%(u[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])/g,
-              function (match, part) {
-                return eval ("\"\\" + part + "\";");
-              });
   },
     
   /**

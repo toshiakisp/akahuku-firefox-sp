@@ -79,8 +79,7 @@ var arAkahukuTitle = {
         = arAkahukuConfig
         .initPref ("char", "akahuku.title.format", defFormat);
       arAkahukuTitle.format
-        = arAkahukuConverter.unescapeExtra
-        (unescape (arAkahukuTitle.format));
+        = unescape (arAkahukuTitle.format);
     }
 
     arAkahukuTitle.commentLength
