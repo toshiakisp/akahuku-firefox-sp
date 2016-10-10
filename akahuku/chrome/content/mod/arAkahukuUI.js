@@ -511,7 +511,7 @@ var arAkahukuUI = {
       if (navbar && inner) {
         if (arAkahukuUI.enableToolbarPreferences) {
           button = document.createElement ("toolbarbutton");
-          var id, command;
+          var id;
           if (style != 1) {
             id = "akahuku-toolbarbutton-preferences-image";
           }
@@ -519,9 +519,9 @@ var arAkahukuUI = {
             id = "akahuku-toolbarbutton-preferences-text";
           }
           button.setAttribute ("id", id);
-          command
-            = "arAkahukuUI.showPreferences (arguments [0]);";
-          button.setAttribute ("oncommand", command);
+          button.addEventListener ("command", function (event) {
+            arAkahukuUI.showPreferences (event);
+          }, false);
           button.setAttribute ("class", "toolbarbutton-1");
           button.setAttribute ("status", Akahuku.enableAll);
           if (style != 0) {
@@ -562,27 +562,30 @@ var arAkahukuUI = {
         var menuseparator;
                 
         label = "\u5168\u6A5F\u80FD\u3092 ON";
-        command = "arAkahukuUI.switchDisabled ();";
         menuitem = targetDocument.createElement ("menuitem");
         menuitem.id = "akahuku-statusbar-popup-all";
         menuitem.setAttribute ("label", label);
-        menuitem.setAttribute ("oncommand", command);
+        menuitem.addEventListener ("command", function () {
+          arAkahukuUI.switchDisabled ();
+        }, false);
         popup.appendChild (menuitem);
                 
         label = "P2P \u3092 ON";
-        command = "arAkahukuUI.switchP2PDisabled ();";
         menuitem = targetDocument.createElement ("menuitem");
         menuitem.id = "akahuku-statusbar-popup-p2p";
         menuitem.setAttribute ("label", label);
-        menuitem.setAttribute ("oncommand", command);
+        menuitem.addEventListener ("command", function () {
+          arAkahukuUI.switchP2PDisabled ();
+        }, false);
         popup.appendChild (menuitem);
                 
         label = "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON";
-        command = "arAkahukuUI.switchP2PStatusbarDisabled ();";
         menuitem = targetDocument.createElement ("menuitem");
         menuitem.id = "akahuku-statusbar-popup-p2p-statusbar";
         menuitem.setAttribute ("label", label);
-        menuitem.setAttribute ("oncommand", command);
+        menuitem.addEventListener ("command", function () {
+          arAkahukuUI.switchP2PStatusbarDisabled ();
+        }, false);
         popup.appendChild (menuitem);
                 
         menuseparator = targetDocument.createElement ("menuseparator");
@@ -590,10 +593,11 @@ var arAkahukuUI = {
         popup.appendChild (menuseparator);
                 
         label = "\u30B5\u30A4\u30C8\u3092\u958B\u304F";
-        command = "arAkahukuUI.openWebsite ();";
         menuitem = targetDocument.createElement ("menuitem");
         menuitem.setAttribute ("label", label);
-        menuitem.setAttribute ("oncommand", command);
+        menuitem.addEventListener ("command", function () {
+          arAkahukuUI.openWebsite ();
+        }, false);
         popup.appendChild (menuitem);
                 
         popupset.appendChild (popup);
