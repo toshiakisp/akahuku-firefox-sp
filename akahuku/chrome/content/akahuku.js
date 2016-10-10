@@ -1761,15 +1761,31 @@ var Akahuku = {
    *
    * @param  Object container
    *         対象のコンテナ
+   * @param  Object conf
+   *         挙動の詳細設定
    * @return Object
    *         複製したコンテナ
    */
-  cloneMessageContainer : function (container) {
+  cloneMessageContainer : function (container, conf) {
     var newContainer = {};
     newContainer.nodes = [];
+    var cloneNodeConf = {
+      excludeClasses : conf.excludeClasses || [],
+      excludeIds : conf.excludeIds || [],
+      stripId : conf.stripId || false,
+      noMediaAutoPlay : conf.noMediaAutoPlay || false,
+    };
+    if (conf.skipMainInner) {
+      // main の子孫は複製させない
+      cloneNodeConf.stopNodes = [container.main];
+    }
     
     for (var i = 0; i < container.nodes.length; i ++) {
-      newContainer.nodes.push (container.nodes [i].cloneNode (true));
+      var dupNode = arAkahukuDOM
+        .cloneNodeCustom (container.nodes [i], true, cloneNodeConf);
+      if (dupNode) {
+        newContainer.nodes.push (dupNode);
+      }
     }
     
     if (container.main.nodeName.toLowerCase () == "td") {

@@ -25,6 +25,79 @@ var arAkahukuDOM = {
       node = node.nextSibling;
     }
   },
+
+  /**
+   * ノードを複製する
+   *
+   * @param  HTMLElement node 元のノード
+   * @param  Boolean deeply 子孫ノードも複製するかどうか
+   * @param  Object conf [optional]挙動設定
+   * @return HTMLElement
+   *         複製されたノード or null
+   */
+  cloneNodeCustom : function (node, deeply, conf) {
+    conf = conf || {};
+
+    // 場合によっては複製せず null を返す
+    if (conf.exculdeIds &&
+        conf.exculdeIds instanceof Array &&
+        typeof node.id !== "undefined") {
+      // 特定IDの要素を複製しない
+      for (var n = 0; n < conf.exculdeIds.length; n ++) {
+        if (node.id == conf.exculdeIds [n]) {
+          return null;
+        }
+      }
+    }
+    if (conf.exculdeClasses &&
+        conf.exculdeClasses instanceof Array &&
+        typeof node.getAttribute !== "undefined") {
+      // 特定クラス名の要素を複製しない
+      for (var n = 0; n < conf.exculdeClasses.length; n ++) {
+        if (arAkahukuDOM.hasClassName (node, conf.exculdeClasses [n])) {
+          return null;
+        }
+      }
+    }
+
+    var dupNode = node.cloneNode (false);
+
+    var nodeName = node.nodeName.toLowerCase ();
+    if (conf.noMediaAutoPlay &&
+        (nodeName == "video" || nodeName == "audio")) {
+      // HTMLMediaElement を自動再生させない
+      if (dupNode.autoplay) {
+        dupNode.autoplay = false;
+        dupNode.src = "about:blank"; // 強制停止
+        dupNode.setAttribute ("src", node.getAttribute ("src"));
+      }
+    }
+
+    if (conf.stripId &&
+        typeof dupNode.removeAttribute !== "undefined") {
+      dupNode.removeAttribute ("id");
+    }
+
+    if (conf.stopNodes && conf.stopNodes instanceof Array) {
+      // 特定ノード以下の子孫の複製は省く
+      for (var n = 0; n < conf.stopNodes.length; n ++) {
+        if (conf.stopNodes [n] === node) {
+          deeply = false;
+          break;
+        }
+      }
+    }
+
+    node = node.firstChild;
+    while (deeply && node) {
+      var newChild = arAkahukuDOM.cloneNodeCustom (node, deeply, conf);
+      if (newChild) {
+        dupNode.appendChild (newChild);
+      }
+      node = node.nextSibling;
+    }
+    return dupNode;
+  },
     
   /**
    * 指定したノードの子をテキストノードのみにする

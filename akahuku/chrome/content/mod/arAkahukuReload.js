@@ -2796,7 +2796,8 @@ var arAkahukuReload = {
         }
         
         var currentContainer
-        = Akahuku.cloneMessageContainer (lastReply.container);
+        = Akahuku.cloneMessageContainer
+        (lastReply.container, {skipMainInner: true});
         arAkahukuDOM.removeClassName
         (currentContainer.main, "akahuku_skipped_reply");
         arAkahukuDOM.removeClassName
