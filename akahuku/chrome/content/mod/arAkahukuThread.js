@@ -2463,33 +2463,18 @@ var arAkahukuThread = {
           continue;
         }
         
-        var newContainer = Akahuku.cloneMessageContainer (container);
-        var nodes2, className;
-        nodes2 = newContainer.main.getElementsByTagName ("small");
-        for (var j = 0; j < nodes2.length; j ++) {
-          className = arAkahukuDOM.getClassName (nodes2 [j]);
-          if (className == "aima_aimani_generated") {
-            nodes2 [j].parentNode.removeChild (nodes2 [j]);
-            j --;
-          }
-        }
-        nodes2 = newContainer.main.getElementsByTagName ("span");
-        for (var j = 0; j < nodes2.length; j ++) {
-          className = arAkahukuDOM.getClassName (nodes2 [j]);
-          if (className == "akahuku_saveimage_container") {
-            nodes2 [j].parentNode.removeChild (nodes2 [j]);
-            j --;
-          }
-        }
-        nodes2 = newContainer.main.getElementsByTagName ("a");
-        for (var j = 0; j < nodes2.length; j ++) {
-          className = arAkahukuDOM.getClassName (nodes2 [j]);
-          if (className == "akahuku_saveimage_button2"
-              || className == "akahuku_saveimage_stop") {
-            nodes2 [j].parentNode.removeChild (nodes2 [j]);
-            j --;
-          }
-        }
+        var newContainer
+          = Akahuku.cloneMessageContainer
+          (container, {
+            excludeClasses : [
+            "akahuku_saveimage_container",
+            "akahuku_saveimage_button2",
+            "akahuku_saveimage_stop",
+            "aima_aimani_generated",
+            ],
+            noMediaAutoPlay : true,
+            stripId : true,
+          });
         param.res [num] = newContainer;
       }
       var offsetHeight = 0;

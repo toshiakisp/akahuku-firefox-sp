@@ -536,7 +536,9 @@ var arAkahukuPopupQuote = {
             continue;
           }
           else {
-            newNode = node.cloneNode (true);
+            newNode = arAkahukuDOM.cloneNodeCustom (node, true, {
+              noMediaAutoPlay: true, // ポップアップでは自動再生オフ
+            });
           }
                     
           if (nodeName == "#text") {
