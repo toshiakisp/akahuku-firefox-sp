@@ -87,7 +87,10 @@ arAkahukuCatalogPopupData.prototype =  {
         var timeout = arAkahukuCatalog.zoomTimeout;
                 
         var exists = false;
-        if (param.cacheImageData.exists (this.key)) {
+        if (this.targetSrc === this.targetImage.src) {
+          exists = true;
+        }
+        else if (param.cacheImageData.exists (this.key)) {
           exists = true;
         }
         else if (arAkahukuP2P.enable) {
