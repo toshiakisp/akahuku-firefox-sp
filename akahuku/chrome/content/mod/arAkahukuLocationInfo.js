@@ -277,11 +277,15 @@ arAkahukuLocationInfo.prototype = {
           }
         }
         else {
-          if (targetDocument.location.href.match
-              (arAkahukuBoard.externalList [i].pattern)) {
-            this.server = RegExp.$1;
-            this.dir = RegExp.$2;
-            path = RegExp.$3;
+          // Note: pattern は jsm 内の RegExp で生成の(場合がある)ため
+          // 結果がここでの RegExp.$* に反映されない (Firefox 49+)
+          var reresult =
+            arAkahukuBoard.externalList [i].pattern
+            .exec (targetDocument.location.href);
+          if (reresult) {
+            this.server = (reresult [1] || "");
+            this.dir = (reresult [2] || "");
+            path = (reresult [3] || "");
                     
             this.isMonaca = arAkahukuBoard.externalList [i].monaca;
                     
