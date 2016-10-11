@@ -50,7 +50,7 @@ var arAkahukuCompat = new function () {
         this._versionChecked = true;
         this._version36 = arAkahukuCompat.comparePlatformVersion ("35.*") > 0;
         this._version18 = arAkahukuCompat.comparePlatformVersion ("17.*") > 0;
-        this._version3_6 = arAkahukuCompat.comparePlatformVersion ("3.5.*") > 0;
+        this._version3_6 = arAkahukuCompat.comparePlatformVersion ("1.9.2") >= 0;
       }
 
       var uri = _getArg (args, 'uri', null);
