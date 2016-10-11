@@ -32,7 +32,16 @@ var arAkahukuCompat = new function () {
       // Gecko 1.8+
       var ai = Cc ["@mozilla.org/xre/app-info;1"]
         .getService (Ci.nsIXULAppInfo);
-      return arAkahukuCompat.compareVersion (ai.platformVersion, v);
+      var platformVersion = ai.platformVersion;
+      if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
+        // For compatibility with Pale moon 26+ (includes 25),
+        // > When wanting to provide Goanna compatibility, you should use
+        // > the application version for an equivalent check on "rough
+        // > Firefox range compatibility".
+        // (https://forum.palemoon.org/viewtopic.php?t=9077)
+        platformVersion = ai.version;
+      }
+      return arAkahukuCompat.compareVersion (platformVersion, v);
     }
     catch (e) {
       return -1; // 1.8より前ではやっつけ
