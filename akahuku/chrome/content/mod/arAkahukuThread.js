@@ -1677,20 +1677,10 @@ var arAkahukuThread = {
         
         if (info.isMht) {
           /* サムネが mht 内に存在するかどうかチェック */
-          try {
-            var contentLocation
-              = arAkahukuUtil.newURIViaNode (src, null);
-            var requestOrigin
-              = arAkahukuUtil.newURIViaNode ("", targetDocument);
-            
-            var uri
-              = UnMHT.getMHTFileURI (contentLocation,
-                                     requestOrigin);
-            if (uri) {
-              src = uri.spec;
-            }
-          }
-          catch (e) { Akahuku.debug.exception (e);
+          var urlUnmht = arAkahukuCompat.UnMHT
+            .getMHTFileURI (src, targetDocument.location.href);
+          if (urlUnmht) {
+            src = urlUnmht;
           }
         }
         

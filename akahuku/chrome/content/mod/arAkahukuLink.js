@@ -2297,20 +2297,10 @@ var arAkahukuLink = {
         
     if (info && info.isMht) {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
-      try {
-        var contentLocation
-        = arAkahukuUtil.newURIViaNode (href, null);
-        var requestOrigin
-        = arAkahukuUtil.newURIViaNode ("", targetDocument);
-                
-        var uri
-        = UnMHT.getMHTFileURI (contentLocation,
-                               requestOrigin);
-        if (uri) {
-          href = uri.spec;
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
+      var urlUnmht = arAkahukuCompat.UnMHT
+        .getMHTFileURI (href, targetDocument.location.href);
+      if (urlUnmht) {
+        href = urlUnmht;
       }
     }
         
@@ -3302,23 +3292,14 @@ var arAkahukuLink = {
         
     if (info.isMht) {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
-      try {
-        var contentLocation
-        = arAkahukuUtil.newURIViaNode (uri, null);
-        var requestOrigin
-        = arAkahukuUtil.newURIViaNode ("", targetDocument);
-                
-        var uri2 = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
-        if (uri2) {
-          /* UnMHT の出力の場合、リファラは送信されず、
-           * また更に mht で保存する事はないので、アドレス直で OK */
-          src = uri2.spec;
-        }
-        else {
-          src = uri;
-        }
+      var uriUnmht = arAkahukuCompat.UnMHT
+        .getMHTFileURI (uri, targetDocument.location.href);
+      if (uriUnmht) {
+        /* UnMHT の出力の場合、リファラは送信されず、
+         * また更に mht で保存する事はないので、アドレス直で OK */
+        src = uriUnmht;
       }
-      catch (e) { Akahuku.debug.exception (e);
+      else {
         src = uri;
       }
     }

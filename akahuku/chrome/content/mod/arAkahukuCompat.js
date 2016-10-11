@@ -432,5 +432,118 @@ var arAkahukuCompat = new function () {
   catch (e) {
     this.LoadContextInfo = { }; // dummy
   }
+
+  this.UnMHT = new function () {
+    function getRootContentLocation_8 (url) {
+      // UnMHT 8.2.0 (UnMHTPageInfo.jsm)
+      var m = {};
+      Cu.import ("resource://unmht/modules/UnMHTCache.jsm", m);
+      var [eFileInfo, part] = m.UnMHTCache.getPart (url);
+      if (eFileInfo && part &&
+          eFileInfo.startPart &&
+          eFileInfo.startPart.contentLocation) {
+        return (part.contentLocation ||
+            eFileInfo.startPart.contentLocation);
+      }
+      return null;
+    }
+    function getRootContentLocation_6 (url) {
+      // UnMHT 6
+      var m = {};
+      Cu.import ("resource://unmht/modules/UnMHTExtractor.jsm", m);
+      var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (url);
+      if (eFileInfo && part && part.startPart) {
+        return part.startPart.contentLocation;
+      }
+      return null;
+    }
+    function getRootContentLocation_old (url) {
+      var param = UnMHT.protocolHandler.getUnMHTURIParam (url);
+      if (param && param.original) {
+        var extractor = UnMHT.getExtractor (param.original);
+        if (extractor && extractor.rootFile) {
+          return extractor.rootFile.contentLocation;
+        }
+      }
+      return null;
+    }
+    function getRootContentLocation_dummy (url) {
+      return null;
+    }
+
+    /**
+     * mht ファイルの保存元 URI を取得する
+     *
+     * @param   string contentLocation  対象の URI (unmht:)
+     * @returns string  保存元 URI or null
+     */
+    this.getRootContentLocation = function (url) {
+      var candidates = [
+        getRootContentLocation_8,
+        getRootContentLocation_6,
+        getRootContentLocation_old,
+        getRootContentLocation_dummy,
+      ];
+      var rooturl = null;
+      for (var i = 0; i < candidates.length; i ++) {
+        try {
+          rooturl = candidates [i] (url);
+          this.getRootContentLocation = candidates [i];
+          return rooturl;
+        }
+        catch (e) { Cu.reportError (e);
+        }
+      }
+      return null;
+    };
+
+    function getMHTFileURI_8 (contentLocation, requestOrigin) {
+      // UnMHT 8.2.0
+      var m = {};
+      Cu.import ("resource://unmht/modules/UnMHTScheme.jsm", m);
+      if (m.UnMHTScheme.isUnMHTURI (contentLocation)) {
+        return contentLocation;
+      }
+      Cu.import ("resource://unmht/modules/UnMHTCache.jsm", m);
+      return m.UnMHTCache.getMHTFileURI (contentLocation, requestOrigin);
+    }
+    function getMHTFileURI_old (contentLocation, requestOrigin) {
+      contentLocation = arAkahukuUtil.newURIViaNode (contentLocation, null);
+      requestOrigin = arAkahukuUtil.newURIViaNode (requestOrigin, null);
+      var uri = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
+      if (uri) {
+        return uri.spec;
+      }
+      return null;
+    }
+    function getMHTFileURI_dummy (contentLocation, requestOrigin) {
+      return null;
+    }
+
+    /**
+     * mht に含まれるファイルの URI を取得する
+     *
+     * @param   string contentLocation  対象の URI
+     * @param   string requestOrigin  呼び出し元の URI (unmht:)
+     * @returns string  ファイルの URI or null
+     */
+    this.getMHTFileURI = function (contentLocation, requestOrigin) {
+      var candidates = [
+        getMHTFileURI_8,
+        getMHTFileURI_old,
+        getMHTFileURI_dummy,
+      ];
+      for (var i = 0; i < candidates.length; i ++) {
+        try {
+          var uri = candidates [i] (contentLocation, requestOrigin);
+          this.getMHTFileURI = candidates [i];
+          return uri;
+        }
+        catch (e) { Cu.reportError (e);
+        }
+      }
+      return null;
+    };
+  };
 };
 

@@ -361,37 +361,10 @@ arAkahukuLocationInfo.prototype = {
       this.mode = "\u8FD4\u4FE1";
       this.isFutaba = false;
       
-      var tryUnMHT = this.isMht;
-      if (tryUnMHT) {
-        try {
-          var m = {};
-          Components.utils.import("resource://unmht/modules/UnMHTExtractor.jsm",m);
-          var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (location);
-          if (eFileInfo && part && part.startPart
-              && /^http:\/\/(?:[^\.\/]+\.)?(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
-              .test (part.startPart.contentLocation) ) {
-            this.isTsumanne = true;
-          }
-          tryUnMHT = false;
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-      }
-      if (tryUnMHT) { // Old UnMHT
-        try {
-          var param = UnMHT.protocolHandler.getUnMHTURIParam (location);
-          var extractor;
-          if (param
-              && param.original
-              && (extractor = UnMHT.getExtractor (param.original))
-              && extractor.rootFile
-              && extractor.rootFile.contentLocation.match
-              (/^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
-            this.isTsumanne = true;
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
+      if (this.isMht) {
+        this.isTsumanne =
+          /^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
+          .test (arAkahukuCompat.UnMHT.getRootContentLocation (location));
       }
     }
     else if (path.match (/\?mode=cat/)) {
