@@ -316,7 +316,8 @@ var arAkahukuThread = {
     /* 掲示板に戻るのリンク */
     if (arAkahukuThread.enableBackNew) {
       style
-      .addRule ("#akahuku_thread_back_new",
+      .addRule ("#akahuku_thread_back_new,"
+                + "#akahuku_thread_back_new2",
                 "font-size: 9pt;");
     }
         
@@ -3404,7 +3405,7 @@ var arAkahukuThread = {
     
     if (arAkahukuThread.enableBackNew && backLink2) {
       var newNode = targetDocument.createElement ("span");
-      newNode.id = "akahuku_thread_back_new";
+      newNode.id = "akahuku_thread_back_new2";
       newNode.appendChild (targetDocument.createTextNode ("*"));
       backLink2.appendChild (newNode);
       backLink2.target = "_blank";

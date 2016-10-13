@@ -1467,6 +1467,7 @@ var arAkahukuMHT = {
       "span",   "akahuku_thread_catalog_new",
       "span",   "akahuku_thread_catalog_new2",
       "span",   "akahuku_thread_back_new",
+      "span",   "akahuku_thread_back_new2",
       "div",    "akahuku_links_on_bottom",
       "div",    "akahuku_cleanup_container",
       "div",    "akahuku_savemht_status",
