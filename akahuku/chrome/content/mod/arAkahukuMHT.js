@@ -1673,6 +1673,14 @@ var arAkahukuMHT = {
         continue;
       }
     }
+
+    nodes = targetDocument.querySelectorAll ("*[__akahuku_contentpolicy_hide]");
+    for (i = 0; i < nodes.length; i ++) {
+      /* ブロックして非表示にした広告を消す */
+      if (nodes [i].parentNode) {
+        nodes [i].parentNode.removeChild (nodes [i]);
+      }
+    }
             
     nodes = targetDocument.getElementsByTagName ("img");
     for (i = 0; i < nodes.length; i ++) {
@@ -1720,6 +1728,10 @@ var arAkahukuMHT = {
           parent.parentNode.removeChild (parent);
           i --;
           continue;
+        }
+        else {
+          // リンクがない場合は属性だけ掃除
+          nodes [i].removeAttribute ("__akahuku_banner");
         }
       }
       /* 合間合間に で小さくなったサムネを元に戻す */
@@ -2152,17 +2164,64 @@ var arAkahukuMHT = {
     }
         
     /* 削除のフォームを消す */
+    var formDelform = null;
     nodes = targetDocument.getElementsByTagName ("input");
     for (i = 0; i < nodes.length; i ++) {
       if (nodes [i].getAttribute ("type")
           && nodes [i].getAttribute ("type").toLowerCase () == "hidden"
           && nodes [i].getAttribute ("value") == "usrdel") {
-        node = arAkahukuDOM.findParentNode (nodes [i], "table");
+        node = arAkahukuDOM.findParentNodeByClassName (nodes [i], "delform");
+        // 旧レイアウト(外部板含む)
+        if (!node) {
+          node = arAkahukuDOM.findParentNode (nodes [i], "table");
+        }
+        formDelform = arAkahukuDOM.findParentNode (nodes [i], "form");
         if (node) {
           node.parentNode.removeChild (node);
         }
         break;
       }
+    }
+    // 末尾の広告コンテナなどの残骸を削除
+    try {
+      node = formDelform ? formDelform.nextSibling : null;
+      while (node) {
+        var canBeRemoved
+          = (function (node) {
+            var numChildElements = 0;
+            if (node.childNodes && node.childNodes.length > 0) {
+              // 先に子孫を再帰チェック
+              var elems = [];
+              for (var i = 0; i < node.childNodes.length; i ++) {
+                if ((node.childNodes [i].nodeName == "#text" &&
+                    !/^[\n\s]*$/.test (node.childNodes [i].nodeValue)) ||
+                    typeof node.childNodes [i].hasAttribute !== "undefined") {
+                  // 空白文字のみではない #text と Element を収集
+                  elems.push (node.childNodes [i]);
+                }
+              }
+              var numChildElements = elems.length;
+              for (var i = 0; i < elems.length; i ++) {
+                if (arguments.callee.call (null, elems [i])) {
+                  // 子孫が空だったら
+                  node.removeChild (elems [i]);
+                  numChildElements --;
+                }
+              }
+            }
+            if (/^(div|span)$/i.test (node.nodeName) &&
+                numChildElements == 0) {
+              return true;
+            }
+          }) (node);
+        var nextNode = node.nextSibling;
+        if (canBeRemoved) {
+          node.parentNode.removeChild (node);
+        }
+        node = nextNode;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     /* フォーム位置だけ末尾に置いた時の追加スタイルを削除 */
