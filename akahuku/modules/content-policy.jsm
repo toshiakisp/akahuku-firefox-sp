@@ -438,15 +438,16 @@ arAkahukuContentPolicy.prototype = {
           hostPattern : null,
           urlPattern : null,
           URI : null,
-          isURI : /^[a-z]*:\/\//.test (matched),
+          isURI : /^[^:]+:\/\//.test (matched),
+          isProtocolRelative : false,
           isFutaba : false,
         };
         if (matched.indexOf ("*") != -1) {
           // ワイルドカード(*)によるURL指定
+          var pat = matched.replace
+            (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
+            .replace (/\*/g, ".*");
           if (obj.isURI) {
-            var pat = matched.replace
-              (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
-              .replace (/\*/g, ".*");
             obj.urlPattern = new RegExp ("^"+pat+"$");
             obj.isURI = false;
             if (/^[^:]*:\/\/[^\/]*\.2chan\.net\//.test (matched)) {
@@ -457,11 +458,16 @@ arAkahukuContentPolicy.prototype = {
               obj.isFutaba = true;
             }
           }
+          else if (/^\/\/./.test (matched)) {
+            obj.isProtocolRelative = true;
+            obj.urlPattern = new RegExp ("^[^:]+:"+pat+"$");
+            if (/^\/\/[^\/]*\.2chan\.net\//.test (matched)) {
+              list [type].includesFutaba = true;
+              obj.isFutaba = true;
+            }
+          }
           else if (/\*\.[^*]+$/.test (matched)) {
             // ホスト部のみのパターン
-            var pat = matched.replace
-              (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
-              .replace (/\*/g, ".*");
             obj.hostPattern = new RegExp (pat+"$","i");
           }
         }
@@ -471,6 +477,12 @@ arAkahukuContentPolicy.prototype = {
             list [type].includesFutaba = true;
             obj.isFutaba = true;
           }
+        }
+        else if (/^\/\/./.test (matched)) {
+          obj.isProtocolRelative = true;
+          var pat = matched.replace
+            (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&");
+          obj.urlPattern = new RegExp ("^[^:]+:"+pat+"$");
         }
         else {
           /* トップレベルや .2chan.net はドメインブロックしない */
@@ -485,6 +497,9 @@ arAkahukuContentPolicy.prototype = {
         }
         if (obj.hostPattern || obj.URI || obj.urlPattern) {
           list [type].push (obj);
+        }
+        else {
+          Components.utils.reportError ("invalid pattern: " + matched);
         }
       }
       catch (e) {
@@ -999,6 +1014,8 @@ arAkahukuContentPolicy.prototype = {
             //   広範囲除外パターン(http://*等)でREJECTされないように。
             if ((!/\.2chan\.net$/i.test (contentLocation.host)
                   || list [i].isFutaba)
+                && (!list [i].isProtocolRelative ||
+                  contentLocation.scheme == requestOrigin.scheme)
                 && list [i].urlPattern.test (contentLocation.spec)) {
               reject = true;
               list [i].count ++;
