@@ -978,6 +978,11 @@ arAkahukuCacheChannel.prototype = {
         doRedirect = true;
       }
       else {
+        // forget previously parsed values
+        this.contentCharset = "";
+        this.contentType = "";
+        this._contentEncoding = "";
+
         if (status == Cr.NS_ERROR_CACHE_KEY_NOT_FOUND
             && this.loadFlags & Ci.nsIRequest.LOAD_BYPASS_CACHE) {
           // Shift-Reload ではキャッシュが無ければ普通に開く
