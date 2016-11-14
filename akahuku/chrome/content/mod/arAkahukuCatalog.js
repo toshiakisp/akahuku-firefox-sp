@@ -1521,7 +1521,6 @@ arAkahukuCatalogParam.prototype = {
     
   sstream : null,         /* nsIScriptableInputStream  データ到着時に
                            *   読み込むストリーム */
-  responseHead : "",      /* String  応答のヘッダ */
   responseText : "",      /* String  応答のデータ */
     
   addedLastCells : false, /* Boolean  最後のセルを追加したか */
@@ -1727,41 +1726,14 @@ arAkahukuCatalogParam.prototype = {
    */
   onStopRequest : function (request, context, statusCode) {
     var httpStatus = 200;
-    var responseHead = "HTTP/1.1 200 OK\r\n"
-    + "Date: " + (new Date ()).toString () + "\r\n"
-    + "Server: unknown\r\n"
-    + "Content-Type: text/html; charset=Shift_JIS\r\n";
         
     try {
       var httpChannel
         = request.QueryInterface (Components.interfaces.nsIHttpChannel);
       httpStatus
         = httpChannel.responseStatus;
-            
-      /* 206 の場合表示がおかしくなるので、Date と Server のみ更新する */
-      responseHead
-        = "HTTP/1.1 200 OK\r\n"
-        + "Date: "
-        + httpChannel.getResponseHeader ("Date") + "\r\n"
-        + "Server: "
-        + httpChannel.getResponseHeader ("Server") + "\r\n"
-        + "Content-Type: text/html; charset=Shift_JIS\r\n";
     }
     catch (e) {
-    }
-        
-    /* 避難所 patch */
-    try {
-      var info
-      = Akahuku.getDocumentParam (this.targetDocument)
-      .location_info;
-      if (info.isMonaca) {
-        responseHead
-          = responseHead.replace (/charset=Shift_JIS/,
-                                  "charset=" + (this.targetDocument.characterSet || "EUC-JP") );
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
     }
         
     if (this.reloadChannel == null) {
@@ -1777,8 +1749,6 @@ arAkahukuCatalogParam.prototype = {
        false, this.targetDocument);
     }
     else if (httpStatus == 200) {
-      this.responseHead = responseHead;
-            
       // "更新中"
       arAkahukuCatalog.setStatus ("\u66F4\u65B0\u4E2D",
                                   true, this.targetDocument);
