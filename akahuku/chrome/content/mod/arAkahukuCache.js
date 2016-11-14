@@ -101,7 +101,7 @@ Akahuku.Cache = new function () {
         = new CachedImageReserver (targetDocument.defaultView);
     }
 
-    if (info.isCache) {
+    if (info.isCache && info.isReply) {
       Akahuku.Cache.asyncGetStatus
         ({url: targetDocument.location.href,
           triggeringNode: targetDocument},

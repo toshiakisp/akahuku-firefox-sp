@@ -36,7 +36,10 @@ function arAkahukuContentPolicy () {
 }
 arAkahukuContentPolicy.prototype = {
   /* nsIContentPolicy の定数 */
+  TYPE_OTHER       : nsIContentPolicy.TYPE_OTHER,
+  TYPE_SCRIPT      : nsIContentPolicy.TYPE_SCRIPT,
   TYPE_IMAGE       : nsIContentPolicy.TYPE_IMAGE,
+  TYPE_STYLESHEET  : nsIContentPolicy.TYPE_STYLESHEET,
   TYPE_OBJECT      : nsIContentPolicy.TYPE_OBJECT,
   TYPE_DOCUMENT    : nsIContentPolicy.TYPE_DOCUMENT,
   TYPE_SUBDOCUMENT : nsIContentPolicy.TYPE_SUBDOCUMENT,
@@ -879,14 +882,18 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
-    /* キャッシュページからの画像読込 */
+    /* キャッシュページからの読込 */
     if (this._enableAll // eusures !this._old || swapped
-        && contentType == this.TYPE_IMAGE
+        && (contentType == this.TYPE_IMAGE ||
+          contentType == this.TYPE_SCRIPT ||
+          contentType == this.TYPE_STYLESHEET ||
+          contentType == this.TYPE_OBJECT ||
+          contentType == this.TYPE_SUBDOCUMENT)
         && requestOrigin
         && requestOrigin.schemeIs ("akahuku")
         && /^\/(file)?cache\//.test (requestOrigin.path)) {
       if (!contentLocation.schemeIs ("akahuku")) {
-        // 通常の画像読込を禁止し、必要なら cache に差し替える
+        // 通常の読込を禁止し、必要なら cache に差し替える
         try {
           var scope = this._getAkahukuScopeForContext (context);
           var decodedOriginSpec
@@ -915,7 +922,7 @@ arAkahukuContentPolicy.prototype = {
         return this.REJECT_OTHER;
       }
       else {
-        // 差し替えられた akahuku:///cache/ 画像は
+        // 差し替えられた akahuku://*/cache/* は
         // 元URLに戻した上で残りの判定へ
         try {
           var scope = this._getAkahukuScopeForContext (context);
