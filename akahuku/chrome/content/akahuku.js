@@ -7,48 +7,6 @@
  *          arAkahukuBoard,
  */
 
-/*
-var arAkahukuThreadManager = {
-  withThread: function(func) {
-    var threadManager =
-    Components.classes["@mozilla.org/thread-manager;1"]
-    .getService(Components.interfaces.nsIThreadManager);
-    
-    var thread = threadManager.newThread(0);
-    thread.dispatch(
-      new arAkahukuThreadManager.ThreadType(func),
-      Components.interfaces.nsIThread.DISPATCH_NORMAL);
-  },
-  
-  withMainThread: function(func) {
-    var threadManager =
-    Components.classes["@mozilla.org/thread-manager;1"]
-    .getService(Components.interfaces.nsIThreadManager);
-    
-    var thread = threadManager.mainThread;
-    thread.dispatch(
-      new arAkahukuThreadManager.ThreadType(func),
-      Components.interfaces.nsIThread.DISPATCH_NORMAL);
-  }
-};
-arAkahukuThreadManager.ThreadType = function(func) {
-  this.func = func;
-};
-arAkahukuThreadManager.ThreadType.prototype = {
-  run: function() {
-    this.func();
-  },
-  
-  QueryInterface: function(iid) {
-    if (iid.equals(Components.interfaces.nsIRunnable) ||
-        iid.equals(Components.interfaces.nsISupports)) {
-      return this;
-    }
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  }
-};
-*/
-
 // arAkahukuJSON のロード
 try {
   Components.utils.import("resource://akahuku/json.jsm");
