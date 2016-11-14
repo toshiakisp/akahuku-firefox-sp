@@ -645,8 +645,12 @@ arAkahukuContentPolicy.prototype = {
 
     if (context instanceof Ci.nsIDOMNode) {
       var contentWindow = (context.ownerDocument || context).defaultView;
-      while (contentWindow.frameElement) {
+      while (contentWindow && contentWindow.frameElement) {
         contentWindow = contentWindow.frameElement.ownerDocument.defaultView;
+      }
+      if (!contentWindow) {
+        this.console.warn ("No Akahuku scope for " + context);
+        return null;
       }
       var chromeEventHandler = contentWindow
         .QueryInterface (Ci.nsIInterfaceRequestor)
