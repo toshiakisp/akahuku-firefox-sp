@@ -1232,8 +1232,8 @@ var arAkahukuImageURL = {
         uinfo.akahukuParam = akahukuParam;
       }
       
-      if (url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
-          || url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
+      if (url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
+          || url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
         /* 広告バナー */
         uinfo.isAd = true;
       }
@@ -1254,7 +1254,7 @@ var arAkahukuImageURL = {
             
       uinfo.isImage = true;
     }
-    else if (url.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)) {
+    else if (url.match (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)) {
       uinfo = new arAkahukuImageURLInfo ();
             
       uinfo.prefix = RegExp.$1;
@@ -1264,13 +1264,13 @@ var arAkahukuImageURL = {
             
       uinfo.board = uinfo.server + "_" + uinfo.dir;
       
-      if (url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
-          || url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
+      if (url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
+          || url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
         /* 広告バナー */
         uinfo.isAd = true;
       }
     }
-    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif|webm|mp4)(\?.*)?$/)) {
+    else if (url.match (/^https?:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif|webm|mp4)(\?.*)?$/)) {
       /* IP アドレスで画像鯖らしき場所が指定された場合 */
       uinfo = new arAkahukuImageURLInfo ();
             
