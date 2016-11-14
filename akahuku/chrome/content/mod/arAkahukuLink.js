@@ -2822,7 +2822,7 @@ var arAkahukuLink = {
         if (info
             && info.isReply && !info.isMht
             && !url.match
-            (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
+            (/^(https?:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
             (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
             && !url.match (/\.(jpe?g|gif|png|bmp|webm|mp4)(\?.*)?$/i)
@@ -3248,7 +3248,7 @@ var arAkahukuLink = {
       else if (uri.match (/[?&#]t=([0-9]+)/)) {
         t = parseInt (RegExp.$1)
       }
-      else if (uri.match (/^http:\/\/www\.youtube\.com\/embed\/.*[?&]start=([0-9]+)/)) {
+      else if (uri.match (/^https?:\/\/www\.youtube\.com\/embed\/.*[?&]start=([0-9]+)/)) {
         t = parseInt (RegExp.$1)
       }
       if (t > 0) {

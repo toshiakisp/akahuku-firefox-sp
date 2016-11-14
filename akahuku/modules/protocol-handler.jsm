@@ -283,7 +283,7 @@ arAkahukuProtocolHandler.prototype = {
    */
   enAkahukuURI : function (type, uri) {
     if (type == "p2p") {
-      if (uri.match (/^http:\/\/dec\.2chan\.net\/up\/src\//)) {
+      if (uri.match (/^https?:\/\/dec\.2chan\.net\/up\/src\//)) {
         return uri;
       }
     }
