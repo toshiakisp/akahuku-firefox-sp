@@ -166,18 +166,21 @@ Akahuku.Cache = new function () {
       callback.apply (null, [status]);
     }
     else if (p.type === "cache") {
+      var candidates = [p.original, p.original + ".backup"];
       var callbackHttpCacheStatus
         = function (status) {
           if ((!status.isExist || status.httpStatusCode === "404")
               && /\d+\.htm$/.test (url)) {
-            source.url = p.original + ".backup";
-            Akahuku.Cache.asyncGetHttpCacheStatus
-              (source, false, callbackHttpCacheStatus);
-            return;
+            source.url = candidates.shift ();
+            if (source.url) {
+              Akahuku.Cache.asyncGetHttpCacheStatus
+                (source, false, callbackHttpCacheStatus);
+              return;
+            }
           }
           callback.apply (null, [status]);
         };
-      source.url = p.original;
+      source.url = candidates.shift ();
       Akahuku.Cache.asyncGetHttpCacheStatus
         (source, false, callbackHttpCacheStatus);
     }
