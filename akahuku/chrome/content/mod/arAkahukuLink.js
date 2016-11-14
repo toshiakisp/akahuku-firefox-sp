@@ -657,26 +657,7 @@ var arAkahukuLink = {
       
       var anchor = targetDocument.createElement ("a");
       url = arAkahukuP2P.tryEnP2P (url);
-      if (typeof (Components.interfaces.nsIIDNService) != "undefined") {
-        if (url.match (/^([A-Za-z0-9]+):\/\/([^\/]+)\/(.+)/)) {
-          var protocol2 = RegExp.$1;
-          var host = RegExp.$2;
-          var path = RegExp.$3;
-                    
-          var idn
-            = Components.classes
-            ["@mozilla.org/network/idn-service;1"].
-            getService (Components.interfaces.nsIIDNService);
-                    
-          try {
-            host = unescape (host);
-            host = idn.convertUTF8toACE (host);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-          url = protocol2 + "://" + host + "/" + path;
-        }
-      }
+      url = arAkahukuUtil.tryConvertIDNHostToAscii (url);
       anchor.setAttribute ("dummyhref", url);
       anchor.className = "akahuku_generated_link";
       arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
@@ -2316,20 +2297,10 @@ var arAkahukuLink = {
         
     if (info && info.isMht) {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
-      try {
-        var contentLocation
-        = arAkahukuUtil.newURIViaNode (href, null);
-        var requestOrigin
-        = arAkahukuUtil.newURIViaNode ("", targetDocument);
-                
-        var uri
-        = UnMHT.getMHTFileURI (contentLocation,
-                               requestOrigin);
-        if (uri) {
-          href = uri.spec;
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
+      var urlUnmht = arAkahukuCompat.UnMHT
+        .getMHTFileURI (href, targetDocument.location.href);
+      if (urlUnmht) {
+        href = urlUnmht;
       }
     }
         
@@ -2851,7 +2822,7 @@ var arAkahukuLink = {
         if (info
             && info.isReply && !info.isMht
             && !url.match
-            (/(http:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
+            (/^(https?:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
             (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
             && !url.match (/\.(jpe?g|gif|png|bmp|webm|mp4)(\?.*)?$/i)
@@ -3101,12 +3072,11 @@ var arAkahukuLink = {
             }
             bq.style.marginLeft = div.offsetWidth + "px";
             bq.style.display = "none";
-            setTimeout
-              ((function (node) {
-                  return function () {
-                    node.style.display = "";
-                  };
-                })(bq), 10);
+            bq.ownerDocument.defaultView
+            .setTimeout
+              (function (node) {
+                node.style.display = "";
+              }, 10, bq);
           }
         }
       }
@@ -3278,7 +3248,7 @@ var arAkahukuLink = {
       else if (uri.match (/[?&#]t=([0-9]+)/)) {
         t = parseInt (RegExp.$1)
       }
-      else if (uri.match (/^http:\/\/www\.youtube\.com\/embed\/.*[?&]start=([0-9]+)/)) {
+      else if (uri.match (/^https?:\/\/www\.youtube\.com\/embed\/.*[?&]start=([0-9]+)/)) {
         t = parseInt (RegExp.$1)
       }
       if (t > 0) {
@@ -3322,23 +3292,14 @@ var arAkahukuLink = {
         
     if (info.isMht) {
       /* リンク先のファイルが mht 内に存在するかどうかチェック */
-      try {
-        var contentLocation
-        = arAkahukuUtil.newURIViaNode (uri, null);
-        var requestOrigin
-        = arAkahukuUtil.newURIViaNode ("", targetDocument);
-                
-        var uri2 = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
-        if (uri2) {
-          /* UnMHT の出力の場合、リファラは送信されず、
-           * また更に mht で保存する事はないので、アドレス直で OK */
-          src = uri2.spec;
-        }
-        else {
-          src = uri;
-        }
+      var uriUnmht = arAkahukuCompat.UnMHT
+        .getMHTFileURI (uri, targetDocument.location.href);
+      if (uriUnmht) {
+        /* UnMHT の出力の場合、リファラは送信されず、
+         * また更に mht で保存する事はないので、アドレス直で OK */
+        src = uriUnmht;
       }
-      catch (e) { Akahuku.debug.exception (e);
+      else {
         src = uri;
       }
     }

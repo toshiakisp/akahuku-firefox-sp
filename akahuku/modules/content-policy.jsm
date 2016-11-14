@@ -36,7 +36,10 @@ function arAkahukuContentPolicy () {
 }
 arAkahukuContentPolicy.prototype = {
   /* nsIContentPolicy の定数 */
+  TYPE_OTHER       : nsIContentPolicy.TYPE_OTHER,
+  TYPE_SCRIPT      : nsIContentPolicy.TYPE_SCRIPT,
   TYPE_IMAGE       : nsIContentPolicy.TYPE_IMAGE,
+  TYPE_STYLESHEET  : nsIContentPolicy.TYPE_STYLESHEET,
   TYPE_OBJECT      : nsIContentPolicy.TYPE_OBJECT,
   TYPE_DOCUMENT    : nsIContentPolicy.TYPE_DOCUMENT,
   TYPE_SUBDOCUMENT : nsIContentPolicy.TYPE_SUBDOCUMENT,
@@ -438,15 +441,16 @@ arAkahukuContentPolicy.prototype = {
           hostPattern : null,
           urlPattern : null,
           URI : null,
-          isURI : /^[a-z]*:\/\//.test (matched),
+          isURI : /^[^:]+:\/\//.test (matched),
+          isProtocolRelative : false,
           isFutaba : false,
         };
         if (matched.indexOf ("*") != -1) {
           // ワイルドカード(*)によるURL指定
+          var pat = matched.replace
+            (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
+            .replace (/\*/g, ".*");
           if (obj.isURI) {
-            var pat = matched.replace
-              (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
-              .replace (/\*/g, ".*");
             obj.urlPattern = new RegExp ("^"+pat+"$");
             obj.isURI = false;
             if (/^[^:]*:\/\/[^\/]*\.2chan\.net\//.test (matched)) {
@@ -457,11 +461,16 @@ arAkahukuContentPolicy.prototype = {
               obj.isFutaba = true;
             }
           }
+          else if (/^\/\/./.test (matched)) {
+            obj.isProtocolRelative = true;
+            obj.urlPattern = new RegExp ("^[^:]+:"+pat+"$");
+            if (/^\/\/[^\/]*\.2chan\.net\//.test (matched)) {
+              list [type].includesFutaba = true;
+              obj.isFutaba = true;
+            }
+          }
           else if (/\*\.[^*]+$/.test (matched)) {
             // ホスト部のみのパターン
-            var pat = matched.replace
-              (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&")
-              .replace (/\*/g, ".*");
             obj.hostPattern = new RegExp (pat+"$","i");
           }
         }
@@ -471,6 +480,12 @@ arAkahukuContentPolicy.prototype = {
             list [type].includesFutaba = true;
             obj.isFutaba = true;
           }
+        }
+        else if (/^\/\/./.test (matched)) {
+          obj.isProtocolRelative = true;
+          var pat = matched.replace
+            (/[-:\[\]\/\{\}\(\)\+\?\.\^\$\|\\]/g, "\\$&");
+          obj.urlPattern = new RegExp ("^[^:]+:"+pat+"$");
         }
         else {
           /* トップレベルや .2chan.net はドメインブロックしない */
@@ -485,6 +500,9 @@ arAkahukuContentPolicy.prototype = {
         }
         if (obj.hostPattern || obj.URI || obj.urlPattern) {
           list [type].push (obj);
+        }
+        else {
+          Components.utils.reportError ("invalid pattern: " + matched);
         }
       }
       catch (e) {
@@ -627,8 +645,12 @@ arAkahukuContentPolicy.prototype = {
 
     if (context instanceof Ci.nsIDOMNode) {
       var contentWindow = (context.ownerDocument || context).defaultView;
-      while (contentWindow.frameElement) {
+      while (contentWindow && contentWindow.frameElement) {
         contentWindow = contentWindow.frameElement.ownerDocument.defaultView;
+      }
+      if (!contentWindow) {
+        this.console.warn ("No Akahuku scope for " + context);
+        return null;
       }
       var chromeEventHandler = contentWindow
         .QueryInterface (Ci.nsIInterfaceRequestor)
@@ -864,14 +886,18 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
-    /* キャッシュページからの画像読込 */
+    /* キャッシュページからの読込 */
     if (this._enableAll // eusures !this._old || swapped
-        && contentType == this.TYPE_IMAGE
+        && (contentType == this.TYPE_IMAGE ||
+          contentType == this.TYPE_SCRIPT ||
+          contentType == this.TYPE_STYLESHEET ||
+          contentType == this.TYPE_OBJECT ||
+          contentType == this.TYPE_SUBDOCUMENT)
         && requestOrigin
         && requestOrigin.schemeIs ("akahuku")
         && /^\/(file)?cache\//.test (requestOrigin.path)) {
       if (!contentLocation.schemeIs ("akahuku")) {
-        // 通常の画像読込を禁止し、必要なら cache に差し替える
+        // 通常の読込を禁止し、必要なら cache に差し替える
         try {
           var scope = this._getAkahukuScopeForContext (context);
           var decodedOriginSpec
@@ -900,7 +926,7 @@ arAkahukuContentPolicy.prototype = {
         return this.REJECT_OTHER;
       }
       else {
-        // 差し替えられた akahuku:///cache/ 画像は
+        // 差し替えられた akahuku://*/cache/* は
         // 元URLに戻した上で残りの判定へ
         try {
           var scope = this._getAkahukuScopeForContext (context);
@@ -999,6 +1025,8 @@ arAkahukuContentPolicy.prototype = {
             //   広範囲除外パターン(http://*等)でREJECTされないように。
             if ((!/\.2chan\.net$/i.test (contentLocation.host)
                   || list [i].isFutaba)
+                && (!list [i].isProtocolRelative ||
+                  contentLocation.scheme == requestOrigin.scheme)
                 && list [i].urlPattern.test (contentLocation.spec)) {
               reject = true;
               list [i].count ++;

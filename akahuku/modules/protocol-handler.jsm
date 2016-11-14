@@ -283,7 +283,7 @@ arAkahukuProtocolHandler.prototype = {
    */
   enAkahukuURI : function (type, uri) {
     if (type == "p2p") {
-      if (uri.match (/^http:\/\/dec\.2chan\.net\/up\/src\//)) {
+      if (uri.match (/^https?:\/\/dec\.2chan\.net\/up\/src\//)) {
         return uri;
       }
     }
@@ -879,6 +879,12 @@ arAkahukuProtocolHandler.prototype = {
 if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
   arAkahukuProtocolHandler.prototype.protocolFlags
     |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
+}
+
+// https 上からの読み込みで mixed content blocker の警告を避ける
+if ("URI_INHERITS_SECURITY_CONTEXT" in Ci.nsIProtocolHandler) {
+  arAkahukuProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_INHERITS_SECURITY_CONTEXT;
 }
 
 /*

@@ -709,8 +709,26 @@ arAkahukuReloadParam.prototype = {
         = httpChannel.responseStatus;
             
       // キャッシュ書込用レスポンスヘッダーの作成
-      // 本当の HTTP レスポンスを得るには少し手順が必要なので仮定して
-      responseHead = "HTTP/1.1 "
+      var protocolVersion = "1.1";
+      if ("protocolVersion" in request) {
+        // requires Firefox 45
+        switch (request.protocolVersion) {
+          case "h2":
+            protocolVersion = "2.0";
+            break;
+          case "http/1.1":
+            protocolVersion = "1.1";
+            break;
+          case "http/1.0":
+            protocolVersion = "1.0";
+            break;
+          default:
+            Akahuku.debug.warn ("unknwon protocolVersion "
+                + request.protocolVersion);
+            protocolVersion = "1.1";
+        }
+      }
+      responseHead = "HTTP/" + protocolVersion + " "
         + httpChannel.responseStatus + " "
         + httpChannel.responseStatusText + "\r\n";
       var visitor = {
@@ -2796,11 +2814,14 @@ var arAkahukuReload = {
         }
         
         var currentContainer
-        = Akahuku.cloneMessageContainer (lastReply.container);
+        = Akahuku.cloneMessageContainer
+        (lastReply.container, {skipMainInner: true});
         arAkahukuDOM.removeClassName
         (currentContainer.main, "akahuku_skipped_reply");
         arAkahukuDOM.removeClassName
         (currentContainer.main, "akahuku_deleted_reply");
+        arAkahukuDOM.removeClassName
+        (currentContainer.main, "akahuku_deleted_reply2");
         
         /* HTML のソースから構築するので innerHTML を使用する  */
         currentContainer.main.innerHTML = currentReplyText;

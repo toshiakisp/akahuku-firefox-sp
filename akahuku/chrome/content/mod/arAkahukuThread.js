@@ -316,7 +316,8 @@ var arAkahukuThread = {
     /* 掲示板に戻るのリンク */
     if (arAkahukuThread.enableBackNew) {
       style
-      .addRule ("#akahuku_thread_back_new",
+      .addRule ("#akahuku_thread_back_new,"
+                + "#akahuku_thread_back_new2",
                 "font-size: 9pt;");
     }
         
@@ -1677,20 +1678,10 @@ var arAkahukuThread = {
         
         if (info.isMht) {
           /* サムネが mht 内に存在するかどうかチェック */
-          try {
-            var contentLocation
-              = arAkahukuUtil.newURIViaNode (src, null);
-            var requestOrigin
-              = arAkahukuUtil.newURIViaNode ("", targetDocument);
-            
-            var uri
-              = UnMHT.getMHTFileURI (contentLocation,
-                                     requestOrigin);
-            if (uri) {
-              src = uri.spec;
-            }
-          }
-          catch (e) { Akahuku.debug.exception (e);
+          var urlUnmht = arAkahukuCompat.UnMHT
+            .getMHTFileURI (src, targetDocument.location.href);
+          if (urlUnmht) {
+            src = urlUnmht;
           }
         }
         
@@ -2463,33 +2454,18 @@ var arAkahukuThread = {
           continue;
         }
         
-        var newContainer = Akahuku.cloneMessageContainer (container);
-        var nodes2, className;
-        nodes2 = newContainer.main.getElementsByTagName ("small");
-        for (var j = 0; j < nodes2.length; j ++) {
-          className = arAkahukuDOM.getClassName (nodes2 [j]);
-          if (className == "aima_aimani_generated") {
-            nodes2 [j].parentNode.removeChild (nodes2 [j]);
-            j --;
-          }
-        }
-        nodes2 = newContainer.main.getElementsByTagName ("span");
-        for (var j = 0; j < nodes2.length; j ++) {
-          className = arAkahukuDOM.getClassName (nodes2 [j]);
-          if (className == "akahuku_saveimage_container") {
-            nodes2 [j].parentNode.removeChild (nodes2 [j]);
-            j --;
-          }
-        }
-        nodes2 = newContainer.main.getElementsByTagName ("a");
-        for (var j = 0; j < nodes2.length; j ++) {
-          className = arAkahukuDOM.getClassName (nodes2 [j]);
-          if (className == "akahuku_saveimage_button2"
-              || className == "akahuku_saveimage_stop") {
-            nodes2 [j].parentNode.removeChild (nodes2 [j]);
-            j --;
-          }
-        }
+        var newContainer
+          = Akahuku.cloneMessageContainer
+          (container, {
+            excludeClasses : [
+            "akahuku_saveimage_container",
+            "akahuku_saveimage_button2",
+            "akahuku_saveimage_stop",
+            "aima_aimani_generated",
+            ],
+            noMediaAutoPlay : true,
+            stripId : true,
+          });
         param.res [num] = newContainer;
       }
       var offsetHeight = 0;
@@ -3108,11 +3084,6 @@ var arAkahukuThread = {
             else if (nodeName == "a") {
               var href;
               href = node.getAttribute ("href");
-              try {
-                href = unescape (href);
-              }
-              catch (e) { Akahuku.debug.exception (e);
-              }
                             
               if (href.match (/^(\/[^\/]+\/)?res\/([0-9]+)\.html?$/)
                   || href.match (/^(\/[^\/]+\/)?2\/([0-9]+)\.html?$/)
@@ -3434,7 +3405,7 @@ var arAkahukuThread = {
     
     if (arAkahukuThread.enableBackNew && backLink2) {
       var newNode = targetDocument.createElement ("span");
-      newNode.id = "akahuku_thread_back_new";
+      newNode.id = "akahuku_thread_back_new2";
       newNode.appendChild (targetDocument.createTextNode ("*"));
       backLink2.appendChild (newNode);
       backLink2.target = "_blank";

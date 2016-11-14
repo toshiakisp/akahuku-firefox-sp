@@ -30,22 +30,6 @@ var arAkahukuConverter = {
   },
     
   /**
-   * 古い Mozilla Suite でエスケープ解除できない %uXXXX を解除する
-   *
-   * @param  String text
-   *         解除する文字列
-   * @return String
-   *         解除した文字列
-   */
-  unescapeExtra : function (text) {
-    return text
-    .replace (/%(u[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])/g,
-              function (match, part) {
-                return eval ("\"\\" + part + "\";");
-              });
-  },
-    
-  /**
    * UTF-8 から UTF-16 に変換する
    *
    * @param  String text

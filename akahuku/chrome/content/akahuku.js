@@ -7,48 +7,6 @@
  *          arAkahukuBoard,
  */
 
-/*
-var arAkahukuThreadManager = {
-  withThread: function(func) {
-    var threadManager =
-    Components.classes["@mozilla.org/thread-manager;1"]
-    .getService(Components.interfaces.nsIThreadManager);
-    
-    var thread = threadManager.newThread(0);
-    thread.dispatch(
-      new arAkahukuThreadManager.ThreadType(func),
-      Components.interfaces.nsIThread.DISPATCH_NORMAL);
-  },
-  
-  withMainThread: function(func) {
-    var threadManager =
-    Components.classes["@mozilla.org/thread-manager;1"]
-    .getService(Components.interfaces.nsIThreadManager);
-    
-    var thread = threadManager.mainThread;
-    thread.dispatch(
-      new arAkahukuThreadManager.ThreadType(func),
-      Components.interfaces.nsIThread.DISPATCH_NORMAL);
-  }
-};
-arAkahukuThreadManager.ThreadType = function(func) {
-  this.func = func;
-};
-arAkahukuThreadManager.ThreadType.prototype = {
-  run: function() {
-    this.func();
-  },
-  
-  QueryInterface: function(iid) {
-    if (iid.equals(Components.interfaces.nsIRunnable) ||
-        iid.equals(Components.interfaces.nsISupports)) {
-      return this;
-    }
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  }
-};
-*/
-
 // arAkahukuJSON のロード
 try {
   Components.utils.import("resource://akahuku/json.jsm");
@@ -1380,6 +1338,16 @@ var Akahuku = {
       }
     }
 
+    if (targetNode.nodeType == targetNode.DOCUMENT_NODE &&
+        documentParam && documentParam.location_info &&
+        documentParam.location_info.isFutaba &&
+        documentParam.location_info.isReply) {
+      // ふたばで全BQ取得時には div.thre 内のみに対象が絞れる可能性
+      // (レイアウト 2016/05/31~)
+      var divThre = targetNode.querySelector ("body>form>div.thre");
+      targetNode = (divThre ? divThre : targetNode);
+    }
+
     var newNodes = new Array ();
 
     /* 可能なら XPath による高速取得を試みる */
@@ -1761,15 +1729,31 @@ var Akahuku = {
    *
    * @param  Object container
    *         対象のコンテナ
+   * @param  Object conf
+   *         挙動の詳細設定
    * @return Object
    *         複製したコンテナ
    */
-  cloneMessageContainer : function (container) {
+  cloneMessageContainer : function (container, conf) {
     var newContainer = {};
     newContainer.nodes = [];
+    var cloneNodeConf = {
+      excludeClasses : conf.excludeClasses || [],
+      excludeIds : conf.excludeIds || [],
+      stripId : conf.stripId || false,
+      noMediaAutoPlay : conf.noMediaAutoPlay || false,
+    };
+    if (conf.skipMainInner) {
+      // main の子孫は複製させない
+      cloneNodeConf.stopNodes = [container.main];
+    }
     
     for (var i = 0; i < container.nodes.length; i ++) {
-      newContainer.nodes.push (container.nodes [i].cloneNode (true));
+      var dupNode = arAkahukuDOM
+        .cloneNodeCustom (container.nodes [i], true, cloneNodeConf);
+      if (dupNode) {
+        newContainer.nodes.push (dupNode);
+      }
     }
     
     if (container.main.nodeName.toLowerCase () == "td") {

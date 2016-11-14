@@ -196,6 +196,7 @@
                 <label value="(ホスト名指定は後方一致、URL指定は完全一致だがワイルドカード(*)が使える)"/>
                 <label value="例: http://mushoku.com/banner.jpg munen.org "/>
                 <label value="例2: http://*.2chan.net/bin/radif.htm http://*.hoge.jp/fuga?*"/>
+                <label value="例3: http*://mushoku.com/banner.jpg //munen.org/ad.htm"/>
               </box>
             </tooltip>
             <box class="sub" orient="vertical">

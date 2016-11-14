@@ -277,11 +277,15 @@ arAkahukuLocationInfo.prototype = {
           }
         }
         else {
-          if (targetDocument.location.href.match
-              (arAkahukuBoard.externalList [i].pattern)) {
-            this.server = RegExp.$1;
-            this.dir = RegExp.$2;
-            path = RegExp.$3;
+          // Note: pattern は jsm 内の RegExp で生成の(場合がある)ため
+          // 結果がここでの RegExp.$* に反映されない (Firefox 49+)
+          var reresult =
+            arAkahukuBoard.externalList [i].pattern
+            .exec (targetDocument.location.href);
+          if (reresult) {
+            this.server = (reresult [1] || "");
+            this.dir = (reresult [2] || "");
+            path = (reresult [3] || "");
                     
             this.isMonaca = arAkahukuBoard.externalList [i].monaca;
                     
@@ -344,7 +348,7 @@ arAkahukuLocationInfo.prototype = {
         
     if (path.match (/%/)) {
       try {
-        path = unescape (path);
+        path = decodeURIComponent (path);
       }
       catch (e) { Akahuku.debug.exception (e);
       }
@@ -357,37 +361,10 @@ arAkahukuLocationInfo.prototype = {
       this.mode = "\u8FD4\u4FE1";
       this.isFutaba = false;
       
-      var tryUnMHT = this.isMht;
-      if (tryUnMHT) {
-        try {
-          var m = {};
-          Components.utils.import("resource://unmht/modules/UnMHTExtractor.jsm",m);
-          var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (location);
-          if (eFileInfo && part && part.startPart
-              && /^http:\/\/(?:[^\.\/]+\.)?(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
-              .test (part.startPart.contentLocation) ) {
-            this.isTsumanne = true;
-          }
-          tryUnMHT = false;
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-      }
-      if (tryUnMHT) { // Old UnMHT
-        try {
-          var param = UnMHT.protocolHandler.getUnMHTURIParam (location);
-          var extractor;
-          if (param
-              && param.original
-              && (extractor = UnMHT.getExtractor (param.original))
-              && extractor.rootFile
-              && extractor.rootFile.contentLocation.match
-              (/^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
-            this.isTsumanne = true;
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
+      if (this.isMht) {
+        this.isTsumanne =
+          /^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
+          .test (arAkahukuCompat.UnMHT.getRootContentLocation (location));
       }
     }
     else if (path.match (/\?mode=cat/)) {
@@ -1255,8 +1232,8 @@ var arAkahukuImageURL = {
         uinfo.akahukuParam = akahukuParam;
       }
       
-      if (url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
-          || url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
+      if (url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
+          || url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
         /* 広告バナー */
         uinfo.isAd = true;
       }
@@ -1277,7 +1254,7 @@ var arAkahukuImageURL = {
             
       uinfo.isImage = true;
     }
-    else if (url.match (/^http:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)) {
+    else if (url.match (/^https?:\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/([^\/]+)\//)) {
       uinfo = new arAkahukuImageURLInfo ();
             
       uinfo.prefix = RegExp.$1;
@@ -1287,13 +1264,13 @@ var arAkahukuImageURL = {
             
       uinfo.board = uinfo.server + "_" + uinfo.dir;
       
-      if (url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
-          || url.match (/^http:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
+      if (url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/ad\//)
+          || url.match (/^https?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/dec\/ad\//)) {
         /* 広告バナー */
         uinfo.isAd = true;
       }
     }
-    else if (url.match (/^http:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif|webm|mp4)(\?.*)?$/)) {
+    else if (url.match (/^https?:\/\/([0-9.]+)(:[0-9]+)?\/(apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/([^\/]+)\/(cat|thumb|src)\/([A-Za-z0-9]+)\.(jpg|png|gif|webm|mp4)(\?.*)?$/)) {
       /* IP アドレスで画像鯖らしき場所が指定された場合 */
       uinfo = new arAkahukuImageURLInfo ();
             

@@ -215,8 +215,9 @@ var arAkahukuImage = {
         popup = targetDocument.createElement ("popup");
         popup.id = "akahuku-saveimage-popup";
         popup.setAttribute ("position", "after_start");
-        popup.setAttribute ("onpopupshowing",
-                            "arAkahukuImage.setPopup ();");
+        popup.addEventListener ("popupshowing", function () {
+          arAkahukuImage.setPopup ();
+        }, false);
                 
         popupset.appendChild (popup);
                 

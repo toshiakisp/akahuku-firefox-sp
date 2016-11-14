@@ -71,14 +71,18 @@ var arAkahukuTab = {
       item = document.createElement ("menuitem");
       item.id = "akahuku-menuitem-tab-sort-all";
       item.setAttribute ("label", "\u5168\u3066\u30BD\u30FC\u30C8");
-      item.setAttribute ("oncommand", "arAkahukuTab.sort (true);");
+      item.addEventListener ("command", function (event) {
+        arAkahukuTab.sort (true);
+      }, false);
       tabMenu.insertBefore (item, insertPos);
       insertPos = item;
             
       item = document.createElement ("menuitem");
       item.id = "akahuku-menuitem-tab-sort-thread";
       item.setAttribute ("label", "\u30B9\u30EC\u3092\u30BD\u30FC\u30C8");
-      item.setAttribute ("oncommand", "arAkahukuTab.sort (false);");
+      item.addEventListener ("command", function (event) {
+        arAkahukuTab.sort (false);
+      }, false);
       tabMenu.insertBefore (item, insertPos);
       insertPos = item;
             

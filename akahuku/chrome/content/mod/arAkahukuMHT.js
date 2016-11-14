@@ -367,22 +367,7 @@ arAkahukuMHTFileData.prototype = {
     }
     
     try {
-      if (typeof (Components.interfaces.nsIIDNService) != "undefined") {
-        if (location.match (/^([A-Za-z0-9]+):\/\/([^\/]+)\/(.+)/)) {
-          var protocol = RegExp.$1;
-          var host = RegExp.$2;
-          var path = RegExp.$3;
-                    
-          var idn
-          = Components.classes
-          ["@mozilla.org/network/idn-service;1"].
-          getService (Components.interfaces.nsIIDNService);
-                
-          host = unescape (host);
-          host = idn.convertUTF8toACE (host);
-          location = protocol + "://" + host + "/" + path;
-        }
-      }
+      location = arAkahukuUtil.tryConvertIDNHostToAscii (location);
       
       Akahuku.Cache.asyncOpenCacheToRead
         ({url: location, triggeringNode: targetDocument}, this);
@@ -1172,8 +1157,7 @@ var arAkahukuMHT = {
       = arAkahukuConfig
       .initPref ("char", "akahuku.savemht.default.format", defFormat);
       arAkahukuMHT.defaultFormat    
-      = arAkahukuConverter.unescapeExtra
-      (unescape (arAkahukuMHT.defaultFormat));
+      = unescape (arAkahukuMHT.defaultFormat);
             
       arAkahukuMHT.enableAuto
       = arAkahukuConfig
@@ -1483,6 +1467,7 @@ var arAkahukuMHT = {
       "span",   "akahuku_thread_catalog_new",
       "span",   "akahuku_thread_catalog_new2",
       "span",   "akahuku_thread_back_new",
+      "span",   "akahuku_thread_back_new2",
       "div",    "akahuku_links_on_bottom",
       "div",    "akahuku_cleanup_container",
       "div",    "akahuku_savemht_status",
@@ -1688,6 +1673,14 @@ var arAkahukuMHT = {
         continue;
       }
     }
+
+    nodes = targetDocument.querySelectorAll ("*[__akahuku_contentpolicy_hide]");
+    for (i = 0; i < nodes.length; i ++) {
+      /* ブロックして非表示にした広告を消す */
+      if (nodes [i].parentNode) {
+        nodes [i].parentNode.removeChild (nodes [i]);
+      }
+    }
             
     nodes = targetDocument.getElementsByTagName ("img");
     for (i = 0; i < nodes.length; i ++) {
@@ -1701,11 +1694,12 @@ var arAkahukuMHT = {
       /* 画像を保存の大きい画像を削除する */
       if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
         var container = Akahuku.getMessageContainer (nodes [i]);
-        if (container) {
-          var bq = Akahuku.getMessageBQ (container.main) [0];
-          if (bq) {
-            arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
-          }
+        var containerMain = (container
+            ? container.main // for replies
+            : nodes [i].parentNode.parentNode); // for thread text
+        var bq = Akahuku.getMessageBQ (containerMain) [0];
+        if (bq) {
+          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
         }
         nodes [i].parentNode.removeChild (nodes [i]);
         i --;
@@ -1734,6 +1728,10 @@ var arAkahukuMHT = {
           parent.parentNode.removeChild (parent);
           i --;
           continue;
+        }
+        else {
+          // リンクがない場合は属性だけ掃除
+          nodes [i].removeAttribute ("__akahuku_banner");
         }
       }
       /* 合間合間に で小さくなったサムネを元に戻す */
@@ -1787,11 +1785,12 @@ var arAkahukuMHT = {
       // 画像を保存の大きい画像(video)を削除する
       if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_saveimage_src")) {
         var container = Akahuku.getMessageContainer (nodes [i]);
-        if (container) {
-          var bq = Akahuku.getMessageBQ (container.main) [0];
-          if (bq) {
-            arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
-          }
+        var containerMain = (container
+            ? container.main // for replies
+            : nodes [i].parentNode.parentNode); // for thread text
+        var bq = Akahuku.getMessageBQ (containerMain) [0];
+        if (bq) {
+          arAkahukuDOM.removeClassName (bq, "akahuku_saveimage_defmargin");
         }
         var hrefOriginal = nodes [i].parentNode
           .getAttribute ("__akahuku_saveimage_href");
@@ -2165,17 +2164,64 @@ var arAkahukuMHT = {
     }
         
     /* 削除のフォームを消す */
+    var formDelform = null;
     nodes = targetDocument.getElementsByTagName ("input");
     for (i = 0; i < nodes.length; i ++) {
       if (nodes [i].getAttribute ("type")
           && nodes [i].getAttribute ("type").toLowerCase () == "hidden"
           && nodes [i].getAttribute ("value") == "usrdel") {
-        node = arAkahukuDOM.findParentNode (nodes [i], "table");
+        node = arAkahukuDOM.findParentNodeByClassName (nodes [i], "delform");
+        // 旧レイアウト(外部板含む)
+        if (!node) {
+          node = arAkahukuDOM.findParentNode (nodes [i], "table");
+        }
+        formDelform = arAkahukuDOM.findParentNode (nodes [i], "form");
         if (node) {
           node.parentNode.removeChild (node);
         }
         break;
       }
+    }
+    // 末尾の広告コンテナなどの残骸を削除
+    try {
+      node = formDelform ? formDelform.nextSibling : null;
+      while (node) {
+        var canBeRemoved
+          = (function (node) {
+            var numChildElements = 0;
+            if (node.childNodes && node.childNodes.length > 0) {
+              // 先に子孫を再帰チェック
+              var elems = [];
+              for (var i = 0; i < node.childNodes.length; i ++) {
+                if ((node.childNodes [i].nodeName == "#text" &&
+                    !/^[\n\s]*$/.test (node.childNodes [i].nodeValue)) ||
+                    typeof node.childNodes [i].hasAttribute !== "undefined") {
+                  // 空白文字のみではない #text と Element を収集
+                  elems.push (node.childNodes [i]);
+                }
+              }
+              var numChildElements = elems.length;
+              for (var i = 0; i < elems.length; i ++) {
+                if (arguments.callee.call (null, elems [i])) {
+                  // 子孫が空だったら
+                  node.removeChild (elems [i]);
+                  numChildElements --;
+                }
+              }
+            }
+            if (/^(div|span)$/i.test (node.nodeName) &&
+                numChildElements == 0) {
+              return true;
+            }
+          }) (node);
+        var nextNode = node.nextSibling;
+        if (canBeRemoved) {
+          node.parentNode.removeChild (node);
+        }
+        node = nextNode;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
     }
         
     /* フォーム位置だけ末尾に置いた時の追加スタイルを削除 */

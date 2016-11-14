@@ -184,8 +184,7 @@ var AkahukuOptions = {
           = AkahukuOptions
           .initPref (map, "char", "akahuku.title.format", defFormat);
           document.getElementById ("title_format").value
-          = AkahukuOptions
-          .unescapeExtra (unescape (value));
+          = unescape (value);
         },
        function (fstream, deletePath) {
          var value   = document.getElementById ("title_format").value;
@@ -194,8 +193,8 @@ var AkahukuOptions = {
                    escape (value));
        }],
       ["int",  "title.comment.length", 20],
-      ["int",  "title.comment.length.type", 0], /* privatemod */
-      ["bool", "title.comment.multiline", false, "privatemod"],
+      ["int",  "title.comment.length.type", 0],
+      ["bool", "title.comment.multiline", false],
       ["bool", "subtitle", false],
       ["bool", "comment.fixup", true],
       ["init",
@@ -223,12 +222,12 @@ var AkahukuOptions = {
       ["bool", "delbanner.image", false],
       ["bool", "delbanner.image.404", false],
       ["bool", "delbanner.flash", false],
-      ["char", "delbanner.sites.image", "", "privatemod"],
-      ["char", "delbanner.sites.iframe", "", "privatemod"],
-      ["char", "delbanner.sites.object", "", "privatemod"],
+      ["char", "delbanner.sites.image", ""],
+      ["char", "delbanner.sites.iframe", ""],
+      ["char", "delbanner.sites.object", ""],
       ["bool", "delbanner.text", false],
       ["bool", "delbanner.movetailad", false],
-      ["bool", "delbanner.movetailad.all", false, "privatemod"],
+      ["bool", "delbanner.movetailad.all", false],
       ["bool", "delbanner.monotonize", false],
       ["init",
        function (map) {
@@ -244,7 +243,7 @@ var AkahukuOptions = {
       ["bool", "wheel.reload.reply", true],
       ["bool", "wheel.reload.reply.sync", false],
       ["bool", "wheel.reload.catalog", true],
-      ["bool", "wheel.reload.catalog.up", false, "privatemod"],
+      ["bool", "wheel.reload.catalog.up", false],
       ["bool", "wheel.reload.all", false],
       ["init",
        function (map) {
@@ -410,7 +409,7 @@ var AkahukuOptions = {
       ["bool", "tabicon", true],
       ["bool", "tabicon.size", true],
       ["int",  "tabicon.size.max", 24],
-      ["bool", "tabicon.asfavicon", true, "privatemod"],
+      ["bool", "tabicon.asfavicon", true],
       ["init",
        function (map) {
           AkahukuOptions.checkTabSort ();
@@ -433,7 +432,7 @@ var AkahukuOptions = {
       ["int",  "quickquote.number.type", 1],
       ["bool", "quickquote.number.clear", false],
       ["bool", "quickquote.number.nocomment", false],
-      ["bool", "quickquote.number.onlyquote", false, "privatemod"],
+      ["bool", "quickquote.number.onlyquote", false],
       ["bool", "quickquote.clear", false],
       ["bool", "quickquote.untroll", false],
       ["bool", "quickquote.focus", false],
@@ -465,7 +464,7 @@ var AkahukuOptions = {
           = AkahukuOptions
           .initPref (map, "char", "akahuku.savemht.default.format", defFormat);
           document.getElementById ("savemht_default_format").value
-          = AkahukuOptions.unescapeExtra (unescape (value));
+          = unescape (value);
         },
        function (fstream, deletePath) {
          var value   = document.getElementById ("savemht_default_format").value;
@@ -651,7 +650,7 @@ var AkahukuOptions = {
       ["bool", "commentbox.shortcut.modifiers.ctrl", false],
       ["bool", "commentbox.shortcut.modifiers.meta", true],
       ["bool", "commentbox.shortcut.modifiers.shift", true],
-      ["bool", "commentbox.submit_shortcut", false, "privatemod"],
+      ["bool", "commentbox.submit_shortcut", false],
       ["init",
        function (map) {
           AkahukuOptions.checkSageButton ();
@@ -680,13 +679,13 @@ var AkahukuOptions = {
       ["bool", "postform.preview", false],
       ["int",  "postform.preview.size", 250],
       ["bool", "postform.save_attachment", false],
-      ["bool", "postform.paste_image_from_clipboard", false, "privatemod"],
+      ["bool", "postform.paste_image_from_clipboard", false],
       ["bool", "postform.delform.hide", false],
       ["bool", "postform.delform.left", false],
       ["bool", "postform.shimonkin", false],
       ["char", "postform.shimonkin.type", "all"],
       ["bool", "postform.bottom", false],
-      ["bool", "postform.bottom_formonly", false, "privatemod"],
+      ["bool", "postform.bottom_formonly", false],
       ["init",
        function (map) {
           AkahukuOptions.checkFormCompatibility ();
@@ -699,7 +698,7 @@ var AkahukuOptions = {
       ["bool", "reload", true],
       ["bool", "reload.range.syncbutton", true],
       ["bool", "reload.range.syncbutton.nodelete", true],
-      ["bool", "reload.range.syncbutton.id", true, "privatemod"],
+      ["bool", "reload.range.syncbutton.id", true],
       ["bool", "reload.rule", true],
       ["bool", "reload.rule.zeroheight", false],
       ["bool", "reload.rule.random", true],
@@ -721,7 +720,7 @@ var AkahukuOptions = {
       ["bool", "reload.extcache", false],
       ["bool", "reload.extcache.file", false],
       ["char", "reload.extcache.file.base", ""],
-      ["bool", "reload.extcache.images", false, "privatemod"],
+      ["bool", "reload.extcache.images", false],
       ["init",
        function (map) {
           AkahukuOptions.checkPartial ();
@@ -794,11 +793,11 @@ var AkahukuOptions = {
       ["bool", "popupquote.clickhide", true],
       ["bool", "popupquote.image", true],
       ["int",  "popupquote.image.size", 2],
-      ["bool", "popupquote.image.preview", true, "privatemod"],
-      ["bool", "popupquote.image.preview.all", true, "privatemod"],
+      ["bool", "popupquote.image.preview", true],
+      ["bool", "popupquote.image.preview.all", true],
       ["bool", "popupquote.nearest", false],
       ["bool", "popupquote.bottomup", false],
-      ["bool", "popupquote.matchbol", false, "privatemod"],
+      ["bool", "popupquote.matchbol", false],
       ["init",
        function (map) {
           AkahukuOptions.checkPopupQuote ();
@@ -838,7 +837,7 @@ var AkahukuOptions = {
           }
           return value;
         }],
-      ["bool", "style.ignore_default.minimum_res", true, "privatemod"],
+      ["bool", "style.ignore_default.minimum_res", true],
       ["bool", "showmail", true],
       ["bool", "showmail.popup", false],
       ["bool", "reply.limitwidth", true],
@@ -847,7 +846,7 @@ var AkahukuOptions = {
       ["bool", "reply.nomargintop", false],
       ["bool", "reply.nomarginbottom", false],
       ["bool", "alertgif", false],
-      ["bool", "style.body_font", false, "privatemod"],
+      ["bool", "style.body_font", false],
       ["int",  "style.body_font.size", 12,
        function (value) {
           if (value < 8) {
@@ -1059,7 +1058,7 @@ var AkahukuOptions = {
       ["bool", "catalog.reorder.stick-by-text.enable", false],
       ["char", "catalog.reorder.stick-by-text.pattern", ""],
       ["bool", "catalog.reorder.fill", false],
-      ["bool", "catalog.reorder.info", false, "privatemod"],
+      ["bool", "catalog.reorder.info", false],
       ["bool", "catalog.zoom", false],
       ["bool", "catalog.zoom.click", false],
       ["bool", "catalog.zoom.noanim", false],
@@ -1080,7 +1079,7 @@ var AkahukuOptions = {
           }
           return value;
         }],
-      ["int",  "catalog.zoom.sizetype", 0], /* privatemod */
+      ["int",  "catalog.zoom.sizetype", 0],
       ["int",  "catalog.zoom.cache.count", 16],
       ["bool", "catalog.zoom.comment", false],
       ["int",  "catalog.zoom.comment.delay", 10,
@@ -1116,9 +1115,9 @@ var AkahukuOptions = {
       ["bool", "catalog.sidebar", false],
       ["bool", "catalog.sidebar.comment", true],
       ["int",  "catalog.sidebar.comment.length", 12],
-      ["bool", "catalog.observe", false, "privatemod"],
-      ["bool", "catalog.observe.replynum", false, "privatemod"],
-      ["bool", "catalog.observe.opened", false, "privatemod"],
+      ["bool", "catalog.observe", false],
+      ["bool", "catalog.observe.replynum", false],
+      ["bool", "catalog.observe.opened", false],
       ["bool", "catalog.observe.opened.reload", true],
       ["bool", "catalog.clickable", true],
       ["bool", "catalog.visited", true],
@@ -1977,22 +1976,6 @@ var AkahukuOptions = {
   },
     
   /**
-   * 古い Mozilla Suite でエスケープ解除できない %uXXXX を解除する
-   *
-   * @param  String text
-   *         解除する文字列
-   * @return String
-   *         解除した文字列
-   */
-  unescapeExtra : function (text) {
-    return text
-    .replace (/%(u[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])/g,
-              function (match, part) {
-                return eval ("\"\\" + part + "\";");
-              });
-  },
-    
-  /**
    * 設定を読み込む
    * 設定が無ければ既定値を書き込む
    *
@@ -2428,8 +2411,7 @@ var AkahukuOptions = {
     
     if (fstream) {
       AkahukuOptions
-        .setPref (fstream, "char", "akahuku.version",
-                  AkahukuVersion.split(".").splice(0,3).join("."));
+        .setPref (fstream, "char", "akahuku.version", AkahukuVersion);
     }
     else {
       if (AkahukuOptions.prefBranch == null) {
@@ -4477,7 +4459,7 @@ var AkahukuOptions = {
       chromeWindow.arAkahukuUI.openWebsite ();
     }
     else {
-      window.open ("http://toshiakisp.github.io/akahuku-firefox-sp/");
+      window.open ("https://toshiakisp.github.io/akahuku-firefox-sp/");
     }
   },
   
