@@ -68,8 +68,14 @@ var arAkahukuDOM = {
       // HTMLMediaElement を自動再生させない
       if (dupNode.autoplay) {
         dupNode.autoplay = false;
-        dupNode.src = "about:blank"; // 強制停止
-        dupNode.setAttribute ("src", node.getAttribute ("src"));
+        var srcOrig = node.getAttribute ("src");
+        if (srcOrig) {
+          // 確実に autoplay させない
+          dupNode.removeAttribute ("src");
+          dupNode.load ();
+          dupNode.setAttribute ("src", srcOrig);
+          dupNode.load ();
+        }
       }
     }
 
