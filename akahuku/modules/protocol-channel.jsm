@@ -1090,7 +1090,7 @@ arAkahukuCacheChannel.prototype = {
     this.contentType = "";
     this._contentEncoding = "";
 
-    if (!/^HTTP\/1\.[10] \d\d\d /.test (headers [0])) {
+    if (!/^HTTP\/(1\.[10]|2\.0) \d\d\d /.test (headers [0])) {
       return "";
     }
     var statusCode = headers [0].substr (9, 3);
