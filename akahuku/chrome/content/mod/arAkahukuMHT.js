@@ -3555,7 +3555,8 @@ var arAkahukuMHT = {
         }
         else {
           if (arAkahukuMHT.enableAutoUnique) {
-            file.createUnique (0x00, 420/*0644*/);
+            file = arAkahukuFile
+              .createUnique (file.path, 0x00, 420/*0644*/);
           }
         }
         param.lastFilename = filename;
