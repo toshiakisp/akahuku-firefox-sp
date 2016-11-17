@@ -2865,10 +2865,10 @@ var arAkahukuPostForm = {
     var filename
       = arAkahukuFile.getDirectory ("TmpD")
       + arAkahukuFile.separator + "akahuku-clip.jpg";
-    var file = arAkahukuFile.initFile (filename);
-    file.createUnique (file.NORMAL_FILE_TYPE, 420/* 0644 */);
+    var file
+      = arAkahukuFile.createUnique
+      (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420 /* 0644 */);
     filename = file.path;
-    var fileurl = arAkahukuFile.getURLSpecFromFilename (filename);
     arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
       if (!Components.isSuccessCode (code)) {
         Akahuku.debug.error (arAkahukuUtil.resultCodeToString (code)
