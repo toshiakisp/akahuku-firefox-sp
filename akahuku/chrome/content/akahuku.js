@@ -152,6 +152,7 @@ var Akahuku = {
     if (info) {
       documentParam.location_info = info;
     }
+    Akahuku.collectLinks (documentParam);
     Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
   },
@@ -170,6 +171,7 @@ var Akahuku = {
         Akahuku.documentParams.splice (i, 1);
         tmp.targetDocument = null;
         tmp.location_info = null;
+        tmp.links = null;
         tmp = null;
         break;
       }
@@ -308,6 +310,63 @@ var Akahuku = {
       return null;
     }
     return Akahuku.getDocumentParam (wnd.document);
+  },
+
+  /**
+   * 関連するドキュメントへのリンクを収集する
+   * @param arAkahukuDocumentParam
+   */
+  collectLinks : function (documentParam)
+  {
+    var homeLinks = [];
+    var backLinks = [];
+    var catalogLinks = [];
+    try {
+      var targetDocument = documentParam.targetDocument;
+      var nodes = targetDocument.getElementsByTagName ("a");
+      for (var i = 0; i < nodes.length; i ++) {
+        if (!nodes [i].hasAttribute ("href") ||
+            /(^javascript:|\.(jpg|gif|png|webm|mp4)$)/i
+            .test (nodes [i].href)) {
+          // 無駄な検索を省く
+          continue;
+        }
+        if (/(\?mode=cat|cat\.htm)$/.test (nodes [i].href)) {
+          // cat\.htm$ : 避難所 patch
+          catalogLinks.push (nodes [i]);
+          if (!documentParam.links.catalog) {
+            documentParam.links.catalog = nodes [i].href;
+          }
+        }
+        else if (/\?mode=cat(&.*)$/.test (nodes [i].href)) {
+          // catalogLinks.push (nodes [i]);
+        }
+        var text = arAkahukuDOM.getInnerText (nodes [i]);
+        if (/\u63B2\u793A\u677F\u306B\u623B\u308B/.test (text) &&
+            // /掲示板に戻る/
+            /futaba\.htm$/.test (nodes [i].href)) {
+          backLinks.push (nodes [i]);
+          if (backLinks.length == 1) {
+            documentParam.links.back = nodes [i].href;
+          }
+        }
+        if ("\u30DB\u30FC\u30E0" === text) {
+            // "ホーム"
+          homeLinks.push (nodes [i]);
+          if (homeLinks.length == 1) {
+            documentParam.links.home = nodes [i].href;
+          }
+        }
+      }
+      documentParam.links.homeAnchors = homeLinks;
+      documentParam.links.backAnchors = backLinks;
+      documentParam.links.catalogAnchors = catalogLinks;
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      documentParam.links.home = "http://www.2chan.net/";
+      documentParam.links.back = "";
+      documentParam.links.catalog = "";
+    }
   },
 
   /**

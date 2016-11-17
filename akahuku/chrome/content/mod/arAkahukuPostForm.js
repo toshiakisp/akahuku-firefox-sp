@@ -4620,6 +4620,18 @@ var arAkahukuPostForm = {
             }
           }
           arAkahukuPostForm.cleanup (viewer);
+
+          // カタログへのリンクを装飾
+          if (arAkahukuThread.enableCatalogNew) {
+            nodes2 = viewer.getElementsByTagName ("a");
+            for (i = 0; i < nodes2.length; i ++) {
+              // same as Akahuku.collectLinks
+              if (/(\?mode=cat|cat\.htm)$/.test (nodes2 [i].href)) {
+                arAkahukuThread.makeAnchorOpenInBlank (nodes2 [i], "catalog");
+                break;
+              }
+            }
+          }
           
           var node = viewer.firstChild;
           while (node) {
@@ -5229,35 +5241,20 @@ var arAkahukuPostForm = {
           }
         }
         else {
-          a = targetDocument.createElement ("a");
-          a.href = "futaba.htm";
-          /* futaba: 未知なので外部には対応しない */
-          a.appendChild (targetDocument.createTextNode
-                         ("\u63B2\u793A\u677F\u306B\u623B\u308B"));
+          a = arAkahukuThread.createBackAnchor (targetDocument);
           td.appendChild (targetDocument.createTextNode
                           ("["));
           td.appendChild (a);
           td.appendChild (targetDocument.createTextNode
                           ("] "));
                     
-          var nodes = targetDocument.getElementsByTagName ("a");
-          for (var i = 0; i < nodes.length && i < 5; i ++) {
-            if (nodes [i].href
-                && (nodes [i].href.match (/\?mode=cat$/)
-                    /* 避難所 patch */
-                    || nodes [i].href.match (/cat\.htm$/))) {
-              a = targetDocument.createElement ("a");
-              a.href = nodes [i].href;
-              a.appendChild (targetDocument.createTextNode
-                             ("\u30AB\u30BF\u30ED\u30B0"));
-                            
-              td.appendChild (targetDocument.createTextNode
-                              ("["));
-              td.appendChild (a);
-              td.appendChild (targetDocument.createTextNode
-                              ("] "));
-              break;
-            }
+          a = arAkahukuThread.createCatalogAnchor (targetDocument);
+          if (a) {
+            td.appendChild (targetDocument.createTextNode
+                            ("["));
+            td.appendChild (a);
+            td.appendChild (targetDocument.createTextNode
+                            ("] "));
           }
         }
         var linkCell = td;

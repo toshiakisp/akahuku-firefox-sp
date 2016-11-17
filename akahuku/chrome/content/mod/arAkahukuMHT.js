@@ -1464,10 +1464,6 @@ var arAkahukuMHT = {
     var remove_element = [
       "div",    "akahuku_respanel",
       "div",    "akahuku_tailad",
-      "span",   "akahuku_thread_catalog_new",
-      "span",   "akahuku_thread_catalog_new2",
-      "span",   "akahuku_thread_back_new",
-      "span",   "akahuku_thread_back_new2",
       "div",    "akahuku_links_on_bottom",
       "div",    "akahuku_cleanup_container",
       "div",    "akahuku_savemht_status",
@@ -1489,6 +1485,24 @@ var arAkahukuMHT = {
                                           remove_element [i + 1]);
       if (node) {
         node.parentNode.removeChild (node);
+      }
+    }
+
+    /* 特定 className の要素自体を消す */
+    var remove_elements_class = [
+      // arAkahukuThread
+      "span",   "akahuku_thread_catalog_new",
+      "span",   "akahuku_thread_back_new",
+      ];
+    for (i = 0; i < remove_elements_class.length; i += 2) {
+      nodes = arAkahukuDOM.getElementsByNames (targetDocument,
+                                               remove_elements_class [i],
+                                               remove_elements_class [i + 1]);
+      for (var j = 0; j < nodes.length; j ++) {
+        // nodes は live ではない
+        if (nodes [j].parentNode) {
+          nodes [j].parentNode.removeChild (nodes [j]);
+        }
       }
     }
         

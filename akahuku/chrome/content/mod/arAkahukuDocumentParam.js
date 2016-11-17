@@ -18,6 +18,16 @@ arAkahukuDocumentParam.prototype = {
   gotop_scroll : null,
   threadoperator_param : null,
   
-  layout : false
+  layout : false,
+
+  // see Akahuku.collectLinks
+  links : {
+    home : "", // ホーム
+    homeAnchors : [],
+    back : "", // 掲示板へ戻る
+    backAnchors : [],
+    catalog : "", // カタログ
+    catalogAnchors : [],
+  },
 };
 
