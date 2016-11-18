@@ -365,13 +365,9 @@ Akahuku.Cache = new function () {
       return;
     }
 
-    if (!contentLocation) {
-      var status = Akahuku.Cache.getImageStatus (context, true);
-      if (status.cache.isExist && status.cache.key) {
-        contentLocation = status.cache.key;
-      }
-    }
     if (!contentLocation || !/^https?:/.test (contentLocation)) {
+      Akahuku.debug.warn ("enCacheURIContext: "
+          + "invalid contentLocation; " + contentLocation);
       return;
     }
 
@@ -392,11 +388,57 @@ Akahuku.Cache = new function () {
 
     context.src = src;
   };
+
+  /**
+   * 画像要素をキャッシュのアドレスに変換する (非同期キャッシュ確認後)
+   *
+   * @param  HTMLElement 画像要素
+   */
+  this.enCacheURIContextIfCached = function (context) {
+    var status = Akahuku.Cache.getImageStatus (context);
+    if (!status.isImage) {
+      Akahuku.debug.warn ("enCacheURIContextIfCached: " +
+          "non image; " + context);
+      return;
+    }
+    if (!status.requestURI) {
+      Akahuku.debug.warn ("enCacheURIContextIfCached: " +
+          "no request URI; " + context);
+      return;
+    }
+    if (!(status.requestURI.schemeIs ("http") ||
+          status.requestURI.schemeIs ("https")) ||
+        (status.isBlocked || status.isErrored)) {
+      // キャッシュされてると期待できない状態
+      return;
+    }
+    Akahuku.Cache.asyncGetStatus
+      ({url: status.requestURI.spec, triggeringNode: context},
+       function (cacheStatus) {
+         if (!cacheStatus.isExist) {
+           Akahuku.debug.warn ("enCacheURIContextIfCached: "
+             + "cache entry is not found for " + cacheStatus.key);
+           return;
+         }
+         if (!(cacheStatus.dataSize > 0)) {
+           Akahuku.debug.warn ("enCacheURIContextIfCached: "
+             + "invalid cache entry for " + cacheStatus.key);
+           return;
+         }
+         if (cacheStatus.expires == 0) {
+           // expires が無いエントリなら処理する必要がない
+           return;
+         }
+         if (typeof context !== "undefined") { // not a dead object
+           Akahuku.Cache.enCacheURIContext (context, cacheStatus.key);
+         }
+       });
+  };
     
   this.enCacheURIForImages = function (rootElement) {
     var nodes = rootElement.getElementsByTagName ("img");
     for (var i = 0; i < nodes.length; i ++) {
-      Akahuku.Cache.enCacheURIContext (nodes [i]);
+      Akahuku.Cache.enCacheURIContextIfCached (nodes [i]);
     }
   };
 

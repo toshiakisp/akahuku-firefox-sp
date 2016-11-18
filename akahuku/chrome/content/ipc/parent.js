@@ -103,6 +103,8 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getDirectory");
 arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "createUnique");
+arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "readFile");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "readBinaryFile");

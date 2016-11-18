@@ -7,23 +7,24 @@
       errored : false,
       wrappedCheckProtocol : null,
       checkProtocol : function (img) {
-        if (!AkahukuPageInfo.errored
-            && typeof (COL_IMAGE_ADDRESS) == "number"
-            && img instanceof Array
-            && COL_IMAGE_ADDRESS in img
-            && img [COL_IMAGE_ADDRESS]) {
+        var col = 0;
+        if (typeof (COL_IMAGE_ADDRESS) == "number") {
+          col = COL_IMAGE_ADDRESS;
+        }
+        if (!AkahukuPageInfo.errored && img && img [col]) {
           try {
             var protocolHandler
             = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
             .getService (Components.interfaces.arIAkahukuProtocolHandler);
-            var param = protocolHandler.getAkahukuURIParam (img [COL_IMAGE_ADDRESS]);
+            var param = protocolHandler.getAkahukuURIParam (img [col]);
             if ("original" in param && param.original) {
               var imgOrig = [];
-              imgOrig [COL_IMAGE_ADDRESS] = param.original;
+              imgOrig [col] = param.original;
               return AkahukuPageInfo.wrappedCheckProtocol.apply (this, [imgOrig]);
             }
           }
           catch (e) {
+            Components.utils.reportError (e);
             AkahukuPageInfo.errored = true;
           }
         }

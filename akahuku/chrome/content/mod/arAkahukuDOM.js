@@ -512,6 +512,45 @@ var arAkahukuDOM = {
         
     return null;
   },
+
+  /**
+   * タグ名とクラス名で子ノードのリスト(非 live)を取得する
+   * @param  HTMLElement 対象の要素
+   * @param  String タグ名
+   * @param  String クラス名、未指定ならクラス名で絞り込まない
+   * @return NodeList (あるいはArray)
+   */
+  getElementsByNames : function (targetElement, tagName, className) {
+    if (targetElement.querySelectorAll) {
+      // requires Gecko 1.9.1 (Firefox 3.5) or above
+      var selector = (tagName || "") + (className ? "." + className : "");
+      return targetElement.querySelectorAll (selector);
+    }
+
+    var nodes = [];
+    var filterClass = false;
+
+    if (!tagName) {
+      if (className) {
+        nodes = targetElement.getElementsByClassName (className);
+      }
+    }
+    else {
+      nodes = targetElement.getElementsByTagName (tagName);
+      filterClass = true;
+    }
+
+    // 非 live 化
+    var list = [];
+    for (var i = 0; i < nodes.length; i ++) {
+      if (filterClass &&
+          arAkahukuDOM.hasClassName (nodes [i], className)) {
+        continue;
+      }
+      list.push (nodes [i]);
+    }
+    return list;
+  },
   
 };
 

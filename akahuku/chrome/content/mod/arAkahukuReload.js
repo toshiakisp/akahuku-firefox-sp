@@ -1154,6 +1154,12 @@ arAkahukuReloadParam.prototype = {
          true,
          function (cacheStatus) {
           var lmcache = NaN;
+          if (!("header" in cacheStatus)) {
+            Akahuku.debug.warn ("no header in cache entry: "
+              + param.location);
+            // キャッシュが不正でもとにかくリロードさせる
+            cacheStatus.header = {};
+          }
           if ("Last-Modified" in cacheStatus.header) {
             lmcache = Date.parse (cacheStatus.header ["Last-Modified"]);
           }
@@ -2682,7 +2688,7 @@ var arAkahukuReload = {
             arAkahukuDOM.addClassName
             (thumbnail, "akahuku_deleted_reply2");
             if (arAkahukuReload.enableExtCacheImages) {
-              Akahuku.Cache.enCacheURIContext (thumbnail);
+              Akahuku.Cache.enCacheURIContextIfCached (thumbnail);
             }
           }
         }
@@ -2886,7 +2892,7 @@ var arAkahukuReload = {
                     arAkahukuDOM.addClassName
                       (thumbT, "akahuku_deleted_reply2");
                     if (arAkahukuReload.enableExtCacheImages) {
-                      Akahuku.Cache.enCacheURIContext (thumbT);
+                      Akahuku.Cache.enCacheURIContextIfCached (thumbT);
                     }
                   }
 

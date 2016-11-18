@@ -424,6 +424,45 @@ arAkahukuMHTFileData.prototype = {
       fileData.onGetFileData ();
     });
   },
+
+  syncGetFileData : function (source, byteSize) {
+    var fileData = this;
+    var url = (this.imageLocation ? this.imageLocation : this.location);
+    try {
+      var binstream
+        = Components.classes ["@mozilla.org/binaryinputstream;1"]
+        .createInstance (Components.interfaces.nsIBinaryInputStream);
+      binstream.setInputStream (source);
+      var bindata = binstream.readBytes (byteSize);
+      binstream.close ();
+      try {
+        source.close ();
+      }
+      catch (e) {
+      }
+      fileData.originalContent = bindata;
+      fileData.content = btoa (bindata);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      result = e.result;
+      Akahuku.debug.warn ("arAkahukuMHTFileData.syncGetFileData resulted in " +
+        arAkahukuUtil.resultCodeToString (result) + " for " + url);
+      if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
+        && fileData.useNetwork) {
+        fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
+        fileData.getFile (fileData.location, null);
+        return;
+      }
+      fileData.originalContent = "";
+      fileData.content = "";
+      if (fileData.status == arAkahukuMHT.FILE_STATUS_NA_NET)
+        fileData.statusMessage = "Error (net):";
+      else
+        fileData.statusMessage = "Error (cache):";
+      fileData.statusMessage += arAkahukuUtil.resultCodeToString (result);
+    }
+    fileData.onGetFileData ();
+  },
     
   /**
    * ファイルを取得したイベント
@@ -590,6 +629,12 @@ arAkahukuMHTFileData.prototype = {
       // asyncGetFileData (arAkahukuUtil.asyncFetch) で
       // ファイルを読み込むには nsIInputStream は問題ありのため
       source = entry.targetFile;
+    }
+    else if ("nsICacheEntryDescriptor" in Ci &&
+        entry instanceof Ci.nsICacheEntryDescriptor) {
+      // cache v1
+      this.syncGetFileData (source, entry.dataSize);
+      return;
     }
     this.asyncGetFileData (source, entry.dataSize);
   },
@@ -1464,10 +1509,6 @@ var arAkahukuMHT = {
     var remove_element = [
       "div",    "akahuku_respanel",
       "div",    "akahuku_tailad",
-      "span",   "akahuku_thread_catalog_new",
-      "span",   "akahuku_thread_catalog_new2",
-      "span",   "akahuku_thread_back_new",
-      "span",   "akahuku_thread_back_new2",
       "div",    "akahuku_links_on_bottom",
       "div",    "akahuku_cleanup_container",
       "div",    "akahuku_savemht_status",
@@ -1489,6 +1530,24 @@ var arAkahukuMHT = {
                                           remove_element [i + 1]);
       if (node) {
         node.parentNode.removeChild (node);
+      }
+    }
+
+    /* 特定 className の要素自体を消す */
+    var remove_elements_class = [
+      // arAkahukuThread
+      "span",   "akahuku_thread_catalog_new",
+      "span",   "akahuku_thread_back_new",
+      ];
+    for (i = 0; i < remove_elements_class.length; i += 2) {
+      nodes = arAkahukuDOM.getElementsByNames (targetDocument,
+                                               remove_elements_class [i],
+                                               remove_elements_class [i + 1]);
+      for (var j = 0; j < nodes.length; j ++) {
+        // nodes は live ではない
+        if (nodes [j].parentNode) {
+          nodes [j].parentNode.removeChild (nodes [j]);
+        }
       }
     }
         
@@ -3541,7 +3600,8 @@ var arAkahukuMHT = {
         }
         else {
           if (arAkahukuMHT.enableAutoUnique) {
-            file.createUnique (0x00, 420/*0644*/);
+            file = arAkahukuFile
+              .createUnique (file.path, 0x00, 420/*0644*/);
           }
         }
         param.lastFilename = filename;

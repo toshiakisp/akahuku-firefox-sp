@@ -4,7 +4,7 @@ const Cu = Components.utils;
 Cu.import ("resource://akahuku/protocol-handler.jsm");
 Cu.import ("resource://gre/modules/XPCOMUtils.jsm");
 var components = [
-  arAkahukuProtocolHandler,
+  arAkahukuSafeProtocolHandler,
 ];
 
 if ("generateNSGetFactory" in XPCOMUtils) {

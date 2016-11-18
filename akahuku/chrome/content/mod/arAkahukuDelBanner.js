@@ -275,8 +275,8 @@ var arAkahukuDelBanner = {
             
       if (Akahuku.protocolHandler.isAkahukuURI (src)) {
         /* akahuku プロトコル */
-        if (src.match (/^akahuku:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/ad\//)
-            || src.match (/^akahuku:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/dec\/ad\//)) {
+        if (src.match (/^akahuku(-safe)?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/ad\//)
+            || src.match (/^akahuku(-safe)?:\/\/[a-z]+.2chan.net(:[0-9]+)?\/p2p\/http\.5\/dec\/ad\//)) {
           /* 広告バナー */
         }
         else {

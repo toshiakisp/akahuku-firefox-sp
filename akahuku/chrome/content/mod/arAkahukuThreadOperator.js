@@ -1099,11 +1099,11 @@ var arAkahukuThreadOperator = {
     }
         
     var window = targetDocument.defaultView;
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
 
     if (info.isReply && arAkahukuThreadOperator.enable) {
       var param = new arAkahukuThreadOperatorParam (targetDocument);
-      Akahuku.getDocumentParam (targetDocument).threadoperator_param
-      = param;
+      documentParam.threadoperator_param = param;
             
       var contents = [];
       var div;
@@ -1333,7 +1333,7 @@ var arAkahukuThreadOperator = {
       img.style.verticalAlign = "top";
       img.src
       = Akahuku.protocolHandler.enAkahukuURI
-      ("preview", "chrome://akahuku/content/images/throp.png");
+      ("local", "chrome://akahuku/content/images/throp.png");
       if (arAkahukuThreadOperator.enableClickOpen) {
         img.addEventListener
           ("click",
@@ -1389,7 +1389,7 @@ var arAkahukuThreadOperator = {
             
         itemdiv.appendChild (targetDocument.createTextNode ("["));
         a = targetDocument.createElement ("a");
-        a.href = "/";
+        a.href = documentParam.links.home || "/";
         a.appendChild (targetDocument.createTextNode
                        ("\u30DB\u30FC\u30E0"));
         itemdiv.appendChild (a);
@@ -1398,16 +1398,8 @@ var arAkahukuThreadOperator = {
         itemdiv.appendChild (targetDocument.createElement ("br"));
             
         itemdiv.appendChild (targetDocument.createTextNode ("["));
-        a = targetDocument.createElement ("a");
-        a.href = "futaba.htm";
-        /* futaba: 未知なので外部には対応しない */
-        a.appendChild (targetDocument.createTextNode
-                       ("\u63B2\u793A\u677F\u306B\u623B\u308B"));
+        a = arAkahukuThread.createBackAnchor (targetDocument);
         itemdiv.appendChild (a);
-        if (arAkahukuThread.enableBackNew) {
-          a.target = "_blank";
-          a.appendChild (targetDocument.createTextNode ("*"));
-        }
         itemdiv.appendChild (targetDocument.createTextNode ("]"));
             
         itemdiv.appendChild (targetDocument.createElement ("br"));

@@ -316,8 +316,7 @@ var arAkahukuThread = {
     /* 掲示板に戻るのリンク */
     if (arAkahukuThread.enableBackNew) {
       style
-      .addRule ("#akahuku_thread_back_new,"
-                + "#akahuku_thread_back_new2",
+      .addRule ("span.akahuku_thread_back_new",
                 "font-size: 9pt;");
     }
         
@@ -339,10 +338,8 @@ var arAkahukuThread = {
       /* カタログのリンク */
       if (arAkahukuThread.enableCatalogNew) {
         style
-        .addRule ("#akahuku_thread_catalog_new",
+        .addRule ("span.akahuku_thread_catalog_new",
                   "font-size: 9pt;")
-        .addRule ("#akahuku_thread_catalog_new2",
-                  "font-size: 9pt;");
       }
             
       /* レス番号 */
@@ -2757,7 +2754,8 @@ var arAkahukuThread = {
         || imageStatus.isBlocked
         // 赤福キャッシュ&プレビューURI
         || (imageStatus.requestURI 
-            && imageStatus.requestURI.schemeIs ("akahuku")
+            && (imageStatus.requestURI.schemeIs ("akahuku")
+              || imageStatus.requestURI.schemeIs ("akahuku-safe"))
             && /^\/(?:(?:file)?cache\/|preview\.)/.test (imageStatus.requestURI.path))
        ){ // 即リロードするべき対象・状態では無い
       return;
@@ -2807,6 +2805,63 @@ var arAkahukuThread = {
     catch (e) { Akahuku.debug.exception (e);
     }
   },
+
+  /**
+   * 掲示板に戻るのリンクを作る
+   * @param  HTMLDocument
+   * @param  arAkahukuDocumentParam
+   */
+  createBackAnchor : function (targetDocument, documentParam) {
+    if (!documentParam) {
+      documentParam = Akahuku.getDocumentParam (targetDocument);
+    }
+    var a = targetDocument.createElement ("a");
+    a.href = documentParam.links.back || "futaba.htm";
+    // "掲示板に戻る"
+    var text = "\u63B2\u793A\u677F\u306B\u623B\u308B";
+    a.appendChild (targetDocument.createTextNode (text));
+    if (arAkahukuThread.enableBackNew) {
+      arAkahukuThread.makeAnchorOpenInBlank  (a, "back");
+    }
+    return a;
+  },
+
+  /**
+   * カタログのリンクを作る
+   * @param  HTMLDocument
+   * @param  arAkahukuDocumentParam
+   */
+  createCatalogAnchor : function (targetDocument, documentParam) {
+    if (!documentParam) {
+      documentParam = Akahuku.getDocumentParam (targetDocument);
+    }
+    if (!documentParam.links.catalog) {
+      return null;
+    }
+    var a = targetDocument.createElement ("a");
+    a.href = documentParam.links.catalog;
+    // "カタログ"
+    var text = "\u30AB\u30BF\u30ED\u30B0";
+    a.appendChild (targetDocument.createTextNode (text));
+    if (arAkahukuThread.enableCatalogNew) {
+      arAkahukuThread.makeAnchorOpenInBlank  (a, "catalog");
+    }
+    return a;
+  },
+
+  /**
+   * アンカーを新しいタブでリンク先を開くようにする
+   * @param  HTMLAnchorElement
+   * @param  String "back" or "catalog"
+   */
+  makeAnchorOpenInBlank : function (a, type) {
+    var targetDocument = a.ownerDocument;
+    var span = targetDocument.createElement ("span");
+    span.className = "akahuku_thread_" + type + "_new";
+    span.appendChild (targetDocument.createTextNode ("*"));
+    a.appendChild (span);
+    a.target = "_blank";
+  },
     
   /**
    * レス番号を振る、スレの消滅情報を追加する、[続きを読む] ボタンを追加する
@@ -2823,8 +2878,9 @@ var arAkahukuThread = {
       return;
     }
 
+    var param = Akahuku.getDocumentParam (targetDocument);
+
     if (info.isReply) {
-      var param = Akahuku.getDocumentParam (targetDocument);
       if (!("thread_param" in param)) {
         param.thread_param = new arAkahukuThreadParam (targetDocument);
       }
@@ -3253,39 +3309,12 @@ var arAkahukuThread = {
     }
         
     var backLink = null;
-    var backLink2 = null;
     var catalogLink = null;
-    var catalogLink2 = null;
     if ((info.isReply && arAkahukuThread.enableCatalogOnBottom)
         || arAkahukuThread.enableCatalogNew
         || arAkahukuThread.enableBackNew) {
-      nodes = targetDocument.getElementsByTagName ("a");
-      
-      for (var i = 0; i < nodes.length; i ++) {
-        if (nodes [i].href
-            && (nodes [i].href.match (/\?mode=cat$/)
-                /* 避難所 patch */
-                || nodes [i].href.match (/cat\.htm$/))) {
-          if (catalogLink == null) {
-            catalogLink = nodes [i];
-          }
-          else if (catalogLink2 == null) {
-            catalogLink2 = nodes [i];
-          }
-        }
-        var text = arAkahukuDOM.getInnerText (nodes [i]);
-        if (nodes [i].href
-            && text.match (/\u63B2\u793A\u677F\u306B\u623B\u308B/)
-            && nodes [i].href.match (/futaba\.htm$/)) {
-          if (backLink == null) {
-            backLink = nodes [i];
-          }
-          else if (backLink2 == null) {
-            backLink2 = nodes [i];
-          }
-          /* futaba: 未知なので外部には対応しない */
-        }
-      }
+      catalogLink = param.links.catalogAnchors [0];
+      backLink = param.links.backAnchors [0];
     }
     
     if (info.isNormal
@@ -3335,20 +3364,12 @@ var arAkahukuThread = {
         var div = targetDocument.createElement ("div");
         div.id = "akahuku_links_on_bottom";
         var a;
+        var span;
                 
         if (arAkahukuThread.enableBackOnBottom) {
           div.appendChild (targetDocument.createTextNode ("["));
                     
-          a = targetDocument.createElement ("a");
-          a.href = "futaba.htm";
-          /* futaba: 未知なので外部には対応しない */
-                    
-          a.appendChild (targetDocument.createTextNode
-                         ("\u63B2\u793A\u677F\u306B\u623B\u308B"));
-          if (arAkahukuThread.enableBackNew) {
-            a.appendChild (targetDocument.createTextNode ("*"));
-            a.target = "_blank";
-          }
+          a = arAkahukuThread.createBackAnchor (targetDocument, param);
           div.appendChild (a);
                     
           div.appendChild (targetDocument.createTextNode ("]"));
@@ -3363,11 +3384,14 @@ var arAkahukuThread = {
           div.appendChild (targetDocument.createTextNode ("["));
                 
           a = targetDocument.createElement ("a");
-          a.href = catalogLink.href;
+          a.href = param.links.catalog;
           a.appendChild (targetDocument.createTextNode
                          ("\u30AB\u30BF\u30ED\u30B0"));
           if (arAkahukuThread.enableCatalogNew) {
-            a.appendChild (targetDocument.createTextNode ("*"));
+            span = targetDocument.createElement ("span");
+            span.className = "akahuku_thread_catalog_new";
+            span.appendChild (targetDocument.createTextNode ("*"));
+            a.appendChild (span);
             a.target = "_blank";
           }
           div.appendChild (a);
@@ -3380,35 +3404,17 @@ var arAkahukuThread = {
     }
     
     if (arAkahukuThread.enableCatalogNew && catalogLink) {
-      var newNode = targetDocument.createElement ("span");
-      newNode.id = "akahuku_thread_catalog_new";
-      newNode.appendChild (targetDocument.createTextNode ("*"));
-      catalogLink.appendChild (newNode);
-      catalogLink.target = "_blank";
-    }
-    
-    if (arAkahukuThread.enableCatalogNew && catalogLink2) {
-      var newNode = targetDocument.createElement ("span");
-      newNode.id = "akahuku_thread_catalog_new2";
-      newNode.appendChild (targetDocument.createTextNode ("*"));
-      catalogLink2.appendChild (newNode);
-      catalogLink2.target = "_blank";
+      for (var i = 0; i < param.links.catalogAnchors.length; i ++) {
+        arAkahukuThread.makeAnchorOpenInBlank
+          (param.links.catalogAnchors [i], "catalog");
+      }
     }
     
     if (arAkahukuThread.enableBackNew && backLink) {
-      var newNode = targetDocument.createElement ("span");
-      newNode.id = "akahuku_thread_back_new";
-      newNode.appendChild (targetDocument.createTextNode ("*"));
-      backLink.appendChild (newNode);
-      backLink.target = "_blank";
-    }
-    
-    if (arAkahukuThread.enableBackNew && backLink2) {
-      var newNode = targetDocument.createElement ("span");
-      newNode.id = "akahuku_thread_back_new2";
-      newNode.appendChild (targetDocument.createTextNode ("*"));
-      backLink2.appendChild (newNode);
-      backLink2.target = "_blank";
+      for (var i = 0; i < param.links.backAnchors.length; i ++) {
+        arAkahukuThread.makeAnchorOpenInBlank
+          (param.links.backAnchors [i], "back");
+      }
     }
         
     if (arAkahukuThread.enableAlertGIF) {

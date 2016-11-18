@@ -78,6 +78,10 @@ console.log ("akahuku.jsm: registering XPCOM components for current process if n
 Cu.import ("resource://akahuku/protocol-handler.jsm", this);
 try {
   registerXPCOM (arAkahukuProtocolHandler);
+  // akahuku-local://
+  registerXPCOM (arAkahukuLocalProtocolHandler);
+  // akahuku-safe://
+  registerXPCOM (arAkahukuSafeProtocolHandler);
 }
 catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {}//登録済み
 catch (e) { console.exception (e);

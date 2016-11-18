@@ -178,6 +178,21 @@ var arAkahukuFile = {
         
     return file;
   },
+
+  NORMAL_FILE_TYPE : 0,
+  DIRECTORY_TYPE : 1,
+
+  /**
+   * ユニークな名前を持つファイル/ディレクトリを作成する
+   * @param  String ファイル名(候補)
+   * @param  Number NORMAL_FILE_TYPE or DIRECTORY_TYPE
+   * @param  Number UNIX-style permission value
+   */
+  createUnique : function (filename, type, permissions) {
+    var file = arAkahukuFile.initFile (filename);
+    file.createUnique (type, permissions);
+    return file;
+  },
     
   /**
    * ファイルを作成する

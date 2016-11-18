@@ -8,6 +8,8 @@
 
 var EXPORTED_SYMBOLS = [
   "arAkahukuProtocolHandler",
+  "arAkahukuSafeProtocolHandler",
+  "arAkahukuLocalProtocolHandler",
 ];
 
 const Ci = Components.interfaces;
@@ -35,15 +37,7 @@ var arAkahukuProtocolHandlerKey = "";
  *   Inherits From: nsIProtocolHandler, arIAkahukuProtocolHandler
  */
 function arAkahukuProtocolHandler () {
-  this.inMainProcess = true;
-  try {
-    var appinfo
-      = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-    this.inMainProcess
-      = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
-  }
-  catch (e) { Cu.reportError (e);
-  }
+  this.init ();
 }
 arAkahukuProtocolHandler.prototype = {
   scheme : "akahuku", /* String  プロトコルスキーム */
@@ -73,6 +67,19 @@ arAkahukuProtocolHandler.prototype = {
     }
   },
     
+  inMainProcess : true,
+
+  init : function () {
+    try {
+      var appinfo
+        = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
+      this.inMainProcess
+        = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
+    }
+    catch (e) { Cu.reportError (e);
+    }
+  },
+
   /**
    * インターフェースの要求
    *   nsISupports.QueryInterface
@@ -93,358 +100,6 @@ arAkahukuProtocolHandler.prototype = {
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
     
-  /**
-   * 16 進文字列にエンコードする
-   *
-   * @param  String text
-   *         エンコードする文字列
-   * @return String
-   *         エンコードした文字列
-   */
-  toHex : function (text) {
-    var hex = [
-      "0", "1", "2", "3", "4", "5", "6", "7",
-      "8", "9", "a", "b", "c", "d", "e", "f"
-      ];
-        
-    var result = "";
-    var c;
-        
-    for (var i = 0; i < text.length; i ++) {
-      c = text.charCodeAt (i) & 0xff;
-      result += hex [(c >> 4) & 0x0f];
-      result += hex [c        & 0x0f];
-    }
-        
-    return result;
-  },
-    
-  /**
-   * MD5 を 4 バイトずつ区切って XOR を取る
-   *
-   * @param  String data
-   *         元の文字列
-   * @return String
-   *         MD5 を 4 バイトずつ区切って XOR を取ったもの
-   */
-  md5_4 : function (data) {
-    var r
-    = new Array (7, 12, 17, 22,
-                 5,  9, 14, 20,
-                 4, 11, 16, 23,
-                 6, 10, 15, 21);
-            
-    var k = new Array ();
-            
-    for (var i = 0; i < 64; i ++) {
-      k [i]
-        = parseInt (Math.abs (Math.sin (i + 1)) * Math.pow (2, 32));
-    }
-                                
-    var h0 = 0x67452301;
-    var h1 = 0xEFCDAB89;
-    var h2 = 0x98BADCFE;
-    var h3 = 0x10325476;
-            
-    var length = data.length * 8;
-    data += "\x80";
-    while (data.length % 64 != 56) {
-      data += "\x00";
-    }
-            
-    data += String.fromCharCode ((length      )  & 0xff);
-    data += String.fromCharCode ((length >>  8)  & 0xff);
-    data += String.fromCharCode ((length >> 16)  & 0xff);
-    data += String.fromCharCode ((length >> 24)  & 0xff);
-    data += String.fromCharCode (0x00);
-    data += String.fromCharCode (0x00);
-    data += String.fromCharCode (0x00);
-    data += String.fromCharCode (0x00);
-            
-    for (var j = 0; j < data.length; j += 64) {
-      var w = new Array ();
-      for (var i = 0; i < 16; i ++) {
-        w [i]
-          = (data.charCodeAt (j + i * 4    )      )
-          | (data.charCodeAt (j + i * 4 + 1) <<  8)
-          | (data.charCodeAt (j + i * 4 + 2) << 16)
-          | (data.charCodeAt (j + i * 4 + 3) << 24);
-      }
-                
-      var a = h0;
-      var b = h1;
-      var c = h2;
-      var d = h3;
-                
-      for (var i = 0; i < 64; i ++) {
-        var f, g, ii;
-        if (0 <= i && i <= 15) {
-          f = (b & c) | (~b & d);
-          g = i;
-          ii = i % 4;
-        }
-        else if (16 <= i && i <= 31) {
-          f = (d & b) | (~d & c);
-          g = (5 * i + 1) % 16;
-          ii = 4 + (i % 4);
-        }
-        else if (32 <= i && i <= 47) {
-          f = b ^ c ^ d;
-          g = (3 * i + 5) % 16;
-          ii = 8 + (i % 4);
-        }
-        else if (48 <= i && i <= 63) {
-          f = c ^ (b | ~d);
-          g = (7 * i) % 16;
-          ii = 12 + (i % 4);
-        }
-                    
-        var temp = d;
-        d = c;
-        c = b;
-        var temp2 = a + f + k [i] + w [g];
-        while (temp2 < 0) {
-          temp2 += 4294967296;
-        }
-        while (temp2 > 4294967295) {
-          temp2 -= 4294967296;
-        }
-        var temp3 = (temp2 << r [ii]) | (temp2 >>> (32 - r [ii]));
-        temp3 += b;
-        while (temp3 < 0) {
-          temp3 += 4294967296;
-        }
-        while (temp3 > 4294967295) {
-          temp3 -= 4294967296;
-        }
-        b = temp3;
-        a = temp;
-      }
-                
-      h0 = h0 + a;
-      h1 = h1 + b;
-      h2 = h2 + c;
-      h3 = h3 + d;
-    }
-            
-    data
-    = String.fromCharCode ((h0      ) & 0xff)
-    + String.fromCharCode ((h0 >>  8) & 0xff)
-    + String.fromCharCode ((h0 >> 16) & 0xff)
-    + String.fromCharCode ((h0 >> 24) & 0xff)
-    + String.fromCharCode ((h1      ) & 0xff)
-    + String.fromCharCode ((h1 >>  8) & 0xff)
-    + String.fromCharCode ((h1 >> 16) & 0xff)
-    + String.fromCharCode ((h1 >> 24) & 0xff)
-    + String.fromCharCode ((h2      ) & 0xff)
-    + String.fromCharCode ((h2 >>  8) & 0xff)
-    + String.fromCharCode ((h2 >> 16) & 0xff)
-    + String.fromCharCode ((h2 >> 24) & 0xff)
-    + String.fromCharCode ((h3      ) & 0xff)
-    + String.fromCharCode ((h3 >>  8) & 0xff)
-    + String.fromCharCode ((h3 >> 16) & 0xff)
-    + String.fromCharCode ((h3 >> 24) & 0xff);
-        
-    data
-    = String.fromCharCode (data.charCodeAt (0)
-                           ^ data.charCodeAt (4)
-                           ^ data.charCodeAt (8)
-                           ^ data.charCodeAt (12))
-    + String.fromCharCode (data.charCodeAt (1)
-                           ^ data.charCodeAt (5)
-                           ^ data.charCodeAt (9)
-                           ^ data.charCodeAt (13))
-    + String.fromCharCode (data.charCodeAt (2)
-                           ^ data.charCodeAt (6)
-                           ^ data.charCodeAt (10)
-                           ^ data.charCodeAt (14))
-    + String.fromCharCode (data.charCodeAt (3)
-                           ^ data.charCodeAt (7)
-                           ^ data.charCodeAt (11)
-                           ^ data.charCodeAt (15));
-        
-    return data;
-  },
-
-  /**
-   * akahuku:// 形式の URI にする
-   *   arIAkahukuProtocolHandler.enAkahukuURI
-   *
-   * @param  String type
-   *         種類
-   *           "p2p"
-   *           "preview"
-   *           "jpeg"
-   *           "cache"
-   * @param  String uri
-   *         URI
-   * @return String
-   *         akahuku:// 形式の URI
-   */
-  enAkahukuURI : function (type, uri) {
-    if (type == "p2p") {
-      if (uri.match (/^https?:\/\/dec\.2chan\.net\/up\/src\//)) {
-        return uri;
-      }
-    }
-    
-    uri = this.deAkahukuURI (uri); // 二重エンコードしないと保証
-    if (uri
-        .match (/^([A-Za-z0-9\-]+):(\/\/)?([^\/]*)(\/\/)?(\/)?(.*)$/)) {
-      var protocol = RegExp.$1;
-      var sep1 = RegExp.$2;
-      var host = RegExp.$3;
-      var sep2 = RegExp.$4;
-      var sep3 = RegExp.$5;
-      var path = RegExp.$6;
-                 
-      var sep = 0;
-      if (sep1) {
-        sep |= 1;
-      }
-      if (sep2) {
-        sep |= 2;
-      }
-      if (sep3) {
-        sep |= 4;
-      }
-            
-      if (!host) {
-        /* ホスト名省略はしない */
-        host = "localhost";
-      }
-            
-      if (type == "preview") {
-        type = type + "." + this.getHash (protocol, host, path);
-      }
-            
-      uri
-      = "akahuku://" + host + "/" + type
-      + "/" + protocol + "." + sep + "/" + path;
-    }
-        
-    return uri;
-  },
-    
-  /**
-   * akahuku:// 形式の URI かどうかを返す
-   *   arIAkahukuProtocolHandler.isAkahukuURI
-   *
-   * @param  String uri
-   *         URI
-   * @return Boolean
-   *         akahuku:// 形式の URI かどうか
-   */
-  isAkahukuURI : function (uri) {
-    var param = this.getAkahukuURIParam (uri);
-    if ("original" in param) {
-      return true;
-    }
-        
-    return false;
-  },
-    
-  /**
-   * akahuku:// 形式の URI を元に戻す
-   *   arIAkahukuProtocolHandler.deAkahukuURI
-   *
-   * @param  String uri
-   *         akahuku:// 形式の URI
-   * @return String
-   *         URI
-   */
-  deAkahukuURI : function (uri) {
-    var param = this.getAkahukuURIParam (uri);
-    if ("original" in param) {
-      return param.original;
-    }
-        
-    return uri;
-  },
-    
-  /**
-   * akahuku:// 形式の URI の情報を取得する
-   *   arIAkahukuProtocolHandler.getAkahukuURIParam
-   *
-   * @param  String uri
-   *         akahuku:// 形式の URI
-   * @return Object
-   *         URI の情報
-   */
-  getAkahukuURIParam : function (uri) {
-    var param = new Object ();
-        
-    if (uri
-        .match (/^akahuku:\/\/([^\/]*)\/([^\/]+)\/([A-Za-z0-9\-]+)\.([0-9]+)\/(.*)$/)) {
-      param.host = RegExp.$1;
-      param.type = RegExp.$2;
-      param.protocol = RegExp.$3;
-      var sep = parseInt (RegExp.$4);
-      param.path = RegExp.$5;
-            
-      try {
-        var idn
-          = Cc ["@mozilla.org/network/idn-service;1"]
-          .getService (Ci.nsIIDNService);
-                
-        param.host = idn.convertUTF8toACE (param.host);
-      }
-      catch (e) {
-      }
-            
-      var sep1 = (sep & 1) ? "//" : "";
-      var sep2 = (sep & 2) ? "//" : "";
-      var sep3 = (sep & 4) ? "/" : "";
-            
-      if (param.type.match (/^preview\.(.+)/)) {
-        param.type = "preview";
-        param.hash = RegExp.$1;
-      }
-            
-      param.original
-        = param.protocol + ":" + sep1 + param.host + sep2 + sep3
-        + param.path;
-    }
-        
-    return param;
-  },
-    
-  /**
-   * ハッシュを生成する
-   *
-   * @param  String protocol
-   *         プロトコル
-   * @param  String host
-   *         ホスト
-   * @param  String path
-   *         パス
-   * @return String
-   *         ハッシュ
-   */
-  getHash : function (protocol, host, path) { 
-    var hash;
-    hash
-    = this.toHex (this.md5_4 (arAkahukuProtocolHandlerKey
-          + "@" + protocol + "/" + host + "/" + path));
-    return hash;
-  },
-    
-  /**
-   * ハッシュ生成の鍵を初期化する
-   */
-  initKey : function () {
-    if (arAkahukuProtocolHandlerKey.length == 0) {
-      var hex = [
-        "0", "1", "2", "3", "4", "5", "6", "7",
-        "8", "9", "a", "b", "c", "d", "e", "f"
-        ];
-      for (var i = 0; i < 32; i ++) {
-        arAkahukuProtocolHandlerKey
-          += hex [parseInt (Math.random () * 15)];
-      }
-    }
-  },
-
   /**
    * ブラックリストのポートを上書きするか
    *   nsIProtocolHandler.allowPort
@@ -881,12 +536,6 @@ if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
     |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
 }
 
-// https 上からの読み込みで mixed content blocker の警告を避ける
-if ("URI_INHERITS_SECURITY_CONTEXT" in Ci.nsIProtocolHandler) {
-  arAkahukuProtocolHandler.prototype.protocolFlags
-    |= Ci.nsIProtocolHandler.URI_INHERITS_SECURITY_CONTEXT;
-}
-
 /*
  * XPCOM と Frame script から同じハッシュが得られるようにするため
  * 関連APIとキーは別JSM (protocol.jsm) のスコープとし
@@ -902,4 +551,137 @@ else {
 }
 
 arAkahukuProtocolHandler.prototype.initKey ();
+
+
+/**
+ * akahuku-local プロトコル (ローカルにあるファイルのプレビュー用)
+ *   Inherits From: nsIProtocolHandler
+ */
+function arAkahukuLocalProtocolHandler () {
+}
+arAkahukuLocalProtocolHandler.prototype = {
+  scheme : "akahuku-local",
+  defaultPort : -1,
+  protocolFlags: Ci.nsIProtocolHandler.URI_STD,
+
+  // required for XPCOM registration by XPCOMUtils
+  classDescription: "Akahuku Local Resource Protocol Handler JS Component",
+  classID : Components.ID ("{9d5fe646-b180-4f04-8a20-3069416a4886}"),
+  contractID : "@mozilla.org/network/protocol;1?name=akahuku-local",
+  _xpcom_categories : [],
+  _xpcom_factory : {
+    createInstance : function (outer, iid) {
+      if (outer != null) {
+        throw Cr.NS_ERROR_NO_AGGREGATION;
+      }
+      var handler = new arAkahukuLocalProtocolHandler ();
+      return handler.QueryInterface (iid);
+    }
+  },
+
+  /**
+   * インターフェース要求
+   *   nsISupports.QueryInterface
+   */
+  QueryInterface : function (iid) {
+    if (iid.equals (Ci.nsISupports)
+        || iid.equals (Ci.nsIProtocolHandler)) {
+      return this;
+    }
+    throw Cr.NS_ERROR_NO_INTERFACE;
+  },
+
+  /**
+   * ブラックリストのポートを上書きするか
+   *   nsIProtocolHandler.allowPort
+   */
+  allowPort : function (port, scheme) {
+    return false;
+  },
+
+  /**
+   * URI を作成する
+   *   nsIProtocolHandler.newURI
+   *
+   * @param  String 対象の URI
+   * @param  String 対象の文字コード
+   * @param  nsIURI 読み込み元の URI
+   * @return nsIURI 作成した URI
+   */
+  newURI : function (spec, charset, baseURI) {
+    var url
+    = Cc ["@mozilla.org/network/standard-url;1"]
+    .createInstance (Ci.nsIStandardURL);
+    var type = Ci.nsIStandardURL.URLTYPE_STANDARD;
+    url.init (type, this.defaultPort, spec, charset, baseURI);
+    return url.QueryInterface (Ci.nsIURI);
+  },
+
+  /**
+   * チャネルを作成する
+   *   nsIProtocolHandler.newChannel
+   *
+   * @param  nsIURI 対象の URI
+   * @return nsIChannel 作成したチャネル
+   */
+  newChannel : function (uri) {
+    var param
+      = arAkahukuProtocolHandler.prototype
+      .getAkahukuURIParam (uri.spec);
+    if (param.type == "local") {
+      return arAkahukuProtocolHandler.prototype
+        ._createPreviewChannel (uri);
+    }
+    return arAkahukuProtocolHandler.prototype._createEmptyChannel (uri);
+  },
+};
+
+if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
+  arAkahukuLocalProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
+}
+if ("URI_IS_LOCAL_RESOURCE" in Ci.nsIProtocolHandler) {
+  // 混在表示コンテンツとなることを回避
+  arAkahukuLocalProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE;
+}
+
+
+/**
+ * akahuku-safe: プロトコル (httpsリソース用)
+ *   Inherits From: arAkahukuProtocolHandler
+ */
+function arAkahukuSafeProtocolHandler () {
+  this.init ();
+}
+arAkahukuSafeProtocolHandler.prototype = {
+  __proto__ : arAkahukuProtocolHandler.prototype,
+  scheme : "akahuku-safe",
+  defaultPort : -1,
+  protocolFlags: Ci.nsIProtocolHandler.URI_STD,
+
+  // required for XPCOM registration by XPCOMUtils
+  classDescription: "Akahuku Safe Protocol Handler JS Component",
+  classID : Components.ID ("{74597554-7400-4074-8c10-a97c54da1989}"),
+  contractID : "@mozilla.org/network/protocol;1?name=akahuku-safe",
+  _xpcom_factory : {
+    createInstance : function (outer, iid) {
+      if (outer != null) {
+        throw Cr.NS_ERROR_NO_AGGREGATION;
+      }
+      var handler = new arAkahukuSafeProtocolHandler ();
+      return handler.QueryInterface (iid);
+    }
+  },
+};
+
+if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
+  arAkahukuSafeProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
+}
+if ("URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT" in Ci.nsIProtocolHandler) {
+  // requires Firefox 19.0+
+  arAkahukuSafeProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT;
+}
 

@@ -623,6 +623,7 @@ var arAkahukuLink = {
         case "mms":
         case "rtsp":
         case "akahuku":
+        case "akahuku-safe":
           protocol = parens [1];
         break;
         default:
@@ -3237,7 +3238,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowScriptAccess", "never");
     }
     else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
-      var youtubeUrl = scheme + "://www.youtube.com/embed/" + RegExp.$1
+      var youtubeUrl = "https://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
       if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s?/)) {
@@ -3257,8 +3258,23 @@ var arAkahukuLink = {
       image = targetDocument.createElement ("iframe");
       image.width = Math.max (480, arAkahukuLink.autoLinkPreviewSWFWidth);
       image.height = Math.max (385, arAkahukuLink.autoLinkPreviewSWFHeight);
-      image.src //= youtubeUrl;
-        = Akahuku.protocolHandler.enAkahukuURI ("preview", youtubeUrl);
+      if (arAkahukuCompat.comparePlatformVersion ("49.*") > 0) {
+        image.src = youtubeUrl;
+        image.referrerPolicy = "no-referrer"; // Fx50+
+      }
+      else {
+        // refferrerPolicy 非対応バージョンでリファラを外す
+        if (scheme == "https") {
+          // downgrade させてリファラを切らせる
+          image.src = youtubeUrl.replace (/^https:/, "http:");
+        }
+        else {
+          // akahuku preview プロトコル経由 (https版へリダイレクト期待)
+          youtubeUrl = youtubeUrl.replace (/^https:/, "http:");
+          image.src
+            = Akahuku.protocolHandler.enAkahukuURI ("preview", youtubeUrl);
+        }
+      }
       image.setAttribute ("frameborder", "0");
       /* (Gecko 10.0+) moz HTML5 Fullscreen */
       image.setAttribute ("mozallowfullscreen", "true");
