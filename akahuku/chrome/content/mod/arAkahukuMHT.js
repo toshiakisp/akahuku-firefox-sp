@@ -424,6 +424,45 @@ arAkahukuMHTFileData.prototype = {
       fileData.onGetFileData ();
     });
   },
+
+  syncGetFileData : function (source, byteSize) {
+    var fileData = this;
+    var url = (this.imageLocation ? this.imageLocation : this.location);
+    try {
+      var binstream
+        = Components.classes ["@mozilla.org/binaryinputstream;1"]
+        .createInstance (Components.interfaces.nsIBinaryInputStream);
+      binstream.setInputStream (source);
+      var bindata = binstream.readBytes (byteSize);
+      binstream.close ();
+      try {
+        source.close ();
+      }
+      catch (e) {
+      }
+      fileData.originalContent = bindata;
+      fileData.content = btoa (bindata);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      result = e.result;
+      Akahuku.debug.warn ("arAkahukuMHTFileData.syncGetFileData resulted in " +
+        arAkahukuUtil.resultCodeToString (result) + " for " + url);
+      if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
+        && fileData.useNetwork) {
+        fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
+        fileData.getFile (fileData.location, null);
+        return;
+      }
+      fileData.originalContent = "";
+      fileData.content = "";
+      if (fileData.status == arAkahukuMHT.FILE_STATUS_NA_NET)
+        fileData.statusMessage = "Error (net):";
+      else
+        fileData.statusMessage = "Error (cache):";
+      fileData.statusMessage += arAkahukuUtil.resultCodeToString (result);
+    }
+    fileData.onGetFileData ();
+  },
     
   /**
    * ファイルを取得したイベント
@@ -590,6 +629,12 @@ arAkahukuMHTFileData.prototype = {
       // asyncGetFileData (arAkahukuUtil.asyncFetch) で
       // ファイルを読み込むには nsIInputStream は問題ありのため
       source = entry.targetFile;
+    }
+    else if ("nsICacheEntryDescriptor" in Ci &&
+        entry instanceof Ci.nsICacheEntryDescriptor) {
+      // cache v1
+      this.syncGetFileData (source, entry.dataSize);
+      return;
     }
     this.asyncGetFileData (source, entry.dataSize);
   },

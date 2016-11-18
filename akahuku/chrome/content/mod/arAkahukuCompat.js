@@ -284,6 +284,9 @@ var arAkahukuCompat = new function () {
           }
           filebox.mozSetFileArray ([file]);
         }
+        else if ("mozSetFileNameArray" in filebox) {
+          filebox.mozSetFileNameArray ([file.path], 1);
+        }
         else {
           // classic way
           filebox.value = arAkahukuFile.getURLSpecFromFile (file);
@@ -380,15 +383,30 @@ var arAkahukuCompat = new function () {
           // nsICacheEntry と nsICacheDescriptor は等価と思っておく
           var entry = descriptor;
           var appCache = null;
-          var check = callback.onCacheEntryCheck (entry, appCache);
+          var check = CacheEntryOpenCallback.ENTRY_WANTED;
+          if (entry) {
+            check = callback.onCacheEntryCheck (entry, appCache);
+          }
           if (check === CacheEntryOpenCallback.ENTRY_WANTED) {
             var isNew = (accessGranted == Ci.nsICache.ACCESS_WRITE); //OK?
             callback.onCacheEntryAvailable (entry, isNew, appCache, result);
           }
+          else {
+            result = Cr.NS_ERROR_CACHE_KEY_NOT_FOUND;
+            callback.onCacheEntryAvailable (null, false, appCache, result);
+          }
         },
       };
       this._session.doomEntriesIfExpired = false;
-      this._session.asyncOpenCacheEntry (uri.spec, accessMode, wrappedcb);
+      try {
+        this._session.asyncOpenCacheEntry (uri.spec, accessMode, wrappedcb);
+      }
+      catch (e if e.result === Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+        // fake async call
+        arAkahukuUtil.executeSoon (function () {
+          wrappedcb.onCacheEntryAvailable (null, false, e.result);
+        });
+      }
     },
     // 
   };

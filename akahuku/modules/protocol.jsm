@@ -210,6 +210,10 @@ var akahuku_scheme_key = "";
    *         ハッシュ
    */
   this.getHash = function (protocol, host, path) { 
+    if (!("@mozilla.org/childprocessmessagemanager;1" in Cc)) {
+      // for old firefox
+      return this.getHashByKey (protocol, host, path);
+    }
     try {
       var cpmm
         = Cc ["@mozilla.org/childprocessmessagemanager;1"]

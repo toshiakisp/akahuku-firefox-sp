@@ -1693,12 +1693,21 @@ var arAkahukuImage = {
       if (arAkahukuImage.enableLimit) {
         var unitW = arAkahukuImage.limitUnit;
         var unitH = unitW;
+        var limitWidth = arAkahukuImage.limitWidth;
+        var limitHeight = arAkahukuImage.limitHeight;
         if (arAkahukuImage.limitUnit === "view") {
+          // requires Gecko 19.0+
           unitW = "vw";
           unitH = "vh";
+          if (arAkahukuCompat.comparePlatformVersion ("18.*") <= 0) {
+            // vw,vh 非対応環境では静的な計算値で模擬
+            unitW = unitH = "px";
+            limitWidth *= targetDocument.documentElement.clientWidth / 100;
+            limitHeight *= targetDocument.documentElement.clientHeight / 100;
+          }
         }
-        srcImage.style.maxWidth = arAkahukuImage.limitWidth + unitW;
-        srcImage.style.maxHeight = arAkahukuImage.limitHeight + unitH;
+        srcImage.style.maxWidth = limitWidth + unitW;
+        srcImage.style.maxHeight = limitHeight + unitH;
       }
             
       image.style.display = "none";

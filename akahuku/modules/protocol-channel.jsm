@@ -21,6 +21,11 @@ var loader
 = Cc ["@mozilla.org/moz/jssubscript-loader;1"]
 .getService (Ci.mozIJSSubScriptLoader);
 try {
+  if (typeof arAkahukuUtil === "undefined") {
+    // necessary for arAkahukuCompat.CacheStorageService
+    loader.loadSubScript
+      ("chrome://akahuku/content/mod/arAkahukuUtil.js");
+  }
   if (typeof arAkahukuCompat === "undefined") {
     loader.loadSubScript
       ("chrome://akahuku/content/mod/arAkahukuCompat.js");
@@ -106,6 +111,7 @@ arAkahukuBypassChannel.prototype = {
   name : "",
   notificationCallbacks : null,
   originalURI : null,
+  URI : null,
 
   /**
    * インターフェースの要求
@@ -476,8 +482,7 @@ arAkahukuBypassChannel.prototype
   //.defineDelegateProperty ("notificationCallbacks")
   //.defineDelegateProperty ("originalURI")
   .defineDelegateProperty ("owner")
-  .defineDelegateProperty ("securityInfo", "readonly")
-  .defineDelegateProperty ("URI", "readonly");
+  .defineDelegateProperty ("securityInfo", "readonly");
 
 /**
  * JPEG サムネチャネル
@@ -774,8 +779,11 @@ arAkahukuCacheChannel.prototype = {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIRequest)
         || iid.equals (Ci.nsIChannel)
-        || iid.equals (arAkahukuCompat.CacheStorageService.CallbackInterface)
-        || iid.equals (Ci.nsIAsyncVerifyRedirectCallback)) {
+        || iid.equals (arAkahukuCompat.CacheStorageService.CallbackInterface)) {
+      return this;
+    }
+    if ("nsIAsyncVerifyRedirectCallback" in Ci
+        && iid.equals (Ci.nsIAsyncVerifyRedirectCallback)) {
       return this;
     }
         

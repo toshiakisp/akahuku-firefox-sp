@@ -1154,6 +1154,12 @@ arAkahukuReloadParam.prototype = {
          true,
          function (cacheStatus) {
           var lmcache = NaN;
+          if (!("header" in cacheStatus)) {
+            Akahuku.debug.warn ("no header in cache entry: "
+              + param.location);
+            // キャッシュが不正でもとにかくリロードさせる
+            cacheStatus.header = {};
+          }
           if ("Last-Modified" in cacheStatus.header) {
             lmcache = Date.parse (cacheStatus.header ["Last-Modified"]);
           }

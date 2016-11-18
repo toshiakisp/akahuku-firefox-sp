@@ -663,6 +663,10 @@ arAkahukuContentPolicy.prototype = {
         if ("Akahuku" in chromeWindow) {
           return chromeWindow;
         }
+        else if ("Akahuku" in chromeWindow.wrappedJSObject) {
+          // older firefox (at least 3.6.x)
+          return chromeWindow.wrappedJSObject;
+        }
       }
       else { // e10s: WindowRoot that is the top of a content frame
         // content-policy's process is the same with context,

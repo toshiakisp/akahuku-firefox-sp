@@ -2662,6 +2662,7 @@ var arAkahukuCatalog = {
       }
       var obj = {pattern: null, label: token};
       var flags = "";
+      var pat;
       try {
         if (token.match (/^\/(.*)\/([gimy]*)$/)) {
           // "/asdf/" はそのまま正規表現に

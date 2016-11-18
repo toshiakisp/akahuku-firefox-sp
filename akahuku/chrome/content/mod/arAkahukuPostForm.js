@@ -3552,14 +3552,11 @@ var arAkahukuPostForm = {
           // 以下で処理することになる添付ファイル名を記憶する
           param.upfile = filename;
         }
-        try {
-          var file
-            = Components.classes ["@mozilla.org/file/local;1"]
-            .createInstance (Components.interfaces
-                             .nsILocalFile);
-          file.initWithPath (filename);
+        var file;
+        if (filename) {
+          file = arAkahukuFile.initFile (filename);
         }
-        catch (e) {
+        if (!file) {
           /* ファイル名が不正 (含クリア) */
           container.style.display = "none";
           preview.removeAttribute ("__size");
