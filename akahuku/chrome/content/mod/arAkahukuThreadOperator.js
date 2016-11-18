@@ -1333,7 +1333,7 @@ var arAkahukuThreadOperator = {
       img.style.verticalAlign = "top";
       img.src
       = Akahuku.protocolHandler.enAkahukuURI
-      ("preview", "chrome://akahuku/content/images/throp.png");
+      ("local", "chrome://akahuku/content/images/throp.png");
       if (arAkahukuThreadOperator.enableClickOpen) {
         img.addEventListener
           ("click",

@@ -262,6 +262,7 @@ var akahuku_scheme_key = "";
    *           "preview"
    *           "jpeg"
    *           "cache"
+   *           "local"
    * @param  String uri
    *         URI
    * @return String
@@ -272,6 +273,24 @@ var akahuku_scheme_key = "";
       if (uri.match (/^https?:\/\/dec\.2chan\.net\/up\/src\//)) {
         return uri;
       }
+    }
+    else if (type == "local") {
+      if (/^chrome:\/\/akahuku\/content\//.test (uri)) {
+        var path = uri.replace (/^chrome:\/\/akahuku\/content\//, "");
+        return "akahuku-local://akahuku/" + path +
+          "?" + this.getHash ("chrome", "akahuku", "content/" + path);
+      }
+      else if (/^file:\/{3}/.test (uri)) {
+        var path = uri.replace (/^file:\/{3}/, "");
+        return "akahuku-local://localhost/" + path +
+          "?" + this.getHash ("file", "localhost", path);
+      }
+      else if (/^akahuku-local:/.test (uri)) {
+        return uri;
+      }
+      Cu.reportError ("enAkahukuURI: "
+          + "failed to akahuku-local protocol; " + uri);
+      return uri;
     }
     
     uri = this.deAkahukuURI (uri); // 二重エンコードしないと保証
@@ -390,6 +409,27 @@ var akahuku_scheme_key = "";
       param.original
         = param.protocol + ":" + sep1 + param.host + sep2 + sep3
         + param.path;
+    }
+    else if (uri.match (/^akahuku-local:\/\/(akahuku|localhost)\/(.*)\?(.*)$/)) {
+      param.type = "local";
+      param.hash = RegExp.$3;
+      if (RegExp.$1 == "akahuku") {
+        param.protocol = "chrome";
+        param.host = "akahuku";
+        param.path = "content/" + RegExp.$2;
+        param.original = "chrome://akahuku/" + param.path;
+      }
+      else {
+        param.protocol = "file";
+        param.host = "localhost";
+        param.path = RegExp.$2;
+        param.original = "file:///" + param.path;
+      }
+
+      var hash = this.getHash (param.protocol, param.host, param.path);
+      if (hash !== param.hash) {
+        Cu.reportError ("getAkahukuURIParam: hash check failed; " + uri);
+      }
     }
         
     return param;

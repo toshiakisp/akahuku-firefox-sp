@@ -896,6 +896,10 @@ arAkahukuContentPolicy.prototype = {
         && requestOrigin
         && requestOrigin.schemeIs ("akahuku")
         && /^\/(file)?cache\//.test (requestOrigin.path)) {
+      if (contentLocation.schemeIs ("akahuku-local")) {
+        // ローカルリソース
+        return this.ACCEPT;
+      }
       if (!contentLocation.schemeIs ("akahuku")) {
         // 通常の読込を禁止し、必要なら cache に差し替える
         try {

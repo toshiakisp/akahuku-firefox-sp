@@ -8,6 +8,7 @@
 
 var EXPORTED_SYMBOLS = [
   "arAkahukuProtocolHandler",
+  "arAkahukuLocalProtocolHandler",
 ];
 
 const Ci = Components.interfaces;
@@ -896,4 +897,98 @@ else {
 }
 
 arAkahukuProtocolHandler.prototype.initKey ();
+
+
+/**
+ * akahuku-local プロトコル (ローカルにあるファイルのプレビュー用)
+ *   Inherits From: nsIProtocolHandler
+ */
+function arAkahukuLocalProtocolHandler () {
+}
+arAkahukuLocalProtocolHandler.prototype = {
+  scheme : "akahuku-local",
+  defaultPort : -1,
+  protocolFlags: Ci.nsIProtocolHandler.URI_STD,
+
+  // required for XPCOM registration by XPCOMUtils
+  classDescription: "Akahuku Local Resource Protocol Handler JS Component",
+  classID : Components.ID ("{9d5fe646-b180-4f04-8a20-3069416a4886}"),
+  contractID : "@mozilla.org/network/protocol;1?name=akahuku-local",
+  _xpcom_categories : [],
+  _xpcom_factory : {
+    createInstance : function (outer, iid) {
+      if (outer != null) {
+        throw Cr.NS_ERROR_NO_AGGREGATION;
+      }
+      var handler = new arAkahukuLocalProtocolHandler ();
+      return handler.QueryInterface (iid);
+    }
+  },
+
+  /**
+   * インターフェース要求
+   *   nsISupports.QueryInterface
+   */
+  QueryInterface : function (iid) {
+    if (iid.equals (Ci.nsISupports)
+        || iid.equals (Ci.nsIProtocolHandler)) {
+      return this;
+    }
+    throw Cr.NS_ERROR_NO_INTERFACE;
+  },
+
+  /**
+   * ブラックリストのポートを上書きするか
+   *   nsIProtocolHandler.allowPort
+   */
+  allowPort : function (port, scheme) {
+    return false;
+  },
+
+  /**
+   * URI を作成する
+   *   nsIProtocolHandler.newURI
+   *
+   * @param  String 対象の URI
+   * @param  String 対象の文字コード
+   * @param  nsIURI 読み込み元の URI
+   * @return nsIURI 作成した URI
+   */
+  newURI : function (spec, charset, baseURI) {
+    var url
+    = Cc ["@mozilla.org/network/standard-url;1"]
+    .createInstance (Ci.nsIStandardURL);
+    var type = Ci.nsIStandardURL.URLTYPE_STANDARD;
+    url.init (type, this.defaultPort, spec, charset, baseURI);
+    return url.QueryInterface (Ci.nsIURI);
+  },
+
+  /**
+   * チャネルを作成する
+   *   nsIProtocolHandler.newChannel
+   *
+   * @param  nsIURI 対象の URI
+   * @return nsIChannel 作成したチャネル
+   */
+  newChannel : function (uri) {
+    var param
+      = arAkahukuProtocolHandler.prototype
+      .getAkahukuURIParam (uri.spec);
+    if (param.type == "local") {
+      return arAkahukuProtocolHandler.prototype
+        ._createPreviewChannel (uri);
+    }
+    return arAkahukuProtocolHandler.prototype._createEmptyChannel (uri);
+  },
+};
+
+if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
+  arAkahukuLocalProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
+}
+if ("URI_IS_LOCAL_RESOURCE" in Ci.nsIProtocolHandler) {
+  // 混在表示コンテンツとなることを回避
+  arAkahukuLocalProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE;
+}
 

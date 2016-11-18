@@ -25,3 +25,6 @@ contract    @unmht.org/akahuku-p2p-servant;2 {e2470698-e238-40f5-8b09-c3e617aae8
 interfaces  components/arIAkahukuProtocolHandler.xpt
 component   {65e9b537-0fa4-4e73-ac9c-77a75fdf2c9f} components/arAkahukuProtocolHandler.js
 contract    @mozilla.org/network/protocol;1?name=akahuku {65e9b537-0fa4-4e73-ac9c-77a75fdf2c9f}
+
+component   {9d5fe646-b180-4f04-8a20-3069416a4886} components/arAkahukuLocalProtocolHandler.js
+contract    @mozilla.org/network/protocol;1?name=akahuku-local {9d5fe646-b180-4f04-8a20-3069416a4886}

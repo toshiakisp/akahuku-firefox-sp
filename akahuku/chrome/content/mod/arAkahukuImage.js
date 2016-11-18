@@ -1749,7 +1749,7 @@ var arAkahukuImage = {
         }
                 
         url = arAkahukuFile.getURLSpecFromFilename (filename);
-        url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
+        url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
       }
             
       srcImage.addEventListener

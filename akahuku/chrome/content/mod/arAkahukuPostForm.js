@@ -454,16 +454,16 @@ var arAkahukuPostForm = {
                 
         var normal
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", base + type + "" + ext);
+        ("local", base + type + "" + ext);
         var hover
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", base + type + "_hover" + ext);
+        ("local", base + type + "_hover" + ext);
         var push
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", base + type + "_push" + ext);
+        ("local", base + type + "_push" + ext);
         var disabled
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", base + type + "_disabled" + ext);
+        ("local", base + type + "_disabled" + ext);
                 
         style
         .addRule ("form[enctype=\"multipart/form-data\"] input[type=\"submit\"]",
@@ -3607,7 +3607,7 @@ var arAkahukuPostForm = {
 
               previewT.src
                 = Akahuku.protocolHandler.enAkahukuURI
-                ("preview",
+                ("local",
                  arAkahukuFile.getURLSpecFromFilename
                  (filename));
             }
@@ -4061,7 +4061,7 @@ var arAkahukuPostForm = {
     }
         
     if (url != "") {
-      url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
+      url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
     }
         
     return url;
@@ -5360,7 +5360,7 @@ var arAkahukuPostForm = {
         img.id = "akahuku_floatpostform_footer_icon";
         img.src
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", "chrome://akahuku/content/images/floatpostform.png");
+        ("local", "chrome://akahuku/content/images/floatpostform.png");
                 
         img.width = "27";
         img.height = "27";
