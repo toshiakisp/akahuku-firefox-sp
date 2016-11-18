@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 const arIAkahukuP2PServant2 = Components.interfaces.arIAkahukuP2PServant2;
 
