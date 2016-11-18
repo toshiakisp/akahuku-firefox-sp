@@ -881,12 +881,6 @@ if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
     |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
 }
 
-// https 上からの読み込みで mixed content blocker の警告を避ける
-if ("URI_INHERITS_SECURITY_CONTEXT" in Ci.nsIProtocolHandler) {
-  arAkahukuProtocolHandler.prototype.protocolFlags
-    |= Ci.nsIProtocolHandler.URI_INHERITS_SECURITY_CONTEXT;
-}
-
 /*
  * XPCOM と Frame script から同じハッシュが得られるようにするため
  * 関連APIとキーは別JSM (protocol.jsm) のスコープとし
