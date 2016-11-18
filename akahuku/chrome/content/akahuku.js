@@ -6,20 +6,6 @@
  *          arAkahukuBoard,
  */
 
-// arAkahukuJSON のロード
-try {
-  Components.utils.import("resource://akahuku/json.jsm");
-}
-catch (e) {
-  // JavaScript Code Module が使えない環境(Fx3より前)では
-  // 従来通りに赤福実装をロード
-  var loader
-    = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
-    .getService (Components.interfaces.mozIJSSubScriptLoader);
-  loader.loadSubScript
-    ("chrome://akahuku/content/mod/arAkahukuJSON.js");
-}
-
 /**
  * 本体
  */

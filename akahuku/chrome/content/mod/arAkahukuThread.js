@@ -139,7 +139,7 @@ arAkahukuThreadParam.prototype = {
       switch (topic) {
         case "arakahuku-thread-replynum-changed":
           subject.QueryInterface (Components.interfaces.nsISupportsString);
-          var decoded = arAkahukuJSON.decode (subject.data);
+          var decoded = JSON.parse (subject.data);
           this.onNotifiedThreadReplyNumChanged (decoded);
           break;
       }
@@ -1580,7 +1580,7 @@ var arAkahukuThread = {
       replyCount: parseInt (replyNum)};
     var subject = Components.classes ["@mozilla.org/supports-string;1"]
     .createInstance (Components.interfaces.nsISupportsString);
-    subject.data = arAkahukuJSON.encode (data);
+    subject.data = JSON.stringify (data);
     arAkahukuUtil.executeSoon (function (subject) {
       var os = Components.classes ["@mozilla.org/observer-service;1"]
       .getService (Components.interfaces.nsIObserverService);
@@ -1635,7 +1635,7 @@ var arAkahukuThread = {
           = Components.classes ["@mozilla.org/supports-string;1"]
           .createInstance (Components.interfaces.nsISupportsString);
         subject.data
-          = arAkahukuJSON.encode ({
+          = JSON.stringify ({
             URL: targetDocument.location.href,
             server: info.server,
             dir: info.dir,
@@ -2791,7 +2791,7 @@ var arAkahukuThread = {
          + imageStatus.requestURI.spec
          + " (status=" + imageStatus.requestImageStatus
          + " , count=" + count + ")"
-         //+ "\n" + arAkahukuJSON.encode (imageStatus)
+         //+ "\n" + JSON.stringify (imageStatus)
          + "\n" + event.target.ownerDocument.location.href);
     }
     try {

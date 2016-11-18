@@ -1,7 +1,7 @@
 
 /**
  * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuFileName, arAkahukuConverter, arAkahukuJSON,
+ *          arAkahukuFileName, arAkahukuConverter,
  *          arAkahukuTitle, arAkahukuUtil, arAkahukuP2P
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
@@ -1150,7 +1150,7 @@ arAkahukuLocationInfo.prototype = {
     var subject
       = Components.classes ["@mozilla.org/supports-string;1"]
       .createInstance (Components.interfaces.nsISupportsString);  
-    subject.data = arAkahukuJSON.encode (this);
+    subject.data = JSON.stringify (this);
     observerService.notifyObservers
       (subject, "arakahuku-location-info-changed", text);
   },

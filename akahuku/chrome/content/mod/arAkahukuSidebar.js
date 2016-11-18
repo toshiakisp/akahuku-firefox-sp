@@ -157,7 +157,7 @@ arAkahukuSidebarBoard.prototype = {
       if (Akahuku.debug.enabled) {
         Akahuku.debug.warn
           ("arAkahukuSidebarBoard rejects an invalid thread entry;\n"
-           + arAkahukuJSON.encode (thread));
+           + JSON.stringify (thread));
       }
       return;
     }
@@ -182,7 +182,7 @@ arAkahukuSidebarBoard.prototype = {
       if (Akahuku.debug.enabled) {
         Akahuku.debug.warn
           ("arAkahukuSidebarBoard drops an invalid thread entry;\n"
-           + arAkahukuJSON.encode (thread));
+           + JSON.stringify (thread));
       }
       this.threads.splice (i, 1);
     }

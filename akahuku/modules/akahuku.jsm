@@ -23,8 +23,6 @@ var Cr = Components.results;
 /**
  * Prepare basis of the extension
  */
-Cu.import ("resource://akahuku/json.jsm");//arAkahukuJSON
-
 Cu.import ("resource://akahuku/console.jsm");
 var console = new AkahukuConsole ();
 var appinfo =

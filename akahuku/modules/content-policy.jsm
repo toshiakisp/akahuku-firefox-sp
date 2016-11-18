@@ -206,13 +206,10 @@ arAkahukuContentPolicy.prototype = {
     .getService (Components.interfaces.mozIJSSubScriptLoader);
     try {
       if ("import" in Components.utils) {
-        Components.utils.import("resource://akahuku/json.jsm");
         Cu.import ("resource://akahuku/console.jsm");
         this.console = new AkahukuConsole ();
       }
       else {
-        loader.loadSubScript
-          ("chrome://akahuku/content/mod/arAkahukuJSON.js");
         var scope = {};
         loader.loadSubScript ("resource://akahuku/console.jsm", scope);
         this.console = new scope.AkahukuConsole ()

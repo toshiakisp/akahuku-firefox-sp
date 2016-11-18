@@ -4476,11 +4476,11 @@ var AkahukuOptions = {
         node = nextNode;
       }
       
-      return arAkahukuJSON.encode (values);
+      return JSON.stringify (values);
     }, 
     
     fromString : function (id, s) {
-      var values = arAkahukuJSON.decode (s);
+      var values = JSON.parse (s);
       while (values.length && values [0] == undefined) {
         values.shift ();
       }
@@ -4781,7 +4781,7 @@ var AkahukuOptions = {
       
       var v;
       var listcell = listitem.firstChild;
-      listcell.setAttribute ("value", escape (arAkahukuJSON.encode (value)));
+      listcell.setAttribute ("value", escape (JSON.stringify (value)));
       for (var i = 0; i < listInfo.columns.length; i ++) {
         v = listInfo.columns [i][1] (value);
         
@@ -4812,7 +4812,7 @@ var AkahukuOptions = {
     
     getItem : function (listitem) {
       var s = unescape (listitem.firstChild.getAttribute ("value"));
-      var v = arAkahukuJSON.decode (s);
+      var v = JSON.parse (s);
       return v;
     },
     
@@ -4849,7 +4849,7 @@ var AkahukuOptions = {
   
   checkUndefined : function (value) {
     try {
-      var values = arAkahukuJSON.decode (value);
+      var values = JSON.parse (value);
       if (values.length) {
         while (values.length && values [0] == undefined) {
           values.shift ();

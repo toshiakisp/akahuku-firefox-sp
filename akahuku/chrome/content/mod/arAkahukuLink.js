@@ -1436,7 +1436,7 @@ var arAkahukuLink = {
           = arAkahukuConfig
           .initPref ("char", "akahuku.autolink.user.patterns2", "null");
         if (value != "null") {
-          var list = arAkahukuJSON.decode (unescape (value));
+          var list = JSON.parse (unescape (value));
           while (list.length && list [0] == undefined) {
             list.shift ();
           }
@@ -1790,7 +1790,7 @@ var arAkahukuLink = {
           = arAkahukuConfig
           .initPref ("char", "akahuku.autolink.user.patterns2", "null");
         if (value != "null") {
-          list = arAkahukuJSON.decode (unescape (value));
+          list = JSON.parse (unescape (value));
           while (list.length && list [0] == undefined) {
             list.shift ();
           }
@@ -1818,7 +1818,7 @@ var arAkahukuLink = {
         
         arAkahukuConfig.setCharPref
           ("akahuku.autolink.user.patterns2",
-           escape (arAkahukuJSON.encode (list)));
+           escape (JSON.stringify (list)));
         
         // "赤福オートリンク：追加しました"
         arAkahukuUI.setStatusPanelText

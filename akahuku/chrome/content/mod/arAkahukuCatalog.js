@@ -1828,17 +1828,17 @@ arAkahukuCatalogParam.prototype = {
     try {
       if (topic == "arakahuku-location-info-changed") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
-        var decodedData = arAkahukuJSON.decode (subject.data);
+        var decodedData = JSON.parse (subject.data);
         this.onNotifiedLocationInfoUpdated (decodedData, data);
       }
       else if (topic == "arakahuku-board-newest-num-updated") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
-        var decodedData = arAkahukuJSON.decode (subject.data);
+        var decodedData = JSON.parse (subject.data);
         this.onNotifiedThreadNewestNumber (decodedData, data);
       }
       else if (topic == "arakahuku-thread-unload") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
-        var decodedData = arAkahukuJSON.decode (subject.data);
+        var decodedData = JSON.parse (subject.data);
         this.onNotifiedThreadUnload (decodedData, data);
       }
     }
