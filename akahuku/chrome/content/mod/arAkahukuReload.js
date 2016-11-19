@@ -2688,7 +2688,7 @@ var arAkahukuReload = {
             arAkahukuDOM.addClassName
             (thumbnail, "akahuku_deleted_reply2");
             if (arAkahukuReload.enableExtCacheImages) {
-              Akahuku.Cache.enCacheURIContext (thumbnail);
+              Akahuku.Cache.enCacheURIContextIfCached (thumbnail);
             }
           }
         }
@@ -2892,7 +2892,7 @@ var arAkahukuReload = {
                     arAkahukuDOM.addClassName
                       (thumbT, "akahuku_deleted_reply2");
                     if (arAkahukuReload.enableExtCacheImages) {
-                      Akahuku.Cache.enCacheURIContext (thumbT);
+                      Akahuku.Cache.enCacheURIContextIfCached (thumbT);
                     }
                   }
 
