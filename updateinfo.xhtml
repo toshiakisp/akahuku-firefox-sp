@@ -1,5 +1,22 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"> 
+<h4>sp_rev.43 (2016-11-19)</h4>
+<ul>
+  <li>修正・調整</li>
+  <ul>
+    <li>各所に生成するリンク(ホーム,掲示板へ戻る)のリンク先を修正、マークアップ(含"*")を調整</li>
+	<li>修正: httpsページからyoutubeのプレビューを見られない問題</li>
+    <li>修正: sp_rev.42でスレのキャッシュを見る時にブロックリストなどが機能しない問題</li>
+    <li>修正: 「続きを読む」の設定「消えそうな画像のキャッシュを保護する」が長らく機能してない件</li>
+    <li>修正: ページ情報ウインドウでのメディアプレビューでakahukuプロトコルが見えなくなってる件</li>
+    <li>古いFirefoxとの互換性を多少向上(cache v1関係など)</li>
+  </ul>
+  <li>マルチプロセス Firefox (e10s) 関係</li>
+  <ul>
+	<li>修正: フォームへのイメージの貼り付け(akahuku-clip.jpgの自動生成)が機能しない問題</li>
+	<li>修正: MHT保存にて設定「ファイル選択を省く」かつ「上書きしない」を有効時にエラーになる問題</li>
+  </ul>
+</ul>
 <h4>sp_rev.42 (2016-11-14)</h4>
 <ul>
   <li>修正・調整</li>
