@@ -8,6 +8,7 @@
 
 var EXPORTED_SYMBOLS = [
   "arAkahukuProtocolHandler",
+  "arAkahukuSafeProtocolHandler",
   "arAkahukuLocalProtocolHandler",
 ];
 
@@ -36,15 +37,7 @@ var arAkahukuProtocolHandlerKey = "";
  *   Inherits From: nsIProtocolHandler, arIAkahukuProtocolHandler
  */
 function arAkahukuProtocolHandler () {
-  this.inMainProcess = true;
-  try {
-    var appinfo
-      = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-    this.inMainProcess
-      = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
-  }
-  catch (e) { Cu.reportError (e);
-  }
+  this.init ();
 }
 arAkahukuProtocolHandler.prototype = {
   scheme : "akahuku", /* String  プロトコルスキーム */
@@ -74,6 +67,19 @@ arAkahukuProtocolHandler.prototype = {
     }
   },
     
+  inMainProcess : true,
+
+  init : function () {
+    try {
+      var appinfo
+        = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
+      this.inMainProcess
+        = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
+    }
+    catch (e) { Cu.reportError (e);
+    }
+  },
+
   /**
    * インターフェースの要求
    *   nsISupports.QueryInterface
@@ -638,5 +644,44 @@ if ("URI_IS_LOCAL_RESOURCE" in Ci.nsIProtocolHandler) {
   // 混在表示コンテンツとなることを回避
   arAkahukuLocalProtocolHandler.prototype.protocolFlags
     |= Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE;
+}
+
+
+/**
+ * akahuku-safe: プロトコル (httpsリソース用)
+ *   Inherits From: arAkahukuProtocolHandler
+ */
+function arAkahukuSafeProtocolHandler () {
+  this.init ();
+}
+arAkahukuSafeProtocolHandler.prototype = {
+  __proto__ : arAkahukuProtocolHandler.prototype,
+  scheme : "akahuku-safe",
+  defaultPort : -1,
+  protocolFlags: Ci.nsIProtocolHandler.URI_STD,
+
+  // required for XPCOM registration by XPCOMUtils
+  classDescription: "Akahuku Safe Protocol Handler JS Component",
+  classID : Components.ID ("{74597554-7400-4074-8c10-a97c54da1989}"),
+  contractID : "@mozilla.org/network/protocol;1?name=akahuku-safe",
+  _xpcom_factory : {
+    createInstance : function (outer, iid) {
+      if (outer != null) {
+        throw Cr.NS_ERROR_NO_AGGREGATION;
+      }
+      var handler = new arAkahukuSafeProtocolHandler ();
+      return handler.QueryInterface (iid);
+    }
+  },
+};
+
+if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
+  arAkahukuSafeProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE;
+}
+if ("URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT" in Ci.nsIProtocolHandler) {
+  // requires Firefox 19.0+
+  arAkahukuSafeProtocolHandler.prototype.protocolFlags
+    |= Ci.nsIProtocolHandler.URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT;
 }
 

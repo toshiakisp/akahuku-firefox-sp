@@ -623,6 +623,7 @@ var arAkahukuLink = {
         case "mms":
         case "rtsp":
         case "akahuku":
+        case "akahuku-safe":
           protocol = parens [1];
         break;
         default:

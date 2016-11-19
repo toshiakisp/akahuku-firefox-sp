@@ -327,8 +327,13 @@ var akahuku_scheme_key = "";
         type = type + "." + this.getHash (protocol, host, path);
       }
             
+      var scheme = "akahuku";
+      if (protocol == "https" && type != "cachefile") {
+        scheme = "akahuku-safe";
+      }
+
       uri
-      = "akahuku://" + host + "/" + type
+      = scheme + "://" + host + "/" + type
       + "/" + protocol + "." + sep + "/" + path;
     }
         
@@ -384,13 +389,18 @@ var akahuku_scheme_key = "";
     var param = new Object ();
         
     if (uri
-        .match (/^akahuku:\/\/([^\/]*)\/([^\/]+)\/([A-Za-z0-9\-]+)\.([0-9]+)\/(.*)$/)) {
+        .match (/^akahuku(?:-safe)?:\/\/([^\/]*)\/([^\/]+)\/([A-Za-z0-9\-]+)\.([0-9]+)\/(.*)$/)) {
       param.host = RegExp.$1;
       param.type = RegExp.$2;
       param.protocol = RegExp.$3;
       var sep = parseInt (RegExp.$4);
       param.path = RegExp.$5;
             
+      if (/^akahuku-safe:/.test (uri) && param.protocol !== "https") {
+        Cu.reportError ("getAkahukuURIParam: "
+            + "akahuku-safe allows https only; " + uri);
+        return new Object ();
+      }
       try {
         var idn
           = Cc ["@mozilla.org/network/idn-service;1"].

@@ -427,7 +427,7 @@ var arAkahukuP2P = {
     }
 
     if (targetNode.nodeName.toLowerCase () == "img") {
-      if (/^akahuku:\/\/[^\/]+\/p2p\//.test (targetNode.src)){
+      if (/^akahuku(-safe)?:\/\/[^\/]+\/p2p\//.test (targetNode.src)){
         data.isP2P = true;
       }
     }
@@ -495,7 +495,7 @@ var arAkahukuP2P = {
         == "img") {
       if ("src" in target) {
         if (target.src.match
-            (/^akahuku:\/\/[^\/]+\/p2p\//)) {
+            (/^akahuku(-safe)?:\/\/[^\/]+\/p2p\//)) {
           src = target.src;
           isP2P = true;
         }

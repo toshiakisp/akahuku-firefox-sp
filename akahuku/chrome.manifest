@@ -28,3 +28,6 @@ contract    @mozilla.org/network/protocol;1?name=akahuku {65e9b537-0fa4-4e73-ac9
 
 component   {9d5fe646-b180-4f04-8a20-3069416a4886} components/arAkahukuLocalProtocolHandler.js
 contract    @mozilla.org/network/protocol;1?name=akahuku-local {9d5fe646-b180-4f04-8a20-3069416a4886}
+
+component   {74597554-7400-4074-8c10-a97c54da1989} components/arAkahukuSafeProtocolHandler.js
+contract    @mozilla.org/network/protocol;1?name=akahuku-safe {74597554-7400-4074-8c10-a97c54da1989}

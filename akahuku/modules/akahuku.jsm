@@ -80,6 +80,8 @@ try {
   registerXPCOM (arAkahukuProtocolHandler);
   // akahuku-local://
   registerXPCOM (arAkahukuLocalProtocolHandler);
+  // akahuku-safe://
+  registerXPCOM (arAkahukuSafeProtocolHandler);
 }
 catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {}//登録済み
 catch (e) { console.exception (e);

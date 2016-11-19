@@ -2754,7 +2754,8 @@ var arAkahukuThread = {
         || imageStatus.isBlocked
         // 赤福キャッシュ&プレビューURI
         || (imageStatus.requestURI 
-            && imageStatus.requestURI.schemeIs ("akahuku")
+            && (imageStatus.requestURI.schemeIs ("akahuku")
+              || imageStatus.requestURI.schemeIs ("akahuku-safe"))
             && /^\/(?:(?:file)?cache\/|preview\.)/.test (imageStatus.requestURI.path))
        ){ // 即リロードするべき対象・状態では無い
       return;

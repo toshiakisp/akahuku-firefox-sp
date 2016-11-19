@@ -716,9 +716,10 @@ arAkahukuContentPolicy.prototype = {
                          mimeTypeGuess, extra) {
   try {
     if (!this._enableP2P) {
-      if (contentLocation.scheme == "akahuku") {
+      if (contentLocation.schemeIs ("akahuku") ||
+          contentLocation.schemeIs ("akahuku-safe")) {
         if (contentLocation.spec.match
-            (/^akahuku:\/\/[^\/]*\/p2p\//)) {
+            (/^akahuku(-safe)?:\/\/[^\/]*\/p2p\//)) {
           /* 全体が無効の場合には P2P なアドレスを元に戻す */
           try {
             var scope = this._getAkahukuScopeForContext (context);
@@ -733,10 +734,11 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
-    if (contentLocation.scheme == "akahuku"
+    if ((contentLocation.schemeIs ("akahuku") ||
+          contentLocation.schemeIs ("akahuku-safe"))
         && this._checkToplevelContext (context)
         && contentLocation.spec.match
-        (/^akahuku:\/\/[^\/]*\/p2p\//)) {
+        (/^akahuku(-safe)?:\/\/[^\/]*\/p2p\//)) {
       try {
         var scope = this._getAkahukuScopeForContext (context);
         var contextDocument = this._getDocumentForContext (context);
@@ -898,13 +900,15 @@ arAkahukuContentPolicy.prototype = {
           contentType == this.TYPE_OBJECT ||
           contentType == this.TYPE_SUBDOCUMENT)
         && requestOrigin
-        && requestOrigin.schemeIs ("akahuku")
+        && (requestOrigin.schemeIs ("akahuku") ||
+          requestOrigin.schemeIs ("akahuku-safe"))
         && /^\/(file)?cache\//.test (requestOrigin.path)) {
       if (contentLocation.schemeIs ("akahuku-local")) {
         // ローカルリソース
         return this.ACCEPT;
       }
-      if (!contentLocation.schemeIs ("akahuku")) {
+      if (!contentLocation.schemeIs ("akahuku") &&
+          !contentLocation.schemeIs ("akahuku-safe")) {
         // 通常の読込を禁止し、必要なら cache に差し替える
         try {
           var scope = this._getAkahukuScopeForContext (context);

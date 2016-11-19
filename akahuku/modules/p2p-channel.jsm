@@ -214,7 +214,7 @@ arAkahukuP2PChannel.prototype = {
    *         失敗すれば null
    */
   init : function (uri) {
-    if (uri.match (/^akahuku:\/\/([^\/]*)\/(p2p)\/([A-Za-z0-9\-]+)\.([0-9]+)\/(.+)$/)) {
+    if (uri.match (/^akahuku(?:-safe)?:\/\/([^\/]*)\/(p2p)\/([A-Za-z0-9\-]+)\.([0-9]+)\/(.+)$/)) {
       var host = RegExp.$1;
       // var type = RegExp.$2;
       var protocol = RegExp.$3;
