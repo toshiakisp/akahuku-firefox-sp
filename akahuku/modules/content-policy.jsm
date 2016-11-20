@@ -8,22 +8,14 @@ const Cc = Components.classes;
 const Cr = Components.results;
 const Cu = Components.utils;
 
-const nsISupports           = Components.interfaces.nsISupports;
-
-const nsICategoryManager    = Components.interfaces.nsICategoryManager;
-const nsIComponentRegistrar = Components.interfaces.nsIComponentRegistrar;
-const nsIFactory            = Components.interfaces.nsIFactory;
-const nsIModule             = Components.interfaces.nsIModule;
-const nsIContentPolicy      = Components.interfaces.nsIContentPolicy;
-
-const nsIInterfaceRequestor = Components.interfaces.nsIInterfaceRequestor;
-const nsIObserverService    = Components.interfaces.nsIObserverService;
-const nsIPrefBranch         = Components.interfaces.nsIPrefBranch;
-const nsIPrefBranch2        = Components.interfaces.nsIPrefBranch2;
-const nsIIOService          = Components.interfaces.nsIIOService;
-const nsIURI                = Components.interfaces.nsIURI;
-const nsIWebNavigation      = Components.interfaces.nsIWebNavigation;
-const nsIWindowMediator     = Components.interfaces.nsIWindowMediator;
+const TYPE_IMAGE = Ci.nsIContentPolicy.TYPE_IMAGE;
+const TYPE_SUBDOCUMENT = Ci.nsIContentPolicy.TYPE_SUBDOCUMENT;
+const TYPE_OBJECT = Ci.nsIContentPolicy.TYPE_OBJECT;
+const TYPE_SCRIPT = Ci.nsIContentPolicy.TYPE_SCRIPT;
+const TYPE_STYLESHEET = Ci.nsIContentPolicy.TYPE_STYLESHEET;
+const ACCEPT = Ci.nsIContentPolicy.ACCEPT;
+const REJECT_SERVER = Ci.nsIContentPolicy.REJECT_SERVER;
+const REJECT_OTHER = Ci.nsIContentPolicy.REJECT_OTHER;
 
 /**
  * 本体
@@ -34,18 +26,6 @@ function arAkahukuContentPolicy () {
   this._init ();
 }
 arAkahukuContentPolicy.prototype = {
-  /* nsIContentPolicy の定数 */
-  TYPE_OTHER       : nsIContentPolicy.TYPE_OTHER,
-  TYPE_SCRIPT      : nsIContentPolicy.TYPE_SCRIPT,
-  TYPE_IMAGE       : nsIContentPolicy.TYPE_IMAGE,
-  TYPE_STYLESHEET  : nsIContentPolicy.TYPE_STYLESHEET,
-  TYPE_OBJECT      : nsIContentPolicy.TYPE_OBJECT,
-  TYPE_DOCUMENT    : nsIContentPolicy.TYPE_DOCUMENT,
-  TYPE_SUBDOCUMENT : nsIContentPolicy.TYPE_SUBDOCUMENT,
-  ACCEPT           : nsIContentPolicy.ACCEPT,
-  REJECT_SERVER    : nsIContentPolicy.REJECT_SERVER,
-  REJECT_OTHER     : nsIContentPolicy.REJECT_OTHER,
-    
   /* Akahuku 側の設定 */
   _prefAllName               : "akahuku.all",
   _prefCheckName             : "akahuku.savepref",
@@ -119,7 +99,7 @@ arAkahukuContentPolicy.prototype = {
     createInstance : function (outer, iid) {
       if (outer != null) {
         /* 統合する対象がある場合はエラー */
-        throw Components.results.NS_ERROR_NO_AGGREGATION;
+        throw Cr.NS_ERROR_NO_AGGREGATION;
       }
       return new arAkahukuContentPolicy ().QueryInterface (iid);
     }
@@ -131,17 +111,17 @@ arAkahukuContentPolicy.prototype = {
    *
    * @param  nsIIDRef iid
    *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
+   * @throws Cr.NS_NOINTERFACE
    * @return nsIContentPolicy
    *         this
    */
   QueryInterface : function (iid) {
-    if (iid.equals (nsISupports)
-        || iid.equals (nsIContentPolicy)) {
+    if (iid.equals (Ci.nsISupports)
+        || iid.equals (Ci.nsIContentPolicy)) {
       return this;
     }
         
-    throw Components.results.NS_ERROR_NO_INTERFACE;
+    throw Cr.NS_ERROR_NO_INTERFACE;
   },
     
   /**
@@ -149,21 +129,21 @@ arAkahukuContentPolicy.prototype = {
    */
   _init : function () {
     /* pref サービスの取得 */
-    if (nsIPrefBranch2 != undefined) {
+    if (typeof Ci.nsIPrefBranch2 !== "undefined") {
       this._pref
-      = Components.classes ["@mozilla.org/preferences-service;1"]
-      .getService (nsIPrefBranch2);
+      = Cc ["@mozilla.org/preferences-service;1"]
+      .getService (Ci.nsIPrefBranch2);
     }
     else {
       this._pref
-      = Components.classes ["@mozilla.org/preferences-service;1"]
-      .getService (nsIPrefBranch);
+      = Cc ["@mozilla.org/preferences-service;1"]
+      .getService (Ci.nsIPrefBranch);
     }
 
     if (typeof (this._pref.addObserver) === "function") {
       this._observerService
-      = Components.classes ["@mozilla.org/observer-service;1"]
-      .getService (nsIObserverService);
+      = Cc ["@mozilla.org/observer-service;1"]
+      .getService (Ci.nsIObserverService);
             
       this._observerService.addObserver (this, "xpcom-shutdown", false);
             
@@ -181,13 +161,13 @@ arAkahukuContentPolicy.prototype = {
     }
 
     this._ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (nsIIOService);
+    = Cc ["@mozilla.org/network/io-service;1"]
+    .getService (Ci.nsIIOService);
         
     // 必要なサブスクリプトのロード
     var loader
-    = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
-    .getService (Components.interfaces.mozIJSSubScriptLoader);
+    = Cc ["@mozilla.org/moz/jssubscript-loader;1"]
+    .getService (Ci.mozIJSSubScriptLoader);
     try {
       Cu.import ("resource://akahuku/console.jsm");
       this.console = new AkahukuConsole ();
@@ -210,7 +190,7 @@ arAkahukuContentPolicy.prototype = {
       }
     }
     catch (e) {
-      Components.utils.reportError (e);
+      Cu.reportError (e);
       if (!this.console) {
         // minimum equivalent
         this.console = {
@@ -374,17 +354,17 @@ arAkahukuContentPolicy.prototype = {
   _updateBlockList : function () {
     this._blockList = new Object ();
         
-    this._blockList [this.TYPE_IMAGE] = new Array ();
-    this._blockList [this.TYPE_SUBDOCUMENT] = new Array ();
-    this._blockList [this.TYPE_OBJECT] = new Array ();
+    this._blockList [TYPE_IMAGE] = [];
+    this._blockList [TYPE_SUBDOCUMENT] = [];
+    this._blockList [TYPE_OBJECT] = [];
         
-    this._blockList [this.TYPE_IMAGE].includesFutaba = false;
-    this._blockList [this.TYPE_SUBDOCUMENT].includesFutaba = false;
-    this._blockList [this.TYPE_OBJECT].includesFutaba = false;
+    this._blockList [TYPE_IMAGE].includesFutaba = false;
+    this._blockList [TYPE_SUBDOCUMENT].includesFutaba = false;
+    this._blockList [TYPE_OBJECT].includesFutaba = false;
         
     var tmp = "";
     var list = this._blockList;
-    var type = this.TYPE_IMAGE;
+    var type = TYPE_IMAGE;
     var ios = this._ios;
     /* String.replace 用関数 (this に注意) */
     function addMatchedToList (matched) {
@@ -455,11 +435,11 @@ arAkahukuContentPolicy.prototype = {
           list [type].push (obj);
         }
         else {
-          Components.utils.reportError ("invalid pattern: " + matched);
+          Cu.reportError ("invalid pattern: " + matched);
         }
       }
       catch (e) {
-        Components.utils.reportError (e);
+        Cu.reportError (e);
       }
       return matched;
     }
@@ -473,7 +453,7 @@ arAkahukuContentPolicy.prototype = {
           (this._prefDelBannerSitesImageName);
         tmp = unescape (tmp);
       }
-      type = this.TYPE_IMAGE;
+      type = TYPE_IMAGE;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
       /* IFRAME */
       tmp = "";
@@ -484,7 +464,7 @@ arAkahukuContentPolicy.prototype = {
           (this._prefDelBannerSitesIframeName);
         tmp = unescape (tmp);
       }
-      type = this.TYPE_SUBDOCUMENT;
+      type = TYPE_SUBDOCUMENT;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
     }
     if (this._enableBlockFlash) {
@@ -497,7 +477,7 @@ arAkahukuContentPolicy.prototype = {
           (this._prefDelBannerSitesObjectName);
         tmp = unescape (tmp);
       }
-      type = this.TYPE_OBJECT;
+      type = TYPE_OBJECT;
       tmp.replace (/[^\s,;]+/g, addMatchedToList);
     }
   },
@@ -671,7 +651,7 @@ arAkahukuContentPolicy.prototype = {
           catch (e) { this.console.exception (e);
           }
                     
-          return this.REJECT_OTHER;
+          return REJECT_OTHER;
         }
       }
     }
@@ -693,12 +673,12 @@ arAkahukuContentPolicy.prototype = {
       catch (e) { this.console.exception (e);
       }
             
-      return this.ACCEPT;
+      return ACCEPT;
     }
 
-    if (this._enableP2P
-        // http 以外もありえるため二重処理を避けて
-        && contentLocation.scheme.substring (0, 4) == "http") {
+    if (this._enableP2P &&
+        (contentLocation.schemeIs ("http") ||
+         contentLocation.schemeIs ("https"))) {
       /* P2P モードが有効の場合 */
 
       if (contentLocation.host.indexOf ("2chan.net") != -1) {
@@ -709,14 +689,14 @@ arAkahukuContentPolicy.prototype = {
           var q = RegExp.$1;
           if (!q.match (/mode=cat2?/)) {
             /* タテログふつーモードでは動かさない */
-            return this.ACCEPT;
+            return ACCEPT;
           }
         }
 
         if (contentLocation.spec.match
             (/^https?:\/\/dec\.2chan\.net\/up\/src\//)) {
           /* あぷでは動かさない */
-          return this.ACCEPT;
+          return ACCEPT;
         }
                 
         if (contentLocation.spec.match
@@ -724,8 +704,8 @@ arAkahukuContentPolicy.prototype = {
           /* カタログ、サムネ、元画像の場合 */
           var ext = RegExp.$3;
                     
-          if (requestOrigin.scheme == "unmht") {
-            return this.ACCEPT;
+          if (requestOrigin.schemeIs ("unmht")) {
+            return ACCEPT;
           }
                     
           var reject = false;
@@ -738,10 +718,10 @@ arAkahukuContentPolicy.prototype = {
           }
                     
           if (reject) {
-            return this.REJECT_OTHER;
+            return REJECT_OTHER;
           }
           else {
-            return this.ACCEPT;
+            return ACCEPT;
           }
         }
       }
@@ -761,29 +741,29 @@ arAkahukuContentPolicy.prototype = {
           }
                         
           if (reject) {
-            return this.REJECT_OTHER;
+            return REJECT_OTHER;
           }
           else {
-            return this.ACCEPT;
+            return ACCEPT;
           }
         }
       }
     }
         
     /* キャッシュページからの読込 */
-    if (this._enableAll
-        && (contentType == this.TYPE_IMAGE ||
-          contentType == this.TYPE_SCRIPT ||
-          contentType == this.TYPE_STYLESHEET ||
-          contentType == this.TYPE_OBJECT ||
-          contentType == this.TYPE_SUBDOCUMENT)
-        && requestOrigin
-        && (requestOrigin.schemeIs ("akahuku") ||
-          requestOrigin.schemeIs ("akahuku-safe"))
-        && /^\/(file)?cache\//.test (requestOrigin.path)) {
+    if (this._enableAll &&
+        (contentType == TYPE_IMAGE ||
+         contentType == TYPE_SCRIPT ||
+         contentType == TYPE_STYLESHEET ||
+         contentType == TYPE_OBJECT ||
+         contentType == TYPE_SUBDOCUMENT) &&
+        requestOrigin &&
+        (requestOrigin.schemeIs ("akahuku") ||
+         requestOrigin.schemeIs ("akahuku-safe")) &&
+        /^\/(file)?cache\//.test (requestOrigin.path)) {
       if (contentLocation.schemeIs ("akahuku-local")) {
         // ローカルリソース
-        return this.ACCEPT;
+        return ACCEPT;
       }
       if (!contentLocation.schemeIs ("akahuku") &&
           !contentLocation.schemeIs ("akahuku-safe")) {
@@ -794,18 +774,17 @@ arAkahukuContentPolicy.prototype = {
             = scope.Akahuku.protocolHandler
             .deAkahukuURI (requestOrigin.spec);
           var policy
-            = Components.classes
-            ["@mozilla.org/layout/content-policy;1"]
-            .getService (nsIContentPolicy);
+            = Cc ["@mozilla.org/layout/content-policy;1"]
+            .getService (Ci.nsIContentPolicy);
           var shouldLoad
             = policy.shouldLoad
             (contentType, contentLocation,
              this._ios.newURI (decodedOriginSpec, "UTF-8", null),
              context, mimeTypeGuess, extra);
-          if (shouldLoad != this.ACCEPT) {
+          if (shouldLoad != ACCEPT) {
             return shouldLoad;
           }
-          if (context instanceof Components.interfaces.nsIDOMElement) {
+          if (context instanceof Ci.nsIDOMElement) {
             scope.Akahuku.queueContextTask
               (scope.Akahuku.Cache,
                "enCacheURIContext", context, contentLocation.spec);
@@ -813,7 +792,7 @@ arAkahukuContentPolicy.prototype = {
         }
         catch (e) { this.console.exception (e);
         }
-        return this.REJECT_OTHER;
+        return REJECT_OTHER;
       }
       else {
         // 差し替えられた akahuku://*/cache/* は
@@ -836,24 +815,25 @@ arAkahukuContentPolicy.prototype = {
       }
     }
 
-    if (contentLocation.scheme.substring (0, 4) != "http") {
+    if (!contentLocation.schemeIs ("http") &&
+        !contentLocation.schemeIs ("https")) {
       /* http(s) 以外の場合許可する */
-      return this.ACCEPT;
+      return ACCEPT;
     }
         
-    if (contentType == this.TYPE_IMAGE
-        || contentType == this.TYPE_SUBDOCUMENT
-        || contentType == this.TYPE_OBJECT) {
+    if (contentType == TYPE_IMAGE ||
+        contentType == TYPE_SUBDOCUMENT ||
+        contentType == TYPE_OBJECT) {
       /* 画像、Flash、フレーム の場合 */
             
       if (!this._enableBlockImage && !this._enableBlockFlash) {
         /* ブロックが無効の場合許可する */
-        return this.ACCEPT;
+        return ACCEPT;
       }
 
       if (!(/^(?:https?|akahuku)$/.test (requestOrigin.scheme))) {
         /* 呼出し元が http(s) akahuku 以外の場合は許可する */
-        return this.ACCEPT;
+        return ACCEPT;
       }
             
       if (requestOrigin.host.indexOf ("2chan.net") != -1) {
@@ -861,13 +841,13 @@ arAkahukuContentPolicy.prototype = {
 
         if (this._isExcludeBoard (requestOrigin)) {
           /* 動作しない板からは全て許可する */
-          return this.ACCEPT;
+          return ACCEPT;
         }
                 
         if (!this._blockList [contentType].includesFutaba
             && /\.2chan\.net$/i.test (contentLocation.host)) {
           /* 2chan.net 内の場合は許可する */
-          return this.ACCEPT;
+          return ACCEPT;
         }
                 
         var list = this._blockList [contentType];
@@ -913,7 +893,7 @@ arAkahukuContentPolicy.prototype = {
         if (reject) {
           /* shouldLoad 内からの DOM 操作が許されない場合があるので
            * 後から適当なタイミングで操作するようタスク登録する */
-          if (context instanceof Components.interfaces.nsIDOMElement) {
+          if (context instanceof Ci.nsIDOMElement) {
             try {
               var scope = this._getAkahukuScopeForContext (context);
               scope.Akahuku.queueContextTask
@@ -926,11 +906,11 @@ arAkahukuContentPolicy.prototype = {
           }
                         
           /* 拒否する */
-          return this.REJECT_SERVER;
+          return REJECT_SERVER;
         }
       }
     }
-    else if (contentType == this.TYPE_DOCUMENT) {
+    else if (contentType == Ci.nsIContentPolicy.TYPE_DOCUMENT) {
       /* ドキュメントの場合 */
             
       var needCheck = false;
@@ -940,15 +920,9 @@ arAkahukuContentPolicy.prototype = {
         needCheck = true;
         if (this._isExcludeBoard (contentLocation)) {
           /* 動作しない板の場合はチェックしない */
-          return this.ACCEPT;
+          return ACCEPT;
         }
       }
-            
-      /** logch 停止 **/
-      //if (contentLocation.host.indexOf ("logch.info") != -1) {
-      //    /* 2chan.net の場合チェックする */
-      //    needCheck = true;
-      //}
             
       /* 避難所 patch */
       if (this._enableBoardExternal) {
@@ -992,7 +966,7 @@ arAkahukuContentPolicy.prototype = {
                     (targetDocument,
                      this._enableReloadHookSync, false);
                                     
-                  return this.REJECT_OTHER;
+                  return REJECT_OTHER;
                 }
               }
               catch (e) { this.console.excption (e);
@@ -1029,7 +1003,7 @@ arAkahukuContentPolicy.prototype = {
                   scope.arAkahukuCatalog
                     .reloadCore (targetDocument, button);
                                     
-                  return this.REJECT_OTHER;
+                  return REJECT_OTHER;
                 }
               }
               catch (e) { this.console.exception (e);
@@ -1043,8 +1017,8 @@ arAkahukuContentPolicy.prototype = {
       }
     }
         
-  } catch (e) { Components.utils.reportError (e); }
-    return this.ACCEPT;
+  } catch (e) { Cu.reportError (e); }
+    return ACCEPT;
   },
     
   /**
@@ -1063,21 +1037,11 @@ arAkahukuContentPolicy.prototype = {
    *         MIME-Type
    * @param  nsISupports extra
    *         不明
-   *
-   * 旧バージョンでは
-   * @param  Number contentType
-   *         コンテントの種類
-   * @param  nsIURI contentLocation
-   *         対象の URI
-   * @param  HTMLElement requestOrigin
-   *         ロード先
-   * @param  Window context
-   *         対象のウィンドウ
    */
   shouldProcess : function (contentType, contentLocation, 
                             requestOrigin, context,
                             mimeTypeGuess, extra) {
-    return this.ACCEPT;
+    return ACCEPT;
   }
 };
 
