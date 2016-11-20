@@ -653,8 +653,7 @@ if ("URI_IS_LOCAL_RESOURCE" in Ci.nsIProtocolHandler) {
 function arAkahukuSafeProtocolHandler () {
   this.init ();
 }
-arAkahukuSafeProtocolHandler.prototype = {
-  __proto__ : arAkahukuProtocolHandler.prototype,
+var asph_properties = {
   scheme : "akahuku-safe",
   defaultPort : -1,
   protocolFlags: Ci.nsIProtocolHandler.URI_STD,
@@ -673,6 +672,18 @@ arAkahukuSafeProtocolHandler.prototype = {
     }
   },
 };
+if (typeof Object.create == "function" &&
+    typeof Object.assign == "function") {
+  // requires Gecko 2.0+
+  arAkahukuSafeProtocolHandler.prototype
+    = Object.create (arAkahukuProtocolHandler.prototype);
+  // requires Gecko 34+
+  Object.assign (arAkahukuSafeProtocolHandler.prototype, asph_properties);
+}
+else {
+  asph_properties.__proto__ = arAkahukuProtocolHandler.prototype;
+  arAkahukuSafeProtocolHandler.prototype = asph_properties;
+}
 
 if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
   arAkahukuSafeProtocolHandler.prototype.protocolFlags
