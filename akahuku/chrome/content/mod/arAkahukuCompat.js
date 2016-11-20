@@ -321,12 +321,14 @@ var arAkahukuCompat = new function () {
           var extMan = Cc ["@mozilla.org/extensions/manager;1"]
             .getService (Ci.nsIExtensionManager);
           var ext = extMan.getItemForID (id);
-          ext.QueryInterface (Ci.nsIUpdateItem);
+          if (!(ext instanceof Ci.nsIUpdateItem)) {
+            ext = null;
+          }
           var addon = { // only for Akahuku's neccessity
-            id: ext.id,
-            version: ext.version,
-            name: ext.name,
-            isActive: true,
+            id: ext ? ext.id : "",
+            version: ext ? ext.version : "",
+            name: ext ? ext.name : "",
+            isActive: ext ? true : false,
           };
           callback (addon);
         };
