@@ -1073,7 +1073,7 @@ AkahukuIPC.prototype = {
       moduleEntry = {};
       clonedState [moduleName] = moduleEntry;
       for (var commandName in this._procedures [moduleName]) {
-        commandEntry = {};
+        var commandEntry = {};
         for (var propName in this._procedures [moduleName][commandName]) {
           if (propName === "_module") {
             // module object cannot be cloned for message

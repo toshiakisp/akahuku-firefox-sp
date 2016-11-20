@@ -170,21 +170,26 @@ function arIPCProxyChild (prototype) {
       if (arIPCProxyChild.prototype.hasOwnProperty (property)) {
         // store in target {}
         target [property] = value;
+        return true;
       }
       else if (prototype.hasOwnProperty (property)) {
         var desc = Object.getOwnPropertyDescriptor (prototype, property);
         if (desc && "function" == typeof desc.value) {
           // function overwrite
           target [property] = value;
+          return true;
         }
         else {
           var data = {type: "set", name: property, value: value};
           var message = "arIPCProxy:" + receiver.parentId;
           var ret = receiver.messageManager
             .sendSyncMessage (message, data) [0];
-          return ret.value;
+          if (ret && ret.result == Cr.NS_OK) {
+            return true;
+          }
         }
       }
+      return false; // strict-mode TypeError
     },
   };
   return new Proxy ({}, handler);
