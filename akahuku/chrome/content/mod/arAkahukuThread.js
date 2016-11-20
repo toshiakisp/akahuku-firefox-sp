@@ -1706,6 +1706,7 @@ var arAkahukuThread = {
       if (tab) {
         var tabbrowser
           = targetBrowser.ownerDocument.getElementById ("content");
+        tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
         
         if ("setIcon" in tabbrowser
             && arAkahukuThread.enableTabIconAsFavicon) {
@@ -1856,6 +1857,7 @@ var arAkahukuThread = {
       if (tab) {
         var tabbrowser = targetBrowser.ownerDocument
           .getElementById ("content");
+        tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
         
         if ("setIcon" in tabbrowser) {
           tabbrowser.setIcon (tab, "");

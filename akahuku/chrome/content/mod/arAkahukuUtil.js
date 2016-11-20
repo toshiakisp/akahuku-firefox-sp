@@ -21,6 +21,8 @@ var arAkahukuUtil = new function () {
           this._isGecko2orAbove = true;
         }
       }
+      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+      }
       catch (e) { Cu.reportError (e);
       }
     }

@@ -315,7 +315,7 @@ var arAkahukuCompat = new function () {
         this.getAddonByID = scope.AddonManager.getAddonByID;
         this.getAddonByID (id, callback);
       }
-      catch (e) { Cu.reportError (e);
+      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
         this.getAddonByID = function getAddonByIDCompat (id, callback) {
           // obsolete gecko 2.0
           var extMan = Cc ["@mozilla.org/extensions/manager;1"]
@@ -332,6 +332,9 @@ var arAkahukuCompat = new function () {
           };
           callback (addon);
         };
+      }
+      catch (e) {
+        Cu.reportError (e);
       }
     }
   };
