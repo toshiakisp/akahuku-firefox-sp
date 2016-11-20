@@ -2748,7 +2748,7 @@ var arAkahukuThread = {
    */
   captureImageErrorToReload : function (event) {
     var imageStatus
-      = Akahuku.Cache.getImageStatus (event.target);
+      = arAkahukuUtil.getImageStatus (event.target);
     if (!imageStatus.isImage || !imageStatus.isErrored
         || imageStatus.isBlocked
         // 赤福キャッシュ&プレビューURI

@@ -1,6 +1,6 @@
 
 /**
- * Require: Akahuku, arAkahukuConfig,
+ * Require: Akahuku, arAkahukuConfig, arAkahukuUtil,
  *          arAkahukuReload, arAkahukuFile, arAkahukuCompat
  */
 
@@ -284,70 +284,6 @@ Akahuku.Cache = new function () {
     return status;
   }
 
-
-
-  /**
-   * 画像のロード状態診断結果
-   */
-  function ImageStatus () {
-    this.isImage = false;
-    this.isBlocked = false;
-    this.isErrored = false;
-  };
-  ImageStatus.prototype = {
-    blockingStatus : 0,
-    requestImageStatus : 0,
-    requestURI : null, 
-    cache : new CacheStatus (),
-  };
-
-  /**
-   * 画像のロード状態を調べる
-   *
-   * @param  HTMLImageElement img
-   *         対象の画像要素
-   * @return Object
-   *         画像の状態
-   */
-  this.getImageStatus = function (img) {
-    var status = new ImageStatus ();
-    try {
-      img
-        = img.QueryInterface
-          (Components.interfaces.nsIImageLoadingContent);
-      status.isImage = true;
-
-      /* コンテンツポリシーによるブロックチェック */
-      status.isBlocked = 
-        (img.imageBlockingStatus
-         != Components.interfaces.nsIContentPolicy.ACCEPT);
-      status.blockingStatus = img.imageBlockingStatus;
-
-      /* リクエストチェック */
-      var request
-        = img.getRequest
-          (Components.interfaces.nsIImageLoadingContent
-           .CURRENT_REQUEST);
-      if (request) {
-        status.requestImageStatus = request.imageStatus;
-        status.requestURI = request.URI;
-        var errorMask
-          = Components.interfaces.imgIRequest.STATUS_LOAD_PARTIAL
-            | Components.interfaces.imgIRequest.STATUS_ERROR;
-        status.isErrored = ((request.imageStatus & errorMask) != 0);
-      }
-    }
-    catch (e if e.result == Components.results.NS_ERROR_NO_INTERFACE) {
-      status.isImage = false;
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-
-    return status;
-  };
-
-    
-
   /**
    * 画像要素をキャッシュのアドレスに変換する
    *
@@ -394,7 +330,7 @@ Akahuku.Cache = new function () {
    * @param  HTMLElement 画像要素
    */
   this.enCacheURIContextIfCached = function (context) {
-    var status = Akahuku.Cache.getImageStatus (context);
+    var status = arAkahukuUtil.getImageStatus (context);
     if (!status.isImage) {
       Akahuku.debug.warn ("enCacheURIContextIfCached: " +
           "non image; " + context);

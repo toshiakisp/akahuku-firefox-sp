@@ -335,5 +335,63 @@ var arAkahukuUtil = new function () {
     }
     return "application/octet-stream";
   };
+
+
+  /**
+   * 画像のロード状態診断結果
+   */
+  function ImageStatus () {
+    this.isImage = false;
+    this.isBlocked = false;
+    this.isErrored = false;
+  };
+  ImageStatus.prototype = {
+    blockingStatus : 0,
+    requestImageStatus : 0,
+    requestURI : null,
+  };
+
+  /**
+   * 画像のロード状態を imgIRequest で調べる
+   *
+   * @param  HTMLImageElement img
+   *         対象の画像要素
+   * @return Object
+   *         画像の状態
+   */
+  this.getImageStatus = function (img) {
+    var status = new ImageStatus ();
+    try {
+      img = img.QueryInterface (Ci.nsIImageLoadingContent);
+      status.isImage = true;
+
+      /* コンテンツポリシーによるブロックチェック */
+      status.isBlocked
+        = (img.imageBlockingStatus != Ci.nsIContentPolicy.ACCEPT);
+      status.blockingStatus = img.imageBlockingStatus;
+
+      /* リクエストチェック */
+      var request
+        = img.getRequest (Ci.nsIImageLoadingContent.CURRENT_REQUEST);
+      if (request) {
+        status.requestImageStatus = request.imageStatus;
+        status.requestURI = request.URI;
+        var errorMask = Ci.imgIRequest.STATUS_ERROR;
+        if (typeof Ci.imgIRequest.STATUS_LOAD_PARTIAL !== "undefined") {
+          errorMask |= Ci.imgIRequest.STATUS_LOAD_PARTIAL;
+        }
+        status.isErrored = ((request.imageStatus & errorMask) != 0);
+      }
+    }
+    catch (e if e.result == Cr.NS_ERROR_NO_INTERFACE) {
+      status.isImage = false;
+    }
+    catch (e) {
+      Cu.reportError (e);
+    }
+
+    return status;
+  };
+
 };
 

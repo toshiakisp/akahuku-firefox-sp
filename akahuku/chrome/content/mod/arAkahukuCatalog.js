@@ -5238,25 +5238,14 @@ var arAkahukuCatalog = {
     nodes = targetDocument.getElementsByTagName ("img");
     for (i = 0; i < nodes.length; i ++) {
       try {
-        var load
-          = nodes [i].QueryInterface
-          (Components.interfaces.nsIImageLoadingContent);
-        var request
-          = load.getRequest
-          (Components.interfaces.nsIImageLoadingContent
-           .CURRENT_REQUEST);
-        if (!request) {
+        var imgStatus = arAkahukuUtil.getImageStatus (nodes [i]);
+        if (!imgStatus.requestURI) {
           continue;
         }
-                
-        var errorStatus
-          = Components.interfaces.imgIRequest.STATUS_ERROR
-          | Components.interfaces.imgIRequest.STATUS_LOAD_PARTIAL;
-                
-        if (request.imageStatus & errorStatus) {
+        if (imgStatus.isErrored) {
           nodes [i].src = nodes [i].src;
         }
-        else if (request.imageStatus == 0) {
+        else if (imgStatus.requestImageStatus == 0) {
           targetDocument.defaultView.setTimeout
             (function (node) {
               node.src = node.src;
