@@ -3175,7 +3175,7 @@ var arAkahukuP2PServant2 = {
     = Components
     .classes ["@mozilla.org/network/file-input-stream;1"]
     .createInstance (nsIFileInputStream);
-    fstream.init (targetFile, 0x01, 0444, 0);
+    fstream.init (targetFile, 0x01, 292 /*0o444*/, 0);
         
     var sstream
     = Components.classes ["@mozilla.org/io/string-input-stream;1"]
@@ -3223,7 +3223,7 @@ var arAkahukuP2PServant2 = {
           = Components
           .classes ["@mozilla.org/network/file-input-stream;1"]
           .createInstance (nsIFileInputStream);
-        fstream.init (hashFile, 0x01, 0444, 0);
+        fstream.init (hashFile, 0x01, 292/*0o444*/, 0);
             
         var sstream
           = Components.classes
@@ -3270,7 +3270,7 @@ var arAkahukuP2PServant2 = {
     hashFile.initWithPath (filename);
         
     if (!hashFile.exists ()) {
-      hashFile.create (0x00, 0644);
+      hashFile.create (0x00, 420/*0o644*/);
     }
         
     var fstream
@@ -3278,7 +3278,7 @@ var arAkahukuP2PServant2 = {
     ["@mozilla.org/network/file-output-stream;1"]
     .createInstance (nsIFileOutputStream);
     fstream.init (hashFile,
-                  0x02 | 0x08 | 0x20, 0644, 0);
+                  0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
     fstream.write (hash, hash.length);
     fstream.close ();
   },
@@ -4148,14 +4148,14 @@ var arAkahukuP2PServant2 = {
             .createInstance (nsILocalFile);
           targetFile.initWithPath (request.targetFileName);
           if (!targetFile.exists ()) {
-            targetFile.create (0x00, 0644);
+            targetFile.create (0x00, 420/*0o644*/);
           }
           var fstream
             = Components.classes
             ["@mozilla.org/network/file-output-stream;1"]
             .createInstance (nsIFileOutputStream);
           fstream.init (targetFile,
-                        0x02 | 0x08 | 0x20, 0644, 0);
+                        0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
           fstream.write (data, data.length);
           fstream.close ();
                     
@@ -4572,7 +4572,7 @@ var arAkahukuP2PServant2 = {
       var bstream
         = Components.classes ["@mozilla.org/binaryinputstream;1"]
         .createInstance (nsIBinaryInputStream);
-      fstream.init (targetFile, 0x01, 0444, 0);
+      fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
       bstream.setInputStream (fstream);
       body = bstream.readBytes (targetFile.fileSize);
       bstream.close ();

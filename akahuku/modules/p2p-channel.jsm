@@ -418,7 +418,7 @@ arAkahukuP2PChannel.prototype = {
     = Components.classes
     ["@mozilla.org/network/file-input-stream;1"]
     .createInstance (Ci.nsIFileInputStream);
-    fstream.init (targetFile, 0x01, 0444, 0);
+    fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
         
     var bstream
     = Components.classes
@@ -448,7 +448,7 @@ arAkahukuP2PChannel.prototype = {
     = Components.classes
     ["@mozilla.org/network/file-input-stream;1"]
     .createInstance (Ci.nsIFileInputStream);
-    fstream.init (targetFile, 0x01, 0444, 0);
+    fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
         
     var inputStreamChannel
     = Components.classes
@@ -470,7 +470,7 @@ arAkahukuP2PChannel.prototype = {
     = Components.classes
     ["@mozilla.org/network/file-input-stream;1"]
     .createInstance (Ci.nsIFileInputStream);
-    ifstream.init (targetFile, 0x01, 0444, 0);
+    ifstream.init (targetFile, 0x01, 292/*0o444*/, 0);
             
     var fileData = new arAkahukuGZIPFileData ();
     var converter
@@ -496,7 +496,7 @@ arAkahukuP2PChannel.prototype = {
     = Components.classes
     ["@mozilla.org/network/file-output-stream;1"]
     .createInstance (Ci.nsIFileOutputStream);
-    ofstream.init (cacheFile, 0x02 | 0x08 | 0x20, 0644, 0);
+    ofstream.init (cacheFile, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
     ofstream.write (fileData.data, fileData.data.length);
     ofstream.close ();
             
@@ -809,7 +809,7 @@ arAkahukuP2PChannel.prototype = {
     .createInstance (Ci.nsILocalFile);
     targetDir.initWithPath (this._targetDirName);
     if (!targetDir.exists ()) {
-      targetDir.create (Ci.nsIFile.DIRECTORY_TYPE, 0755);
+      targetDir.create (Ci.nsIFile.DIRECTORY_TYPE, 493/*0o755*/);
     }
         
     var cacheFile
@@ -853,7 +853,7 @@ arAkahukuP2PChannel.prototype = {
           = Components
           .classes ["@mozilla.org/network/file-input-stream;1"]
           .createInstance (Ci.nsIFileInputStream);
-        fstream.init (targetFile, 0x01, 0444, 0);
+        fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
                 
         var bstream
           = Components.classes
@@ -883,7 +883,7 @@ arAkahukuP2PChannel.prototype = {
           = Components
           .classes ["@mozilla.org/network/file-input-stream;1"]
           .createInstance (Ci.nsIFileInputStream);
-        fstream.init (targetFile, 0x01, 0444, 0);
+        fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
                 
         if (this._type == 1) {
           this._listener.onDataAvailable

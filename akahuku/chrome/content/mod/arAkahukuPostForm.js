@@ -2866,7 +2866,7 @@ var arAkahukuPostForm = {
       + arAkahukuFile.separator + "akahuku-clip.jpg";
     var file
       = arAkahukuFile.createUnique
-      (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420 /* 0644 */);
+      (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420/*0o644*/);
     filename = file.path;
     arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
       if (!Components.isSuccessCode (code)) {

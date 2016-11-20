@@ -106,7 +106,7 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
   openInputStream : function (offset) {
     this.fstream
     = arAkahukuFile.createFileInputStream
-    (this.targetFile, 0x01, 292/*0444*/, 0,
+    (this.targetFile, 0x01, 292/*0o444*/, 0,
      this.ownerDocument.defaultView);
         
     return this.fstream;
@@ -3099,7 +3099,7 @@ var arAkahukuMHT = {
             
       /* ファイルに書き込む */
       var fstream = arAkahukuFile.createFileOutputStream
-        (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0,
+        (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0,
          targetWindow);
             
       var data = "";
@@ -3600,7 +3600,7 @@ var arAkahukuMHT = {
         else {
           if (arAkahukuMHT.enableAutoUnique) {
             file = arAkahukuFile
-              .createUnique (file.path, 0x00, 420/*0644*/);
+              .createUnique (file.path, 0x00, 420/*0o644*/);
           }
         }
         param.lastFilename = filename;

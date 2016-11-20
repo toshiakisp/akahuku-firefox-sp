@@ -2228,7 +2228,7 @@ var arAkahukuReload = {
         targetFile.initWithPath (path);
         if (targetFile.exists ()) {
           var fstream = arAkahukuFile.createFileInputStream
-            (targetFile, 0x01, 292/*0444*/, 0,
+            (targetFile, 0x01, 292/*0o444*/, 0,
              targetDocument.defaultView);
           _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize, path);
           location = null; // キャッシュ読み不要

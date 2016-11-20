@@ -378,7 +378,7 @@ arAkahukuProtocolHandler.prototype = {
       var fstream
         = Cc ["@mozilla.org/network/file-input-stream;1"]
         .createInstance (Ci.nsIFileInputStream);
-      fstream.init (targetFile, 0x01, 0444, 0);
+      fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
 
       var inputStreamChannel
         = Cc ["@mozilla.org/network/input-stream-channel;1"]
