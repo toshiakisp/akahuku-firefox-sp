@@ -1399,10 +1399,12 @@ var Akahuku = {
     if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath
         && doc.defaultView) {
       try {
+        var itType = Components.interfaces
+          .nsIDOMXPathResult.ORDERED_NODE_ITERATOR_TYPE;
         var iterator =
           doc.evaluate
           (".//blockquote[count(ancestor::center)=0][count(ancestor::table[@border='1' or @class='ama'])=0][count(ancestor::div[@id='akahuku_respanel_content' or @class='ama'])=0]",
-           targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+           targetNode, null, itType, null);
         var node = iterator.iterateNext ();
         while (node) {
           newNodes.push (node);
@@ -1413,7 +1415,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
-             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, itType, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);
@@ -1429,7 +1431,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (xpath,
-             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, itType, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);
