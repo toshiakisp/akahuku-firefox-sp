@@ -101,9 +101,7 @@ arAkahukuContentPolicy.prototype = {
   _enableBoardSelect : false,        /* Boolean  動作する板を指定するか */
   _boardSelectExList : new Object (),/* Object  動作しない板
                                       *   <String 板名, Boolean ダミー> */
-    
-  _old : false,             /* Boolean  旧バージョンかどうか */
-    
+
   // required for XPCOM registration by XPCOMUtils
   classDescription: "Akahuku Content Policy JS Component",
   classID : Components.ID ("{87501060-b014-4b67-9a53-aa5e5af9d52c}"),
@@ -150,19 +148,6 @@ arAkahukuContentPolicy.prototype = {
    * 初期化処理
    */
   _init : function () {
-    /* 旧バージョンのチェック */
-    this._old = "OTHER" in Components.interfaces.nsIContentPolicy;
-    if (this._old) {
-      /* 旧バージョンの場合、定数を取得し直す */
-      this.TYPE_IMAGE = nsIContentPolicy.IMAGE;
-      this.TYPE_OBJECT = nsIContentPolicy.OBJECT;
-      this.TYPE_DOCUMENT = nsIContentPolicy.DOCUMENT;
-      this.TYPE_SUBDOCUMENT = nsIContentPolicy.SUBDOCUMENT;
-      this.ACCEPT = true;
-      this.REJECT_SERVER = false;
-      this.REJECT_OTHER = false;
-    }
-        
     /* pref サービスの取得 */
     if (nsIPrefBranch2 != undefined) {
       this._pref
@@ -176,7 +161,6 @@ arAkahukuContentPolicy.prototype = {
     }
 
     if (typeof (this._pref.addObserver) === "function") {
-      /* 新バージョンの場合、オブザーバを登録する */
       this._observerService
       = Components.classes ["@mozilla.org/observer-service;1"]
       .getService (nsIObserverService);
@@ -205,15 +189,8 @@ arAkahukuContentPolicy.prototype = {
     = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
     .getService (Components.interfaces.mozIJSSubScriptLoader);
     try {
-      if ("import" in Components.utils) {
-        Cu.import ("resource://akahuku/console.jsm");
-        this.console = new AkahukuConsole ();
-      }
-      else {
-        var scope = {};
-        loader.loadSubScript ("resource://akahuku/console.jsm", scope);
-        this.console = new scope.AkahukuConsole ()
-      }
+      Cu.import ("resource://akahuku/console.jsm");
+      this.console = new AkahukuConsole ();
       this.console.prefix = "Akahuku debug ContentPolicy";
       var appinfo
         = Cc ["@mozilla.org/xre/app-info;1"]
@@ -389,26 +366,6 @@ arAkahukuContentPolicy.prototype = {
         this._boardSelectExList = arAkahukuBoard.selectExList;
       }
     }
-  },
-    
-  /**
-   * unescape の代替品
-   * 旧バージョンの場合このスコープでは未定義なので使用する
-   *
-   * @param  String text
-   *         エスケープ解除する文字列
-   * @return String
-   *         エスケープ解除した文字列
-   */
-  _unescape : function (text) {
-    text
-    = text.replace (/%([0-9A-Za-z][0-9A-Za-z])/g,
-                    function (match, part1) {
-                      return String
-                      .fromCharCode (parseInt ("0x" + part1));
-                    });
-        
-    return text;
   },
     
   /**
@@ -695,17 +652,6 @@ arAkahukuContentPolicy.prototype = {
    * @param  String mimeTypeGuess
    *         予想される MIME-Type
    * @param  nsISupports extra
-   *         不明
-   *
-   * 旧バージョンでは
-   * @param  Number contentType
-   *         コンテントの種類
-   * @param  nsIURI contentLocation
-   *         対象の URI
-   * @param  HTMLElement requestOrigin
-   *         ロード先
-   * @param  Window context
-   *         対象のウィンドウ
    */
   shouldLoad : function (contentType, contentLocation,
                          requestOrigin, context,
@@ -742,7 +688,7 @@ arAkahukuContentPolicy.prototype = {
           (context,
            contextDocument.location.href,
            contentLocation.spec,
-           20, targetWindow, -1);
+           20, scope, -1);
       }
       catch (e) { this.console.exception (e);
       }
@@ -750,75 +696,11 @@ arAkahukuContentPolicy.prototype = {
       return this.ACCEPT;
     }
 
-    /* http(s) 以外でも cache の処理等があるのでまだ許可しない
-    if (contentLocation.scheme.substring (0, 4) != "http") {
-      return this.ACCEPT;
-    }
-    */
-        
-    var swapped = false;
-        
-    if (this._enableAll) {
-      /* 全体が有効の場合 */
-            
-      if (this._old) {
-        /* 旧バージョンの場合引数が違うので入れ替える */
-        swapped = true;
-                
-        var targetWindow = context;
-        context = requestOrigin;
-                
-        requestOrigin
-          = Components.classes ["@mozilla.org/network/standard-url;1"]
-          .createInstance (nsIURI);
-        if (targetWindow.document.location) {
-          try {
-            requestOrigin.spec
-              = targetWindow.document.location.href;
-          }
-          catch (e) {
-            /* 古い Mozilla Suite の場合、許可する */
-            return this.ACCEPT;
-          }
-        }
-        else {
-          /* 古い Mozilla Suite でのアンカーによる移動の場合、許可する */
-          return this.ACCEPT;
-        }
-      }
-    }
-        
     if (this._enableP2P
         // http 以外もありえるため二重処理を避けて
         && contentLocation.scheme.substring (0, 4) == "http") {
       /* P2P モードが有効の場合 */
 
-      if (this._old && !swapped) {
-        /* 旧バージョンの場合引数が違うので入れ替える */
-        swapped = true;
-                
-        var targetWindow = context;
-        context = requestOrigin;
-                
-        requestOrigin
-        = Components.classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (nsIURI);
-        if (targetWindow.document.location) {
-          try {
-            requestOrigin.spec
-              = targetWindow.document.location.href;
-          }
-          catch (e) {
-            /* 古い Mozilla Suite の場合、許可する */
-            return this.ACCEPT;
-          }
-        }
-        else {
-          /* 古い Mozilla Suite でのアンカーによる移動の場合、許可する */
-          return this.ACCEPT;
-        }
-      }
-            
       if (contentLocation.host.indexOf ("2chan.net") != -1) {
         /* 2chan.net 内の画像の場合 */
         if (!this._enableP2PTatelog
@@ -889,7 +771,7 @@ arAkahukuContentPolicy.prototype = {
     }
         
     /* キャッシュページからの読込 */
-    if (this._enableAll // eusures !this._old || swapped
+    if (this._enableAll
         && (contentType == this.TYPE_IMAGE ||
           contentType == this.TYPE_SCRIPT ||
           contentType == this.TYPE_STYLESHEET ||
@@ -968,32 +850,7 @@ arAkahukuContentPolicy.prototype = {
         /* ブロックが無効の場合許可する */
         return this.ACCEPT;
       }
-            
-      if (this._old && !swapped) {
-        /* 旧バージョンの場合引数が違うので入れ替える */
-                
-        var targetWindow = context;
-        context = requestOrigin;
-                
-        requestOrigin
-        = Components.classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (nsIURI);
-        if (targetWindow.document.location) {
-          try {
-            requestOrigin.spec
-              = targetWindow.document.location.href;
-          }
-          catch (e) {
-            /* 古い Mozilla Suite の場合、許可する */
-            return this.ACCEPT;
-          }
-        }
-        else {
-          /* 古い Mozilla Suite でのアンカーによる移動の場合、許可する */
-          return this.ACCEPT;
-        }
-      }
-            
+
       if (!(/^(?:https?|akahuku)$/.test (requestOrigin.scheme))) {
         /* 呼出し元が http(s) akahuku 以外の場合は許可する */
         return this.ACCEPT;
