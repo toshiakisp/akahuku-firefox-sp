@@ -74,6 +74,32 @@ else { // Boot as a classic XUL-overlay extension
     catch (e) { Components.utils.reportError (e);
     }
   }
+
+  try {
+    Components.utils.import ("resource://akahuku/console.jsm", this);
+    Akahuku.debug = new AkahukuConsole ();
+    Akahuku.debug.prefix = "Akahuku debug";
+  }
+  catch (e) {
+    Components.utils.reportError (e);
+    // minimum impl. for fail safe
+    Akahuku.debug = {
+      log : function () {},
+      info : function () {},
+      warn : function () {},
+      error : function () {},
+      exception : function (e) {
+        Components.utils.reportError (e);
+      },
+      tic : function () {
+        return {toc: function () { return 0; }};
+      },
+      nsresultToString : function (e) {
+        return "[0x" + Number (e).toString (16) + "]";
+      },
+    };
+  }
+
   Akahuku.init ();
 
   // Transfer old-ext handler calls for JSM to handler calls for XUL

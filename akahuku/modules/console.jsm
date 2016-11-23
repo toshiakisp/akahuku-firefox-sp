@@ -2,6 +2,7 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
+const Cr = Components.results;
 
 var EXPORTED_SYMBOLS = [
   "AkahukuConsole",
@@ -175,6 +176,18 @@ AkahukuConsole.prototype = {
       str += "(" + String (node.location) + ")";
     }
     return str;
+  },
+
+  nsresultToString : function (code) {
+    var codeInHex = "(0x" + code.toString (16) + ")";
+    var codeName = "";
+    for (var name in Cr) {
+      if (code === Cr [name]) {
+        codeName = name + " ";
+        break;
+      }
+    }
+    return codeName + codeInHex;
   },
 };
 
