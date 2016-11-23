@@ -1394,13 +1394,20 @@ function arAkahukuDOMFileChannel (uri, file) {
   if (file instanceof File) {
     this._domFile = file;
   }
-  else if (file instanceof Ci.nsIFile) {
-    this._domFile = new File (file);
+  try {
+    // assuming file instanceof Ci.nsIFile
+    if (typeof File.createFromNsIFile !== "undefined") {
+      // Firefix 52.0+
+      this._domFile = File.createFromNsIFile (file);
+    }
+    else {
+      this._domFile = new File (file); // Firefix 8.0-51.0
+    }
   }
-  else {
+  catch (e) {
     throw Components.Exception
-      ("file must be a DOM File or a nsIFile",
-       Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
+      ("DOMFile construction failed from " + file,
+       e.result || Cr.NS_ERROR_ILLEGAL_VALUE);
   }
   this._reader = null;
   this._listener = null;

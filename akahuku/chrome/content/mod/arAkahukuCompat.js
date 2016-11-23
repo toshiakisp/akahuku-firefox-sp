@@ -279,7 +279,14 @@ var arAkahukuCompat = new function () {
             Components.utils.importGlobalProperties (["File"]);
           }
           if (!(file instanceof File)) {
-            file = new File (file); // Gecko 6.0
+            if (typeof File.createFromNsIFile !== "undefine") {
+              // Firefox 52.0+ (Bug 1303518)
+              file = File.createFromNsIFile (file);
+            }
+            else {
+              // Gecko (6.0)-51.0
+              file = new File (file);
+            }
           }
           filebox.mozSetFileArray ([file]);
         }
