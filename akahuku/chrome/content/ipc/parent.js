@@ -220,7 +220,11 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuP2P, "P2P", "setContextMenuContentData");
 arAkahukuIPCRoot.defineProc
-  (arAkahukuQuote, "P2P", "deleteCacheFiles");
+  (arAkahukuP2P, "P2P", "deleteCacheFiles", {async: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuP2P, "P2P", "update", {async: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuP2P, "P2P", "updateStatusbar", {async: true});
 
 
 

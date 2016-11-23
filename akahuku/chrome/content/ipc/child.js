@@ -292,8 +292,16 @@ arAkahukuIPC.defineProc
   (arAkahukuP2P, "P2P", "deleteCache", {async: true, remote: true});
 
 arAkahukuP2P.deleteCacheFiles = function () {
-  arAkahukuIPC.sendSyncCommand
+  arAkahukuIPC.sendAsyncCommand
     ("P2P/deleteCacheFiles", arguments);
+};
+arAkahukuP2P.update = function () {
+  arAkahukuIPC.sendAsyncCommand
+    ("P2P/update", arguments);
+};
+arAkahukuP2P.updateStatusbar = function () {
+  arAkahukuIPC.sendAsyncCommand
+    ("P2P/updateStatusbar", arguments);
 };
 
 

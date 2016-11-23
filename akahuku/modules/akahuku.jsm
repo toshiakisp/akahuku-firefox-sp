@@ -121,13 +121,6 @@ load ("mod/arAkahukuBoard.js");
 load ("mod/arAkahukuTitle.js");
 load ("mod/arAkahukuFileName.js");
 load ("mod/arAkahukuP2P.js");
-arAkahukuP2P.update = function () { //XUL, XPCOM(p2p-servant)
-};
-arAkahukuP2P.applyP2P = function (targetDocument, targetNode, prefetchOnly) { // XPCOM(p2p-servant)
-  return [-1, -1, -1, -1];
-};
-arAkahukuP2P.prefetchNotify = function () { // XPCOM(p2p-servant)
-};
 load ("mod/arAkahukuLocationInfo.js");
 load ("mod/arAkahukuDelBanner.js");
 load ("mod/arAkahukuThread.js");

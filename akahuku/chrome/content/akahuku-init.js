@@ -33,16 +33,18 @@ if (Akahuku.useFrameScript) {
   Akahuku.debug = new AkahukuConsole ();
   Akahuku.debug.prefix = "Akahuku debug(xul#main)";
 
+  // Start Local inter-Process Call service in the main process
+  Components.utils.import ("resource://akahuku/ipc.jsm", this);
+  arAkahukuIPCRoot.init ();
+  // Prepare P2PServant IPC parent
+  Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+
   Akahuku.init (); // required for main-process IPC childs
 
   window.addEventListener
     ("load", function () {Akahuku.onLoad ();}, false);
   window.addEventListener
     ("unload", function () {Akahuku.onUnload ();}, false);
-
-  // Start Local inter-Process Call service in the main process
-  Components.utils.import ("resource://akahuku/ipc.jsm", this);
-  arAkahukuIPCRoot.init ();
 
   // Set scope for subscripts to be loaded
   arAkahukuIPCRoot.initSubScriptScope (this);

@@ -53,6 +53,9 @@ var arAkahukuP2P = {
   /**
    * 初期化処理
    */
+  init : function () {
+    Cu.import ("resource://akahuku/p2p-service.jsm");
+  },
   initForXUL : function () {
     window.addEventListener
     ("keydown",
@@ -336,7 +339,7 @@ var arAkahukuP2P = {
     }
     
     if (!context.ownerDocument) {
-      setTimeout
+      context.defaultView.setTimeout
       (function (node, src) {
         try {
           node.setAttribute ("src", src);
@@ -444,41 +447,7 @@ var arAkahukuP2P = {
    *         ない場合は null
    */
   getCacheFile : function (uri) {
-    var uinfo = arAkahukuImageURL.parse (uri, true, true);
-    if (!uinfo) {
-      return null;
-    }
-    
-    if (arAkahukuP2P.enableTreatAsSame
-        && uinfo.dir.match (/^([^\-]+)\-([^\-]+)$/)) {
-      uinfo.server = RegExp.$1;
-      uinfo.dir = RegExp.$2;
-    }
-    
-    var targetFileName
-    = arAkahukuP2P.cacheBase
-    + arAkahukuFile.separator
-    + uinfo.server
-    + arAkahukuFile.separator
-    + uinfo.dir
-    + arAkahukuFile.separator
-    + uinfo.type
-    + arAkahukuFile.separator
-    + uinfo.leafNameExt;
-    
-    try {
-      var file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (targetFileName);
-      if (file.exists ()) {
-        return file;
-      }
-    }
-    catch (e) {
-    }
-    
-    return null;
+    return arAkahukuP2PService.utils.getCacheFileIfExists (uri);
   },
   
   /**
@@ -504,45 +473,8 @@ var arAkahukuP2P = {
     if (!isP2P) {
       return;
     }
-        
-    var uinfo = arAkahukuImageURL.parse (src, true, true);
-    if (!uinfo) {
-      return;
-    }
-    
-    var targetFileName
-    = arAkahukuP2P.cacheBase
-    + arAkahukuFile.separator
-    + uinfo.server
-    + arAkahukuFile.separator
-    + uinfo.dir
-    + arAkahukuFile.separator
-    + uinfo.type
-    + arAkahukuFile.separator
-    + uinfo.leafNameExt;
-        
-    arAkahukuP2P.deleteCacheFiles (targetFileName);
-  },
-    
-  deleteCacheFiles : function (targetFileName) {
-    try {
-      var file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (targetFileName);
-      if (file.exists ()) {
-        file.remove (true);
-      }
-      file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      file.initWithPath (targetFileName + ".hash");
-      if (file.exists ()) {
-        file.remove (true);
-      }
-    }
-    catch (e) {
-    }
+
+    arAkahukuP2PService.utils.deleteCache (src);
   },
     
   /**
@@ -562,14 +494,11 @@ var arAkahukuP2P = {
    * P2P の状態を更新する
    */
   update : function () {
-    if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-        == "undefined") {
+    var servant = arAkahukuP2PService.servant;
+    if (!servant) {
+      Akahuku.debug.error ("no arAkahukuP2PService.servant !");
       return;
     }
-        
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
     
     if (arAkahukuP2P.statusbarTimer != null) {
       clearInterval (arAkahukuP2P.statusbarTimer);
@@ -790,10 +719,7 @@ var arAkahukuP2P = {
    * ノードリストを保存する
    */
   saveNodeList : function () {
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
-        
+    var servant = arAkahukuP2PService.servant;
     var nodeList = servant.getNodeList ();
     if (nodeList) {
       arAkahukuConfig.setCharPref
@@ -823,8 +749,8 @@ var arAkahukuP2P = {
    * P2P ステータスバーを更新する
    */
   updateStatusbar : function () {
-    if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-        == "undefined") {
+    var servant = arAkahukuP2PService.servant;
+    if (!servant) {
       return;
     }
     
@@ -840,10 +766,6 @@ var arAkahukuP2P = {
       return;
     }
         
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
-            
     var servantStatus = servant.getStatus (true);
             
     var tmp = servantStatus.split (/,/);
@@ -1094,17 +1016,14 @@ var arAkahukuP2P = {
    *            Number キューにあった数, Number キューに突っ込んだ個数]
    */
   applyP2P : function (targetDocument, targetNode, prefetchOnly) {
-    if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-        == "undefined") {
+    var servant = arAkahukuP2PService.servant;
+    if (!servant) {
+      Akahuku.debug.warn ("no p2p servant available!")
       return [-1, -1, -1, -1];
     }
         
     var nodes, i;
     nodes = targetNode.getElementsByTagName ("a");
-        
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
         
     var now = (new Date ()).getTime ();
         
@@ -1238,11 +1157,7 @@ var arAkahukuP2P = {
   prefetchNotify : function (targetWindow) {
     if (arAkahukuP2P.prefetchList.length > 0) {
       var path = arAkahukuP2P.prefetchList.shift ();
-            
-      var servant
-      = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-      .getService (Components.interfaces.arIAkahukuP2PServant2);
-            
+      var servant = arAkahukuP2PService.servant;
       servant.prefetchFile (path, null);
     }
         

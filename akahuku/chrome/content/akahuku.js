@@ -362,6 +362,7 @@ var Akahuku = {
     arAkahukuLink.init ();
     arAkahukuCatalog.init ();
     arAkahukuConverter.init ();
+    arAkahukuP2P.init ();
     arAkahukuConfig.init ();
     arAkahukuStyle.init ();
 
