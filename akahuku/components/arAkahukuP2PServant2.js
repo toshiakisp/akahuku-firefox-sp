@@ -42,6 +42,8 @@ const nsIThreadManager = Components.interfaces.nsIThreadManager;
 const nsIEventTarget = Components.interfaces.nsIEventTarget;
 const nsIRunnable = Components.interfaces.nsIRunnable;
 
+var debug = {};
+
 /**
  * ポートチェッカ
  *   Inherits From: nsITimerCallback
@@ -2881,6 +2883,7 @@ var arAkahukuP2PServant2 = {
       }
       else if (listener) {
         arAkahukuP2PServant2.recvFail ++;
+        debug.console.warn ("failed due to REQUEST_LIMIT", path);
         listener.onP2PFail ();
       }
       return;
@@ -2891,6 +2894,7 @@ var arAkahukuP2PServant2 = {
        * リレー中は起きない */
       if (listener) {
         arAkahukuP2PServant2.recvFail ++;
+        debug.console.warn ("failed due to TIMEOUT_LIMIT", path);
         listener.onP2PFail ();
       }
       return;
@@ -2919,6 +2923,7 @@ var arAkahukuP2PServant2 = {
         }
         else if (listener) {
           arAkahukuP2PServant2.recvFail ++;
+          debug.console.warn ("failed due to illegal path", path);
           listener.onP2PFail ();
         }
         return;
@@ -2932,6 +2937,7 @@ var arAkahukuP2PServant2 = {
       }
       else if (listener) {
         arAkahukuP2PServant2.recvFail ++;
+        debug.console.warn ("failed due to illegal path (2)", path);
         listener.onP2PFail ();
       }
       return;
@@ -3142,6 +3148,7 @@ var arAkahukuP2PServant2 = {
         }
         else if (listener) {
           arAkahukuP2PServant2.recvFail ++;
+          debug.console.warn ("failed due to error", e, path);
           listener.onP2PFail ();
         }
         return;
@@ -5059,18 +5066,27 @@ function NSGetModule (compMgr, fileSpec) {
   return arAkahukuP2PServant2Module;
 }
 
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+/**
+ * デバッグ用出力 debug.console
+ *   XPCOMの初期化が早くCu.import (...)が失敗する旧バージョンのため
+ *   実行時に import するよう lazy getter として用意する
+ */
+XPCOMUtils.defineLazyGetter (debug, "console", function () {
+  Components.utils.import ("resource://akahuku/console.jsm");
+  var console = new AkahukuConsole ();
+  console.prefix = "Akahuku P2P XPCOM";
+  return console;
+});
+
 /**
  * Gecko 2.0 以降でのXPCOMコンポーネントのインタフェース
  */
 var NSGetFactory;
-try {
-  Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-  
+if (typeof XPCOMUtils.generateNSGetFactory !== "undefined") {
   arAkahukuP2PServant2_P.prototype.classID
     = Components.ID ("{e2470698-e238-40f5-8b09-c3e617aae84c}");
   NSGetFactory = XPCOMUtils.generateNSGetFactory ([arAkahukuP2PServant2_P]);
-}
-catch (e) {
-  Components.utils.reportError (e);
 }
 
