@@ -342,7 +342,7 @@ AkahukuIPCResponse.prototype = {
   },
   restoreFromPayload : function (payload)
   {
-    this.name = payload.message;
+    this.name = payload.name;
     this.isSuccess = payload.data.success;
     this.message = payload.data.message;
 
