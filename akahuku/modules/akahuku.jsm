@@ -164,11 +164,13 @@ Akahuku.debug = console;
 
 load ("mod/arAkahukuCache.js");
 
-// IPC in a content process
-Cu.import ("resource://akahuku/ipc.jsm", this);
-arAkahukuIPC.init ();
-// redefine methods for ipc child
-load ("ipc/child.js");
+if (arAkahukuCompat.comparePlatformVersion ("47.*") > 0) {
+  // IPC in a content process or main-process frame
+  Cu.import ("resource://akahuku/ipc.jsm", this);
+  arAkahukuIPC.init ();
+  // redefine methods for ipc child
+  load ("ipc/child.js");
+}
 
 
 // Akahuku initialize (Akahuku.onLoad 相当)
