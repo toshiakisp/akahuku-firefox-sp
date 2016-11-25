@@ -395,5 +395,58 @@ var arAkahukuUtil = new function () {
     return status;
   };
 
+  /**
+   * Timer
+   */
+  var nextTimerId = 1;
+  var timerIds = [];
+
+  var timerCallback = function (callback, args) {
+    this._callback = callback;
+    this._args = args;
+  };
+  timerCallback.prototype = {
+    QueryInterface : function (iid) {
+      if (iid.Equals (Ci.nsITimerCallback) ||
+          iid.Equals (Ci.nsISupports)) {
+        return this;
+      }
+      throw Cr.NS_ERROR_NO_INTERFACE;
+    },
+    notify : function (timer) {
+      this._callback.apply (null, this._args);
+    },
+  };
+
+  /**
+   * setTimeout equivalent without window
+   */
+  this.setTimeout = function (callback, delay) {
+    var id = nextTimerId ++;
+    if (nextTimerId == 0x7fffffff) {
+      nextTimerId = 1;
+    }
+    var args = Array.slice (arguments, 2);
+    var timer
+      = Cc ["@mozilla.org/timer;1"]
+      .createInstance (Ci.nsITimer);
+    timerIds.push ({id: id, timer: timer});
+    var tcb = new timerCallback (callback, args);
+    timer.initWithCallback (tcb, delay, timer.TYPE_ONE_SHOT);
+    return id;
+  };
+  this.clearTimeout = function (id) {
+    if (!(id > 0)) {
+      return;
+    }
+    for (var i = 0; i < timerIds.length; i ++) {
+      if (timerIds [i].id == id) {
+        timerIds [i].timer.cancel ();
+        timerIds.splice (i);
+        return;
+      }
+    }
+  };
+
 };
 
