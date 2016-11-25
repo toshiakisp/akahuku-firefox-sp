@@ -167,31 +167,16 @@ var Akahuku = {
   ensureDocumentParamsSane : function () {
     for (var i = 0; i < Akahuku.documentParams.length; i ++) {
       var param = Akahuku.documentParams [i];
-      if (Akahuku.checkDeadObject (param.targetDocument)) {
+      if (arAkahukuCompat.isDeadWrapper (param.targetDocument)) {
         Akahuku.debug.warn ("drop an document param with dead object");
         Akahuku.documentParams.splice (i, 1);
         i --;
       }
     }
     if (Akahuku.latestParam &&
-        Akahuku.checkDeadObject (Akahuku.latestParam.targetDocument)) {
+        arAkahukuCompat.isDeadWrapper (Akahuku.latestParam.targetDocument)) {
       Akahuku.debug.warn ("drop the latest document param with dead object");
       Akahuku.latestParam = null;
-    }
-  },
-
-  checkDeadObject : function (obj) {
-    if (Components.utils.isDeadWrapper) {
-      // requires Gecko 17?
-      return Components.utils.isDeadWrapper (obj);
-    }
-    try {
-      // 適当なプロパティを参照しようとしてみる
-      obj.defaultView;
-      return false;
-    }
-    catch (e) {
-      return true;
     }
   },
 

@@ -574,5 +574,20 @@ var arAkahukuCompat = new function () {
       return null;
     };
   };
+
+  this.isDeadWrapper = function (object) {
+    if ("isDeadWrapper" in Cu) {
+      // requires Firefox 17?+
+      return Cu.isDeadWrapper (object);
+    }
+    try {
+      String (object);
+      return false;
+    }
+    catch (e) {
+      return true;
+    }
+  };
+
 };
 

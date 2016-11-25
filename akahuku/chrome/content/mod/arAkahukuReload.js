@@ -3765,7 +3765,7 @@ var arAkahukuReload = {
    * @param  boolean 同期を優先するか
    */
   reloadOnDemand : function (doc, trySync) {
-    if (typeof doc === "undefined") { // dead object
+    if (arAkahukuCompat.isDeadWrapper (doc)) {
       return;
     }
 
@@ -3867,7 +3867,9 @@ var arAkahukuReload = {
         // 瞬間的なフォーカスでは動作しないようにタイマー処理
         targetDocument.defaultView
         .setTimeout (function () {
-          if (typeof targetDocument === "undefined") return; //dead obj
+          if (arAkahukuCompat.isDeadWrapper (targetDocument)) {
+            return;
+          }
           if (targetDocument.hasFocus ()) {
             arAkahukuReload.reloadOnDemand (targetDocument);
           }

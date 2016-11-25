@@ -1429,10 +1429,11 @@ arAkahukuMergeItemVisitedCallback.prototype = {
       // (asyncWaitRequests で結果を待たない場合)
       try {
         var td = this.wrappedObject.td;
-        td && arAkahukuCatalog.setCellVisited (td, visited);
+        if (td && !arAkahukuCompat.isDeadWrapper (td)) {
+          arAkahukuCatalog.setCellVisited (td, visited);
+        }
       }
       catch (e) { Akahuku.debug.exception (e);
-        // 既に閉じられてて dead object な場合など
       }
     }
     if (this.list) {

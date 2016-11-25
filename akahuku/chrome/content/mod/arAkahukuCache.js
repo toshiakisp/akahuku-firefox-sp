@@ -364,7 +364,7 @@ Akahuku.Cache = new function () {
            // expires が無いエントリなら処理する必要がない
            return;
          }
-         if (typeof context !== "undefined") { // not a dead object
+         if (!arAkahukuCompat.isDeadWrapper (context)) {
            Akahuku.Cache.enCacheURIContext (context, cacheStatus.key);
          }
        });
