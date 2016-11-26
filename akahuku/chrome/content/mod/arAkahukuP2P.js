@@ -1123,7 +1123,10 @@ var arAkahukuP2P = {
         }
                 
         arAkahukuP2P.prefetchedList [path] = now;
-        arAkahukuP2P.prefetchList.push (path);
+        arAkahukuP2P.prefetchList.push ({
+          path: path,
+          ownerDocument: targetDocument,
+        });
         pushed ++;
       }
             
@@ -1143,9 +1146,9 @@ var arAkahukuP2P = {
     if (arAkahukuP2P.prefetchList.length > 0
         && arAkahukuP2P.prefetchTimer == null) {
       arAkahukuP2P.prefetchTimer
-      = targetDocument.defaultView.setTimeout (function (targetWindow) {
-        arAkahukuP2P.prefetchNotify (targetWindow);
-      }, 500, targetDocument.defaultView);
+      = arAkahukuUtil.setTimeout (function () {
+        arAkahukuP2P.prefetchNotify ();
+      }, 500);
     }
         
     return [found, saved, waiting, pushed];
@@ -1154,17 +1157,27 @@ var arAkahukuP2P = {
   /**
    * プリフェッチする
    */
-  prefetchNotify : function (targetWindow) {
+  prefetchNotify : function () {
     if (arAkahukuP2P.prefetchList.length > 0) {
-      var path = arAkahukuP2P.prefetchList.shift ();
+      var target = arAkahukuP2P.prefetchList.shift ();
+      // 既に閉じたドキュメントからのプリフェッチ要求はスキップ
+      while (target &&
+          arAkahukuCompat.isDeadWrapper (target.ownerDocument)) {
+        target = arAkahukuP2P.prefetchList.shift ();
+      }
+      if (!target) { // no target left
+        arAkahukuP2P.prefetchTimer = null;
+        return;
+      }
+      var path = target.path;
       var servant = arAkahukuP2PService.servant;
       servant.prefetchFile (path, null);
     }
         
     if (arAkahukuP2P.prefetchList.length > 0) {
       arAkahukuP2P.prefetchTimer
-      = targetWindow.setTimeout (function () {
-        arAkahukuP2P.prefetchNotify (targetWindow);
+      = arAkahukuUtil.setTimeout (function () {
+        arAkahukuP2P.prefetchNotify ();
       }, 500);
     }
     else {
