@@ -589,5 +589,18 @@ var arAkahukuCompat = new function () {
     }
   };
 
+  this.toggleSidebar = function (commandID, forceOpen) {
+    if (typeof SidebarUI !== "undefined") {
+      if (forceOpen) {
+        SidebarUI.show (commandID);
+      }
+      else {
+        SidebarUI.toggle (commandID);
+      }
+    }
+    else {
+      toggleSidebar (commandID, forceOpen);
+    }
+  };
 };
 
