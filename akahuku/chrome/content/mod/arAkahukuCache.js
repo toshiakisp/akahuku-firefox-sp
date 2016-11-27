@@ -383,7 +383,6 @@ Akahuku.Cache = new function () {
    */
   this.RedirectedCacheFinder = function () {
     this.openFlag = arAkahukuCompat.CacheStorage.OPEN_READONLY;
-    this._storage = null;
     this._isPending = false;
     this._lastEntry = null;
     this._callback = null;
@@ -407,9 +406,7 @@ Akahuku.Cache = new function () {
       }
       catch (e) { Akahuku.debug.exception (e);
       }
-      this._storage
-        = arAkahukuCompat.CacheStorageService
-        .diskCacheStorage (loadContextInfo, false);
+      this._contextWindow = targetWindow;
     },
     isPending : function () { return this._isPending },
     cancel : function ()
@@ -423,13 +420,11 @@ Akahuku.Cache = new function () {
       this._redirected = 0;
       if (this._isPending)
         throw Components.results.NS_ERROR_IN_PROGRESS;
-      var ios = Components.classes ["@mozilla.org/network/io-service;1"]
-        .getService (Components.interfaces.nsIIOService);
-      var uri = ios.newURI (key, null, null);
       this._callback = callback;
       this._lastEntry = null;
       this._isPending = true;
-      this._storage.asyncOpenURI (uri, "", this.openFlag, this);
+      var source = {url: key, contextWindow: this._contextWindow};
+      Akahuku.Cache.asyncOpenCache (source, this.openFlag, this);
     },
     // nsICacheEntryOpenCallback
     mainThreadOnly : true,
@@ -459,10 +454,8 @@ Akahuku.Cache = new function () {
         this._lastEntry = entry;
         var dest = this._resolveRedirection (entry);
         if (dest) {
-          var ios = Components.classes ["@mozilla.org/network/io-service;1"]
-            .getService (Components.interfaces.nsIIOService);
-          var uri = ios.newURI (dest, null, null);
-          this._storage.asyncOpenURI (uri, "", this.openFlag, this);
+          var source = {url: dest, contextWindow: this._contextWindow};
+          Akahuku.Cache.asyncOpenCache (source, this.openFlag, this);
           return; // dest の onCacheEntryAvailable を待つ
         }
       }
@@ -541,19 +534,14 @@ Akahuku.Cache = new function () {
       }
       catch (e) {
       }
-      var storage = arAkahukuCompat.CacheStorageService
-        .diskCacheStorage (loadContextInfo, false);
 
-      var flag = arAkahukuCompat.CacheStorage.OPEN_READONLY;
-      var ios = Components.classes ["@mozilla.org/network/io-service;1"]
-        .getService (Components.interfaces.nsIIOService);
-
+      var source = {url: ""}; // no contextWindow for destruct
       for (var i=0; i < this.keys.length; i++) {
         var t = this.originalExpireTimes [this.keys [i]];
         var listener = new CacheEtimeRestorer (t);
         try {
-          var uri = ios.newURI (this.keys [i], null, null);
-          storage.asyncOpenURI (uri, "", flag, listener);
+          source.url = this.keys [i];
+          Akahuku.Cache.asyncOpenCacheToRead (source, listener);
         }
         catch (e) { Akahuku.debug.exception (e);
         }
@@ -576,6 +564,10 @@ Akahuku.Cache = new function () {
               if (descriptor) {
                 that.register (descriptor);
                 descriptor.close ();
+              }
+              else {
+                Akahuku.debug.warn ("CachedImageReserver:",
+                  "no cache entry", originalSrc);
               }
             });
       };
