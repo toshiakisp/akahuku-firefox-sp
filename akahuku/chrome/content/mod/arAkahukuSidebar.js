@@ -1809,24 +1809,16 @@ var arAkahukuSidebar = {
         if (link) {
           var tab = null;
           var tabbrowser = document.getElementById ("content");
-          function reloadTarget (browser, targetDocument) {
+          function reloadTarget (browser) {
             try {
-              if (arAkahukuReload.enable
-                  && arAkahukuReload.enableHook
-                  && Akahuku.getDocumentParam (targetDocument)) {
-                arAkahukuReload.diffReloadCore
-                  (targetDocument,
-                   arAkahukuReload.enableHookSync, false);
-              }
-              else {
-                browser.contentWindow
-                  .QueryInterface (Components.interfaces
-                                   .nsIInterfaceRequestor)
-                  .getInterface (Components.interfaces
-                                 .nsIWebNavigation)
-                  .reload (Components.interfaces.nsIWebNavigation
-                           .LOAD_FLAGS_NONE);
-              }
+              var flag
+                = Components.interfaces
+                .nsIWebNavigation.LOAD_FLAGS_NONE;
+              browser.webNavigation.reload (flag)
+            }
+            catch (e if e.result == 0x805e000a) {
+              // NS_ERROR_CONTENT_BLOCKED
+              // (maybe by arAkahukuReload.enableHook)
             }
             catch (e) { Akahuku.debug.exception (e);
             }
@@ -1836,9 +1828,8 @@ var arAkahukuSidebar = {
             for (i =0; i < tabbrowser.tabs.length; i++) {
               tab = tabbrowser.tabs [i];
               var browser = tabbrowser.getBrowserForTab (tab);
-              var targetDocument = browser.contentDocument;
-              if (targetDocument.location.href == link) {
-                reloadTarget (browser, targetDocument);
+              if (browser.currentURI.spec == link) {
+                reloadTarget (browser);
                 break;
               }
               tab = null;
@@ -1853,7 +1844,7 @@ var arAkahukuSidebar = {
                 = tab.linkedBrowser.contentDocument;
               if (targetDocument.location.href == link) {
                 /* リロード */
-                reloadTarget (tab.linkedBrowser, targetDocument);
+                reloadTarget (tab.linkedBrowser);
                 break;
               }
               tab = null;
