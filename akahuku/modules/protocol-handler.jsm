@@ -305,20 +305,7 @@ arAkahukuProtocolHandler.prototype = {
     var param = this.getAkahukuURIParam (uri.spec);
 
     if (!isFile) {
-      if (this.inMainProcess) {
-        var channel
-          = new arAkahukuCacheChannel (param.original, uri);
-      }
-      else { // Content process (e10s)
-        // キャッシュストレージにアクセスしずらいので
-        // LOAD_FROM_CACHE を立てた nsIHttpChannel に任せる
-        // (arAkahukuBypassChannel でラップしてリダイレクトを解決)
-        var channel
-          = new arAkahukuBypassChannel (uri.spec, param.original);
-        channel.enableHeaderBlocker = false;
-        channel.loadFlags = Ci.nsIRequest.LOAD_FROM_CACHE;
-      }
-      return channel;
+      return new arAkahukuCacheChannel (param.original, uri);
     }
     try {
       // from arAkahukuReload.js

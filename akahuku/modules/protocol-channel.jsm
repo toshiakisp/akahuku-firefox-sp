@@ -59,6 +59,16 @@ function newChannel2 (url, loadInfo) {
   }
 }
 
+var inMainProcess = true;
+try {
+  var appinfo
+  = Cc ["@mozilla.org/xre/app-info;1"]
+  .getService (Ci.nsIXULRuntime);
+  inMainProcess = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
+}
+catch (e) { Cu.reportError (e);
+}
+
 /**
  * リファラを送信しないチャネル
  * (画像などドキュメント以外ではクッキーも送受信しない)
@@ -99,16 +109,6 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
 
   if (contentType) {
     this.contentType = contentType;
-  }
-
-  this.inMainProcess = true;
-  try {
-    var appinfo
-      = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-    this.inMainProcess
-      = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
-  }
-  catch (e) { Cu.reportError (e);
   }
 }
 arAkahukuBypassChannel.prototype = {
@@ -348,7 +348,7 @@ arAkahukuBypassChannel.prototype = {
         || !(this._realChannel instanceof Ci.nsIHttpChannel)) {
       return;
     }
-    if (!this.inMainProcess) {
+    if (!inMainProcess) {
       // http-on-* observers only work in the parent process
       return;
     }
@@ -833,7 +833,12 @@ arAkahukuCacheChannel.prototype = {
       throw this.status;
     }
     try {
-      this._asyncOpenCacheEntryToRead (this._key, this);
+      if (inMainProcess) {
+        this._asyncOpenCacheEntryToRead (this._key);
+      }
+      else {
+        this._asyncOpenChannelFromCache (this._key);
+      }
     }
     catch (e) { Components.utils.reportError (e);
       this._isPending = false;
@@ -883,7 +888,7 @@ arAkahukuCacheChannel.prototype = {
     this._streamConverter = null;
   },
 
-  _asyncOpenCacheEntryToRead : function (key, listener)
+  _asyncOpenCacheEntryToRead : function (key)
   {
     var loadContextInfo = arAkahukuCompat.LoadContextInfo.default;
     try {
@@ -951,7 +956,7 @@ arAkahukuCacheChannel.prototype = {
       if (nextKey) {
         this._key = nextKey;
         try {
-          this._asyncOpenCacheEntryToRead (this._key, this);
+          this._asyncOpenCacheEntryToRead (this._key);
         }
         catch (e) {
           if (e.result != Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
@@ -1141,6 +1146,53 @@ arAkahukuCacheChannel.prototype = {
       channel.contentCharset = this.contentCharset; 
     if (this.contentLength)
       channel.contentLength = this.contentLength;
+  },
+
+  _asyncOpenChannelFromCache : function (key)
+  {
+    var channel = newChannel2 (key);
+    channel.loadFlags = Ci.nsIRequest.LOAD_FROM_CACHE;
+    channel.QueryInterface (Ci.nsIHttpChannel);
+    channel.requestMethod = "HEAD";
+    var that = this;
+    var listener = {
+      onDataAvailable : function (request, context, inputStream, offset, count) {
+        // drop data
+        var sstream
+          = Cc ["@mozilla.org/scriptableinputstream;1"]
+          .createInstance (Ci.nsIScriptableInputStream);
+        sstream.init (inputStream);
+        sstream.read (count);
+      },
+      onStartRequest : function (request, context) {},
+      onStopRequest : function (request, context, statusCode) {
+        request.QueryInterface (Ci.nsIHttpChannel);
+        if (Components.isSuccessCode (statusCode) &&
+            request.responseStatus == 200) {
+          // cache hit
+          var channel = newChannel2 (that._key);
+          that._setupReplacementChannel (channel);
+          channel.loadFlags = Ci.nsIRequest.LOAD_FROM_CACHE;
+          var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
+          verifyHelper.init
+            (that, channel, Ci.nsIChannelEventSink.REDIRECT_INTERNAL, that);
+          that._waitingForRedirectCallback = true;
+          that._redirectChannel = channel;
+        }
+        else {
+          // no valid cache
+          that._key = that._candidates.shift ();
+          if (that._key) {
+            that._asyncOpenChannelFromCache (that._key);
+          }
+          else {
+            that._redirectChannel = that._createFailChannel (that.URI);
+            that.onRedirectVerifyCallback (Cr.NS_OK);
+          }
+        }
+      },
+    };
+    channel.asyncOpen (listener, null);
   },
 
   _createFailChannel : function (uri) 
