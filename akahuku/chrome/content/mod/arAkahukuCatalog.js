@@ -2279,11 +2279,15 @@ var arAkahukuCatalog = {
       style
       .addRule (catcell,
                 "width: " + w + ";")
-      .addRule (catcell + " .akahuku_native_comment,"
-                + catcell + " .akahuku_comment",
+      .addRule (catcell + " .akahuku_native_comment",
                 "display: inline-block;"
                 + "max-width: " + w + ";"
                 + "word-break: break-all;")
+      .addRule (catcell + " div.akahuku_comment",
+                "max-width: " + w + ";"
+                + "word-break: break-all;"
+                + "font-size: 8pt;"
+                + "overflow: hidden;")
 
       if (arAkahukuCatalog.cellWidthMaxLines >= 0) {
         var lineHeight = 1.1;
@@ -2366,6 +2370,13 @@ var arAkahukuCatalog = {
                     + "width: auto !important;");
         }
       }
+    }
+    else {
+      style
+      .addRule (catcell + " div.akahuku_comment",
+                "max-width: 50px;"
+                + "font-size: 8pt;"
+                + "overflow: hidden;")
     }
   },
     
@@ -3756,9 +3767,6 @@ var arAkahukuCatalog = {
         
     node = targetDocument.createElement ("div");
     node.className = "akahuku_comment";
-    node.style.maxWidth = "50px";
-    node.style.overflow = "hidden";
-    node.style.fontSize = "8pt";
     var font
     = arAkahukuCatalog.getReplyCountNode (tdElement);
     if (font) {
