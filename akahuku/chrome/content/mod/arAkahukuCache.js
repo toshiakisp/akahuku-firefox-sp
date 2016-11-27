@@ -657,7 +657,6 @@ Akahuku.Cache = new function () {
     }
     if (!source.contextWindow && typeof window !== "undefined") {
       source.contextWindow = window;
-      Akahuku.debug.warn ("no valid triggeringNode, use XUL window");
     }
     return source;
   }

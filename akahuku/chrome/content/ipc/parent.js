@@ -17,11 +17,17 @@ var arAkahukuCacheIPCWrapper = {
 
   asyncOpenCache : function (source, flag, callback)
   {
-    var browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
+    var messageManager = arAkahukuIPCRoot.messageTarget;
     var sourceObj = {
       url: source,
-      contextWindow: browser.ownerDocument.defaultView.top,
+      contextWindow: null,
     };
+    if (messageManager instanceof Ci.nsIDOMXULElement) {
+      // xul:browser in remote mode
+      var browser = arAkahukuIPCRoot.messageTarget;
+      sourceObj.contextWindow = browser.ownerDocument.defaultView.top;
+      messageManager = browser.messageManager;
+    }
     var wrappedCallback = {
       onCacheEntryCheck : function (entry, appCache) {
         // (how can I send sync IPC command to a content process?)
@@ -37,7 +43,7 @@ var arAkahukuCacheIPCWrapper = {
         if (entry) {
           Cu.import ("resource://akahuku/ipc-cache.jsm");
           var entryP = new arCacheEntryParent (entry);
-          entryP.attachIPCMessageManager (browser.messageManager);
+          entryP.attachIPCMessageManager (messageManager);
           entry = entryP.createIPCTransferable ();
         }
         callback.onCacheEntryAvaiable (entry, isNew, appCache, status);
@@ -63,7 +69,7 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuCacheIPCWrapper,
    "Cache", "asyncOpenCache",
-   {async: true, callback: 3, frame: true,
+   {async: true, callback: 3,
      callbackObjectMethod: ["onCacheEntryCheck","onCacheEntryAvaiable"]});
 
 

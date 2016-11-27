@@ -51,7 +51,9 @@ Akahuku.Cache.asyncOpenCache = function (source, flag, callback) {
   var callbackWrapper = {
     originalCallback: callback,
     messageManager:
-      arAkahukuIPC.getContentFrameMessageManager (contextWindow),
+      contextWindow
+      ? arAkahukuIPC.getContentFrameMessageManager (contextWindow)
+      : arAkahukuIPC.getChildProcessMessageManager (),
     onCacheEntryAvaiable : function (entry, isNew, appCache, status) {
       if (entry) {
         Cu.import ("resource://akahuku/ipc-cache.jsm");
