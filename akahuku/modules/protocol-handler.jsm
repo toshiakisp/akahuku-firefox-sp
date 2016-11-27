@@ -404,9 +404,19 @@ arAkahukuProtocolHandler.prototype = {
   _createThreadCacheDOMFileChannel : function (uri, path) {
     try {
       Cu.importGlobalProperties (["File"]);
-      var file = new File (path);
+      if (typeof File.createFromFileName !== "undefined") {
+        // Firefox 52.0+ (Bug 1303518)
+        file = File.createFromFileName (path);
+      }
+      else {
+        file = new File (path);
+      }
+    }
+    catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+      return this._createThreadCacheFailChannel (uri);
     }
     catch (e) {
+      Cu.reportError (e);
       var file
         = Cc ["@mozilla.org/file/local;1"]
         .createInstance (Ci.nsILocalFile);

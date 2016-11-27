@@ -1394,20 +1394,22 @@ function arAkahukuDOMFileChannel (uri, file) {
   if (file instanceof File) {
     this._domFile = file;
   }
-  try {
+  else {
     // assuming file instanceof Ci.nsIFile
-    if (typeof File.createFromNsIFile !== "undefined") {
-      // Firefix 52.0+
-      this._domFile = File.createFromNsIFile (file);
+    try {
+      if (typeof File.createFromNsIFile !== "undefined") {
+        // Firefix 52.0+
+        this._domFile = File.createFromNsIFile (file);
+      }
+      else {
+        this._domFile = new File (file); // Firefix 8.0-51.0
+      }
     }
-    else {
-      this._domFile = new File (file); // Firefix 8.0-51.0
+    catch (e) {
+      throw Components.Exception
+        ("DOMFile construction failed from " + file,
+         e.result || Cr.NS_ERROR_ILLEGAL_VALUE);
     }
-  }
-  catch (e) {
-    throw Components.Exception
-      ("DOMFile construction failed from " + file,
-       e.result || Cr.NS_ERROR_ILLEGAL_VALUE);
   }
   this._reader = null;
   this._listener = null;
@@ -1416,21 +1418,42 @@ function arAkahukuDOMFileChannel (uri, file) {
   this._isOpened = false;
   this._isStarted = false;
 
+  this.name = uri.spec;
   this.URI = uri.clone ();
   this.originalURI = this.URI.clone ();
 }
 arAkahukuDOMFileChannel.prototype = {
   QueryInterface : function (iid) {
     if (iid.equals (Ci.nsISupports)
+        || iid.equals (Ci.nsIRequest)
+        || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIChannel)) {
       return this;
     }
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
+  /**
+   * nsIInterfaceRequestor.getInterface
+   */
+  getInterface : function (iid) {
+    if (this.notificationCallbacks) {
+      try {
+        return this.notificationCallbacks.getInterface (iid);
+      }
+      catch (e) {
+      }
+    }
+    // try load group's notification callbacks...
+    if (this.loadGroup &&
+        this.loadGroup.notificationCallbacks) {
+      return this.loadGroup.notificationCallbacks.getInterface (iid);
+    }
+    throw Cr.NS_NOINTERFACE;
+  },
   // nsIRequest
   loadFlags : 0,
   loadGroup : null,
-  name : "arAkahukuDOMFileChannel",
+  name : "",
   status : Cr.NS_OK,
   // nsIChannel
   contentCharset : "",
@@ -1490,6 +1513,9 @@ arAkahukuDOMFileChannel.prototype = {
     this._reader = reader;
     this._isPending = true;
     this._isOpened = true;
+    if (this.loadGroup) {
+      this.loadGroup.addRequest (this, null);
+    }
   },
   _onReaderLoadStart : function (reader) {
     if (!this._isStarted) {
@@ -1506,12 +1532,12 @@ arAkahukuDOMFileChannel.prototype = {
     istream.setData (reader.result, 0, reader.result.byteLength);
     this.contentLength = dataLength;
 
-    var inputStream ;
     try {
       this._listener.onDataAvailable
         (this, this._context, istream, 0, istream.available ());
       this._isPending = false;
       this._listener.onStopRequest (this, this._context, Cr.NS_OK);
+      istream.close ();
     }
     catch (e) { Cu.reportError (e);
       this._isPending = false;
@@ -1519,6 +1545,9 @@ arAkahukuDOMFileChannel.prototype = {
 
     this._listener = null;
     this._context = null;
+    if (this.loadGroup) {
+      this.loadGroup.removeRequest (this, null, this.status);
+    }
   },
   _onReaderError : function (event) {
     this.status = Cr.NS_BINDING_FAILED;
@@ -1541,6 +1570,9 @@ arAkahukuDOMFileChannel.prototype = {
     }
     this._listener = null;
     this._context = null;
+    if (this.loadGroup) {
+      this.loadGroup.removeRequest (this, null, this.status);
+    }
   },
 };
 
