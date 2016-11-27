@@ -909,25 +909,10 @@ arAkahukuReloadParam.prototype = {
                 var name;
                 name = info.server + "_" + info.dir;
                                 
-                if (name in arAkahukuSidebar.boards) {
+                if (arAkahukuSidebar.hasBoard (name)) {
                   var ok = true;
                   if (!arAkahukuSidebar.enableBackground) {
-                    var sidebar
-                      = arAkahukuSidebar.getSidebar ();
-                    if (!sidebar.docShell) {
-                      ok = false;
-                    }
-                    else {
-                      var sidebarDocument
-                        = sidebar.contentDocument;
-                      var iframe
-                        = sidebarDocument.getElementById
-                        ("akahuku_sidebar_iframe_"
-                         + name);
-                      if (iframe == null) {
-                        ok = false;
-                      }
-                    }
+                    ok = arAkahukuSidebar.hasTabForBoard (name);
                   }
                   if (ok) {
                     arAkahukuSidebar.onThreadExpired
@@ -1016,25 +1001,10 @@ arAkahukuReloadParam.prototype = {
             var name;
             name = info.server + "_" + info.dir;
                                 
-            if (name in arAkahukuSidebar.boards) {
+            if (arAkahukuSidebar.hasBoard (name)) {
               var ok = true;
               if (!arAkahukuSidebar.enableBackground) {
-                var sidebar
-                  = arAkahukuSidebar.getSidebar ();
-                if (!sidebar.docShell) {
-                  ok = false;
-                }
-                else {
-                  var sidebarDocument
-                    = sidebar.contentDocument;
-                  var iframe
-                    = sidebarDocument.getElementById
-                    ("akahuku_sidebar_iframe_"
-                     + name);
-                  if (iframe == null) {
-                    ok = false;
-                  }
-                }
+                ok = arAkahukuSidebar.hasTabForBoard (name);
               }
               if (ok) {
                 arAkahukuSidebar.onThreadExpired
@@ -3465,22 +3435,10 @@ var arAkahukuReload = {
             
         name = info.server + "_" + info.dir;
             
-        if (name in arAkahukuSidebar.boards) {
+        if (arAkahukuSidebar.hasBoard (name)) {
           var ok = true;
           if (!arAkahukuSidebar.enableBackground) {
-            var sidebar = arAkahukuSidebar.getSidebar ();
-            if (!sidebar.docShell) {
-              ok = false;
-            }
-            else {
-              var sidebarDocument = sidebar.contentDocument;
-              var iframe
-                = sidebarDocument.getElementById
-                ("akahuku_sidebar_iframe_" + name);
-              if (iframe == null) {
-                ok = false;
-              }
-            }
+            ok = arAkahukuSidebar.hasTabForBoard (name);
           }
           if (ok) {
             var nodes = Akahuku.getMessageBQ (targetDocument);

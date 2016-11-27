@@ -3846,10 +3846,8 @@ var arAkahukuCatalog = {
             
       if (arAkahukuCatalog.enableSidebar
           && arAkahukuCatalog.enableSidebarComment) {
-        if (name in arAkahukuSidebar.boards) {
-          var thread
-            = arAkahukuSidebar.boards [name].getThread
-            (num);
+        if (arAkahukuSidebar.hasBoard (name)) {
+          var thread = arAkahukuSidebar.getThread (name, num);
           if (thread && thread.comment) {
             var node
               = arAkahukuCatalog.createCommentNode (tdElement);
@@ -3944,10 +3942,10 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableSidebar
         && arAkahukuCatalog.enableSidebarComment) {
       var name = info.server + "_" + info.dir;
-      if (name in arAkahukuSidebar.boards) {
+      if (arAkahukuSidebar.hasBoard (name)) {
         var thread
-          = arAkahukuSidebar.boards [name].getThread
-          (tdElement.getAttribute ("__thread_id"));
+          = arAkahukuSidebar.getThread
+          (name, tdElement.getAttribute ("__thread_id"));
         if (thread && thread.comment) {
           var node = 
             arAkahukuDOM.getFirstElementByNames
@@ -5570,9 +5568,8 @@ var arAkahukuCatalog = {
           .location_info;
           var name = info.server + "_" + info.dir;
           var thread = null;
-          if (name in arAkahukuSidebar.boards) {
-            thread
-            = arAkahukuSidebar.boards [name].getThread (num);
+          if (arAkahukuSidebar.hasBoard (name)) {
+            thread = arAkahukuSidebar.getThread (name, num);
           }
           if (thread && thread.comment) { //コメント情報は必須
             var key = "t" + num;

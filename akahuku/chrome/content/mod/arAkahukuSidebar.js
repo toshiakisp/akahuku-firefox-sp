@@ -402,11 +402,6 @@ var arAkahukuSidebar = {
     arAkahukuSidebar.enable
     = arAkahukuConfig
     .initPref ("bool", "akahuku.sidebar", false);
-    var broadcaster = document.getElementById ("mainBroadcasterSet");
-    if (broadcaster == null) {
-      /* Mozilla Suite では無効にする */
-      arAkahukuSidebar.enable = false;
-    }
     if (arAkahukuSidebar.enable) {
       arAkahukuSidebar.enableBackground
       = arAkahukuConfig
@@ -588,6 +583,101 @@ var arAkahukuSidebar = {
 
     return documents;
   },
+
+  /**
+   * スレッドを更新or追加する [XUL]
+   */
+  updateThreadItem : function (item) {
+    var board = null;
+    if (item.boardName in arAkahukuSidebar.boards) {
+      board = arAkahukuSidebar.boards [item.boardName];
+    }
+    else {
+      board = new arAkahukuSidebarBoard ();
+      arAkahukuSidebar.boards [item.boardName] = board;
+    }
+
+    var append = false;
+    var thread = board.getThread (item.num);
+    if (thread == null) {
+      if (item.type === "expired" || item.type === "changed") {
+        return;
+      }
+      append = true;
+      thread = new arAkahukuSidebarThread ();
+    }
+    else if (item.type === "expired") {
+      thread.isExpired = true;
+      thread.warning = ""; // 消滅後は赤字にしない
+      arAkahukuSidebar.sort (name);
+      arAkahukuSidebar.update (name);
+      if (arAkahukuSidebar.enableMarked) {
+        arAkahukuSidebar.sort ("*_*");
+        arAkahukuSidebar.update ("*_*");
+      }
+      return;
+    }
+
+    thread.num = item.num;
+
+    if (typeof item.threadLink !== "undefined") {
+      thread.threadLink = item.threadLink;
+    }
+    if (typeof item.reply !== "undefined" &&
+        item.reply >= 0) {
+      if (append) {
+        thread.lastReply = -1;
+      }
+      else {
+        thread.lastReply = thread.reply;
+      }
+      thread.reply = item.reply;
+    }
+
+    if (item.type === "normal" || item.type === "changed") {
+      if (typeof item.expire !== "undefined") {
+        thread.expire = item.expire;
+      }
+      if (typeof item.warning !== "undefined") {
+        thread.warning = item.warning;
+      }
+      if (typeof item.lastNum !== "undefined" &&
+          item.lastNum >= 0) {
+        thread.lastNum = item.lastNum;
+      }
+    }
+
+    if (item.type === "normal") {
+      thread.comment = item.comment;
+      thread.imageNum = item.imageNum;
+      thread.imageSrc = item.imageSrc;
+      thread.imageSrcType = 1;
+      thread.imageLink = item.imageLink;
+      thread.imageWidth = item.imageWidth;
+      thread.imageHeight = item.imageHeight;
+      thread.imageBytes = item.imageBytes;
+      thread.imageExt = item.imageExt;
+    }
+    else if (item.type === "catalog") {
+      if (thread.lastNum <= 0) {
+        thread.lastNum = item.lastNum;
+      }
+      // カタログからもコメントを取得する
+      thread.commentInCatalog = item.comment;
+      thread.imageNum = item.imageNum;
+      if (thread.imageSrcType != 1) {
+        thread.imageSrc = item.imageSrc;
+        thread.imageSrcType = item.imageSrcType;
+      }
+    }
+
+    if (append) {
+      board.addThread (thread);
+    }
+    else {
+      board.validateThread (thread.num);
+    }
+  },
     
   /**
    * 通常モードをロードしたイベント
@@ -606,16 +696,6 @@ var arAkahukuSidebar = {
     var imageSrc, imageLink, imageNum;
     var imageWidth, imageHeight, imageBytes, imageExt;
     var threadLink;
-        
-    var board = null;
-        
-    if (name in arAkahukuSidebar.boards) {
-      board = arAkahukuSidebar.boards [name];
-    }
-    else {
-      board = new arAkahukuSidebarBoard ();
-      arAkahukuSidebar.boards [name] = board;
-    }
         
     var nodes = Akahuku.getMessageBQ (targetDocument);
     for (var i = 0; i < nodes.length; i ++) {
@@ -641,7 +721,8 @@ var arAkahukuSidebar = {
                         
             node = node.previousSibling;
           }
-          board.validateThread (thread.num);
+          arAkahukuSidebar.updateThreadItem (thread);
+          thread = null;
         }
                 
         node = nodes [i];
@@ -762,50 +843,35 @@ var arAkahukuSidebar = {
           node = node.nextSibling;
         }
                 
-        var append = false;
-        thread = board.getThread (num);
-        if (thread == null) {
-          append = true;
-          thread = new arAkahukuSidebarThread ();
-        }
-                
-        thread.num = num;
-        thread.comment = comment;
-                
-        if (append) {
-          thread.lastReply = -1;
-        }
-        else {
-          thread.lastReply = thread.reply;
-        }
-        thread.reply = reply;
-        thread.expire = expire;
-        thread.warning = warning;
-        thread.lastNum = num;
-                
         if (name.match (/cgi_(b|9|10)/)
             && imageSrc) {
           imageSrc = imageSrc.replace (/img\.2chan\.net/,
                                        "cgi.2chan.net");
         }
                 
-        thread.imageSrc = imageSrc;
-        thread.imageSrcType = 1;
-        thread.imageLink = imageLink;
-        thread.imageNum = imageNum;
-        thread.imageWidth = imageWidth;
-        thread.imageHeight = imageHeight;
-        thread.imageBytes = imageBytes;
-        thread.imageExt = imageExt;
-                
         if (threadLink == "") {
           threadLink = targetDocument.location.href;
         }
-        thread.threadLink = threadLink;
                 
-        if (append) {
-          board.addThread (thread);
-        }
+        thread = {
+          type: "normal",
+          boardName: name,
+          num: num,
+          reply: reply,
+          threadLink: threadLink,
+          imageSrc: imageSrc,
+          imageSrcType: 1,
+          imageNum: imageNum,
+          imageLink: imageLink,
+          imageWidth: imageWidth,
+          imageHeight: imageHeight,
+          imageBytes: imageBytes,
+          imageExt: imageExt,
+          comment: comment,
+          expire: expire,
+          warning: warning,
+          lastNum: num,
+        };
       }
       else {
         /* レス */
@@ -836,7 +902,7 @@ var arAkahukuSidebar = {
       }
     }
     if (thread) {
-      board.validateThread (thread.num);
+      arAkahukuSidebar.updateThreadItem (thread);
     }
   },
     
@@ -871,16 +937,6 @@ var arAkahukuSidebar = {
     var imageSrcType;
     var comment;
         
-    var board = null;
-        
-    if (name in arAkahukuSidebar.boards) {
-      board = arAkahukuSidebar.boards [name];
-    }
-    else {
-      board = new arAkahukuSidebarBoard ();
-      arAkahukuSidebar.boards [name] = board;
-    }
-    
     var nodes = targetDocument.getElementsByTagName ("td");
     for (var i = 0; i < nodes.length; i ++) {
       node = nodes [i].firstChild;
@@ -954,43 +1010,18 @@ var arAkahukuSidebar = {
         continue;
       }
             
-      var append = false;
-      thread = board.getThread (num);
-      if (thread == null) {
-        append = true;
-        thread = new arAkahukuSidebarThread ();
-      }
-            
-      thread.num = num;
-            
-      if (append) {
-        thread.lastReply = -1;
-      }
-      else {
-        thread.lastReply = thread.reply;
-      }
-      thread.reply = reply;
-      if (thread.lastNum <= 0) {
-        thread.lastNum = -(100 + i);
-      }
-            
-      if (thread.imageSrcType != 1) {
-        thread.imageSrc = imageSrc;
-        thread.imageSrcType = imageSrcType;
-      }
-      thread.imageNum = imageNum;
-            
-      thread.threadLink = threadLink;
-
-      // カタログからもコメントを取得する
-      thread.commentInCatalog = comment;
-            
-      if (append) {
-        board.addThread (thread);
-      }
-      else {
-        board.validateThread (thread.num);
-      }
+      arAkahukuSidebar.updateThreadItem ({
+        type: "catalog",
+        boardName: name,
+        num: num,
+        reply: reply,
+        threadLink: threadLink,
+        imageSrc: imageSrc,
+        imageSrcType: imageSrcType,
+        imageNum: imageNum,
+        comment: comment,
+        lastNum: -(100 + i),
+      });
     }
   },
     
@@ -1017,29 +1048,11 @@ var arAkahukuSidebar = {
       return;
     }
         
-    if (name in arAkahukuSidebar.boards) {
-      board = arAkahukuSidebar.boards [name];
-    }
-    else {
-      board = new arAkahukuSidebarBoard ();
-      arAkahukuSidebar.boards [name] = board;
-    }
-        
-    thread = board.getThread (num);
-    if (thread == null) {
-      return;
-    }
-        
-    thread.isExpired = true;
-
-    thread.warning = ""; // 消滅後は赤字にしない
-        
-    arAkahukuSidebar.sort (name);
-    arAkahukuSidebar.update (name);
-    if (arAkahukuSidebar.enableMarked) {
-      arAkahukuSidebar.sort ("*_*");
-      arAkahukuSidebar.update ("*_*");
-    }
+    arAkahukuSidebar.updateThreadItem ({
+      type: "expired",
+      boardName: name,
+      num: num,
+    });
   },
     
   /**
@@ -1077,33 +1090,15 @@ var arAkahukuSidebar = {
       return;
     }
         
-    if (name in arAkahukuSidebar.boards) {
-      board = arAkahukuSidebar.boards [name];
-    }
-    else {
-      board = new arAkahukuSidebarBoard ();
-      arAkahukuSidebar.boards [name] = board;
-    }
-        
-    thread = board.getThread (num);
-    if (thread == null) {
-      return;
-    }
-        
-    thread.lastReply = thread.reply;
-    if (reply != null) {
-      thread.reply = reply;
-    }
-    if (expire != null) {
-      thread.expire = expire;
-    }
-    if (warning != null) {
-      thread.warning = warning;
-    }
-    if (lastNum != null) {
-      thread.lastNum = lastNum;
-    }
-    board.validateThread (num);
+    arAkahukuSidebar.updateThreadItem ({
+      type: "changed",
+      boardName: name,
+      num: num,
+      reply: reply || -1,
+      expire: expire || "",
+      warning: warning || "",
+      lastNum: lastNum || -1,
+    });
         
     arAkahukuSidebar.asyncUpdateVisited (name, function () {
       arAkahukuSidebar.sort (name);
@@ -2754,7 +2749,60 @@ var arAkahukuSidebar = {
       deck.selectedPanel = box;
     }
   },
+
+  /**
+   * サイドバーに板のタブがあるか [XUL]
+   *
+   * @param String name
+   */
+  hasTabForBoard : function (name) {
+    var sidebar = arAkahukuSidebar.getSidebar ();
+    if (!sidebar.docShell) {
+      return false;
+    }
+    var sidebarDocument;
+    try {
+      sidebarDocument = sidebar.contentDocument;
+    }
+    catch (e) {
+      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
+    }
+    var iframe
+      = sidebarDocument
+      .getElementById ("akahuku_sidebar_iframe_" + name);
+    if (iframe == null) {
+      return false;
+    }
+    return true;
+  },
     
+  /**
+   * サイドバーに板の情報があるか [XUL]
+   *
+   * @param String name
+   * @return Boolean
+   */
+  hasBoard : function (name) {
+    return (name in arAkahukuSidebar.boards);
+  },
+
+  /**
+   * スレの情報を得る [XUL]
+   *
+   * @param String boardName
+   * @param Number threadNumber
+   * @return Object or null
+   */
+  getThread : function (boardName, threadNumber) {
+    if (arAkahukuSidebar.hasBoard (boardName)) {
+      var thread = arAkahukuSidebar.boards [boardName].getThread (threadNumber);
+      if (thread) {
+        return JSON.parse (JSON.stringify (thread));
+      }
+    }
+    return null;
+  },
+
   /**
    * サイドバーを更新する
    *
@@ -2769,21 +2817,7 @@ var arAkahukuSidebar = {
       var name = info.server + "_" + info.dir;
             
       if (!arAkahukuSidebar.enableBackground) {
-        var sidebar = arAkahukuSidebar.getSidebar ();
-        if (!sidebar.docShell) {
-          return;
-        }
-        var sidebarDocument;
-        try {
-          sidebarDocument = sidebar.contentDocument;
-        }
-        catch (e) {
-          sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
-        }
-        var iframe
-          = sidebarDocument
-          .getElementById ("akahuku_sidebar_iframe_" + name);
-        if (iframe == null) {
+        if (!arAkahukuSidebar.hasTabForBoard (name)) {
           return;
         }
       }
