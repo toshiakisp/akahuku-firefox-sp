@@ -327,6 +327,36 @@ arAkahukuQuote.searchInNewTabXUL = function () {
 
 
 
+arAkahukuSidebar.updateThreadItem = function () {
+  arAkahukuIPC.sendAsyncCommand ("Sidebar/updateThreadItem", arguments);
+};
+arAkahukuSidebar.hasTabForBoard = function () {
+  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasTabForBoard", arguments);
+};
+arAkahukuSidebar.hasBoard = function () {
+  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasBoard", arguments);
+};
+arAkahukuSidebar.getThread = function () {
+  return arAkahukuIPC.sendSyncCommand ("Sidebar/getThread", arguments);
+};
+arAkahukuSidebar.asyncUpdateVisited = function () {
+  arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", arguments);
+}
+arAkahukuSidebar.sort = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/sort", arguments);
+};
+arAkahukuSidebar.updateMarked = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/updateMarked", arguments);
+};
+arAkahukuSidebar.update = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/update", arguments);
+};
+arAkahukuSidebar.term = function () {
+  // don't save in child processes
+};
+
+
+
 arAkahukuSound.init = function () {
   // Create simple object providing necessary "play" function
   // because nsISound instance can not be created in child processes.

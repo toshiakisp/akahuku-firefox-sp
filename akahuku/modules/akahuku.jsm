@@ -143,13 +143,6 @@ load ("mod/arAkahukuBloomer.js");
 load ("mod/arAkahukuJPEG.js");
 load ("mod/arAkahukuTab.js");
 load ("mod/arAkahukuSidebar.js");
-arAkahukuSidebar.getConfig = function () {
-  //FIXME: XUL document
-};
-arAkahukuSidebar.applyOnXul = arAkahukuSidebar.apply;
-arAkahukuSidebar.apply = function (targetDocument, info) {
-  // FIXME: XUL側の処理だがcontent documentが必要で…
-};
 
 
 load ("akahuku.js");

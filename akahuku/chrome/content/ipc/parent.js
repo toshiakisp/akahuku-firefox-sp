@@ -239,6 +239,26 @@ arAkahukuIPCRoot.defineProc
 
 
 
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "updateThreadItem", {async: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "hasTabForBoard");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "hasBoard");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "getThread");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "asyncUpdateVisited",
+   {async: true, callback: 2});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "sort");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "updateMarked");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "update");
+
+
+
 var arAkahukuSoundIPCHelper = {
   play : function (uri) {
     if (!arAkahukuSound.sound) {
