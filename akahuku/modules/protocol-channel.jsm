@@ -34,6 +34,31 @@ catch (e) {
   Components.utils.reportError (e);
 }
 
+function newChannel2 (url, loadInfo) {
+  var ios
+    = Cc ["@mozilla.org/network/io-service;1"]
+    .getService (Ci.nsIIOService);
+  if (loadInfo && "newChannelFromURIWithLoadInfo" in ios) {
+    // requires Firefox 37+
+    var uri = ios.newURI (url, null, null);
+    return ios.newChannelFromURIWithLoadInfo (uri, loadInfo);
+  }
+  if ("newChannel2" in ios) {
+    var ssm
+      = Cc ["@mozilla.org/scriptsecuritymanager;1"]
+      .getService (Ci.nsIScriptSecurityManager);
+    return ios.newChannel2 (url, null, null,
+        null,
+        ssm.getSystemPrincipal (),
+        null,
+        Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+        Ci.nsIContentPolicy.TYPE_OTHER);
+  }
+  else {
+    return ios.newChannel (url, null, null);
+  }
+}
+
 /**
  * リファラを送信しないチャネル
  * (画像などドキュメント以外ではクッキーも送受信しない)
@@ -61,20 +86,7 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
     var ios
       = Cc ["@mozilla.org/network/io-service;1"]
       .getService (Ci.nsIIOService);
-    if ("newChannel2" in ios) {
-      var ssm
-        = Cc ["@mozilla.org/scriptsecuritymanager;1"]
-        .getService (Ci.nsIScriptSecurityManager);
-      this._realChannel = ios.newChannel2 (originalURI, null, null,
-          null,
-          ssm.getSystemPrincipal (),
-          null,
-          Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-          Ci.nsIContentPolicy.TYPE_OTHER);
-    }
-    else {
-      this._realChannel = ios.newChannel (originalURI, null, null);
-    }
+    this._realChannel = newChannel2 (originalURI);
     this.originalURI = ios.newURI (uri, null, null);
     // hide a real channel's originalURI
     // to bypass ScriptSecurityManager's CheckLoadURI
@@ -604,25 +616,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
   asyncOpen : function (listener, context) {
     this._listener = listener;
     this._context = context;
-        
-    var channel;
-    var ios
-      = Cc ["@mozilla.org/network/io-service;1"]
-      .getService (Ci.nsIIOService);
-    if ("newChannel2" in ios) {
-      var ssm
-        = Cc ["@mozilla.org/scriptsecuritymanager;1"]
-        .getService (Ci.nsIScriptSecurityManager);
-      channel = ios.newChannel2 (this._originalURI, null, null,
-          null,
-          ssm.getSystemPrincipal (),
-          null,
-          Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-          Ci.nsIContentPolicy.TYPE_OTHER);
-    }
-    else {
-      channel = ios.newChannel (this._originalURI, null, null);
-    }
+    var channel = newChannel2 (this._originalURI);
     channel.asyncOpen (this, null);
   },
     
@@ -993,23 +987,7 @@ arAkahukuCacheChannel.prototype = {
         if (status == Cr.NS_ERROR_CACHE_KEY_NOT_FOUND
             && this.loadFlags & Ci.nsIRequest.LOAD_BYPASS_CACHE) {
           // Shift-Reload ではキャッシュが無ければ普通に開く
-          var ios
-            = Cc ["@mozilla.org/network/io-service;1"]
-            .getService (Ci.nsIIOService);
-          if ("newChannel2" in ios) {
-            var ssm
-              = Cc ["@mozilla.org/scriptsecuritymanager;1"]
-              .getService (Ci.nsIScriptSecurityManager);
-            ischannel = ios.newChannel2 (this._originalKey, null, null,
-                null,
-                ssm.getSystemPrincipal (),
-                null,
-                Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                Ci.nsIContentPolicy.TYPE_OTHER);
-          }
-          else {
-            ischannel = ios.newChannel (this._originalKey, null, null);
-          }
+          ischannel = newChannel2 (this._originalKey);
           this._setupReplacementChannel (ischannel);
           doRedirect = true;
         }
