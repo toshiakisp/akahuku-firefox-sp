@@ -994,7 +994,10 @@ var arAkahukuSidebar = {
           }
         }
         else if (nodeName == "small") {
-          comment = node.textContent;
+          if (!comment) {
+            // 合間合間に等の追加要素で上書きされないように
+            comment = node.textContent;
+          }
         }
         else if (nodeName == "font") {
           if (node.innerHTML.match (/^(?:(\d+)|\((\d+)\))$/)) {
