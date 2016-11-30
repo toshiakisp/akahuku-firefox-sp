@@ -57,6 +57,7 @@ var arAkahukuP2P = {
     Cu.import ("resource://akahuku/p2p-service.jsm");
   },
   initForXUL : function () {
+    arAkahukuP2P.update ();
     window.addEventListener
     ("keydown",
      function () {

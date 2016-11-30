@@ -92,8 +92,6 @@ var arAkahukuConfig = {
       arAkahukuBoard.getConfig ();
       arAkahukuP2P.getConfig ();
     }
-        
-    arAkahukuP2P.update ();
   },
     
   /**
