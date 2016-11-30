@@ -1145,6 +1145,7 @@ var AkahukuOptions = {
       ["int",  "sidebar.max.view", 50],
       ["int",  "sidebar.max.cache", 100],
       ["int",  "sidebar.thumbnail.size", 64],
+      ["char", "sidebar.threadclick.after", "none"],
       ["bool", "sidebar.shortcut", false],
       ["char", "sidebar.shortcut.keycode", "VK_R"],
       ["bool", "sidebar.shortcut.modifiers.alt", false],
@@ -4214,6 +4215,9 @@ var AkahukuOptions = {
     = document.getElementById ("sidebar_max_cache_label").disabled
     = document.getElementById ("sidebar_thumbnail_size").disabled
     = document.getElementById ("sidebar_thumbnail_size_label").disabled
+    = document.getElementById ("sidebar_threadclick_after").disabled
+    = document.getElementById ("sidebar_threadclick_after_label").disabled
+    = document.getElementById ("sidebar_threadclick_after_label2").disabled
     = document.getElementById ("sidebar_save").disabled
     = document.getElementById ("sidebar_board_select_in_list").disabled
     = document.getElementById ("sidebar_board_select_in_label").disabled

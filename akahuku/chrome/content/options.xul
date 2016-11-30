@@ -1981,6 +1981,22 @@
                        value="サムネのサイズ" />
                 <textbox id="sidebar_thumbnail_size" size="6" />
               </box>
+              <box orient="horizontal" align="center">
+                <label id="sidebar_threadclick_after_label"
+                       control="sidebar_threadclick_after"
+                       value="既存のスレをクリック時" />
+                <menulist id="sidebar_threadclick_after"
+                        tooltiptext="(デフォルト:タブ切替のみ) タブ切替を行った後にリロード等を行える。一部アクション(*)は「続きを読む」機能の有効化が必要。">
+                  <menupopup id="sidebar_threadclick_after_menu">
+                    <menuitem value="none" label="タブ切替のみ" />
+                    <menuitem value="reload" label="リロード" />
+                    <menuitem value="diff" label="続きを読む *" />
+                    <menuitem value="sync" label="同期 *" />
+                  </menupopup>
+                </menulist>
+                <label id="sidebar_threadclick_after_label2"
+                       value=".sp" class="sp"/>
+              </box>
               <checkbox id="sidebar_shortcut" checked="false"
                         label="ショートカットキー"
                         oncommand="AkahukuOptions.checkSidebarShortcut ();" />

@@ -3695,6 +3695,17 @@ var arAkahukuReload = {
       }
     }
   },
+
+  /**
+   * 指定 browser のコンテンツで可能なら"続きを読む"
+   */
+  diffReloadForBrowser : function (browser, doSync) {
+    var targetDocument = browser.contentDocument;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (param.reload_param) {
+      arAkahukuReload.diffReloadCore (targetDocument, doSync, false);
+    }
+  },
     
   /**
    * キャッシュをバックアップする

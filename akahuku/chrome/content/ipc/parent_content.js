@@ -145,6 +145,14 @@ arAkahukuLink.onVisit = function (aURI, aVisitID, aTime, aSessionID,
 
 
 
+arAkahukuReload.diffReloadForBrowser = function (browser, doSync) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("Reload/diffReloadForBrowser", [null, doSync],
+     browser.messageManager);
+};
+
+
+
 //
 // In XUL, document params are registered by linking its browser.
 //

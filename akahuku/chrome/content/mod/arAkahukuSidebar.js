@@ -237,6 +237,8 @@ var arAkahukuSidebar = {
                                *   [String 板名, ...] */
     
   enableMarked : false,       /* Boolean  マークしたスレのタブを作る */
+
+  afterThreadClick : "none",   /* String  既存のスレをクリック時 */
     
   shortcutKeycode : 0,              /* Number  ショートカットキーのキーコード */
   shortcutModifiersAlt : false,     /* Boolean  ショートカットキーの Alt */
@@ -459,6 +461,10 @@ var arAkahukuSidebar = {
             return "";
           });
       }
+
+      arAkahukuSidebar.afterThreadClick
+      = arAkahukuConfig
+      .initPref ("char", "akahuku.sidebar.threadclick.after", "none");
             
       arAkahukuSidebar.enableShortcut
       = arAkahukuConfig
@@ -1807,29 +1813,16 @@ var arAkahukuSidebar = {
         link = node.getAttribute ("__link");
                 
         if (link) {
+          var targetBrowser = null;
           var tab = null;
           var tabbrowser = document.getElementById ("content");
-          function reloadTarget (browser) {
-            try {
-              var flag
-                = Components.interfaces
-                .nsIWebNavigation.LOAD_FLAGS_NONE;
-              browser.webNavigation.reload (flag)
-            }
-            catch (e if e.result == 0x805e000a) {
-              // NS_ERROR_CONTENT_BLOCKED
-              // (maybe by arAkahukuReload.enableHook)
-            }
-            catch (e) { Akahuku.debug.exception (e);
-            }
-          }
           if ("tabs" in tabbrowser) {
             /* Firefox4/Gecko2.0 */
             for (i =0; i < tabbrowser.tabs.length; i++) {
               tab = tabbrowser.tabs [i];
               var browser = tabbrowser.getBrowserForTab (tab);
               if (browser.currentURI.spec == link) {
-                reloadTarget (browser);
+                targetBrowser = browser;
                 break;
               }
               tab = null;
@@ -1843,8 +1836,7 @@ var arAkahukuSidebar = {
               var targetDocument
                 = tab.linkedBrowser.contentDocument;
               if (targetDocument.location.href == link) {
-                /* リロード */
-                reloadTarget (tab.linkedBrowser);
+                targetBrowser = tab.linkedBrowser;
                 break;
               }
               tab = null;
@@ -1852,8 +1844,17 @@ var arAkahukuSidebar = {
           }
           if (tab == null) {
             tab = tabbrowser.addTab (link);
+            tabbrowser.selectedTab = tab;
           }
-          tabbrowser.selectedTab = tab;
+          else if (targetBrowser) {
+            setTimeout (function () {
+              // click イベント終了後にタブ切替をしないと
+              // visibilitychange が生じない
+              tabbrowser.selectedTab = tab;
+              arAkahukuSidebar.updateThreadForBrowser
+                (targetBrowser, arAkahukuSidebar.afterThreadClick);
+            }, 0);
+          }
           break;
         }
       }
@@ -1950,6 +1951,36 @@ var arAkahukuSidebar = {
         }
       }
       node = node.parentNode;
+    }
+  },
+
+  /**
+   * スレを更新する
+   */
+  updateThreadForBrowser : function (browser, type) {
+    switch (type) {
+      case "reload":
+        try {
+          var flag
+            = Components.interfaces
+            .nsIWebNavigation.LOAD_FLAGS_NONE;
+          browser.webNavigation.reload (flag)
+        }
+        catch (e if e.result == 0x805e000a) {
+          // NS_ERROR_CONTENT_BLOCKED
+          // (maybe by arAkahukuReload.enableHook)
+        }
+        catch (e) { Akahuku.debug.exception (e);
+        }
+        break;
+      case "diff":
+        arAkahukuReload.diffReloadForBrowser (browser, false);
+        break;
+      case "sync":
+        arAkahukuReload.diffReloadForBrowser (browser, true);
+        break;
+      case "none":
+      default:
     }
   },
     

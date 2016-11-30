@@ -327,6 +327,21 @@ arAkahukuQuote.searchInNewTabXUL = function () {
 
 
 
+var arAkahukuReloadIPCWrapper = {
+  diffReloadForBrowser : function (browser, doSync) {
+    // minimum equivalent
+    browser = {
+      contentDocument: arAkahukuIPC.messageTarget.content.document,
+    };
+    arAkahukuReload.diffReloadForBrowser (browser, doSync);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuReloadIPCWrapper,
+   "Reload", "diffReloadForBrowser", {async: true, remote: true});
+
+
+
 arAkahukuSidebar.updateThreadItem = function () {
   arAkahukuIPC.sendAsyncCommand ("Sidebar/updateThreadItem", arguments);
 };
