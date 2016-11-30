@@ -345,7 +345,7 @@ var arAkahukuSidebar = {
           && arAkahukuSidebar.shortcutModifiersCtrl == event.ctrlKey
           && arAkahukuSidebar.shortcutModifiersMeta == event.metaKey
           && arAkahukuSidebar.shortcutModifiersShift == event.shiftKey) {
-        toggleSidebar ("viewAkahukuSidebar");
+        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar");
         event.preventDefault ();
       }
     }

@@ -1,6 +1,7 @@
 
 /** 
- * Require: arAkahukuConfig, arAkahukuFile
+ * Require: arAkahukuConfig, arAkahukuFile,
+ *   arAkahukuCompat, arAkahukuUtil
  */
 
 /**
@@ -80,7 +81,7 @@ var arAkahukuP2P = {
           && arAkahukuP2P.shortcutModifiersCtrl == event.ctrlKey
           && arAkahukuP2P.shortcutModifiersMeta == event.metaKey
           && arAkahukuP2P.shortcutModifiersShift == event.shiftKey) {
-        toggleSidebar ("viewAkahukuP2PSidebar");
+        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar");
         event.preventDefault ();
       }
     }
