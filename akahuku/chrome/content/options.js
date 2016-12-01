@@ -4200,15 +4200,15 @@ var AkahukuOptions = {
     
   checkSidebar : function () {
     document.getElementById ("sidebar_background").disabled
+    = document.getElementById ("sidebar_check_groupbox_label").disabled
+    = document.getElementById ("sidebar_check_pages_label").disabled
     = document.getElementById ("sidebar_check_catalog").disabled
-    = document.getElementById ("sidebar_tab_vertical").disabled
-    = document.getElementById ("sidebar_tab_hidden").disabled
-    = document.getElementById ("sidebar_tab_menu").disabled
+    = document.getElementById ("sidebar_tab_show").disabled
     = document.getElementById ("sidebar_sort_type").disabled
+    = document.getElementById ("sidebar_sort_type_label").disabled
     = document.getElementById ("sidebar_sort_visited").disabled
     = document.getElementById ("sidebar_sort_marked").disabled
     = document.getElementById ("sidebar_sort_invert").disabled
-    = document.getElementById ("sidebar_markedtab").disabled
     = document.getElementById ("sidebar_max_view").disabled
     = document.getElementById ("sidebar_max_view_label").disabled
     = document.getElementById ("sidebar_max_cache").disabled
@@ -4219,14 +4219,31 @@ var AkahukuOptions = {
     = document.getElementById ("sidebar_threadclick_after_label").disabled
     = document.getElementById ("sidebar_threadclick_after_label2").disabled
     = document.getElementById ("sidebar_save").disabled
+    = document.getElementById ("sidebar_shortcut").disabled
+    = document.getElementById ("sidebar_board_select_groupbox_label").disabled
     = document.getElementById ("sidebar_board_select_in_list").disabled
     = document.getElementById ("sidebar_board_select_in_label").disabled
     = document.getElementById ("sidebar_board_select_ex_list").disabled
     = document.getElementById ("sidebar_board_select_ex_label").disabled
     = document.getElementById ("sidebar_board_select_add").disabled
     = document.getElementById ("sidebar_board_select_delete").disabled
+    = document.getElementById ("sidebar_board_moveup").disabled
+    = document.getElementById ("sidebar_board_movedown").disabled
+    = document.getElementById ("sidebar_thread_groupbox_label").disabled
+    = document.getElementById ("sidebar_detail_groupbox_label").disabled
     = !document.getElementById ("sidebar").checked;
     AkahukuOptions.checkSidebarShortcut ();
+    AkahukuOptions.checkSidebarTabShow ();
+  },
+
+  checkSidebarTabShow : function () {
+    document.getElementById ("sidebar_tab_hidden").checked
+    = !document.getElementById ("sidebar_tab_show").checked;
+    document.getElementById ("sidebar_tab_vertical").disabled
+    = document.getElementById ("sidebar_tab_menu").disabled
+    = document.getElementById ("sidebar_markedtab").disabled
+    = !document.getElementById ("sidebar").checked
+    || !document.getElementById ("sidebar_tab_show").checked;
   },
     
   checkSidebarShortcut : function () {
