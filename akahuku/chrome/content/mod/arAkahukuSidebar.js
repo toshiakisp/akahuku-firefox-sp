@@ -2228,6 +2228,58 @@ var arAkahukuSidebar = {
       });
     }
   },
+
+  onIframeHtmlWheel : function (event) {
+    if (event.target instanceof Components.interfaces.nsIDOMXULElement) {
+      // Iframe 内要素を期待
+      return;
+    }
+    if (event.ctrlKey &&
+        !event.altKey && !event.metaKey && !event.shiftKey) {
+      // Ctrl-wheel でサムネサイズを変更する
+      event.preventDefault ();
+      event.stopPropagation ();
+      var targetDocument = event.target.ownerDocument;
+      var nodes
+        = targetDocument
+        .getElementsByClassName ("akahuku_sidebar_thread");
+      if (nodes.length == 0) {
+        // 表示が変化しないので中止
+        return;
+      }
+      var wheelDelta = (event.type === "wheel"
+          ? event.deltaY
+          : event.detail); // DOMMouseScroll
+      var presize = arAkahukuSidebar.thumbnailSize;
+      if (wheelDelta < 0) {
+        arAkahukuSidebar.thumbnailSize += 2;
+        if (arAkahukuSidebar.thumbnailSize > 250) {
+          arAkahukuSidebar.thumbnailSize = 250;
+        }
+      }
+      else if (wheelDelta > 0) {
+        arAkahukuSidebar.thumbnailSize -= 2;
+        if (arAkahukuSidebar.thumbnailSize < 8) {
+          arAkahukuSidebar.thumbnailSize = 8;
+        }
+      }
+      if (presize != arAkahukuSidebar.thumbnailSize) {
+        arAkahukuSidebar.setIframeHtmlStyle (targetDocument);
+        // 設定に保存(デバウンス)
+        if (typeof arguments.callee._timerId !== "undefined") {
+          targetDocument.defaultView
+            .clearTimeout (arguments.callee._timerId);
+        }
+        arguments.callee._timerId
+          = targetDocument.defaultView
+          .setTimeout (function () {
+            arAkahukuConfig.setIntPref
+            ("akahuku.sidebar.thumbnail.size",
+             arAkahukuSidebar.thumbnailSize);
+          }, 300);
+      }
+    }
+  },
     
   /**
    * 更新用のフレームが読み込み完了したイベント
@@ -2576,6 +2628,15 @@ var arAkahukuSidebar = {
       iframe.setAttribute ("src",
                            "chrome://akahuku/content/sidebar_html.html#" + name);
       iframe.setAttribute ("flex", "1");
+
+      var wheelEventName = "wheel";
+      if (!(wheelEventName in iframe)) {
+        wheelEventName = "DOMMouseScroll";
+      }
+      iframe.addEventListener
+        (wheelEventName, function (ev) {
+          arAkahukuSidebar.onIframeHtmlWheel (ev);
+        }, false);
             
       box.appendChild (iframe);
       deck.appendChild (box);
