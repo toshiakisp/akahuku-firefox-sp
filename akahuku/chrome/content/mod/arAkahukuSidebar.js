@@ -501,6 +501,9 @@ var arAkahukuSidebar = {
                      true);
       }
     }
+
+    // 設定変更をその場で反映する
+    arAkahukuSidebar.updateSidebarByConfig ();
   },
     
   /**
@@ -527,6 +530,39 @@ var arAkahukuSidebar = {
     }
         
     return sidebar;
+  },
+
+  /**
+   * サイドバーのドキュメントを得る [XUL]
+   *
+   * @param String targetId (optional) 確認したいID
+   * @return XULDocument
+   */
+  getSidebarDocument : function (targetId) {
+    if (typeof document === "undefined") {
+      // onload 以前に呼ばれる場合に備える
+      return null;
+    }
+    if (targetId) {
+      var menuitem = document.getElementById (targetId);
+      if (!menuitem ||
+          menuitem.getAttribute ("checked") != "true") {
+        if (!menuitem) Akahuku.debug.warn ("Sidebar: no " + targetId);
+        return null;
+      }
+    }
+    var sidebar = arAkahukuSidebar.getSidebar ();
+    if (!sidebar.docShell) {
+      return null;
+    }
+    var sidebarDocument;
+    try {
+      sidebarDocument = sidebar.contentDocument;
+    }
+    catch (e) {
+      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
+    }
+    return sidebarDocument;
   },
 
   /**
@@ -1255,6 +1291,16 @@ var arAkahukuSidebar = {
     if (arAkahukuSidebar.sortInvert) {
       board.threads = board.threads.reverse ();
     }
+
+    board._sortSign = arAkahukuSidebar._getSortConfigSignature ();
+  },
+
+  _getSortConfigSignature : function () {
+    return "sort"
+      + arAkahukuSidebar.sortType
+      + (arAkahukuSidebar.sortInvert ? "1" : "0")
+      + (arAkahukuSidebar.enableSortVisited ? "1" : "0")
+      + (arAkahukuSidebar.enableSortMarked  ? "1" : "0");
   },
     
   /**
@@ -1280,35 +1326,23 @@ var arAkahukuSidebar = {
    *
    * @param  String name
    *         対象の板
-   * @param  XULDocuemtn optSidebarDocuemtn
+   * @param  XULDocuemtn sidebarDocuemtn
    *         (optional) 対象のサイドバードキュメント
    */
-  update : function (name, optSidebarDocument) {
+  update : function (name, sidebarDocument) {
     if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuConfig.loadPrefBranch ();
       arAkahukuSidebar.getConfig ();
     }
         
-    if (!optSidebarDocument) { // 互換性のため
-    var menuitem = document.getElementById ("viewAkahukuSidebar");
-    if (menuitem.getAttribute ("checked") != "true") {
+    if (!sidebarDocument) { // 互換性のため
+      sidebarDocument
+        = arAkahukuSidebar.getSidebarDocument ("viewAkahukuSidebar");
+    }
+    if (!sidebarDocument) {
+      Akahuku.debug.error ("Sidebar.update: no sidebar document!");
       return;
-    }
-    var sidebar = arAkahukuSidebar.getSidebar ();
-    if (!sidebar.docShell) {
-      return;
-    }
-    var sidebarDocument;
-    try {
-      sidebarDocument = sidebar.contentDocument;
-    }
-    catch (e) {
-      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
-    }
-    }
-    else {
-      var sidebarDocument = optSidebarDocument;
     }
     var iframe
     = sidebarDocument.getElementById ("akahuku_sidebar_iframe_" + name);
@@ -1358,6 +1392,7 @@ var arAkahukuSidebar = {
       }
     }
         
+    arAkahukuSidebar.setIframeHtmlStyle (targetDocument);
     arAkahukuDOM.setText (targetDocument.body, null);
         
     var hidden = 0;
@@ -1393,7 +1428,6 @@ var arAkahukuSidebar = {
       catch (e) { Akahuku.debug.exception (e);
       }
             
-      var size = arAkahukuSidebar.thumbnailSize + 2;
       var ok = true;
             
       try {
@@ -1403,15 +1437,12 @@ var arAkahukuSidebar = {
         else {
           div = thread.node;
                     
-          div.style.height = size + "px";
           div.style.borderColor = getBGColorForThread (thread);
                     
           nodes = div.getElementsByTagName ("img");
           if (nodes && nodes.length >= 1) {
             node = nodes [0];
             node.style.visibility = "";
-            node.style.maxWidth = (size - 2) + "px";
-            node.style.maxHeight = (size - 2) + "px";
             var src = thread.imageSrc;
             src = arAkahukuP2P.tryEnP2P (src);
             if (thread.isExpired && !arAkahukuP2P.enable) {
@@ -1454,16 +1485,9 @@ var arAkahukuSidebar = {
                     node.style.color = "#aa8888";
                   }
                   node.style.visibility = "";
-                  if (thread.imageNum) {
-                    node.style.marginLeft = size + "px";
-                  }
-                  node.style.height = (size - 12) + "px";
                 }
                 else if (node.className
                          == "akahuku_sidebar_status") {
-                  if (thread.imageNum) {
-                    node.style.marginLeft = size + "px";
-                  }
                   node.style.backgroundColor
                     = getBGColorForThread (thread);
                 }
@@ -1541,15 +1565,13 @@ var arAkahukuSidebar = {
         div = targetDocument.createElement ("div");
         div.className = "akahuku_sidebar_thread";
         div.style.borderColor = getBGColorForThread (thread);
-        div.style.height = size + "px";
         div.setAttribute ("__link", thread.threadLink);
         div.setAttribute ("__num", thread.num);
                 
         if (thread.imageNum) {
+          div.setAttribute ("__image", thread.imageSrcType);
           node = targetDocument.createElement ("img");
           node.className = "akahuku_sidebar_image";
-          node.style.maxWidth = (size - 2) + "px";
-          node.style.maxHeight = (size - 2) + "px";
           var src = thread.imageSrc;
           src = arAkahukuP2P.tryEnP2P (src);
           if (thread.isExpired && !arAkahukuP2P.enable) {
@@ -1572,13 +1594,6 @@ var arAkahukuSidebar = {
                 
         node = targetDocument.createElement ("div");
         node.className = "akahuku_sidebar_comment";
-        if (thread.imageNum) {
-          node.style.marginLeft = size + "px";
-        }
-        else {
-          node.style.marginLeft = 8 + "px";
-        }
-        node.style.height = (size - 12) + "px";
         /* thread.comment に HTML が含まれるので innerHTML を使用する  */
         // node.innerHTML = thread.comment;
         // [SECURITY] chrome への読込はサニタイズが必要
@@ -1601,12 +1616,6 @@ var arAkahukuSidebar = {
                 
         node = targetDocument.createElement ("div");
         node.className = "akahuku_sidebar_status";
-        if (thread.imageNum) {
-          node.style.marginLeft = size + "px";
-        }
-        else {
-          node.style.marginLeft = 8 + "px";
-        }
         node.style.backgroundColor = getBGColorForThread (thread);
         node2 = targetDocument.createElement ("span");
         node2.className = "akahuku_sidebar_reply";
@@ -1662,7 +1671,116 @@ var arAkahukuSidebar = {
         targetDocument.body.appendChild (div);
       }
     }
+
+    // 更新時の設定保存
+    targetDocument.body.setAttribute ("__sort", board._sortSign);
+    targetDocument.body.setAttribute ("__maxview", arAkahukuSidebar.maxView);
   },
+
+  /**
+   * スレ一覧のスタイルを更新
+   *
+   * @param Document 対象iframeのcontentDocument
+   */
+  setIframeHtmlStyle : function (targetDocument) {
+    var style = targetDocument.getElementById ("headstyle");
+    if (!style) {
+      Akahuku.debug.error ("no #headstyle in " + targetDocument);
+      return;
+    }
+    var styleText = "";
+    var size = arAkahukuSidebar.thumbnailSize;
+    styleText += "div.akahuku_sidebar_thread {"
+      + "height: " + (size + 2) + "px;"
+      + "}\n";
+    styleText += "div.akahuku_sidebar_comment {"
+      + "height: " + (size - 10) + "px;"
+      + "}\n";
+    styleText += "div.akahuku_sidebar_thread[__image]"
+      + " div.akahuku_sidebar_comment ,"
+      + "div.akahuku_sidebar_thread[__image]"
+      + " div.akahuku_sidebar_status {"
+      + "margin-left: " + (size + 2) + "px;"
+      + "}\n";
+    styleText += "img.akahuku_sidebar_image {"
+      + "max-width: " + size + "px;"
+      + "max-height: " + size + "px;"
+      + "}\n";
+    style.textContent = styleText;
+  },
+
+  /**
+   * 設定の変更をサイドバーに反映する [XUL]
+   */
+  updateSidebarByConfig : function () {
+    var sidebarDocument
+      = arAkahukuSidebar.getSidebarDocument ("viewAkahukuSidebar");
+    if (!sidebarDocument) {
+      return;
+    }
+
+    // タブ増減・順序変更は再読み込みで対応
+    var markedTab
+      = sidebarDocument.getElementById ("akahuku_sidebar_iframe_*_*");
+    if ((markedTab && !arAkahukuSidebar.enableMarked) ||
+        (!markedTab && arAkahukuSidebar.enableMarked)) {
+      sidebarDocument.location.reload ();
+      return;
+    }
+    var tabs = sidebarDocument.getElementsByClassName ("tab");
+    for (var i = 0; i < arAkahukuSidebar.list.length; i ++) {
+      var name = arAkahukuSidebar.list [i].replace (/:/, "_");
+      if (!(i < tabs.length) ||
+          tabs [i].id !== "akahuku_sidebar_tab_" + name) {
+        sidebarDocument.location.reload ();
+        return;
+      }
+    }
+
+    // タブの見た目
+    var container
+    = sidebarDocument.getElementById ("akahuku_sidebar_tabcontainer");
+    if (arAkahukuSidebar.enableTabVertical) {
+      container.parentNode.orient = "horizontal";
+      container.orient = "vertical";
+    }
+    else {
+      container.parentNode.orient = "vertical";
+      container.orient = "horizontal";
+    }
+    container.hidden = arAkahukuSidebar.enableTabHidden;
+    container.enableMenuButton = arAkahukuSidebar.enableTabMenu;
+
+    // IframeHtml
+    var sortSign = arAkahukuSidebar._getSortConfigSignature ();
+    var iframes
+      = sidebarDocument.getElementsByClassName ("akahuku_sidebar_iframe");
+    try {
+      for (var i = 0; i < iframes.length; i ++) {
+        var name = iframes [i].id.replace (/^akahuku_sidebar_iframe_/, "");
+        var targetDocument = iframes [i].contentDocument;
+        var styleUpdated = false;
+        var sorted = false;
+        if (targetDocument.body.getAttribute ("__sort") != sortSign) {
+          arAkahukuSidebar.sort (name);
+          sorted = true;
+        }
+        if (sorted ||
+            targetDocument.body.getAttribute ("__maxview")
+            != arAkahukuSidebar.maxView) {
+          arAkahukuSidebar.update (name);
+          styleUpdated = true;
+        }
+        if (!styleUpdated) {
+          arAkahukuSidebar.setIframeHtmlStyle (targetDocument);
+        }
+      }
+    }
+    catch (e) {
+      Akahuku.debug.exception (e);
+    }
+  },
+
     
   /**
    * マウスが動いたイベント
@@ -1674,19 +1792,6 @@ var arAkahukuSidebar = {
   onMouseMove : function (event) {
     var sidebarDocument
       = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
-    /* 以下ではサイドバー以外にロードされた場合対応できない
-    var sidebar = arAkahukuSidebar.getSidebar ();
-    if (!sidebar.docShell) {
-      return;
-    }
-    var sidebarDocument;
-    try {
-      sidebarDocument = sidebar.contentDocument;
-    }
-    catch (e) {
-      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
-    }
-    */
     var deck = sidebarDocument.getElementById ("akahuku_sidebar_deck");
     var box = deck.selectedPanel;
 
@@ -2413,6 +2518,7 @@ var arAkahukuSidebar = {
       box.appendChild (buttons);
       iframe = sidebarDocument.createElement ("iframe");
       iframe.id = "akahuku_sidebar_iframe_" + name;
+      iframe.className = "akahuku_sidebar_iframe";
       iframe.setAttribute ("type", "content");//念のため制限
       iframe.addEventListener
         ("load", arAkahukuSidebar.onIframeHtmlLoad, true);
@@ -2523,19 +2629,6 @@ var arAkahukuSidebar = {
   setContextMenu : function (event) {
     var sidebarDocument
       = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
-    /* 以下ではサイドバー以外にロードされた場合対応できない
-    var sidebar = arAkahukuSidebar.getSidebar ();
-    if (!sidebar.docShell) {
-      return;
-    }
-    var sidebarDocument;
-    try {
-      sidebarDocument = sidebar.contentDocument;
-    }
-    catch (e) {
-      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
-    }
-    */
     var item;
         
     item
@@ -2665,19 +2758,6 @@ var arAkahukuSidebar = {
   onSort : function (event, type, sorttype) {
     var sidebarDocument
       = arAkahukuSidebar._getDocumentsOnEvent (event).sidebar;
-    /* 以下ではサイドバー以外にロードされた場合対応できない
-    var sidebar = arAkahukuSidebar.getSidebar ();
-    if (!sidebar.docShell) {
-      return;
-    }
-    var sidebarDocument;
-    try {
-      sidebarDocument = sidebar.contentDocument;
-    }
-    catch (e) {
-      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
-    }
-    */
     var deck = sidebarDocument.getElementById ("akahuku_sidebar_deck");
     var box = deck.selectedPanel;
         
@@ -2781,16 +2861,9 @@ var arAkahukuSidebar = {
    * @param String name
    */
   hasTabForBoard : function (name) {
-    var sidebar = arAkahukuSidebar.getSidebar ();
-    if (!sidebar.docShell) {
+    var sidebarDocument = arAkahukuSidebar.getSidebarDocument ();
+    if (!sidebarDocument) {
       return false;
-    }
-    var sidebarDocument;
-    try {
-      sidebarDocument = sidebar.contentDocument;
-    }
-    catch (e) {
-      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
     }
     var iframe
       = sidebarDocument

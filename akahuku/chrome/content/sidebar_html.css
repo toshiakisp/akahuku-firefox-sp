@@ -51,3 +51,8 @@ div.akahuku_sidebar_status {
   height: 12px;
 }
 
+div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_comment,
+div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_status {
+  margin-left: 8px;
+}
+
