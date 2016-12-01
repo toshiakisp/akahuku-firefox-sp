@@ -2154,9 +2154,14 @@ var arAkahukuSidebar = {
       //onload で about:blank へ戻す処理が失敗していたら
       if (iframe.getAttribute ("src") != "about:blank")
       iframe.setAttribute ("src", "about:blank");
+      var param = "";
+      var sortType = parseInt (event.target.getAttribute ("__catSort"));
+      if (sortType > 0 && sortType <= 4) {
+        param += "&sort=" + sortType;
+      }
       iframe.setAttribute ("src",
                            "http://" + server + ".2chan.net/"
-                           + dir + "/futaba.php?mode=cat");
+                           + dir + "/futaba.php?mode=cat" + param);
       /* futaba: ふたば内でしか動作しないので外部には対応しない */
             
       var button;
@@ -2172,6 +2177,35 @@ var arAkahukuSidebar = {
       if (button) {
         button.setAttribute ("disabled", "true");
       }
+    }
+  },
+
+  onCommandCatalogPopup : function (event) {
+    var menuitem = event.target;
+    var type = menuitem.id.replace (/^akahuku-sidebar-catalog-popup-/, "");
+    var sortType = 0;
+    if (type == "cat") {
+      sortType = 0;
+    }
+    else if (type.match (/^sort(\d+)$/)) {
+      var num = parseInt (RegExp.$1) || 0;
+      sortType = num;
+    }
+    else {
+      Akahuku.debug.error ("unknwon sort type: " + type);
+      return;
+    }
+    // 全タブのボタンに変更を反映
+    var label = menuitem.label;
+    if (label.length == 2) {
+      label = "\u30AB\u30BF" + label; // "カタ" +
+    }
+    var sidebarDocument = menuitem.ownerDocument;
+    var buttons
+      = sidebarDocument.getElementsByClassName ("refresh_catalog");
+    for (var i = 0; i < buttons.length; i ++) {
+      buttons [i].label = label;
+      buttons [i].setAttribute ("__catSort", sortType);
     }
   },
     
@@ -2378,6 +2412,16 @@ var arAkahukuSidebar = {
       }
     }
         
+    // カタログ種類の選択ポップアップ
+    popup = sidebarDocument.getElementById ("akahuku-sidebar-catalog-popup");
+    if (popup) {
+      popup.addEventListener
+        ("command",
+         function (event) {
+           arAkahukuSidebar.onCommandCatalogPopup (event);
+        }, false);
+    }
+
     if (!arAkahukuConfig.isObserving) {
       /* 監視していない場合にのみ設定を取得する */
       arAkahukuSidebar.getConfig ();
@@ -2490,13 +2534,20 @@ var arAkahukuSidebar = {
       if (arAkahukuBoard.hasCatalog (tmp)) {
         button = sidebarDocument.createElement ("button");
         button.id = "akahuku_sidebar_refresh_catalog_" + name;
-        button.className = "refresh";
+        button.className = "refresh refresh_catalog";
         button.setAttribute ("label", "\u30AB\u30BF\u30ED\u30B0");
         button.addEventListener
           ("command",
            function () {
             arAkahukuSidebar.onRefreshCatalog (arguments [0]);
           }, false);
+        buttons.appendChild (button);
+        // カタログ種類
+        button = sidebarDocument.createElement ("button");
+        button.id = "akahuku_sidebar_refresh_cat_menu_" + name;
+        button.className = "refresh_menu";
+        button.setAttribute ("type", "menu");
+        button.setAttribute ("popup", "akahuku-sidebar-catalog-popup");
         buttons.appendChild (button);
       }
       iframe = sidebarDocument.createElement ("iframe");

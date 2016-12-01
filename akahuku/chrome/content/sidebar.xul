@@ -40,5 +40,17 @@
                 id="akahuku-sidebar-popup-sort-invert"
                 label="ソートを反転" />
     </menupopup>
+    <menupopup id="akahuku-sidebar-catalog-popup" position="after_end">
+      <menuitem id="akahuku-sidebar-catalog-popup-cat" label="カタログ"
+                type="radio" name="sort" checked="true"/>
+      <menuitem id="akahuku-sidebar-catalog-popup-sort1" label="新順"
+                type="radio" name="sort"/>
+      <menuitem id="akahuku-sidebar-catalog-popup-sort2" label="古順"
+                type="radio" name="sort"/>
+      <menuitem id="akahuku-sidebar-catalog-popup-sort3" label="多順"
+                type="radio" name="sort"/>
+      <menuitem id="akahuku-sidebar-catalog-popup-sort4" label="少順"
+                type="radio" name="sort"/>
+    </menupopup>
   </popupset>
 </page>
