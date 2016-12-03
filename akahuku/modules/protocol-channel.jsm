@@ -382,20 +382,51 @@ arAkahukuBypassChannel.prototype = {
    *   nsIChannelEventSink.asyncOnChannelRedirect
    */
   asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
-    newChannel = this.createRedirectedChannel (oldChannel, newChannel);
+    if (flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL) {
+      // 内部リダイレクト(拡張機能など):
+      // sink には報告せず newChannel への参照切替だけで済ます
+      this._realChannel = newChannel;
+      callback.onRedirectVerifyCallback (Cr.NS_OK);
+      return;
+    }
+
+    // 新しい arAkahukuBypassChannel でラップしてリファラ制御等を続ける
+    var redirectChannel
+      = this.createRedirectedChannel (oldChannel, newChannel);
+    if (redirectChannel == newChannel) {
+      // ラップ出来なかったので内部の切替だけ(親リスナに伝えない)
+      this._realChannel = newChannel;
+      callback.onRedirectVerifyCallback (Cr.NS_OK);
+      return;
+    }
+
+    // リダイレクト要求への返答は保留しながら、
+    // 本チャネル自身のリスナ(親)に新チャネルへのリダイレクト要求を出し、
+    // その結果を元のリダイレクト要求の結果として戻す
     this._redirectCallback = callback;
-    // コールバックにリダイレクト発生を伝える
+    this._redirectChannel = redirectChannel;
     var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
-    verifyHelper.init
-      (this, newChannel, Ci.nsIChannelEventSink.REDIRECT_INTERNAL, this);
+    verifyHelper.init (this, redirectChannel, flags, this);
   },
   /**
    * 非同期リダイレクトイベントの待ち受け
    *   nsIAsyncVerifyRedirectCallback.onRedirectVerifyCallback
+   * @param nsresult result
+   *        arAkahukuAsyncRedirectVerifyHelper の集計結果
    */
   onRedirectVerifyCallback : function (result) {
-    this._redirectCallback.onRedirectVerifyCallback (result);
+    var callback = this._redirectCallback;
+    var redirectChannel = this._redirectChannel;
     this._redirectCallback = null;
+    this._redirectChannel = null;
+    if (Components.isSuccessCode (result)) {
+      // 新チャネルへのリダイレクトが受け入れられた
+      redirectChannel.originalURI = this.originalURI;
+      this._realChannel = redirectChannel;
+    }
+
+    // 元々のリダイレクト検証要求にも sink からの結果を返す
+    callback.onRedirectVerifyCallback (result);
   },
 
   /**
@@ -419,22 +450,17 @@ arAkahukuBypassChannel.prototype = {
    * リダイレクト用 arAkahukuBypassChannel を生成する
    */
   createRedirectedChannel : function (oldChannel, newChannel) {
-    if (newChannel instanceof Ci.nsIHttpChannel) {
-      newChannel = new arAkahukuBypassChannel (newChannel);
-      newChannel.loadFlags |= this.loadFlags;
-      newChannel.enableHeaderBlocker = this.enableHeaderBlocker;
-      /* リダイレクト時にはリファラを付与 */
-      newChannel._realChannel.referrer = oldChannel.URI;
-      // 新しいリダイレクト用チャネルの asyncOpen は呼ばず
-      // ストリームリスナを数珠つなぎにする
-      newChannel._listener = this._listener;
-      this._listener = newChannel;
-      if (newChannel.enableHeaderBlocker
-          && !(newChannel.loadFlags & Ci.nsIChannel.LOAD_DOCUMENT_URI)) {
-        newChannel.startHeadersBlocker ();
-      }
+    if (!(newChannel instanceof Ci.nsIHttpChannel)) {
+      return newChannel;
     }
-    return newChannel;
+
+    var newBypassChannel = new arAkahukuBypassChannel (newChannel);
+    newBypassChannel.loadFlags
+      |= (this.loadFlags | Ci.nsIChannel.LOAD_REPLACE);
+    // newBypassChannel はストリームリスナの中継のみ行う
+    newBypassChannel.enableHeaderBlocker = false;
+
+    return newBypassChannel;
   },
 
   /**
