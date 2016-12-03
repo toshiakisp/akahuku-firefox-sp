@@ -91,6 +91,8 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
     this._realChannel = arguments [0].QueryInterface (Ci.nsIChannel);
     callbacks = this._realChannel.notificationCallbacks;
     this.originalURI = this._realChannel.originalURI.clone ();
+    this.URI = this._realChannel.URI.clone ();
+    this.name = this.URI.spec;
   }
   else {
     var ios
@@ -101,8 +103,8 @@ function arAkahukuBypassChannel (uri, originalURI, contentType) {
     // hide a real channel's originalURI
     // to bypass ScriptSecurityManager's CheckLoadURI
     this.URI = this.originalURI.clone ();
+    this.name = uri;
   }
-  this.name = uri;
   /* 通知をフィルタリングする */
   this.notificationCallbacks = callbacks;
   this._realChannel.notificationCallbacks = this;
