@@ -3329,12 +3329,6 @@ var arAkahukuLink = {
                (/^http:\/\/www\.(nijibox)5\.com\/futabafiles\/(tubu)\/(src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
         src = arAkahukuP2P.enP2P (uri);
       }
-      else if (/^img$/i.test (image.nodeName) &&
-          arAkahukuCompat.comparePlatformVersion ("49.*") > 0) {
-        // img, a, iframe, area since Fx 50.0
-        src = uri;
-        image.referrerPolicy = "no-referrer";
-      }
       else {
         src = Akahuku.protocolHandler.enAkahukuURI ("preview", uri);
       }
