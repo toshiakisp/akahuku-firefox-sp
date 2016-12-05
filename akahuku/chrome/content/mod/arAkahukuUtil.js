@@ -442,7 +442,7 @@ var arAkahukuUtil = new function () {
     for (var i = 0; i < timerIds.length; i ++) {
       if (timerIds [i].id == id) {
         timerIds [i].timer.cancel ();
-        timerIds.splice (i);
+        timerIds.splice (i, 1);
         return;
       }
     }
