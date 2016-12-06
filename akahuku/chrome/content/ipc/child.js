@@ -157,6 +157,9 @@ arAkahukuConfig.restoreTime = function () {
 arAkahukuFile.getDirectory = function () {
   return arAkahukuIPC.sendSyncCommand ("File/getDirectory", arguments);
 };
+arAkahukuFile.create = function () {
+  return arAkahukuIPC.sendSyncCommand ("File/create", arguments);
+};
 arAkahukuFile.createUnique = function () {
   return arAkahukuIPC.sendSyncCommand ("File/createUnique", arguments);
 };

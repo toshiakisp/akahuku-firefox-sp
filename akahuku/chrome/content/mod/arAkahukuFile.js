@@ -182,6 +182,21 @@ var arAkahukuFile = {
   DIRECTORY_TYPE : 1,
 
   /**
+   * ファイル/ディレクトリが無ければ作成する
+   *   (必要な親ディレクトリも作成される)
+   * @param  String パス
+   * @param  Number NORMAL_FILE_TYPE or DIRECTORY_TYPE
+   * @param  Number UNIX-style permission value
+   */
+  create : function (filename, type, permissions) {
+    var file = arAkahukuFile.initFile (filename);
+    if (!file.exists ()) {
+      file.create (type, permissions);
+    }
+    return file;
+  },
+
+  /**
    * ユニークな名前を持つファイル/ディレクトリを作成する
    * @param  String ファイル名(候補)
    * @param  Number NORMAL_FILE_TYPE or DIRECTORY_TYPE
@@ -202,7 +217,7 @@ var arAkahukuFile = {
    *         ファイルの内容
    */
   createFile : function (filename, text) {
-    var file = arAkahukuFile.initFile (filename);
+    var file = arAkahukuFile.create (filename, 0, 420/*0o644*/);
     if (file) {
       try {
         var fstream
@@ -229,7 +244,7 @@ var arAkahukuFile = {
    */
   asyncCreateFile : function (filename, text, callback) {
     var fstream = null;
-    var file = arAkahukuFile.initFile (filename);
+    var file = arAkahukuFile.create (filename, 0, 420/*0o644*/);
     try {
       fstream
       = arAkahukuFile.createFileOutputStream
