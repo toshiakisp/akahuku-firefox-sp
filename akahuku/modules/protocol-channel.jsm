@@ -1119,19 +1119,15 @@ arAkahukuCacheChannel.prototype = {
     var statusCode = headers [0].substr (9, 3);
     var newLocations = new Array ();
     for (var i = 1; i < headers.length; i++) {
-      if (!headers [i].match (/^([^: ]+): ([^\s]+)/)) {
+      if (!headers [i].match (/^([^: ]+): +(.*)/)) {
         continue;
       }
       var key = RegExp.$1, value = RegExp.$2;
       switch (key) {
         case "Content-Type":
-          value.replace
-            (/;\s*charset=([^\s]+)/,
-             function (matched, charset) {
-               this.contentCharset = charset;
-               return "";
-             });
-          this.contentType = new String (value);
+          var match = /^([^;]+)(?:; *charset=([^\s]+))?/.exec (value);
+          this.contentType = match [1] || "";
+          this.contentCharset = match [2] || "";
           break;
         case "Content-Encoding":
           if (!this._contentEncoding) {
