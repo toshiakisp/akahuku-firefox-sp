@@ -1695,11 +1695,13 @@ var arAkahukuLink = {
       // 自動認識にも preview 用匿名チャネルを使う
       url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
             
-      var ios
-      = Components.classes ["@mozilla.org/network/io-service;1"]
-      .getService (Components.interfaces.nsIIOService);
       listener.channel 
-      = ios.newChannel (url, null, null);
+      = arAkahukuUtil.newChannel ({
+        uri: url,
+        loadingNode: targetDocument,
+        contentPolicyType:
+          Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST,
+      });
       listener.channel.notificationCallbacks = listener;
             
       try {

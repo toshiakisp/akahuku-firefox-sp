@@ -245,15 +245,28 @@ arAkahukuMHTFileData.prototype = {
    */
   getFile : function (location, targetDocument) {
     var window = this.ownerDocument.defaultView;
+    var type = Components.interfaces.nsIContentPolicy.TYPE_IMAGE;
+    switch (this.node.nodeName.toLowerCase ()) {
+      case "source":
+        if (this.node.parentNode &&
+            this.node.parentNode.nodeName.toLowerCase () == "picture") {
+          break; // TYPE_IMAGE
+        }
+      case "video":
+      case "audio":
+        type = Components.interfaces.nsIContentPolicy.TYPE_MEDIA;
+        break;
+    }
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
       window.setTimeout
-      ((function (file, location) {
+      ((function (file, location, type) {
           return function () {
-            var ios
-            = Components.classes ["@mozilla.org/network/io-service;1"]
-            .getService (Components.interfaces.nsIIOService);
             file.channel 
-            = ios.newChannel (location, null, null);
+            = arAkahukuUtil.newChannel ({
+              uri: location,
+              loadingNode: file.ownerDocument,
+              contentPolicyType: type,
+            });
             arAkahukuUtil.setChannelContext (file.channel, file.ownerDocument);
 
             try {
@@ -268,7 +281,7 @@ arAkahukuMHTFileData.prototype = {
               file.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
             }
           };
-        })(this, location), this.delay);
+        })(this, location, type), this.delay);
             
       return;
     }

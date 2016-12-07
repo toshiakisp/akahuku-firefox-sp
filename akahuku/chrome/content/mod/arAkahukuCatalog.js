@@ -5314,7 +5314,8 @@ var arAkahukuCatalog = {
       = arAkahukuUtil.newChannel ({
         uri: targetDocument.location.href,
         loadingNode: targetDocument,
-        contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH,
+        contentPolicyType:
+          Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST,
       }).QueryInterface (Components.interfaces.nsIHttpChannel);
     if (!arAkahukuCatalog.enableReloadUpdateCache) {
       // HttpChannel にキャッシュを更新させない
