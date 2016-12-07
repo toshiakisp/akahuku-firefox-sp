@@ -23,10 +23,10 @@
       <menuitem id="akahuku-sidebar-popup-sort-mark" label="マークする" />
       <menuitem id="akahuku-sidebar-popup-sort-unmark" label="マークを外す" />
       <menuseparator id="akahuku-sidebar-popup-separator1" />
-      <menuitem type="radio" autocheck="false"
+      <menuitem type="radio" autocheck="false" name="sortorder"
                 id="akahuku-sidebar-popup-sort-num"
                 label="スレの立った順にソート" />
-      <menuitem type="radio" autocheck="false"
+      <menuitem type="radio" autocheck="false" name="sortorder"
                 id="akahuku-sidebar-popup-sort-lastnum"
                 label="最終レス番号順にソート" />
       <menuseparator id="akahuku-sidebar-popup-separator2" />
@@ -42,15 +42,15 @@
     </menupopup>
     <menupopup id="akahuku-sidebar-catalog-popup" position="after_end">
       <menuitem id="akahuku-sidebar-catalog-popup-cat" label="カタログ"
-                type="radio" name="sort" checked="true"/>
+                type="radio" name="catsort" checked="true"/>
       <menuitem id="akahuku-sidebar-catalog-popup-sort1" label="新順"
-                type="radio" name="sort"/>
+                type="radio" name="catsort"/>
       <menuitem id="akahuku-sidebar-catalog-popup-sort2" label="古順"
-                type="radio" name="sort"/>
+                type="radio" name="catsort"/>
       <menuitem id="akahuku-sidebar-catalog-popup-sort3" label="多順"
-                type="radio" name="sort"/>
+                type="radio" name="catsort"/>
       <menuitem id="akahuku-sidebar-catalog-popup-sort4" label="少順"
-                type="radio" name="sort"/>
+                type="radio" name="catsort"/>
     </menupopup>
   </popupset>
 </page>
