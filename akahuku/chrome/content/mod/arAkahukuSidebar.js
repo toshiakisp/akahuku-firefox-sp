@@ -720,6 +720,22 @@ var arAkahukuSidebar = {
       board.validateThread (thread.num);
     }
   },
+
+  /**
+   * ソート順ボタンのラベル名を得る
+   */
+  getSortTypeLabel : function (sortType) {
+    sortType = sortType || arAkahukuSidebar.sortType;
+    switch (sortType) {
+      case 0: // "スレ新順"
+        return "\u30B9\u30EC\u65B0\u9806";
+        break;
+      case 1: // "最終レス順"
+        return "\u6700\u7D42\u30EC\u30B9\u9806";
+        break;
+    }
+    return "??\u9806";
+  },
     
   /**
    * 通常モードをロードしたイベント
@@ -2369,6 +2385,11 @@ var arAkahukuSidebar = {
     }
     container.enableMenuButton = arAkahukuSidebar.enableTabMenu;
         
+    var sort_num
+      = function () { arAkahukuSidebar.onSort (arguments [0], 0, 0); };
+    var sort_lastnum
+      = function () { arAkahukuSidebar.onSort (arguments [0], 0, 1); };
+
     var popup = sidebarDocument.getElementById ("akahuku-sidebar-popup");
     if (popup) {
       popup.addEventListener
@@ -2391,22 +2412,14 @@ var arAkahukuSidebar = {
         = sidebarDocument
         .getElementById ("akahuku-sidebar-popup-sort-num");
       if (item) {
-        item.addEventListener
-          ("command", 
-           function () {
-            arAkahukuSidebar.onSort (arguments [0], 0, 0);
-          }, false);
+        item.addEventListener ("command", sort_num, false);
       }
             
       item
         = sidebarDocument
         .getElementById ("akahuku-sidebar-popup-sort-lastnum");
       if (item) {
-        item.addEventListener
-          ("command", 
-           function () {
-            arAkahukuSidebar.onSort (arguments [0], 0, 1);
-          }, false);
+        item.addEventListener ("command", sort_lastnum, false);
       }
             
       item
@@ -2472,6 +2485,20 @@ var arAkahukuSidebar = {
          function (event) {
            arAkahukuSidebar.onCommandCatalogPopup (event);
         }, false);
+    }
+
+    // ソート順ポップアップ
+    item = sidebarDocument
+      .getElementById ("akahuku-sidebar-sortorder-popup-num");
+    if (item) {
+      item.addEventListener ("command", sort_num, false);
+      item.setAttribute ("checked", arAkahukuSidebar.sortType == 0);
+    }
+    item = sidebarDocument
+      .getElementById ("akahuku-sidebar-sortorder-popup-lastnum");
+    if (item) {
+      item.addEventListener ("command", sort_lastnum, false);
+      item.setAttribute ("checked", arAkahukuSidebar.sortType == 1);
     }
 
     if (!arAkahukuConfig.isObserving) {
@@ -2602,6 +2629,15 @@ var arAkahukuSidebar = {
         button.setAttribute ("popup", "akahuku-sidebar-catalog-popup");
         buttons.appendChild (button);
       }
+      // ソート順
+      button = sidebarDocument.createElement ("button");
+      button.id = "akahuku_sidebar_sortorder_" + name;
+      button.className = "sortorder_menu";
+      button.setAttribute ("label", arAkahukuSidebar.getSortTypeLabel ());
+      button.setAttribute ("tooltiptext", "\u30BD\u30FC\u30C8\u9806");
+      button.setAttribute ("type", "menu");
+      button.setAttribute ("popup", "akahuku-sidebar-sortorder-popup");
+      buttons.appendChild (button);
       iframe = sidebarDocument.createElement ("iframe");
       iframe.setAttribute ("type", "content");// 明示的に権限制限
       var iframe2 = iframe; // 後でdocShellの設定をするため保管
@@ -2914,6 +2950,33 @@ var arAkahukuSidebar = {
           }
         }
       }
+
+      // ソートタイプの状態を反映
+      var item = sidebarDocument
+        .getElementById ("akahuku_sidebar_sortorder_" + name);
+      if (item) {
+        item.setAttribute ("label", arAkahukuSidebar.getSortTypeLabel ());
+      }
+      var item = sidebarDocument
+        .getElementById ("akahuku-sidebar-popup-sort-num");
+      if (item) {
+        item.setAttribute ("checked", arAkahukuSidebar.sortType == 0);
+      }
+      item = sidebarDocument
+        .getElementById ("akahuku-sidebar-popup-sort-lastnum");
+      if (item) {
+        item.setAttribute ("checked", arAkahukuSidebar.sortType == 1);
+      }
+      item = sidebarDocument
+        .getElementById ("akahuku-sidebar-sortorder-popup-num");
+      if (item) {
+        item.setAttribute ("checked", arAkahukuSidebar.sortType == 0);
+      }
+      item = sidebarDocument
+        .getElementById ("akahuku-sidebar-sortorder-popup-lastnum");
+      if (item) {
+        item.setAttribute ("checked", arAkahukuSidebar.sortType == 1);
+      }
             
       arAkahukuSidebar.asyncUpdateVisited (name, function () {
         arAkahukuSidebar.sort (name);
@@ -2964,6 +3027,12 @@ var arAkahukuSidebar = {
       var box
       = sidebarDocument.getElementById ("akahuku_sidebar_deck_" + name);
       deck.selectedPanel = box;
+      var item
+      = sidebarDocument
+      .getElementById ("akahuku_sidebar_sortorder_" + name);
+      if (item) {
+        item.setAttribute ("label", arAkahukuSidebar.getSortTypeLabel ());
+      }
     }
   },
 

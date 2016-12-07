@@ -52,5 +52,13 @@
       <menuitem id="akahuku-sidebar-catalog-popup-sort4" label="少順"
                 type="radio" name="catsort"/>
     </menupopup>
+    <menupopup id="akahuku-sidebar-sortorder-popup" position="after_start">
+      <menuitem type="radio" autocheck="false" name="sortorder"
+                id="akahuku-sidebar-sortorder-popup-num"
+                label="スレの立った順にソート" />
+      <menuitem type="radio" autocheck="false" name="sortorder"
+                id="akahuku-sidebar-sortorder-popup-lastnum"
+                label="最終レス番号順にソート" />
+    </menupopup>
   </popupset>
 </page>
