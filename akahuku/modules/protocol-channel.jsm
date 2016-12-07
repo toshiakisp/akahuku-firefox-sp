@@ -34,6 +34,8 @@ catch (e) {
   Components.utils.reportError (e);
 }
 
+Cu.import ("resource://akahuku/observer.jsm");
+
 /**
  * チャネルの nsIInterfaceRequestor.getInterface 用 base impl.
  *   (asyncOpen2 を実装する上では実装必須らしい)
@@ -86,7 +88,6 @@ catch (e) { Cu.reportError (e);
  * (画像などドキュメント以外ではクッキーも送受信しない)
  *   Inherits From: nsIChannel, nsIRequest
  *                  nsIStreamListener, nsIRequestObserver
- *                  nsIObserver
  *                  nsIInterfaceRequestor, nsIChannelEventSink
  *
  * @param  String uri
@@ -158,7 +159,6 @@ arAkahukuBypassChannel.prototype = {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIChannel)
         || iid.equals (Ci.nsIRequest)
-        || iid.equals (Ci.nsIObserver)
         || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIChannelEventSink)
         || iid.equals (Ci.nsIStreamListener)
@@ -325,34 +325,6 @@ arAkahukuBypassChannel.prototype = {
   },
 
   /**
-   * ヘッダーを監視
-   *   nsIObserver.observe
-   *
-   * @param  nsISupports subject
-   *         この通知を引き起こしたチャネル (nsIChannel)
-   * @param  String topic
-   *         通知トピック
-   * @param  String data
-   *         データ
-   */
-  observe : function (subject, topic, data) {
-    if (subject != this._realChannel) {
-      return;
-    }
-    var httpChannel = subject.QueryInterface (Ci.nsIHttpChannel);
-
-    if (topic == "http-on-modify-request") {
-      /* リクエストにクッキーを含めないように */
-      httpChannel.setRequestHeader ("Cookie", "", false);
-    }
-    else if (topic == "http-on-examine-response") {
-      /* レスポンスによってクッキーをセットされないように */
-      httpChannel.setResponseHeader ("Set-Cookie", "", false);
-      this.stopHeadersBlocker ();
-    }
-  },
-
-  /**
    * 必要ならヘッダー監視を開始する
    */
   startHeadersBlocker : function () {
@@ -360,16 +332,21 @@ arAkahukuBypassChannel.prototype = {
         || !(this._realChannel instanceof Ci.nsIHttpChannel)) {
       return;
     }
-    if (!inMainProcess) {
-      // http-on-* observers only work in the parent process
-      return;
+    try {
+      this._blockReqListener = function () {}; // no reaction
+      this._blockResListener = function () {};
+      var filter = {
+        urls: [this._realChannel.originalURI.spec],
+      };
+      AkahukuObserver.cookieBlocker
+        .onRequestBlocked.addListener (this._blockReqListener, filter);
+      AkahukuObserver.cookieBlocker
+        .onResponseBlocked.addListener (this._blockResListener, filter);
+      this._observingHeaders = true;
     }
-    var observerService
-      = Cc ["@mozilla.org/observer-service;1"]
-      .getService (Ci.nsIObserverService);
-    observerService.addObserver (this, "http-on-modify-request", false);
-    observerService.addObserver (this, "http-on-examine-response", false);
-    this._observingHeaders = true;
+    catch (e) {
+      Cu.reportError (e);
+    }
   },
 
   /**
@@ -379,12 +356,24 @@ arAkahukuBypassChannel.prototype = {
     if (!this._observingHeaders) {
       return;
     }
-    var observerService
-      = Cc ["@mozilla.org/observer-service;1"]
-      .getService (Ci.nsIObserverService);
-    observerService.removeObserver (this, "http-on-modify-request");
-    observerService.removeObserver (this, "http-on-examine-response");
+    AkahukuObserver.cookieBlocker
+      .onRequestBlocked.removeListener (this._blockReqListener);
+    this._blockReqListener = null;
+    AkahukuObserver.cookieBlocker
+      .onResponseBlocked.removeListener (this._blockResListener);
+    this._blockResListener = null;
     this._observingHeaders = false;
+  },
+
+  /**
+   * ヘッダー監視を再設定する
+   * (リダイレクト後など新しいチャネルに対して)
+   */
+  resetHeadersBlocker : function () {
+    if (this._observingHeaders) {
+      this.stopHeaderBlocker ();
+      this.startHeaderBlocker ();
+    }
   },
 
   /**
@@ -434,6 +423,7 @@ arAkahukuBypassChannel.prototype = {
       redirectChannel.originalURI = this.originalURI;
       // _realChannl の切替 (ここが唯一)
       this._realChannel = redirectChannel;
+      this.resetHeadersBlocker ();
     }
 
     // 元々のリダイレクト検証要求にも sink からの結果を返す

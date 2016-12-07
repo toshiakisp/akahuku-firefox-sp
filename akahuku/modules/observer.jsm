@@ -432,6 +432,53 @@ HttpNotificationObserver.prototype
 
 
 /**
+ * Cookie ブロッカー
+ */
+function CookieBlocker (topics, extraInfoSpec) {
+  var obj = Object_create (CookieBlocker.prototype);
+  Object_assign (obj, HttpNotificationObserver (topics, extraInfoSpec));
+  return obj;
+};
+CookieBlocker.prototype
+= Object_create (HttpNotificationObserver.prototype);
+
+CookieBlocker.prototype
+.onNotified = function (subject, topic, data) {
+  if (this._details) {
+    var cookie;
+    try {
+      if (topic == "http-on-modify-request") {
+        // リクエストにクッキーを含めないように
+        cookie = subject.getRequestHeader ("Cookie");
+        if (cookie) {
+          subject.setRequestHeader ("Cookie", "", false);
+        }
+      }
+      else { // http-on-examine-response etc.
+        // レスポンスによってクッキーをセットされないように
+        cookie = subject.getResponseHeader ("Cookie");
+        if (cookie) {
+          subject.setResponseHeader ("Set-Cookie", "", false);
+        }
+      }
+    }
+    catch (e if e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
+      // no Cookie in header
+    }
+    catch (e) {
+      console.exception (e);
+    }
+    if (cookie) {
+      // ブロック後の情報に更新
+      this._details = HttpNotificationObserver.getChannelDetails (subject);
+      this._details.blockedCookie = cookie;
+      this.callback.call (null, this._details);
+    }
+  }
+};
+
+
+/**
  * NotificationObserver クラスのファクトリ (IPC)
  */
 NotificationObserverFactory = {
@@ -456,6 +503,17 @@ NotificationObserverFactory = {
           "http-on-modify-request",
         ];
         return HttpNotificationObserver (topics);
+        break;
+      case "cookieBlockerRequest":
+        return CookieBlocker (["http-on-modify-request"]);
+        break;
+      case "cookieBlockerResponse":
+        topics = [
+          "http-on-examine-response",
+          "http-on-examine-cached-response",
+          "http-on-examine-merged-response",
+        ];
+        return CookieBlocker (topics);
         break;
       default:
         throw Error ("unsupported topics: " + eventName);
@@ -599,6 +657,20 @@ var AkahukuObserver= {
       // "blocking" は未サポート
       new NotificationEventManager
       ("onHeadersReceived", ["responseHeaders"]),
+  },
+
+  /**
+   * 特殊: Cookie ブロッカー
+   * (webRequest風に実装するのが e10s では面倒なので専用を用意)
+   *
+   * addListener することで Cookie をブロックするようになり
+   * 結果をコールバックで確認できる
+   */
+  cookieBlocker: {
+    onRequestBlocked:
+      new NotificationEventManager ("cookieBlockerRequest"),
+    onResponseBlocked:
+      new NotificationEventManager ("cookieBlockerResponse"),
   },
 };
 
