@@ -1970,7 +1970,12 @@
                   <menulist id="sidebar_sort_type">
                     <menupopup id="sidebar_sort_type_menu">
                       <menuitem value="1" label="最終レス番号順" />
-                      <menuitem value="0" label="新順 (スレの立った順)" />
+                      <menuitem value="0" label="スレの新しい順" />
+                      <menuitem value="2" label="レスの古い順" />
+                      <menuitem value="5" label="カタログ順" />
+                      <menuitem value="3" label="レスの多い順" />
+                      <menuitem value="4" label="レスの少ない順" />
+                      <menuitem value="6" label="レスの増加数順" />
                     </menupopup>
                   </menulist>
                 </box>
