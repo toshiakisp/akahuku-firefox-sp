@@ -38,6 +38,8 @@ if (Akahuku.useFrameScript) {
   arAkahukuIPCRoot.init ();
   // Prepare P2PServant IPC parent
   Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+  // Prepare Observer IPC parent
+  Components.utils.import ("resource://akahuku/observer.jsm", {});
 
   Akahuku.init (); // required for main-process IPC childs
 
