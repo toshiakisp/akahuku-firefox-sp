@@ -395,7 +395,7 @@ arAkahukuBypassChannel.prototype = {
     if (flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL) {
       // 内部リダイレクト(拡張機能など):
       // sink には報告せず newChannel への参照切替だけで済ます
-      this._realChannel = newChannel;
+      this._redirectChannel = newChannel;
       callback.onRedirectVerifyCallback (Cr.NS_OK);
       return;
     }
@@ -405,7 +405,7 @@ arAkahukuBypassChannel.prototype = {
       = this.createRedirectedChannel (oldChannel, newChannel);
     if (redirectChannel == newChannel) {
       // ラップ出来なかったので内部の切替だけ(親リスナに伝えない)
-      this._realChannel = newChannel;
+      this._redirectChannel = newChannel;
       callback.onRedirectVerifyCallback (Cr.NS_OK);
       return;
     }
@@ -429,14 +429,17 @@ arAkahukuBypassChannel.prototype = {
     var redirectChannel = this._redirectChannel;
     this._redirectCallback = null;
     this._redirectChannel = null;
-    if (Components.isSuccessCode (result)) {
+    if (Components.isSuccessCode (result) && redirectChannel) {
       // 新チャネルへのリダイレクトが受け入れられた
       redirectChannel.originalURI = this.originalURI;
+      // _realChannl の切替 (ここが唯一)
       this._realChannel = redirectChannel;
     }
 
     // 元々のリダイレクト検証要求にも sink からの結果を返す
-    callback.onRedirectVerifyCallback (result);
+    if (callback) {
+      callback.onRedirectVerifyCallback (result);
+    }
   },
 
   /**
