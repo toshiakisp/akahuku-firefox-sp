@@ -1054,7 +1054,8 @@ arAkahukuReloadParam.prototype = {
         = arAkahukuUtil.newChannel ({
           uri: channel.originalURI,
           loadingNode: this.targetDocument,
-          contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
+          contentPolicyType:
+            Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST})
         .QueryInterface (Components.interfaces.nsIHttpChannel);
       channel4GET.requestMethod = "GET";
       channel4GET.loadFlags = channel.loadFlags;
@@ -3665,7 +3666,8 @@ var arAkahukuReload = {
     = arAkahukuUtil.newChannel ({
       uri: location,
       loadingNode: targetDocument,
-      contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
+      contentPolicyType:
+        Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST})
     .QueryInterface (Components.interfaces.nsIHttpChannel);
 
     if (param.requestMode == 0 //HEAD-GET
