@@ -130,7 +130,7 @@ arAkahukuGZIPFileData.prototype = {
 /**
  * P2P チャネル
  *   Inherits From: arIAkahukuP2PChannel,
- *                  nsIChannel, nsIRequest
+ *                  nsIChannel, nsIRequest, nsIInterfaceRequestor
  *                  nsIWebProgressListener
  *                  nsITimerCallback
  *                  arIAkahukuP2PServantListener
@@ -144,9 +144,11 @@ arAkahukuP2PChannel.prototype = {
   _isPending : false, /* Boolean  リクエストの途中かどうか */
     
   _type : 0,   /* Number  動作の形態
-                *   0: キャッシュから
-                *   1: チャネル
-                *   2: pipe 経由 */
+                *   0: キャッシュから (return nsIInputStreamChannel)
+                *   1: チャネル (Firefox 1.* 用)
+                *   2: pipe 経由 (return nsIInputStreamChannel)
+                *   3: チャネル (内部バッファ経由)
+                *   4: チャネル (ファイルから内部バッファ経由読込) */
     
   _outputStream : null, /* nsIAsyncOutputStream  ファイルの出力先
                          *   pipe 経由の場合に使用する */
@@ -182,6 +184,7 @@ arAkahukuP2PChannel.prototype = {
   owner : null,
   securityInfo : null,
   URI : null,
+  loadInfo : null,
 
   // required for XPCOM registration by XPCOMUtils
   classDescription: "Akahuku P2P Channel JS Component",
@@ -216,6 +219,7 @@ arAkahukuP2PChannel.prototype = {
   QueryInterface : function (iid) {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIChannel)
+        || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIRequest)
         || iid.equals (Ci.nsIWebProgressListener)
         || iid.equals (Ci.nsITimerCallback)
@@ -226,6 +230,29 @@ arAkahukuP2PChannel.prototype = {
         
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
+
+  /**
+   * nsIInterfaceRequestor
+   */
+  getInterface : function (iid) {
+    // see nsBaseChannel.cpp, nsNetUtil.h (NS_QueryNotificationCallbacks)
+    try {
+      if (this.notificationCallbacks) {
+        try {
+          return this.notificationCallbacks.getInterface (iid);
+        }
+        catch (e) {
+        }
+      }
+      if (this.loadGroup &&
+          this.loadGroup.notificationCallbacks) {
+        return this.loadGroup.notificationCallbacks.getInterface (iid);
+      }
+    }
+    catch (e) {
+    }
+    throw Cr.NS_ERROR_NO_INTERFACE;
+  },
     
   /**
    * 初期化
@@ -233,11 +260,12 @@ arAkahukuP2PChannel.prototype = {
    *
    * @param  String uri
    *         akahuku プロトコルの URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         キャッシュのチャネル
    *         失敗すれば null
    */
-  init : function (uri) {
+  init : function (uri, loadInfo) {
     var uriParam = protocolHandler.getAkahukuURIParam (uri);
     if (uriParam.original) {
       this._webURI = uriParam.original;
@@ -255,6 +283,8 @@ arAkahukuP2PChannel.prototype = {
     = Cc ["@mozilla.org/network/standard-url;1"]
     .createInstance (Ci.nsIURI);
     this.originalURI.spec = uri;
+
+    this.loadInfo = loadInfo || null;
 
     var param
       = arAkahukuP2PService.utils.getP2PPathParam (this._webURI);
@@ -313,10 +343,18 @@ arAkahukuP2PChannel.prototype = {
     var cacheChannel = this._getCacheChannel ();
     if (cacheChannel) {
       /* キャッシュがあればキャッシュから */
+      if (this.loadInfo) { // init by newChannel2 (Firefox 36)
+        this._type = 4; // 内部バッファでファイル詠み込み
+        return this;
+      }
       this._type = 0;
       return cacheChannel;
     }
         
+    if (this.loadInfo) { // init by newChannel2 (Firefox 36)
+      this._type = 3; // P2Pリクエスト(内部バッファ読込)
+      return this;
+    }
     this._type = 2;
     return this._getPipedChannel ();
   },
@@ -529,6 +567,15 @@ arAkahukuP2PChannel.prototype = {
     = Cc ["@mozilla.org/timer;1"]
     .createInstance (Ci.nsITimer);
     timer.initWithCallback (this, 100, Ci.nsITimer.TYPE_ONE_SHOT);
+    this._isPending = true;
+  },
+
+  asyncOpen2 : function (listener) {
+    var csm
+      = Cc ["@mozilla.org/contentsecuritymanager;1"]
+      .getService (Ci.nsIContentSecurityManager);
+    var wrappedListener = csm.performSecurityCheck (this, listener);
+    this.asyncOpen (wrappedListener, null);
   },
     
   /**
@@ -689,7 +736,7 @@ arAkahukuP2PChannel.prototype = {
    *         呼び出し元のタイマ
    */
   notify : function (tiemr) {
-    if (this._type == 1) {
+    if (this._type == 1 || this._type == 3 || this._type == 4) {
       this._isPending = true;
       try {
         this._listener.onStartRequest (this, this._context);
@@ -701,6 +748,11 @@ arAkahukuP2PChannel.prototype = {
       }
     }
         
+    if (this._type == 4) {
+      // キャッシュファイルを読む
+      this._onSave ();
+      return;
+    }
     this._getFromP2P ();
   },
     
@@ -764,7 +816,10 @@ arAkahukuP2PChannel.prototype = {
       targetFile.initWithPath (this._targetFileName);
 
       // Use a wrapper of WebBrowserPersist in arAkahukuImage
-      var isPrivate = false; // FIXME: loadInfo neccessary?
+      var isPrivate = false;
+      if (this.loadInfo) {
+        isPrivate = this.loadInfo.usePrivateBrowsing;
+      }
       var self = this;
       var callback = function (success, savedFile, msg) {
         if (!success) {
@@ -911,12 +966,51 @@ arAkahukuP2PChannel.prototype = {
             bstream.close ();
           }
         }
+        else if (this._type == 3 || this._type == 4) {
+          // 内部読み込みモード (Firefox 42 or above)
+          var copier
+            = Cc ["@mozilla.org/network/async-stream-copier;1"]
+            .createInstance (Ci.nsIAsyncStreamCopier);
+          var pipe
+            = Cc ["@mozilla.org/pipe;1"].createInstance (Ci.nsIPipe);
+          pipe.init (true, true, 1<<12, 0xffffffff, null);
+          copier.init (fstream, pipe.outputStream, null, false, true, 4096, true, true);
+          // 内部バッファへの詠み込み監視
+          var observer = {
+            _p2pch : null,
+            onStartRequest : function (r, c) {},
+            onStopRequest : function (r, c, statusCode) {
+              // バッファに読み込み完了
+              pipe.outputStream.close ();
+              // リスナに通知
+              var listener = this._p2pch._listener;
+              listener.onDataAvailable
+                (this._p2pch, this._p2pch._context,
+                 pipe.inputStream, 0, pipe.inputStream.available ());
+              pipe.inputStream.close ();
+              pipe = null;
+              this._p2pch._isPending = false;
+              listener.onStopRequest
+                (this._p2pch, this._p2pch._context, Cr.NS_OK);
+              // 片付け
+              fstream.close ();
+              fstream = null;
+              this._p2pch._listener = null;
+              this._p2pch._context = null;
+              this._p2pch._outputStream = null;
+              this._p2pch = null;
+            },
+          };
+          observer._p2pch = this;
+          copier.asyncCopy (observer, null);
+          return;
+        }
       }
       catch (e) { Components.utils.reportError (e);
       }
     }
         
-    if (this._type == 1) {
+    if (this._type == 1 || this._type == 3 || this._type == 4) {
       try {
         this._isPending = false;
         this._listener.onStopRequest (this, this._context,
@@ -949,7 +1043,7 @@ arAkahukuP2PChannel.prototype = {
    * ファイルの保存が失敗したイベント
    */
   _onFail : function () {
-    if (this._type == 1) {
+    if (this._type == 1 || this._type == 3 || this._type == 4) {
       try {
         this._isPending = false;
         this._listener.onStopRequest (this, this._context,

@@ -173,6 +173,11 @@ var arAkahukuUtil = new function () {
    *   loadUsingSystemPrincipal: true,
    *   contentPolicyType: Ci.nsIContentPolicy.TYPE_* [optional]
    *   }
+   * or (newChannel2 実装用拡張)
+   * source = {
+   *   uri: string, nsIURI, or nsIFile
+   *   loadInfo: nsILoadInfo, or null
+   *   }
    */
   this.newChannel = function (source) {
     if (source instanceof Ci.nsIChannel) {
@@ -185,6 +190,7 @@ var arAkahukuUtil = new function () {
     var triggeringPrincipal = null;
     var securityFlags = 0;
     var loadUsingSystemPrincipal = false;
+    var loadInfo = null;
     var contentPolicyType = Ci.nsIContentPolicy.TYPE_OTHER;
     if (typeof source == "string"
         || source instanceof Ci.nsIURI
@@ -210,9 +216,14 @@ var arAkahukuUtil = new function () {
         loadUsingSystemPrincipal = false;
         loadingNode = source.loadingNode;
       }
+      else if ("loadInfo" in source) {
+        loadInfo = source.loadInfo;
+        // loadInfo が null の場合に備えて
+        loadUsingSystemPrincipal = true;
+      }
       else {
         throw Components.Exception (
-            "arAkahukuUtil.newChannel requires object with uri property",
+            "arAkahukuUtil.newChannel: illegal property set",
             Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
       }
 
@@ -229,6 +240,10 @@ var arAkahukuUtil = new function () {
     var ios = Cc ["@mozilla.org/network/io-service;1"]
       .getService (Ci.nsIIOService);
 
+    if (loadInfo && "newChannelFromURIWithLoadInfo" in ios) {
+      // requires Firefox 37+
+      return ios.newChannelFromURIWithLoadInfo (uri, loadInfo);
+    }
     if ("newChannelFromURI2" in ios) {
       if (loadUsingSystemPrincipal) {
         loadingPrincipal = getSystemPrincipal ();

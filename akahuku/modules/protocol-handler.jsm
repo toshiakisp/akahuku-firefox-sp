@@ -161,14 +161,15 @@ arAkahukuProtocolHandler.prototype = {
     
   /**
    * チャネルを作成する
-   *   nsIProtocolHandler.newChannel
+   *   nsIProtocolHandler.newChannel2 (since Firefox 36)
    *
    * @param  nsIURI uri
    *         対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  newChannel : function (uri) {
+  newChannel2 : function (uri, loadInfo) {
     var pos;
     while ((pos = uri.spec.indexOf ("akahuku://", 1)) > 0) {
       /* Bazzacuda Image Saver が相対パスの連結に失敗する
@@ -179,26 +180,30 @@ arAkahukuProtocolHandler.prototype = {
     var param = this.getAkahukuURIParam (uri.spec);
     if (param.type == "p2p") {
       /* P2P */
-      return this._createP2PChannel (uri);
+      return this._createP2PChannel (uri, loadInfo);
     }
     else if (param.type == "preview") {
       /* プレビュー */
-      return this._createPreviewChannel (uri);
+      return this._createPreviewChannel (uri, loadInfo);
     }
     else if (param.type == "jpeg") {
       /* JPEG サムネ */
-      return this._createJPEGThumbnailChannel (uri);
+      return this._createJPEGThumbnailChannel (uri, loadInfo);
     }
     else if (param.type == "cache") {
       /* スレバックアップキャッシュ */
-      return this._createThreadCacheChannel (uri, false);
+      return this._createThreadCacheChannel (uri, false, loadInfo);
     }
     else if (param.type == "filecache") {
       /* スレバックアップキャッシュ (ファイル) */
-      return this._createThreadCacheChannel (uri, true);
+      return this._createThreadCacheChannel (uri, true, loadInfo);
     }
         
-    return this._createEmptyChannel (uri);
+    return this._createEmptyChannel (uri, loadInfo);
+  },
+
+  newChannel : function (uri) {
+    return this.newChannel2 (uri, null);
   },
     
   /**
@@ -206,15 +211,16 @@ arAkahukuProtocolHandler.prototype = {
    *
    * @param  nsIURI uri
    *         対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  _createPreviewChannel : function (uri) {
+  _createPreviewChannel : function (uri, loadInfo) {
     var param = this.getAkahukuURIParam (uri.spec);
         
     if (param.hash
         != this.getHash (param.protocol, param.host, param.path)) {
-      return this._createEmptyChannel (uri);
+      return this._createEmptyChannel (uri, loadInfo);
     }
         
     var contentType = "";
@@ -234,13 +240,12 @@ arAkahukuProtocolHandler.prototype = {
     }
     else {
       /* 画像以外でもバイパスチャネルの利用を許可する
-      return this._createEmptyChannel (uri);
+      return this._createEmptyChannel (uri, loadInfo);
       */
     }
         
-    var channel = new arAkahukuBypassChannel (uri.spec,
-                                              param.original,
-                                              contentType);
+    var channel = new arAkahukuBypassChannel
+      (uri.spec, param.original, contentType, loadInfo);
         
     return channel;
   },
@@ -270,23 +275,23 @@ arAkahukuProtocolHandler.prototype = {
    *
    * @param  nsIURI uri
    *         対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  _createJPEGThumbnailChannel : function (uri) {
+  _createJPEGThumbnailChannel : function (uri, loadInfo) {
     var param = this.getAkahukuURIParam (uri.spec);
         
     if (this.isAkahukuURI (param.original)) {
       var param2 = this.getAkahukuURIParam (param.original);
       if (param2.type == "jpeg") {
         /* 対象がサムネなら何もしない */
-        return this._createEmptyChannel (uri);
+        return this._createEmptyChannel (uri, loadInfo);
       }
     }
         
-    var channel = new arAkahukuJPEGThumbnailChannel (uri.spec,
-                                                     param.original,
-                                                     "image/jpeg");
+    var channel = new arAkahukuJPEGThumbnailChannel
+      (uri.spec, param.original, "image/jpeg", loadInfo);
         
     return channel;
   },
@@ -298,14 +303,15 @@ arAkahukuProtocolHandler.prototype = {
    *         対象の URI
    * @param  Boolean isFile
    *         ファイルかどうか
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  _createThreadCacheChannel : function (uri, isFile) {
+  _createThreadCacheChannel : function (uri, isFile, loadInfo) {
     var param = this.getAkahukuURIParam (uri.spec);
 
     if (!isFile) {
-      return new arAkahukuCacheChannel (param.original, uri);
+      return new arAkahukuCacheChannel (param.original, uri, loadInfo);
     }
     try {
       // from arAkahukuReload.js
@@ -333,23 +339,23 @@ arAkahukuProtocolHandler.prototype = {
         .replace (/^https?:\/\//, "");
 
 
-      if (this.inMainProcess) {
+      if (this.inMainProcess && !loadInfo) {
         path = fileProtocolHandler.getFileFromURLSpec (base + path).path;
         // create nsIInputStreamChannel directly
         return this._createThreadCacheFileChannel (uri, path);
       }
-      else { // in content process
+      else { // in content process or init by newChannel2 (Firefox 36+)
         // Require Firefox 29 (OS.Path.fromFileURI)
         var scope = {};
         Cu.import ("resource://gre/modules/osfile.jsm",scope);
         path = scope.OS.Path.fromFileURI (base + path);
-        return this._createThreadCacheDOMFileChannel (uri, path);
+        return this._createThreadCacheDOMFileChannel (uri, path, loadInfo);
       }
     }
     catch (e) {
       // 想定外のエラーが起きた場合
       Cu.reportError (e);
-      return this._createThreadCacheFailChannel (uri);
+      return this._createThreadCacheFailChannel (uri, loadInfo);
     }
   },
   _createThreadCacheFileChannel : function (uri, path) {
@@ -388,7 +394,7 @@ arAkahukuProtocolHandler.prototype = {
       return this._createThreadCacheFailChannel (uri);
     }
   },
-  _createThreadCacheDOMFileChannel : function (uri, path) {
+  _createThreadCacheDOMFileChannel : function (uri, path, loadInfo) {
     try {
       Cu.importGlobalProperties (["File"]);
       if (typeof File.createFromFileName !== "undefined") {
@@ -400,7 +406,7 @@ arAkahukuProtocolHandler.prototype = {
       }
     }
     catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
-      return this._createThreadCacheFailChannel (uri);
+      return this._createThreadCacheFailChannel (uri, loadInfo);
     }
     catch (e) {
       Cu.reportError (e);
@@ -409,11 +415,11 @@ arAkahukuProtocolHandler.prototype = {
         .createInstance (Ci.nsILocalFile);
       file.initWithPath (path);
       if (!file.exists ()) {
-        return this._createThreadCacheFailChannel (uri);
+        return this._createThreadCacheFailChannel (uri, loadInfo);
       }
     }
 
-    var channel = new arAkahukuDOMFileChannel (uri, file);
+    var channel = new arAkahukuDOMFileChannel (uri, file, loadInfo);
     channel.contentType = "text/html";
     return channel;
   },
@@ -423,10 +429,11 @@ arAkahukuProtocolHandler.prototype = {
    *
    * @param  nsIURI uri
    *         対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  _createThreadCacheFailChannel : function (uri) {
+  _createThreadCacheFailChannel : function (uri, loadInfo) {
     var text
     = "<?xml version=\"1.0\" encoding=\"Shift_JIS\"?>"
     + "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\""
@@ -455,6 +462,12 @@ arAkahukuProtocolHandler.prototype = {
     + "</p>"
     + "</body>"
     + "</html>";
+
+    if (loadInfo) { // via newChannel2
+      throw "not supported";
+      // exception will result in a fallback to newChannel
+    }
+
     var sstream
     = Cc ["@mozilla.org/io/string-input-stream;1"]
     .createInstance (Ci.nsIStringInputStream);
@@ -481,16 +494,17 @@ arAkahukuProtocolHandler.prototype = {
    *
    * @param  nsIURI uri
    *         対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  _createP2PChannel : function (uri) {
+  _createP2PChannel : function (uri, loadInfo) {
     var channel = new arAkahukuP2PChannel ();
         
-    channel = channel.init (uri.spec);
+    channel = channel.init (uri.spec, loadInfo);
         
     if (!channel) {
-      return this._createEmptyChannel (uri);
+      return this._createEmptyChannel (uri, loadInfo);
     }
         
     return channel;
@@ -501,10 +515,16 @@ arAkahukuProtocolHandler.prototype = {
    *
    * @param  nsIURI uri
    *         対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel
    *         作成したチャネル
    */
-  _createEmptyChannel : function (uri) {
+  _createEmptyChannel : function (uri, loadInfo) {
+    if (loadInfo) { // via newChannel2
+      throw "not supported";
+      // exception will result in a fallback to newChannel
+    }
+
     var sstream
     = Cc ["@mozilla.org/io/string-input-stream;1"]
     .createInstance (Ci.nsIStringInputStream);
@@ -615,20 +635,26 @@ arAkahukuLocalProtocolHandler.prototype = {
 
   /**
    * チャネルを作成する
-   *   nsIProtocolHandler.newChannel
+   *   nsIProtocolHandler.newChannel2
    *
    * @param  nsIURI 対象の URI
+   * @param  nsILoadInfo loadInfo
    * @return nsIChannel 作成したチャネル
    */
-  newChannel : function (uri) {
+  newChannel2 : function (uri, loadInfo) {
     var param
       = arAkahukuProtocolHandler.prototype
       .getAkahukuURIParam (uri.spec);
     if (param.type == "local") {
       return arAkahukuProtocolHandler.prototype
-        ._createPreviewChannel (uri);
+        ._createPreviewChannel (uri, loadInfo);
     }
-    return arAkahukuProtocolHandler.prototype._createEmptyChannel (uri);
+    return arAkahukuProtocolHandler.prototype
+      ._createEmptyChannel (uri, loadInfo);
+  },
+
+  newChannel : function (uri) {
+    return this.newChannel2 (uri, null);
   },
 };
 
