@@ -68,7 +68,7 @@ akahukutabcontainer[orient="vertical"] > .tab[selected] {
 }
 
 .refresh {
-  /* -moz-user-focus: ignore; */
+  -moz-user-focus: ignore;
   -moz-appearance: none;
   -moz-border-top-colors: none;
   -moz-border-bottom-colors: none;
@@ -147,4 +147,8 @@ akahukutabcontainer[orient="vertical"] > .tab[selected] {
   color: #800000;
   background-color: #ffffee;
   border-width: 0;
+}
+
+iframe.akahuku_sidebar_iframe {
+  -moz-user-focus: ignore;
 }

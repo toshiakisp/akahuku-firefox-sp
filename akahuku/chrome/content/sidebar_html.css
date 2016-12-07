@@ -8,6 +8,7 @@ html {
 body {
   margin : 0;
   padding : 0;
+  -moz-user-select: none;
 }
 
 .akahuku_sidebar_thread {
