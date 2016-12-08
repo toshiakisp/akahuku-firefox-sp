@@ -23,25 +23,25 @@
       <menuitem id="akahuku-sidebar-popup-sort-mark" label="マークする" />
       <menuitem id="akahuku-sidebar-popup-sort-unmark" label="マークを外す" />
       <menuseparator id="akahuku-sidebar-popup-separator1" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-lastnum"
                 label="最終レス番号順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-num"
                 label="スレの新しい順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-old"
                 label="スレの古い順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-catalog-order"
                 label="カタログ順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-reply-most"
                 label="レスの多い順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-reply-least"
                 label="レスの少ない順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-popup-sort-reply-delta-most"
                 label="レスの増加数順にソート" />
       <menuseparator id="akahuku-sidebar-popup-separator2" />
@@ -68,25 +68,25 @@
                 type="radio" name="catsort"/>
     </menupopup>
     <menupopup id="akahuku-sidebar-sortorder-popup" position="after_start">
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-lastnum"
                 label="最終レス番号順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-num"
                 label="スレの新しい順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-old"
                 label="スレの古い順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-catalog-order"
                 label="カタログ順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-reply-most"
                 label="レスの多い順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-reply-least"
                 label="レスの少ない順にソート" />
-      <menuitem type="radio" autocheck="false" name="sortorder"
+      <menuitem type="radio" name="sortorder"
                 id="akahuku-sidebar-sortorder-popup-reply-delta-most"
                 label="レスの増加数順にソート" />
     </menupopup>
