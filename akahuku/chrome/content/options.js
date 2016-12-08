@@ -4208,6 +4208,7 @@ var AkahukuOptions = {
     = document.getElementById ("sidebar_check_normal").disabled
     = document.getElementById ("sidebar_check_reply").disabled
     = document.getElementById ("sidebar_check_catalog").disabled
+    = document.getElementById ("sidebar_refresh_button_label").disabled
     = document.getElementById ("sidebar_refresh_catalog_type").disabled
     = document.getElementById ("sidebar_refresh_catalog_type_label").disabled
     = document.getElementById ("sidebar_tab_show").disabled
