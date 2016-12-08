@@ -220,6 +220,8 @@ var arAkahukuSidebar = {
     
   enable : false,             /* Boolean  サイドバーを使用する */
   enableBackground : false,   /* Boolean  非表示の間も反映させる */
+  enableCheckNormal : true,   /* Boolean  通常 (モードをチェックする) */
+  enableCheckReply: true,     /* Boolean  レス送信モード (をチェックする) */
   enableCheckCatalog : false, /* Boolean  カタログをチェックする */
   refreshCatalogType : 0,     /* Number   (更新ボタンの)カタログ種類 */
   enableTabVertical : false,  /* Boolean  タブを縦に表示する */
@@ -415,6 +417,12 @@ var arAkahukuSidebar = {
       arAkahukuSidebar.enableBackground
       = arAkahukuConfig
       .initPref ("bool", "akahuku.sidebar.background", false);
+      arAkahukuSidebar.enableCheckNormal
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.sidebar.check.normal", true);
+      arAkahukuSidebar.enableCheckReply
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.sidebar.check.reply", true);
       arAkahukuSidebar.enableCheckCatalog
       = arAkahukuConfig
       .initPref ("bool", "akahuku.sidebar.check.catalog", true);
@@ -3289,9 +3297,15 @@ var arAkahukuSidebar = {
       }
             
       if (info.isNormal) {
+        if (!arAkahukuSidebar.enableCheckNormal) {
+          return;
+        }
         arAkahukuSidebar.onNormalLoad (targetDocument, name);
       }
       else if (info.isReply) {
+        if (!arAkahukuSidebar.enableCheckReply) {
+          return;
+        }
         if (info.isNotFound) {
           var name;
           name = info.server + "_" + info.dir;
