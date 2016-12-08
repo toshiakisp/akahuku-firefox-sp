@@ -1793,6 +1793,25 @@ var arAkahukuSidebar = {
     if (!sidebarDocument) {
       return;
     }
+    if (!arAkahukuSidebar.enable) {
+      var container
+      = sidebarDocument.getElementById ("akahuku_sidebar_tabcontainer");
+      if (container) {
+        // !enable に変更された
+        sidebarDocument.location.reload ();
+        return;
+      }
+      return;
+    }
+    else {
+      var container
+      = sidebarDocument.getElementById ("akahuku_sidebar_tabcontainer");
+      if (!container) {
+        // !enable で開かれて内容が空
+        sidebarDocument.location.reload ();
+        return;
+      }
+    }
 
     // タブ増減・順序変更は再読み込みで対応
     var markedTab
@@ -1803,6 +1822,10 @@ var arAkahukuSidebar = {
       return;
     }
     var tabs = sidebarDocument.getElementsByClassName ("tab");
+    if (arAkahukuSidebar.list.length != tabs.length) {
+      sidebarDocument.location.reload ();
+      return;
+    }
     for (var i = 0; i < arAkahukuSidebar.list.length; i ++) {
       var name = arAkahukuSidebar.list [i].replace (/:/, "_");
       if (!(i < tabs.length) ||
