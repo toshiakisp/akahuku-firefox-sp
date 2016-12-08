@@ -1950,6 +1950,22 @@
                   <checkbox id="sidebar_background" checked="false"
                             label="サイドバーが非表示の間も" />
                 </box>
+                <label value="更新ボタン (0ページ, カタログ)" id="sidebar_refresh_button_label"/>
+                <box orient="vertical" class="sub">
+                  <box orient="horizontal" align="center">
+                    <label id="sidebar_refresh_catalog_type_label" control="sidebar_refresh_catalog_type"
+                           value="カタログ種類" />
+                    <menulist id="sidebar_refresh_catalog_type">
+                      <menupopup id="sidebar_refresh_catalog_type_menu">
+                        <menuitem value="0" label="カタログ" />
+                        <menuitem value="1" label="新順" />
+                        <menuitem value="2" label="古順" />
+                        <menuitem value="3" label="多順" />
+                        <menuitem value="4" label="少順" />
+                      </menupopup>
+                    </menulist>
+                  </box>
+                </box>
                 <checkbox id="sidebar_save" checked="false"
                           label="終了時にスレ情報を保存する" />
               </groupbox>

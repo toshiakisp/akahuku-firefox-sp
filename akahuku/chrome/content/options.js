@@ -1133,6 +1133,7 @@ var AkahukuOptions = {
       ["bool", "sidebar", false],
       ["bool", "sidebar.background", false],
       ["bool", "sidebar.check.catalog", true],
+      ["int",  "sidebar.refresh.catalog.type", 0],
       ["bool", "sidebar.tab.vertical", false],
       ["bool", "sidebar.tab.hidden", false],
       ["bool", "sidebar.tab.menu", false],
@@ -4203,6 +4204,8 @@ var AkahukuOptions = {
     = document.getElementById ("sidebar_check_groupbox_label").disabled
     = document.getElementById ("sidebar_check_pages_label").disabled
     = document.getElementById ("sidebar_check_catalog").disabled
+    = document.getElementById ("sidebar_refresh_catalog_type").disabled
+    = document.getElementById ("sidebar_refresh_catalog_type_label").disabled
     = document.getElementById ("sidebar_tab_show").disabled
     = document.getElementById ("sidebar_sort_type").disabled
     = document.getElementById ("sidebar_sort_type_label").disabled

@@ -221,6 +221,7 @@ var arAkahukuSidebar = {
   enable : false,             /* Boolean  サイドバーを使用する */
   enableBackground : false,   /* Boolean  非表示の間も反映させる */
   enableCheckCatalog : false, /* Boolean  カタログをチェックする */
+  refreshCatalogType : 0,     /* Number   (更新ボタンの)カタログ種類 */
   enableTabVertical : false,  /* Boolean  タブを縦に表示する */
   enableTabHidden : false,    /* Boolean  タブを表示しない */
   enableTabMenu : false,    /* Boolean  タブメニューを表示する */
@@ -417,6 +418,9 @@ var arAkahukuSidebar = {
       arAkahukuSidebar.enableCheckCatalog
       = arAkahukuConfig
       .initPref ("bool", "akahuku.sidebar.check.catalog", true);
+      arAkahukuSidebar.refreshCatalogType
+      = arAkahukuConfig
+      .initPref ("int",  "akahuku.sidebar.refresh.catalog.type", 0);
       arAkahukuSidebar.enableTabVertical
       = arAkahukuConfig
       .initPref ("bool", "akahuku.sidebar.tab.vertical", false);
@@ -748,6 +752,26 @@ var arAkahukuSidebar = {
         return "\u30AB\u30BF\u30ED\u30B0\u9806";
       case 6: // "レス増順"
         return "\u30EC\u30B9\u5897\u9806";
+    }
+    return "??\u9806";
+  },
+
+  /**
+   * カタログ種類のボタンのラベル名を得る
+   */
+  getRefreshCatalogTypeLabel : function (type) {
+    type = type || arAkahukuSidebar.refreshCatalogType;
+    switch (type) {
+      case 0: // "カタログ"
+        return "\u30AB\u30BF\u30ED\u30B0";
+      case 1: // "新順"
+        return "\u65B0\u9806";
+      case 2: // "古順"
+        return "\u53E4\u9806";
+      case 3: // "多順"
+        return "\u591A\u9806";
+      case 4: // "少順"
+        return "\u5C11\u9806";
     }
     return "??\u9806";
   },
@@ -1794,6 +1818,9 @@ var arAkahukuSidebar = {
     container.hidden = arAkahukuSidebar.enableTabHidden;
     container.enableMenuButton = arAkahukuSidebar.enableTabMenu;
 
+    // カタログ更新UI (更新まではしない)
+    arAkahukuSidebar.updateCatalogRefreshUI ();
+
     // IframeHtml
     var sortSign = arAkahukuSidebar._getSortConfigSignature ();
     var iframes
@@ -2238,17 +2265,45 @@ var arAkahukuSidebar = {
       Akahuku.debug.error ("unknwon sort type: " + type);
       return;
     }
+    arAkahukuSidebar.refreshCatalogType = sortType;
+    arAkahukuConfig
+      .setIntPref ("akahuku.sidebar.refresh.catalog.type", sortType);
     // 全タブのボタンに変更を反映
-    var label = menuitem.label;
+    arAkahukuSidebar.updateCatalogRefreshUI ();
+  },
+
+  /**
+   * カタログ種類の選択を設定に合わせて更新
+   */
+  updateCatalogRefreshUI : function () {
+    var label = arAkahukuSidebar.getRefreshCatalogTypeLabel ();
     if (label.length == 2) {
       label = "\u30AB\u30BF" + label; // "カタ" +
     }
-    var sidebarDocument = menuitem.ownerDocument;
+    var sidebarDocument = arAkahukuSidebar.getSidebarDocument ();
+    if (!sidebarDocument) {
+      return;
+    }
     var buttons
       = sidebarDocument.getElementsByClassName ("refresh_catalog");
     for (var i = 0; i < buttons.length; i ++) {
       buttons [i].label = label;
-      buttons [i].setAttribute ("__catSort", sortType);
+      buttons [i].setAttribute ("__catSort", arAkahukuSidebar.refreshCatalogType);
+    }
+    // ポップアップメニューの選択を更新 (type="radio" autocheck="true")
+    var ids = [
+      "akahuku-sidebar-catalog-popup-cat",
+      "akahuku-sidebar-catalog-popup-sort1",
+      "akahuku-sidebar-catalog-popup-sort2",
+      "akahuku-sidebar-catalog-popup-sort3",
+      "akahuku-sidebar-catalog-popup-sort4",
+    ];
+    var id = ids [arAkahukuSidebar.refreshCatalogType];
+    if (id) {
+      var item = sidebarDocument.getElementById (id);
+      if (item) {
+        item.setAttribute ("checked", "true");
+      }
     }
   },
     
@@ -2830,6 +2885,8 @@ var arAkahukuSidebar = {
     spacer.className = "tabspace";
     spacer.setAttribute ("flex", "1");
     container.appendChild (spacer);
+
+    arAkahukuSidebar.updateCatalogRefreshUI ();
   },
     
   /**
