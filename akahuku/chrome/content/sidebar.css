@@ -22,6 +22,10 @@ akahukutabcontainer[orient="vertical"] .tabspace {
   width: 100%;
 }
 
+.tab {
+  -moz-user-focus: ignore;
+}
+
 .tab > label {
   -moz-appearance: none;
   margin: 0px;
