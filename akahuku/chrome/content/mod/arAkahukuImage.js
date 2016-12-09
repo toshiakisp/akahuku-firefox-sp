@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuFile,
@@ -304,7 +303,7 @@ var arAkahukuImage = {
       = arAkahukuConfig
       .initPref ("char", "akahuku.saveimage.base.list2", "null");
       if (value != "null") {
-        list = arAkahukuJSON.decode (unescape (value));
+        list = JSON.parse (unescape (value));
         while (list.length && list [0] == undefined) {
           list.shift ();
         }
@@ -1158,7 +1157,7 @@ var arAkahukuImage = {
   saveBaseList : function () {
     arAkahukuConfig.setCharPref
     ("akahuku.saveimage.base.list2",
-     escape (arAkahukuJSON.encode (arAkahukuImage.baseList)));
+     escape (JSON.stringify (arAkahukuImage.baseList)));
   },
 
   /**

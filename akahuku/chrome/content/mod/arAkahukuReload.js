@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
@@ -910,25 +909,10 @@ arAkahukuReloadParam.prototype = {
                 var name;
                 name = info.server + "_" + info.dir;
                                 
-                if (name in arAkahukuSidebar.boards) {
+                if (arAkahukuSidebar.hasBoard (name)) {
                   var ok = true;
                   if (!arAkahukuSidebar.enableBackground) {
-                    var sidebar
-                      = arAkahukuSidebar.getSidebar ();
-                    if (!sidebar.docShell) {
-                      ok = false;
-                    }
-                    else {
-                      var sidebarDocument
-                        = sidebar.contentDocument;
-                      var iframe
-                        = sidebarDocument.getElementById
-                        ("akahuku_sidebar_iframe_"
-                         + name);
-                      if (iframe == null) {
-                        ok = false;
-                      }
-                    }
+                    ok = arAkahukuSidebar.hasTabForBoard (name);
                   }
                   if (ok) {
                     arAkahukuSidebar.onThreadExpired
@@ -1017,25 +1001,10 @@ arAkahukuReloadParam.prototype = {
             var name;
             name = info.server + "_" + info.dir;
                                 
-            if (name in arAkahukuSidebar.boards) {
+            if (arAkahukuSidebar.hasBoard (name)) {
               var ok = true;
               if (!arAkahukuSidebar.enableBackground) {
-                var sidebar
-                  = arAkahukuSidebar.getSidebar ();
-                if (!sidebar.docShell) {
-                  ok = false;
-                }
-                else {
-                  var sidebarDocument
-                    = sidebar.contentDocument;
-                  var iframe
-                    = sidebarDocument.getElementById
-                    ("akahuku_sidebar_iframe_"
-                     + name);
-                  if (iframe == null) {
-                    ok = false;
-                  }
-                }
+                ok = arAkahukuSidebar.hasTabForBoard (name);
               }
               if (ok) {
                 arAkahukuSidebar.onThreadExpired
@@ -1085,7 +1054,8 @@ arAkahukuReloadParam.prototype = {
         = arAkahukuUtil.newChannel ({
           uri: channel.originalURI,
           loadingNode: this.targetDocument,
-          contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
+          contentPolicyType:
+            Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST})
         .QueryInterface (Components.interfaces.nsIHttpChannel);
       channel4GET.requestMethod = "GET";
       channel4GET.loadFlags = channel.loadFlags;
@@ -2229,7 +2199,7 @@ var arAkahukuReload = {
         targetFile.initWithPath (path);
         if (targetFile.exists ()) {
           var fstream = arAkahukuFile.createFileInputStream
-            (targetFile, 0x01, 292/*0444*/, 0,
+            (targetFile, 0x01, 292/*0o444*/, 0,
              targetDocument.defaultView);
           _asyncLoadCacheAndUpdate (fstream, targetFile.fileSize, path);
           location = null; // キャッシュ読み不要
@@ -3466,22 +3436,10 @@ var arAkahukuReload = {
             
         name = info.server + "_" + info.dir;
             
-        if (name in arAkahukuSidebar.boards) {
+        if (arAkahukuSidebar.hasBoard (name)) {
           var ok = true;
           if (!arAkahukuSidebar.enableBackground) {
-            var sidebar = arAkahukuSidebar.getSidebar ();
-            if (!sidebar.docShell) {
-              ok = false;
-            }
-            else {
-              var sidebarDocument = sidebar.contentDocument;
-              var iframe
-                = sidebarDocument.getElementById
-                ("akahuku_sidebar_iframe_" + name);
-              if (iframe == null) {
-                ok = false;
-              }
-            }
+            ok = arAkahukuSidebar.hasTabForBoard (name);
           }
           if (ok) {
             var nodes = Akahuku.getMessageBQ (targetDocument);
@@ -3616,25 +3574,14 @@ var arAkahukuReload = {
     nodes = targetDocument.getElementsByTagName ("img");
     for (i = 0; i < nodes.length; i ++) {
       try {
-        var load
-          = nodes [i].QueryInterface
-          (Components.interfaces.nsIImageLoadingContent);
-        var request
-          = load.getRequest
-          (Components.interfaces.nsIImageLoadingContent
-           .CURRENT_REQUEST);
-                
-        var errorStatus
-          = Components.interfaces.imgIRequest.STATUS_ERROR
-          | Components.interfaces.imgIRequest.STATUS_LOAD_PARTIAL;
-                
-        if (!request) {
+        var imgStatus = arAkahukuUtil.getImageStatus (nodes [i]);
+        if (!imgStatus.requestURI) {
           continue;
         }
-        if (request.imageStatus & errorStatus) {
+        if (imgStatus.isErrored) {
           nodes [i].src = nodes [i].src;
         }
-        else if (request.imageStatus == 0) {
+        else if (imgStatus.requestImageStatus == 0) {
           targetDocument.defaultView.setTimeout
             (function (node) {
               node.src = node.src;
@@ -3719,7 +3666,8 @@ var arAkahukuReload = {
     = arAkahukuUtil.newChannel ({
       uri: location,
       loadingNode: targetDocument,
-      contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH})
+      contentPolicyType:
+        Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST})
     .QueryInterface (Components.interfaces.nsIHttpChannel);
 
     if (param.requestMode == 0 //HEAD-GET
@@ -3747,6 +3695,17 @@ var arAkahukuReload = {
                 
         servant.visitBoard (info.server + "/" + info.dir);
       }
+    }
+  },
+
+  /**
+   * 指定 browser のコンテンツで可能なら"続きを読む"
+   */
+  diffReloadForBrowser : function (browser, doSync) {
+    var targetDocument = browser.contentDocument;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (param.reload_param) {
+      arAkahukuReload.diffReloadCore (targetDocument, doSync, false);
     }
   },
     
@@ -3777,7 +3736,7 @@ var arAkahukuReload = {
    * @param  boolean 同期を優先するか
    */
   reloadOnDemand : function (doc, trySync) {
-    if (typeof doc === "undefined") { // dead object
+    if (arAkahukuCompat.isDeadWrapper (doc)) {
       return;
     }
 
@@ -3879,7 +3838,9 @@ var arAkahukuReload = {
         // 瞬間的なフォーカスでは動作しないようにタイマー処理
         targetDocument.defaultView
         .setTimeout (function () {
-          if (typeof targetDocument === "undefined") return; //dead obj
+          if (arAkahukuCompat.isDeadWrapper (targetDocument)) {
+            return;
+          }
           if (targetDocument.hasFocus ()) {
             arAkahukuReload.reloadOnDemand (targetDocument);
           }

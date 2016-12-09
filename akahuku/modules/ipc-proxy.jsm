@@ -9,6 +9,7 @@
 var EXPORTED_SYMBOLS = [
   "arIPCProxyParent",
   "arIPCProxyChild",
+  "arIPCProxyAsyncChild",
 ];
 
 const Cc = Components.classes;
@@ -57,12 +58,13 @@ arIPCProxyParent.prototype = {
           ret.value = this.target [data.name];
           break;
         case "call":
+          var args = unconvArguments (data.value, this.messageManager);
           if (this.hasOwnProperty (data.name)) {
-            ret.value = this [data.name].apply (this, data.value);
+            ret.value = this [data.name].apply (this, args);
           }
           else {
             ret.value = this.target [data.name]
-              .apply (this.target, data.value);
+              .apply (this.target, args);
           }
           break;
         case "detach":
@@ -127,15 +129,10 @@ function arIPCProxyChild (prototype) {
         desc = Object.getOwnPropertyDescriptor (prototype, property);
         if (desc && "function" == typeof desc.value) {
           return target [property] = function () {
-            var args = [];
-            if (arguments) {
-              args = (arguments.length == 1
-                  ? [arguments [0]]
-                  : Array.apply (null, arguments));
-            }
             if (!receiver.parentId) {
               throw CE ("arIPCProxyChild: parentId must be given");
             }
+            var args = convArgumentsForIPC (arguments, receiver.messageManager);
             var data = {type: "call", name: property, value: args};
             var message = "arIPCProxy:" + receiver.parentId;
             var ret = receiver.messageManager
@@ -170,21 +167,26 @@ function arIPCProxyChild (prototype) {
       if (arIPCProxyChild.prototype.hasOwnProperty (property)) {
         // store in target {}
         target [property] = value;
+        return true;
       }
       else if (prototype.hasOwnProperty (property)) {
         var desc = Object.getOwnPropertyDescriptor (prototype, property);
         if (desc && "function" == typeof desc.value) {
           // function overwrite
           target [property] = value;
+          return true;
         }
         else {
           var data = {type: "set", name: property, value: value};
           var message = "arIPCProxy:" + receiver.parentId;
           var ret = receiver.messageManager
             .sendSyncMessage (message, data) [0];
-          return ret.value;
+          if (ret && ret.result == Cr.NS_OK) {
+            return true;
+          }
         }
       }
+      return false; // strict-mode TypeError
     },
   };
   return new Proxy ({}, handler);
@@ -209,3 +211,156 @@ arIPCProxyChild.prototype = {
 };
 
 
+/**
+ * arIPCProxyAsyncChild
+ *   関数呼び出しのみを async な IPC メッセージ化するプロキシ
+ *   (chrome process からでも扱える)
+ *
+ *   + arIPCProxyAsyncChild.prototype 自身のプロパティは set/get 可能
+ *   + 指定した prototype 自身のプロパティ:
+ *     + 関数の場合: IPC メッセージ化する関数を get 可能
+ *     + 関数以外:
+ *       + optTarget 指定時: それ自身のプロパティなら get 可能
+ *         (元オブジェクトのプロパティを静的にコピーしておける)
+ *       + 未指定時: throw TypeError (同期的に取得不能なため)
+ *   + その他のプロパティ: undefined
+ */
+function arIPCProxyAsyncChild (prototype, parentId, optTarget) {
+  if (!parentId) {
+    throw CE ("arIPCProxyAsyncChild: parentId must be given"
+        + " (get '" + property + "')");
+  }
+  var target = optTarget || {};
+  target.parenetId = parentId;
+  var handler = {
+    get : function (target, property, receiver) {
+      if (Object.prototype.hasOwnProperty.call
+          (arIPCProxyAsyncChild.prototype, property)) {
+        // 自身のプロトタイプに存在するものはそのままアクセス
+        if (Object.prototype.hasOwnProperty.call (target, property)) {
+          return target [property];
+        }
+        return arIPCProxyAsyncChild.prototype [property];
+      }
+      else if (Object.prototype
+          .hasOwnProperty.call (prototype, property)) {
+        // 指定されたプロトタイプに存在するプロパティ
+        var desc = Object.getOwnPropertyDescriptor (prototype, property);
+        if (desc && "function" == typeof desc.value) {
+          // target の同名関数を優先 (cached)
+          desc = Object.getOwnPropertyDescriptor (target, property);
+          if (desc && "function" == typeof desc.value) {
+            return target [property];
+          }
+          // IPCメッセージ化(async)
+          return target [property] = function () {
+            var args = convArgumentsForIPC (arguments, receiver.messageManager);
+            var data = {type: "call", name: property, value: args};
+            var message = "arIPCProxy:" + parentId;
+            receiver.messageManager.sendAsyncMessage (message, data);
+          };
+        }
+        else if (Object.prototype.hasOwnProperty.call (target, property)) {
+          // 関数ではないプロパティなら target を参照
+          return target [property];
+        }
+        else {
+          throw TypeError
+            ("arIPCProxyAsyncChild: invalid property '" + property + "'");
+        }
+      }
+      return undefined;
+    },
+    set : function (target, property, value, receiver) {
+      if (arIPCProxyAsyncChild.prototype.hasOwnProperty (property)) {
+        target [property] = value;
+        return true;
+      }
+      return false; // strict-mode TypeError
+    },
+  };
+  return new Proxy (target, handler);
+}
+
+arIPCProxyAsyncChild.prototype = {
+  messageManager : null,
+  parentId: null,
+  attachIPCMessageManager : function (mm) {
+    this.messageManager = mm;
+  },
+  detachIPCMessageManager : function () {
+    var data = {type: "detach", name: "", value: ""};
+    var message = "arIPCProxy:" + this.parentId;
+    this.messageManager.sendAsyncMessage (message, data);
+    this.messageManager = null;
+    this.parentId = null;
+  },
+};
+
+
+/**
+ * コールバック関数用 Proxy (手動で detach が必要)
+ */
+function CallbackFunctionParent (callback) {
+  return new arIPCProxyParent (callback);
+}
+
+function CallbackFunctionChild (id) {
+  var target = function () {}; // typeof proxy == "function"
+  return new arIPCProxyAsyncChild (Function.prototype, id, target);
+}
+
+
+/**
+ * 関数の引数を IPC で転送可能な形式に変換
+ */
+function convArgumentsForIPC (args, mm) {
+  var result = [];
+  if (args) {
+    for (var i = 0; i < args.length; i ++) {
+      result.push (wrapToTransfer (args [i], mm));
+    }
+  }
+  return result;
+}
+function wrapToTransfer (value, mm) {
+  if (typeof value === "function") {
+    // コールバック関数と仮定し
+    // IPCでコールバックを待ち受ける状態にして転送
+    var func = new CallbackFunctionParent (value);
+    func.attachIPCMessageManager (mm);
+    return {value: func.id, type: "function"};
+  }
+
+  if (typeof value !== "object" || value === null) {
+    // object ではないプリミティブと null はそのまま
+    return value;
+  }
+
+  // "object"
+  return {value: value, type: "object"};
+}
+
+/**
+ * IPC で転送された引数を対応する値に戻す
+ */
+function unconvArguments (values, mm) {
+  var result = [];
+  for (var i = 0; i < values.length; i ++) {
+    result.push (unwrapTransfered (values [i], mm));
+  }
+  return result;
+}
+function unwrapTransfered (value, mm) {
+  if (typeof value !== "object" || value === null) {
+    return value;
+  }
+
+  // object or function in {value: obj, type: ""}
+  if (value.type === "function") {
+    var func = new CallbackFunctionChild (value.value);
+    func.attachIPCMessageManager (mm);
+    return func;
+  }
+  return value.value;
+}

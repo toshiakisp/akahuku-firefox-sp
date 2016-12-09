@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku
@@ -139,6 +138,7 @@ var arAkahukuWindow = {
     }
     var xulDocument = targetBrowser.ownerDocument;
     var tabbrowser = xulDocument.getElementById ("content");
+    tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
     if ("tabs" in tabbrowser) {
       /* Firefox4/Gecko2.0 以降では安全なプロパティだけを使って単純に */
       var numTabs = tabbrowser.tabs.length;
@@ -170,6 +170,9 @@ var arAkahukuWindow = {
         }
       }
     }
+    else {
+      Akahuku.debug.warn ("no tabs nor mTabContainer in " + tabbrowser);
+    }
         
     return null;
   },
@@ -196,14 +199,7 @@ var arAkahukuWindow = {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-    if ("unwrap" in XPCNativeWrapper) {
-      parentWindow = XPCNativeWrapper.unwrap (parentWindow);
-    }
-    else {
-      if (parentWindow.wrappedJSObject) {
-        parentWindow = parentWindow.wrappedJSObject;
-      }
-    }
+    parentWindow = arAkahukuWindow.unwrapXPCNative (parentWindow);
     return parentWindow;
   },
 
@@ -258,11 +254,25 @@ var arAkahukuWindow = {
     var tab = arAkahukuWindow.getTabForBrowser (targetBrowser);
     if (tab) {
       chromeWindow.focus ();
-      xulDocument.getElementById ("content").selectedTab = tab;
+      var tabbrowser = xulDocument.getElementById ("content");
+      tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
+      tabbrowser.selectedTab = tab;
     }
     else {
-      Akahuku.debug.warn ("arAkahukuWindow.focusTabForWindow: "
-          + "tab not found for window " + targetWindow);
+      Akahuku.debug.warn ("arAkahukuWindow.focusTabForBrowser: "
+          + "tab not found for " + targetBrowser);
     }
+  },
+
+  unwrapXPCNative : function (obj) {
+    if (typeof XPCNativeWrapper === "function" &&
+        typeof XPCNativeWrapper.unwrap === "function") {
+      return XPCNativeWrapper.unwrap (obj);
+    }
+    else if (obj.wrappedJSObject) {
+      // for old firefox
+      return obj.wrappedJSObject;
+    }
+    return obj;
   },
 };

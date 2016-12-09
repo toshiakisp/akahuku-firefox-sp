@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: arAkahukuLocationInfo, arAkahukuFile, arAkahukuServerName,
@@ -1133,7 +1132,10 @@ var AkahukuOptions = {
     "sidebar" : [
       ["bool", "sidebar", false],
       ["bool", "sidebar.background", false],
+      ["bool", "sidebar.check.normal", true],
+      ["bool", "sidebar.check.reply", true],
       ["bool", "sidebar.check.catalog", true],
+      ["int",  "sidebar.refresh.catalog.type", 0],
       ["bool", "sidebar.tab.vertical", false],
       ["bool", "sidebar.tab.hidden", false],
       ["bool", "sidebar.tab.menu", false],
@@ -1146,6 +1148,7 @@ var AkahukuOptions = {
       ["int",  "sidebar.max.view", 50],
       ["int",  "sidebar.max.cache", 100],
       ["int",  "sidebar.thumbnail.size", 64],
+      ["char", "sidebar.threadclick.after", "none"],
       ["bool", "sidebar.shortcut", false],
       ["char", "sidebar.shortcut.keycode", "VK_R"],
       ["bool", "sidebar.shortcut.modifiers.alt", false],
@@ -4200,30 +4203,55 @@ var AkahukuOptions = {
     
   checkSidebar : function () {
     document.getElementById ("sidebar_background").disabled
+    = document.getElementById ("sidebar_check_groupbox_label").disabled
+    = document.getElementById ("sidebar_check_pages_label").disabled
+    = document.getElementById ("sidebar_check_normal").disabled
+    = document.getElementById ("sidebar_check_reply").disabled
     = document.getElementById ("sidebar_check_catalog").disabled
-    = document.getElementById ("sidebar_tab_vertical").disabled
-    = document.getElementById ("sidebar_tab_hidden").disabled
-    = document.getElementById ("sidebar_tab_menu").disabled
+    = document.getElementById ("sidebar_refresh_button_label").disabled
+    = document.getElementById ("sidebar_refresh_catalog_type").disabled
+    = document.getElementById ("sidebar_refresh_catalog_type_label").disabled
+    = document.getElementById ("sidebar_tab_show").disabled
     = document.getElementById ("sidebar_sort_type").disabled
+    = document.getElementById ("sidebar_sort_type_label").disabled
     = document.getElementById ("sidebar_sort_visited").disabled
     = document.getElementById ("sidebar_sort_marked").disabled
     = document.getElementById ("sidebar_sort_invert").disabled
-    = document.getElementById ("sidebar_markedtab").disabled
     = document.getElementById ("sidebar_max_view").disabled
     = document.getElementById ("sidebar_max_view_label").disabled
     = document.getElementById ("sidebar_max_cache").disabled
     = document.getElementById ("sidebar_max_cache_label").disabled
     = document.getElementById ("sidebar_thumbnail_size").disabled
     = document.getElementById ("sidebar_thumbnail_size_label").disabled
+    = document.getElementById ("sidebar_threadclick_after").disabled
+    = document.getElementById ("sidebar_threadclick_after_label").disabled
+    = document.getElementById ("sidebar_threadclick_after_label2").disabled
     = document.getElementById ("sidebar_save").disabled
+    = document.getElementById ("sidebar_shortcut").disabled
+    = document.getElementById ("sidebar_board_select_groupbox_label").disabled
     = document.getElementById ("sidebar_board_select_in_list").disabled
     = document.getElementById ("sidebar_board_select_in_label").disabled
     = document.getElementById ("sidebar_board_select_ex_list").disabled
     = document.getElementById ("sidebar_board_select_ex_label").disabled
     = document.getElementById ("sidebar_board_select_add").disabled
     = document.getElementById ("sidebar_board_select_delete").disabled
+    = document.getElementById ("sidebar_board_moveup").disabled
+    = document.getElementById ("sidebar_board_movedown").disabled
+    = document.getElementById ("sidebar_thread_groupbox_label").disabled
+    = document.getElementById ("sidebar_detail_groupbox_label").disabled
     = !document.getElementById ("sidebar").checked;
     AkahukuOptions.checkSidebarShortcut ();
+    AkahukuOptions.checkSidebarTabShow ();
+  },
+
+  checkSidebarTabShow : function () {
+    document.getElementById ("sidebar_tab_hidden").checked
+    = !document.getElementById ("sidebar_tab_show").checked;
+    document.getElementById ("sidebar_tab_vertical").disabled
+    = document.getElementById ("sidebar_tab_menu").disabled
+    = document.getElementById ("sidebar_markedtab").disabled
+    = !document.getElementById ("sidebar").checked
+    || !document.getElementById ("sidebar_tab_show").checked;
   },
     
   checkSidebarShortcut : function () {
@@ -4331,7 +4359,7 @@ var AkahukuOptions = {
           .classes ["@mozilla.org/scriptableinputstream;1"]
           .createInstance (Components.interfaces
                            .nsIScriptableInputStream);
-        fstream.init (file, 0x01, 292/*0444*/, 0);
+        fstream.init (file, 0x01, 292/*0o444*/, 0);
         sstream.init (fstream);
         var text = sstream.read (-1);
         sstream.close ();
@@ -4406,7 +4434,7 @@ var AkahukuOptions = {
           = Components
           .classes ["@mozilla.org/network/file-output-stream;1"]
           .createInstance (Components.interfaces.nsIFileOutputStream);
-        fstream.init (file, 0x02 | 0x08 | 0x20, 420/*0644*/, 0);
+        fstream.init (file, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
                 
         AkahukuOptions.savePrefs (fstream, deletePath, true);
                 
@@ -4477,11 +4505,11 @@ var AkahukuOptions = {
         node = nextNode;
       }
       
-      return arAkahukuJSON.encode (values);
+      return JSON.stringify (values);
     }, 
     
     fromString : function (id, s) {
-      var values = arAkahukuJSON.decode (s);
+      var values = JSON.parse (s);
       while (values.length && values [0] == undefined) {
         values.shift ();
       }
@@ -4782,7 +4810,7 @@ var AkahukuOptions = {
       
       var v;
       var listcell = listitem.firstChild;
-      listcell.setAttribute ("value", escape (arAkahukuJSON.encode (value)));
+      listcell.setAttribute ("value", escape (JSON.stringify (value)));
       for (var i = 0; i < listInfo.columns.length; i ++) {
         v = listInfo.columns [i][1] (value);
         
@@ -4813,7 +4841,7 @@ var AkahukuOptions = {
     
     getItem : function (listitem) {
       var s = unescape (listitem.firstChild.getAttribute ("value"));
-      var v = arAkahukuJSON.decode (s);
+      var v = JSON.parse (s);
       return v;
     },
     
@@ -4850,7 +4878,7 @@ var AkahukuOptions = {
   
   checkUndefined : function (value) {
     try {
-      var values = arAkahukuJSON.decode (value);
+      var values = JSON.parse (value);
       if (values.length) {
         while (values.length && values [0] == undefined) {
           values.shift ();

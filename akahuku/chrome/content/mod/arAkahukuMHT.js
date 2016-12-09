@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
@@ -107,7 +106,7 @@ arAkahukuP2PCacheEntryDescriptor.prototype = {
   openInputStream : function (offset) {
     this.fstream
     = arAkahukuFile.createFileInputStream
-    (this.targetFile, 0x01, 292/*0444*/, 0,
+    (this.targetFile, 0x01, 292/*0o444*/, 0,
      this.ownerDocument.defaultView);
         
     return this.fstream;
@@ -246,15 +245,28 @@ arAkahukuMHTFileData.prototype = {
    */
   getFile : function (location, targetDocument) {
     var window = this.ownerDocument.defaultView;
+    var type = Components.interfaces.nsIContentPolicy.TYPE_IMAGE;
+    switch (this.node.nodeName.toLowerCase ()) {
+      case "source":
+        if (this.node.parentNode &&
+            this.node.parentNode.nodeName.toLowerCase () == "picture") {
+          break; // TYPE_IMAGE
+        }
+      case "video":
+      case "audio":
+        type = Components.interfaces.nsIContentPolicy.TYPE_MEDIA;
+        break;
+    }
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
       window.setTimeout
-      ((function (file, location) {
+      ((function (file, location, type) {
           return function () {
-            var ios
-            = Components.classes ["@mozilla.org/network/io-service;1"]
-            .getService (Components.interfaces.nsIIOService);
             file.channel 
-            = ios.newChannel (location, null, null);
+            = arAkahukuUtil.newChannel ({
+              uri: location,
+              loadingNode: file.ownerDocument,
+              contentPolicyType: type,
+            });
             arAkahukuUtil.setChannelContext (file.channel, file.ownerDocument);
 
             try {
@@ -269,7 +281,7 @@ arAkahukuMHTFileData.prototype = {
               file.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
             }
           };
-        })(this, location), this.delay);
+        })(this, location, type), this.delay);
             
       return;
     }
@@ -3100,7 +3112,7 @@ var arAkahukuMHT = {
             
       /* ファイルに書き込む */
       var fstream = arAkahukuFile.createFileOutputStream
-        (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0644*/, 0,
+        (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0,
          targetWindow);
             
       var data = "";
@@ -3601,7 +3613,7 @@ var arAkahukuMHT = {
         else {
           if (arAkahukuMHT.enableAutoUnique) {
             file = arAkahukuFile
-              .createUnique (file.path, 0x00, 420/*0644*/);
+              .createUnique (file.path, 0x00, 420/*0o644*/);
           }
         }
         param.lastFilename = filename;

@@ -342,7 +342,7 @@ AkahukuIPCResponse.prototype = {
   },
   restoreFromPayload : function (payload)
   {
-    this.name = payload.message;
+    this.name = payload.name;
     this.isSuccess = payload.data.success;
     this.message = payload.data.message;
 
@@ -449,12 +449,15 @@ AkahukuIPCCallbackListener.prototype = {
     if (this.message !== message.name) {
       return;
     }
-    //console.log ("AkahukuIPCCallbackListener receiveMessage: "+this.message);
     this.messageManager
       .removeMessageListener (this.message, this);
     this.messageManager = null;
 
     var resp = new AkahukuIPCResponse (message);
+    if (this.definition.debug) {
+      console.log ("AkahukuIPCCallbackListener received response:",
+          resp.name, resp);
+    }
     resp.callbackTo (this.originalCallback);
   },
 };
@@ -462,6 +465,7 @@ AkahukuIPCCallbackListener.prototype = {
 function AkahukuIPCCallbackSender (def, responseId, mm) {
   this.responseId = responseId;
   this.callbackMethod = def.callbackMethod;
+  this.definition = def;
   this.callback = this.createCallback ();
   this.messageManager = mm;
 }
@@ -512,7 +516,10 @@ AkahukuIPCCallbackSender.prototype = {
       callbackMethod: callbackMethod || null,
     });
     var payload = response.store ();
-    //console.log ("sendResponse "+ this.responseId);
+    if (this.definition.debug) {
+      console.log ("AkahukuIPCCallbackSender send response:",
+          this.responseId, response);
+    }
     if (this.messageManager) {
       var ms = this.messageManager;
       ms.sendAsyncMessage
@@ -612,6 +619,11 @@ AkahukuIPC.prototype = {
    *         [optional] コマンドの設定
    */
   defineProc : function (module, moduleName, commandName, optSettings) {
+    if (!this.initialized) {
+      throw Components.Exception
+        ("AkahukuIPC is not initizilzed yet",
+         Cr.NS_ERROR_FAILURE, Components.stack.caller);
+    }
     if (!this.isRoot && !(optSettings && optSettings.remote)) {
       throw Components.Exception
         ("AkahukuIPC.defineProc is available only for root IPC"
@@ -634,6 +646,7 @@ AkahukuIPC.prototype = {
       _module: module,
       moduleName: moduleName,
       methodName: commandName,
+      debug: false,
       enable: true,
       async: false,
       frame: false, // use frame message manager to send
@@ -643,6 +656,9 @@ AkahukuIPC.prototype = {
       callbackMethod: "",
     };
     if (optSettings) {
+      if ("debug" in optSettings && optSettings.debug) {
+        command_def.debug = true;
+      }
       if ("async" in optSettings && optSettings.async) {
         command_def.async = true;
       }
@@ -1073,7 +1089,7 @@ AkahukuIPC.prototype = {
       moduleEntry = {};
       clonedState [moduleName] = moduleEntry;
       for (var commandName in this._procedures [moduleName]) {
-        commandEntry = {};
+        var commandEntry = {};
         for (var propName in this._procedures [moduleName][commandName]) {
           if (propName === "_module") {
             // module object cannot be cloned for message

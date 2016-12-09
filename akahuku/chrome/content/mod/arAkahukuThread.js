@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
@@ -140,7 +139,7 @@ arAkahukuThreadParam.prototype = {
       switch (topic) {
         case "arakahuku-thread-replynum-changed":
           subject.QueryInterface (Components.interfaces.nsISupportsString);
-          var decoded = arAkahukuJSON.decode (subject.data);
+          var decoded = JSON.parse (subject.data);
           this.onNotifiedThreadReplyNumChanged (decoded);
           break;
       }
@@ -1581,7 +1580,7 @@ var arAkahukuThread = {
       replyCount: parseInt (replyNum)};
     var subject = Components.classes ["@mozilla.org/supports-string;1"]
     .createInstance (Components.interfaces.nsISupportsString);
-    subject.data = arAkahukuJSON.encode (data);
+    subject.data = JSON.stringify (data);
     arAkahukuUtil.executeSoon (function (subject) {
       var os = Components.classes ["@mozilla.org/observer-service;1"]
       .getService (Components.interfaces.nsIObserverService);
@@ -1636,7 +1635,7 @@ var arAkahukuThread = {
           = Components.classes ["@mozilla.org/supports-string;1"]
           .createInstance (Components.interfaces.nsISupportsString);
         subject.data
-          = arAkahukuJSON.encode ({
+          = JSON.stringify ({
             URL: targetDocument.location.href,
             server: info.server,
             dir: info.dir,
@@ -1707,6 +1706,7 @@ var arAkahukuThread = {
       if (tab) {
         var tabbrowser
           = targetBrowser.ownerDocument.getElementById ("content");
+        tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
         
         if ("setIcon" in tabbrowser
             && arAkahukuThread.enableTabIconAsFavicon) {
@@ -1857,6 +1857,7 @@ var arAkahukuThread = {
       if (tab) {
         var tabbrowser = targetBrowser.ownerDocument
           .getElementById ("content");
+        tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
         
         if ("setIcon" in tabbrowser) {
           tabbrowser.setIcon (tab, "");
@@ -2749,7 +2750,7 @@ var arAkahukuThread = {
    */
   captureImageErrorToReload : function (event) {
     var imageStatus
-      = Akahuku.Cache.getImageStatus (event.target);
+      = arAkahukuUtil.getImageStatus (event.target);
     if (!imageStatus.isImage || !imageStatus.isErrored
         || imageStatus.isBlocked
         // 赤福キャッシュ&プレビューURI
@@ -2792,7 +2793,7 @@ var arAkahukuThread = {
          + imageStatus.requestURI.spec
          + " (status=" + imageStatus.requestImageStatus
          + " , count=" + count + ")"
-         //+ "\n" + arAkahukuJSON.encode (imageStatus)
+         //+ "\n" + JSON.stringify (imageStatus)
          + "\n" + event.target.ownerDocument.location.href);
     }
     try {

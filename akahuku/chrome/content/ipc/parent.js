@@ -17,11 +17,17 @@ var arAkahukuCacheIPCWrapper = {
 
   asyncOpenCache : function (source, flag, callback)
   {
-    var browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
+    var messageManager = arAkahukuIPCRoot.messageTarget;
     var sourceObj = {
       url: source,
-      contextWindow: browser.ownerDocument.defaultView.top,
+      contextWindow: null,
     };
+    if (messageManager instanceof Ci.nsIDOMXULElement) {
+      // xul:browser in remote mode
+      var browser = arAkahukuIPCRoot.messageTarget;
+      sourceObj.contextWindow = browser.ownerDocument.defaultView.top;
+      messageManager = browser.messageManager;
+    }
     var wrappedCallback = {
       onCacheEntryCheck : function (entry, appCache) {
         // (how can I send sync IPC command to a content process?)
@@ -37,7 +43,7 @@ var arAkahukuCacheIPCWrapper = {
         if (entry) {
           Cu.import ("resource://akahuku/ipc-cache.jsm");
           var entryP = new arCacheEntryParent (entry);
-          entryP.attachIPCMessageManager (browser.messageManager);
+          entryP.attachIPCMessageManager (messageManager);
           entry = entryP.createIPCTransferable ();
         }
         callback.onCacheEntryAvaiable (entry, isNew, appCache, status);
@@ -63,7 +69,7 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuCacheIPCWrapper,
    "Cache", "asyncOpenCache",
-   {async: true, callback: 3, frame: true,
+   {async: true, callback: 3,
      callbackObjectMethod: ["onCacheEntryCheck","onCacheEntryAvaiable"]});
 
 
@@ -102,6 +108,8 @@ arAkahukuIPCRoot.defineProc
 
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getDirectory");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuFile, "File", "create");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "createUnique");
 arAkahukuIPCRoot.defineProc
@@ -220,12 +228,36 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuP2P, "P2P", "setContextMenuContentData");
 arAkahukuIPCRoot.defineProc
-  (arAkahukuQuote, "P2P", "deleteCacheFiles");
+  (arAkahukuP2P, "P2P", "deleteCacheFiles", {async: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuP2P, "P2P", "update", {async: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuP2P, "P2P", "updateStatusbar", {async: true});
 
 
 
 arAkahukuIPCRoot.defineProc
   (arAkahukuQuote, "Quote", "searchInNewTabXUL", {async: true});
+
+
+
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "updateThreadItem", {async: true});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "hasTabForBoard");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "hasBoard");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "getThread");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "asyncUpdateVisited",
+   {async: true, callback: 2});
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "sort");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "updateMarked");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "update");
 
 
 

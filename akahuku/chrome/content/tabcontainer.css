@@ -4,6 +4,7 @@ akahukutabcontainer {
 }
 
 button.scrollbutton {
+  -moz-user-focus: ignore;
   -moz-appearance: none;
   -moz-box-align: center;
   -moz-box-pack: center;
@@ -32,6 +33,7 @@ button.scrollbutton[disabled="true"] {
 }
 
 button.menubutton {
+  -moz-user-focus: ignore;
   -moz-appearance: none;
   -moz-box-align: center;
   -moz-box-pack: center;

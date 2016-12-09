@@ -26,8 +26,6 @@
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuFileName.js" />
   <script type="application/x-javascript"
-          src="chrome://akahuku/content/mod/arAkahukuJSON.js" />
-  <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuServerName.js" />
   <script type="application/x-javascript"
           src="chrome://akahuku/content/mod/arAkahukuTitle.js" />
@@ -1935,60 +1933,136 @@
           
           <box orient="horizontal">
             <box orient="vertical" flex="1">
-              <checkbox id="sidebar_background" checked="false"
-                        label="非表示の間も反映させる" />
-              <checkbox id="sidebar_check_catalog" checked="false"
-                        label="カタログをチェックする" />
-              <checkbox id="sidebar_tab_vertical" checked="false"
-                        label="タブを縦に表示する" />
-              <checkbox id="sidebar_tab_hidden" checked="false"
-                        label="タブを表示しない" />
-              <checkbox id="sidebar_tab_menu" checked="false"
-                        label="タブメニューを表示する" />
-              <checkbox id="sidebar_sort_visited" checked="false"
-                        label="既読のスレを上に持ってくる" />
-              <checkbox id="sidebar_sort_marked" checked="false"
-                        label="マークしたスレを上に持ってくる" />
-              <checkbox id="sidebar_sort_invert" checked="false"
-                        label="ソートを反転" />
-              <checkbox id="sidebar_markedtab" checked="false"
-                        label="マークされたスレを別タブに表示" />
-              <checkbox id="sidebar_save" checked="false"
-                        label="サイドバーの内容を保存する" />
+              <groupbox orient="vertical">
+                <caption>
+                  <label value="スレの情報" id="sidebar_check_groupbox_label"/>
+                </caption>
+                <label value="表示したページから取得" id="sidebar_check_pages_label"/>
+                <box orient="vertical" class="sub">
+                  <box orient="horizontal">
+                    <checkbox id="sidebar_check_normal" checked="true" disabled="true"
+                              label="通常" />
+                    <checkbox id="sidebar_check_reply" checked="true" disabled="true"
+                              label="レス送信モード" />
+                    <checkbox id="sidebar_check_catalog" checked="false"
+                              label="カタログ" />
+                  </box>
+                  <checkbox id="sidebar_background" checked="false"
+                            label="サイドバーが非表示の間も" />
+                </box>
+                <label value="更新ボタン (0ページ, カタログ)" id="sidebar_refresh_button_label"/>
+                <box orient="vertical" class="sub">
+                  <box orient="horizontal" align="center">
+                    <label id="sidebar_refresh_catalog_type_label" control="sidebar_refresh_catalog_type"
+                           value="カタログ種類" />
+                    <menulist id="sidebar_refresh_catalog_type">
+                      <menupopup id="sidebar_refresh_catalog_type_menu">
+                        <menuitem value="0" label="カタログ" />
+                        <menuitem value="1" label="新順" />
+                        <menuitem value="2" label="古順" />
+                        <menuitem value="3" label="多順" />
+                        <menuitem value="4" label="少順" />
+                      </menupopup>
+                    </menulist>
+                  </box>
+                </box>
+                <checkbox id="sidebar_save" checked="false"
+                          label="終了時にスレ情報を保存する" />
+              </groupbox>
+              <groupbox orient="vertical">
+                <caption>
+                  <label value="スレの表示" id="sidebar_thread_groupbox_label"/>
+                </caption>
+                <box orient="horizontal" align="center">
+                  <label id="sidebar_thumbnail_size_label"
+                         control="sidebar_thumbnail_size"
+                         value="サムネのサイズ (px)"/>
+                  <textbox id="sidebar_thumbnail_size" size="4"
+                           type="number" min="8" max="250"/>
+                </box>
+                <box orient="horizontal" align="center">
+                  <label id="sidebar_sort_type_label" control="sidebar_sort_type"
+                         value="表示順" />
+                  <menulist id="sidebar_sort_type">
+                    <menupopup id="sidebar_sort_type_menu">
+                      <menuitem value="1" label="最終レス番号順" />
+                      <menuitem value="0" label="スレの新しい順" />
+                      <menuitem value="2" label="レスの古い順" />
+                      <menuitem value="5" label="カタログ順" />
+                      <menuitem value="3" label="レスの多い順" />
+                      <menuitem value="4" label="レスの少ない順" />
+                      <menuitem value="6" label="レスの増加数順" />
+                    </menupopup>
+                  </menulist>
+                </box>
+                <box orient="vertical" class="sub">
+                  <box orient="horizontal">
+                    <checkbox id="sidebar_sort_visited" checked="false"
+                              label="既読を上に" />
+                    <checkbox id="sidebar_sort_marked" checked="false"
+                              label="マークを上に" />
+                    <checkbox id="sidebar_sort_invert" checked="false"
+                              label="反転" />
+                  </box>
+                </box>
+              </groupbox>
             </box>
-            <box orient="vertical" flex="1">
-              <box orient="horizontal" align="center">
-                <label id="sidebar_sort_type_label" control="sidebar_sort_type"
-                       value="表示順" />
-                <menulist id="sidebar_sort_type">
-                  <menupopup id="sidebar_sort_type_menu">
-                    <menuitem value="0" label="スレの立った順" />
-                    <menuitem value="1" label="最終レス番号順" />
-                  </menupopup>
-                </menulist>
-              </box>
-              <box orient="horizontal" align="center">
-                <label id="sidebar_max_view_label"
-                       control="sidebar_max_view" value="表示する数" />
-                <textbox id="sidebar_max_view" size="6" />
-              </box>
-              <box orient="horizontal" align="center">
-                <label id="sidebar_max_cache_label"
-                       control="sidebar_max_cache" value="内部で保持する数" />
-                <textbox id="sidebar_max_cache" size="6" />
-              </box>
-              <box orient="horizontal" align="center">
-                <label id="sidebar_thumbnail_size_label"
-                       control="sidebar_thumbnail_size"
-                       value="サムネのサイズ" />
-                <textbox id="sidebar_thumbnail_size" size="6" />
-              </box>
+            <box orient="vertical">
+              <groupbox orient="vertical">
+                <caption>
+                  <checkbox id="sidebar_tab_show" checked="true"
+                            label="板毎のタブの表示"
+                            oncommand="AkahukuOptions.checkSidebarTabShow ();" />
+                </caption>
+                <checkbox id="sidebar_tab_hidden" checked="false"
+                          label="タブを表示しない" hidden="true"/>
+                <box orient="horizontal">
+                  <checkbox id="sidebar_tab_vertical" checked="false"
+                            label="横に表示(縦並び)" />
+                  <checkbox id="sidebar_tab_menu" checked="false"
+                            label="タブ一覧ボタンを表示" />
+                </box>
+                <checkbox id="sidebar_markedtab" checked="false"
+                          label="マークされたスレを別タブに表示" />
+              </groupbox>
+              <groupbox orient="vertical">
+                <caption>
+                  <label value="詳細" id="sidebar_detail_groupbox_label"/>
+                </caption>
+                <box orient="horizontal" align="center">
+                  <label id="sidebar_max_view_label"
+                         control="sidebar_max_view" value="表示するスレの数/板" />
+                  <textbox id="sidebar_max_view" size="3" type="number" increment="10"/>
+                </box>
+                <box orient="horizontal" align="center">
+                  <label id="sidebar_max_cache_label"
+                         control="sidebar_max_cache" value="内部で保持する数/板" />
+                  <textbox id="sidebar_max_cache" size="3" type="number" increment="10"/>
+                </box>
+                <box orient="horizontal" align="center">
+                  <label id="sidebar_threadclick_after_label"
+                         control="sidebar_threadclick_after"
+                         value="既存のスレをクリック時" />
+                  <menulist id="sidebar_threadclick_after"
+                          tooltiptext="(デフォルト:タブ切替のみ) タブ切替を行った後にリロード等を行える。一部アクション(*)は「続きを読む」機能の有効化が必要。">
+                    <menupopup id="sidebar_threadclick_after_menu">
+                      <menuitem value="none" label="タブ切替のみ" />
+                      <menuitem value="reload" label="リロード" />
+                      <menuitem value="diff" label="続きを読む *" />
+                      <menuitem value="sync" label="同期 *" />
+                    </menupopup>
+                  </menulist>
+                  <label id="sidebar_threadclick_after_label2"
+                         value=".sp" class="sp"/>
+                </box>
+              </groupbox>
               <checkbox id="sidebar_shortcut" checked="false"
                         label="ショートカットキー"
                         oncommand="AkahukuOptions.checkSidebarShortcut ();" />
               <box class="sub" orient="vertical">
                 <box orient="horizontal" align="top">
                   <textbox id="sidebar_shortcut_input" value="ここで入力"
+                           size="16"
                            onkeydown="AkahukuOptions.onSidebarShortcutKeyDown (arguments [0])"
                            onkeypress="AkahukuOptions.onSidebarShortcutKeyDown (arguments [0])"
                            onkeyup="this.value = 'ここで入力';" />
@@ -2012,7 +2086,7 @@
           </box>
           
           <groupbox orient="horizontal" flex="1">
-            <caption label="表示する板" />
+            <caption label="表示する板" id="sidebar_board_select_groupbox_label"/>
             <box orient="vertical" flex="1">
               <label id="sidebar_board_select_in_label" value="表示する" />
               <listbox id="sidebar_board_select_in_list" flex="1"

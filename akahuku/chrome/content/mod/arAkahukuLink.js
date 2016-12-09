@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
@@ -1437,7 +1436,7 @@ var arAkahukuLink = {
           = arAkahukuConfig
           .initPref ("char", "akahuku.autolink.user.patterns2", "null");
         if (value != "null") {
-          var list = arAkahukuJSON.decode (unescape (value));
+          var list = JSON.parse (unescape (value));
           while (list.length && list [0] == undefined) {
             list.shift ();
           }
@@ -1696,11 +1695,13 @@ var arAkahukuLink = {
       // 自動認識にも preview 用匿名チャネルを使う
       url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
             
-      var ios
-      = Components.classes ["@mozilla.org/network/io-service;1"]
-      .getService (Components.interfaces.nsIIOService);
       listener.channel 
-      = ios.newChannel (url, null, null);
+      = arAkahukuUtil.newChannel ({
+        uri: url,
+        loadingNode: targetDocument,
+        contentPolicyType:
+          Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST,
+      });
       listener.channel.notificationCallbacks = listener;
             
       try {
@@ -1791,7 +1792,7 @@ var arAkahukuLink = {
           = arAkahukuConfig
           .initPref ("char", "akahuku.autolink.user.patterns2", "null");
         if (value != "null") {
-          list = arAkahukuJSON.decode (unescape (value));
+          list = JSON.parse (unescape (value));
           while (list.length && list [0] == undefined) {
             list.shift ();
           }
@@ -1819,7 +1820,7 @@ var arAkahukuLink = {
         
         arAkahukuConfig.setCharPref
           ("akahuku.autolink.user.patterns2",
-           escape (arAkahukuJSON.encode (list)));
+           escape (JSON.stringify (list)));
         
         // "赤福オートリンク：追加しました"
         arAkahukuUI.setStatusPanelText
@@ -2919,97 +2920,6 @@ var arAkahukuLink = {
     
     return null;
   },
-
-  /**
-   * 画像読み込みエラーの詳細を取得するためのオブザーバー作成
-   */
-  loadErrorObserverFactory : function ()
-  {
-    function LoadErrorObserver () {
-      this.targetNode = null;
-      this.targetURI = null;
-      this.registered = false;
-    };
-    LoadErrorObserver.prototype = {
-      statusCodeAttrName : "__akahuku_preview_error_status",
-      statusTextAttrName : "__akahuku_preview_error_status_text",
-      register : function (node, uriSpec)
-      {
-        this.targetNode = node;
-        this.targetURI = arAkahukuUtil.newURIViaNode (uriSpec, null);
-        if (!this.registered) {
-          this.os
-            = Components.classes ["@mozilla.org/observer-service;1"]
-            .getService (Components.interfaces.nsIObserverService);
-          try {
-            this.os.addObserver
-              (this, "http-on-examine-response", false);
-            this.registered = true;
-          }
-          catch (e if Components.results.NS_ERROR_NOT_IMPLEMENTED) {
-            // http-on-* observers only work in the parent process
-            Akahuku.debug.log
-              ("Can't monitor detail load errors of preview"
-               + " in a content process by observing http-on-*");
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-        }
-      },
-      unregister : function () {
-        if (this.registered) {
-          this.registered = false;
-          this.os.removeObserver
-            (this, "http-on-examine-response", false);
-        }
-      },
-      // nsIObserver.observe
-      observe : function (subject, topic, data)
-      {
-        if (topic != "http-on-examine-response")
-          return;
-        // QueryInterface
-        if (!(subject instanceof Components.interfaces.nsIHttpChannel))
-          return;
-        if (!this.isChannelShouldProcess (subject))
-          return;
-        if (!subject.requestSucceeded) {
-          // エラーの情報をノードに記録
-          this.targetNode.setAttribute
-            (this.statusCodeAttrName, subject.responseStatus);
-          this.targetNode.setAttribute
-            (this.statusTextAttrName, subject.responseStatusText);
-        }
-      },
-      // 処理すべきチャネルの判定
-      // FIXME: URI単位より確実な判定方法はないものか...
-      isChannelShouldProcess : function (channel)
-      {
-        if (!channel.URI.equals (this.targetURI)
-            && !channel.originalURI.equals (this.targetURI) ) {
-          return false;
-        }
-        try { // リクエスト生成元の同一判定
-          var callbacks = channel.notificationCallbacks;
-          if (!callbacks && channel.loadGroup) {
-            callbacks = channel.loadGroup.notificationCallbacks;
-          }
-          var contextWindow
-            = callbacks.getInterface (Components.interfaces.nsILoadContext)
-            .associatedWindow;
-          if (contextWindow.document != this.targetNode.ownerDocument) {
-            return false;
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-          return false;
-        }
-        return true;
-      },
-    };
-
-    return new LoadErrorObserver ();
-  },
   
   /**
    * プレビュー画像読み込みの完了イベント
@@ -3151,13 +3061,15 @@ var arAkahukuLink = {
     var text = "";
     if (status == 404) {
       text = "\u30D5\u30A1\u30A4\u30EB\u304C\u7121\u3044\u3088";
+      node.title = statusText;
     }
     else if (status == 403) {
       text = "\u6A29\u9650\u304C\u306A\u3044\u3088";
-
+      node.title = statusText;
     }
     else if (status == 401) {
       text = "\u8A8D\u8A3C\u304C\u8981\u308B\u3088";
+      node.title = statusText;
     }
     else {
       text
@@ -3191,24 +3103,42 @@ var arAkahukuLink = {
       image.style.borderWidth = "0px";
       image.title = uri;
       // HTTPレスポンスを直に監視してエラー情報を得る
-      var observer = arAkahukuLink.loadErrorObserverFactory ();
-      observer.register (image, uri);
+      Components.utils.import ("resource://akahuku/observer.jsm");
+      var listener = function (details) {
+        if (!(200 <= details.statsuCode && details.statsuCode < 300)) {
+          // エラーの情報をノードに記録
+          image.setAttribute
+            ("__akahuku_preview_error_status", details.statusCode);
+          image.setAttribute
+            ("__akahuku_preview_error_status_text", details.statusLine);
+        }
+        else {
+          // リダイレクトの結果成功したら
+          image.removeAttribute ("__akahuku_preview_error_status");
+          image.removeAttribute ("__akahuku_preview_error_status_text");
+        }
+      };
+      var targetEvent = AkahukuObserver.webRequest.onHeadersReceived;
+      targetEvent.addListener (listener, {
+        urls: [uri],
+        _window: image.ownerDocument.defaultView},
+        ["responseHeaders"]);
       image.addEventListener
         ("load",
          function () {
-          observer.unregister ();
+          targetEvent.removeListener (listener);
           arAkahukuLink.onImageLoad (arguments [0]);
         }, false);
       image.addEventListener
         ("error",
          function () {
-          observer.unregister ();
+          targetEvent.removeListener (listener);
           arAkahukuLink.onImageError (arguments [0]);
         }, false);
       targetDocument.defaultView.addEventListener
         ("pagehide",
          function () {
-          observer.unregister ();
+          targetEvent.removeListener (listener);
         }, false);
     }
     else if (/\.(webm|mp4)(\?.*)?$/i.test (uri)) {

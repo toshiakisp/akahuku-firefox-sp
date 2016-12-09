@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: arAkahukuConfig,
@@ -6,20 +5,6 @@
  *          arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
  *          arAkahukuBoard,
  */
-
-// arAkahukuJSON のロード
-try {
-  Components.utils.import("resource://akahuku/json.jsm");
-}
-catch (e) {
-  // JavaScript Code Module が使えない環境(Fx3より前)では
-  // 従来通りに赤福実装をロード
-  var loader
-    = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
-    .getService (Components.interfaces.mozIJSSubScriptLoader);
-  loader.loadSubScript
-    ("chrome://akahuku/content/mod/arAkahukuJSON.js");
-}
 
 /**
  * 本体
@@ -56,89 +41,6 @@ var Akahuku = {
   enableDownloadLastDirHack : false,
 
   contextTasksArray : new Array (),
-
-  /**
-   * デバッグ用
-   */
-  debug : {
-    enabled : true,
-    prefix : "Akahuku debug: ",
-    _consoleService : Components.classes ["@mozilla.org/consoleservice;1"]
-      .getService (Components.interfaces.nsIConsoleService),
-
-    log : function (message) {
-      if (!this.enabled) return;
-      this._consoleService.logStringMessage (this.prefix + message);
-    },
-    warn : function (message) {
-      if (!this.enabled) return;
-      var stack = Components.stack.caller;
-      var scriptError
-        = Components.classes ["@mozilla.org/scripterror;1"]
-        .createInstance (Components.interfaces.nsIScriptError);
-      scriptError.init
-        (this.prefix + message,
-         "filename" in stack ? stack.filename : null,
-         null,
-         "lineNumber" in stack ?  stack.lineNumber : null,
-         null,
-         Components.interfaces.nsIScriptError.warningFlag,
-         null);
-      this._consoleService.logMessage (scriptError);
-    },
-    error : function (message) {
-      if (!this.enabled) return;
-      var stack = Components.stack.caller;
-      var scriptError
-        = Components.classes ["@mozilla.org/scripterror;1"]
-        .createInstance (Components.interfaces.nsIScriptError);
-      scriptError.init
-        (this.prefix + message,
-         "filename" in stack ? stack.filename : null,
-         null,
-         "lineNumber" in stack ?  stack.lineNumber : null,
-         null,
-         Components.interfaces.nsIScriptError.errorFlag,
-         null);
-      this._consoleService.logMessage (scriptError);
-    },
-    exception : function (error) {
-      if (!this.enabled) return;
-      if (typeof error !== "object") {
-        error = new Error (String (error),
-          Components.stack.caller.filename,
-          Components.stack.caller.lineNumber);
-      }
-      var message = 'exception: ' + error.message;
-      //Components.utils.reportError (error);
-      for (var frame = Components.stack.caller;
-          frame && frame.filename; frame = frame.caller) {
-        message += "\n    " + frame.toString ();
-      }
-      var scriptError
-        = Components.classes ["@mozilla.org/scripterror;1"]
-        .createInstance (Components.interfaces.nsIScriptError);
-      scriptError.init
-        (this.prefix + message,
-         "fileName" in error ? error.fileName : null,
-         null,
-         "lineNumber" in error ?  error.lineNumber : null,
-         "columnNumber" in error ?  error.columnNumber : null,
-         Components.interfaces.nsIScriptError.warningFlag,
-         null);
-      this._consoleService.logMessage (scriptError);
-    },
-    tic : function () {
-      var start = new Date ();
-      start.toc = function () {
-        var now = new Date ();
-        var ms = now.getTime () - this.getTime ();
-        this.setTime (now.getTime ());
-        return ms;
-      };
-      return start;
-    },
-  },
     
   /**
    * ドキュメントごとの情報を追加する
@@ -265,31 +167,16 @@ var Akahuku = {
   ensureDocumentParamsSane : function () {
     for (var i = 0; i < Akahuku.documentParams.length; i ++) {
       var param = Akahuku.documentParams [i];
-      if (Akahuku.checkDeadObject (param.targetDocument)) {
+      if (arAkahukuCompat.isDeadWrapper (param.targetDocument)) {
         Akahuku.debug.warn ("drop an document param with dead object");
         Akahuku.documentParams.splice (i, 1);
         i --;
       }
     }
     if (Akahuku.latestParam &&
-        Akahuku.checkDeadObject (Akahuku.latestParam.targetDocument)) {
+        arAkahukuCompat.isDeadWrapper (Akahuku.latestParam.targetDocument)) {
       Akahuku.debug.warn ("drop the latest document param with dead object");
       Akahuku.latestParam = null;
-    }
-  },
-
-  checkDeadObject : function (obj) {
-    if (Components.utils.isDeadWrapper) {
-      // requires Gecko 17?
-      return Components.utils.isDeadWrapper (obj);
-    }
-    try {
-      // 適当なプロパティを参照しようとしてみる
-      obj.defaultView;
-      return false;
-    }
-    catch (e) {
-      return true;
     }
   },
 
@@ -460,6 +347,7 @@ var Akahuku = {
     arAkahukuLink.init ();
     arAkahukuCatalog.init ();
     arAkahukuConverter.init ();
+    arAkahukuP2P.init ();
     arAkahukuConfig.init ();
     arAkahukuStyle.init ();
 
@@ -1414,10 +1302,12 @@ var Akahuku = {
     if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath
         && doc.defaultView) {
       try {
+        var itType = Components.interfaces
+          .nsIDOMXPathResult.ORDERED_NODE_ITERATOR_TYPE;
         var iterator =
           doc.evaluate
           (".//blockquote[count(ancestor::center)=0][count(ancestor::table[@border='1' or @class='ama'])=0][count(ancestor::div[@id='akahuku_respanel_content' or @class='ama'])=0]",
-           targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+           targetNode, null, itType, null);
         var node = iterator.iterateNext ();
         while (node) {
           newNodes.push (node);
@@ -1428,7 +1318,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (".//div[contains(concat(' ',normalize-space(@class),' '),' re ') or contains(concat(' ',normalize-space(@class),' '),' t ')]",
-             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, itType, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);
@@ -1444,7 +1334,7 @@ var Akahuku = {
           iterator =
             doc.evaluate
             (xpath,
-             targetNode, null, doc.defaultView.XPathResult.ORDERED_NODE_ITERATOR_TYPE, iterator);
+             targetNode, null, itType, iterator);
           node = iterator.iterateNext ();
           while (node) {
             newNodes.push (node);

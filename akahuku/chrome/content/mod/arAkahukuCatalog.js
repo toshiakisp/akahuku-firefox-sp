@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuConfig, arAkahukuConverter
@@ -1430,10 +1429,11 @@ arAkahukuMergeItemVisitedCallback.prototype = {
       // (asyncWaitRequests で結果を待たない場合)
       try {
         var td = this.wrappedObject.td;
-        td && arAkahukuCatalog.setCellVisited (td, visited);
+        if (td && !arAkahukuCompat.isDeadWrapper (td)) {
+          arAkahukuCatalog.setCellVisited (td, visited);
+        }
       }
       catch (e) { Akahuku.debug.exception (e);
-        // 既に閉じられてて dead object な場合など
       }
     }
     if (this.list) {
@@ -1829,17 +1829,17 @@ arAkahukuCatalogParam.prototype = {
     try {
       if (topic == "arakahuku-location-info-changed") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
-        var decodedData = arAkahukuJSON.decode (subject.data);
+        var decodedData = JSON.parse (subject.data);
         this.onNotifiedLocationInfoUpdated (decodedData, data);
       }
       else if (topic == "arakahuku-board-newest-num-updated") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
-        var decodedData = arAkahukuJSON.decode (subject.data);
+        var decodedData = JSON.parse (subject.data);
         this.onNotifiedThreadNewestNumber (decodedData, data);
       }
       else if (topic == "arakahuku-thread-unload") {
         subject.QueryInterface (Components.interfaces.nsISupportsString);
-        var decodedData = arAkahukuJSON.decode (subject.data);
+        var decodedData = JSON.parse (subject.data);
         this.onNotifiedThreadUnload (decodedData, data);
       }
     }
@@ -2279,11 +2279,15 @@ var arAkahukuCatalog = {
       style
       .addRule (catcell,
                 "width: " + w + ";")
-      .addRule (catcell + " .akahuku_native_comment,"
-                + catcell + " .akahuku_comment",
+      .addRule (catcell + " .akahuku_native_comment",
                 "display: inline-block;"
                 + "max-width: " + w + ";"
                 + "word-break: break-all;")
+      .addRule (catcell + " div.akahuku_comment",
+                "max-width: " + w + ";"
+                + "word-break: break-all;"
+                + "font-size: 8pt;"
+                + "overflow: hidden;")
 
       if (arAkahukuCatalog.cellWidthMaxLines >= 0) {
         var lineHeight = 1.1;
@@ -2366,6 +2370,13 @@ var arAkahukuCatalog = {
                     + "width: auto !important;");
         }
       }
+    }
+    else {
+      style
+      .addRule (catcell + " div.akahuku_comment",
+                "max-width: 50px;"
+                + "font-size: 8pt;"
+                + "overflow: hidden;")
     }
   },
     
@@ -3756,9 +3767,6 @@ var arAkahukuCatalog = {
         
     node = targetDocument.createElement ("div");
     node.className = "akahuku_comment";
-    node.style.maxWidth = "50px";
-    node.style.overflow = "hidden";
-    node.style.fontSize = "8pt";
     var font
     = arAkahukuCatalog.getReplyCountNode (tdElement);
     if (font) {
@@ -3846,10 +3854,8 @@ var arAkahukuCatalog = {
             
       if (arAkahukuCatalog.enableSidebar
           && arAkahukuCatalog.enableSidebarComment) {
-        if (name in arAkahukuSidebar.boards) {
-          var thread
-            = arAkahukuSidebar.boards [name].getThread
-            (num);
+        if (arAkahukuSidebar.hasBoard (name)) {
+          var thread = arAkahukuSidebar.getThread (name, num);
           if (thread && thread.comment) {
             var node
               = arAkahukuCatalog.createCommentNode (tdElement);
@@ -3944,10 +3950,10 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableSidebar
         && arAkahukuCatalog.enableSidebarComment) {
       var name = info.server + "_" + info.dir;
-      if (name in arAkahukuSidebar.boards) {
+      if (arAkahukuSidebar.hasBoard (name)) {
         var thread
-          = arAkahukuSidebar.boards [name].getThread
-          (tdElement.getAttribute ("__thread_id"));
+          = arAkahukuSidebar.getThread
+          (name, tdElement.getAttribute ("__thread_id"));
         if (thread && thread.comment) {
           var node = 
             arAkahukuDOM.getFirstElementByNames
@@ -5239,25 +5245,14 @@ var arAkahukuCatalog = {
     nodes = targetDocument.getElementsByTagName ("img");
     for (i = 0; i < nodes.length; i ++) {
       try {
-        var load
-          = nodes [i].QueryInterface
-          (Components.interfaces.nsIImageLoadingContent);
-        var request
-          = load.getRequest
-          (Components.interfaces.nsIImageLoadingContent
-           .CURRENT_REQUEST);
-        if (!request) {
+        var imgStatus = arAkahukuUtil.getImageStatus (nodes [i]);
+        if (!imgStatus.requestURI) {
           continue;
         }
-                
-        var errorStatus
-          = Components.interfaces.imgIRequest.STATUS_ERROR
-          | Components.interfaces.imgIRequest.STATUS_LOAD_PARTIAL;
-                
-        if (request.imageStatus & errorStatus) {
+        if (imgStatus.isErrored) {
           nodes [i].src = nodes [i].src;
         }
-        else if (request.imageStatus == 0) {
+        else if (imgStatus.requestImageStatus == 0) {
           targetDocument.defaultView.setTimeout
             (function (node) {
               node.src = node.src;
@@ -5319,7 +5314,8 @@ var arAkahukuCatalog = {
       = arAkahukuUtil.newChannel ({
         uri: targetDocument.location.href,
         loadingNode: targetDocument,
-        contentPolicyType: Components.interfaces.nsIContentPolicy.TYPE_REFRESH,
+        contentPolicyType:
+          Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST,
       }).QueryInterface (Components.interfaces.nsIHttpChannel);
     if (!arAkahukuCatalog.enableReloadUpdateCache) {
       // HttpChannel にキャッシュを更新させない
@@ -5581,9 +5577,8 @@ var arAkahukuCatalog = {
           .location_info;
           var name = info.server + "_" + info.dir;
           var thread = null;
-          if (name in arAkahukuSidebar.boards) {
-            thread
-            = arAkahukuSidebar.boards [name].getThread (num);
+          if (arAkahukuSidebar.hasBoard (name)) {
+            thread = arAkahukuSidebar.getThread (name, num);
           }
           if (thread && thread.comment) { //コメント情報は必須
             var key = "t" + num;

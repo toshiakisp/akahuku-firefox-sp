@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Firefox/Gecko バージョン間の差異を吸収する
@@ -280,7 +279,14 @@ var arAkahukuCompat = new function () {
             Components.utils.importGlobalProperties (["File"]);
           }
           if (!(file instanceof File)) {
-            file = new File (file); // Gecko 6.0
+            if (typeof File.createFromNsIFile !== "undefine") {
+              // Firefox 52.0+ (Bug 1303518)
+              file = File.createFromNsIFile (file);
+            }
+            else {
+              // Gecko (6.0)-51.0
+              file = new File (file);
+            }
           }
           filebox.mozSetFileArray ([file]);
         }
@@ -316,21 +322,26 @@ var arAkahukuCompat = new function () {
         this.getAddonByID = scope.AddonManager.getAddonByID;
         this.getAddonByID (id, callback);
       }
-      catch (e) { Cu.reportError (e);
+      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
         this.getAddonByID = function getAddonByIDCompat (id, callback) {
           // obsolete gecko 2.0
           var extMan = Cc ["@mozilla.org/extensions/manager;1"]
             .getService (Ci.nsIExtensionManager);
           var ext = extMan.getItemForID (id);
-          ext.QueryInterface (Ci.nsIUpdateItem);
+          if (!(ext instanceof Ci.nsIUpdateItem)) {
+            ext = null;
+          }
           var addon = { // only for Akahuku's neccessity
-            id: ext.id,
-            version: ext.version,
-            name: ext.name,
-            isActive: true,
+            id: ext ? ext.id : "",
+            version: ext ? ext.version : "",
+            name: ext ? ext.name : "",
+            isActive: ext ? true : false,
           };
           callback (addon);
         };
+      }
+      catch (e) {
+        Cu.reportError (e);
       }
     }
   };
@@ -562,6 +573,34 @@ var arAkahukuCompat = new function () {
       }
       return null;
     };
+  };
+
+  this.isDeadWrapper = function (object) {
+    if ("isDeadWrapper" in Cu) {
+      // requires Firefox 17?+
+      return Cu.isDeadWrapper (object);
+    }
+    try {
+      String (object);
+      return false;
+    }
+    catch (e) {
+      return true;
+    }
+  };
+
+  this.toggleSidebar = function (commandID, forceOpen) {
+    if (typeof SidebarUI !== "undefined") {
+      if (forceOpen) {
+        SidebarUI.show (commandID);
+      }
+      else {
+        SidebarUI.toggle (commandID);
+      }
+    }
+    else {
+      toggleSidebar (commandID, forceOpen);
+    }
   };
 };
 

@@ -23,8 +23,6 @@ var Cr = Components.results;
 /**
  * Prepare basis of the extension
  */
-Cu.import ("resource://akahuku/json.jsm");//arAkahukuJSON
-
 Cu.import ("resource://akahuku/console.jsm");
 var console = new AkahukuConsole ();
 var appinfo =
@@ -123,13 +121,6 @@ load ("mod/arAkahukuBoard.js");
 load ("mod/arAkahukuTitle.js");
 load ("mod/arAkahukuFileName.js");
 load ("mod/arAkahukuP2P.js");
-arAkahukuP2P.update = function () { //XUL, XPCOM(p2p-servant)
-};
-arAkahukuP2P.applyP2P = function (targetDocument, targetNode, prefetchOnly) { // XPCOM(p2p-servant)
-  return [-1, -1, -1, -1];
-};
-arAkahukuP2P.prefetchNotify = function () { // XPCOM(p2p-servant)
-};
 load ("mod/arAkahukuLocationInfo.js");
 load ("mod/arAkahukuDelBanner.js");
 load ("mod/arAkahukuThread.js");
@@ -152,13 +143,6 @@ load ("mod/arAkahukuBloomer.js");
 load ("mod/arAkahukuJPEG.js");
 load ("mod/arAkahukuTab.js");
 load ("mod/arAkahukuSidebar.js");
-arAkahukuSidebar.getConfig = function () {
-  //FIXME: XUL document
-};
-arAkahukuSidebar.applyOnXul = arAkahukuSidebar.apply;
-arAkahukuSidebar.apply = function (targetDocument, info) {
-  // FIXME: XUL側の処理だがcontent documentが必要で…
-};
 
 
 load ("akahuku.js");
@@ -166,11 +150,13 @@ Akahuku.debug = console;
 
 load ("mod/arAkahukuCache.js");
 
-// IPC in a content process
-Cu.import ("resource://akahuku/ipc.jsm", this);
-arAkahukuIPC.init ();
-// redefine methods for ipc child
-load ("ipc/child.js");
+if (arAkahukuCompat.comparePlatformVersion ("47.*") > 0) {
+  // IPC in a content process or main-process frame
+  Cu.import ("resource://akahuku/ipc.jsm", this);
+  arAkahukuIPC.init ();
+  // redefine methods for ipc child
+  load ("ipc/child.js");
+}
 
 
 // Akahuku initialize (Akahuku.onLoad 相当)

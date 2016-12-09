@@ -1,7 +1,6 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuConfig, arAkahukuJSON
+ * Require: arAkahukuConfig
  */
 
 function arAkahukuBoardInfo (id) {
@@ -135,7 +134,7 @@ var arAkahukuBoard = {
         = arAkahukuConfig
         .initPref ("char", "akahuku.board_external.patterns2", "null");
       if (value != "null") {
-        arAkahukuBoard.externalList = arAkahukuJSON.decode (unescape (value));
+        arAkahukuBoard.externalList = JSON.parse (unescape (value));
         while (arAkahukuBoard.externalList.length
                && arAkahukuBoard.externalList [0] == undefined) {
           arAkahukuBoard.externalList.shift ();
@@ -230,9 +229,9 @@ var arAkahukuBoard = {
     var tmp2 = arAkahukuConfig
     .initPref ("char", "akahuku.board_external.patterns2", "null");
     if (tmp2 != "null") {
-      var list = arAkahukuJSON.decode (unescape (tmp2));
+      var list = JSON.parse (unescape (tmp2));
       list.push (value);
-      tmp2 = arAkahukuJSON.encode (list);
+      tmp2 = JSON.stringify (list);
       arAkahukuConfig.setCharPref
       ("akahuku.board_external.patterns2", tmp2);
     }
@@ -290,7 +289,7 @@ var arAkahukuBoard = {
       var subject
         = Components.classes ["@mozilla.org/supports-string;1"]
         .createInstance (Components.interfaces.nsISupportsString);
-      subject.data = arAkahukuJSON.encode ({
+      subject.data = JSON.stringify ({
         name: id,
         value: num,
       });

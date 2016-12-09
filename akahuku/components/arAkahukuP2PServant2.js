@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 const arIAkahukuP2PServant2 = Components.interfaces.arIAkahukuP2PServant2;
 
@@ -42,6 +41,8 @@ const nsIThread = Components.interfaces.nsIThread;
 const nsIThreadManager = Components.interfaces.nsIThreadManager;
 const nsIEventTarget = Components.interfaces.nsIEventTarget;
 const nsIRunnable = Components.interfaces.nsIRunnable;
+
+var debug = {};
 
 /**
  * ポートチェッカ
@@ -2882,6 +2883,7 @@ var arAkahukuP2PServant2 = {
       }
       else if (listener) {
         arAkahukuP2PServant2.recvFail ++;
+        debug.console.warn ("failed due to REQUEST_LIMIT", path);
         listener.onP2PFail ();
       }
       return;
@@ -2892,6 +2894,7 @@ var arAkahukuP2PServant2 = {
        * リレー中は起きない */
       if (listener) {
         arAkahukuP2PServant2.recvFail ++;
+        debug.console.warn ("failed due to TIMEOUT_LIMIT", path);
         listener.onP2PFail ();
       }
       return;
@@ -2920,6 +2923,7 @@ var arAkahukuP2PServant2 = {
         }
         else if (listener) {
           arAkahukuP2PServant2.recvFail ++;
+          debug.console.warn ("failed due to illegal path", path);
           listener.onP2PFail ();
         }
         return;
@@ -2933,6 +2937,7 @@ var arAkahukuP2PServant2 = {
       }
       else if (listener) {
         arAkahukuP2PServant2.recvFail ++;
+        debug.console.warn ("failed due to illegal path (2)", path);
         listener.onP2PFail ();
       }
       return;
@@ -3143,6 +3148,7 @@ var arAkahukuP2PServant2 = {
         }
         else if (listener) {
           arAkahukuP2PServant2.recvFail ++;
+          debug.console.warn ("failed due to error", e, path);
           listener.onP2PFail ();
         }
         return;
@@ -3176,7 +3182,7 @@ var arAkahukuP2PServant2 = {
     = Components
     .classes ["@mozilla.org/network/file-input-stream;1"]
     .createInstance (nsIFileInputStream);
-    fstream.init (targetFile, 0x01, 0444, 0);
+    fstream.init (targetFile, 0x01, 292 /*0o444*/, 0);
         
     var sstream
     = Components.classes ["@mozilla.org/io/string-input-stream;1"]
@@ -3224,7 +3230,7 @@ var arAkahukuP2PServant2 = {
           = Components
           .classes ["@mozilla.org/network/file-input-stream;1"]
           .createInstance (nsIFileInputStream);
-        fstream.init (hashFile, 0x01, 0444, 0);
+        fstream.init (hashFile, 0x01, 292/*0o444*/, 0);
             
         var sstream
           = Components.classes
@@ -3271,7 +3277,7 @@ var arAkahukuP2PServant2 = {
     hashFile.initWithPath (filename);
         
     if (!hashFile.exists ()) {
-      hashFile.create (0x00, 0644);
+      hashFile.create (0x00, 420/*0o644*/);
     }
         
     var fstream
@@ -3279,7 +3285,7 @@ var arAkahukuP2PServant2 = {
     ["@mozilla.org/network/file-output-stream;1"]
     .createInstance (nsIFileOutputStream);
     fstream.init (hashFile,
-                  0x02 | 0x08 | 0x20, 0644, 0);
+                  0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
     fstream.write (hash, hash.length);
     fstream.close ();
   },
@@ -4149,14 +4155,14 @@ var arAkahukuP2PServant2 = {
             .createInstance (nsILocalFile);
           targetFile.initWithPath (request.targetFileName);
           if (!targetFile.exists ()) {
-            targetFile.create (0x00, 0644);
+            targetFile.create (0x00, 420/*0o644*/);
           }
           var fstream
             = Components.classes
             ["@mozilla.org/network/file-output-stream;1"]
             .createInstance (nsIFileOutputStream);
           fstream.init (targetFile,
-                        0x02 | 0x08 | 0x20, 0644, 0);
+                        0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
           fstream.write (data, data.length);
           fstream.close ();
                     
@@ -4573,7 +4579,7 @@ var arAkahukuP2PServant2 = {
       var bstream
         = Components.classes ["@mozilla.org/binaryinputstream;1"]
         .createInstance (nsIBinaryInputStream);
-      fstream.init (targetFile, 0x01, 0444, 0);
+      fstream.init (targetFile, 0x01, 292/*0o444*/, 0);
       bstream.setInputStream (fstream);
       body = bstream.readBytes (targetFile.fileSize);
       bstream.close ();
@@ -5060,18 +5066,27 @@ function NSGetModule (compMgr, fileSpec) {
   return arAkahukuP2PServant2Module;
 }
 
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+/**
+ * デバッグ用出力 debug.console
+ *   XPCOMの初期化が早くCu.import (...)が失敗する旧バージョンのため
+ *   実行時に import するよう lazy getter として用意する
+ */
+XPCOMUtils.defineLazyGetter (debug, "console", function () {
+  Components.utils.import ("resource://akahuku/console.jsm");
+  var console = new AkahukuConsole ();
+  console.prefix = "Akahuku P2P XPCOM";
+  return console;
+});
+
 /**
  * Gecko 2.0 以降でのXPCOMコンポーネントのインタフェース
  */
 var NSGetFactory;
-try {
-  Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-  
+if (typeof XPCOMUtils.generateNSGetFactory !== "undefined") {
   arAkahukuP2PServant2_P.prototype.classID
     = Components.ID ("{e2470698-e238-40f5-8b09-c3e617aae84c}");
   NSGetFactory = XPCOMUtils.generateNSGetFactory ([arAkahukuP2PServant2_P]);
-}
-catch (e) {
-  Components.utils.reportError (e);
 }
 

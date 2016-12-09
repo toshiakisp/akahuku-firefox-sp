@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * XPCOM周りの頻出処理を簡単にするモジュール
@@ -21,6 +20,8 @@ var arAkahukuUtil = new function () {
         if (Services.vc.compare (Services.appinfo.platformVersion, "2.0") >= 0) {
           this._isGecko2orAbove = true;
         }
+      }
+      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
       }
       catch (e) { Cu.reportError (e);
       }
@@ -172,6 +173,11 @@ var arAkahukuUtil = new function () {
    *   loadUsingSystemPrincipal: true,
    *   contentPolicyType: Ci.nsIContentPolicy.TYPE_* [optional]
    *   }
+   * or (newChannel2 実装用拡張)
+   * source = {
+   *   uri: string, nsIURI, or nsIFile
+   *   loadInfo: nsILoadInfo, or null
+   *   }
    */
   this.newChannel = function (source) {
     if (source instanceof Ci.nsIChannel) {
@@ -184,6 +190,7 @@ var arAkahukuUtil = new function () {
     var triggeringPrincipal = null;
     var securityFlags = 0;
     var loadUsingSystemPrincipal = false;
+    var loadInfo = null;
     var contentPolicyType = Ci.nsIContentPolicy.TYPE_OTHER;
     if (typeof source == "string"
         || source instanceof Ci.nsIURI
@@ -209,9 +216,14 @@ var arAkahukuUtil = new function () {
         loadUsingSystemPrincipal = false;
         loadingNode = source.loadingNode;
       }
+      else if ("loadInfo" in source) {
+        loadInfo = source.loadInfo;
+        // loadInfo が null の場合に備えて
+        loadUsingSystemPrincipal = true;
+      }
       else {
         throw Components.Exception (
-            "arAkahukuUtil.newChannel requires object with uri property",
+            "arAkahukuUtil.newChannel: illegal property set",
             Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
       }
 
@@ -228,6 +240,10 @@ var arAkahukuUtil = new function () {
     var ios = Cc ["@mozilla.org/network/io-service;1"]
       .getService (Ci.nsIIOService);
 
+    if (loadInfo && "newChannelFromURIWithLoadInfo" in ios) {
+      // requires Firefox 37+
+      return ios.newChannelFromURIWithLoadInfo (uri, loadInfo);
+    }
     if ("newChannelFromURI2" in ios) {
       if (loadUsingSystemPrincipal) {
         loadingPrincipal = getSystemPrincipal ();
@@ -336,5 +352,116 @@ var arAkahukuUtil = new function () {
     }
     return "application/octet-stream";
   };
+
+
+  /**
+   * 画像のロード状態診断結果
+   */
+  function ImageStatus () {
+    this.isImage = false;
+    this.isBlocked = false;
+    this.isErrored = false;
+  };
+  ImageStatus.prototype = {
+    blockingStatus : 0,
+    requestImageStatus : 0,
+    requestURI : null,
+  };
+
+  /**
+   * 画像のロード状態を imgIRequest で調べる
+   *
+   * @param  HTMLImageElement img
+   *         対象の画像要素
+   * @return Object
+   *         画像の状態
+   */
+  this.getImageStatus = function (img) {
+    var status = new ImageStatus ();
+    try {
+      img = img.QueryInterface (Ci.nsIImageLoadingContent);
+      status.isImage = true;
+
+      /* コンテンツポリシーによるブロックチェック */
+      status.isBlocked
+        = (img.imageBlockingStatus != Ci.nsIContentPolicy.ACCEPT);
+      status.blockingStatus = img.imageBlockingStatus;
+
+      /* リクエストチェック */
+      var request
+        = img.getRequest (Ci.nsIImageLoadingContent.CURRENT_REQUEST);
+      if (request) {
+        status.requestImageStatus = request.imageStatus;
+        status.requestURI = request.URI;
+        var errorMask = Ci.imgIRequest.STATUS_ERROR;
+        if (typeof Ci.imgIRequest.STATUS_LOAD_PARTIAL !== "undefined") {
+          errorMask |= Ci.imgIRequest.STATUS_LOAD_PARTIAL;
+        }
+        status.isErrored = ((request.imageStatus & errorMask) != 0);
+      }
+    }
+    catch (e if e.result == Cr.NS_ERROR_NO_INTERFACE) {
+      status.isImage = false;
+    }
+    catch (e) {
+      Cu.reportError (e);
+    }
+
+    return status;
+  };
+
+  /**
+   * Timer
+   */
+  var nextTimerId = 1;
+  var timerIds = [];
+
+  var timerCallback = function (callback, args) {
+    this._callback = callback;
+    this._args = args;
+  };
+  timerCallback.prototype = {
+    QueryInterface : function (iid) {
+      if (iid.Equals (Ci.nsITimerCallback) ||
+          iid.Equals (Ci.nsISupports)) {
+        return this;
+      }
+      throw Cr.NS_ERROR_NO_INTERFACE;
+    },
+    notify : function (timer) {
+      this._callback.apply (null, this._args);
+    },
+  };
+
+  /**
+   * setTimeout equivalent without window
+   */
+  this.setTimeout = function (callback, delay) {
+    var id = nextTimerId ++;
+    if (nextTimerId == 0x7fffffff) {
+      nextTimerId = 1;
+    }
+    var args = Array.slice (arguments, 2);
+    var timer
+      = Cc ["@mozilla.org/timer;1"]
+      .createInstance (Ci.nsITimer);
+    timerIds.push ({id: id, timer: timer});
+    var tcb = new timerCallback (callback, args);
+    timer.initWithCallback (tcb, delay, timer.TYPE_ONE_SHOT);
+    return id;
+  };
+  this.clearTimeout = function (id) {
+    if (!(id > 0)) {
+      return;
+    }
+    for (var i = 0; i < timerIds.length; i ++) {
+      if (timerIds [i].id == id) {
+        timerIds [i].timer.cancel ();
+        timerIds.splice (i, 1);
+        return;
+      }
+    }
+  };
+
 };
 

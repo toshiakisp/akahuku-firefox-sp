@@ -51,7 +51,9 @@ Akahuku.Cache.asyncOpenCache = function (source, flag, callback) {
   var callbackWrapper = {
     originalCallback: callback,
     messageManager:
-      arAkahukuIPC.getContentFrameMessageManager (contextWindow),
+      contextWindow
+      ? arAkahukuIPC.getContentFrameMessageManager (contextWindow)
+      : arAkahukuIPC.getChildProcessMessageManager (),
     onCacheEntryAvaiable : function (entry, isNew, appCache, status) {
       if (entry) {
         Cu.import ("resource://akahuku/ipc-cache.jsm");
@@ -154,6 +156,9 @@ arAkahukuConfig.restoreTime = function () {
 
 arAkahukuFile.getDirectory = function () {
   return arAkahukuIPC.sendSyncCommand ("File/getDirectory", arguments);
+};
+arAkahukuFile.create = function () {
+  return arAkahukuIPC.sendSyncCommand ("File/create", arguments);
 };
 arAkahukuFile.createUnique = function () {
   return arAkahukuIPC.sendSyncCommand ("File/createUnique", arguments);
@@ -292,8 +297,16 @@ arAkahukuIPC.defineProc
   (arAkahukuP2P, "P2P", "deleteCache", {async: true, remote: true});
 
 arAkahukuP2P.deleteCacheFiles = function () {
-  arAkahukuIPC.sendSyncCommand
+  arAkahukuIPC.sendAsyncCommand
     ("P2P/deleteCacheFiles", arguments);
+};
+arAkahukuP2P.update = function () {
+  arAkahukuIPC.sendAsyncCommand
+    ("P2P/update", arguments);
+};
+arAkahukuP2P.updateStatusbar = function () {
+  arAkahukuIPC.sendAsyncCommand
+    ("P2P/updateStatusbar", arguments);
 };
 
 
@@ -313,6 +326,51 @@ arAkahukuIPC.defineProc
 
 arAkahukuQuote.searchInNewTabXUL = function () {
   arAkahukuIPC.sendAsyncCommand ("Quote/searchInNewTabXUL", arguments);
+};
+
+
+
+var arAkahukuReloadIPCWrapper = {
+  diffReloadForBrowser : function (browser, doSync) {
+    // minimum equivalent
+    browser = {
+      contentDocument: arAkahukuIPC.messageTarget.content.document,
+    };
+    arAkahukuReload.diffReloadForBrowser (browser, doSync);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuReloadIPCWrapper,
+   "Reload", "diffReloadForBrowser", {async: true, remote: true});
+
+
+
+arAkahukuSidebar.updateThreadItem = function () {
+  arAkahukuIPC.sendAsyncCommand ("Sidebar/updateThreadItem", arguments);
+};
+arAkahukuSidebar.hasTabForBoard = function () {
+  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasTabForBoard", arguments);
+};
+arAkahukuSidebar.hasBoard = function () {
+  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasBoard", arguments);
+};
+arAkahukuSidebar.getThread = function () {
+  return arAkahukuIPC.sendSyncCommand ("Sidebar/getThread", arguments);
+};
+arAkahukuSidebar.asyncUpdateVisited = function () {
+  arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", arguments);
+}
+arAkahukuSidebar.sort = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/sort", arguments);
+};
+arAkahukuSidebar.updateMarked = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/updateMarked", arguments);
+};
+arAkahukuSidebar.update = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/update", arguments);
+};
+arAkahukuSidebar.term = function () {
+  // don't save in child processes
 };
 
 

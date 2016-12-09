@@ -33,16 +33,20 @@ if (Akahuku.useFrameScript) {
   Akahuku.debug = new AkahukuConsole ();
   Akahuku.debug.prefix = "Akahuku debug(xul#main)";
 
+  // Start Local inter-Process Call service in the main process
+  Components.utils.import ("resource://akahuku/ipc.jsm", this);
+  arAkahukuIPCRoot.init ();
+  // Prepare P2PServant IPC parent
+  Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+  // Prepare Observer IPC parent
+  Components.utils.import ("resource://akahuku/observer.jsm", {});
+
   Akahuku.init (); // required for main-process IPC childs
 
   window.addEventListener
     ("load", function () {Akahuku.onLoad ();}, false);
   window.addEventListener
     ("unload", function () {Akahuku.onUnload ();}, false);
-
-  // Start Local inter-Process Call service in the main process
-  Components.utils.import ("resource://akahuku/ipc.jsm", this);
-  arAkahukuIPCRoot.init ();
 
   // Set scope for subscripts to be loaded
   arAkahukuIPCRoot.initSubScriptScope (this);
@@ -74,6 +78,32 @@ else { // Boot as a classic XUL-overlay extension
     catch (e) { Components.utils.reportError (e);
     }
   }
+
+  try {
+    Components.utils.import ("resource://akahuku/console.jsm", this);
+    Akahuku.debug = new AkahukuConsole ();
+    Akahuku.debug.prefix = "Akahuku debug";
+  }
+  catch (e) {
+    Components.utils.reportError (e);
+    // minimum impl. for fail safe
+    Akahuku.debug = {
+      log : function () {},
+      info : function () {},
+      warn : function () {},
+      error : function () {},
+      exception : function (e) {
+        Components.utils.reportError (e);
+      },
+      tic : function () {
+        return {toc: function () { return 0; }};
+      },
+      nsresultToString : function (e) {
+        return "[0x" + Number (e).toString (16) + "]";
+      },
+    };
+  }
+
   Akahuku.init ();
 
   // Transfer old-ext handler calls for JSM to handler calls for XUL

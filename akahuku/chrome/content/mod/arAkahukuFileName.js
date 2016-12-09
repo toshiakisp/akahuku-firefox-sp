@@ -1,7 +1,6 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
- * Require: arAkahukuConfig, arAkahukuJSON
+ * Require: arAkahukuConfig
  */
 
 var arAkahukuFileName = {
@@ -38,7 +37,7 @@ var arAkahukuFileName = {
       .initPref (null, "char", "akahuku.filename_convert.list", "null");
     }
     if (value != "null") {
-      arAkahukuFileName.convertList = arAkahukuJSON.decode (unescape (value));
+      arAkahukuFileName.convertList = JSON.parse (unescape (value));
       while (arAkahukuFileName.convertList.length
              && arAkahukuFileName.convertList [0] == undefined) {
         arAkahukuFileName.convertList.shift ();

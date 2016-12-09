@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: Akahuku, arAkahukuBloomer, arAkahukuBoard, arAkahukuCatalog,
@@ -93,8 +92,6 @@ var arAkahukuConfig = {
       arAkahukuBoard.getConfig ();
       arAkahukuP2P.getConfig ();
     }
-        
-    arAkahukuP2P.update ();
   },
     
   /**

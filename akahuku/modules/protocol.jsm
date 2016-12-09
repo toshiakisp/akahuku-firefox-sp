@@ -13,7 +13,6 @@ var EXPORTED_SYMBOLS = [
   "getAkahukuURIParam",
   // for use in XPCOM
   "getHash",
-  "getHashByKey",
   "initKey",
 ];
 
@@ -210,45 +209,6 @@ var akahuku_scheme_key = "";
    *         ハッシュ
    */
   this.getHash = function (protocol, host, path) { 
-    if (!("@mozilla.org/childprocessmessagemanager;1" in Cc)) {
-      // for old firefox
-      return this.getHashByKey (protocol, host, path);
-    }
-    try {
-      var cpmm
-        = Cc ["@mozilla.org/childprocessmessagemanager;1"]
-        .getService (Ci.nsISyncMessageSender);
-      var results
-        = cpmm.sendSyncMessage
-        ("akahuku.fx.sp@toshiakisp.github.io:ProtocolHandler/syncGetHash",
-         {protocol: protocol, host: host, path: path});
-      if (results.length > 0) {
-        return results [0];
-      }
-      else {
-        // 同一プロセスの場合はそのまま結果[]となるっぽい
-      }
-    }
-    catch (e) {
-      Cu.reportError (e);
-      // XPCOMと同インスタンスなのでそのままハッシュ生成
-    }
-    return this.getHashByKey (protocol, host, path);
-  };
-    
-  /**
-   * ハッシュを生成する
-   *
-   * @param  String protocol
-   *         プロトコル
-   * @param  String host
-   *         ホスト
-   * @param  String path
-   *         パス
-   * @return String
-   *         ハッシュ
-   */
-  this.getHashByKey = function (protocol, host, path) { 
     var hash;
     hash
     = toHex (md5_4 (akahuku_scheme_key
@@ -451,6 +411,9 @@ var akahuku_scheme_key = "";
     
 
   this.initKey = function () {
+    Cu.import ("resource://akahuku/storage.jsm");
+    akahuku_scheme_key
+      = AkahukuStorage.local.get ("protocol/akahuku_scheme_key") || "";
     if (akahuku_scheme_key.length == 0) {
       var hex = [
         "0", "1", "2", "3", "4", "5", "6", "7",
@@ -460,6 +423,10 @@ var akahuku_scheme_key = "";
         akahuku_scheme_key
           += hex [parseInt (Math.random () * 15)];
       }
+      // store process-wide key for other processes
+      AkahukuStorage.local.set ({
+        "protocol/akahuku_scheme_key": akahuku_scheme_key,
+      });
     }
   };
 

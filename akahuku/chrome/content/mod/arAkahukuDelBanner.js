@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * Require: arAkahukuConfig, arAkahukuDOM
@@ -244,15 +243,13 @@ var arAkahukuDelBanner = {
         }
       }
             
-      if ("className" in nodes [i]
-          && nodes [i].className
-          && nodes [i].className.match (/^akahuku_generated/)) {
+      if (/^akahuku_generated/
+          .test (arAkahukuDOM.getClassName (nodes [i]))) {
         /* 固定フォームのアイコン */
         continue;
       }
 
-      if ("className" in nodes [i]
-          && nodes [i].className == "akahuku_preview") {
+      if (arAkahukuDOM.hasClassName (nodes [i], "akahuku_preview")) {
         /* プレビュー */
         continue;
       }

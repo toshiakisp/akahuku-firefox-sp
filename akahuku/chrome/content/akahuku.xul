@@ -357,12 +357,12 @@
                  label="赤福サイドバー"
                  type="checkbox" group="sidebar"
                  sidebarurl="chrome://akahuku/content/sidebar.xul"
-                 oncommand="toggleSidebar ('viewAkahukuSidebar');"/>
+                 oncommand="arAkahukuCompat.toggleSidebar ('viewAkahukuSidebar');"/>
     <broadcaster id="viewAkahukuP2PSidebar" autoCheck="false"
                  label="赤福 P2P サイドバー"
                  type="checkbox" group="sidebar"
                  sidebarurl="chrome://akahuku/content/p2psidebar.xul"
-                 oncommand="toggleSidebar ('viewAkahukuP2PSidebar');"/>
+                 oncommand="arAkahukuCompat.toggleSidebar ('viewAkahukuP2PSidebar');"/>
   </broadcasterset>
   
   <menupopup id="viewSidebarMenu">

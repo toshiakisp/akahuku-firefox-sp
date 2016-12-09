@@ -1,4 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
 /**
  * akahuku/protocol-channel.jsm
@@ -35,12 +34,60 @@ catch (e) {
   Components.utils.reportError (e);
 }
 
+Cu.import ("resource://akahuku/observer.jsm");
+
+/**
+ * チャネルの nsIInterfaceRequestor.getInterface 用 base impl.
+ *   (asyncOpen2 を実装する上では実装必須らしい)
+ * see nsBaseChannel.cpp, nsNetUtil.h (NS_QueryNotificationCallbacks)
+ */
+function channel_getInterface (channel, iid) {
+  // この関数内で instanceof や Cu.reportError は使えない
+  try {
+    if (channel.notificationCallbacks) {
+      try {
+        return channel.notificationCallbacks.getInterface (iid);
+      }
+      catch (e) {
+      }
+    }
+    if (channel.loadGroup &&
+        channel.loadGroup.notificationCallbacks) {
+      return channel.loadGroup.notificationCallbacks.getInterface (iid);
+    }
+  }
+  catch (e) {
+  }
+  throw Cr.NS_ERROR_NO_INTERFACE;
+}
+
+/**
+ * チャネルの nsIChannel.asyncOpen2 用 base impl.
+ */
+function channel_asyncOpen2 (channel, listener) {
+  var csm
+    = Cc ["@mozilla.org/contentsecuritymanager;1"]
+    .getService (Ci.nsIContentSecurityManager);
+  var wrappedListener = csm.performSecurityCheck (channel, listener);
+  channel.asyncOpen (wrappedListener, null);
+}
+
+
+var inMainProcess = true;
+try {
+  var appinfo
+  = Cc ["@mozilla.org/xre/app-info;1"]
+  .getService (Ci.nsIXULRuntime);
+  inMainProcess = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
+}
+catch (e) { Cu.reportError (e);
+}
+
 /**
  * リファラを送信しないチャネル
  * (画像などドキュメント以外ではクッキーも送受信しない)
  *   Inherits From: nsIChannel, nsIRequest
  *                  nsIStreamListener, nsIRequestObserver
- *                  nsIObserver
  *                  nsIInterfaceRequestor, nsIChannelEventSink
  *
  * @param  String uri
@@ -49,55 +96,40 @@ catch (e) {
  *         本来の URI
  * @param  String contentType
  *         MIME タイプ
+ * @param  nsILoadInfo loadInfo
  */
-function arAkahukuBypassChannel (uri, originalURI, contentType) {
+function arAkahukuBypassChannel (uri, originalURI, contentType, loadInfo) {
   var callbacks = null;
   if (arguments.length == 1) {
     /* 既存のチャネルをラップして生成する */
     this._realChannel = arguments [0].QueryInterface (Ci.nsIChannel);
     callbacks = this._realChannel.notificationCallbacks;
     this.originalURI = this._realChannel.originalURI.clone ();
+    this.URI = this._realChannel.URI.clone ();
+    this.name = this.URI.spec;
+    if (typeof this._realChannel.loadInfo !== "undefined") {
+      this.loadInfo = this._realChannel.loadInfo;
+    }
   }
   else {
     var ios
       = Cc ["@mozilla.org/network/io-service;1"]
       .getService (Ci.nsIIOService);
-    if ("newChannel2" in ios) {
-      var ssm
-        = Cc ["@mozilla.org/scriptsecuritymanager;1"]
-        .getService (Ci.nsIScriptSecurityManager);
-      this._realChannel = ios.newChannel2 (originalURI, null, null,
-          null,
-          ssm.getSystemPrincipal (),
-          null,
-          Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-          Ci.nsIContentPolicy.TYPE_OTHER);
-    }
-    else {
-      this._realChannel = ios.newChannel (originalURI, null, null);
-    }
+    this._realChannel
+      = arAkahukuUtil.newChannel ({uri: originalURI, loadInfo: loadInfo});
     this.originalURI = ios.newURI (uri, null, null);
     // hide a real channel's originalURI
     // to bypass ScriptSecurityManager's CheckLoadURI
     this.URI = this.originalURI.clone ();
+    this.name = uri;
+    this.loadInfo = loadInfo || null;
   }
-  this.name = uri;
   /* 通知をフィルタリングする */
   this.notificationCallbacks = callbacks;
   this._realChannel.notificationCallbacks = this;
 
   if (contentType) {
     this.contentType = contentType;
-  }
-
-  this.inMainProcess = true;
-  try {
-    var appinfo
-      = Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-    this.inMainProcess
-      = (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT);
-  }
-  catch (e) { Cu.reportError (e);
   }
 }
 arAkahukuBypassChannel.prototype = {
@@ -119,7 +151,7 @@ arAkahukuBypassChannel.prototype = {
    *
    * @param  nsIIDRef iid
    *         インターフェース ID
-   * @throws Cr.NS_NOINTERFACE
+   * @throws Cr.NS_ERROR_NO_INTERFACE
    * @return nsIProtocolHandler
    *         this
    */
@@ -127,7 +159,6 @@ arAkahukuBypassChannel.prototype = {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIChannel)
         || iid.equals (Ci.nsIRequest)
-        || iid.equals (Ci.nsIObserver)
         || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIChannelEventSink)
         || iid.equals (Ci.nsIStreamListener)
@@ -143,23 +174,11 @@ arAkahukuBypassChannel.prototype = {
   },
 
   /**
-   * インターフェース要求 (notificationCallbacksのための)
+   * インターフェース要求
    *   nsIInterfaceRequestor.getInterface 
    */
   getInterface : function (iid) {
-    try {
-      return this.QueryInterface (iid);
-    }
-    catch (e) {
-      try {
-        /* nsIProgressEventSink 等、自身でサポートしないものは
-         * クライアントの notificationCallbacks から直に取得 */
-        return this.notificationCallbacks.getInterface (iid);
-      }
-      catch (e) {
-        throw Cr.NS_NOINTERFACE;
-      }
-    }
+    return channel_getInterface (this, iid);
   },
     
   /**
@@ -223,6 +242,10 @@ arAkahukuBypassChannel.prototype = {
       this.stopHeadersBlocker ();
       throw e;
     }
+  },
+
+  asyncOpen2 : function (listener) {
+    channel_asyncOpen2 (this, listener);
   },
     
   /**
@@ -302,34 +325,6 @@ arAkahukuBypassChannel.prototype = {
   },
 
   /**
-   * ヘッダーを監視
-   *   nsIObserver.observe
-   *
-   * @param  nsISupports subject
-   *         この通知を引き起こしたチャネル (nsIChannel)
-   * @param  String topic
-   *         通知トピック
-   * @param  String data
-   *         データ
-   */
-  observe : function (subject, topic, data) {
-    if (subject != this._realChannel) {
-      return;
-    }
-    var httpChannel = subject.QueryInterface (Ci.nsIHttpChannel);
-
-    if (topic == "http-on-modify-request") {
-      /* リクエストにクッキーを含めないように */
-      httpChannel.setRequestHeader ("Cookie", "", false);
-    }
-    else if (topic == "http-on-examine-response") {
-      /* レスポンスによってクッキーをセットされないように */
-      httpChannel.setResponseHeader ("Set-Cookie", "", false);
-      this.stopHeadersBlocker ();
-    }
-  },
-
-  /**
    * 必要ならヘッダー監視を開始する
    */
   startHeadersBlocker : function () {
@@ -337,16 +332,21 @@ arAkahukuBypassChannel.prototype = {
         || !(this._realChannel instanceof Ci.nsIHttpChannel)) {
       return;
     }
-    if (!this.inMainProcess) {
-      // http-on-* observers only work in the parent process
-      return;
+    try {
+      this._blockReqListener = function () {}; // no reaction
+      this._blockResListener = function () {};
+      var filter = {
+        urls: [this._realChannel.originalURI.spec],
+      };
+      AkahukuObserver.cookieBlocker
+        .onRequestBlocked.addListener (this._blockReqListener, filter);
+      AkahukuObserver.cookieBlocker
+        .onResponseBlocked.addListener (this._blockResListener, filter);
+      this._observingHeaders = true;
     }
-    var observerService
-      = Cc ["@mozilla.org/observer-service;1"]
-      .getService (Ci.nsIObserverService);
-    observerService.addObserver (this, "http-on-modify-request", false);
-    observerService.addObserver (this, "http-on-examine-response", false);
-    this._observingHeaders = true;
+    catch (e) {
+      Cu.reportError (e);
+    }
   },
 
   /**
@@ -356,12 +356,24 @@ arAkahukuBypassChannel.prototype = {
     if (!this._observingHeaders) {
       return;
     }
-    var observerService
-      = Cc ["@mozilla.org/observer-service;1"]
-      .getService (Ci.nsIObserverService);
-    observerService.removeObserver (this, "http-on-modify-request");
-    observerService.removeObserver (this, "http-on-examine-response");
+    AkahukuObserver.cookieBlocker
+      .onRequestBlocked.removeListener (this._blockReqListener);
+    this._blockReqListener = null;
+    AkahukuObserver.cookieBlocker
+      .onResponseBlocked.removeListener (this._blockResListener);
+    this._blockResListener = null;
     this._observingHeaders = false;
+  },
+
+  /**
+   * ヘッダー監視を再設定する
+   * (リダイレクト後など新しいチャネルに対して)
+   */
+  resetHeadersBlocker : function () {
+    if (this._observingHeaders) {
+      this.stopHeaderBlocker ();
+      this.startHeaderBlocker ();
+    }
   },
 
   /**
@@ -369,20 +381,55 @@ arAkahukuBypassChannel.prototype = {
    *   nsIChannelEventSink.asyncOnChannelRedirect
    */
   asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
-    newChannel = this.createRedirectedChannel (oldChannel, newChannel);
+    if (flags & Ci.nsIChannelEventSink.REDIRECT_INTERNAL) {
+      // 内部リダイレクト(拡張機能など):
+      // sink には報告せず newChannel への参照切替だけで済ます
+      this._redirectChannel = newChannel;
+      callback.onRedirectVerifyCallback (Cr.NS_OK);
+      return;
+    }
+
+    // 新しい arAkahukuBypassChannel でラップしてリファラ制御等を続ける
+    var redirectChannel
+      = this.createRedirectedChannel (oldChannel, newChannel);
+    if (redirectChannel == newChannel) {
+      // ラップ出来なかったので内部の切替だけ(親リスナに伝えない)
+      this._redirectChannel = newChannel;
+      callback.onRedirectVerifyCallback (Cr.NS_OK);
+      return;
+    }
+
+    // リダイレクト要求への返答は保留しながら、
+    // 本チャネル自身のリスナ(親)に新チャネルへのリダイレクト要求を出し、
+    // その結果を元のリダイレクト要求の結果として戻す
     this._redirectCallback = callback;
-    // コールバックにリダイレクト発生を伝える
+    this._redirectChannel = redirectChannel;
     var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
-    verifyHelper.init
-      (this, newChannel, Ci.nsIChannelEventSink.REDIRECT_INTERNAL, this);
+    verifyHelper.init (this, redirectChannel, flags, this);
   },
   /**
    * 非同期リダイレクトイベントの待ち受け
    *   nsIAsyncVerifyRedirectCallback.onRedirectVerifyCallback
+   * @param nsresult result
+   *        arAkahukuAsyncRedirectVerifyHelper の集計結果
    */
   onRedirectVerifyCallback : function (result) {
-    this._redirectCallback.onRedirectVerifyCallback (result);
+    var callback = this._redirectCallback;
+    var redirectChannel = this._redirectChannel;
     this._redirectCallback = null;
+    this._redirectChannel = null;
+    if (Components.isSuccessCode (result) && redirectChannel) {
+      // 新チャネルへのリダイレクトが受け入れられた
+      redirectChannel.originalURI = this.originalURI;
+      // _realChannl の切替 (ここが唯一)
+      this._realChannel = redirectChannel;
+      this.resetHeadersBlocker ();
+    }
+
+    // 元々のリダイレクト検証要求にも sink からの結果を返す
+    if (callback) {
+      callback.onRedirectVerifyCallback (result);
+    }
   },
 
   /**
@@ -406,22 +453,17 @@ arAkahukuBypassChannel.prototype = {
    * リダイレクト用 arAkahukuBypassChannel を生成する
    */
   createRedirectedChannel : function (oldChannel, newChannel) {
-    if (newChannel instanceof Ci.nsIHttpChannel) {
-      newChannel = new arAkahukuBypassChannel (newChannel);
-      newChannel.loadFlags |= this.loadFlags;
-      newChannel.enableHeaderBlocker = this.enableHeaderBlocker;
-      /* リダイレクト時にはリファラを付与 */
-      newChannel._realChannel.referrer = oldChannel.URI;
-      // 新しいリダイレクト用チャネルの asyncOpen は呼ばず
-      // ストリームリスナを数珠つなぎにする
-      newChannel._listener = this._listener;
-      this._listener = newChannel;
-      if (newChannel.enableHeaderBlocker
-          && !(newChannel.loadFlags & Ci.nsIChannel.LOAD_DOCUMENT_URI)) {
-        newChannel.startHeadersBlocker ();
-      }
+    if (!(newChannel instanceof Ci.nsIHttpChannel)) {
+      return newChannel;
     }
-    return newChannel;
+
+    var newBypassChannel = new arAkahukuBypassChannel (newChannel);
+    newBypassChannel.loadFlags
+      |= (this.loadFlags | Ci.nsIChannel.LOAD_REPLACE);
+    // newBypassChannel はストリームリスナの中継のみ行う
+    newBypassChannel.enableHeaderBlocker = false;
+
+    return newBypassChannel;
   },
 
   /**
@@ -486,7 +528,7 @@ arAkahukuBypassChannel.prototype
 
 /**
  * JPEG サムネチャネル
- *   Inherits From: nsIChannel, nsIRequest
+ *   Inherits From: nsIChannel, nsIRequest, nsIInterfaceRequestor
  *                  nsITimerCallback
  *                  nsIWebProgressListener
  *
@@ -496,10 +538,12 @@ arAkahukuBypassChannel.prototype
  *         本来の URI
  * @param  String contentType
  *         MIME タイプ
+ * @param  nsILoadInfo loadInfo
  */
-function arAkahukuJPEGThumbnailChannel (uri, originalURI, contentType) {
+function arAkahukuJPEGThumbnailChannel (uri, originalURI, contentType, loadInfo) {
   this._originalURI = originalURI;
   this.contentType = contentType;
+  this.loadInfo = loadInfo || null;
     
   var ios
     = Cc ["@mozilla.org/network/io-service;1"]
@@ -529,6 +573,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
   owner : null,
   securityInfo : null,
   URI : null,
+  loadInfo : null,
     
   /**
    * インターフェースの要求
@@ -536,7 +581,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
    *
    * @param  nsIIDRef iid
    *         インターフェース ID
-   * @throws Cr.NS_NOINTERFACE
+   * @throws Cr.NS_ERROR_NO_INTERFACE
    * @return nsIProtocolHandler
    *         this
    */
@@ -544,11 +589,16 @@ arAkahukuJPEGThumbnailChannel.prototype = {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIChannel)
         || iid.equals (Ci.nsIRequest)
+        || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIRequestObserver)) {
       return this;
     }
         
     throw Cr.NS_ERROR_NO_INTERFACE;
+  },
+
+  getInterface : function (iid) {
+    return channel_getInterface (this, iid);
   },
     
   /**
@@ -605,26 +655,16 @@ arAkahukuJPEGThumbnailChannel.prototype = {
   asyncOpen : function (listener, context) {
     this._listener = listener;
     this._context = context;
-        
-    var channel;
-    var ios
-      = Cc ["@mozilla.org/network/io-service;1"]
-      .getService (Ci.nsIIOService);
-    if ("newChannel2" in ios) {
-      var ssm
-        = Cc ["@mozilla.org/scriptsecuritymanager;1"]
-        .getService (Ci.nsIScriptSecurityManager);
-      channel = ios.newChannel2 (this._originalURI, null, null,
-          null,
-          ssm.getSystemPrincipal (),
-          null,
-          Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-          Ci.nsIContentPolicy.TYPE_OTHER);
-    }
-    else {
-      channel = ios.newChannel (this._originalURI, null, null);
-    }
+    var channel
+      = arAkahukuUtil.newChannel ({
+        uri: this._originalURI,
+        loadInfo: this.loadInfo
+      });
     channel.asyncOpen (this, null);
+  },
+
+  asyncOpen2 : function (listener) {
+    channel_asyncOpen2 (this, listener);
   },
     
   /**
@@ -748,13 +788,14 @@ arAkahukuJPEGThumbnailChannel.prototype = {
 
 /**
  * キャッシュアクセスチャネル
- *   Inherits From: nsIChannel, nsIRequest
+ *   Inherits From: nsIChannel, nsIRequest, nsIInterfaceRequestor
  *                  nsICacheListener
  *
  * @param  String key
  * @param  nsIURI  uri
+ * @param  nsILoadInfo loadInfo
  */
-function arAkahukuCacheChannel (key, uri) {
+function arAkahukuCacheChannel (key, uri, loadInfo) {
   this._originalKey = new String (key);
   this._candidates = [
     this._originalKey,
@@ -765,19 +806,21 @@ function arAkahukuCacheChannel (key, uri) {
   this.name = uri.spec;
   this.originalURI = uri;
   this.URI = uri;
+  this.loadInfo = loadInfo || null;
 }
 arAkahukuCacheChannel.prototype = {
   _isPending : false,
   _wasOpened : false,
   _canceled : false,
-  _waitingForRedirectCallback : true,
-  _redirectChannel : null,
+  _redirectChannel : null, // asyncOpen するべきチャネル
+  _started : false, // _listener に onStartRequest したか
+  _stopped : false, // _listener に onStopRequest したか
   _contentEncoding : "",
-  _streamConverter : null,
 
   QueryInterface : function (iid) {
     if (iid.equals (Ci.nsISupports)
         || iid.equals (Ci.nsIRequest)
+        || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIChannel)
         || iid.equals (arAkahukuCompat.CacheStorageService.CallbackInterface)) {
       return this;
@@ -796,27 +839,24 @@ arAkahukuCacheChannel.prototype = {
   name : "",
   status : Cr.NS_OK,
   cancel : function (status) {
-    this._canceled = true;
-    this.status = status;
-    if (this._redirectChannel)
-      this._redirectChannel.cancel (status);
-    if (this._streamConverter)
-      this._streamConverter.cancel (status);
+    if (!this._canceled) {
+      this._canceled = true;
+      this.status = status;
+    }
   },
   isPending : function () {
     return this._isPending;
   },
   resume : function () {
-    if (this._redirectChannel)
-      this._redirectChannel.resume ();
-    if (this._streamConverter)
-      this._streamConverter.resume ();
+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
   suspend : function () {
-    if (this._redirectChannel)
-      this._redirectChannel.suspend ();
-    if (this._streamConverter)
-      this._streamConverter.suspend ();
+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+  },
+
+  /* nsIInterfaceRequestor */
+  getInterface : function (iid) {
+    return channel_getInterface (this, iid);
   },
 
   /* nsIChannel */
@@ -828,6 +868,7 @@ arAkahukuCacheChannel.prototype = {
   owner : null,
   securityInfo : null,
   URI : null,
+  loadInfo : null,
   asyncOpen : function (listener, context) {
     if (this._isPending) throw Cr.NS_ERROR_IN_PROGRESS;
     if (this._wasOpened) throw Cr.NS_ERROR_ALREADY_OPENED;
@@ -840,7 +881,12 @@ arAkahukuCacheChannel.prototype = {
       throw this.status;
     }
     try {
-      this._asyncOpenCacheEntryToRead (this._key, this);
+      if (inMainProcess) {
+        this._asyncOpenCacheEntryToRead (this._key);
+      }
+      else {
+        this._asyncOpenChannelFromCache (this._key);
+      }
     }
     catch (e) { Components.utils.reportError (e);
       this._isPending = false;
@@ -854,6 +900,9 @@ arAkahukuCacheChannel.prototype = {
       }
     }
   },
+  asyncOpen2 : function (listener) {
+    channel_asyncOpen2 (this, listener);
+  },
   open : function () {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
@@ -861,48 +910,48 @@ arAkahukuCacheChannel.prototype = {
   // チャネルを片付ける
   _close : function (status)
   {
-    this.status = status;
     if (this._isPending) {
+      if (status == Cr.NS_BINDING_REDIRECTED) {
+        this._started = true;
+        this._stopped = true;
+      }
+      try {
+        if (!this._started) {
+          this._started = true;
+          this._listener.onStartRequest (this, this._context);
+        }
+        this.status = status;
+        this._isPending = false;
+        if (!this._stopped) {
+          this._stopped = true;
+          this._listener.onStopRequest (this, this._context, status);
+        }
+      } catch (e) {
+        Cu.reportError (e);
+        this.status = status;
+        this._isPending = false;
+      }
       if (this.loadGroup) {
         try {
           this.loadGroup.removeRequest (this, null, this.status);
-        } catch (e) { }
+        } catch (e) {
+        }
       }
-      if (status != Cr.NS_BINDING_REDIRECTED
-          && status != Cr.NS_OK) {
-        // リクエスト失敗
-        try {
-          this._listener.onStartRequest (this, this._context);
-        } catch (e) { Components.utils.reportError (e); }
-        this._isPending = false;
-        try {
-          this._listener.onStopRequest (this, this._context, status);
-        } catch (e) { Components.utils.reportError (e); }
-      }
-      else {
-        this._isPending = false;
-      }
+    }
+    else {
+      this.status = status;
     }
     this._listener = null;
     this._context = null;
     this.notificationCallbacks = null;
-    this._redirectChannel = null;
-    this._streamConverter = null;
   },
 
-  _asyncOpenCacheEntryToRead : function (key, listener)
+  _asyncOpenCacheEntryToRead : function (key)
   {
     var loadContextInfo = arAkahukuCompat.LoadContextInfo.default;
-    try {
-      var pb = null;
-      if ("nsIPrivateBrowsingChannel" in Ci) {
-        pb = this.QueryInterface (Ci.nsIPrivateBrowsingChannel);
-      }
-      if (pb && pb.isChannelPrivate) {
-        loadContextInfo = arAkahukuCompat.LoadContextInfo.private;
-      }
-    }
-    catch (e) {
+    if (this.loadInfo &&
+        this.loadInfo.usePrivateBrowsing) {
+      loadContextInfo = arAkahukuCompat.LoadContextInfo.private;
     }
     var ios
       = Cc ["@mozilla.org/network/io-service;1"]
@@ -924,8 +973,12 @@ arAkahukuCacheChannel.prototype = {
    */
   onCacheEntryAvailable: function (descriptor, isNew, appCache, status) {
     if (this._canceled) {
-      if (descriptor) descriptor.close ();
-      this._close (Cr.NS_BINDING_ABORTED);
+      try {
+        if (descriptor) descriptor.close ();
+      }
+      finally {
+        this._close (this.status);
+      }
       return;
     }
 
@@ -958,7 +1011,7 @@ arAkahukuCacheChannel.prototype = {
       if (nextKey) {
         this._key = nextKey;
         try {
-          this._asyncOpenCacheEntryToRead (this._key, this);
+          this._asyncOpenCacheEntryToRead (this._key);
         }
         catch (e) {
           if (e.result != Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
@@ -973,69 +1026,18 @@ arAkahukuCacheChannel.prototype = {
     }
 
     try {
-      var ischannel = null;
-      var doRedirect = false;
       if (isValidCache) {
-        ischannel
+        var ischannel
           = Components.classes
           ["@mozilla.org/network/input-stream-channel;1"]
           .createInstance (Ci.nsIInputStreamChannel);
         ischannel.setURI (this.URI);
         ischannel.contentStream = descriptor.openInputStream (0);          
         this._setupReplacementChannel (ischannel);
-        doRedirect = true;
+        this._openStreamChannelInternal (ischannel);
       }
       else {
-        // forget previously parsed values
-        this.contentCharset = "";
-        this.contentType = "";
-        this._contentEncoding = "";
-
-        if (status == Cr.NS_ERROR_CACHE_KEY_NOT_FOUND
-            && this.loadFlags & Ci.nsIRequest.LOAD_BYPASS_CACHE) {
-          // Shift-Reload ではキャッシュが無ければ普通に開く
-          var ios
-            = Cc ["@mozilla.org/network/io-service;1"]
-            .getService (Ci.nsIIOService);
-          if ("newChannel2" in ios) {
-            var ssm
-              = Cc ["@mozilla.org/scriptsecuritymanager;1"]
-              .getService (Ci.nsIScriptSecurityManager);
-            ischannel = ios.newChannel2 (this._originalKey, null, null,
-                null,
-                ssm.getSystemPrincipal (),
-                null,
-                Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                Ci.nsIContentPolicy.TYPE_OTHER);
-          }
-          else {
-            ischannel = ios.newChannel (this._originalKey, null, null);
-          }
-          this._setupReplacementChannel (ischannel);
-          doRedirect = true;
-        }
-        else if (this.loadFlags & Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI) {
-          // キャッシュが無いよメッセージ
-          ischannel = this._createFailChannel (this.URI);
-        }
-      }
-
-      if (!ischannel) {
-        this._close (Cr.NS_ERROR_NO_CONTENT);
-        return;
-      }
-
-      if (doRedirect) {
-        var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
-        verifyHelper.init
-          (this, ischannel, Ci.nsIChannelEventSink.REDIRECT_INTERNAL, this);
-        this._waitingForRedirectCallback = true;
-        this._redirectChannel = ischannel;
-      }
-      else {
-        // リダイレクト通知せず直にチャネルを開く
-        this._redirectChannel = ischannel;
-        this.onRedirectVerifyCallback (Cr.NS_OK);
+        this._onNoValidCacheFound ();
       }
     }
     catch (e) { Components.utils.reportError (e);
@@ -1056,44 +1058,114 @@ arAkahukuCacheChannel.prototype = {
   },
   mainThreadOnly : true,
 
-  onRedirectVerifyCallback : function (result)
-  {
-    if (this._canceled && Components.isSuccessCode (result)) {
-      result = Cr.NS_BINDING_ABORTED;
+  onRedirectVerifyCallback : function (result) {
+    if (this._canceled) {
+      this._close (this.status);
+      return;
+    }
+    if (!Components.isSuccessCode (result)) {
+      // 拒絶されても続行しようがない
+      this._close (result);
+      return;
     }
 
-    if (Components.isSuccessCode (result)) {
-      // リダイレクト先を開く
-      try {
-        if (this._contentEncoding) {
-          this._streamConverter
-            = Components.classes
-            ["@mozilla.org/streamconv;1?from="
-            +this._contentEncoding
-            +"&to=uncompressed"]
-            .createInstance (Ci.nsIStreamConverter);
+    try {
+      if (this._redirectChannel) {
+        // see nsBaseChannel.cpp nsBaseChannel::ContinueRedirect()
+        this._redirectChannel.originalURI = this.originalURI;
+        if (this.loadInfo && this.loadInfo.enforceSecurity) {
+          this._redirectChannel.asyncOpen2 (this._listener);
         }
-        if (this._streamConverter) {
-          this._streamConverter.asyncConvertData
-            (this._contentEncoding, "uncompressed",
-             this._listener, this._context);
-          this._listener = this._streamConverter;
+        else {
+          this._redirectChannel.asyncOpen (this._listener, this._context);
         }
-        this._redirectChannel.asyncOpen
-          (this._listener, this._context);
-        if (this._waitingForRedirectCallback)
-          result = Cr.NS_BINDING_REDIRECTED;
+        this._redirectChannel = null;
       }
-      catch (e) { Components.utils.reportError (e);
-        result = Cr.NS_BINDING_FAILED;
+      else {
+        Cu.reportError ("this must not be happen");
       }
-    } else {
-      // リダイレクト拒絶
+    }
+    catch (e) {
+      Cu.reportError (e);
     }
 
-    this._waitingForRedirectCallback = false;
+    this._close (Cr.NS_BINDING_REDIRECTED);
+  },
 
-    this._close (result);
+  _openStreamChannelInternal : function (channel) {
+    channel.originalURI = this.originalURI;
+    this.contentCharset = channel.contentCharset;
+    this.contentType = channel.contentType;
+    this.contentLength = channel.contentLength;
+    try {
+      // リクエスト仲介用 nsIStreamListener
+      var that = this;
+      var listener = {
+        onStartRequest : function (request, con) {
+          if (that._canceled) {
+            try {
+              request.cancel (that.status);
+            }
+            finally {
+              return that._close (that.status);
+            }
+          }
+          try {
+            that._started = true;
+            that._listener.onStartRequest (that, that._context);
+          }
+          catch (e) {
+            Cu.reportError (e);
+            request.cancel (e.result);
+            that._close (e.result);
+          }
+        },
+        onStopRequest : function (request, con, statusCode) {
+          if (that._canceled) return that._close (that.status);
+          try {
+            that._stopped = true;
+            that._listener
+              .onStopRequest (that, that._context, statusCode);
+          }
+          catch (e) {
+            Cu.reportError (e);
+          }
+          that._close (statusCode);
+        },
+        onDataAvailable : function (req, con, ist, offset, c) {
+          try {
+            that._listener
+              .onDataAvailable (that, that._context, ist, offset, c);
+            if (that._canceled) {
+              req.cancel (e.result);
+              that._close (that.status);
+            }
+          }
+          catch (e) {
+            Cu.reportError (e);
+            req.cancel (e.result);
+            that._close (e.result);
+          }
+        },
+      };
+      if (this._contentEncoding) {
+        var streamConverter
+          = Cc ["@mozilla.org/streamconv;1?from="
+          + this._contentEncoding + "&to=uncompressed"]
+          .createInstance (Ci.nsIStreamConverter);
+        // _listener <- (this <-) listener <- streamConverter <- channel
+        streamConverter.asyncConvertData
+          (this._contentEncoding, "uncompressed",
+           listener, null);
+        listener = streamConverter;
+      }
+      // _listener <- (this <-) listener <- channel
+      channel.asyncOpen (listener, null);
+    }
+    catch (e) {
+      Cu.reportError (e);
+      this._close (Cr.NS_BINDING_FAILED);
+    }
   },
 
   _parseHeaders : function (headers)
@@ -1109,19 +1181,15 @@ arAkahukuCacheChannel.prototype = {
     var statusCode = headers [0].substr (9, 3);
     var newLocations = new Array ();
     for (var i = 1; i < headers.length; i++) {
-      if (!headers [i].match (/^([^: ]+): ([^\s]+)/)) {
+      if (!headers [i].match (/^([^: ]+): +(.*)/)) {
         continue;
       }
       var key = RegExp.$1, value = RegExp.$2;
       switch (key) {
         case "Content-Type":
-          value.replace
-            (/;\s*charset=([^\s]+)/,
-             function (matched, charset) {
-               this.contentCharset = charset;
-               return "";
-             });
-          this.contentType = new String (value);
+          var match = /^([^;]+)(?:; *charset=([^\s]+))?/.exec (value);
+          this.contentType = match [1] || "";
+          this.contentCharset = match [2] || "";
           break;
         case "Content-Encoding":
           if (!this._contentEncoding) {
@@ -1150,7 +1218,6 @@ arAkahukuCacheChannel.prototype = {
     channel.loadGroup = this.loadGroup;
     channel.notificationCallbacks = this.notificationCallbacks;
     channel.loadFlags |= (this.loadFlags | Ci.nsIChannel.LOAD_REPLACE);
-    channel.originalURI = this.originalURI;
 
     try {
       channel = channel.QueryInterface (Ci.nsIInputStreamChannel);
@@ -1162,8 +1229,124 @@ arAkahukuCacheChannel.prototype = {
       channel.contentType = this.contentType;
     if (this.contentCharset)
       channel.contentCharset = this.contentCharset; 
-    if (this.contentLength)
-      channel.contentLength = this.contentLength;
+  },
+
+  /**
+   * キャッシュを探索する(CacheStorageを使わない版(e10s-ready))
+   */
+  _asyncOpenChannelFromCache : function (key)
+  {
+    var channel
+      = arAkahukuUtil.newChannel
+      ({uri: key, loadInfo: this.loadInfo});
+    const cacheFlagMask // 立たせる
+      = Ci.nsIRequest.LOAD_FROM_CACHE
+      | Ci.nsIRequest.VALIDATE_NEVER
+      | Ci.nsICachingChannel.LOAD_ONLY_FROM_CACHE;
+    const cacheFlagExcludeMask // 立っていたら降ろす
+      = ~(Ci.nsIRequest.LOAD_BYPASS_CACHE
+      | Ci.nsIRequest.VALIDATE_ALWAYS
+      | Ci.nsIRequest.VALIDATE_ONCE_PER_SESSION
+      | Ci.nsICachingChannel.LOAD_BYPASS_LOCAL_CACHE
+      | Ci.nsICachingChannel.LOAD_BYPASS_LOCAL_CACHE_IF_BUSY);
+    channel.loadFlags |= cacheFlagMask;
+    channel.loadFlags &= cacheFlagExcludeMask;
+    channel.QueryInterface (Ci.nsIHttpChannel);
+    channel.requestMethod = "HEAD";
+    var that = this;
+    var listener = {
+      onDataAvailable : function (request, context, inputStream, offset, count) {
+        // drop data
+        var sstream
+          = Cc ["@mozilla.org/scriptableinputstream;1"]
+          .createInstance (Ci.nsIScriptableInputStream);
+        sstream.init (inputStream);
+        sstream.read (count);
+      },
+      onStartRequest : function (request, context) {
+        if (that._canceled) return that._close (that.status);
+      },
+      onStopRequest : function (request, context, statusCode) {
+        if (that._canceled) return that._close (that.status);
+        request.QueryInterface (Ci.nsIHttpChannel);
+        if (Components.isSuccessCode (statusCode) &&
+            request.responseStatus == 200) {
+          // cache hit
+          var channel
+            = arAkahukuUtil.newChannel
+            ({uri: that._key, loadInfo: that.loadInfo});
+          that._setupReplacementChannel (channel);
+          channel.loadFlags |= cacheFlagMask;
+          channel.loadFlags &= cacheFlagExcludeMask;
+          // akahuku://... のままで認識させるため LOAD_REPLACE は降ろす
+          channel.loadFlags &= ~Ci.nsIChannel.LOAD_REPLACE;
+          that._redirectChannel = channel;
+          var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
+          verifyHelper.init
+            (that, channel, Ci.nsIChannelEventSink.REDIRECT_INTERNAL, that);
+        }
+        else {
+          // no valid cache
+          that._key = that._candidates.shift ();
+          if (that._key) {
+            that._asyncOpenChannelFromCache (that._key);
+          }
+          else {
+            return that._onNoValidCacheFound ();
+          }
+        }
+      },
+    };
+    channel.asyncOpen (listener, null);
+  },
+
+  /**
+   * キャッシュが見つからなかった時の後処理
+   */
+  _onNoValidCacheFound : function () {
+    // forget previously parsed values
+    this.contentCharset = "";
+    this.contentType = "";
+    this.contentLength = 0;
+    this._contentEncoding = "";
+
+    if (this.loadFlags & Ci.nsIRequest.LOAD_BYPASS_CACHE ||
+        (this.loadFlags & Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI) &&
+        /\.(jpg|png|gif|webm|mp4)$/i.test (this._originalKey)) {
+      // Shift-Reload かトップで画像等を開く場合は
+      // キャッシュが無ければ普通に開く
+      var channel
+        = arAkahukuUtil.newChannel ({
+          uri: this._originalKey,
+          loadInfo: this.loadInfo
+        });
+      this._setupReplacementChannel (channel);
+      if (channel instanceof Ci.nsIHttpChannel) {
+        // リダイレクト
+        var verifyHelper = new arAkahukuAsyncRedirectVerifyHelper ();
+        verifyHelper.init
+          (this, channel, Ci.nsIChannelEventSink.REDIRECT_INTERNAL, this);
+        this._redirectChannel = channel; // asyncOpen が必要
+        return;
+      }
+      else {
+        // 内部でチャネルを開く (安全のため)
+        this._openStreamChannelInternal (channel);
+        return;
+      }
+    }
+    else if (this.loadFlags & Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI) {
+      // キャッシュが無いよメッセージ
+      var ischannel = this._createFailChannel (this.URI);
+      // 内部でチャネルを開く
+      //   nsIInputStreamChannel をリダイレクトさせると
+      //   ContentSecurityManager が(?)クラッシュを引き起こすため
+      this._openStreamChannelInternal (ischannel);
+      return;
+    }
+
+    // 通常失敗
+    this._close (Cr.NS_ERROR_NO_CONTENT);
   },
 
   _createFailChannel : function (uri) 
@@ -1390,18 +1573,27 @@ arAkahukuAsyncRedirectVerifyHelper.Event.prototype = {
  * (require Gecko 8.0: new File)
  * [e10s] File と FileReader はコンテントプロセスでも使える
  */
-function arAkahukuDOMFileChannel (uri, file) {
+function arAkahukuDOMFileChannel (uri, file, loadInfo) {
   Cu.importGlobalProperties (["File"]);
   if (file instanceof File) {
     this._domFile = file;
   }
-  else if (file instanceof Ci.nsIFile) {
-    this._domFile = new File (file);
-  }
   else {
-    throw Components.Exception
-      ("file must be a DOM File or a nsIFile",
-       Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
+    // assuming file instanceof Ci.nsIFile
+    try {
+      if (typeof File.createFromNsIFile !== "undefined") {
+        // Firefix 52.0+
+        this._domFile = File.createFromNsIFile (file);
+      }
+      else {
+        this._domFile = new File (file); // Firefix 8.0-51.0
+      }
+    }
+    catch (e) {
+      throw Components.Exception
+        ("DOMFile construction failed from " + file,
+         e.result || Cr.NS_ERROR_ILLEGAL_VALUE);
+    }
   }
   this._reader = null;
   this._listener = null;
@@ -1410,12 +1602,16 @@ function arAkahukuDOMFileChannel (uri, file) {
   this._isOpened = false;
   this._isStarted = false;
 
+  this.name = uri.spec;
   this.URI = uri.clone ();
   this.originalURI = this.URI.clone ();
+  this.loadInfo = loadInfo || null;
 }
 arAkahukuDOMFileChannel.prototype = {
   QueryInterface : function (iid) {
     if (iid.equals (Ci.nsISupports)
+        || iid.equals (Ci.nsIRequest)
+        || iid.equals (Ci.nsIInterfaceRequestor)
         || iid.equals (Ci.nsIChannel)) {
       return this;
     }
@@ -1424,8 +1620,12 @@ arAkahukuDOMFileChannel.prototype = {
   // nsIRequest
   loadFlags : 0,
   loadGroup : null,
-  name : "arAkahukuDOMFileChannel",
+  name : "",
   status : Cr.NS_OK,
+  // nsIInterfaceRequestor
+  getInterface : function (iid) {
+    return channel_getInterface (this, iid);
+  },
   // nsIChannel
   contentCharset : "",
   contentLength : -1,
@@ -1435,6 +1635,7 @@ arAkahukuDOMFileChannel.prototype = {
   owner : null,
   securityInfo : null,
   URI : null,
+  loadInfo : null,
 
   cancel : function (status) {
     if (this._reader) {
@@ -1484,6 +1685,12 @@ arAkahukuDOMFileChannel.prototype = {
     this._reader = reader;
     this._isPending = true;
     this._isOpened = true;
+    if (this.loadGroup) {
+      this.loadGroup.addRequest (this, null);
+    }
+  },
+  asyncOpen2 : function (listener) {
+    channel_asyncOpen2 (this, listener);
   },
   _onReaderLoadStart : function (reader) {
     if (!this._isStarted) {
@@ -1500,12 +1707,12 @@ arAkahukuDOMFileChannel.prototype = {
     istream.setData (reader.result, 0, reader.result.byteLength);
     this.contentLength = dataLength;
 
-    var inputStream ;
     try {
       this._listener.onDataAvailable
         (this, this._context, istream, 0, istream.available ());
       this._isPending = false;
       this._listener.onStopRequest (this, this._context, Cr.NS_OK);
+      istream.close ();
     }
     catch (e) { Cu.reportError (e);
       this._isPending = false;
@@ -1513,6 +1720,9 @@ arAkahukuDOMFileChannel.prototype = {
 
     this._listener = null;
     this._context = null;
+    if (this.loadGroup) {
+      this.loadGroup.removeRequest (this, null, this.status);
+    }
   },
   _onReaderError : function (event) {
     this.status = Cr.NS_BINDING_FAILED;
@@ -1535,6 +1745,9 @@ arAkahukuDOMFileChannel.prototype = {
     }
     this._listener = null;
     this._context = null;
+    if (this.loadGroup) {
+      this.loadGroup.removeRequest (this, null, this.status);
+    }
   },
 };
 
