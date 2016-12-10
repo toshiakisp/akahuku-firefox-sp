@@ -1416,7 +1416,7 @@ var arAkahukuSidebar = {
         = arAkahukuSidebar.getSidebarDocument ("viewAkahukuSidebar");
     }
     if (!sidebarDocument) {
-      Akahuku.debug.error ("Sidebar.update: no sidebar document!");
+      Akahuku.debug.log ("Sidebar.update: no sidebar document");
       return;
     }
     var iframe
