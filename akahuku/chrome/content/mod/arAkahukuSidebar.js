@@ -1357,6 +1357,9 @@ var arAkahukuSidebar = {
             if (!x.catalogOrder) return 1;
             return -(y.catalogOrder - x.catalogOrder);
           case 6:
+            if (y.lastReply == -1 && x.lastReply == -1) return 0;
+            if (y.lastReply == -1) return -1;
+            if (x.lastReply == -1) return 1;
             return ((y.reply - y.lastReply) - (x.reply - x.lastReply));
         }
         return 0;
