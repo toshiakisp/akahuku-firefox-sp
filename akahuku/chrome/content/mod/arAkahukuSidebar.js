@@ -1043,6 +1043,9 @@ var arAkahukuSidebar = {
     var comment;
         
     var nodes = targetDocument.getElementsByTagName ("td");
+    if (nodes.length > 0) {
+      arAkahukuSidebar.resetCatalogOrder (name);
+    }
     for (var i = 0; i < nodes.length; i ++) {
       node = nodes [i].firstChild;
             
@@ -1376,6 +1379,21 @@ var arAkahukuSidebar = {
       + (arAkahukuSidebar.sortInvert ? "1" : "0")
       + (arAkahukuSidebar.enableSortVisited ? "1" : "0")
       + (arAkahukuSidebar.enableSortMarked  ? "1" : "0");
+  },
+
+  /**
+   * 全スレのカタログ順の情報をリセットする
+   */
+  resetCatalogOrder : function (name) {
+    if (!(name in arAkahukuSidebar.boards)) {
+      return;
+    }
+    var board = arAkahukuSidebar.boards [name];
+    if (board && board.threads) {
+      for (var i = 0; i < board.threads.length; i ++) {
+        board.threads [i].catalogOrder = 0;
+      }
+    }
   },
     
   /**

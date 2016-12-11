@@ -363,6 +363,9 @@ arAkahukuSidebar.asyncUpdateVisited = function () {
 arAkahukuSidebar.sort = function () {
   arAkahukuIPC.sendSyncCommand ("Sidebar/sort", arguments);
 };
+arAkahukuSidebar.resetCatalogOrder = function () {
+  arAkahukuIPC.sendSyncCommand ("Sidebar/resetCatalogOrder", arguments);
+};
 arAkahukuSidebar.updateMarked = function () {
   arAkahukuIPC.sendSyncCommand ("Sidebar/updateMarked", arguments);
 };
