@@ -246,6 +246,16 @@ arAkahukuProtocolHandler.prototype = {
         
     var channel = new arAkahukuBypassChannel
       (uri.spec, param.original, contentType, loadInfo);
+
+    if (contentType.length == 0) {
+      // 画像以外(iframe等での使用)では元のURIと認識させる
+      // (iframe 内での詠み込みがCORや混在コンテンツと認識されないように)
+      var ios
+        = Cc ["@mozilla.org/network/io-service;1"]
+        .getService (Ci.nsIIOService);
+      channel.URI = ios.newURI (param.original, null, null);
+      channel.loadFlags |= Ci.nsIChannel.LOAD_REPLACE;
+    }
         
     return channel;
   },
@@ -464,7 +474,9 @@ arAkahukuProtocolHandler.prototype = {
     + "</html>";
 
     if (loadInfo) { // via newChannel2
-      throw "not supported";
+      throw Components.Exception ("Akahuku protocol-handler: "
+          + "_createThreadCacheFailChannel() "
+          + "does not support loadInfo (newChannel2)");
       // exception will result in a fallback to newChannel
     }
 
@@ -521,7 +533,9 @@ arAkahukuProtocolHandler.prototype = {
    */
   _createEmptyChannel : function (uri, loadInfo) {
     if (loadInfo) { // via newChannel2
-      throw "not supported";
+      throw Components.Exception ("Akahuku protocol-handler: "
+          + "_createEmptyChannel() "
+          + "does not support loadInfo (newChannel2)");
       // exception will result in a fallback to newChannel
     }
 

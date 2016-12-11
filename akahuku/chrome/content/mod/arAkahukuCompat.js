@@ -279,7 +279,7 @@ var arAkahukuCompat = new function () {
             Components.utils.importGlobalProperties (["File"]);
           }
           if (!(file instanceof File)) {
-            if (typeof File.createFromNsIFile !== "undefine") {
+            if (typeof File.createFromNsIFile !== "undefined") {
               // Firefox 52.0+ (Bug 1303518)
               file = File.createFromNsIFile (file);
             }

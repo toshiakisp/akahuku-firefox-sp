@@ -255,6 +255,8 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuSidebar, "Sidebar", "sort");
 arAkahukuIPCRoot.defineProc
+  (arAkahukuSidebar, "Sidebar", "resetCatalogOrder");
+arAkahukuIPCRoot.defineProc
   (arAkahukuSidebar, "Sidebar", "updateMarked");
 arAkahukuIPCRoot.defineProc
   (arAkahukuSidebar, "Sidebar", "update");

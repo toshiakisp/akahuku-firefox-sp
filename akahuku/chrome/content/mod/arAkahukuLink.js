@@ -3194,16 +3194,9 @@ var arAkahukuLink = {
       }
       else {
         // refferrerPolicy 非対応バージョンでリファラを外す
-        if (scheme == "https") {
-          // downgrade させてリファラを切らせる
-          image.src = youtubeUrl.replace (/^https:/, "http:");
-        }
-        else {
-          // akahuku preview プロトコル経由 (https版へリダイレクト期待)
-          youtubeUrl = youtubeUrl.replace (/^https:/, "http:");
-          image.src
-            = Akahuku.protocolHandler.enAkahukuURI ("preview", youtubeUrl);
-        }
+        // akahuku preview プロトコル経由
+        image.src
+          = Akahuku.protocolHandler.enAkahukuURI ("preview", youtubeUrl);
       }
       image.setAttribute ("frameborder", "0");
       /* (Gecko 10.0+) moz HTML5 Fullscreen */

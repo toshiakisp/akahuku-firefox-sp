@@ -1043,6 +1043,9 @@ var arAkahukuSidebar = {
     var comment;
         
     var nodes = targetDocument.getElementsByTagName ("td");
+    if (nodes.length > 0) {
+      arAkahukuSidebar.resetCatalogOrder (name);
+    }
     for (var i = 0; i < nodes.length; i ++) {
       node = nodes [i].firstChild;
             
@@ -1354,6 +1357,9 @@ var arAkahukuSidebar = {
             if (!x.catalogOrder) return 1;
             return -(y.catalogOrder - x.catalogOrder);
           case 6:
+            if (y.lastReply == -1 && x.lastReply == -1) return 0;
+            if (y.lastReply == -1) return -1;
+            if (x.lastReply == -1) return 1;
             return ((y.reply - y.lastReply) - (x.reply - x.lastReply));
         }
         return 0;
@@ -1376,6 +1382,21 @@ var arAkahukuSidebar = {
       + (arAkahukuSidebar.sortInvert ? "1" : "0")
       + (arAkahukuSidebar.enableSortVisited ? "1" : "0")
       + (arAkahukuSidebar.enableSortMarked  ? "1" : "0");
+  },
+
+  /**
+   * 全スレのカタログ順の情報をリセットする
+   */
+  resetCatalogOrder : function (name) {
+    if (!(name in arAkahukuSidebar.boards)) {
+      return;
+    }
+    var board = arAkahukuSidebar.boards [name];
+    if (board && board.threads) {
+      for (var i = 0; i < board.threads.length; i ++) {
+        board.threads [i].catalogOrder = 0;
+      }
+    }
   },
     
   /**
@@ -1416,7 +1437,7 @@ var arAkahukuSidebar = {
         = arAkahukuSidebar.getSidebarDocument ("viewAkahukuSidebar");
     }
     if (!sidebarDocument) {
-      Akahuku.debug.error ("Sidebar.update: no sidebar document!");
+      Akahuku.debug.log ("Sidebar.update: no sidebar document");
       return;
     }
     var iframe
@@ -1815,21 +1836,27 @@ var arAkahukuSidebar = {
 
     // タブ増減・順序変更は再読み込みで対応
     var markedTab
-      = sidebarDocument.getElementById ("akahuku_sidebar_iframe_*_*");
+      = sidebarDocument.getElementById ("akahuku_sidebar_tab_*_*");
     if ((markedTab && !arAkahukuSidebar.enableMarked) ||
         (!markedTab && arAkahukuSidebar.enableMarked)) {
       sidebarDocument.location.reload ();
       return;
     }
     var tabs = sidebarDocument.getElementsByClassName ("tab");
-    if (arAkahukuSidebar.list.length != tabs.length) {
-      sidebarDocument.location.reload ();
-      return;
-    }
     for (var i = 0; i < arAkahukuSidebar.list.length; i ++) {
       var name = arAkahukuSidebar.list [i].replace (/:/, "_");
       if (!(i < tabs.length) ||
           tabs [i].id !== "akahuku_sidebar_tab_" + name) {
+        sidebarDocument.location.reload ();
+        return;
+      }
+    }
+    for (var i = 0; i < tabs.length; i ++) {
+      if (tabs [i].id == "akahuku_sidebar_tab_*_*") continue;
+      var name = tabs [i].id
+        .replace (/^akahuku_sidebar_tab_([^_]+)_([^_]+)$/, "$1:$2");
+      if (arAkahukuSidebar.list.indexOf (name) == -1) {
+        // タブが削除された
         sidebarDocument.location.reload ();
         return;
       }
