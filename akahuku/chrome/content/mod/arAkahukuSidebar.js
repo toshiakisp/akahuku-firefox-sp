@@ -1815,21 +1815,27 @@ var arAkahukuSidebar = {
 
     // タブ増減・順序変更は再読み込みで対応
     var markedTab
-      = sidebarDocument.getElementById ("akahuku_sidebar_iframe_*_*");
+      = sidebarDocument.getElementById ("akahuku_sidebar_tab_*_*");
     if ((markedTab && !arAkahukuSidebar.enableMarked) ||
         (!markedTab && arAkahukuSidebar.enableMarked)) {
       sidebarDocument.location.reload ();
       return;
     }
     var tabs = sidebarDocument.getElementsByClassName ("tab");
-    if (arAkahukuSidebar.list.length != tabs.length) {
-      sidebarDocument.location.reload ();
-      return;
-    }
     for (var i = 0; i < arAkahukuSidebar.list.length; i ++) {
       var name = arAkahukuSidebar.list [i].replace (/:/, "_");
       if (!(i < tabs.length) ||
           tabs [i].id !== "akahuku_sidebar_tab_" + name) {
+        sidebarDocument.location.reload ();
+        return;
+      }
+    }
+    for (var i = 0; i < tabs.length; i ++) {
+      if (tabs [i].id == "akahuku_sidebar_tab_*_*") continue;
+      var name = tabs [i].id
+        .replace (/^akahuku_sidebar_tab_([^_]+)_([^_]+)$/, "$1:$2");
+      if (arAkahukuSidebar.list.indexOf (name) == -1) {
+        // タブが削除された
         sidebarDocument.location.reload ();
         return;
       }
