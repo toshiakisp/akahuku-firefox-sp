@@ -238,10 +238,14 @@ arAkahukuProtocolHandler.prototype = {
     else if (/\.bmp$/i.test (tmp)) {
       contentType = "image/bmp";
     }
-    else {
-      /* 画像以外でもバイパスチャネルの利用を許可する
-      return this._createEmptyChannel (uri, loadInfo);
-      */
+    else if (/\.swf$/i.test (tmp)) {
+      contentType = "application/x-shockwave-flash";
+    }
+    else if (/\.webm$/i.test (tmp)) {
+      contentType = "video/webm";
+    }
+    else if (/\.mp4$/i.test (tmp)) {
+      contentType = "video/mp4";
     }
         
     var channel = new arAkahukuBypassChannel
