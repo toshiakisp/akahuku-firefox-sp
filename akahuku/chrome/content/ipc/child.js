@@ -311,6 +311,26 @@ arAkahukuP2P.updateStatusbar = function () {
 
 
 
+var arAkahukuPostFormIPCWrapper = {
+  // called from onKeyDown in Chrome process
+  focusCommentboxForBrowser : function (browser) {
+    var contentDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuPostForm.focusCommentbox (contentDocument);
+  },
+  toggleSageButtonForBrowser : function (browser) {
+    var contentDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuPostForm.toggleSageButton (contentDocument);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuPostFormIPCWrapper, "PostForm", "focusCommentboxForBrowser",
+   {async: true, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuPostFormIPCWrapper, "PostForm", "toggleSageButtonForBrowser",
+   {async: true, remote: true});
+
+
+
 arAkahukuIPC.defineProc
   (arAkahukuQuote, "Quote", "quote", {async: true, remote: true});
 arAkahukuIPC.defineProc

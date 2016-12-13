@@ -145,6 +145,19 @@ arAkahukuLink.onVisit = function (aURI, aVisitID, aTime, aSessionID,
 
 
 
+arAkahukuPostForm.focusCommentboxForBrowser = function (browser) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("PostForm/focusCommentboxForBrowser", [null],
+     browser.messageManager);
+};
+arAkahukuPostForm.toggleSageButtonForBrowser = function (browser) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("PostForm/toggleSageButtonForBrowser", [null],
+     browser.messageManager);
+};
+
+
+
 arAkahukuReload.diffReloadForBrowser = function (browser, doSync) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Reload/diffReloadForBrowser", [null, doSync],
