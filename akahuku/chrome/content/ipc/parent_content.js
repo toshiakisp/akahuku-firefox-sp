@@ -163,6 +163,8 @@ Akahuku.addDocumentParam = function (targetBrowser, info) {
     // dummy fo getDocumentParamsByURI
     documentURIObject: targetBrowser.currentURI.clone (),
   };
+  documentParam.targetOuterWindowID = targetBrowser.outerWindowID;
+  documentParam.targetInnerWindowID = targetBrowser.innerWindowID;
   documentParam.location_info = info;
   documentParam.flags = {}; // only available in the main process
   Akahuku.documentParams.push (documentParam);
