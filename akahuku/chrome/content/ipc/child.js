@@ -290,6 +290,17 @@ arAkahukuMHT.asyncOpenSaveMHTFilePicker
      [null, filename, dirname_base, callback],
      contentWindow);
 };
+var arAkahukuMHTIPCWrapper = {
+  saveMHTForBrowser : function () {
+    var browser = { // minimum
+      contentDocument : arAkahukuIPC.messageTarget.content.document,
+    };
+    arAkahukuMHT.saveMHTForBrowser (browser);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuMHTIPCWrapper, "MHT", "saveMHTForBrowser",
+   {async: true, remote: true});
 
 
 

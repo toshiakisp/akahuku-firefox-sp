@@ -67,6 +67,14 @@ arAkahukuLink.openAsAutoLink = function (event) {
 
 
 
+arAkahukuMHT.saveMHTForBrowser = function (browser) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("MHT/saveMHTForBrowser", [null],
+     browser.messageManager);
+};
+
+
+
 arAkahukuQuote.quote = function (addQuotePrefix, focusTextArea, optTarget) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Quote/quote", [addQuotePrefix, focusTextArea, gContextMenu.target],
