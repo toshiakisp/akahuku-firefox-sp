@@ -345,7 +345,7 @@ var Akahuku = {
       else {
         Akahuku.protocolHandler
           = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-          .getService (Ci.arIAkahukuProtocolHandler);
+          .getService (Components.interfaces.arIAkahukuProtocolHandler);
       }
     }
     catch (e) { Akahuku.debug.exception (e);
