@@ -1290,31 +1290,46 @@ var arAkahukuThread = {
     }
         
     if (expire.match
-        (/(([0-9]+)[^0-9]+)?(([0-9]+)[^0-9]+)?([0-9]+):([0-9]+)/)) {
+        (/(([0-9]+)\u5E74)?(([0-9]+)\u6708)?(([0-9]+)\u65E5)?(([0-9]+):([0-9]+))?/) &&
+        RegExp.lastMatch.length > 0) {
+      var specLevel = 0;
+      var day_uncert = false;
       var date = new Date ();
       var year = date.getYear () + 1900;
       var mon;
       var day;
       var mon_rep = false;
-      if (RegExp.$1 && RegExp.$3) {
-        mon = RegExp.$2;
+      if (RegExp.$1) {
+        year = parseInt (RegExp.$2);
+        if (year < 100) {
+          year += 2000;
+        }
+        specLevel = 1;
+      }
+      if (RegExp.$3) {
+        mon = RegExp.$4;
         mon_rep = true;
-        day = RegExp.$4;
-      }
-      else if (RegExp.$1) {
-        mon = date.getMonth ();
-        day = RegExp.$2;
-      }
-      else if (RegExp.$3) {
-        mon = date.getMonth ();
-        day = RegExp.$4;
+        specLevel = 2;
       }
       else {
         mon = date.getMonth ();
-        day = date.getDate ();
       }
-      var hour = RegExp.$5;
-      var min = RegExp.$6;
+      if (RegExp.$5) {
+        day = RegExp.$6;
+        specLevel = 3;
+      }
+      else if (RegExp.$7) {
+        day = date.getDate ();
+        day_uncert = true;
+      }
+      else {
+        day = 28; //省略時は月末頃
+      }
+      var hour = RegExp.$8 || "00";
+      var min = RegExp.$9 || "00";
+      if (RegExp.$7) {
+        specLevel = 4;
+      }
       if (mon_rep) {
         mon = parseInt (mon.replace (/^0/, "")) - 1;
       }
@@ -1351,28 +1366,37 @@ var arAkahukuThread = {
             
       var text = "";
       var dayExist = 0;
+      if (specLevel <= 2 && expireDiff >= 30 * 60 * 24) {
+        text += parseInt (expireDiff / (30 * 60 * 24));
+        text += "\u30F6\u6708"; // "ヶ月"
+        expireDiff = 0; // 細かい残り時間は表示しない
+      }
       if (expireDiff >= 60 * 24) {
         text += parseInt (expireDiff / (60 * 24));
-        text += "\u65E5";
+        text += "\u65E5"; // "日"
         expireDiff %= 60 * 24;
         dayExist = 1;
       }
+      if (specLevel < 4) {
+        // 消滅時刻までわかってない場合は時間差までは表示しない
+        expireDiff = 0;
+      }
       if (expireDiff >= 60) {
         if (dayExist) {
-          text += "\u3068";
+          text += "\u3068"; // "と"
           dayExist = 0;
         }
         text += parseInt (expireDiff / 60);
-        text += "\u6642\u9593";
+        text += "\u6642\u9593"; // "時間"
         expireDiff %= 60;
       }
       if (text == "" || expireDiff > 0) {
         if (dayExist) {
-          text += "\u3068";
+          text += "\u3068"; // "と"
           dayExist = 0;
         }
         text += expireDiff;
-        text += "\u5206";
+        text += "\u5206"; // "分"
       }
             
       return text;
@@ -3130,7 +3154,8 @@ var arAkahukuThread = {
                 /* 避難所 patch */
                 || nodeName == "span") {
               if (node.innerHTML.match
-                  (/(([0-9]+\u5E74)?([0-9]+\u6708)?([0-9]+\u65E5)?[0-9]+:[0-9]+)\u9803\u6D88\u3048\u307E\u3059/)) {
+                  (/(([0-9]+\u5E74)?([0-9]+\u6708)?([0-9]+\u65E5)?([0-9]+:[0-9]+)?)\u9803\u6D88\u3048\u307E\u3059/)) {
+                // /(([0-9]+年)?([0-9]+月)?([0-9]+日)?([0-9]+:[0-9]+)?)頃消えます/
                 expire = RegExp.$1;
                 if (info.isReply) {
                   info.expire = expire;
