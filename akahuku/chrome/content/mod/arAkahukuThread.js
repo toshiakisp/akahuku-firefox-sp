@@ -1351,7 +1351,10 @@ var arAkahukuThread = {
       var expireTime = date.getTime ();
       
       if (estimatedTime > 0) {
-        if (expireTime < estimatedTime - 12 * 60 * 60 * 1000) {
+        if (day_uncert && !info.isFutaba &&
+            expireTime < estimatedTime - 12 * 60 * 60 * 1000) {
+          // 消滅予告日が不確かな際には予想消滅時刻を考慮して日単位でずらす
+          // (ふたばではこの問題はもうないはずなので補正しない)
           expireTime
             += Math.ceil ((estimatedTime - expireTime
                            - 12 * 60 * 60 * 1000) / (24 * 60 * 60 * 1000))
