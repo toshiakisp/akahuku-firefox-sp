@@ -1,36 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"> 
-<h4>sp_rev.45 (2016-12-11)</h4>
+<h4>sp_rev.46 (2017-01-23)</h4>
 <ul>
   <li>修正・調整</li>
   <ul>
-	<li>バグ修正: 投稿フォームへの画像の[貼り付け]やコメント欄へのドラッグ＆ドロップ、Ctrl-Vが機能しない問題</li>
-	<li>[Firefox 50未満] youtube のオートリンクのプレビューが[見る]で表示されない件に対応</li>
-	<li>バグ修正: 設定変更で常にサイドバーがリロードされてしまう</li>
-	<li>サイドバーの「カタログ順」で、新しく読み込み・反映したカタログでの順序となるよう調整</li>
-	<li>サイドバーの「レス増加順」で、増加したスレのみが上位に来るように(新しいスレを無視)</li>
+    <li>バグ修正: マルチプロセス(e10s)環境下で一部のショートカットキーが機能しない問題 [<a href="https://github.com/toshiakisp/akahuku-firefox-sp/issues/15">Issue/15</a>]</li>
+    <li>バグ修正: webmを「画像を保存」で保存後に「元画像で表示」しても再生できない [<a href="https://github.com/toshiakisp/akahuku-firefox-sp/issues/16">Issue/16</a>]</li>
+    <li>バグ修正: youtubeプレビューでURLのt=1h10m等が再生開始時間に正しく反映されない [<a href="https://github.com/toshiakisp/akahuku-firefox-sp/issues/17">Issue/17</a>]</li>
+    <li>消滅まで数日・数ヶ月のスレでも残り時間がスレ末尾やスレ操作パネルに表示されるようにした [<a href="https://github.com/toshiakisp/akahuku-firefox-sp/issues/18">Issue/18</a>]</li>
   </ul>
-</ul>
-<h4>sp_rev.44 (2016-12-08)</h4>
-<ul>
-  <li>機能改善</li>
-  <ul>
-    <li>サイドバーの設定パネルを整理</li>
-    <li>サイドバーの更新ボタンでカタログ種類を選択可能に</li>
-    <li>サイドバーのソート順を示すメニューを表示</li>
-    <li>サイドバーのソート順を追加: 新順、多順…</li>
-    <li>サイドバーから既存のスレを開く際の挙動を設定可能に</li>
-    <li>サイドバーの設定を変えたときにすぐ反映されるように</li>
-    <li>サイドバーがフォーカスを取らないように</li>
-    <li>サイドバー上でのCtrl-ホイールでサムネサイズを変更</li>
-  </ul>
-  <li>修正・調整</li>
-  <ul>
-    <li>古いFirefoxの互換性を改善 (3.6.*でも一応動作はするらしい)</li>
-	<li>修正: リダイレクトするオートリンクのプレビューが動作しない (orクラッシュ?)</li>
-	<li>修正: スレをファイルに保存等が、フォルダが存在しないと失敗する問題</li>
-    <li>Firefox 52.0a2への対応</li>
-  </ul>
-  <li>マルチプロセス Firefox (e10s) 対応を完了 (含, P2P, サイドバー)</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/0f27625...bec49bb">All changes from previous release on github</a> (10 commits, 15 files changed)</li>
 </ul>
 </html>
