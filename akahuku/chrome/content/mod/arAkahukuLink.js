@@ -3171,7 +3171,7 @@ var arAkahukuLink = {
       var youtubeUrl = "https://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
-      if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?([0-9]+)s?/)) {
+      if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9]+)s?)?/)) {
         t = parseInt (RegExp.$3)
           + parseInt (RegExp.$2 || 0) * 60
           + parseInt (RegExp.$1 || 0) * 3600;

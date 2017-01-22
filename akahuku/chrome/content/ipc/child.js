@@ -290,6 +290,17 @@ arAkahukuMHT.asyncOpenSaveMHTFilePicker
      [null, filename, dirname_base, callback],
      contentWindow);
 };
+var arAkahukuMHTIPCWrapper = {
+  saveMHTForBrowser : function () {
+    var browser = { // minimum
+      contentDocument : arAkahukuIPC.messageTarget.content.document,
+    };
+    arAkahukuMHT.saveMHTForBrowser (browser);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuMHTIPCWrapper, "MHT", "saveMHTForBrowser",
+   {async: true, remote: true});
 
 
 
@@ -308,6 +319,26 @@ arAkahukuP2P.updateStatusbar = function () {
   arAkahukuIPC.sendAsyncCommand
     ("P2P/updateStatusbar", arguments);
 };
+
+
+
+var arAkahukuPostFormIPCWrapper = {
+  // called from onKeyDown in Chrome process
+  focusCommentboxForBrowser : function (browser) {
+    var contentDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuPostForm.focusCommentbox (contentDocument);
+  },
+  toggleSageButtonForBrowser : function (browser) {
+    var contentDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuPostForm.toggleSageButton (contentDocument);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuPostFormIPCWrapper, "PostForm", "focusCommentboxForBrowser",
+   {async: true, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuPostFormIPCWrapper, "PostForm", "toggleSageButtonForBrowser",
+   {async: true, remote: true});
 
 
 

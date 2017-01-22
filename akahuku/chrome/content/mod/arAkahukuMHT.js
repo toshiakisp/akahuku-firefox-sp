@@ -1159,15 +1159,10 @@ var arAkahukuMHT = {
           && arAkahukuMHT.shortcutModifiersCtrl == event.ctrlKey
           && arAkahukuMHT.shortcutModifiersMeta == event.metaKey
           && arAkahukuMHT.shortcutModifiersShift == event.shiftKey) {
-        var tabbrowser = document.getElementById ("content");
-        if (tabbrowser.contentDocument) {
-          var button
-            = tabbrowser.contentDocument.getElementById
-            ("akahuku_savemht_button");
-          if (button) {
-            arAkahukuMHT.saveMHT (tabbrowser.contentDocument);
-            event.preventDefault ();
-          }
+        var browser = document.getElementById ("content").selectedBrowser;
+        if (Akahuku.getDocumentParamForBrowser (browser)) {
+          arAkahukuMHT.saveMHTForBrowser (browser);
+          event.preventDefault ();
         }
       }
     }
@@ -3785,6 +3780,19 @@ var arAkahukuMHT = {
         }
         callback.apply (null, [ret, file, dir]);
       });
+  },
+
+  saveMHTForBrowser : function (browser) {
+    // non-e10s
+    if (!browser.contentDocument) {
+      Akahuku.debug.error ("no contentDocument on", browser);
+      return;
+    }
+    var targetDocument = browser.contentDocument;
+    var button = targetDocument.getElementById ("akahuku_savemht_button");
+    if (button) {
+      arAkahukuMHT.saveMHT (targetDocument);
+    }
   },
     
   /**

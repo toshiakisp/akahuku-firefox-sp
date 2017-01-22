@@ -51,6 +51,17 @@ var Akahuku = {
   addDocumentParam : function (targetDocument, info) {
     var documentParam = new arAkahukuDocumentParam ();
     documentParam.targetDocument = targetDocument;
+    try {
+      // requires Gekco 2.0 (Firefox 4) or above
+      var wu
+      = targetDocument.defaultView
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIDOMWindowUtils);
+      documentParam.targetOuterWindowID = wu.outerWindowID;
+      documentParam.targetInnerWindowID = wu.currentInnerWindowID;
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
     if (info) {
       documentParam.location_info = info;
     }
@@ -159,6 +170,32 @@ var Akahuku = {
 
   hasDocumentParamForURI : function (uri) {
     return (Akahuku.getDocumentParamsByURI (uri, true).length > 0);
+  },
+
+  getDocumentParamForBrowser : function (browser) {
+    if (Akahuku.useFrameScript) { // e10s
+      if (!("innerWindowID" in browser)) { // < Fx 45(?)
+        Akahuku.debug.error ("no innerWindowID in browser; " + browser);
+        return null;
+      }
+      for (var i = 0; i < Akahuku.documentParams.length; i ++) {
+        if (Akahuku.documentParams [i].targetInnerWindowID
+            == browser.innerWindowID) {
+          Akahuku.latestParam = Akahuku.documentParams [i];
+          return Akahuku.documentParams [i];
+        }
+      }
+      return null;
+    }
+    else {
+      if (browser.contentDocument) {
+        return Akahuku.getDocumentParam (browser.contentDocument);
+      }
+      else {
+        Akahuku.debug.warn ("no contentDocument on browser: " + browser);
+        return null;
+      }
+    }
   },
 
   /**
@@ -308,7 +345,7 @@ var Akahuku = {
       else {
         Akahuku.protocolHandler
           = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-          .getService (Ci.arIAkahukuProtocolHandler);
+          .getService (Components.interfaces.arIAkahukuProtocolHandler);
       }
     }
     catch (e) { Akahuku.debug.exception (e);

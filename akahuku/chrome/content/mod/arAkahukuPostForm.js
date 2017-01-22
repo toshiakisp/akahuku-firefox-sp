@@ -331,7 +331,7 @@ var arAkahukuPostForm = {
   },
     
   /**
-   * キーが押されたイベント
+   * キーが押されたイベント [XUL]
    *
    * @param  Event event
    *         対象のイベント
@@ -348,32 +348,14 @@ var arAkahukuPostForm = {
           == event.metaKey
           && arAkahukuPostForm.commentboxShortcutModifiersShift
           == event.shiftKey) {
-        var tabbrowser = document.getElementById ("content");
-        if (tabbrowser.contentDocument) {
-          var targetDocument = tabbrowser.contentDocument;
-          var target = arAkahukuPostForm.findCommentbox (targetDocument);
-          if (!target) {
-            Akahuku.debug.warn ("no commentbox found.");
-            return;
-          }
-          
-          arAkahukuPostForm.ensureDispPostForm (targetDocument);
-          if (!arAkahukuPostForm.enableCommentboxStatusSize) {
-            if (arAkahukuPostForm.enableCommentboxSetRows) {
-              target.rows = arAkahukuPostForm.commentboxSetRowsCount;
-              target.style.height = "auto";
-            }
-            else {
-              target.rows = "8";
-            }
-          }
-                    
-          target.setSelectionRange
-            (target.value.length, target.value.length);
-          target.focus ();
-                    
-          arAkahukuPostForm.focus (targetDocument, target);
+        var browser = document.getElementById ("content").selectedBrowser;
+        if (Akahuku.getDocumentParamForBrowser (browser)) {
+          browser.focus ();
+          arAkahukuPostForm.focusCommentboxForBrowser (browser);
           event.preventDefault ();
+        }
+        else {
+          Akahuku.debug.log ("no AkahukuDocumentParam on", browser);
         }
         return;
       }
@@ -389,19 +371,70 @@ var arAkahukuPostForm = {
           == event.metaKey
           && arAkahukuPostForm.mailboxSageButtonKeyModifiersShift
           == event.shiftKey) {
-        var tabbrowser = document.getElementById ("content");
-        if (tabbrowser.contentDocument) {
-          var targetDocument = tabbrowser.contentDocument;
-          var target
-            = targetDocument.getElementById ("akahuku_sagebutton");
-          if (!target) {
-            return;
-          }
-          arAkahukuPostForm.onSageButtonClickCore (targetDocument);
+        var browser = document.getElementById ("content").selectedBrowser;
+        if (Akahuku.getDocumentParamForBrowser (browser)) {
+          arAkahukuPostForm.toggleSageButtonForBrowser (browser);
           event.preventDefault ();
         }
+        else {
+          Akahuku.debug.log ("no AkahukuDocumentParam on", browser);
+        }
+        return;
       }
     }
+  },
+
+  focusCommentboxForBrowser : function (browser) {
+    // non-e10s
+    if (!browser.contentDocument) {
+      Akahuku.debug.error ("no contentDocument on", browser);
+      return;
+    }
+    arAkahukuPostForm.focusCommentbox (browser.contentDocument);
+  },
+  focusCommentbox : function (targetDocument) {
+    // content
+    var target = arAkahukuPostForm.findCommentbox (targetDocument);
+    if (!target) {
+      Akahuku.debug.warn ("no commentbox found.");
+      return;
+    }
+
+    arAkahukuPostForm.ensureDispPostForm (targetDocument);
+    if (!arAkahukuPostForm.enableCommentboxStatusSize) {
+      if (arAkahukuPostForm.enableCommentboxSetRows) {
+        target.rows = arAkahukuPostForm.commentboxSetRowsCount;
+        target.style.height = "auto";
+      }
+      else {
+        target.rows = "8";
+      }
+    }
+
+    target.setSelectionRange
+      (target.value.length, target.value.length);
+    target.focus ();
+
+    // 必要ならフォームにスクロールする
+    arAkahukuPostForm.focus (targetDocument, target);
+  },
+
+  toggleSageButtonForBrowser : function (browser) {
+    // non-e10s
+    if (!browser.contentDocument) {
+      Akahuku.debug.error ("no contentDocument on", browser);
+      return;
+    }
+    arAkahukuPostForm.toggleSageButton (browser.contentDocument);
+  },
+  toggleSageButton : function (targetDocument) {
+    // content
+    var target
+      = targetDocument.getElementById ("akahuku_sagebutton");
+    if (!target) {
+      return;
+    }
+    arAkahukuPostForm.onSageButtonClickCore (targetDocument);
   },
     
   /**

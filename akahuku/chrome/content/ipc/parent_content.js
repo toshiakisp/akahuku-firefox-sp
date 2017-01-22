@@ -67,6 +67,14 @@ arAkahukuLink.openAsAutoLink = function (event) {
 
 
 
+arAkahukuMHT.saveMHTForBrowser = function (browser) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("MHT/saveMHTForBrowser", [null],
+     browser.messageManager);
+};
+
+
+
 arAkahukuQuote.quote = function (addQuotePrefix, focusTextArea, optTarget) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Quote/quote", [addQuotePrefix, focusTextArea, gContextMenu.target],
@@ -145,6 +153,19 @@ arAkahukuLink.onVisit = function (aURI, aVisitID, aTime, aSessionID,
 
 
 
+arAkahukuPostForm.focusCommentboxForBrowser = function (browser) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("PostForm/focusCommentboxForBrowser", [null],
+     browser.messageManager);
+};
+arAkahukuPostForm.toggleSageButtonForBrowser = function (browser) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("PostForm/toggleSageButtonForBrowser", [null],
+     browser.messageManager);
+};
+
+
+
 arAkahukuReload.diffReloadForBrowser = function (browser, doSync) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Reload/diffReloadForBrowser", [null, doSync],
@@ -163,6 +184,8 @@ Akahuku.addDocumentParam = function (targetBrowser, info) {
     // dummy fo getDocumentParamsByURI
     documentURIObject: targetBrowser.currentURI.clone (),
   };
+  documentParam.targetOuterWindowID = targetBrowser.outerWindowID;
+  documentParam.targetInnerWindowID = targetBrowser.innerWindowID;
   documentParam.location_info = info;
   documentParam.flags = {}; // only available in the main process
   Akahuku.documentParams.push (documentParam);

@@ -441,7 +441,7 @@ var arAkahukuUtil = new function () {
     if (nextTimerId == 0x7fffffff) {
       nextTimerId = 1;
     }
-    var args = Array.slice (arguments, 2);
+    var args = Array.prototype.slice.call (arguments, 2);
     var timer
       = Cc ["@mozilla.org/timer;1"]
       .createInstance (Ci.nsITimer);
