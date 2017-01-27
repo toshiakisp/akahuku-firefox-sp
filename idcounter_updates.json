@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "idcounter-webext@toshiakisp.github.io": {
+      "updates": [
+        { "version": "1.0",
+          "update_link": "https://toshiakisp.github.io/akahuku-firefox-sp/idcounter-1.0.xpi",
+		  "applications": {
+            "gecko": { "strict_min_version": "45.0a1" } } }
+      ]
+    }
+  }
+}

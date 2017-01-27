@@ -101,7 +101,7 @@ header {
   position:fixed;
 }
 
-header ul {
+header ul, .install_button {
   list-style:none;
   height:40px;
   
@@ -120,6 +120,13 @@ header ul {
   box-shadow:inset #fff 0 1px 0, inset rgba(0,0,0,0.03) 0 -1px 0;
   width:270px;
 }
+.install_button {
+  display: inline-block;
+  background: linear-gradient(#84C63C, #489615) repeat scroll 0% 0% #489615;
+  width: 89px;
+  height:40px;
+  text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
+}
 
 header li {
   width:89px;
@@ -128,7 +135,7 @@ header li {
   height:40px;
 }
 
-header ul a {
+header ul a, .install_button a {
   line-height:1;
   font-size:11px;
   color:#999;
@@ -136,6 +143,9 @@ header ul a {
   text-align:center;
   padding-top:6px;
   height:40px;
+}
+.install_button a {
+  color:#fff;
 }
 
 strong {
@@ -153,10 +163,13 @@ header ul li + li + li {
   width:89px;
 }
 
-header ul a strong {
+header ul a strong, .install_button a strong {
   font-size:14px;
   display:block;
   color:#222;
+}
+.install_button a strong {
+  color:#fff;
 }
 
 section {
