@@ -1683,9 +1683,15 @@ var arAkahukuLink = {
     }
         
     if (type == 1) {
+      // "拡張子を指定\n\n"
+      // "何も入力しないと拡張子指定を解除します"
       ext
-      = prompt ("\u4F55\u3082\u5165\u529B\u3057\u306A\u3044\u3068\u62E1\u5F35\u5B50\u6307\u5B9A\u3092\u89E3\u9664\u3057\u307E\u3059", "",
-                "\u62E1\u5F35\u5B50\u3092\u6307\u5B9A");
+      = targetNode.ownerDocument.defaultView
+      .prompt ("\u62E1\u5F35\u5B50\u3092\u6307\u5B9A\n\n"
+          + "\u4F55\u3082\u5165\u529B\u3057\u306A\u3044\u3068\u62E1\u5F35\u5B50\u6307\u5B9A\u3092\u89E3\u9664\u3057\u307E\u3059", "");
+      if (ext == null) { // キャンセル時
+        return;
+      }
     }
     else if (type == 2) {
       var listener = new arAkahukuLinkExtListener ();
