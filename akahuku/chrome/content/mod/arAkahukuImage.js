@@ -508,7 +508,8 @@ var arAkahukuImage = {
       = targetDocument.getElementById ("akahuku_saveimage_button_" + id);
       arAkahukuImage.currentNormal
       = (linkNode.getAttribute ("__akahuku_saveimage_normal") == 1);
-      if (arAkahukuImage.currentTarget.style.display != "none") {
+      if (arAkahukuImage.currentTarget &&
+          arAkahukuImage.currentTarget.style.display != "none") {
         data.isSaveImageLink = true;
       }
     }
