@@ -1857,6 +1857,9 @@ var arAkahukuPostForm = {
         /* スレを立てる */
                 
         /* 確認 */
+        var confirm = function (msg) {
+          return targetDocument.defaultView.confirm (msg);
+        };
         if (!confirm
             ("\u30B9\u30EC\u7ACB\u3066\u3061\u3083\u3046\u3088\uFF1F\n"
              + "\u305D\u308C\u3067\u3082\u3044\u3044\u306E\uFF1F")) {
