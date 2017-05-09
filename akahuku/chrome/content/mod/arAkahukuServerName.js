@@ -278,6 +278,12 @@ var arAkahukuServerData = {
     "webm",
     1000, true
     ],
+  "dec:71" : [ /* そうだね */
+    "\u305D\u3046\u3060\u306D",
+    "\u305D\u3046\u3060\u306D",
+    "\u305D\u3046\u3060\u306D",
+    2000, true
+    ],
   "dec:61" : [ /* ソニー */
     "\u30BD\u30CB\u30FC",
     "\u30BD\u30CB\u30FC",
@@ -331,7 +337,7 @@ var arAkahukuServerData = {
     "\u3084\u304A\u3044",
     "\u3084\u304A\u3044",
     "\u3084\u304A\u3044",
-    500, true
+    100, true
     ],
   "cgi:o" : [ /* 二次元グロ */
     "\u4E8C\u6B21\u5143\u30B0\u30ED",
@@ -391,6 +397,12 @@ var arAkahukuServerData = {
   "nov:y" : [ /* 模型裏 */
     "\u6A21\u578B\u88CF",
     "\u6A21\u578B\u88CF",
+    "\u6A21\u578B\u88CF",
+    4000, true
+    ],
+  "jun:47" : [ /* 模型裏 jun */
+    "\u6A21\u578B\u88CF jun",
+    "\u6A21\u578B\u88CF jun",
     "\u6A21\u578B\u88CF",
     4000, true
     ],
@@ -514,6 +526,12 @@ var arAkahukuServerData = {
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
     "\u304A\u7D75sql",
+    1000, true
+    ],
+  "jun:72" : [ /* お絵sqlip */
+    "\u304A\u7D75sqlip",
+    "\u304A\u7D75sqlip",
+    "\u304A\u7D75\u304B\u304Dsqlip",
     1000, true
     ],
   "zip:6" : [ /* ニュース表 */
