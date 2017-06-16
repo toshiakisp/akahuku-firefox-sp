@@ -3,6 +3,15 @@
  * ドキュメントごとの情報
  */
 function arAkahukuDocumentParam () {
+  this.links = {
+    // see Akahuku.collectLinks
+    home : "", // ホーム
+    homeAnchors : [],
+    back : "", // 掲示板へ戻る
+    backAnchors : [],
+    catalog : "", // カタログ
+    catalogAnchors : [],
+  };
 }
 arAkahukuDocumentParam.prototype = {
   targetDocument : null,
@@ -22,14 +31,6 @@ arAkahukuDocumentParam.prototype = {
   
   layout : false,
 
-  // see Akahuku.collectLinks
-  links : {
-    home : "", // ホーム
-    homeAnchors : [],
-    back : "", // 掲示板へ戻る
-    backAnchors : [],
-    catalog : "", // カタログ
-    catalogAnchors : [],
-  },
+  links : null,
 };
 

@@ -1857,6 +1857,9 @@ var arAkahukuPostForm = {
         /* スレを立てる */
                 
         /* 確認 */
+        var confirm = function (msg) {
+          return targetDocument.defaultView.confirm (msg);
+        };
         if (!confirm
             ("\u30B9\u30EC\u7ACB\u3066\u3061\u3083\u3046\u3088\uFF1F\n"
              + "\u305D\u308C\u3067\u3082\u3044\u3044\u306E\uFF1F")) {
@@ -2854,10 +2857,11 @@ var arAkahukuPostForm = {
           var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
           if (filebox && file instanceof Components.interfaces.nsIFile) {
             if (param.testAttachableExt (file.path)) {
-              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-              if (arAkahukuPostForm.enablePreview) {
-                arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-              }
+              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+                if (arAkahukuPostForm.enablePreview) {
+                  arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+                }
+              });
               return; // 貼り付け成功時はそこで終了
             }
           }
@@ -2873,10 +2877,11 @@ var arAkahukuPostForm = {
     var file = arAkahukuClipboard.getFile ();
     if (file) {
       if (param.testAttachableExt (file.path)) {
-        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+          if (arAkahukuPostForm.enablePreview) {
+            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+          }
+        });
         return; // 貼り付け成功時はそこで終了
       }
     }
@@ -2909,10 +2914,11 @@ var arAkahukuPostForm = {
       }
       var filebox = targetDocument.getElementsByName ("upfile")[0];
       if (filebox) {
-        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+          if (arAkahukuPostForm.enablePreview) {
+            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+          }
+        });
       }
     });
   },
@@ -2949,10 +2955,11 @@ var arAkahukuPostForm = {
       }
     }
     if (filebox && file) {
-      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-      if (arAkahukuPostForm.enablePreview) {
-        arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-      }
+      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
+      });
     }
   },
 

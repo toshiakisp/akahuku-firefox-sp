@@ -118,7 +118,7 @@ XPCOMStyleSheetServiceEntry.prototype = {
     var ios
       = Cc ["@mozilla.org/network/io-service;1"]
       .getService (Ci.nsIIOService);
-    uri = ios.newURI (uriStr, null, null);
+    var uri = ios.newURI (uriStr, null, null);
 
     if (this._registeredData) {
       if (this._registeredData.uri.equals (uri) &&

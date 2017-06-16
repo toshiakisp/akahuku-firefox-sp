@@ -255,10 +255,12 @@ var arAkahukuCompat = new function () {
      * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]
      * required for e10s content process
      *
+     * @param filebox HTMLInputElement
      * @param file  a url string or nsIFile
      *              (no support for nsIDOMFile and Array)
+     * @param callback Function
      */
-    mozSetFile : function (filebox, file) {
+    mozSetFile : function (filebox, file, callback) {
       if (!(filebox instanceof Ci.nsIDOMHTMLInputElement
           && filebox.type == "file")) {
         throw Components.Exception (
@@ -282,6 +284,16 @@ var arAkahukuCompat = new function () {
             if (typeof File.createFromNsIFile !== "undefined") {
               // Firefox 52.0+ (Bug 1303518)
               file = File.createFromNsIFile (file);
+              if (!(file instanceof File) && "then" in file) {
+                // 54.0+: createFromNsIFile returns a Promise (Bug 1335536)
+                file.then (function (file) {
+                  filebox.mozSetFileArray ([file]);
+                  if (typeof callback === "function") {
+                    callback.apply (null, []);
+                  }
+                });
+                return;
+              }
             }
             else {
               // Gecko (6.0)-51.0
@@ -297,6 +309,10 @@ var arAkahukuCompat = new function () {
           // classic way
           filebox.value = arAkahukuFile.getURLSpecFromFile (file);
         }
+      }
+      // Call directly callback after classical sync operations
+      if (typeof callback === "function") {
+        callback.apply (null, []);
       }
     },
   };

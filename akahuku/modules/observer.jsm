@@ -481,7 +481,7 @@ CookieBlocker.prototype
 /**
  * NotificationObserver クラスのファクトリ (IPC)
  */
-NotificationObserverFactory = {
+var NotificationObserverFactory = {
   /**
    * 生成 (IPC main-process version)
    *
