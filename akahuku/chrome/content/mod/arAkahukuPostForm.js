@@ -2857,10 +2857,11 @@ var arAkahukuPostForm = {
           var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
           if (filebox && file instanceof Components.interfaces.nsIFile) {
             if (param.testAttachableExt (file.path)) {
-              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-              if (arAkahukuPostForm.enablePreview) {
-                arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-              }
+              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+                if (arAkahukuPostForm.enablePreview) {
+                  arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+                }
+              });
               return; // 貼り付け成功時はそこで終了
             }
           }
@@ -2876,10 +2877,11 @@ var arAkahukuPostForm = {
     var file = arAkahukuClipboard.getFile ();
     if (file) {
       if (param.testAttachableExt (file.path)) {
-        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+          if (arAkahukuPostForm.enablePreview) {
+            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+          }
+        });
         return; // 貼り付け成功時はそこで終了
       }
     }
@@ -2912,10 +2914,11 @@ var arAkahukuPostForm = {
       }
       var filebox = targetDocument.getElementsByName ("upfile")[0];
       if (filebox) {
-        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+          if (arAkahukuPostForm.enablePreview) {
+            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+          }
+        });
       }
     });
   },
@@ -2952,10 +2955,11 @@ var arAkahukuPostForm = {
       }
     }
     if (filebox && file) {
-      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-      if (arAkahukuPostForm.enablePreview) {
-        arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-      }
+      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
+      });
     }
   },
 
