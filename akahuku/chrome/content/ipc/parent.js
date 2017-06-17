@@ -105,6 +105,10 @@ arAkahukuIPCRoot.defineProc
   (arAkahukuConfig, "Config", "setIntPref");
 arAkahukuIPCRoot.defineProc
   (arAkahukuConfig, "Config", "clearUserPref");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuConfig, "Config", "setTime");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuConfig, "Config", "restoreTime");
 
 
 
