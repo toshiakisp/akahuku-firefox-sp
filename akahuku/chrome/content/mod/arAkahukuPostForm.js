@@ -2934,6 +2934,23 @@ var arAkahukuPostForm = {
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile") [0];
     var file = null;
+    // Try HTML5 way
+    try {
+      var dt = event.dataTransfer;
+      if ("items" in dt) { // DataTransferItemList (Fx50+)
+        for (var n=0; n < dt.items.length && !file; n ++) {
+          if (dt.items [n].kind == "file") {
+            file = dt.items [n].getAsFile (); // DOM File
+            event.preventDefault ();
+            break;
+          }
+        }
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+      file = null;
+    }
+    // Classical way
     for (var n=0; n < event.dataTransfer.mozItemCount && !file; n ++) {
       var types = event.dataTransfer.mozTypesAt (n);
       for (var i=0; i < types.length && !file; i ++) {

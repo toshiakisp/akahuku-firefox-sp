@@ -86,6 +86,9 @@ arAkahukuIPCRoot.defineProc
      callbackObjectMethod: "isVisited",
    });
 arAkahukuIPCRoot.defineProc
+  (arAkahukuCompat, "Compat", "createFileFromNsIFile",
+   {async: true, callback: 2});
+arAkahukuIPCRoot.defineProc
   (arAkahukuCompat, "Compat", "losslessDecodeURI");
 arAkahukuIPCRoot.defineProc
   (arAkahukuCompat.AddonManager,
@@ -102,6 +105,10 @@ arAkahukuIPCRoot.defineProc
   (arAkahukuConfig, "Config", "setIntPref");
 arAkahukuIPCRoot.defineProc
   (arAkahukuConfig, "Config", "clearUserPref");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuConfig, "Config", "setTime");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuConfig, "Config", "restoreTime");
 
 
 
