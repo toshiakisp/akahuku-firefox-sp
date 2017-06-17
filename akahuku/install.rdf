@@ -5,7 +5,7 @@
   
   <Description about="urn:mozilla:install-manifest">
     <em:id>akahuku.fx.sp@toshiakisp.github.io</em:id>
-    <em:version>5.2.90.sp_rev.48</em:version>
+    <em:version>5.2.90.sp_rev.49</em:version>
     <em:type>2</em:type>
     
     <em:targetApplication>
