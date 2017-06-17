@@ -47,6 +47,20 @@ var arAkahukuCompat = new function () {
     }
   };
 
+  this.getPlatformType = function () {
+    try {
+      // Gecko 1.8+
+      var ai = Cc ["@mozilla.org/xre/app-info;1"]
+        .getService (Ci.nsIXULAppInfo);
+      if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
+        return "Goanna";
+      }
+    }
+    catch (e) {
+    }
+    return "Gecko";
+  };
+
   this.WebBrowserPersist = {
     _versionChecked : false,
     _version3_6: false,
@@ -59,6 +73,11 @@ var arAkahukuCompat = new function () {
         this._version36 = arAkahukuCompat.comparePlatformVersion ("35.*") > 0;
         this._version18 = arAkahukuCompat.comparePlatformVersion ("17.*") > 0;
         this._version3_6 = arAkahukuCompat.comparePlatformVersion ("1.9.2") >= 0;
+        if (arAkahukuCompat.getPlatformType () === "Goanna"
+            && arAkahukuCompat.comparePlatformVersion ("27.0") >= 0) {
+          // Palemoon 27+ has newer API
+          this._version36 = true;
+        }
       }
 
       var uri = _getArg (args, 'uri', null);
