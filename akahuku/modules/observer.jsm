@@ -26,6 +26,13 @@ try {
     .getService (Ci.nsIXULRuntime);
   if (typeof appinfo.browserTabsRemoteAutostart !== "undefined") {
     isE10sReady = true;
+
+    // Check Palemoon 25+ (Goanna)
+    var ai = Cc ["@mozilla.org/xre/app-info;1"]
+      .getService (Ci.nsIXULAppInfo);
+    if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
+      isE10sReady = false;
+    }
   }
   if (appinfo.processType !== appinfo.PROCESS_TYPE_DEFAULT) {
     inMainProcess = false;
