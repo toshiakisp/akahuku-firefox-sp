@@ -86,6 +86,9 @@ arAkahukuIPCRoot.defineProc
      callbackObjectMethod: "isVisited",
    });
 arAkahukuIPCRoot.defineProc
+  (arAkahukuCompat, "Compat", "createFileFromNsIFile",
+   {async: true, callback: 2});
+arAkahukuIPCRoot.defineProc
   (arAkahukuCompat, "Compat", "losslessDecodeURI");
 arAkahukuIPCRoot.defineProc
   (arAkahukuCompat.AddonManager,

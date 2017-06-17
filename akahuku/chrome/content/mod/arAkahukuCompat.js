@@ -256,8 +256,7 @@ var arAkahukuCompat = new function () {
      * required for e10s content process
      *
      * @param filebox HTMLInputElement
-     * @param file  a url string or nsIFile
-     *              (no support for nsIDOMFile and Array)
+     * @param file  a url string, nsIFile, or File
      * @param callback Function
      */
     mozSetFile : function (filebox, file, callback) {
@@ -281,26 +280,17 @@ var arAkahukuCompat = new function () {
             Components.utils.importGlobalProperties (["File"]);
           }
           if (!(file instanceof File)) {
-            if (typeof File.createFromNsIFile !== "undefined") {
-              // Firefox 52.0+ (Bug 1303518)
-              file = File.createFromNsIFile (file);
-              if (!(file instanceof File) && "then" in file) {
-                // 54.0+: createFromNsIFile returns a Promise (Bug 1335536)
-                file.then (function (file) {
-                  filebox.mozSetFileArray ([file]);
-                  if (typeof callback === "function") {
-                    callback.apply (null, []);
-                  }
-                });
-                return;
+            arAkahukuCompat.createFileFromNsIFile (file, function (domfile) {
+              filebox.mozSetFileArray ([domfile]);
+              if (typeof callback === "function") {
+                callback.apply (null, []);
               }
-            }
-            else {
-              // Gecko (6.0)-51.0
-              file = new File (file);
-            }
+            });
+            return;
           }
-          filebox.mozSetFileArray ([file]);
+          else {
+            filebox.mozSetFileArray ([file]);
+          }
         }
         else if ("mozSetFileNameArray" in filebox) {
           filebox.mozSetFileNameArray ([file.path], 1);
@@ -315,6 +305,33 @@ var arAkahukuCompat = new function () {
         callback.apply (null, []);
       }
     },
+  };
+
+  /**
+   * Async File.createFromNsIFile
+   * (requires Fx6+, not ready for content processes)
+   */
+  this.createFileFromNsIFile = function (localfile, callback) {
+    if (typeof File == "undefined") {
+      // necessary for frame scripts, requiring Firefox 28 and up
+      Components.utils.importGlobalProperties (["File"]);
+    }
+    if (typeof File.createFromNsIFile !== "undefined") {
+      // Firefox 52.0+ (Bug 1303518)
+      var file = File.createFromNsIFile (localfile);
+      if (!(file instanceof File) && "then" in file) {
+        // 54.0+: createFromNsIFile returns a Promise (Bug 1335536)
+        file.then (function (file) {
+          callback.apply (null, [file]);
+        });
+        return;
+      }
+    }
+    else {
+      // Gecko (6.0)-51.0
+      file = new File (file);
+      callback.apply (null, [file]);
+    }
   };
 
 
