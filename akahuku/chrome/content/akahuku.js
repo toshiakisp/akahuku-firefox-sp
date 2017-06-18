@@ -417,6 +417,7 @@ var Akahuku = {
     arAkahukuSound.init ();
     arAkahukuLink.init ();
     arAkahukuCatalog.init ();
+    arAkahukuBoard.init ();
     arAkahukuConverter.init ();
     arAkahukuP2P.init ();
     arAkahukuConfig.init ();
@@ -601,6 +602,7 @@ var Akahuku = {
         
     arAkahukuLink.term ();
     arAkahukuCatalog.term ();
+    arAkahukuBoard.term ();
         
     Akahuku.initialized = false;
   },

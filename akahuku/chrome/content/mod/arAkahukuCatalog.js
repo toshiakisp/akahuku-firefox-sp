@@ -4322,10 +4322,6 @@ var arAkahukuCatalog = {
     }
 
     if (arAkahukuCatalog.enableObserveOpened) {
-      if (!arAkahukuCatalog.isOpenedCell (td)) {
-        Akahuku.debug.log ("Catalog.updateByThreadInfo:",
-            "setCellOpened true for", info);
-      }
       arAkahukuCatalog.setCellOpened (td, true);
     }
   },

@@ -99,6 +99,35 @@ var arAkahukuBoard = {
   boardList : new arAkahukuBoardList (),
   internalList: new Array (),  /* Array  内部の板のリスト */
   
+  observed : false,
+  observePaused : false,
+
+  /**
+   * 初期化処理
+   */
+  init : function () {
+    if (!this.observed) {
+      var os
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+      os.addObserver (this, "arakahuku-board-newest-num-updated", false);
+      this.observed = true;
+    }
+  },
+  
+  /**
+   * 終了処理
+   */
+  term : function () {
+    if (this.observed) {
+      var os
+      = Components.classes ["@mozilla.org/observer-service;1"]
+      .getService (Components.interfaces.nsIObserverService);
+      os.removeObserver (this, "arakahuku-board-newest-num-updated", false);
+      this.observed = false;
+    }
+  },
+
   /**
    * 設定を読み込む
    */
@@ -173,6 +202,32 @@ var arAkahukuBoard = {
         }
       }
     }
+  },
+
+  /**
+   * nsIObserver.observe
+   */
+  observe : function (subject, topic, data) {
+    if (this.observePaused) {
+      return;
+    }
+    try {
+      if (topic == "arakahuku-board-newest-num-updated") {
+        subject.QueryInterface (Components.interfaces.nsISupportsString);
+        var decodedData = JSON.parse (subject.data);
+        this.onNotifiedThreadNewestNumber (decodedData, data);
+      }
+    }
+    catch (e) {
+      Akahuku.debug.exception (e);
+    }
+  },
+  /**
+   * 板の最新レス番号の更新通知イベント
+   */
+  onNotifiedThreadNewestNumber : function (newestNum, data) {
+    // e10s-multi: 他プロセスからの新情報は通知せず反映
+    this.updateNewestNum (newestNum.name, newestNum.value, true);
   },
     
   /**
@@ -264,8 +319,10 @@ var arAkahukuBoard = {
    *         アドレス情報 あるいは板ID(String)
    * @param  Number num
    *         レス番号
+   * @param  Boolean dontNotify
+   *         通知をせずに更新するか
    */
-  updateNewestNum : function (idOrInfo, num) {
+  updateNewestNum : function (idOrInfo, num, dontNotify) {
     if (!(num > 0)) {
       return;
     }
@@ -282,7 +339,7 @@ var arAkahukuBoard = {
     else {
       num = oldNum;
     }
-    if (updated) {
+    if (updated && !dontNotify) {
       var observerService
         = Components.classes ["@mozilla.org/observer-service;1"]
         .getService (Components.interfaces.nsIObserverService);
@@ -293,8 +350,10 @@ var arAkahukuBoard = {
         name: id,
         value: num,
       });
+      this.observePaused = true;
       observerService.notifyObservers
         (subject, "arakahuku-board-newest-num-updated", null);
+      this.observePaused = false;
     }
   },
   getNewestNum : function (idOrInfo) {

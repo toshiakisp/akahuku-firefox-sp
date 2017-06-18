@@ -40,6 +40,8 @@ if (Akahuku.useFrameScript) {
   Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
   // Prepare Observer IPC parent
   Components.utils.import ("resource://akahuku/observer.jsm", {});
+  // Prepare Notification relay root for e10s-multi
+  Components.utils.import ("resource://akahuku/notification-relay.jsm", {});
 
   Akahuku.init (); // required for main-process IPC childs
 
