@@ -73,6 +73,7 @@ var Akahuku = {
       documentURIObject: targetBrowser.currentURI.clone (),
     };
     documentParam.ID = targetBrowser.innerWindowID;
+    documentParam.targetBrowser = targetBrowser;
     if (info) {
       documentParam.location_info = info;
     }
@@ -94,6 +95,7 @@ var Akahuku = {
       if (tmp.ID == targetID) {
         Akahuku.documentParams.splice (i, 1);
         tmp.targetDocument = null;
+        tmp.targetBrowser = null;
         tmp.ID = null;
         tmp.location_info = null;
         tmp.links = null;

@@ -171,6 +171,11 @@ arAkahukuReload.diffReloadForBrowser = function (browser, doSync) {
     ("Reload/diffReloadForBrowser", [null, doSync],
      browser.messageManager);
 };
+arAkahukuReload.reloadOnDemandForBrowser = function (browser, trySync) {
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("Reload/reloadOnDemandForBrowser", [null, trySync],
+     browser.messageManager);
+};
 
 
 

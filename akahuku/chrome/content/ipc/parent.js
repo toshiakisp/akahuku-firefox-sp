@@ -74,6 +74,38 @@ arAkahukuIPCRoot.defineProc
 
 
 
+var arAkahukuCatalogIPCWrapper = {
+  asyncFocusByThreadURI : function (uri, context, callback) {
+    var result = false;
+    var params = Akahuku.getDocumentParamsByURI (uri);
+    if (params.length > 0) {
+      try {
+        var targetBrowser = params [0].targetBrowser;
+        var tab = arAkahukuWindow.getTabForBrowser (targetBrowser);
+        if (tab) {
+          result = true;// to be success
+          arAkahukuWindow.focusTabForBrowser (targetBrowser);
+          if (arAkahukuCatalog.enableObserveOpenedReload) {
+            arAkahukuReload.reloadOnDemandForBrowser (targetBrowser);
+          }
+        }
+        else {
+          result = false;
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    callback.apply (null, [result]);
+  },
+};
+arAkahukuIPCRoot.defineProc
+  (arAkahukuCatalogIPCWrapper,
+   "Catalog", "asyncFocusByThreadURI",
+   {async: true, callback: 3});
+
+
+
 arAkahukuIPCRoot.defineProc
   (arAkahukuClipboard, "Clipboard", "getFile");
 
@@ -374,6 +406,19 @@ arAkahukuIPCRoot.defineProc
   (AkahukuIPCWrapper, "Akahuku", "setDocumentParamFlag", {frame: true});
 arAkahukuIPCRoot.defineProc
   (AkahukuIPCWrapper, "Akahuku", "unsetDocumentParamFlag", {frame: true});
+
+
+
+// Special methods for the parent process
+var AkahukuIPCSpecial = {
+  hasDocumentParamForURIAsync : function (url, callback) {
+    var ret = Akahuku.hasDocumentParamForURI (url);
+    callback.apply (null, [ret]);
+  },
+};
+arAkahukuIPCRoot.defineProc
+  (AkahukuIPCSpecial, "Akahuku", "hasDocumentParamForURIAsync",
+   {async: true, callback: 2});
 
 
 

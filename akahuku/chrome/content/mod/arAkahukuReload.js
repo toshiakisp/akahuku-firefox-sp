@@ -3782,6 +3782,11 @@ var arAkahukuReload = {
     }
   },
 
+  reloadOnDemandForBrowser : function (browser, trySync) {
+    var targetDocument = browser.contentDocument;
+    arAkahukuReload.reloadOnDemand (targetDocument, trySync);
+  },
+
   _checkElementYInScreen : function (targetNode, checkWhole, marginTop, marginBottom) {
     var doc = targetNode.ownerDocument;
 

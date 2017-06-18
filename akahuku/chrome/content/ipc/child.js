@@ -103,6 +103,22 @@ arAkahukuCatalog.init = function () {
 arAkahukuCatalog.term = function () {
   // arAkahukuIPC remove proc?
 };
+arAkahukuCatalog.isOpenedAsync = function (uri, callback) {
+  // just query for the parent process
+  arAkahukuIPC.sendAsyncCommand
+    ("Akahuku/hasDocumentParamForURIAsync", [uri, function (opened) {
+      if (typeof callback === "function") {
+        callback.apply (null, [opened]);
+      }
+      else {
+        callback.isOpened.apply (callback, [uri, opened]);
+      }
+    }]);
+};
+arAkahukuCatalog.asyncFocusByThreadURI = function (uri, anchor, callback) {
+  arAkahukuIPC.sendAsyncCommand
+    ("Catalog/asyncFocusByThreadURI", [uri, null, callback]);
+};
 
 
 
@@ -373,10 +389,20 @@ var arAkahukuReloadIPCWrapper = {
     };
     arAkahukuReload.diffReloadForBrowser (browser, doSync);
   },
+  reloadOnDemandForBrowser : function (browser, doSync) {
+    // minimum equivalent
+    browser = {
+      contentDocument: arAkahukuIPC.messageTarget.content.document,
+    };
+    arAkahukuReload.reloadOnDemandForBrowser (browser, doSync);
+  },
 };
 arAkahukuIPC.defineProc
   (arAkahukuReloadIPCWrapper,
    "Reload", "diffReloadForBrowser", {async: true, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuReloadIPCWrapper,
+   "Reload", "reloadOnDemandForBrowser", {async: true, remote: true});
 
 
 
