@@ -564,6 +564,7 @@ AkahukuIPC.prototype = {
   inMainProcess : false,
   isRoot : false,
   initialized : false,
+  console : null,
 
   getContentFrameMessageManager : getContentFrameMessageManager,
 
@@ -583,6 +584,9 @@ AkahukuIPC.prototype = {
   },
   get messageResponse () { // メインプロセス->子プロセス(コールバック)
     return this.messagePrefix + "/Response";
+  },
+  get messageCallChild () { // メインプロセス->子プロセス (含broadcast)
+    return this.messagePrefix + "/CallChild";
   },
   get messageDefine () { // 新コマンド追加
     return this.messagePrefix + "/Define";
@@ -731,7 +735,9 @@ AkahukuIPC.prototype = {
 
   // nsIMessageListener.receiveMessage
   receiveMessage : function (message) {
-    if (message.name === this.messageCall) {
+    if (this.isRoot ?
+        (message.name === this.messageCall) :
+        (message.name === this.messageCallChild)) {
       return this._receiveCallMessage (message);
     }
     if (message.name === this.messageDefine) {
@@ -764,14 +770,23 @@ AkahukuIPC.prototype = {
           ("AkahukuIPC(child) receives non-remote command; "
            + rcvRequest.name);
       }
+      if (!this.isRoot && message.sync) {
+        throw Components.Exception
+          ("AkahukuIPC(child) receives sync message; "
+           + rcvRequest.name);
+      }
       var ret = null;
       this.messageTarget = message.target;
       if (entry.def.async) {
-        //console.log ("receive async IPC call " + rcvRequest.name);
+        if (entry.def.debug) {
+          this.console.log ("receive async IPC call " + rcvRequest.name);
+        }
         this._executeAsyncCommandEntry (entry, rcvRequest);
       }
       else {
-        //console.log ("receive IPC call " + rcvRequest.name);
+        if (entry.def.debug) {
+          this.console.log ("receive IPC call " + rcvRequest.name);
+        }
         ret = this._executeSyncCommandEntry (entry, rcvRequest);
       }
       this.messageTarget = null;
@@ -811,7 +826,7 @@ AkahukuIPC.prototype = {
           "sendSyncCommand ('" + entry.moduleName + "/" + entry.command
            + "') can not return CPOW-required objects, but results in " + ret.value;
         ret.value = null;
-        console.error (ret.message);
+        this.console.error (ret.message);
       }
       else {
         ret.success = true;
@@ -829,13 +844,13 @@ AkahukuIPC.prototype = {
   {
     try {
       //console.log ("async IPC: " + entry.command + " argumentsToCall=" + request.argumentsToCall);
-    } catch (e) {console.log (e);}
+    } catch (e) {this.console.log (e);}
     try {
       var func = entry.module [entry.command];
       func.apply (entry.module, request.argumentsToCall);
     }
     catch (e) {
-      console.exception (e);
+      this.console.exception (e);
       if (entry.def.callback > 0) {
         // エラーが起きたことをレスポンスして
         // コールバックメッセージの待ち受けを解除させる
@@ -918,7 +933,7 @@ AkahukuIPC.prototype = {
     }
     if (entry.def.async) {
       throw Components.Exception
-        ("AkahukuIPC: command is for syncronus requests; " + command,
+        ("AkahukuIPC: command is for asyncronus requests; " + command,
          Cr.NS_ERROR_FAILURE, Components.stack.caller);
     }
     if (entry.def.remote) {
@@ -963,7 +978,7 @@ AkahukuIPC.prototype = {
 
     // Check syncronusly returned values
     if (rets.length > 1) {
-      console.warn
+      this.console.warn
         ("sendSyncCommand returns multiple values, not only one.")
     }
     if (rets.length > 0) {
@@ -984,7 +999,7 @@ AkahukuIPC.prototype = {
         }
       }
       else {
-        console.info (rets);
+        this.console.info (rets);
         throw Components.Exception
           ("AkahukuIPC: unexpected structure returned; " + command,
            Cr.NS_ERROR_FAILURE, Components.stack.caller);
@@ -1059,7 +1074,8 @@ AkahukuIPC.prototype = {
         .getService (Ci.nsIMessageSender);
     }
     if (ms) {
-      ms.sendAsyncMessage (this.messageCall, payload.data, payload.objects);
+      var call = (this.isRoot ? this.messageCallChild : this.messageCall); 
+      ms.sendAsyncMessage (call, payload.data, payload.objects);
     }
     else {
       if (!optBroadcast) {
@@ -1069,7 +1085,7 @@ AkahukuIPC.prototype = {
       }
       ms = Cc ['@mozilla.org/parentprocessmessagemanager;1']
         .getService (Ci.nsIMessageBroadcaster);
-      ms.broadcastAsyncMessage (this.messageCall, payload.data, payload.objects);
+      ms.broadcastAsyncMessage (this.messageCallChild, payload.data, payload.objects);
     }
   },
   sendAsyncCommandToFrame : function (command, args, targetFrame)
@@ -1119,11 +1135,11 @@ AkahukuIPC.prototype = {
   },
   loadSubScript : function (path) {
     if (path.indexOf ("chrome://akahuku/content/") !== 0) {
-      console.error ("AkahukuIPC: loadSubScript is for limited path: " + path);
+      this.console.error ("AkahukuIPC: loadSubScript is for limited path: " + path);
       return;
     }
     if (this._isAlreadyLoaded (path)) {
-      console.log ("AkahukuIPC: " + path + " is already loaded.");
+      this.console.log ("AkahukuIPC: " + path + " is already loaded.");
       return;
     }
     Cc ["@mozilla.org/moz/jssubscript-loader;1"]
@@ -1140,28 +1156,29 @@ AkahukuIPC.prototype = {
 
   addFrame : function (frame) {
     // listen remote command for the frame
-    frame.addMessageListener (this.messageCall, this, false);
+    frame.addMessageListener (this.messageCallChild, this, false);
   },
   removeFrame : function (frame) {
-    frame.removeMessageListener (this.messageCall, this, false);
+    frame.removeMessageListener (this.messageCallChild, this, false);
   },
 
 
   initAsRoot : function () {
     if (this.initialized) {
-      console.log ("AkahukuIPC already initialized");
+      this.console.log ("AkahukuIPC already initialized");
       return;
     }
     this.initialized = true;
     this.isRoot = true;
+    this.console = new AkahukuConsole ();
 
     var appinfo =
       Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
     if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
-      console.prefix = "Akahuku root-IPC (main)";
+      this.console.prefix = "Akahuku root-IPC (main)";
     }
     else {
-      console.prefix = "Akahuku root-IPC (content)";
+      this.console.prefix = "Akahuku root-IPC (content)";
     }
 
     // Start linstening for global frame message manager
@@ -1187,24 +1204,25 @@ AkahukuIPC.prototype = {
     this.defineProc (test, "test", "hello");
     this.defineProc (test, "test", "echo");
 
-    console.log ("AkahukuIPC initialized");
+    this.console.log ("AkahukuIPC initialized as root");
   },
 
   initAsChild : function () {
     if (this.initialized) {
-      console.log ("AkahukuIPC already initialized");
+      this.console.log ("AkahukuIPC already initialized");
       return;
     }
     this.initialized = true;
     this.isRoot = false;
+    this.console = new AkahukuConsole ();
 
     var appinfo =
       Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
     if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
-      console.prefix = "Akahuku child-IPC (main)";
+      this.console.prefix = "Akahuku child-IPC (main)";
     }
     else {
-      console.prefix = "Akahuku child-IPC (content)";
+      this.console.prefix = "Akahuku child-IPC (content)";
     }
 
     // 新しく追加される情報を反映するためのメッセージを待つ
@@ -1212,7 +1230,7 @@ AkahukuIPC.prototype = {
       .getService (Ci.nsIMessageListenerManager);
     mlm.addMessageListener (this.messageDefine, this, false);
     // broadcast されるremoteコマンドを待つ
-    mlm.addMessageListener (this.messageCall, this, false);
+    mlm.addMessageListener (this.messageCallChild, this, false);
 
     // メインプロセスからサービスマップを複製
     try {
@@ -1220,10 +1238,10 @@ AkahukuIPC.prototype = {
           this.sendSyncCommand ("AkahukuIPC/cloneState"));
     }
     catch (e) {
-      console.exception (e);
+      this.console.exception (e);
     }
 
-    console.log ("AkahukuIPC initialized");
+    this.console.log ("AkahukuIPC initialized as a child");
   },
 
 };
