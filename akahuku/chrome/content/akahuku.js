@@ -51,21 +51,31 @@ var Akahuku = {
   addDocumentParam : function (targetDocument, info) {
     var documentParam = new arAkahukuDocumentParam ();
     documentParam.targetDocument = targetDocument;
-    try {
-      // requires Gekco 2.0 (Firefox 4) or above
-      var wu
-      = targetDocument.defaultView
-      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-      .getInterface (Components.interfaces.nsIDOMWindowUtils);
-      documentParam.targetOuterWindowID = wu.outerWindowID;
-      documentParam.targetInnerWindowID = wu.currentInnerWindowID;
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    documentParam.ID = Akahuku.getDocumentID (targetDocument);
     if (info) {
       documentParam.location_info = info;
     }
     Akahuku.collectLinks (documentParam);
+    Akahuku.documentParams.push (documentParam);
+    Akahuku.latestParam = documentParam;
+  },
+
+  /**
+   * ドキュメントごとの情報を追加する (e10s, main process ready)
+   *
+   * @param  Browser targetBrowser
+   *         対象のドキュメントを持つ Browser
+   */
+  addDocumentParamForBrowser : function (targetBrowser, info) {
+    var documentParam = new arAkahukuDocumentParam ();
+    documentParam.targetDocument = {
+      // dummy fo getDocumentParamsByURI
+      documentURIObject: targetBrowser.currentURI.clone (),
+    };
+    documentParam.ID = targetBrowser.innerWindowID;
+    if (info) {
+      documentParam.location_info = info;
+    }
     Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
   },
@@ -78,11 +88,13 @@ var Akahuku = {
    */
   deleteDocumentParam : function (targetDocument) {
     Akahuku.ensureDocumentParamsSane ();
+    var targetID = Akahuku.getDocumentID (targetDocument);
     for (var i = 0; i < Akahuku.documentParams.length; i ++) {
       var tmp = Akahuku.documentParams [i];
-      if (tmp.targetDocument == targetDocument) {
+      if (tmp.ID == targetID) {
         Akahuku.documentParams.splice (i, 1);
         tmp.targetDocument = null;
+        tmp.ID = null;
         tmp.location_info = null;
         tmp.links = null;
         tmp = null;
@@ -90,6 +102,26 @@ var Akahuku = {
       }
     }
     Akahuku.latestParam = null;
+  },
+
+  /**
+   * Document の識別子を得る
+   */
+  getDocumentID : function (target) {
+    if (target instanceof Components.interfaces.nsIDOMDocument) {
+      try {
+        var contextWinUtil
+          = target.defaultView
+          .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+          .getInterface (Components.interfaces.nsIDOMWindowUtils);
+        // requires Gekco 2.0 (Firefox 4) or above
+        return contextWinUtil.currentInnerWindowID || target;
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    // fail safe
+    return target;
   },
 
   /*
@@ -102,14 +134,14 @@ var Akahuku = {
    */
   getDocumentParam : function (targetDocument) {
     Akahuku.ensureDocumentParamsSane ();
+    var id = Akahuku.getDocumentID (targetDocument);
     var latest = Akahuku.latestParam;
-    if (latest
-        && latest.targetDocument == targetDocument) {
+    if (latest && latest.ID == id) {
       return latest;
     }
     
     for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-      if (Akahuku.documentParams [i].targetDocument == targetDocument) {
+      if (Akahuku.documentParams [i].ID == id) {
         Akahuku.latestParam = Akahuku.documentParams [i];
         return Akahuku.documentParams [i];
       }
@@ -179,7 +211,7 @@ var Akahuku = {
         return null;
       }
       for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-        if (Akahuku.documentParams [i].targetInnerWindowID
+        if (Akahuku.documentParams [i].ID
             == browser.innerWindowID) {
           Akahuku.latestParam = Akahuku.documentParams [i];
           return Akahuku.documentParams [i];

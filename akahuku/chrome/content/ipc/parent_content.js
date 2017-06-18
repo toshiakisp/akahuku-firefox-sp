@@ -177,61 +177,6 @@ arAkahukuReload.diffReloadForBrowser = function (browser, doSync) {
 //
 // In XUL, document params are registered by linking its browser.
 //
-Akahuku.addDocumentParam = function (targetBrowser, info) {
-  var documentParam = new arAkahukuDocumentParam ();
-  documentParam.targetBrowser = targetBrowser;
-  documentParam.targetDocument = {
-    // dummy fo getDocumentParamsByURI
-    documentURIObject: targetBrowser.currentURI.clone (),
-  };
-  documentParam.targetOuterWindowID = targetBrowser.outerWindowID;
-  documentParam.targetInnerWindowID = targetBrowser.innerWindowID;
-  documentParam.location_info = info;
-  documentParam.flags = {}; // only available in the main process
-  Akahuku.documentParams.push (documentParam);
-  Akahuku.latestParam = documentParam;
-};
-Akahuku.removeDocumentParam = function (targetBrowser) {
-  for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-    var tmp = Akahuku.documentParams [i];
-    if (tmp.targetBrowser == targetBrowser) {
-      Akahuku.documentParams.splice (i, 1);
-      tmp.targetBrowser = null;
-      tmp.targetDocument = null;
-      tmp.location_info = null;
-      tmp = null;
-      break;
-    }
-  }
-  Akahuku.latestParam = null;
-};
-Akahuku.getDocumentParam = function (targetBrowser) {
-  if (targetBrowser
-      && !targetBrowser instanceof Components.interfaces.nsIDOMXULDocument
-      && targetBrowser instanceof Components.interfaces.nsIDOMDocument) {
-    // content document as CPOW
-    var targetDocument = targetBrowser;
-    targetBrowser = null;
-    var tabbrowser = document.getElementById ("content");
-    var numTabs = tabbrowser.tabs.length;
-    for (var i = 0; i < numTabs; i ++) {
-      var browser = tabbrowser.getBrowserForTab (tabbrowser.tabs [i]);
-      if (browser.contentDocumentAsCPOW === targetDocument) {
-        targetBrowser = browser;
-        break;
-      }
-    }
-  }
-  if (!targetBrowser) {
-    return null;
-  }
-  for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-    if (Akahuku.documentParams [i].targetBrowser == targetBrowser) {
-      return Akahuku.documentParams [i];
-    }
-  }
-  return null;
-};
 Akahuku.getFocusedDocumentParam = function () {
   var focusedBrowser = document.commandDispatcher.focusedElement;
   if (!focusedBrowser
@@ -239,7 +184,7 @@ Akahuku.getFocusedDocumentParam = function () {
       || !/(?:xul:)?browser/i.test (focusedBrowser.nodeName)) {
     return null;
   }
-  return Akahuku.getDocumentParam (focusedBrowser);
+  return Akahuku.getDocumentParamForBrowser (focusedBrowser);
 };
 
 

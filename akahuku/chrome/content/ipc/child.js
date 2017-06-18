@@ -525,15 +525,25 @@ Akahuku._addDocumentParamOrig = Akahuku.addDocumentParam;
 Akahuku.addDocumentParam = function (targetDocument, info) {
   Akahuku._addDocumentParamOrig (targetDocument, info);
   arAkahukuIPC.sendSyncCommand
-    ("Akahuku/addDocumentParam", [null, info],
+    ("Akahuku/addDocumentParamForBrowser", [null, info],
      targetDocument.defaultView);
 };
-Akahuku._removeDocumentParamOrig = Akahuku.removeDocumentParam;
-Akahuku.removeDocumentParam = function (targetDocument) {
-  arAkahukuIPC.sendSyncCommand
-    ("Akahuku/removeDocumentParam", [null],
-     targetDocument.defaultView);
-  Akahuku._removeDocumentParamOrig (targetDocument);
+Akahuku._deleteDocumentParamOrig = Akahuku.deleteDocumentParam;
+Akahuku.deleteDocumentParam = function (targetDocument) {
+  // sendSyncCommand nor sendAsyncCommand with frame is not capable (why?)
+  var innerWindowID = -1;
+  try {
+    var contextWinUtil
+      = targetDocument.defaultView.QueryInterface (Ci.nsIInterfaceRequestor)
+      .getInterface (Ci.nsIDOMWindowUtils);
+    // requires Gekco 2.0 (Firefox 4) or above
+    innerWindowID = contextWinUtil.currentInnerWindowID || -1;
+  }
+  catch (e) { Akahuku.debug.exception (e);
+  }
+  arAkahukuIPC.sendAsyncCommand
+    ("Akahuku/deleteDocumentParam", [innerWindowID]);
+  Akahuku._deleteDocumentParamOrig (targetDocument);
 };
 
 

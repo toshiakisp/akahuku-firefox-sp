@@ -332,11 +332,11 @@ arAkahukuIPCRoot.defineProc
 
 // In e10s XUL, document params are registered by linking its browser.
 var AkahukuIPCWrapper = {
-  addDocumentParam : function (targetBrowser, info) {
-    Akahuku.addDocumentParam (arAkahukuIPCRoot.messageTarget, info);
+  addDocumentParamForBrowser : function (targetBrowser, info) {
+    Akahuku.addDocumentParamForBrowser (arAkahukuIPCRoot.messageTarget, info);
   },
-  removeDocumentParam : function (targetBrowser) {
-    Akahuku.removeDocumentParam (arAkahukuIPCRoot.messageTarget);
+  deleteDocumentParam : function (innerWindowID) {
+    Akahuku.deleteDocumentParam (innerWindowID);
   },
 
   // utiliy IPC command
@@ -365,9 +365,9 @@ var AkahukuIPCWrapper = {
   },
 };
 arAkahukuIPCRoot.defineProc
-  (AkahukuIPCWrapper, "Akahuku", "addDocumentParam", {frame: true});
+  (AkahukuIPCWrapper, "Akahuku", "addDocumentParamForBrowser", {frame: true});
 arAkahukuIPCRoot.defineProc
-  (AkahukuIPCWrapper, "Akahuku", "removeDocumentParam", {frame: true});
+  (AkahukuIPCWrapper, "Akahuku", "deleteDocumentParam", {frame: false, async:true});
 arAkahukuIPCRoot.defineProc
   (AkahukuIPCWrapper, "Akahuku", "getFocusedDocument", {frame: true});
 arAkahukuIPCRoot.defineProc
