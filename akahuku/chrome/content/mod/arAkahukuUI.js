@@ -11,8 +11,6 @@
  *   [ステータスバー]、[ツールバー]
  */
 var arAkahukuUI = {
-  enableToolbarPreferences : false,   /* Boolean
-                                       *   ツールバーにパネルを表示する */
   enableStatusbarPreferences : false, /* Boolean
                                        *   ステータスバーにパネルを表示する */
     
@@ -252,10 +250,6 @@ var arAkahukuUI = {
     = arAkahukuConfig
     .initPref ("bool", "akahuku.statusbar.preferences", true);
         
-    arAkahukuUI.enableToolbarPreferences
-    = arAkahukuConfig
-    .initPref ("bool", "akahuku.toolbar.preferences", false);
-        
     arAkahukuUI.enableStatusbarOrder
     = arAkahukuConfig
     .initPref ("bool", "akahuku.statusbar.order", true);
@@ -492,47 +486,6 @@ var arAkahukuUI = {
    * ステータスバー、ツールバーのパネルを表示する
    */
   showPanel : function () {
-    if (arAkahukuUI.enableToolbarPreferences) {
-      var style = -1;
-            
-      var style = -1;
-      if (arAkahukuConfig
-          .prefHasUserValue ("browser.chrome.toolbar_style")) {
-        style
-          = arAkahukuConfig
-          .getIntPref ("browser.chrome.toolbar_style");
-      }
-      var navbar;
-      var button;
-      var inner;
-      navbar = document.getElementById ("nav-bar");
-      inner = document.getElementById ("nav-bar-inner");
-      if (navbar && inner) {
-        if (arAkahukuUI.enableToolbarPreferences) {
-          button = document.createElement ("toolbarbutton");
-          var id;
-          if (style != 1) {
-            id = "akahuku-toolbarbutton-preferences-image";
-          }
-          else {
-            id = "akahuku-toolbarbutton-preferences-text";
-          }
-          button.setAttribute ("id", id);
-          button.addEventListener ("command", function (event) {
-            arAkahukuUI.showPreferences (event);
-          }, false);
-          button.setAttribute ("class", "toolbarbutton-1");
-          button.setAttribute ("status", Akahuku.enableAll);
-          if (style != 0) {
-            button.setAttribute ("label", "\u8D64\u798F");
-          }
-          button.setAttribute ("tooltiptext", "\u8D64\u798F");
-                    
-          navbar.insertBefore (button, inner);
-        }
-      }
-    }
-        
     var panel;
     panel = document.getElementById ("akahuku-statusbarpanel-preferences");
     if (panel) {

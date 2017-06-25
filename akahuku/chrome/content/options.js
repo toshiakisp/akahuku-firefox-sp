@@ -1319,7 +1319,6 @@ var AkahukuOptions = {
     "other" : [
       ["bool", "add_checkbox_id", false],
       ["bool", "statusbar.preferences", true],
-      ["bool", "toolbar.preferences", false],
       ["bool", "statusbar.order", true],
       ["func", "statusbar.order.list", null,
        function (map) {
