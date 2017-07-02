@@ -1290,7 +1290,7 @@ var arAkahukuImage = {
     var document = event.currentTarget.ownerDocument;
     var browser;
     var w = document.commandDispatcher.focusedWindow;
-    if (!w instanceof Components.interfaces.nsIDOMChromeWindow) {
+    if (w && !(w instanceof Components.interfaces.nsIDOMChromeWindow)) {
       browser = arAkahukuWindow.getBrowserForWindow (w);
     }
     else { // for e10s
