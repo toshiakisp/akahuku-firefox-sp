@@ -563,6 +563,7 @@ AkahukuIPC.prototype = {
   messagePrefix : "akahuku.fx.sp@toshiakisp.github.io:IPC",
   inMainProcess : false,
   isRoot : false,
+  processID : -1,
   initialized : false,
   console : null,
 
@@ -803,9 +804,13 @@ AkahukuIPC.prototype = {
         throw Components.Exception
           ("AkahukuIPC: '" + entry.command + "' is disabled");
       }
+      else if (!this.isRoot) {
+        // ignore undefined command in child processes
+        // to suppress warnings for undefined broadcasting commands.
+      }
       else {
         throw Components.Exception
-          ("AkahukuIPC: '" + rcvRequest.name+ "' is not defined.");
+          ("AkahukuIPC(root): '" + rcvRequest.name+ "' is not defined.");
       }
     }
   },
@@ -1178,8 +1183,9 @@ AkahukuIPC.prototype = {
       this.console.prefix = "Akahuku root-IPC (main)";
     }
     else {
-      this.console.prefix = "Akahuku root-IPC (content)";
+      this.console.prefix = "Akahuku root-IPC (content#" + appinfo.processID + ")";
     }
+    this.processID = appinfo.processID;
 
     // Start linstening for global frame message manager
     var gfmm = Cc ["@mozilla.org/globalmessagemanager;1"]
@@ -1222,8 +1228,9 @@ AkahukuIPC.prototype = {
       this.console.prefix = "Akahuku child-IPC (main)";
     }
     else {
-      this.console.prefix = "Akahuku child-IPC (content)";
+      this.console.prefix = "Akahuku child-IPC (content#" + appinfo.processID + ")";
     }
+    this.processID = appinfo.processID;
 
     // 新しく追加される情報を反映するためのメッセージを待つ
     var mlm = Cc ['@mozilla.org/childprocessmessagemanager;1']
