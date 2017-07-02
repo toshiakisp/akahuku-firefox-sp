@@ -111,6 +111,9 @@ var Akahuku = {
    */
   getDocumentID : function (target) {
     if (target instanceof Components.interfaces.nsIDOMDocument) {
+      if (!target.defaultView) { // cloned documents
+        return target;
+      }
       try {
         var contextWinUtil
           = target.defaultView
