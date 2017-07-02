@@ -44,7 +44,7 @@ var arAkahukuP2P = {
    * 初期化処理
    */
   init : function () {
-    Cu.import ("resource://akahuku/p2p-service.jsm");
+    Components.utils.import ("resource://akahuku/p2p-service.jsm");
   },
   initForXUL : function () {
     arAkahukuP2P.update ();

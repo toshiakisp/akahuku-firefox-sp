@@ -27,9 +27,9 @@ var arAkahukuWindow = {
     //       (not a browser object, but it is possible set/get attribute)
     try {
       var handler = targetWindow
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebNavigation)
-        .QueryInterface (Ci.nsIDocShell)
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsIDocShell)
         .chromeEventHandler;
       if (!("setAttribute" in handler)) {
         // WindowRoot (e10s) lacks *Attribute functions, define them
@@ -80,10 +80,10 @@ var arAkahukuWindow = {
   getWebProgressForWindow : function (targetWindow) {
     try {
       return targetWindow
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebNavigation)
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebProgress);
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebProgress);
     }
     catch (e) { Akahuku.debug.exception (e);
       // classic method
@@ -97,20 +97,20 @@ var arAkahukuWindow = {
    */
   getMessageManagerForWindow : function (targetWindow) {
     return targetWindow
-      .QueryInterface (Ci.nsIInterfaceRequestor)
-      .getInterface (Ci.nsIWebNavigation)
-      .QueryInterface (Ci.nsIInterfaceRequestor)
-      .QueryInterface (Ci.nsIDocShell)
-      .QueryInterface (Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIContentFrameMessageManager);
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIWebNavigation)
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .QueryInterface (Components.interfaces.nsIDocShell)
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIContentFrameMessageManager);
   },
 
   isContentWindowPrivate : function (targetWindow) {
     try {
       return targetWindow
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebNavigation)
-        .QueryInterface (Ci.nsILoadContext)
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsILoadContext)
         .usePrivateBrowsing;
     }
     catch (e) {
