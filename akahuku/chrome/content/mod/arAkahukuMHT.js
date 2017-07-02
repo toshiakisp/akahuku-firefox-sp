@@ -64,8 +64,11 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
     try {
       entry.dataSize;
     }
-    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
+      throw e;
     }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
@@ -785,8 +788,11 @@ arAkahukuMHTFileData.prototype = {
     try {
       entry.dataSize;
     }
-    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
+      throw e;
     }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
@@ -3167,7 +3173,10 @@ var arAkahukuMHT = {
       try {
         arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
       }
-      catch (e if e.result === Components.results.NS_ERROR_FILE_IS_LOCKED) {
+      catch (e) {
+        if (e.result !== Components.results.NS_ERROR_FILE_IS_LOCKED) {
+          throw e;
+        }
         // ロックが解けるのを少し待ってリトライ
         arAkahukuUtil.wait (300);
         arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);

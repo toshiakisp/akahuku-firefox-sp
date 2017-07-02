@@ -141,14 +141,16 @@ BaseNotificationObserver.prototype = {
         }
         this.registered = true;
       }
-      catch (e if Components.results.NS_ERROR_NOT_IMPLEMENTED) {
-        // http-on-* observers only work in the parent process
-        console.error
-          ("Can't monitor detail load errors of preview"
-           + " in a content process by observing http-on-*");
-      }
       catch (e) {
-        console.exception (e);
+        if (e.result == Components.results.NS_ERROR_NOT_IMPLEMENTED) {
+          // http-on-* observers only work in the parent process
+          console.error
+            ("Can't monitor detail load errors of preview"
+             + " in a content process by observing http-on-*");
+        }
+        else {
+          console.exception (e);
+        }
       }
     }
     this.onRegistered (callback, filter, extraInfo);
@@ -274,11 +276,13 @@ HttpNotificationObserver.getChannelDetails = function (channel) {
       + " " + channel.responseStatus
       + " " + channel.responseStatusText;
   }
-  catch (e if e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
-    // no response yet
-  }
   catch (e) {
-    console.exception (e);
+    if (e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
+      // no response yet
+    }
+    else {
+      console.exception (e);
+    }
   }
 
   try {
@@ -469,11 +473,13 @@ CookieBlocker.prototype
         }
       }
     }
-    catch (e if e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
-      // no Cookie in header
-    }
     catch (e) {
-      console.exception (e);
+      if (e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
+        // no Cookie in header
+      }
+      else {
+        console.exception (e);
+      }
     }
     if (cookie) {
       // ブロック後の情報に更新

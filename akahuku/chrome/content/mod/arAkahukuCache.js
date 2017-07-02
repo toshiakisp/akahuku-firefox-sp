@@ -218,8 +218,13 @@ Akahuku.Cache = new function () {
         try {
           var text = descriptor.getMetaDataElement ("response-head");
         }
-        catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-          text = "";
+        catch (e) {
+          if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+            text = "";
+          }
+          else {
+            throw e;
+          }
         }
         if (text) {
           var headers = text.match (/[^\r\n]*\r\n/g);
@@ -432,8 +437,13 @@ Akahuku.Cache = new function () {
       try {
         entry.dataSize;
       }
-      catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+          return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+        }
+        else {
+          throw e;
+        }
       }
       return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
     },
@@ -477,8 +487,13 @@ Akahuku.Cache = new function () {
       try {
         var head = descriptor.getMetaDataElement ("response-head");
       }
-      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-        head = "";
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+          head = "";
+        }
+        else {
+          throw e;
+        }
       }
       var httpStatusCode = "000";
       if (head && head.match (/^HTTP\/\d\.\d (\d{3}) ([^\r\n]+)/)) {

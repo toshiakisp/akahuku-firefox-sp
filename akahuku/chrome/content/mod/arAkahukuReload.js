@@ -451,8 +451,13 @@ arAkahukuReloadParam.prototype = {
       try {
         var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
       }
-      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-        charset = "Shift_JIS";
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+          charset = "Shift_JIS";
+        }
+        else {
+          throw e;
+        }
       }
       var responseHead = "";
       try {
@@ -539,8 +544,11 @@ arAkahukuReloadParam.prototype = {
     try {
       entry.dataSize;
     }
-    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
+      throw e;
     }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
@@ -825,11 +833,14 @@ arAkahukuReloadParam.prototype = {
         }
       }
     }
-    catch (e if e.result === Components.results.NS_ERROR_NOT_AVAILABLE) {
-      // responseStatus が無い (接続失敗時など)
-      errorStatus = "\u63A5\u7D9A\u5931\u6557?"; // "接続失敗?"
-    }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
+      if (e.result === Components.results.NS_ERROR_NOT_AVAILABLE) {
+        // responseStatus が無い (接続失敗時など)
+        errorStatus = "\u63A5\u7D9A\u5931\u6557?"; // "接続失敗?"
+      }
+      else {
+        Akahuku.debug.exception (e);
+      }
     }
         
     /* 避難所 patch */

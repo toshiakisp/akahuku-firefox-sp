@@ -96,8 +96,11 @@ arAkahukuSidebarThread.prototype = {
     try {
       var uri = ios.newURI (uriStr, null, null);
     }
-    catch (e if e.result == Components.results.NS_ERROR_MALFORMED_URI) {
-      return null;
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_MALFORMED_URI) {
+        return null;
+      }
+      throw e;
     }
     return uri;
   },
@@ -2346,11 +2349,14 @@ var arAkahukuSidebar = {
             .nsIWebNavigation.LOAD_FLAGS_NONE;
           browser.webNavigation.reload (flag)
         }
-        catch (e if e.result == 0x805e000a) {
-          // NS_ERROR_CONTENT_BLOCKED
-          // (maybe by arAkahukuReload.enableHook)
-        }
-        catch (e) { Akahuku.debug.exception (e);
+        catch (e) {
+          if (e.result == 0x805e000a) {
+            // NS_ERROR_CONTENT_BLOCKED
+            // (maybe by arAkahukuReload.enableHook)
+          }
+          else {
+            Akahuku.debug.exception (e);
+          }
         }
         break;
       case "diff":

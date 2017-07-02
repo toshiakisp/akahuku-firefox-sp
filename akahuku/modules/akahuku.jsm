@@ -162,8 +162,13 @@ Akahuku.startup = function () {
     registerXPCOM (arAkahukuSafeProtocolHandler);
     console.log ("startup: arAkahukuSafeProtocolHandler XPCOM registered")
   }
-  catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {} // already registered
-  catch (e) { console.exception (e);
+  catch (e) {
+    if (e.result == Cr.NS_ERROR_FACTORY_EXISTS) {
+      // already registered
+    }
+    else {
+      console.exception (e);
+    }
   }
 
   Cu.import ("resource://akahuku/content-policy.jsm", global);
@@ -171,8 +176,13 @@ Akahuku.startup = function () {
     registerXPCOM (arAkahukuContentPolicy);
     console.log ("startup: arAkahukuContentPolicy XPCOM registered")
   }
-  catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {} // already registered
-  catch (e) { console.exception (e);
+  catch (e) {
+    if (e.result == Cr.NS_ERROR_FACTORY_EXISTS) {
+      // already registered
+    }
+    else {
+      console.exception (e);
+    }
   }
 
   // XSLTParser and XULSerializer for frame scripts

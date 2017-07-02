@@ -147,9 +147,14 @@ arAkahukuProtocolHandler.prototype = {
     try {
       url.init (Ci.nsIStandardURL.URLTYPE_AUTHORITY, -1, spec, charset, baseURI);
     }
-    catch (e if e.result == Cr.NS_ERROR_MALFORMED_URI) {
-      // "akahuku:///"
-      url.init (Ci.nsIStandardURL.URLTYPE_NO_AUTHORITY, -1, spec, charset, baseURI);
+    catch (e) {
+      if (e.result == Cr.NS_ERROR_MALFORMED_URI) {
+        // "akahuku:///"
+        url.init (Ci.nsIStandardURL.URLTYPE_NO_AUTHORITY, -1, spec, charset, baseURI);
+      }
+      else {
+        throw e;
+      }
     }
     var uri = url.QueryInterface (Ci.nsIURI);
     if (preamble && uri.spec != spec) {
@@ -419,10 +424,10 @@ arAkahukuProtocolHandler.prototype = {
         file = new File (path);
       }
     }
-    catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
-      return this._createThreadCacheFailChannel (uri, loadInfo);
-    }
     catch (e) {
+      if (e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+        return this._createThreadCacheFailChannel (uri, loadInfo);
+      }
       Cu.reportError (e);
       var file
         = Cc ["@mozilla.org/file/local;1"]

@@ -113,10 +113,15 @@ var arAkahukuClipboard = {
       try {
         trans.getTransferData (flavor, data, dataLen);
       }
-      catch (e if e.result == Components.results.NS_ERROR_FAILURE) {
-        Akahuku.debug.warn
-          ("conversion failed from clipboard with flavor "+flavor);
-        return null;
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_FAILURE) {
+          Akahuku.debug.warn
+            ("conversion failed from clipboard with flavor "+flavor);
+          return null;
+        }
+        else {
+          throw e;
+        }
       }
 
       var image = data.value;
@@ -154,9 +159,14 @@ var arAkahukuClipboard = {
       trans.getTransferData (flavor, data, {});
       return data.value.QueryInterface (Components.interfaces.nsIFile);
     }
-    catch (e if e.result == Components.results.NS_ERROR_FAILURE) {
-      Akahuku.debug.warn ("failed to obtain nsIFile from clipboard");
-      return null;
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_FAILURE) {
+        Akahuku.debug.warn ("failed to obtain nsIFile from clipboard");
+        return null;
+      }
+      else {
+        throw e;
+      }
     }
   },
 

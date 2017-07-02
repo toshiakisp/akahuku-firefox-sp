@@ -342,13 +342,20 @@ var arAkahukuCompat = new function () {
 
   this.AddonManager = new function () {
     this.getAddonByID = function (id, callback) {
+      var hasAddonManager = false;
       try {
         var scope = {};
         Cu.import ("resource://gre/modules/AddonManager.jsm", scope);
+        hasAddonManager = true;
         this.getAddonByID = scope.AddonManager.getAddonByID;
         this.getAddonByID (id, callback);
       }
-      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+      catch (e) {
+        if (e.result != Cr.NS_ERROR_FILE_NOT_FOUND) {
+          Cu.reportError (e);
+        }
+      }
+      if (!hasAddonManager) {
         this.getAddonByID = function getAddonByIDCompat (id, callback) {
           // obsolete gecko 2.0
           var extMan = Cc ["@mozilla.org/extensions/manager;1"]
@@ -365,9 +372,6 @@ var arAkahukuCompat = new function () {
           };
           callback (addon);
         };
-      }
-      catch (e) {
-        Cu.reportError (e);
       }
     }
   };
@@ -438,7 +442,10 @@ var arAkahukuCompat = new function () {
       try {
         this._session.asyncOpenCacheEntry (uri.spec, accessMode, wrappedcb);
       }
-      catch (e if e.result === Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+      catch (e) {
+        if (e.result !== Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+          throw e;
+        }
         // fake async call
         arAkahukuUtil.executeSoon (function () {
           wrappedcb.onCacheEntryAvailable (null, false, e.result);

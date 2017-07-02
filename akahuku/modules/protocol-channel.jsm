@@ -1051,8 +1051,11 @@ arAkahukuCacheChannel.prototype = {
     try {
       entry.dataSize;
     }
-    catch (e if e.result == Cr.NS_ERROR_IN_PROGRESS) {
-      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    catch (e) {
+      if (e.result == Cr.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
+      throw e;
     }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
@@ -1221,8 +1224,12 @@ arAkahukuCacheChannel.prototype = {
 
     try {
       channel = channel.QueryInterface (Ci.nsIInputStreamChannel);
-    } catch (e if e.result == Cr.NS_ERROR_NO_INTERFACE) {
-      return;
+    }
+    catch (e) {
+      if (e.result == Cr.NS_ERROR_NO_INTERFACE) {
+        return;
+      }
+      throw e;
     }
     // 既知のコンテンツ情報を引き継ぐ
     if (this.contentType)
@@ -1425,10 +1432,13 @@ arAkahukuAsyncRedirectVerifyHelper.prototype = {
           ["@mozilla.org/contentsecuritymanager;1"]
           .getService (Ci.nsIChannelEventSink);
       }
-      catch (e if e.result == Cr.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
-        // no nsIChannelEventSink (Gecko < 46)
-      }
-      catch (e) { Components.utils.reportError (e);
+      catch (e) {
+        if (e.result == Cr.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
+          // no nsIChannelEventSink (Gecko < 46)
+        }
+        else {
+          Components.utils.reportError (e);
+        }
       }
     }
     if (!gsink && "@mozilla.org/netwerk/global-channel-event-sink;1" in Components.classes) {

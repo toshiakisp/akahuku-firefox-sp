@@ -2621,11 +2621,14 @@ var arAkahukuCatalog = {
           file.initWithPath (filename);
           file.remove (false);
         }
-        catch (e if e.result == Components.results.NS_ERROR_FILE_TARGET_DOES_NOT_EXIST
-               || e.result == Components.results.NS_ERROR_FILE_NOT_FOUND) {
-          // 無いなら無視
-        }
-        catch (e) { Akahuku.debug.exception (e);
+        catch (e) {
+          if (e.result == Components.results.NS_ERROR_FILE_TARGET_DOES_NOT_EXIST
+              || e.result == Components.results.NS_ERROR_FILE_NOT_FOUND) {
+            // 無いなら無視
+          }
+          else {
+            Akahuku.debug.exception (e);
+          }
         }
       }
     }

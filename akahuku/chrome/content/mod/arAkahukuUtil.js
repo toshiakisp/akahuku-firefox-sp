@@ -22,9 +22,12 @@ var arAkahukuUtil = new function () {
           this._isGecko2orAbove = true;
         }
       }
-      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
-      }
-      catch (e) { Cu.reportError (e);
+      catch (e) {
+        if (e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+        }
+        else {
+          Cu.reportError (e);
+        }
       }
     }
     if (!this._isGecko2orAbove
@@ -401,11 +404,13 @@ var arAkahukuUtil = new function () {
         status.isErrored = ((request.imageStatus & errorMask) != 0);
       }
     }
-    catch (e if e.result == Cr.NS_ERROR_NO_INTERFACE) {
-      status.isImage = false;
-    }
     catch (e) {
-      Cu.reportError (e);
+      if (e.result == Cr.NS_ERROR_NO_INTERFACE) {
+        status.isImage = false;
+      }
+      else {
+        Cu.reportError (e);
+      }
     }
 
     return status;

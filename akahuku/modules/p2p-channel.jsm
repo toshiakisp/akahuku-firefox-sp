@@ -958,8 +958,11 @@ arAkahukuP2PChannel.prototype = {
                 = this._outputStream.write
                 (bindata, bindata.length);
               }
-              catch (e if e.result == Cr.NS_BINDING_ABORTED) {
-                break;
+              catch (e) {
+                if (e.result == Cr.NS_BINDING_ABORTED) {
+                  break;
+                }
+                throw e;
               }
               wrote += size;
             }

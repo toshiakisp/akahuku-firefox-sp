@@ -482,10 +482,13 @@ var arAkahukuLink = {
       historyService.addObserver (arAkahukuLink, false);
       this.historyService = historyService;
     }
-    catch (e if Components.results.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
-      // no error message; this can happens in content process (e10s)
-    }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
+        // no error message; this can happens in content process (e10s)
+      }
+      else {
+        Akahuku.debug.exception (e);
+      }
     }
     
     arAkahukuLink.initPatterns ();

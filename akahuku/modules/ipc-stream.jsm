@@ -150,13 +150,15 @@ arInputStreamParent.prototype = {
         payload.status = Cr.NS_BASE_STREAM_CLOSED;
       }
     }
-    catch (e if e.result == Cr.NS_BASE_STREAM_CLOSED) { // EOF
-      payload.status = e.result;
-    }
     catch (e) {
-      Cu.reportError (e);
-      payload.status = e.result;
-      payload.message = e.name + "; " + e.message;
+      if (e.result == Cr.NS_BASE_STREAM_CLOSED) { // EOF
+        payload.status = e.result;
+      }
+      else {
+        Cu.reportError (e);
+        payload.status = e.result;
+        payload.message = e.name + "; " + e.message;
+      }
     }
 
     try {

@@ -292,12 +292,12 @@ var arAkahukuFile = {
           fstream.write (text, text.length);
           fstream.close ();
         }
-        catch (e if e instanceof Components.interfaces.nsIXPCException) {
-          Components.utils.reportError (e.message);
-          callback.apply (null, [e.result]);
-          return;
-        }
         catch (e) {
+          if (e instanceof Components.interfaces.nsIXPCException) {
+            Components.utils.reportError (e.message);
+            callback.apply (null, [e.result]);
+            return;
+          }
           Components.utils.reportError (e.message);
           callback.apply (null, [Components.results.NS_ERROR_FAILURE]);
           return;
