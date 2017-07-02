@@ -2818,8 +2818,8 @@ var arAkahukuCatalog = {
       tr.firstChild.className = "akahuku_header";
     }
         
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var info = documentParam.location_info;
         
     var i;
     var newTable = oldTable.cloneNode (false);
@@ -3013,13 +3013,38 @@ var arAkahukuCatalog = {
       }
             
       try {
-        if (typeof Aima_Aimani != "undefined") {
-          if (Aima_Aimani.hideNGNumberCatalogueHandler) {
-            Aima_Aimani.hideNGNumberCatalogueHandler (td);
+        if (documentParam.flags.existsAimaAimani) {
+          var scope = null;
+          try {
+            // for aima_aimani sp (e10s ready)
+            scope = {};
+            Components.utils.import
+              ("chrome://aima_aimani/content/aima_aimani.jsm", scope);
+          }
+          catch (e) {
+            scope = null;
+            if (e.result == Components.results.NS_ERROR_FILE_NOT_FOUND) {
+              // old aima_aimani (no e10s support)
+              try {
+                scope = arAkahukuWindow
+                  .getParentWindowInChrome (targetDocument.defaultView);
+              }
+              catch (e2) {
+                Akahuku.debug.exception (e2);
+              }
+            }
+            else {
+              Akahuku.debug.exception (e);
+            }
+          }
+          if (scope && scope.Aima_Aimani
+              && scope.Aima_Aimani.hideNGNumberCatalogueHandler) {
+            scope.Aima_Aimani.hideNGNumberCatalogueHandler (td);
 
             // 古い合間合間にの挙動を修正 (enableCellWidth関係)
             arAkahukuCatalog.fixAimaAimaniInlineStyle (td);
           }
+          scope = null;
         }
       }
       catch (e) { Akahuku.debug.exception (e);
@@ -3919,9 +3944,11 @@ var arAkahukuCatalog = {
             
       if (arAkahukuCatalog.enableSidebar
           && arAkahukuCatalog.enableSidebarComment) {
-        if (arAkahukuSidebar.hasBoard (name)) {
-          var thread = arAkahukuSidebar.getThread (name, num);
-          if (thread && thread.comment) {
+        var browser = arAkahukuWindow
+          .getBrowserForWindow (targetDocument.defaultView);
+        var thread = arAkahukuSidebar.getThread (name, num, browser);
+        if (thread) {
+          if (thread.comment) {
             var node
               = arAkahukuCatalog.createCommentNode (tdElement);
             replaced = true;
@@ -4015,11 +4042,13 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableSidebar
         && arAkahukuCatalog.enableSidebarComment) {
       var name = info.server + "_" + info.dir;
-      if (arAkahukuSidebar.hasBoard (name)) {
-        var thread
-          = arAkahukuSidebar.getThread
-          (name, tdElement.getAttribute ("__thread_id"));
-        if (thread && thread.comment) {
+      var browser = arAkahukuWindow
+        .getBrowserForWindow (targetDocument.defaultView);
+      var thread
+        = arAkahukuSidebar.getThread
+        (name, tdElement.getAttribute ("__thread_id"), browser);
+      if (thread) {
+        if (thread.comment) {
           var node = 
             arAkahukuDOM.getFirstElementByNames
             (tdElement, "div", "akahuku_comment");
@@ -5650,10 +5679,11 @@ var arAkahukuCatalog = {
           = Akahuku.getDocumentParam (targetDocument)
           .location_info;
           var name = info.server + "_" + info.dir;
-          var thread = null;
-          if (arAkahukuSidebar.hasBoard (name)) {
-            thread = arAkahukuSidebar.getThread (name, num);
-          }
+          var browser
+          = arAkahukuWindow
+          .getBrowserForWindow (targetDocument.defaultView);
+          var thread
+          = arAkahukuSidebar.getThread (name, num, browser);
           if (thread && thread.comment) { //コメント情報は必須
             var key = "t" + num;
             if (key != param.lastPopupKey) {

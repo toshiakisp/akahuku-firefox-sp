@@ -647,8 +647,9 @@ Akahuku.Cache = new function () {
         }
       }
     }
-    if (!source.contextWindow && typeof window !== "undefined") {
-      source.contextWindow = window;
+    if (!source.contextWindow) {
+      Akahuku.debug.warn ("Cache._ensureSourceObject:",
+          "no source.contextWindow;", source);
     }
     return source;
   }

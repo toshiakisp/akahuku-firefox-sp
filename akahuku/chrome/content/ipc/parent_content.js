@@ -244,6 +244,13 @@ arAkahukuUI.applyFocusedDocument = function (event) {
     ("UI/applyDocument", [],
      window.gBrowser.selectedBrowser.messageManager);
 };
+arAkahukuUI._onContextMenuHidden_orig = arAkahukuUI.onContextMenuHidden;
+arAkahukuUI.onContextMenuHidden = function () {
+  arAkahukuUI._onContextMenuHidden_orig ();
+  arAkahukuIPCRoot.broadcastAsyncCommandToChildProcesses
+    ("UI/onContextMenuHidden", []);
+};
+
 
 
 })();

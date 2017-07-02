@@ -910,10 +910,12 @@ arAkahukuReloadParam.prototype = {
                 var name;
                 name = info.server + "_" + info.dir;
                                 
-                if (arAkahukuSidebar.hasBoard (name)) {
+                var browser = arAkahukuWindow
+                  .getBrowserForWindow (this.targetDocument.defaultView);
+                if (arAkahukuSidebar.hasBoard (name, browser)) {
                   var ok = true;
                   if (!arAkahukuSidebar.enableBackground) {
-                    ok = arAkahukuSidebar.hasTabForBoard (name);
+                    ok = arAkahukuSidebar.hasTabForBoard (name, browser);
                   }
                   if (ok) {
                     arAkahukuSidebar.onThreadExpired
@@ -1001,11 +1003,13 @@ arAkahukuReloadParam.prototype = {
           try {
             var name;
             name = info.server + "_" + info.dir;
+            var browser = arAkahukuWindow
+              .getBrowserForWindow (this.targetDocument.defaultView);
                                 
-            if (arAkahukuSidebar.hasBoard (name)) {
+            if (arAkahukuSidebar.hasBoard (name, browser)) {
               var ok = true;
               if (!arAkahukuSidebar.enableBackground) {
-                ok = arAkahukuSidebar.hasTabForBoard (name);
+                ok = arAkahukuSidebar.hasTabForBoard (name, browser);
               }
               if (ok) {
                 arAkahukuSidebar.onThreadExpired
@@ -2576,19 +2580,34 @@ var arAkahukuReload = {
     var aimaHandler2 = function () {};
         
     try {
-      if (typeof Aima_Aimani != "undefined") {
+      var scope = {};
+      if (documentParam.flags.existsAimaAimani) {
+        try {
+          Components.utils.import
+            ("chrome://aima_aimani/content/aima_aimani.jsm", scope);
+          if (scope.Aima_Aimani.useAkahukuCustomEvents) {
+            // sp version uses custom events instead of handlers
+            scope = null;
+          }
+        }
+        catch (e2) {
+          scope = arAkahukuWindow
+            .getParentWindowInChrome (targetDocument.defaultView);
+        }
+      }
+      if (scope) {
         if (!arAkahukuConfig.isObserving) {
           /* 監視していない場合にのみ設定を取得する */
-          if (Aima_Aimani.loadNGWord) {
-            Aima_Aimani.loadNGWord ();
+          if (scope.Aima_Aimani.loadNGWord) {
+            scope.Aima_Aimani.loadNGWord ();
           }
         }
                 
-        if ("hideNGNumberHandler" in Aima_Aimani) {
-          aimaHandler = Aima_Aimani.hideNGNumberHandler;
+        if ("hideNGNumberHandler" in scope.Aima_Aimani) {
+          aimaHandler = scope.Aima_Aimani.hideNGNumberHandler;
         }
-        if ("hideNGNumberHandler2" in Aima_Aimani) {
-          aimaHandler2 = Aima_Aimani.hideNGNumberHandler2;
+        if ("hideNGNumberHandler2" in scope.Aima_Aimani) {
+          aimaHandler2 = scope.Aima_Aimani.hideNGNumberHandler2;
         }
       }
     }
@@ -3438,11 +3457,13 @@ var arAkahukuReload = {
         var name, reply, expire, warning, lastNum;
             
         name = info.server + "_" + info.dir;
+        var browser = arAkahukuWindow
+          .getBrowserForWindow (targetDocument.defaultView);
             
-        if (arAkahukuSidebar.hasBoard (name)) {
+        if (arAkahukuSidebar.hasBoard (name, browser)) {
           var ok = true;
           if (!arAkahukuSidebar.enableBackground) {
-            ok = arAkahukuSidebar.hasTabForBoard (name);
+            ok = arAkahukuSidebar.hasTabForBoard (name, browser);
           }
           if (ok) {
             var nodes = Akahuku.getMessageBQ (targetDocument);

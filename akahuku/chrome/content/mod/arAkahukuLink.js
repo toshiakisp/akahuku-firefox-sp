@@ -2400,7 +2400,7 @@ var arAkahukuLink = {
           // ツリー型タブ アドオン対応 (0.12.2011060201+)
           // オートリンク先も通常リンク先同様に子タブにさせる
           if ("TreeStyleTabService" in window) {
-            TreeStyleTabService.readyToOpenChildTabNow
+            window.TreeStyleTabService.readyToOpenChildTabNow
               (tabbrowser.selectedTab);
           }
         }
@@ -3287,8 +3287,8 @@ var arAkahukuLink = {
       }
     }
         
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var info = documentParam.location_info;
         
     var src = "";
         
@@ -3321,38 +3321,12 @@ var arAkahukuLink = {
       }
     }
         
-    if (typeof (noscriptOverlay) != "undefined"
+    if (documentParam.flags.existsNoScriptOverlay
         && uri.match (/\.(swf)(\?.*)?$/i)) {
-      /* NoScript があれば解除する */
-      try {
-        uri2 = targetDocument.location.href;
-        uri2
-        = uri2.replace
-        (/^([^\/]+:\/\/\/?[^\/]+)\/.+$/, "$1");
-                
-        var enabled = false;
-                
-        try {
-          enabled = noscriptOverlay.ns.isJSEnabled (uri2);
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-                
-        if (!enabled) {
-          noscriptOverlay.safeAllow
-          (uri2, true, true);
-        }
-                
-        noscriptOverlay.safeAllow (src, true, true);
-                
-        if (!enabled) {
-          setTimeout (function (uri2) {
-              noscriptOverlay.safeAllow (uri2, false, false);
-            }, 3000, uri2);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
+      var browser = arAkahukuWindow
+        .getBrowserForWindow (targetDocument.defaultView);
+      arAkahukuLink.makeURLSafeInNoscript
+        (src, targetDocument.location.href, browser);
     }
         
     if (!image.src) {
@@ -3360,6 +3334,42 @@ var arAkahukuLink = {
     }
         
     return image;
+  },
+
+  /**
+   * 要素に新たに設定するURLをNoscriptでブロックさせないようにする
+   */
+  makeURLSafeInNoscript : function (targetUrl, docUrl, browser) {
+    var w = browser.ownerDocument.defaultView;
+    // リロード不要フラグ(Noscript 3以降?)を指定
+    var reloadPolicy = -1;
+    try {
+      if (typeof w.noscriptOverlay.ns.RELOAD_NO !== "undefined") {
+        reloadPolicy = w.noscriptOverlay.ns.RELOAD_NO;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+    // サイトのJSが無効なら一時的に有効にする
+    if (docUrl) {
+      var siteUrl = docUrl.replace (/^([^\/]+:\/\/\/?[^\/]+)\/.+$/, "$1");
+      try {
+        if (!w.noscriptOverlay.ns.isJSEnabled (siteUrl)) {
+          w.noscriptOverlay.safeAllow (siteUrl, true, true, reloadPolicy);
+          w.setTimeout (function (url) {
+            w.noscriptOverlay.safeAllow (url, false, false, reloadPolicy);
+          }, 3000, siteUrl);
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    // 対象URLを許可(設定保存はさせない)
+    try {
+      w.noscriptOverlay.safeAllow (targetUrl, true, true, reloadPolicy);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
   },
     
   /**
@@ -3560,9 +3570,10 @@ var arAkahukuLink = {
         node.appendChild (anchor);
       }
       else {
-        if (typeof window !== "undefined"
-            && "noscriptOverlay" in window) {
-          setTimeout (function (node, image) {
+        var documentParam = Akahuku.getDocumentParam (targetDocument);
+        if (/\.(swf)(\?.*)?$/i.test (uri)
+            && documentParam.flags.existsNoScriptOverlay) {
+          targetDocument.defaultView.setTimeout (function (node, image) {
               node.appendChild (image);
             }, 500, node, image);
         }

@@ -642,8 +642,8 @@ arAkahukuMHTFileData.prototype = {
       // ファイルを読み込むには nsIInputStream は問題ありのため
       source = entry.targetFile;
     }
-    else if ("nsICacheEntryDescriptor" in Ci &&
-        entry instanceof Ci.nsICacheEntryDescriptor) {
+    else if ("nsICacheEntryDescriptor" in Components.interfaces &&
+        entry instanceof Components.interfaces.nsICacheEntryDescriptor) {
       // cache v1
       this.syncGetFileData (source, entry.dataSize);
       return;

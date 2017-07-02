@@ -591,23 +591,6 @@ var arAkahukuQuote = {
   },
     
   /**
-   * フォーカスのあるウィンドウを取得する
-   *
-   * @param  Window
-   *         対象のウィンドウ
-   * @return String
-   *         選択文字列
-   */
-  getFocusedWindow : function () {
-    var targetWindow = document.commandDispatcher.focusedWindow;
-    if (targetWindow == window) {
-      targetWindow = content;
-    }
-        
-    return targetWindow;
-  },
-    
-  /**
    * 選択文字列を取得する
    *
    * @param  Window
@@ -629,10 +612,11 @@ var arAkahukuQuote = {
    *         プレフィックスを追加するかどうか
    * @param  Boolean focusTextArea
    *         コメント欄にフォーカスを移すかどうか
+   * @param  HTMLElement originNode
+   *         対象ドキュメントの要素
    */
-  quote : function (addQuotePrefix, focusTextArea, optTarget) {
-    var target = optTarget || gContextMenu.target;
-    var targetDocument = target.ownerDocument;
+  quote : function (addQuotePrefix, focusTextArea, originNode) {
+    var targetDocument = originNode.ownerDocument;
     var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
@@ -802,7 +786,8 @@ var arAkahukuQuote = {
     = "http://www.google.com/images?hl=ja&q="
     + encodeURIComponent (s);
 
-    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus);
+    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
+    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
   },
   onClickGoogleImage : function (event) {
     var window = event.currentTarget.ownerDocument.defaultView;
@@ -823,15 +808,16 @@ var arAkahukuQuote = {
     = "http://ja.wikipedia.org/wiki/%E7%89%B9%E5%88%A5:Search?search="
     + encodeURIComponent (s) + "&go=%E8%A1%A8%E7%A4%BA";
         
-    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus);
+    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
+    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
   },
   onClickWikipedia : function (event) {
     var window = event.currentTarget.ownerDocument.defaultView;
     arAkahukuQuote.wikipedia (window.gContextMenu.target);
   },
 
-  searchInNewTabXUL : function (href, focus) {
-    var tabbrowser = document.getElementById ("content");
+  searchInNewTabXUL : function (href, focus, browser) {
+    var tabbrowser = browser.ownerDocument.getElementById ("content");
     var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
     if (focus) {
       tabbrowser.selectedTab = newTab;

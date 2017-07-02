@@ -25,9 +25,9 @@ arAkahukuGZIPReader.prototype = {
    *         this
    */
   QueryInterface : function (iid) {
-    if (iid.equals (nsISupports)
-        || iid.equals (nsIStreamListener)
-        || iid.equals (nsIRequestObserver)) {
+    if (iid.equals (Components.interfaces.nsISupports)
+        || iid.equals (Components.interfaces.nsIStreamListener)
+        || iid.equals (Components.interfaces.nsIRequestObserver)) {
       return this;
     }
         

@@ -56,6 +56,7 @@ var Akahuku = {
       documentParam.location_info = info;
     }
     Akahuku.collectLinks (documentParam);
+    Akahuku.detectEnvironment (documentParam);
     Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
   },
@@ -77,6 +78,7 @@ var Akahuku = {
     if (info) {
       documentParam.location_info = info;
     }
+    Akahuku.detectEnvironment (documentParam);
     Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
   },
@@ -329,6 +331,31 @@ var Akahuku = {
       documentParam.links.back = "";
       documentParam.links.catalog = "";
     }
+  },
+
+  /**
+   * 実行時環境情報を収集してparamに記録
+   * @param arAkahukuDocumentParam param
+   */
+  detectEnvironment : function (param) {
+    var targetWindow = param.targetDocument.defaultView;
+    var browser
+      = param.targetBrowser
+      || arAkahukuWindow.getBrowserForWindow (targetWindow);
+    var flags = Akahuku.getChromeEnvironmentFlags (browser);
+    for (var key in flags) {
+      if (Object.prototype.hasOwnProperty.call (flags, key)) {
+        param.flags [key] = flags [key];
+      }
+    }
+  },
+  getChromeEnvironmentFlags : function (browser) {
+    var chromeWindow = browser.ownerDocument.defaultView;
+    var flags = {
+      existsNoScriptOverlay : "noscriptOverlay" in chromeWindow,
+      existsAimaAimani : "Aima_Aimani" in chromeWindow,
+    };
+    return flags;
   },
 
   /**
@@ -898,7 +925,9 @@ var Akahuku = {
         
     /* 状態の変更を UnMHT に通知する */
     try {
-      UnMHTBrowserProgressListener.onLocationChange ();
+      var cw = arAkahukuWindow
+        .getParentWindowInChrome (targetDocument.defaultView);
+      cw.UnMHTBrowserProgressListener.onLocationChange ();
     }
     catch (e) {
     }
@@ -1872,6 +1901,7 @@ var Akahuku = {
    */
   onImageDocumentActivity : function (event) {
     var doc = event.originalTarget;
+    var gBrowser = event.currentTarget;
     if (event.target && "nodeName" in event.target
         && event.target.nodeName == "tab") {
       var browser = gBrowser.getBrowserForTab (event.target);

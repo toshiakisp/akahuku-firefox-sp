@@ -231,15 +231,11 @@ var arAkahukuCompat = new function () {
         if (window && typeof window.gBrowser !== "undefined") {
           return window.gBrowser.getStatusPanel ();
         }
-        if (typeof gBrowser !== "undefined") {
-          return gBrowser.getStatusPanel ();
-        }
       }
       catch (e) {
       }
-      if (typeof document !== "undefined"
-          && document instanceof Ci.nsIDOMXULDocument) {
-        return document.getElementById ("statusbar-display");
+      if (window.document instanceof Ci.nsIDOMXULDocument) {
+        return window.document.getElementById ("statusbar-display");
       }
       else {
         return null;
@@ -247,33 +243,6 @@ var arAkahukuCompat = new function () {
     };
   };
 
-  this.Document = new function () {
-    /**
-     * Document.activeElement [LS]
-     * (Basic support at Firefox 3.0 (Gecko 1.9.0))
-     */
-    function activeElementReal (targetDocument) {
-      return targetDocument.activeElement;
-    }
-    function activeElementCompat (targetDocument) {
-      // Note: this code requires running in XUL browser.
-      var focusedElement = document.commandDispatcher.focusedElement;
-      if (focusedElement && focusedElement.ownerDocument === targetDocument) {
-        return focusedElement;
-      }
-      return targetDocument;
-    }
-    this.activeElement = function (targetDocument) {
-      // on-demand initialization
-      if (arAkahukuCompat.comparePlatformVersion ("1.9.0") >= 0) {
-        this.activeElement = activeElementReal;
-      }
-      else {
-        this.activeElement = activeElementCompat;
-      }
-      return this.activeElement (targetDocument);
-    }
-  };
   this.HTMLInputElement = {
     /**
      * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]
@@ -360,24 +329,13 @@ var arAkahukuCompat = new function () {
 
 
   this.losslessDecodeURI = function (uri) {
-    if (typeof window === "undefined") {
-      // for bootstrap.js env
-      try {
-        return Cc ["@mozilla.org/appshell/window-mediator;1"]
-          .getService (Ci.nsIWindowMediator)
-          .getMostRecentWindow ("navigator:browser")
-          .losslessDecodeURI (uri);
-      }
-      catch (e) { Cu.reportError (e);
-      }
+    try {
+      return Cc ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (Ci.nsIWindowMediator)
+        .getMostRecentWindow ("navigator:browser")
+        .losslessDecodeURI (uri);
     }
-    if (typeof window !== "undefined"
-        && "losslessDecodeURI" in window) {
-      try {
-        return window.losslessDecodeURI (uri);
-      }
-      catch (e) { Cu.reportError (e);
-      }
+    catch (e) { Cu.reportError (e);
     }
     return uri.spec;
   };
@@ -555,9 +513,12 @@ var arAkahukuCompat = new function () {
       return null;
     }
     function getRootContentLocation_old (url) {
-      var param = UnMHT.protocolHandler.getUnMHTURIParam (url);
+      var w = Cc ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (Ci.nsIWindowMediator)
+        .getMostRecentWindow ("navigator:browser");
+      var param = w.UnMHT.protocolHandler.getUnMHTURIParam (url);
       if (param && param.original) {
-        var extractor = UnMHT.getExtractor (param.original);
+        var extractor = w.UnMHT.getExtractor (param.original);
         if (extractor && extractor.rootFile) {
           return extractor.rootFile.contentLocation;
         }
@@ -607,7 +568,10 @@ var arAkahukuCompat = new function () {
     function getMHTFileURI_old (contentLocation, requestOrigin) {
       contentLocation = arAkahukuUtil.newURIViaNode (contentLocation, null);
       requestOrigin = arAkahukuUtil.newURIViaNode (requestOrigin, null);
-      var uri = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
+      var w = Cc ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (Ci.nsIWindowMediator)
+        .getMostRecentWindow ("navigator:browser");
+      var uri = w.UnMHT.getMHTFileURI (contentLocation, requestOrigin);
       if (uri) {
         return uri.spec;
       }

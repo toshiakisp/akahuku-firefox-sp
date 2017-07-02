@@ -24,32 +24,26 @@ var arAkahukuUI = {
                                   *   表示されているかどうか */
     
   prefDialog : null, /* ChromeWindow  設定ダイアログ */
+
+  managedWindows : [],
     
   /**
    * 初期化処理
    */
   initForXUL : function () {
-    arAkahukuUI.showPanel ();
-    arAkahukuUI.setPanelStatus ();
+    arAkahukuUI.managedWindows.push (window);
+    arAkahukuUI.showPanelForWindow (window);
+    arAkahukuUI.setPanelStatusForWindow (window);
         
     /* コンテキストメニューのイベントを監視 */
     var menu = document.getElementById ("contentAreaContextMenu");
     if (menu) {
       menu.addEventListener
-        ("popupshowing", 
-         function () {
-          arAkahukuUI.setContextMenu (arguments [0]);
-        }, false);
+        ("popupshowing", arAkahukuUI.setContextMenu, false);
       menu.addEventListener
-        ("popupshown",
-         function () {
-          arAkahukuUI.onContextMenuShown ();
-        }, false);
+        ("popupshown", arAkahukuUI.onContextMenuShown, false);
       menu.addEventListener
-        ("popuphidden",
-         function () {
-          arAkahukuUI.onContextMenuHidden ();
-        }, false);
+        ("popuphidden", arAkahukuUI.onContextMenuHidden, false);
     }
         
     if (arAkahukuUI.enableStatusbarOrder) {
@@ -498,14 +492,10 @@ var arAkahukuUI = {
    * ステータスバー、ツールバーのパネルを表示する
    */
   showPanel : function () {
-    if (typeof window !== "undefined") { // XUL overlay context
-      arAkahukuUI.showPanelForWindow (window);
-      return;
-    }
-    // for all windows (jsm context)
-    arAkahukuWindow.forEachWindow (function (win) {
+    for (var i = 0; i < arAkahukuUI.managedWindows.length; i ++) {
+      var win = arAkahukuUI.managedWindows [i];
       arAkahukuUI.showPanelForWindow (win);
-    });
+    }
   },
   showPanelForWindow : function (window) {
     var document = window.document;
@@ -584,14 +574,10 @@ var arAkahukuUI = {
     arAkahukuConfig.loadPrefBranch ();
     Akahuku.getConfig ();
 
-    if (typeof window !== "undefined") { // XUL overlay context
-      arAkahukuUI.setPanelStatusForWindow (window);
-      return;
-    }
-    // for all windows (jsm context)
-    arAkahukuWindow.forEachWindow (function (win) {
+    for (var i = 0; i < arAkahukuUI.managedWindows.length; i ++) {
+      var win = arAkahukuUI.managedWindows [i];
       arAkahukuUI.setPanelStatusForWindow (win);
-    });
+    }
   },
   setPanelStatusForWindow : function (window) {
     var document = window.document;
@@ -634,12 +620,13 @@ var arAkahukuUI = {
 
   setAttributeOfToolbarButton : function (id, attr, value, document) {
     var button = document.getElementById (id);
+    var window = document.defaultView;
     if (button) {
       button.setAttribute (attr, value);
     }
-    else if (typeof CustomizableUI != "undefined") {
+    else if (typeof window.CustomizableUI != "undefined") {
       // For Australis
-      var widgets = CustomizableUI.getWidget (id);
+      var widgets = window.CustomizableUI.getWidget (id);
       if (widgets) {
         for (var i = 0; i < widgets.instances.length; i ++) {
           button = widgets.instances [i].node;

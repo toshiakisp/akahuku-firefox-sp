@@ -16,8 +16,9 @@ var arAkahukuUtil = new function () {
     if (!("_isGecko2orAbove" in this)) {
       this._isGecko2orAbove = false;
       try {
-        Cu.import ("resource://gre/modules/Services.jsm");
-        if (Services.vc.compare (Services.appinfo.platformVersion, "2.0") >= 0) {
+        var s = {};
+        Cu.import ("resource://gre/modules/Services.jsm", s);
+        if (s.Services.vc.compare (s.Services.appinfo.platformVersion, "2.0") >= 0) {
           this._isGecko2orAbove = true;
         }
       }

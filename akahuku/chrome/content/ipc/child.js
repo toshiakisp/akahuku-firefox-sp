@@ -56,7 +56,7 @@ Akahuku.Cache.asyncOpenCache = function (source, flag, callback) {
       : arAkahukuIPC.getChildProcessMessageManager (),
     onCacheEntryAvaiable : function (entry, isNew, appCache, status) {
       if (entry) {
-        Cu.import ("resource://akahuku/ipc-cache.jsm");
+        Components.utils.import ("resource://akahuku/ipc-cache.jsm");
         entry = new arCacheEntryChild (entry);
         entry.attachIPCMessageManager (this.messageManager);
       }
@@ -188,7 +188,7 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
     .sendSyncCommand ("File/createFileOutputStream",
         [file, ioFlags, perm, behaviorFlags], contentWindow);
   if (fstream) {
-    Cu.import ("resource://akahuku/ipc-stream.jsm");
+    Components.utils.import ("resource://akahuku/ipc-stream.jsm");
     fstream = new arOutputStreamChild (fstream);
     var mm = (contentWindow
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
@@ -209,7 +209,7 @@ arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFla
     .sendSyncCommand ("File/createFileInputStream",
         [file, ioFlags, perm, behaviorFlags], contentWindow);
   if (fstream) {
-    Cu.import ("resource://akahuku/ipc-stream.jsm");
+    Components.utils.import ("resource://akahuku/ipc-stream.jsm");
     var fstreamC = new arInputStreamChild (fstream);
     var mm = (contentWindow
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
@@ -297,6 +297,11 @@ arAkahukuLink.openLinkInXUL = function (href, to, focus, target, isPrivate) {
     ("Link/openLinkInXUL", [href, to, focus, null, isPrivate],
      target.defaultView);
 };
+arAkahukuLink.makeURLSafeInNoscript = function (targetUrl, docUrl, browser) {
+  arAkahukuIPC.sendSyncCommand
+    ("Link/makeURLSafeInNoscript", [targetUrl, docUrl, null],
+     browser.ownerGlobal);
+};
 
 
 
@@ -375,8 +380,10 @@ arAkahukuIPC.defineProc
 arAkahukuIPC.defineProc
   (arAkahukuQuote, "Quote", "wikipedia", {async: true, remote: true});
 
-arAkahukuQuote.searchInNewTabXUL = function () {
-  arAkahukuIPC.sendAsyncCommand ("Quote/searchInNewTabXUL", arguments);
+arAkahukuQuote.searchInNewTabXUL = function (href, focus, browser) {
+  arAkahukuIPC.sendAsyncCommand
+    ("Quote/searchInNewTabXUL", [href, focus],
+     browser.ownerGlobal);
 };
 
 
@@ -409,29 +416,28 @@ arAkahukuIPC.defineProc
 arAkahukuSidebar.updateThreadItem = function () {
   arAkahukuIPC.sendAsyncCommand ("Sidebar/updateThreadItem", arguments);
 };
-arAkahukuSidebar.hasTabForBoard = function () {
-  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasTabForBoard", arguments);
+arAkahukuSidebar.hasTabForBoard = function (name, browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Sidebar/hasTabForBoard", [name, null],
+     browser.ownerGlobal);
 };
-arAkahukuSidebar.hasBoard = function () {
-  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasBoard", arguments);
+arAkahukuSidebar.hasBoard = function (boardName, browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Sidebar/hasBoard", [boardName, null],
+     browser.ownerGlobal);
 };
-arAkahukuSidebar.getThread = function () {
-  return arAkahukuIPC.sendSyncCommand ("Sidebar/getThread", arguments);
+arAkahukuSidebar.getThread = function (boardName, threadNumber, browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Sidebar/getThread", [boardName, threadNumber, null],
+     browser.ownerGlobal);
 };
-arAkahukuSidebar.asyncUpdateVisited = function () {
-  arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", arguments);
+arAkahukuSidebar.asyncUpdateVisited = function (name) {
+  arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", [name]);
 }
-arAkahukuSidebar.sort = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/sort", arguments);
-};
-arAkahukuSidebar.resetCatalogOrder = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/resetCatalogOrder", arguments);
-};
-arAkahukuSidebar.updateMarked = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/updateMarked", arguments);
-};
-arAkahukuSidebar.update = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/update", arguments);
+arAkahukuSidebar.resetCatalogOrder = function (name, originBrowser) {
+  arAkahukuIPC.sendSyncCommand
+    ("Sidebar/resetCatalogOrder", [name, null],
+     originBrowser.ownerGlobal);
 };
 arAkahukuSidebar.term = function () {
   // don't save in child processes
@@ -517,7 +523,14 @@ arAkahukuUI.showPanel = function () {
 };
 arAkahukuUI.setPanelStatus = function () {
 };
+arAkahukuUI._ContentContextMenuShowing = false;
 var arAkahukuUIIPCWrapper = {
+  onContextMenuHidden : function () {
+    if (arAkahukuUI._ContentContextMenuShowing) {
+      arAkahukuUI._ContentContextMenuShowing = false;
+      arAkahukuUI.onContextMenuHidden ();
+    }
+  },
   addDocumentToExternalBoards : function () {
     var targetDocument = arAkahukuIPC.messageTarget.content.document;
     arAkahukuUI.addDocumentToExternalBoards (targetDocument);
@@ -535,6 +548,10 @@ arAkahukuIPC.defineProc
   (arAkahukuUIIPCWrapper,
    "UI", "applyDocument",
    {async: true, callback: 0, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuUIIPCWrapper,
+   "UI", "onContextMenuHidden",
+   {async: true, remote: true});
 
 
 
@@ -563,6 +580,11 @@ Akahuku.getFocusedDocumentParam = function () {
     = arAkahukuIPC.sendSyncCommand ("Akahuku/getFocusedDocument", []);
   return Akahuku.getDocumentParam (focusedDocument);
 };
+Akahuku.getChromeEnvironmentFlags = function (browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Akahuku/getChromeEnvironmentFlags", [null],
+     browser.ownerGlobal);
+};
 
 //
 // add/remove arAkahukuDocumentParam in both content and XUL(browser)
@@ -580,8 +602,9 @@ Akahuku.deleteDocumentParam = function (targetDocument) {
   var innerWindowID = -1;
   try {
     var contextWinUtil
-      = targetDocument.defaultView.QueryInterface (Ci.nsIInterfaceRequestor)
-      .getInterface (Ci.nsIDOMWindowUtils);
+      = targetDocument.defaultView
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIDOMWindowUtils);
     // requires Gekco 2.0 (Firefox 4) or above
     innerWindowID = contextWinUtil.currentInnerWindowID || -1;
   }

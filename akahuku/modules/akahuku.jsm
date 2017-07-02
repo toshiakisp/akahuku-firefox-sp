@@ -312,4 +312,10 @@ function handleContentContextMenu (subject) {
   arAkahukuIPC.sendSyncCommand ("JPEG/setContextMenuContentData", [data]);
   data = arAkahukuP2P.getContextMenuContentData (target);
   arAkahukuIPC.sendSyncCommand ("P2P/setContextMenuContentData", [data]);
+
+  // turn flag on in content processes at this timing
+  // (while turn off via arAkahukuUI.onContextMenuHidden IPC command)
+  arAkahukuUI.onContextMenuShown ();
+  arAkahukuUI._ContentContextMenuShowing = true;
 };
+

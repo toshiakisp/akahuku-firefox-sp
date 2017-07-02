@@ -712,19 +712,16 @@ arAkahukuDOM.Style = new function () {
 /**
  * factory of DOM Mutation Observer for DOM3/4
  */
-arAkahukuDOM.createMutationObserver = function (callback, optNode) {
-  if (optNode && optNode instanceof Components.interfaces.nsIDOMDocument
-      && "MutationObserver" in optNode.defaultView) {
-    return new optNode.defaultView
+arAkahukuDOM.createMutationObserver = function (callback, node) {
+  if (node && node instanceof Components.interfaces.nsIDOMDocument
+      && "MutationObserver" in node.defaultView) {
+    return new node.defaultView
       .MutationObserver (callback);
   }
-  if (optNode && optNode instanceof Components.interfaces.nsIDOMElement
-      && "MutationObserver" in optNode.ownerDocument.defaultView) {
-    return new optNode.ownerDocumenet.defaultView
+  if (node && node instanceof Components.interfaces.nsIDOMElement
+      && "MutationObserver" in node.ownerDocument.defaultView) {
+    return new node.ownerDocumenet.defaultView
       .MutationObserver (callback);
-  }
-  if (typeof (MutationObserver) != "undefined") {
-    return new MutationObserver (callback);
   }
 
   return new arAkahukuDOM.MutationObserverOnDOM3 (callback);

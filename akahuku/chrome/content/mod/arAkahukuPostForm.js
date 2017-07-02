@@ -1528,8 +1528,14 @@ var arAkahukuPostForm = {
           if (history.count > 1) {
             history.PurgeHistory (history.count - 1);
           }
+          else {
+            return;
+          }
+          // no e10s support bellow because of no need for recent firefox
+          var w = arAkahukuWindow
+          .getParentWindowInChrome (targetDocument.defaultView);
           var backCommand
-          = document.getElementById ("Browser:Back");
+          = w.document.getElementById ("Browser:Back");
           if (backCommand) {
             backCommand.setAttribute ("disabled", "true");
           }
@@ -3057,7 +3063,7 @@ var arAkahukuPostForm = {
 
     var commentFocused = false;
         
-    var focusedElement = arAkahukuCompat.Document.activeElement (targetDocument);
+    var focusedElement = targetDocument.activeElement;
     var form = arAkahukuDOM.findParentNode (focusedElement, "form");
     if (form
         && "id" in form
@@ -3224,8 +3230,7 @@ var arAkahukuPostForm = {
       }
       param = param.postform_param;
             
-      if ((typeof gContextMenu !== "undefined" && gContextMenu != null)
-          && arAkahukuUI.contextMenuShown) {
+      if (arAkahukuUI.contextMenuShown) {
         /* コンテキストメニューが表示されていたら何もしない */
         return;
       }
@@ -4225,8 +4230,14 @@ var arAkahukuPostForm = {
                 if (history.count > 1) {
                   history.PurgeHistory (history.count - 1);
                 }
+                else {
+                  return;
+                }
+                // no e10s support bellow because of no need for recent firefox
+                var w = arAkahukuWindow
+                .getParentWindowInChrome (targetDocument.defaultView);
                 var backCommand
-                  = document.getElementById ("Browser:Back");
+                = w.document.getElementById ("Browser:Back");
                 if (backCommand) {
                   backCommand.setAttribute ("disabled", "true");
                 }

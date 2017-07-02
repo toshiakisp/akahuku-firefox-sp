@@ -70,18 +70,16 @@ var arAkahukuTab = {
       item = document.createElement ("menuitem");
       item.id = "akahuku-menuitem-tab-sort-all";
       item.setAttribute ("label", "\u5168\u3066\u30BD\u30FC\u30C8");
-      item.addEventListener ("command", function (event) {
-        arAkahukuTab.sort (true);
-      }, false);
+      item.addEventListener ("command",
+          arAkahukuTab.onClickTabSortAll, false);
       tabMenu.insertBefore (item, insertPos);
       insertPos = item;
             
       item = document.createElement ("menuitem");
       item.id = "akahuku-menuitem-tab-sort-thread";
       item.setAttribute ("label", "\u30B9\u30EC\u3092\u30BD\u30FC\u30C8");
-      item.addEventListener ("command", function (event) {
-        arAkahukuTab.sort (false);
-      }, false);
+      item.addEventListener ("command",
+          arAkahukuTab.onClickTabSortThreads, false);
       tabMenu.insertBefore (item, insertPos);
       insertPos = item;
             
@@ -185,9 +183,10 @@ var arAkahukuTab = {
    * 
    * @param  Boolean all
    *         全てのページをソートするかどうか
+   * @param  Window
    */
-  sort : function (all) {
-    var tabbrowser = document.getElementById ("content");
+  sort : function (all, chromeWindow) {
+    var tabbrowser = chromeWindow.document.getElementById ("content");
         
     var tabs = null;
     if ("visibleTabs" in tabbrowser) {
@@ -431,5 +430,13 @@ var arAkahukuTab = {
         tabbrowser.moveTabTo (list [i].tab, indics [i]);
       }
     }
-  }
+  },
+  onClickTabSortThreads : function (event) {
+    var menuitem = event.currentTarget;
+    arAkahukuTab.sort (false, menuitem.ownerDocument.defaultView);
+  },
+  onClickTabSortAll : function (event) {
+    var menuitem = event.currentTarget;
+    arAkahukuTab.sort (true, menuitem.ownerDocument.defaultView);
+  },
 };

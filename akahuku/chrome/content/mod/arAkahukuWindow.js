@@ -51,26 +51,6 @@ var arAkahukuWindow = {
     }
     catch (e) {
     }
-    // code works only for XUL overlay (depends on document global)
-    var tabbrowser = document.getElementById ("content");
-    if ("getBrowserForDocument" in tabbrowser) {
-      return tabbrowser.getBrowserForDocument (targetWindow.document);
-    }
-    /* 古いコード */
-    if (tabbrowser.mTabContainer) {
-      for (var i = 0; i < tabbrowser.mTabContainer.childNodes.length; i ++) {
-        var tab = tabbrowser.mTabContainer.childNodes [i];
-        if (tab.linkedBrowser
-            && tab.linkedBrowser
-            .contentWindow == targetWindow) {
-          return tab.linkedBrowser;
-        }
-      }
-    }
-    else if (tabbrowser.contentWindow == targetWindow) {
-      return tabbrowser;
-    }
-        
     return null;
   },
   /**
@@ -201,6 +181,11 @@ var arAkahukuWindow = {
     }
     parentWindow = arAkahukuWindow.unwrapXPCNative (parentWindow);
     return parentWindow;
+  },
+
+  getChromeWindowForBrowser : function (browser) {
+    var chromeWindow = browser.ownerDocument.defaultView.top;
+    return arAkahukuWindow.unwrapXPCNative (chromeWindow);
   },
 
   getMostRecentWindow : function () {
