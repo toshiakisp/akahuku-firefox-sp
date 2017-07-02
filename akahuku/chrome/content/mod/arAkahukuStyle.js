@@ -89,6 +89,10 @@ var arAkahukuStyle = {
     }
   },
 
+  term : function () {
+    this.modifyStyleFile (false);
+  },
+
   onPrefChanged : function () {
     if (Akahuku.enableAll) {
       arAkahukuStyle.modifyStyleFile (true);

@@ -2,6 +2,7 @@
 // Frame script
 
 Components.utils.import("resource://akahuku/akahuku.jsm");
+Akahuku.startup (); // if necessary for a process
 Akahuku.useFrameScript = true;
 Akahuku.addFrame (this);
 

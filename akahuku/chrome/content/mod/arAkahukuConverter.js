@@ -13,6 +13,10 @@ var arAkahukuConverter = {
     = Components.classes ["@mozilla.org/intl/scriptableunicodeconverter"]
     .getService (Components.interfaces.nsIScriptableUnicodeConverter);
   },
+
+  term : function () {
+    arAkahukuConverter.converter = null;
+  },
     
   /**
    * 色々マズい文字をよろしくする

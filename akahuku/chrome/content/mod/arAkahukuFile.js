@@ -108,6 +108,11 @@ var arAkahukuFile = {
     /* 各種ディレクトリを作る */
     arAkahukuFile.makeSystemDirectory ();
   },
+
+  term : function () {
+    arAkahukuFile.fileProtocolHandler = null;
+    arAkahukuFile.systemDirectory = "";
+  },
     
   /**
    * 現在のユーザの Profile ディレクトリを取得する

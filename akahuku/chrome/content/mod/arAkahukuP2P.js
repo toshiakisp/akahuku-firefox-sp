@@ -54,6 +54,17 @@ var arAkahukuP2P = {
       arAkahukuP2P.onKeyDown (arguments [0]);
     }, true);
   },
+
+  term : function () {
+    var servant = arAkahukuP2PService.servant;
+    if (servant) {
+      try {
+        arAkahukuP2P.saveNodeList ();
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+  },
     
   /**
    * キーが押されたイベント

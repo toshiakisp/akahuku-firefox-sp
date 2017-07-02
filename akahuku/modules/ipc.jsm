@@ -565,6 +565,7 @@ AkahukuIPC.prototype = {
   isRoot : false,
   processID : -1,
   initialized : false,
+  terminated : false,
   console : null,
 
   getContentFrameMessageManager : getContentFrameMessageManager,
@@ -1249,6 +1250,35 @@ AkahukuIPC.prototype = {
     }
 
     this.console.log ("AkahukuIPC initialized as a child");
+  },
+
+  term : function () {
+    if (!this.initialized) {
+      this.console.warn ("AkahukuIPC is not initialized");
+      return;
+    }
+    if (this.terminated) {
+      this.console.warn ("AkahukuIPC is already terminated");
+      return;
+    }
+    this.terminated = true;
+    if (this.isRoot) {
+      var gfmm = Cc ["@mozilla.org/globalmessagemanager;1"]
+        .getService (Ci.nsIMessageListenerManager);
+      gfmm.removeMessageListener (this.messageCall, this);
+      var gpmm = Cc ["@mozilla.org/parentprocessmessagemanager;1"]
+        .getService (Ci.nsIMessageListenerManager);
+      gpmm.removeMessageListener (this.messageCall, this);
+      gpmm.removeMessageListener (this.messageDefine, this);
+      this.console.log ("AkahukuIPC root is terminated.");
+    }
+    else {
+      var mlm = Cc ['@mozilla.org/childprocessmessagemanager;1']
+        .getService (Ci.nsIMessageListenerManager);
+      mlm.removeMessageListener (this.messageDefine, this);
+      mlm.removeMessageListener (this.messageCallChild, this);
+      this.console.log ("AkahukuIPC child is terminated.");
+    }
   },
 
 };

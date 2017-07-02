@@ -258,13 +258,7 @@ var arAkahukuSidebar = {
   /**
    * 初期化処理
    */
-  initForXUL : function () {
-    window.addEventListener
-    ("keydown",
-     function () {
-      arAkahukuSidebar.onKeyDown (arguments [0]);
-    }, true);
-        
+  init : function () {
     var board = new arAkahukuSidebarBoard ();
     arAkahukuSidebar.boards ["*_*"] = board;
         
@@ -338,7 +332,12 @@ var arAkahukuSidebar = {
       }
     }
   },
-    
+
+  initForXUL : function () {
+    window.addEventListener
+    ("keydown", arAkahukuSidebar.onKeyDown, true);
+  },
+
   /**
    * キーが押されたイベント
    *

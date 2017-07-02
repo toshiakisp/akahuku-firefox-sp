@@ -19,21 +19,12 @@ var Ci = Components.interfaces;
 var Cu = Components.utils;
 var Cr = Components.results;
 
-
-/**
- * Prepare basis of the extension
- */
-Cu.import ("resource://akahuku/console.jsm");
-var console = new AkahukuConsole ();
+var console;
+var global = this;
+var startedup = false;
+var shutdowned = false;
 var appinfo =
   Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
-  console.prefix = "Akahuku debug(jsm#main)";
-}
-else {
-  console.prefix = "Akahuku debug(jsm#" + appinfo.processID + ")";
-}
-console.log ("akahuku.jsm starting up ..."); 
 
 // subscript loder
 var load = (function () {
@@ -63,46 +54,9 @@ var load = (function () {
   };
 })();
 
-// utility function; registerXPCOM
-Cu.import ("resource://akahuku/XPCOM.jsm", this);
-
-
 /**
- * Step.1 XPCOMコンポーネントを各プロセスに登録する
+ * Akahuku モジュールスタックを構築
  */
-console.log ("akahuku.jsm: registering XPCOM components for current process if neccesary")
-
-// akahuku://... プロトコルをコンテントプロセスでも登録
-Cu.import ("resource://akahuku/protocol-handler.jsm", this);
-try {
-  registerXPCOM (arAkahukuProtocolHandler);
-  // akahuku-local://
-  registerXPCOM (arAkahukuLocalProtocolHandler);
-  // akahuku-safe://
-  registerXPCOM (arAkahukuSafeProtocolHandler);
-}
-catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {}//登録済み
-catch (e) { console.exception (e);
-}
-
-// Content policy をコンテントプロセスでも登録
-Cu.import ("resource://akahuku/content-policy.jsm", this);
-try {
-  registerXPCOM (arAkahukuContentPolicy);
-}
-catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {}//登録済み
-catch (e) { console.exception (e);
-}
-
-
-/**
- * Stpe.2 Akahukuモジュールスタックを構築
- */
-console.log ("akahuku.jsm: building Akahuku module stack for JSM")
-
-// XSLTParser and XULSerializer for frame scripts
-Cu.import ("resource://akahuku/XSLT.jsm");
-
 load ("version.js");
 
 // Level 1: 
@@ -146,22 +100,173 @@ load ("mod/arAkahukuSidebar.js");
 
 
 load ("akahuku.js");
-Akahuku.debug = console;
 
 load ("mod/arAkahukuCache.js");
 
-if (arAkahukuCompat.comparePlatformVersion ("47.*") > 0) {
-  // IPC in a content process or main-process frame
-  Cu.import ("resource://akahuku/ipc.jsm", this);
-  arAkahukuIPC.init ();
-  // redefine methods for ipc child
-  load ("ipc/child.js");
-}
+/**
+ * startup jsm module
+ */
+Akahuku.startup = function () {
+  if (startedup) {
+    return;
+  }
+  startedup = true;
+
+  Cu.import ("resource://akahuku/console.jsm");
+  console = new AkahukuConsole ();
+  if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+    console.prefix = "Akahuku debug(jsm#main)";
+  }
+  else {
+    console.prefix = "Akahuku debug(jsm#" + appinfo.processID + ")";
+  }
+  console.log ("startup: starting up Akahuku ...");
+  Akahuku.debug = console;
+
+  // Prepare IPC staff (some XPCOM modules depends it)
+  if (arAkahukuCompat.comparePlatformVersion ("37.*") > 0) { //38 or newer
+    // Prepare IPC (MessageManager may be usable since Firefox 38)
+    Cu.import ("resource://akahuku/ipc.jsm", global);
+
+    if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+      console.log ("startup: starting IPC Root")
+      arAkahukuIPCRoot.init ();
+      arAkahukuIPCRoot.initSubScriptScope (global);
+      arAkahukuIPCRoot.loadSubScript
+        ("chrome://akahuku/content/ipc/parent.js");
+      // only init a child module in the main process
+      arAkahukuIPC.init ();
+    }
+    else { // child process
+      console.log ("startup: starting IPC child")
+      arAkahukuIPC.init ();
+      load ("ipc/child.js"); // applicable only for child proceseses
+
+      // child-process shutdown
+      arAkahukuIPC.defineProc
+        (Akahuku, "Akahuku", "shutdown",
+         {async: true, callback: 0, remote: true});
+    }
+  }
+
+  Cu.import ("resource://akahuku/XPCOM.jsm", global);
+  Cu.import ("resource://akahuku/protocol-handler.jsm", global);
+  try {
+    // akahuku:// protocol
+    registerXPCOM (arAkahukuProtocolHandler);
+    console.log ("startup: arAkahukuProtocolHandler XPCOM registered")
+    // akahuku-local://
+    registerXPCOM (arAkahukuLocalProtocolHandler);
+    console.log ("startup: arAkahukuLocalProtocolHandler XPCOM registered")
+    // akahuku-safe://
+    registerXPCOM (arAkahukuSafeProtocolHandler);
+    console.log ("startup: arAkahukuSafeProtocolHandler XPCOM registered")
+  }
+  catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {} // already registered
+  catch (e) { console.exception (e);
+  }
+
+  Cu.import ("resource://akahuku/content-policy.jsm", global);
+  try {
+    registerXPCOM (arAkahukuContentPolicy);
+    console.log ("startup: arAkahukuContentPolicy XPCOM registered")
+  }
+  catch (e if Cr.NS_ERROR_FACTORY_EXISTS) {} // already registered
+  catch (e) { console.exception (e);
+  }
+
+  // XSLTParser and XULSerializer for frame scripts
+  Cu.import ("resource://akahuku/XSLT.jsm", global);
+
+  Akahuku.init ();
+
+  if (typeof appinfo.PROCESS_TYPE_CONTENT !== "undefined"
+      && appinfo.processType === appinfo.PROCESS_TYPE_CONTENT) {
+    var os = Cc ["@mozilla.org/observer-service;1"]
+      .getService (Ci.nsIObserverService);
+    os.addObserver (handleContentContextMenu, "content-contextmenu", false);
+  }
+
+  Akahuku.initialized = true;
+  Akahuku.debug.log ("Akahuku is initialized for JSM.")
+};
 
 
-// Akahuku initialize (Akahuku.onLoad 相当)
-Akahuku.init ();
+/**
+ * shutdown jsm module
+ */
+Akahuku.shutdown = function () {
+  if (shutdowned || !startedup) {
+    console.warn ("abort shutdown (startedup =", startedup,
+        ", shutdowned =", shutdowned, ")");
+    return;
+  }
+  shutdowned = true;
+  Akahuku.debug.log ("shutdown: shutting down Akahuku ...")
 
+  if (arAkahukuCompat.comparePlatformVersion ("37.*") > 0 //38 or newer
+      && appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+    arAkahukuIPCRoot.broadcastAsyncCommandToChildProcesses ("Akahuku/shutdown");
+  }
+
+
+  var unload = function () {};
+  if ("unload" in Cu) { // Fx7+
+    unload = Cu.unload;
+  }
+  unload ("resource://akahuku/protocol-handler.jsm");
+  unload ("resource://akahuku/content-policy.jsm");
+  unload ("resource://akahuku/XSLT.jsm");
+
+  if (typeof appinfo.PROCESS_TYPE_CONTENT !== "undefined"
+      && appinfo.processType === appinfo.PROCESS_TYPE_CONTENT) {
+    var os = Cc ["@mozilla.org/observer-service;1"]
+      .getService (Ci.nsIObserverService);
+    os.removeObserver (handleContentContextMenu, "content-contextmenu");
+  }
+
+  try {
+    Akahuku.term ();
+  }
+  catch (e) { console.exception (e);
+  }
+
+  try {
+    unregisterXPCOM (arAkahukuProtocolHandler);
+    console.log ("shutdown: arAkahukuProtocolHandler XPCOM unregistered")
+    unregisterXPCOM (arAkahukuLocalProtocolHandler);
+    console.log ("shutdown: arAkahukuLocalProtocolHandler XPCOM unregistered")
+    unregisterXPCOM (arAkahukuSafeProtocolHandler);
+    console.log ("shutdown: arAkahukuSafeProtocolHandler XPCOM unregistered")
+  }
+  catch (e) { console.exception (e);
+  }
+  try {
+    unregisterXPCOM (arAkahukuContentPolicy);
+    console.log ("shutdown: arAkahukuContentPolicy XPCOM unregistered")
+  }
+  catch (e) { console.exception (e);
+  }
+  unload ("resource://akahuku/XPCOM.jsm");
+
+  if (arAkahukuCompat.comparePlatformVersion ("37.*") > 0) { //38 or newer
+    if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+      arAkahukuIPC.term ();
+      arAkahukuIPCRoot.term ();
+    }
+    else { // child process
+      arAkahukuIPC.term ();
+    }
+    unload ("resource://akahuku/ipc.jsm");
+  }
+
+  Akahuku.debug.log ("shutdown: Akahuku is shutdowned")
+};
+
+/**
+ * register event listeners for frame script environment
+ * @param frame
+ */
 Akahuku.addFrame = function addFrame (frame) {
 
   // Fire a custom event that Akahuku is ready for a frame.
@@ -208,14 +313,3 @@ function handleContentContextMenu (subject) {
   data = arAkahukuP2P.getContextMenuContentData (target);
   arAkahukuIPC.sendSyncCommand ("P2P/setContextMenuContentData", [data]);
 };
-if (appinfo.PROCESS_TYPE_CONTENT
-    && appinfo.processType === appinfo.PROCESS_TYPE_CONTENT) {
-  var os = Cc ["@mozilla.org/observer-service;1"]
-    .getService (Ci.nsIObserverService);
-  os.addObserver (handleContentContextMenu, "content-contextmenu", false);
-}
-
-
-Akahuku.initialized = true;
-Akahuku.debug.log ("Akahuku is initialized for JSM.")
-

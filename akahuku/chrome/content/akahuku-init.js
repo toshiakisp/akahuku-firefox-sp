@@ -113,6 +113,7 @@ else { // Boot as a classic XUL-overlay extension
   try {
     var jsm = {};
     Components.utils.import ("resource://akahuku/akahuku.jsm", jsm);
+    jsm.Akahuku.startup ();
     jsm.Akahuku.onAima_Aimanied = function () {
       Akahuku.onAima_Aimanied (arguments [0]);
     }

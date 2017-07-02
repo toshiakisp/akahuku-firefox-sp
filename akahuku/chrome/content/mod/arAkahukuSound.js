@@ -54,6 +54,10 @@ var arAkahukuSound = {
     = Components.classes ["@mozilla.org/sound;1"]
     .createInstance (Components.interfaces.nsISound);
   },
+
+  term : function () {
+    arAkahukuSound.sound = null;
+  },
     
   /**
    * 設定を読み込む

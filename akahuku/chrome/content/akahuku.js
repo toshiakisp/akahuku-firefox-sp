@@ -426,11 +426,38 @@ var Akahuku = {
     arAkahukuP2P.init ();
     arAkahukuConfig.init ();
     arAkahukuStyle.init ();
+    arAkahukuSidebar.init ();
 
     this.initialized = true;
   },
 
   /**
+   * 終了(XUL windowに依存しない部分)
+   */
+  term : function () {
+    if (!Akahuku.initialized) {
+      return;
+    }
+
+    arAkahukuSidebar.term ();
+    arAkahukuStyle.term ();
+    arAkahukuConfig.term ();
+    arAkahukuP2P.term ();
+    arAkahukuConverter.term ();
+    arAkahukuBoard.term ();
+    arAkahukuCatalog.term ();
+    arAkahukuLink.term ();
+    arAkahukuSound.term ();
+    arAkahukuFile.term ();
+
+    if ("unload" in Components.utils) {
+      Components.utils.unload ("resource://akahuku/protocol.jsm");
+    }
+    Akahuku.protocolHandler = null;
+
+    Akahuku.initialized = false;
+  },
+
    * ウィンドウが開かれたイベント
    */
   onLoad : function () {
