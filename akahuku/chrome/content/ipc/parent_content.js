@@ -209,7 +209,7 @@ arAkahukuReload.reloadOnDemandForBrowser = function (browser, trySync) {
 Akahuku.getFocusedDocumentParam = function (window) {
   var focusedBrowser = window.document.commandDispatcher.focusedElement;
   if (!focusedBrowser
-      || !focusedBrowser instanceof Components.interfaces.nsIDOMXULElement
+      || !(focusedBrowser instanceof Components.interfaces.nsIDOMXULElement)
       || !/(?:xul:)?browser/i.test (focusedBrowser.nodeName)) {
     return null;
   }

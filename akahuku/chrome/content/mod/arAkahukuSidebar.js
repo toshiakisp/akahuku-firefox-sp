@@ -107,7 +107,7 @@ arAkahukuSidebarThread.prototype = {
   isSafeURL : function (url) {
     var destURI
       = (url instanceof  Components.interfaces.nsIURI
-         ? url : makeURI (url)); 
+         ? url : this.makeURI (url));
     if (!destURI) {
       return false;
     }

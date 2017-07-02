@@ -269,7 +269,7 @@ var Akahuku = {
     if (window == wnd || !wnd) {
       wnd = window.content;
     }
-    if (!wnd instanceof Components.interfaces.nsIDOMWindow
+    if (!(wnd instanceof Components.interfaces.nsIDOMWindow)
         ||wnd instanceof Components.interfaces.nsIDOMChromeWindow) {
       return null;
     }

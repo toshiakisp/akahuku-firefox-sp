@@ -1815,7 +1815,7 @@ var arAkahukuThread = {
                * 修正しなければならない
                */
               try {
-                var s, e;
+                var s, e, style;
                 style = targetBrowser.ownerDocument.defaultView
                   .getComputedStyle (node, "");
                 s = style.getPropertyCSSValue ("margin-left").getFloatValue (CSSPrimitiveValue.CSS_PX) + "px";

@@ -195,7 +195,7 @@ arAkahukuP2PService.utils = {
         if (typeof treatAsSame === "undefined") {
           treatAsSame = arAkahukuP2PService.servant.getTreatAsSame ();
         }
-        if (treatAsAame) {
+        if (treatAsSame) {
           p.server = sdir;
         }
         else {
@@ -332,6 +332,7 @@ arAkahukuP2PService.utils = {
     }
 
     try {
+      var targetFileName = file.path;
       if (file.exists ()) {
         file.remove (true);
       }

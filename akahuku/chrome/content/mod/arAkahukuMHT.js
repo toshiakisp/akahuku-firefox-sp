@@ -459,9 +459,8 @@ arAkahukuMHTFileData.prototype = {
       fileData.content = btoa (bindata);
     }
     catch (e) { Akahuku.debug.exception (e);
-      result = e.result;
       Akahuku.debug.warn ("arAkahukuMHTFileData.syncGetFileData resulted in " +
-        arAkahukuUtil.resultCodeToString (result) + " for " + url);
+        arAkahukuUtil.resultCodeToString (e.result) + " for " + url);
       if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
         && fileData.useNetwork) {
         fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
@@ -474,7 +473,7 @@ arAkahukuMHTFileData.prototype = {
         fileData.statusMessage = "Error (net):";
       else
         fileData.statusMessage = "Error (cache):";
-      fileData.statusMessage += arAkahukuUtil.resultCodeToString (result);
+      fileData.statusMessage += arAkahukuUtil.resultCodeToString (e.result);
     }
     fileData.onGetFileData ();
   },
@@ -3556,10 +3555,7 @@ var arAkahukuMHT = {
       }
       catch (e) {
         /* ベースのディレクトリが不正 */
-        arAkahukuImage.onSave
-          (target, false,
-           "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
-        return;
+        throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
       }
             
       if (!dir.exists ()) {

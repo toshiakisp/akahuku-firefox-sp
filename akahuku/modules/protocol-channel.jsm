@@ -1140,7 +1140,7 @@ arAkahukuCacheChannel.prototype = {
             that._listener
               .onDataAvailable (that, that._context, ist, offset, c);
             if (that._canceled) {
-              req.cancel (e.result);
+              req.cancel (that.status);
               that._close (that.status);
             }
           }

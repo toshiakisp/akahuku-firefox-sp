@@ -344,7 +344,6 @@ var arAkahukuImage = {
                 }
               }
               if (dialog_keep == "o") {
-                subdir_type = "s";
                 subdir = "0";
               }
               
@@ -1063,7 +1062,7 @@ var arAkahukuImage = {
       targetDocument.defaultView
       .setTimeout (function () {
         arAkahukuImage.saveImage
-          (target, index, newHref, leafName, normal);
+          (target, targetDirIndex, newHref, leafName, normal);
       }, wait)
     };
     arAkahukuImage.asyncSaveImageToFile
