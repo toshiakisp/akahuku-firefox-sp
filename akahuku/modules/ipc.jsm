@@ -541,6 +541,7 @@ function AkahukuIPC () {
     .getService (Ci.nsIXULRuntime);
   this.inMainProcess
     = (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT);
+  this.processID = appinfo.processID;
   // Define default procedures
   this._procedures = {
     AkahukuIPC : {
@@ -795,23 +796,25 @@ AkahukuIPC.prototype = {
       return ret;
     }
     else {
+      if (!this.isRoot && this.inMainProcess) {
+        // just ignore undefined (broadcast) commands
+        // in child node in the main processes
+        return;
+      }
+      var debugHeader = "AkahukuICP("
+        + (this.isRoot ? "root" : "child#" + this.processId) + "): ";
       if (entry) {
         if (!entry.module) {
           throw Components.Exception
-            ("AkahukuIPC: can not execute this command '"
-             + entry.moduleName + "/" + entry.command
-             + "' in current ICP(" + (this.isRoot ? "root" : "child") + ")");
+            (debugHeader + "can not execute '"
+             + rcvRequest.name + "' because of no module");
         }
         throw Components.Exception
-          ("AkahukuIPC: '" + entry.command + "' is disabled");
-      }
-      else if (!this.isRoot) {
-        // ignore undefined command in child processes
-        // to suppress warnings for undefined broadcasting commands.
+          (debugHeader + "'" + entry.command + "' is disabled");
       }
       else {
         throw Components.Exception
-          ("AkahukuIPC(root): '" + rcvRequest.name+ "' is not defined.");
+          (debugHeader + "'" + rcvRequest.name+ "' is not defined.");
       }
     }
   },
@@ -1178,15 +1181,12 @@ AkahukuIPC.prototype = {
     this.isRoot = true;
     this.console = new AkahukuConsole ();
 
-    var appinfo =
-      Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-    if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+    if (this.inMainProcess) {
       this.console.prefix = "Akahuku root-IPC (main)";
     }
     else {
-      this.console.prefix = "Akahuku root-IPC (content#" + appinfo.processID + ")";
+      this.console.prefix = "Akahuku root-IPC (content#" + this.processID + ")";
     }
-    this.processID = appinfo.processID;
 
     // Start linstening for global frame message manager
     var gfmm = Cc ["@mozilla.org/globalmessagemanager;1"]
@@ -1223,15 +1223,12 @@ AkahukuIPC.prototype = {
     this.isRoot = false;
     this.console = new AkahukuConsole ();
 
-    var appinfo =
-      Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
-    if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+    if (this.inMainProcess) {
       this.console.prefix = "Akahuku child-IPC (main)";
     }
     else {
-      this.console.prefix = "Akahuku child-IPC (content#" + appinfo.processID + ")";
+      this.console.prefix = "Akahuku child-IPC (content#" + this.processID + ")";
     }
-    this.processID = appinfo.processID;
 
     // 新しく追加される情報を反映するためのメッセージを待つ
     var mlm = Cc ['@mozilla.org/childprocessmessagemanager;1']
