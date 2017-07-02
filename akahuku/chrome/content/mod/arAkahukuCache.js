@@ -131,7 +131,7 @@ Akahuku.Cache = new function () {
 
   this.showCacheNotification = function (browser, text) {
     try {
-      var tabbrowser = document.getElementById ("content");
+      var tabbrowser = browser.ownerDocument.getElementById ("content");
       var box = tabbrowser.getNotificationBox (browser);
       var oldItem = box.getNotificationWithValue (Akahuku.Cache);
       box.appendNotification

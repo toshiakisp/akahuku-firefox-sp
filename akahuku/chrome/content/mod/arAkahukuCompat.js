@@ -225,10 +225,15 @@ var arAkahukuCompat = new function () {
   };
 
   this.gBrowser = new function () {
-    this.getStatusPanel = function () {
+    this.getStatusPanel = function (window) {
       try {
         // since Firefox 26.0a1 [Bug 821687 (mozilla.org)]
-        return gBrowser.getStatusPanel ();
+        if (window && typeof window.gBrowser !== "undefined") {
+          return window.gBrowser.getStatusPanel ();
+        }
+        if (typeof gBrowser !== "undefined") {
+          return gBrowser.getStatusPanel ();
+        }
       }
       catch (e) {
       }
@@ -355,6 +360,17 @@ var arAkahukuCompat = new function () {
 
 
   this.losslessDecodeURI = function (uri) {
+    if (typeof window === "undefined") {
+      // for bootstrap.js env
+      try {
+        return Cc ["@mozilla.org/appshell/window-mediator;1"]
+          .getService (Ci.nsIWindowMediator)
+          .getMostRecentWindow ("navigator:browser")
+          .losslessDecodeURI (uri);
+      }
+      catch (e) { Cu.reportError (e);
+      }
+    }
     if (typeof window !== "undefined"
         && "losslessDecodeURI" in window) {
       try {
@@ -641,17 +657,17 @@ var arAkahukuCompat = new function () {
     }
   };
 
-  this.toggleSidebar = function (commandID, forceOpen) {
-    if (typeof SidebarUI !== "undefined") {
+  this.toggleSidebar = function (commandID, forceOpen, window) {
+    if (typeof window.SidebarUI !== "undefined") {
       if (forceOpen) {
-        SidebarUI.show (commandID);
+        window.SidebarUI.show (commandID);
       }
       else {
-        SidebarUI.toggle (commandID);
+        window.SidebarUI.toggle (commandID);
       }
     }
     else {
-      toggleSidebar (commandID, forceOpen);
+      window.toggleSidebar (commandID, forceOpen);
     }
   };
 };

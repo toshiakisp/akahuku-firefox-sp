@@ -79,7 +79,8 @@ var arAkahukuBloomer = {
           && arAkahukuBloomer.modifiersCtrl == event.ctrlKey
           && arAkahukuBloomer.modifiersMeta == event.metaKey
           && arAkahukuBloomer.modifiersShift == event.shiftKey) {
-        arAkahukuBloomer.openBloomer ();
+        var w = event.currentTarget.ownerDocument.defaultView;
+        arAkahukuBloomer.openBloomer (w);
         event.preventDefault ();
       }
     }
@@ -88,7 +89,8 @@ var arAkahukuBloomer = {
   /**
    * ブルマ女将を開く
    */
-  openBloomer : function () {
+  openBloomer : function (window) {
+    var document = window.document;
     if (Akahuku.enableAll
         && arAkahukuBloomer.enable) {
       var tabbrowser = document.getElementById ("content");

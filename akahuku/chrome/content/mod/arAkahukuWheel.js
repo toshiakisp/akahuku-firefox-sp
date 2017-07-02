@@ -153,14 +153,14 @@ var arAkahukuWheel = {
                 
         var text = "\u3061\u3087\u3063\u3068\u5F85\u3063\u3066\u306D";
                 
-        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE);
+        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE, selectedBrowser);
                 
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
           targetWindow.setTimeout (function (text) {
               try {
-                arAkahukuUI.clearStatusPanelText (text);
+                arAkahukuUI.clearStatusPanelText (text, selectedBrowser);
               }
               catch (e) { Akahuku.debug.exception (e);
               }
@@ -277,7 +277,7 @@ var arAkahukuWheel = {
         else if (info.isReply) {
           if (arAkahukuReload.enable
               && documentParam.reload_param) {
-            arAkahukuUI.clearStatusPanelText ();
+            arAkahukuUI.clearStatusPanelText (null, selectedBrowser);
             arAkahukuReload.diffReloadCore
               (targetDocument,
                arAkahukuWheel.enableReloadReplySync, false);
@@ -295,7 +295,7 @@ var arAkahukuWheel = {
         else if (info.isCatalog) {
           if (arAkahukuCatalog.enableReload
               && documentParam.catalog_param) {
-            arAkahukuUI.clearStatusPanelText ();
+            arAkahukuUI.clearStatusPanelText (null, selectedBrowser);
             var anchor
               = targetDocument
               .getElementById ("akahuku_catalog_reload_button");
@@ -323,13 +323,13 @@ var arAkahukuWheel = {
           + parseInt (wheelCount * 100
                       / Akahuku.reloadThreshold)
           + "%";
-        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE);
+        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE, selectedBrowser);
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
           targetWindow.setTimeout (function (text) {
               try {
-                arAkahukuUI.clearStatusPanelText (text);
+                arAkahukuUI.clearStatusPanelText (text, selectedBrowser);
               }
               catch (e) { Akahuku.debug.exception (e);
               }

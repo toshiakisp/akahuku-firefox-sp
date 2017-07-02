@@ -258,7 +258,8 @@ var Akahuku = {
    * @return arAkahukuDocumentParam
    *         ドキュメントごとの情報
    */
-  getFocusedDocumentParam : function () {
+  getFocusedDocumentParam : function (window) {
+    var document = window.document;
     var wnd = document.commandDispatcher.focusedWindow;
     if (window == wnd || !wnd) {
       wnd = window.content;

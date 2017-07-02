@@ -6,63 +6,67 @@
 
 (function () {
 
-arAkahukuImage.selectSaveImageDirFromXUL = function () {
-  var targetFrame = (gContextMenu
-      ? gContextMenu.browser.messageManager
-      : arAkahukuImage.__IPC_popupFrame);
-  arAkahukuImage.__IPC_popupFrame = null;
+arAkahukuImage.selectSaveImageDirFromXUL = function (targetDirIndex, linkmenu, browser) {
+  var targetFrame = browser.messageManager;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Image/selectSaveImageDirFromXUL", arguments,
+    ("Image/selectSaveImageDirFromXUL", [targetDirIndex, linkmenu],
      targetFrame);
 };
 
 
 
-arAkahukuJPEG.openThumbnail = function () {
+arAkahukuJPEG.onClickOpenThumbnail = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("JPEG/openThumbnail",
-     [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+     [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuJPEG.closeThumbnail = function () {
+arAkahukuJPEG.onClickCloseThumbnail = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("JPEG/closeThumbnail",
-     [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+     [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
 
 
 
-arAkahukuLink.setExt = function (type, ext) {
+arAkahukuLink.onClickSetExt = function (event, type, ext) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/setExt", [type, ext, gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Link/setExt", [type, ext, window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuLink.addUser = function () {
+arAkahukuLink.onClickAddUser = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/addUser", [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Link/addUser", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuLink.openLink = function () {
+arAkahukuLink.onClickOpenLink = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/openLink", [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Link/openLink", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuLink.saveLink = function () {
+arAkahukuLink.onClickSaveLink = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/saveLink", [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Link/saveLink", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuLink.copyLink = function () {
+arAkahukuLink.onClickCopyLink = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/copyLink", [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Link/copyLink", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuLink.openAsAutoLink = function (event) {
-  var eventDummy = {shiftKey: event.shiftKey}; // minimum requirements
+arAkahukuLink.onClickOpenAsAutoLink = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/openAsAutoLink", [eventDummy, gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Link/openAsAutoLink", [window.gContextMenu.target, event.shiftKey],
+     window.gContextMenu.browser.messageManager);
 };
 
 
@@ -75,43 +79,54 @@ arAkahukuMHT.saveMHTForBrowser = function (browser) {
 
 
 
-arAkahukuQuote.quote = function (addQuotePrefix, focusTextArea, optTarget) {
+arAkahukuQuote.onClickQuote = function (event, addQuotePrefix, focusTextArea) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/quote", [addQuotePrefix, focusTextArea, gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Quote/quote", [addQuotePrefix, focusTextArea, window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuQuote.quoteToMailBox = function (focusMailBox, optTarget) {
+arAkahukuQuote.onClickQuoteToMailBox = function (event, focusMailBox) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/quoteToMailBox", [focusMailBox, gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Quote/quoteToMailBox", [focusMailBox, window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuQuote.quoteToNameBox = function (focusNameBox, optTarget) {
+arAkahukuQuote.onClickQuoteToNameBox = function (event, focusNameBox) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/quoteToNameBox", [focusNameBox, gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Quote/quoteToNameBox", [focusNameBox, window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuQuote.googleImage = function (optTarget) {
+arAkahukuQuote.onClickGoogleImage = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/googleImage", [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Quote/googleImage", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
-arAkahukuQuote.wikipedia = function (optTarget) {
+arAkahukuQuote.onClickWikipedia = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/wikipedia", [gContextMenu.target],
-     gContextMenu.browser.messageManager);
+    ("Quote/wikipedia", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
+};
+arAkahukuQuote.onClickCopyToClipboard = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("Quote/copyToClipboard", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
 };
 
 
 
-arAkahukuThread.showResPanel = function () {
+arAkahukuThread.showResPanelForBrowser = function (targetBrowser) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Thread/showResPanel", [],
-     gBrowser.selectedBrowser.messageManager);
+     targetBrowser.messageManager);
 };
-arAkahukuThread.closeResPanel = function (targetDocument) {
+arAkahukuThread.closeResPanelForBrowser = function (targetBrowser) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("Thread/closeResPanel", [],
-     gBrowser.selectedBrowser.messageManager);
+     targetBrowser.messageManager);
 };
 
 
@@ -153,6 +168,15 @@ arAkahukuLink.onVisit = function (aURI, aVisitID, aTime, aSessionID,
 
 
 
+arAkahukuP2P.onClickDeleteCache = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("P2P/deleteCache", [window.gContextMenu.target],
+     window.gContextMenu.browser.messageManager);
+};
+
+
+
 arAkahukuPostForm.focusCommentboxForBrowser = function (browser) {
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("PostForm/focusCommentboxForBrowser", [null],
@@ -182,8 +206,8 @@ arAkahukuReload.reloadOnDemandForBrowser = function (browser, trySync) {
 //
 // In XUL, document params are registered by linking its browser.
 //
-Akahuku.getFocusedDocumentParam = function () {
-  var focusedBrowser = document.commandDispatcher.focusedElement;
+Akahuku.getFocusedDocumentParam = function (window) {
+  var focusedBrowser = window.document.commandDispatcher.focusedElement;
   if (!focusedBrowser
       || !focusedBrowser instanceof Components.interfaces.nsIDOMXULElement
       || !/(?:xul:)?browser/i.test (focusedBrowser.nodeName)) {
@@ -194,8 +218,8 @@ Akahuku.getFocusedDocumentParam = function () {
 
 
 
-arAkahukuUI.getFocusedDocumentInfo = function () {
-  var param = Akahuku.getFocusedDocumentParam ();
+arAkahukuUI.getFocusedDocumentInfo = function (window) {
+  var param = Akahuku.getFocusedDocumentParam (window);
   var focusedBrowser = param ? param.targetBrowser : null;
   var info = {
     isAkahukuApplied: param != null,
@@ -207,6 +231,18 @@ arAkahukuUI.getFocusedDocumentInfo = function () {
     targetDocument: null,
   };
   return info;
+};
+arAkahukuUI.addFocusedToExternalBoards = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("UI/addDocumentToExternalBoards", [],
+     window.gBrowser.selectedBrowser.messageManager);
+};
+arAkahukuUI.applyFocusedDocument = function (event) {
+  var window = event.currentTarget.ownerDocument.defaultView;
+  arAkahukuIPCRoot.sendAsyncCommandToFrame
+    ("UI/applyDocument", [],
+     window.gBrowser.selectedBrowser.messageManager);
 };
 
 

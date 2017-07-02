@@ -214,9 +214,8 @@ var arAkahukuImage = {
         popup = targetDocument.createElement ("popup");
         popup.id = "akahuku-saveimage-popup";
         popup.setAttribute ("position", "after_start");
-        popup.addEventListener ("popupshowing", function () {
-          arAkahukuImage.setPopup ();
-        }, false);
+        popup.addEventListener
+          ("popupshowing", arAkahukuImage.setPopup, false);
                 
         popupset.appendChild (popup);
                 
@@ -415,6 +414,13 @@ var arAkahukuImage = {
    */
   setContextMenu : function (event) {
     var popup = event.target;
+    var document = event.currentTarget.ownerDocument;
+    var gContextMenu = document.defaultView.gContextMenu;
+    var browser = gContextMenu.browser;
+    if (!browser) {
+      var contentWindow = gContextMenu.target.ownerDocument.defaultView;
+      browser = arAkahukuWindow.getBrowserForWindow (contentWindow);
+    }
         
     var label, menuitem;
         
@@ -470,7 +476,7 @@ var arAkahukuImage = {
       menuitem.className = "__akahuku_saveimage";
       menuitem.addEventListener ("command", (function (i) {
         return function () {
-          arAkahukuImage.selectSaveImageDirFromXUL (i, false);
+          arAkahukuImage.selectSaveImageDirFromXUL (i, false, browser);
         }
       })(i), false);
       popup.insertBefore (menuitem, sep.nextSibling);
@@ -756,7 +762,13 @@ var arAkahukuImage = {
     }
   },
 
-  openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY) {
+  openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY, window) {
+    if (!window && targetContentNode) { // non-e10s
+      window
+        = arAkahukuWindow.getParentWindowInChrome
+        (targetContentNode.ownerDocument.defaultView);
+    }
+    var document = window.document;
     var popup = document.getElementById ("akahuku-saveimage-popup");
 
     if (targetContentNode && "openPopup" in popup) {
@@ -787,7 +799,7 @@ var arAkahukuImage = {
     }
   },
 
-  selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu) {
+  selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu, browser) {
     arAkahukuImage.onSaveImageClick
       (null, targetDirIndex, undefined, linkmenu);
   },
@@ -1273,8 +1285,18 @@ var arAkahukuImage = {
   /**
    * ポップアップメニューの内容を設定する
    */
-  setPopup : function () {
-    var popup = document.getElementById ("akahuku-saveimage-popup");
+  setPopup : function (event) {
+    var popup = event.target;
+    var document = event.currentTarget.ownerDocument;
+    var browser;
+    var w = document.commandDispatcher.focusedWindow;
+    if (!w instanceof Components.interfaces.nsIDOMChromeWindow) {
+      browser = arAkahukuWindow.getBrowserForWindow (w);
+    }
+    else { // for e10s
+      browser = document.commandDispatcher.focusedElement;
+      w = null;
+    }
         
     var label, menuitem;
         
@@ -1300,7 +1322,7 @@ var arAkahukuImage = {
       menuitem.setAttribute ("label", label);
       menuitem.addEventListener ("command", (function (i) {
         return function () {
-          arAkahukuImage.selectSaveImageDirFromXUL (i, false);
+          arAkahukuImage.selectSaveImageDirFromXUL (i, false, browser);
         }
       })(i), false);
       popup.appendChild (menuitem);

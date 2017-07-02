@@ -204,12 +204,9 @@ arAkahukuIPCRoot.defineProc
 
 var arAkahukuImageIPC = {
   openXULSaveImagePopup : function (node, rect, x, y) {
-    // store mm to be responsed when command is called
-    // for future use in selectSaveImageDirFromXUL.
     // messageTarget is <xul:browser> in the chrome process.
-    arAkahukuImage.__IPC_popupFrame
-      = arAkahukuIPCRoot.messageTarget.messageManager;
-    arAkahukuImage.openXULSaveImagePopup (node, rect, x, y);
+    var window = arAkahukuIPCRoot.messageTarget.ownerDocument.defaultView;
+    arAkahukuImage.openXULSaveImagePopup (null, rect, x, y, window);
   },
   asyncOpenSaveImageFilePicker : function (browser, filename, dirname, callback) {
     // replace actual browser for message
@@ -240,8 +237,15 @@ arAkahukuIPCRoot.defineProc
 
 
 
+var arAkahukuLinkIPCWrapper = {
+  openLinkInXUL : function (href, to, focus, target, isPrivate) {
+    var browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
+    arAkahukuLink.openLinkInXUL
+      (href, to, focus, browser, isPrivate);
+  },
+};
 arAkahukuIPCRoot.defineProc
-  (arAkahukuLink, "Link", "openLinkInXUL",
+  (arAkahukuLinkIPCWrapper, "Link", "openLinkInXUL",
    {async: true, callback: 0, frame: true});
 arAkahukuIPCRoot.defineProc
   (arAkahukuLink, "Link", "setContextMenuContentData");
@@ -334,18 +338,32 @@ arAkahukuIPCRoot.defineProc
 
 
 
+var arAkahukuUIIPC = {
+  setStatusPanelText : function (text, type) {
+    var browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuUI.setStatusPanelText (text, type, browser);
+  },
+  clearStatusPanelText : function (text) {
+    var browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuUI.clearStatusPanelText (text, browser);
+  },
+  getStatusPanelText : function () {
+    var browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuUI.getStatusPanelText (browser);
+  },
+};
 arAkahukuIPCRoot.defineProc
-  (arAkahukuUI,
+  (arAkahukuUIIPC,
    "UI", "setStatusPanelText",
-   {async: false, callback: 0, frame: false});
+   {async: false, callback: 0, frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuUI,
+  (arAkahukuUIIPC,
    "UI", "clearStatusPanelText",
-   {async: false, callback: 0, frame: false});
+   {async: false, callback: 0, frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuUI,
+  (arAkahukuUIIPC,
    "UI", "getStatusPanelText",
-   {async: false, callback: 0, frame: false});
+   {async: false, callback: 0, frame: true});
 
 
 
@@ -373,7 +391,8 @@ var AkahukuIPCWrapper = {
 
   // utiliy IPC command
   getFocusedDocument : function () {
-    var focusedBrowser = document.commandDispatcher.focusedElement;
+    var window = arAkahukuWindow.getMostRecentWindow ();
+    var focusedBrowser = window.document.commandDispatcher.focusedElement;
     if (!focusedBrowser
         || !focusedBrowser instanceof Components.interfaces.nsIDOMXULElement
         || !/(?:xul:)?browser/i.test (focusedBrowser.nodeName)) {

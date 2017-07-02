@@ -1159,6 +1159,7 @@ var arAkahukuMHT = {
           && arAkahukuMHT.shortcutModifiersCtrl == event.ctrlKey
           && arAkahukuMHT.shortcutModifiersMeta == event.metaKey
           && arAkahukuMHT.shortcutModifiersShift == event.shiftKey) {
+        var document = event.currentTarget.document;
         var browser = document.getElementById ("content").selectedBrowser;
         if (Akahuku.getDocumentParamForBrowser (browser)) {
           arAkahukuMHT.saveMHTForBrowser (browser);

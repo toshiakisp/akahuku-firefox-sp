@@ -1480,6 +1480,8 @@ var arAkahukuLink = {
    */
   setContextMenu : function (event) {
     var menuitem;
+    var document = event.currentTarget.ownerDocument;
+    var gContextMenu = document.defaultView.gContextMenu;
         
     var c = arAkahukuLink.getContextMenuContentData (gContextMenu.target);
 
@@ -1648,8 +1650,7 @@ var arAkahukuLink = {
    * @param  String ext
    *         指定する拡張子
    */
-  setExt : function (type, ext, optTarget) {
-    var targetNode = optTarget || gContextMenu.target;
+  setExt : function (type, ext, targetNode) {
     var targetDocument = targetNode.ownerDocument;
         
     if (targetNode.nodeName.toLowerCase () != "a") {
@@ -1720,6 +1721,25 @@ var arAkahukuLink = {
         
     arAkahukuLink.setExt2 (ext, targetDocument, targetNode, extNode);
   },
+  onClickSetExt : function (event, type, ext) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuLink.setExt (type, ext, window.gContextMenu.target);
+  },
+  onClickSetExtAuto : function (event) {
+    arAkahukuLink.onClickSetExt (event, 2, "");
+  },
+  onClickSetExtJPEG : function (event) {
+    arAkahukuLink.onClickSetExt (event, 0, "jpg");
+  },
+  onClickSetExtPNG : function (event) {
+    arAkahukuLink.onClickSetExt (event, 0, "png");
+  },
+  onClickSetExtGIF : function (event) {
+    arAkahukuLink.onClickSetExt (event, 0, "gif");
+  },
+  onClickSetExtManual : function (event) {
+    arAkahukuLink.onClickSetExt (event, 1, "");
+  },
         
   /**
    * オートリンクに拡張子を追加する
@@ -1774,8 +1794,9 @@ var arAkahukuLink = {
   /**
    * ユーザ指定文字列に追加する
    */
-  addUser : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  addUser : function (target) {
+    var browser = arAkahukuWindow
+      .getBrowserForWindow (target.ownerDocument.defaultView);
         
     if (target.src.match
         (/^(.+\/)([^0-9\/]+)([0-9]+)\.(.+)$/)) {
@@ -1831,15 +1852,19 @@ var arAkahukuLink = {
         // "赤福オートリンク：追加しました"
         arAkahukuUI.setStatusPanelText
           ("\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u8FFD\u52A0\u3057\u307E\u3057\u305F",
-           "status");
+           "status", browser);
       }
       else {
         // "赤福オートリンク：同じ項目があります"
         arAkahukuUI.setStatusPanelText
           ("\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\uFF1A\u540C\u3058\u9805\u76EE\u304C\u3042\u308A\u307E\u3059",
-           "status");
+           "status", browser);
       }
     }
+  },
+  onClickAddUser : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuLink.addUser (window.gContextMenu.target);
   },
     
   /**
@@ -2102,30 +2127,35 @@ var arAkahukuLink = {
   /**
    * オートリンクを新しいウィンドウで開く
    */
-  openLink : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  openLink : function (target) {
     var isPrivate = arAkahukuWindow.isContentWindowPrivate
       (target.ownerDocument.defaultView);
     arAkahukuLink.openLinkInXUL (target.getAttribute ("dummyhref"), 2, //2=window.open
         false, target.ownerDocument, isPrivate);
   },
+  onClickOpenLink : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuLink.openLink (window.gContextMenu.target);
+  },
     
   /**
    * オートリンクを保存する
    */
-  saveLink : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  saveLink : function (target) {
     var isPrivate = arAkahukuWindow.isContentWindowPrivate
       (target.ownerDocument.defaultView);
     arAkahukuLink.openLinkInXUL (target.getAttribute ("dummyhref"), 3, // 3=saveURL
         false, target.ownerDocument, isPrivate);
   },
+  onClickSaveLink : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuLink.saveLink (window.gContextMenu.target);
+  },
     
   /**
    * オートリンクをコピーする
    */
-  copyLink : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  copyLink : function (target) {
     var copytext = target.getAttribute ("dummyhref");
         
     try {
@@ -2134,6 +2164,10 @@ var arAkahukuLink = {
     }
     catch (e) { Akahuku.debug.exception (e)
     }
+  },
+  onClickCopyLink : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuLink.copyLink (window.gContextMenu.target);
   },
     
   /**
@@ -2247,11 +2281,12 @@ var arAkahukuLink = {
   /**
    * オートリンクとして開く
    *
-   * @param  Event event
-   *         対象のイベント
+   * @param  DOMElement target
+   *         対象の要素
+   * @param  Boolean invertFocus
+   *         フォーカス反転するか
    */
-  openAsAutoLink : function (event, optTarget) {
-    var target = optTarget || gContextMenu.target;
+  openAsAutoLink : function (target, invertFocus) {
     var targetDocument = target.ownerDocument;
     var selection = targetDocument.defaultView.getSelection ().toString ();
         
@@ -2265,7 +2300,7 @@ var arAkahukuLink = {
                 
     var to = 1;
     var focus = arAkahukuLink.enableAutoLinkFocus;
-    if (event.shiftKey) {
+    if (invertFocus) {
       focus = !focus;
     }
         
@@ -2277,6 +2312,11 @@ var arAkahukuLink = {
         arAkahukuLink.openAutoLink (nodes [i], to, focus);
       }
     }
+  },
+  onClickOpenAsAutoLink : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    var target = window.gContextMenu.target;
+    arAkahukuLink.openAsAutoLink (target, event.shiftKey);
   },
     
   /**
@@ -2334,7 +2374,20 @@ var arAkahukuLink = {
     }
   },
     
-  openLinkInXUL : function (href, to, focus, targetDocument, isPrivate) {
+  openLinkInXUL : function (href, to, focus, target, isPrivate) {
+    var targetDocument, document, window;
+    if (target instanceof Components.interfaces.nsIDOMXULElement) {
+      // target is a browser
+      document = target.ownerDocument;
+      window = document.defaultView;
+      targetDocument = null; //no need for saveURL (isPrivate is provided)
+    }
+    else if (target instanceof Components.interfaces.nsIDOMDocument) {
+      targetDocument = target;
+      window = arAkahukuWindow
+        .getParentWindowInChrome (targetDocument.defaultView);
+      document = window.document;
+    }
     ; /* switch のインデント用 */
     switch (to) {
       case 0:
@@ -2367,7 +2420,7 @@ var arAkahukuLink = {
         window.open (href, "_blank");
         break;
       case 3:
-        saveURL (href, null, null, true, false, null,
+        window.saveURL (href, null, null, true, false, null,
             targetDocument, isPrivate);
         break;
     }
@@ -2399,7 +2452,9 @@ var arAkahukuLink = {
         = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF: "
         // "赤福オートリンク:"
         + href;
-      arAkahukuUI.setStatusPanelText (text, "overLink");
+      var browser = arAkahukuWindow
+        .getBrowserForWindow (targetDocument.defaultView);
+      arAkahukuUI.setStatusPanelText (text, "overLink", browser);
     }
   },
     
@@ -2414,8 +2469,10 @@ var arAkahukuLink = {
      * out/over の無限ループに陥ることを防ぐために少し待つ
      */
     var targetDocument = event.target.ownerDocument;
+    var browser = arAkahukuWindow
+      .getBrowserForWindow (targetDocument.defaultView);
     var param = Akahuku.getDocumentParam (targetDocument).link_param;
-    var statusLabel = arAkahukuUI.getStatusPanelText ();
+    var statusLabel = arAkahukuUI.getStatusPanelText (browser);
     targetDocument.defaultView
       .clearTimeout (param.mouseOutTimeoutId);
     param.mouseOutTimeoutId
@@ -2423,7 +2480,7 @@ var arAkahukuLink = {
       .setTimeout
       ((function (oldLabel, param) {
           return function () {
-            arAkahukuUI.clearStatusPanelText (oldLabel);
+            arAkahukuUI.clearStatusPanelText (oldLabel, browser);
             param.mouseOutTimeoutId = null;
           };
         })(statusLabel, param), 100);

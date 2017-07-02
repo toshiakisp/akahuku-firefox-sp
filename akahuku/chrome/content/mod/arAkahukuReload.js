@@ -2014,11 +2014,13 @@ var arAkahukuReload = {
           ? "[\u540C\u671F] " // "[同期] "
           : "[\u7D9A\u304D\u3092\u8AAD\u3080] " // "[続きを読む] "
           ) + message;
-      arAkahukuUI.setStatusPanelText (statusText, "overLink");
+      var browser = arAkahukuWindow
+        .getBrowserForWindow (targetDocument.defaultView);
+      arAkahukuUI.setStatusPanelText (statusText, "overLink", browser);
       // permanent フラグとは関係無く全てのメッセージを時間でクリア
       targetDocument.defaultView
       .setTimeout (function () {
-        arAkahukuUI.clearStatusPanelText (statusText);
+        arAkahukuUI.clearStatusPanelText (statusText, browser);
       }, 5000);
     }
         

@@ -1943,6 +1943,7 @@ var arAkahukuThread = {
    *         対象のイベント
    */
   onTabMove : function (event) {
+    var document = event.currentTarget.document;
     if (arAkahukuThread.enableTabIcon
         && arAkahukuThread.enableTabIconSize) {
       /* タブのアイコンをサムネにする */
@@ -2528,14 +2529,7 @@ var arAkahukuThread = {
   showResPanel : function (targetDocument) {
     var frame, header, content, button, resizer, scroll, bar;
         
-    if (targetDocument) {
-      params = Akahuku.getDocumentParam (targetDocument);
-    }
-    else {
-      params = Akahuku.getFocusedDocumentParam ();
-      targetDocument = params.targetDocument;
-    }
-        
+    var params = Akahuku.getDocumentParam (targetDocument);
     if (!params) {
       return;
     }
@@ -2738,21 +2732,16 @@ var arAkahukuThread = {
             
     targetDocument.body.appendChild (frame);
   },
+  showResPanelForBrowser : function (targetBrowser) {
+    var targetDocument = targetBrowser.contentDocument;
+    arAkahukuThread.showResPanel (targetDocument);
+  },
     
   /**
    * レスパネルを閉じる
    */
   closeResPanel : function (targetDocument) {
-    var document_param;
-    if (targetDocument) {
-      document_param
-        = Akahuku.getDocumentParam (targetDocument);
-    }
-    else {
-      document_param
-        = Akahuku.getFocusedDocumentParam ();
-    }
-        
+    var document_param = Akahuku.getDocumentParam (targetDocument);
     if (!document_param || !document_param.respanel_param) {
       return;
     }
@@ -2767,6 +2756,10 @@ var arAkahukuThread = {
       param.destruct ();
       document_param.respanel_param = null;
     }
+  },
+  closeResPanelForBrowser : function (targetBrowser) {
+    var targetDocument = targetBrowser.contentDocument;
+    arAkahukuThread.closeResPanel (targetDocument);
   },
     
   /**

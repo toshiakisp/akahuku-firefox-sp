@@ -155,6 +155,7 @@ var arAkahukuTab = {
    */
   setContextMenu : function (event) {
     var menuitem;
+    var document = event.currentTarget.ownerDocument;
         
     menuitem
     = document.getElementById ("akahuku-menuitem-tab-sort-thread");

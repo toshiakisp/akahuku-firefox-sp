@@ -39,17 +39,6 @@ var arAkahukuP2P = {
   shortcutModifiersCtrl : false,    /* Boolean  ショートカットキーの Ctrl */
   shortcutModifiersMeta : false,    /* Boolean  ショートカットキーの Meta */
   shortcutModifiersShift : false,   /* Boolean  ショートカットキーの Shift */
-  
-  statusPlace : "statusbarpanel",   /* String  ステータス表示場所 */
-  nodeLabel : null,
-  sep0Label : null,
-  sendLabel : null,
-  sep1Label : null,
-  recvLabel : null,
-  sep2Label : null,
-  relayLabel : null,
-  sep3Label : null,
-  futabLabel : null,
     
   /**
    * 初期化処理
@@ -81,7 +70,8 @@ var arAkahukuP2P = {
           && arAkahukuP2P.shortcutModifiersCtrl == event.ctrlKey
           && arAkahukuP2P.shortcutModifiersMeta == event.metaKey
           && arAkahukuP2P.shortcutModifiersShift == event.shiftKey) {
-        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar");
+        var window = event.currentTarget;
+        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar", false, window);
         event.preventDefault ();
       }
     }
@@ -393,6 +383,8 @@ var arAkahukuP2P = {
    */
   setContextMenu : function (event) {
     var menuitem;
+    var document = event.currentTarget.ownerDocument;
+    var gContextMenu = document.defaultView.gContextMenu;
             
     var c = arAkahukuP2P.getContextMenuContentData (gContextMenu.target);
         
@@ -455,10 +447,9 @@ var arAkahukuP2P = {
   /**
    * P2P のキャッシュを削除する
    */
-  deleteCache : function (optTarget) {
+  deleteCache : function (target) {
     var isP2P = false;
     var src = "";
-    var target = optTarget || gContextMenu.target;
         
     if (target
         && target.nodeName.toLowerCase ()
@@ -477,6 +468,10 @@ var arAkahukuP2P = {
     }
 
     arAkahukuP2PService.utils.deleteCache (src);
+  },
+  onClickDeleteCache : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuP2P.deleteCache (window.gContextMenu.target);
   },
     
   /**
@@ -502,107 +497,16 @@ var arAkahukuP2P = {
       return;
     }
     
-    if (arAkahukuP2P.statusbarTimer != null) {
-      clearInterval (arAkahukuP2P.statusbarTimer);
-      arAkahukuP2P.statusbarTimer = null;
-    }
-        
-    var panel;
-    panel = document.getElementById ("akahuku-toolbarbutton-p2pstatus");
-    if (panel) {
-      arAkahukuP2P.statusPlace = "toolbarpanel";
-      
-      if (arAkahukuP2P.nodeLabel == null) {
-        var l;
-        
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-node");
-        arAkahukuP2P.nodeLabel = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-sep0");
-        arAkahukuP2P.sep0Label = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-send");
-        arAkahukuP2P.sendLabel = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-sep1");
-        arAkahukuP2P.sep1Label = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-recv");
-        arAkahukuP2P.recvLabel = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-sep2");
-        arAkahukuP2P.sep2Label = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-relay");
-        arAkahukuP2P.relayLabel = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-sep3");
-        arAkahukuP2P.sep3Label = l;
-        l = document.getElementById ("akahuku-toolbarpanel-p2p-futaba");
-        arAkahukuP2P.futabaLabel = l;
-      }
+
+    if (typeof window !== "undefined") {
+      arAkahukuP2P.updatePanelForWindow (window);
     }
     else {
-      arAkahukuP2P.statusPlace = "statusbarpanel";
-      arAkahukuP2P.nodeLabel = null;
-    }
-    
-    if (!panel) {
-      panel = document.getElementById ("akahuku-statusbarpanel-p2p");
-      
-      var l;
-        
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-node");
-      arAkahukuP2P.nodeLabel = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-sep0");
-      arAkahukuP2P.sep0Label = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-send");
-      arAkahukuP2P.sendLabel = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-sep1");
-      arAkahukuP2P.sep1Label = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-recv");
-      arAkahukuP2P.recvLabel = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-sep2");
-      arAkahukuP2P.sep2Label = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-relay");
-      arAkahukuP2P.relayLabel = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-sep3");
-      arAkahukuP2P.sep3Label = l;
-      l = document.getElementById ("akahuku-statusbarpanel-p2p-futaba");
-      arAkahukuP2P.futabaLabel = l;
-    }
-    
-    if (panel) {
-      if (Akahuku.enableAll
-          && arAkahukuP2P.enable
-          && (arAkahukuP2P.statusPlace == "toolbarpanel"
-              || arAkahukuP2P.enableStatusbar)) {
-        panel.hidden = false;
-      }
-      else {
-        panel.hidden = true;
-      }
-            
-      var text = panel.getAttribute ("tooltiptext");
-      if (text.indexOf (AkahukuVersion) == -1) {
-        panel.setAttribute ("tooltiptext",
-                            text + " " + AkahukuVersion);
-      }
-            
-      var node = panel.firstChild;
-      while (node) {
-        text = node.getAttribute ("tooltiptext");
-        if (text.indexOf (AkahukuVersion) == -1) {
-          node.setAttribute ("tooltiptext",
-                             text + " " + AkahukuVersion);
-        }
-        node = node.nextSibling;
-      }
+      arAkahukuWindow.forEachWindow (arAkahukuP2P.updatePanelForWindow);
     }
         
     if (Akahuku.enableAll && arAkahukuP2P.enable) {
       var noaccept, started, port;
-            
-      if (panel) {
-        arAkahukuP2P.statusbarTimer
-          = setInterval
-          (function () {
-            arAkahukuP2P.updateStatusbar ();
-          }, 1000);
-      }
             
       var status = servant.getStatus (true);
       if (status.match (/^([^,]*),([^,]*),([^,]*),/)) {
@@ -716,6 +620,139 @@ var arAkahukuP2P = {
       servant.stop ();
     }
   },
+
+  updatePanelForWindow : function (window) {
+    if (typeof window.arAkahukuP2P_statusbarTimer !== "undefined"
+        && window.arAkahukuP2P_statusbarTimer != null) {
+      window.clearInterval (window.arAkahukuP2P_statusbarTimer);
+      window.arAkahukuP2P_statusbarTimer = null;
+    }
+
+    var param = arAkahukuP2P.getStatusPanelParamForWindow (window);
+    if (!param.panel) {
+      return;
+    }
+
+    if (Akahuku.enableAll
+        && arAkahukuP2P.enable
+        && (param.statusPlace == "toolbarpanel"
+            || arAkahukuP2P.enableStatusbar)) {
+      param.panel.hidden = false;
+    }
+    else {
+      param.panel.hidden = true;
+    }
+
+    var text = param.panel.getAttribute ("tooltiptext");
+    if (text.indexOf (AkahukuVersion) == -1) {
+      param.panel.setAttribute
+        ("tooltiptext", text + " " + AkahukuVersion);
+    }
+
+    var node = param.panel.firstChild;
+    while (node) {
+      text = node.getAttribute ("tooltiptext");
+      if (text.indexOf (AkahukuVersion) == -1) {
+        node.setAttribute
+          ("tooltiptext", text + " " + AkahukuVersion);
+      }
+      node = node.nextSibling;
+    }
+
+    if (Akahuku.enableAll && arAkahukuP2P.enable) {
+      window.arAkahukuP2P_statusbarTimer
+        = window.setInterval
+        (function () {
+          arAkahukuP2P.updateStatusbar (param);
+        }, 1000);
+    }
+  },
+
+  /**
+   * Window別のパネル情報を取得する
+   * @param  Window targetWindow
+   *         対象の Chrome ウィンドウ
+   */
+  getStatusPanelParamForWindow : function (targetWindow) {
+    var doc = targetWindow.document;
+    var param = {
+      panel : null,
+      statusPlace : "toolbarpanel",
+      nodeLabel : null,
+      sep0Label : null,
+      sendLabel : null,
+      sep1Label : null,
+      recvLabel : null,
+      sep2Label : null,
+      relayLabel : null,
+      sep3Label : null,
+      futabLabel : null,
+      // properties for updateStatusbar
+      sendLast : -1,
+      recvLast : -1,
+      relayLast : -1,
+      futabaLast : -1,
+      sendLastTime : -1,
+      recvLastTime : -1,
+      relayLastTime : -1,
+      futabaLastTime : -1,
+      redLabel : false,
+      labelR : -1,
+      labelG : -1,
+      labelB : -1,
+    };
+    var l;
+
+    var panel = doc.getElementById ("akahuku-toolbarbutton-p2pstatus");
+    if (panel) {
+      param.panel = panel;
+      param.statusPlace = "toolbarpanel";
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-node");
+      param.nodeLabel = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-sep0");
+      param.sep0Label = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-send");
+      param.sendLabel = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-sep1");
+      param.sep1Label = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-recv");
+      param.recvLabel = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-sep2");
+      param.sep2Label = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-relay");
+      param.relayLabel = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-sep3");
+      param.sep3Label = l;
+      l = doc.getElementById ("akahuku-toolbarpanel-p2p-futaba");
+      param.futabaLabel = l;
+
+      return param;
+    }
+
+    param.statusPlace = "statusbarpanel";
+    panel = doc.getElementById ("akahuku-statusbarpanel-p2p");
+    param.panel = panel;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-node");
+    param.nodeLabel = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-sep0");
+    param.sep0Label = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-send");
+    param.sendLabel = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-sep1");
+    param.sep1Label = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-recv");
+    param.recvLabel = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-sep2");
+    param.sep2Label = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-relay");
+    param.relayLabel = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-sep3");
+    param.sep3Label = l;
+    l = doc.getElementById ("akahuku-statusbarpanel-p2p-futaba");
+    param.futabaLabel = l;
+
+    return param;
+  },
     
   /**
    * ノードリストを保存する
@@ -730,41 +767,28 @@ var arAkahukuP2P = {
     }
   },
     
-    
-  statusbarTimer : null, /* Number  ステータスバーを更新するタイマー ID */
-  sendLast : -1,
-  recvLast : -1,
-  relayLast : -1,
-  futabaLast : -1,
-  sendLastTime : -1,
-  recvLastTime : -1,
-  relayLastTime : -1,
-  futabaLastTime : -1,
-    
-  labelR : -1,
-  labelG : -1,
-  labelB : -1,
-  
-  redLabel : false,
-    
   /**
    * P2P ステータスバーを更新する
    */
-  updateStatusbar : function () {
+  updateStatusbar : function (param) {
     var servant = arAkahukuP2PService.servant;
     if (!servant) {
+      Akahuku.debug.warn ("P2P.updateStatusbar: no p2p servant available!")
       return;
     }
     
+    var document = param.panel.ownerDocument;
+    var window = document.defaultView;
     var panel = document.getElementById ("akahuku-toolbarbutton-p2pstatus");
-    if (panel && arAkahukuP2P.statusPlace == "statusbarpanel") {
-      arAkahukuP2P.nodeLabel = null;
-      arAkahukuP2P.update ();
+    if (panel && param.statusPlace == "statusbarpanel") {
+      Akahuku.debug.warn ("P2P.updateStatusbar: type mismatch for", panel);
+      arAkahukuP2P.updatePanelForWindow (window);
       return;
     }
         
-    if (arAkahukuP2P.nodeLabel == null) {
-      arAkahukuP2P.update ();
+    if (!param.nodeLabel) {
+      Akahuku.debug.warn ("P2P.updateStatusbar: no nodeLabel");
+      arAkahukuP2P.updatePanelForWindow (window);
       return;
     }
         
@@ -791,144 +815,96 @@ var arAkahukuP2P = {
             
     var now = (new Date ()).getTime ();
         
-    if (arAkahukuP2P.sendLast != sendSuccess) {
-      if (arAkahukuP2P.sendLast != -1) {
-        arAkahukuP2P.sendLastTime = now;
+    if (param.sendLast != sendSuccess) {
+      if (param.sendLast != -1) {
+        param.sendLastTime = now;
       }
-      arAkahukuP2P.sendLast = sendSuccess;
+      param.sendLast = sendSuccess;
     }
-    if (arAkahukuP2P.recvLast != recvSuccess) {
-      if (arAkahukuP2P.recvLast != -1) {
-        arAkahukuP2P.recvLastTime = now;
+    if (param.recvLast != recvSuccess) {
+      if (param.recvLast != -1) {
+        param.recvLastTime = now;
       }
-      arAkahukuP2P.recvLast = recvSuccess;
+      param.recvLast = recvSuccess;
     }
-    if (arAkahukuP2P.relayLast != relaySuccess) {
-      if (arAkahukuP2P.relayLast != -1) {
-        arAkahukuP2P.relayLastTime = now;
+    if (param.relayLast != relaySuccess) {
+      if (param.relayLast != -1) {
+        param.relayLastTime = now;
       }
-      arAkahukuP2P.relayLast = relaySuccess;
+      param.relayLast = relaySuccess;
     }
-    if (arAkahukuP2P.futabaLast != recvFail) {
-      if (arAkahukuP2P.futabaLast != -1) {
-        arAkahukuP2P.futabaLastTime = now;
+    if (param.futabaLast != recvFail) {
+      if (param.futabaLast != -1) {
+        param.futabaLastTime = now;
       }
-      arAkahukuP2P.futabaLast = recvFail;
+      param.futabaLast = recvFail;
     }
         
     var label;
     var diff, r, g, b;
     
+    var redLabelValue = "";
     if (nodeName == "offline") {
-      label = arAkahukuP2P.nodeLabel;
-      label.value = "\u30AA\u30D5\u30E9\u30A4\u30F3\u30E2\u30FC\u30C9\u3067\u3059";
-      label.style.color = "#ff0000";
-      arAkahukuP2P.redLabel = true;
-      label = arAkahukuP2P.sep0Label;
-      label.value = "";
-      label = arAkahukuP2P.sendLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep1Label;
-      label.value = "";
-      label = arAkahukuP2P.recvLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep2Label;
-      label.value = "";
-      label = arAkahukuP2P.relayLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep3Label;
-      label.value = "";
-      label = arAkahukuP2P.futabaLabel;
-      label.value = "";
-            
-      return;
+      redLabelValue = "\u30AA\u30D5\u30E9\u30A4\u30F3\u30E2\u30FC\u30C9\u3067\u3059";
     }
-    if (portCheckStatus == "fail") {
-      label = arAkahukuP2P.nodeLabel;
-      label.value = "\u30DD\u30FC\u30C8\u304C\u958B\u3044\u3066\u3044\u307E\u305B\u3093";
-      label.style.color = "#ff0000";
-      arAkahukuP2P.redLabel = true;
-      label = arAkahukuP2P.sep0Label;
-      label.value = "";
-      label = arAkahukuP2P.sendLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep1Label;
-      label.value = "";
-      label = arAkahukuP2P.recvLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep2Label;
-      label.value = "";
-      label = arAkahukuP2P.relayLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep3Label;
-      label.value = "";
-      label = arAkahukuP2P.futabaLabel;
-      label.value = "";
-            
-      return;
+    else if (portCheckStatus == "fail") {
+      redLabelValue = "\u30DD\u30FC\u30C8\u304C\u958B\u3044\u3066\u3044\u307E\u305B\u3093";
     }
-    if (arAkahukuP2P.illegalAddress) {
-      label = arAkahukuP2P.nodeLabel;
-      label.value = "\u81EA\u5206\u306E\u30A2\u30C9\u30EC\u30B9\u304C\u7121\u52B9\u3067\u3059";
-      label.style.color = "#ff0000";
-      arAkahukuP2P.redLabel = true;
-      label = arAkahukuP2P.sep0Label;
-      label.value = "";
-      label = arAkahukuP2P.sendLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep1Label;
-      label.value = "";
-      label = arAkahukuP2P.recvLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep2Label;
-      label.value = "";
-      label = arAkahukuP2P.relayLabel;
-      label.value = "";
-      label = arAkahukuP2P.sep3Label;
-      label.value = "";
-      label = arAkahukuP2P.futabaLabel;
-      label.value = "";
-            
+    else if (arAkahukuP2P.illegalAddress) {
+      redLabelValue = "\u81EA\u5206\u306E\u30A2\u30C9\u30EC\u30B9\u304C\u7121\u52B9\u3067\u3059";
+    }
+    if (redLabelValue) {
+      param.nodeLabel.value = redLabelValue;
+      param.nodeLabel.style.color = "#ff0000";
+      param.redLabel = true;
+      param.sep0Label.value = "";
+      param.sendLabel.value = "";
+      param.sep1Label.value = "";
+      param.recvLabel.value = "";
+      param.sep2Label.value = "";
+      param.relayLabel.value = "";
+      param.sep3Label.value = "";
+      param.futabaLabel.value = "";
       return;
     }
     
-    label = arAkahukuP2P.nodeLabel;
-    if (arAkahukuP2P.redLabel) {
-      arAkahukuP2P.redLabel = false;
+    label = param.nodeLabel;
+    if (param.redLabel) {
+      param.redLabel = false;
       label.style.color = "";
     };
     label.value = "\u63A5: " + aliveNode + "/" + namedNode;
         
-    label = arAkahukuP2P.sep0Label;
+    label = param.sep0Label;
     label.value = " / ";
     label.style.color = "#000000";
         
-    label = arAkahukuP2P.sendLabel;
-    if (arAkahukuP2P.labelR == -1) {
+    label = param.sendLabel;
+    if (param.labelR == -1) {
       var color = window.getComputedStyle (label, "color").color;
       if (color.match (/\( *([0-9]+) *, *([0-9]+) *, *([0-9]+) *\)/)) {
-        arAkahukuP2P.labelR = parseInt (RegExp.$1);
-        arAkahukuP2P.labelG = parseInt (RegExp.$2);
-        arAkahukuP2P.labelB = parseInt (RegExp.$3);
+        param.labelR = parseInt (RegExp.$1);
+        param.labelG = parseInt (RegExp.$2);
+        param.labelB = parseInt (RegExp.$3);
       }
       else {
-        arAkahukuP2P.labelR = 0;
-        arAkahukuP2P.labelG = 0;
-        arAkahukuP2P.labelB = 0;
+        param.labelR = 0;
+        param.labelG = 0;
+        param.labelB = 0;
       }
     }
         
     label.value = "\u653B: " + sendSuccess;
-    if (now < arAkahukuP2P.sendLastTime + 5000) {
-      diff = (arAkahukuP2P.sendLastTime + 5000 - now) / 5000;
-      r = arAkahukuP2P.labelR * (1 - diff);
-      g = 64 * diff + arAkahukuP2P.labelG * (1 - diff);
-      b = 238 * diff + arAkahukuP2P.labelB * (1 - diff);
+    if (now < param.sendLastTime + 5000) {
+      diff = (param.sendLastTime + 5000 - now) / 5000;
+      r = param.labelR * (1 - diff);
+      g = 64 * diff + param.labelG * (1 - diff);
+      b = 238 * diff + param.labelB * (1 - diff);
     }
     else {
-      r = arAkahukuP2P.labelR;
-      g = arAkahukuP2P.labelG;
-      b =  arAkahukuP2P.labelB;
+      r = param.labelR;
+      g = param.labelG;
+      b =  param.labelB;
     }
     label.style.color
     = "rgb("
@@ -936,21 +912,21 @@ var arAkahukuP2P = {
     + parseInt (g) + ","
     + parseInt (b) + ")";
 
-    label = arAkahukuP2P.sep1Label;
+    label = param.sep1Label;
     label.value = "/";
         
-    label = arAkahukuP2P.recvLabel;
+    label = param.recvLabel;
     label.value = "\u53D7: " + recvSuccess;
-    if (now < arAkahukuP2P.recvLastTime + 5000) {
-      diff = (arAkahukuP2P.recvLastTime + 5000 - now) / 5000;
-      r = arAkahukuP2P.labelR * (1 - diff);
-      g = 64 * diff + arAkahukuP2P.labelG * (1 - diff);
-      b = 238 * diff + arAkahukuP2P.labelB * (1 - diff);
+    if (now < param.recvLastTime + 5000) {
+      diff = (param.recvLastTime + 5000 - now) / 5000;
+      r = param.labelR * (1 - diff);
+      g = 64 * diff + param.labelG * (1 - diff);
+      b = 238 * diff + param.labelB * (1 - diff);
     }
     else {
-      r = arAkahukuP2P.labelR;
-      g = arAkahukuP2P.labelG;
-      b =  arAkahukuP2P.labelB;
+      r = param.labelR;
+      g = param.labelG;
+      b =  param.labelB;
     }
     label.style.color
     = "rgb("
@@ -958,21 +934,21 @@ var arAkahukuP2P = {
     + parseInt (g) + ","
     + parseInt (b) + ")";
 
-    label = arAkahukuP2P.sep2Label;
+    label = param.sep2Label;
     label.value = "/";
         
-    label = arAkahukuP2P.relayLabel;
+    label = param.relayLabel;
     label.value = "\u7D99: " + relaySuccess;
-    if (now < arAkahukuP2P.relayLastTime + 5000) {
-      diff = (arAkahukuP2P.relayLastTime + 5000 - now) / 5000;
-      r = arAkahukuP2P.labelR * (1 - diff);
-      g = 64 * diff + arAkahukuP2P.labelG * (1 - diff);
-      b = 238 * diff + arAkahukuP2P.labelB * (1 - diff);
+    if (now < param.relayLastTime + 5000) {
+      diff = (param.relayLastTime + 5000 - now) / 5000;
+      r = param.labelR * (1 - diff);
+      g = 64 * diff + param.labelG * (1 - diff);
+      b = 238 * diff + param.labelB * (1 - diff);
     }
     else {
-      r = arAkahukuP2P.labelR;
-      g = arAkahukuP2P.labelG;
-      b =  arAkahukuP2P.labelB;
+      r = param.labelR;
+      g = param.labelG;
+      b =  param.labelB;
     }
     label.style.color
     = "rgb("
@@ -980,21 +956,21 @@ var arAkahukuP2P = {
     + parseInt (g) + ","
     + parseInt (b) + ")";
 
-    label = arAkahukuP2P.sep3Label;
+    label = param.sep3Label;
     label.value = "/";
         
-    label = arAkahukuP2P.futabaLabel;
+    label = param.futabaLabel;
     label.value = "\u53CC: " + recvFail;
-    if (now < arAkahukuP2P.futabaLastTime + 5000) {
-      diff = (arAkahukuP2P.futabaLastTime + 5000 - now) / 5000;
-      r = arAkahukuP2P.labelR * (1 - diff);
-      g = 64 * diff + arAkahukuP2P.labelG * (1 - diff);
-      b = 238 * diff + arAkahukuP2P.labelB * (1 - diff);
+    if (now < param.futabaLastTime + 5000) {
+      diff = (param.futabaLastTime + 5000 - now) / 5000;
+      r = param.labelR * (1 - diff);
+      g = 64 * diff + param.labelG * (1 - diff);
+      b = 238 * diff + param.labelB * (1 - diff);
     }
     else {
-      r = arAkahukuP2P.labelR;
-      g = arAkahukuP2P.labelG;
-      b =  arAkahukuP2P.labelB;
+      r = param.labelR;
+      g = param.labelG;
+      b =  param.labelB;
     }
     label.style.color
     = "rgb("

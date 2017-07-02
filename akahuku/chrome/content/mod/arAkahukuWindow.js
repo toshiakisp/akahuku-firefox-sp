@@ -203,6 +203,24 @@ var arAkahukuWindow = {
     return parentWindow;
   },
 
+  getMostRecentWindow : function () {
+    return Components.classes ["@mozilla.org/appshell/window-mediator;1"]
+      .getService (Components.interfaces.nsIWindowMediator)
+      .getMostRecentWindow ("navigator:browser");
+  },
+
+  forEachWindow : function (callback) {
+    var entries
+      = Components.classes
+      ["@mozilla.org/appshell/window-mediator;1"]
+      .getService (Components.interfaces.nsIWindowMediator)
+      .getEnumerator ("navigator:browser");
+    while (entries.hasMoreElements ()) {
+      var window = entries.getNext ();
+      callback.apply (null, [window]);
+    }
+  },
+
   focusAkahukuTabByURI : function (uri, optWindow, optNoEnumerate) {
     var entries
       = Components.classes

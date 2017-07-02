@@ -292,10 +292,10 @@ arAkahukuIPC.defineProc
   (arAkahukuLink, "Link", "copyLink", {async: true, remote: true});
 arAkahukuIPC.defineProc
   (arAkahukuLink, "Link", "openAsAutoLink", {async: true, remote: true});
-arAkahukuLink.openLinkInXUL = function (href, to, focus, targetDocument, isPrivate) {
+arAkahukuLink.openLinkInXUL = function (href, to, focus, target, isPrivate) {
   arAkahukuIPC.sendAsyncCommand
-    ("Link/openLinkInXUL", [href, to, focus, targetDocument, isPrivate],
-     targetDocument.defaultView);
+    ("Link/openLinkInXUL", [href, to, focus, null, isPrivate],
+     target.defaultView);
 };
 
 
@@ -497,23 +497,44 @@ arAkahukuIPC.defineProc
 
 
 
-arAkahukuUI.setStatusPanelText = function () {
+arAkahukuUI.setStatusPanelText = function (text, type, browser) {
   arAkahukuIPC.sendSyncCommand
-    ("UI/setStatusPanelText", arguments);
+    ("UI/setStatusPanelText", [text, type],
+     browser.ownerGlobal);
 };
-arAkahukuUI.clearStatusPanelText = function () {
+arAkahukuUI.clearStatusPanelText = function (optText, browser) {
   arAkahukuIPC.sendSyncCommand
-    ("UI/clearStatusPanelText", arguments);
+    ("UI/clearStatusPanelText", [optText],
+     browser.ownerGlobal);
 };
-arAkahukuUI.getStatusPanelText = function () {
+arAkahukuUI.getStatusPanelText = function (browser) {
   return arAkahukuIPC.sendSyncCommand
-    ("UI/getStatusPanelText", []);
+    ("UI/getStatusPanelText", [],
+     browser.ownerGlobal);
 };
 arAkahukuUI.showPanel = function () {
   // no action need from content processes
 };
 arAkahukuUI.setPanelStatus = function () {
 };
+var arAkahukuUIIPCWrapper = {
+  addDocumentToExternalBoards : function () {
+    var targetDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuUI.addDocumentToExternalBoards (targetDocument);
+  },
+  applyDocument : function () {
+    var targetDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuUI.applyDocument (targetDocument);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuUIIPCWrapper,
+   "UI", "addDocumentToExternalBoards",
+   {async: true, callback: 0, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuUIIPCWrapper,
+   "UI", "applyDocument",
+   {async: true, callback: 0, remote: true});
 
 
 
@@ -540,7 +561,6 @@ arAkahukuWindow.focusTabForWindow = function (targetWindow) {
 Akahuku.getFocusedDocumentParam = function () {
   var focusedDocument
     = arAkahukuIPC.sendSyncCommand ("Akahuku/getFocusedDocument", []);
-  Akahuku.debug.log ("getFocusedDocumentParam", focusedDocument);
   return Akahuku.getDocumentParam (focusedDocument);
 };
 

@@ -337,6 +337,7 @@ var arAkahukuPostForm = {
    *         対象のイベント
    */
   onKeyDown : function (event) {
+    var document = event.currentTarget.document;
     if (arAkahukuPostForm.enableCommentboxShortcut) {
       if (arAkahukuPostForm.commentboxShortcutKeycode
           == event.keyCode
