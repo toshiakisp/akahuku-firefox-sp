@@ -227,7 +227,7 @@ arIPCProxyChild.prototype = {
  */
 function arIPCProxyAsyncChild (prototype, parentId, optTarget) {
   if (!parentId) {
-    throw CE ("arIPCProxyAsyncChild: parentId must be given";
+    throw CE ("arIPCProxyAsyncChild: parentId must be given");
   }
   var target = optTarget || {};
   target.parenetId = parentId;
