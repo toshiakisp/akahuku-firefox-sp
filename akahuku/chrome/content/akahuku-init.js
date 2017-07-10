@@ -131,14 +131,6 @@ else { // Boot as a classic XUL-overlay extension
   window.addEventListener
     ("unload", function () {Akahuku.onUnload ();}, false);
 
-  if (arAkahukuCompat.comparePlatformVersion ("1.7.*") <= 0) {
-    /* 古い Mozilla Suite では最初のイベントリスナが無視されるので 2 つ登録する */
-    window.addEventListener
-      ("load", function () {Akahuku.onLoad ();}, false);
-    window.addEventListener
-      ("unload", function () {Akahuku.onUnload ();}, false);
-  }
-
 }
 
 

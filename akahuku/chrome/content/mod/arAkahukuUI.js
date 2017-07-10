@@ -504,67 +504,6 @@ var arAkahukuUI = {
     if (panel) {
       panel.hidden = !arAkahukuUI.enableStatusbarPreferences;
     }
-        
-    var popup;
-    popup = document.getElementById ("akahuku-statusbar-popup");
-    if (!popup) {
-      /* Mozilla Suite では mainPopupSet が無いためオーバーレイできない */
-            
-      var mainWindow = document.getElementById ("main-window");
-      if (mainWindow) {
-        var targetDocument = mainWindow.ownerDocument;
-        var popupset = targetDocument.createElement ("popupset");
-                
-        var label, command;
-                
-        popup = targetDocument.createElement ("popup");
-        popup.id = "akahuku-statusbar-popup";
-        popup.setAttribute ("position", "after_start");
-        popup.addEventListener ("popupshowing",
-            arAkahukuUI.setStatusbarPopup, false);
-                
-        var menuitem;
-        var menuseparator;
-                
-        label = "\u5168\u6A5F\u80FD\u3092 ON";
-        menuitem = targetDocument.createElement ("menuitem");
-        menuitem.id = "akahuku-statusbar-popup-all";
-        menuitem.setAttribute ("label", label);
-        menuitem.addEventListener ("command",
-          arAkahukuUI.switchDisabled, false);
-        popup.appendChild (menuitem);
-                
-        label = "P2P \u3092 ON";
-        menuitem = targetDocument.createElement ("menuitem");
-        menuitem.id = "akahuku-statusbar-popup-p2p";
-        menuitem.setAttribute ("label", label);
-        menuitem.addEventListener ("command",
-          arAkahukuUI.switchP2PDisabled, false);
-        popup.appendChild (menuitem);
-                
-        label = "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON";
-        menuitem = targetDocument.createElement ("menuitem");
-        menuitem.id = "akahuku-statusbar-popup-p2p-statusbar";
-        menuitem.setAttribute ("label", label);
-        menuitem.addEventListener ("command",
-          arAkahukuUI.switchP2PStatusbarDisabled, false);
-        popup.appendChild (menuitem);
-                
-        menuseparator = targetDocument.createElement ("menuseparator");
-        menuseparator.id = "akahuku-menuitem-separator";
-        popup.appendChild (menuseparator);
-                
-        label = "\u30B5\u30A4\u30C8\u3092\u958B\u304F";
-        menuitem = targetDocument.createElement ("menuitem");
-        menuitem.setAttribute ("label", label);
-        menuitem.addEventListener ("command", arAkahukuUI.openWebsite);
-        popup.appendChild (menuitem);
-                
-        popupset.appendChild (popup);
-                
-        mainWindow.appendChild (popupset);
-      }
-    }
   },
     
   /**

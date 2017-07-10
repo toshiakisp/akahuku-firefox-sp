@@ -199,29 +199,6 @@ var arAkahukuImage = {
    * 初期化処理
    */
   initForXUL : function () {
-    var popup;
-    popup = document.getElementById ("akahuku-saveimage-popup");
-    if (!popup) {
-      /* Mozilla Suite では mainPopupSet が無いためオーバーレイできない */
-            
-      var mainWindow = document.getElementById ("main-window");
-      if (mainWindow) {
-        var targetDocument = mainWindow.ownerDocument;
-        var popupset = targetDocument.createElement ("popupset");
-                
-        var label, command;
-                
-        popup = targetDocument.createElement ("popup");
-        popup.id = "akahuku-saveimage-popup";
-        popup.setAttribute ("position", "after_start");
-        popup.addEventListener
-          ("popupshowing", arAkahukuImage.setPopup, false);
-                
-        popupset.appendChild (popup);
-                
-        mainWindow.appendChild (popupset);
-      }
-    }
   },
     
   /**
