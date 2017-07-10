@@ -215,15 +215,40 @@ arAkahukuSidebarBoard.prototype = {
  */
 function arAkahukuSidebarParam (win) {
   this.targetWindow = win;
+  this.ID = this.getWindowID (win);
   this.boards = {};
+  // XULDocument  現在対象のサイドバーのドキュメント
+  this.currentSidebarDocument = null;
 }
+arAkahukuSidebarParam.prototype = {
+  getWindowID : function (win) {
+    var id = -1;
+    try {
+      var id = win
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIDOMWindowUtils)
+        .outerWindowID;
+      if (typeof id == "undefined") {// before Fx4
+        id = -1;
+      }
+    }
+    catch (e) {
+      Akahuku.debug.exception (e);
+    }
+    return id;
+  },
+  isTarget : function (win) {
+    if (this.ID > 0) {
+      return this.ID == this.getWindowID (win);
+    }
+    return this.targetWindow == win;
+  },
+};
 /**
  * サイドバー管理
  *   [サイドバー]
  */
 var arAkahukuSidebar = {
-  currentSidebarDocument : null, /* XULDocument  現在対象のサイドバーの
-                                  *   ドキュメント */
   enable : false,             /* Boolean  サイドバーを使用する */
   enableBackground : false,   /* Boolean  非表示の間も反映させる */
   enableCheckNormal : true,   /* Boolean  通常 (モードをチェックする) */
@@ -262,6 +287,7 @@ var arAkahukuSidebar = {
   shortcutModifiersShift : false,   /* Boolean  ショートカットキーの Shift */
 
   params : [],
+  lastSidebarParam : null,
 
   addSidebarParam : function (chromeWindow) {
     if (arAkahukuSidebar.getSidebarParam (chromeWindow)) {
@@ -271,10 +297,15 @@ var arAkahukuSidebar = {
     var param = new arAkahukuSidebarParam (chromeWindow);
     arAkahukuSidebar.initSidebarParam (param);
     arAkahukuSidebar.params.push (param);
+    arAkahukuSidebar.lastSidebarParam = param;
   },
   deleteSidebarParam : function (chromeWindow) {
+    if (arAkahukuSidebar.lastSidebarParam
+        && arAkahukuSidebar.lastSidebarParam.isTarget (chromeWindow)) {
+      arAkahukuSidebar.lastSidebarParam = null;
+    }
     for (var i = 0; i < arAkahukuSidebar.params.length; i ++) {
-      if (arAkahukuSidebar.params [i].targetWindow == chromeWindow) {
+      if (arAkahukuSidebar.params [i].isTarget (chromeWindow)) {
         var tmp = arAkahukuSidebar.params [i];
         arAkahukuSidebar.params.splice (i, 1);
         arAkahukuSidebar.termSidebarParam (tmp);
@@ -285,13 +316,17 @@ var arAkahukuSidebar = {
     }
   },
   getSidebarParam : function (chromeWindow) {
+    if (arAkahukuSidebar.lastSidebarParam
+        && arAkahukuSidebar.lastSidebarParam.isTarget (chromeWindow)) {
+      return arAkahukuSidebar.lastSidebarParam;
+    }
     for (var i = 0; i < arAkahukuSidebar.params.length; i ++) {
-      if (arAkahukuSidebar.params [i].targetWindow == chromeWindow) {
-        return arAkahukuSidebar.params [i];
+      if (arAkahukuSidebar.params [i].isTarget (chromeWindow)) {
+        var param = arAkahukuSidebar.params [i];
+        arAkahukuSidebar.lastSidebarParam = param;
+        return param;
       }
     }
-    Akahuku.debug.warn ("no SidebarParam for " + chromeWindow,
-        "(params.length =", arAkahukuSidebar.params.length, ")");
     return null;
   },
     
@@ -628,7 +663,10 @@ var arAkahukuSidebar = {
       sidebarDocument = sidebar.contentDocument;
     }
     catch (e) {
-      sidebarDocument = arAkahukuSidebar.currentSidebarDocument;
+      var param = arAkahukuSidebar.getSidebarParam (chromeWindow);
+      if (param) {
+        sidebarDocument = param.currentSidebarDocument;
+      }
     }
     return sidebarDocument;
   },
@@ -1890,7 +1928,7 @@ var arAkahukuSidebar = {
     // for all attached windows
     for (var i = 0; i < arAkahukuSidebar.params.length; i ++) {
       var param = arAkahukuSidebar.params [i];
-      arAkahukuSidebar.updateSidebarFor (param.targetWindow);
+      arAkahukuSidebar.updateSidebarFor (param);
     }
   },
   updateSidebarFor : function (param) {
@@ -2664,15 +2702,15 @@ var arAkahukuSidebar = {
     if (!arAkahukuSidebar.enable) {
       return;
     }
-    // 複数は開けない
-    if (arAkahukuSidebar.currentSidebarDocument) {
-      return;
-    }
-    arAkahukuSidebar.currentSidebarDocument = sidebarDocument;
     var chromeWindow
       = arAkahukuWindow.getParentWindowInChrome
         (sidebarDocument.defaultView);
     var param = arAkahukuSidebar.getSidebarParam (chromeWindow);
+    // 複数は開けない
+    if (param.currentSidebarDocument) {
+      return;
+    }
+    param.currentSidebarDocument = sidebarDocument;
         
     var container
     = sidebarDocument.getElementById ("akahuku_sidebar_tabcontainer");
@@ -3115,14 +3153,14 @@ var arAkahukuSidebar = {
    *         サイドバーのドキュメント
    */
   onSidebarUnload : function (sidebarDocument) {
-    if (arAkahukuSidebar.currentSidebarDocument != sidebarDocument) {
-      return;
-    }
-    arAkahukuSidebar.currentSidebarDocument = null;
     var chromeWindow
       = arAkahukuWindow.getParentWindowInChrome
         (sidebarDocument.defaultView);
     var param = arAkahukuSidebar.getSidebarParam (chromeWindow);
+    if (param.currentSidebarDocument != sidebarDocument) {
+      return;
+    }
+    param.currentSidebarDocument = null;
 
     // スレッド・板情報からの DOM 参照を切断
     for (var name in param.boards) {
@@ -3405,7 +3443,7 @@ var arAkahukuSidebar = {
    * @param XULElement browser
    */
   hasTabForBoard : function (name, browser) {
-    var win = browser.ownerDocument.defaultView;
+    var win = arAkahukuWindow.getChromeWindowForBrowser (browser);
     var sidebarDocument = arAkahukuSidebar.getSidebarDocument (null, win);
     if (!sidebarDocument) {
       return false;
