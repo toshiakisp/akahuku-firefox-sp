@@ -416,9 +416,11 @@ arAkahukuProtocolHandler.prototype = {
   _createThreadCacheDOMFileChannel : function (uri, path, loadInfo) {
     try {
       Cu.importGlobalProperties (["File"]);
+      var file;
       if (typeof File.createFromFileName !== "undefined") {
         // Firefox 52.0+ (Bug 1303518)
         file = File.createFromFileName (path);
+        // file is a Promise in Firefox 54.0+
       }
       else {
         file = new File (path);

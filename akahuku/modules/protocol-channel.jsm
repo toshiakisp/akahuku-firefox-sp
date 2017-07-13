@@ -1582,18 +1582,33 @@ arAkahukuAsyncRedirectVerifyHelper.Event.prototype = {
  * ファイル読み込みチャンネル
  * (require Gecko 8.0: new File)
  * [e10s] File と FileReader はコンテントプロセスでも使える
+ * という時期もあったが Fx54.0 以降？はリジェクトされる
+ * (dom.file.createInChild=trueはテスト用)
  */
 function arAkahukuDOMFileChannel (uri, file, loadInfo) {
   Cu.importGlobalProperties (["File"]);
+  this._domFilePending = false;
   if (file instanceof File) {
     this._domFile = file;
+  }
+  else if (typeof file.then == "function") {
+    // file may be a promise that will be resolved into a file
+    this._expectPromiseToFile (file);
   }
   else {
     // assuming file instanceof Ci.nsIFile
     try {
       if (typeof File.createFromNsIFile !== "undefined") {
-        // Firefix 52.0+
-        this._domFile = File.createFromNsIFile (file);
+        // Firefox 52.0+
+        var promise = File.createFromNsIFile (file);
+        if (promise instanceof File) {
+          // Firefix 52.0-53.0
+          this._domFile = promise;
+        }
+        else {
+          // Firefox 54.0+
+          this._expectPromiseToFile (promise);
+        }
       }
       else {
         this._domFile = new File (file); // Firefix 8.0-51.0
@@ -1672,6 +1687,11 @@ arAkahukuDOMFileChannel.prototype = {
         ("arAkahukuDOMFileChannel is already opened",
          Cr.NS_ERROR_ALREADY_OPENED, Components.stack.caller);
     }
+    if (!this._domFilePending && !this._domFile) {
+      throw Components.Exception
+        ("arAkahukuDOMFileChannel is not initialized properly",
+         Cr.NS_ERROR_DOM_INVALID_STATE_ERR, Components.stack.caller);
+    }
     this._listener = listener;
     this._context = context;
 
@@ -1691,7 +1711,9 @@ arAkahukuDOMFileChannel.prototype = {
         channel._onReaderError (event);
       };
     })(this);
-    reader.readAsArrayBuffer (this._domFile);
+    if (!this._domFilePending) {
+      reader.readAsArrayBuffer (this._domFile);
+    }
     this._reader = reader;
     this._isPending = true;
     this._isOpened = true;
@@ -1735,7 +1757,6 @@ arAkahukuDOMFileChannel.prototype = {
     }
   },
   _onReaderError : function (event) {
-    this.status = Cr.NS_BINDING_FAILED;
     if (event.target.error.name) { // DOMError (Gecko 13.0)
       Cu.reportError ("arAkahukuDOMFileChannel: FileReader.onerror => "
           + event.target.error.name);
@@ -1744,6 +1765,10 @@ arAkahukuDOMFileChannel.prototype = {
       Cu.reportError ("arAkahukuDOMFileChannel: FileReader.onerror => "
           + "error.code = " + event.target.error.code);
     }
+    this._onError (Cr.NS_BINDING_FAILED);
+  },
+  _onError : function (status) {
+    this.status = status;
     try {
       if (!this._isStarted) {
         this._listener.onStartRequest (this, this._context);
@@ -1758,6 +1783,26 @@ arAkahukuDOMFileChannel.prototype = {
     if (this.loadGroup) {
       this.loadGroup.removeRequest (this, null, this.status);
     }
+  },
+  _expectPromiseToFile : function (promise) {
+    this._domFilePending = true;
+    var that = this;
+    promise.then (function (file) {
+      that._domFilePending = false;
+      if (!(file instanceof File)) {
+        Cu.reportError ("arAkahukuDOMFileChannel: must be a File, but " + file);
+        that._onError (Cr.NS_ERROR_UNEXPECTED);
+        return;
+      }
+      that._domFile = file;
+      if (that._isPending) { // asyncOpen has been called
+        that._reader.readAsArrayBuffer (that._domFile);
+      }
+    }, function (reason) {
+      Cu.reportError ("arAkahukuDOMFileChannel: promise is rejected; " + reason);
+      that._domFilePending = false;
+      that._onError (reason.result || Cr.NS_ERROR_UNEXPECTED);
+    });
   },
 };
 
