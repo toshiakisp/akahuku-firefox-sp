@@ -2,6 +2,7 @@
 /**
  * Akahuku Inter-Process Comunication manager
  */
+/* global Components, Promise */
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -145,6 +146,7 @@ function AkahukuIPCPayload (message) {
 function AkahukuIPCSendingRequest () {
   this.name = null;
   this.callback = null;
+  this.promise = null;
   this.definition = {};
   this.transferableArguments = null;
   this.transferableObjects = null;
@@ -169,6 +171,18 @@ AkahukuIPCSendingRequest.prototype = {
       args [entry.def.callback - 1] = null; // omit from transferables
       this.callback = new AkahukuIPCCallbackListener (entry, callback);
       this.callback.init (optContentWindow);
+    }
+    else if (entry.def.promise) {
+      var that = this;
+      this.promise = new Promise (function (resolve, reject) {
+        // special callback object for "promise" type
+        var callback = {
+          onFulfilled : function (value) { resolve (value); },
+          onRejected : function (reason) { reject (reason); },
+        };
+        that.callback = new AkahukuIPCCallbackListener (entry, callback);
+        that.callback.init (optContentWindow);
+      });
     }
 
     this.transferableArguments = args;
@@ -212,6 +226,7 @@ function AkahukuIPCReceivedRequest (message) {
   this.transferableSerializedArguments = null;
   this.transferableObjects = null;
   this.argumentsToCall = null;
+  this.promiseHandler = null;
   this.messageManager = null;
   if (message) {
     if ("sendAsyncMessage" in message.target) {
@@ -256,7 +271,7 @@ AkahukuIPCReceivedRequest.prototype = {
       return str;
     }
 
-    if (payload.data.responseId && payload.data.callback > 0) {
+    if (payload.data.responseId) {
       this.callback = payload.data.responseId;
       this.callbackAddress = payload.data.callback;
     }
@@ -264,12 +279,25 @@ AkahukuIPCReceivedRequest.prototype = {
   setDefinition : function (def)
   {
     // def.callback == this.callbackAddress
-    if (def.callback > 0) {
+    if (def.callback > 0 || def.promise) {
       var responseId = this.callback;
       this.response = new AkahukuIPCCallbackSender
         (def, responseId, this.messageManager);
-      this.argumentsToCall [this.callbackAddress-1]
-        = this.response.callback;
+      if (this.callbackAddress > 0) {
+        this.argumentsToCall [this.callbackAddress-1]
+          = this.response.callback;
+      }
+    }
+    if (def.promise) {
+      var callback = this.response.callback;
+      this.promiseHandler = {
+        onFulfilled : function (value) {
+          callback.onFulfilled (value);
+        },
+        onRejected : function (reason) {
+          callback.onRejected (reason);
+        },
+      };
     }
   },
 
@@ -661,6 +689,7 @@ AkahukuIPC.prototype = {
       callback: 0,
       callbackType: "function",
       callbackMethod: "",
+      promise: false, // async command returns a promise (instead of callback)
     };
     if (optSettings) {
       if ("debug" in optSettings && optSettings.debug) {
@@ -682,6 +711,13 @@ AkahukuIPC.prototype = {
       if ("remote" in optSettings && optSettings.remote) {
         command_def.remote = true;
         // FIXME frame とは排他？
+      }
+      if ("promise" in optSettings && optSettings.promise) {
+        command_def.promise = true;
+        // "promise" type is implemented as a special object-type callback
+        command_def.callback = 0;
+        command_def.callbackType = "object";
+        command_def.callbackMethod = ["onFulfilled", "onRejected"];
       }
     }
     this._procedures [moduleName] [commandName] = command_def;
@@ -856,7 +892,11 @@ AkahukuIPC.prototype = {
     } catch (e) {this.console.log (e);}
     try {
       var func = entry.module [entry.command];
-      func.apply (entry.module, request.argumentsToCall);
+      var ret = func.apply (entry.module, request.argumentsToCall);
+      if (entry.def.promise) {
+        ret.then (request.promiseHandler.onFulfilled,
+            request.promiseHandler.onRejected);
+      }
     }
     catch (e) {
       this.console.exception (e);
@@ -1052,8 +1092,9 @@ AkahukuIPC.prototype = {
     }
     if (entry.def.remote) {
       if (optBroadcast) {
-        if (!(this.isRoot && entry.def.async && entry.def.callback == 0
-          && !optTarget && !optContentWindow)) {
+        if (!(this.isRoot && entry.def.async
+              && entry.def.callback == 0 && !entry.def.promise
+              && !optTarget && !optContentWindow)) {
           throw Components.Exception
             ("AkahukuIPC: invalid arguments for broadcasting; " + command,
              Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
@@ -1096,6 +1137,10 @@ AkahukuIPC.prototype = {
         .getService (Ci.nsIMessageBroadcaster);
       ms.broadcastAsyncMessage (this.messageCallChild, payload.data, payload.objects);
     }
+    if (entry.def.promise) {
+      return request.promise;
+    }
+    return undefined;
   },
   sendAsyncCommandToFrame : function (command, args, targetFrame)
   {
