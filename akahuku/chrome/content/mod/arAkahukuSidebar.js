@@ -411,6 +411,10 @@ var arAkahukuSidebar = {
   },
 
   initForXUL : function () {
+    this.attachToWindow (window);// eslint-disable-line no-undef
+  },
+  attachToWindow : function (window)
+  {
     var doc = window.document;
     var mainbc = doc.getElementById ("mainBroadcasterSet");
     if (mainbc) {
@@ -464,6 +468,23 @@ var arAkahukuSidebar = {
     arAkahukuSidebar.addSidebarParam (window);
     window.addEventListener
     ("keydown", arAkahukuSidebar.onKeyDown, true);
+  },
+  dettachFromWindow : function (window) {
+    arAkahukuSidebar.deleteSidebarParam (window);
+    window.removeEventListener
+    ("keydown", arAkahukuSidebar.onKeyDown, true);
+
+    var ids = [
+      "viewAkahukuP2PSidebar-menuitem",
+      "viewAkahukuSidebar-menuitem",
+      "viewAkahukuP2PSidebar",
+      "viewAkahukuSidebar"];
+    for (var i = 0; i < ids.length; i ++) {
+      var elem = document.getElementById (ids [i]);
+      if (elem) {
+        elem.parentNode.removeChild (elem);
+      }
+    }
   },
 
   /**

@@ -38,9 +38,14 @@ var arAkahukuTab = {
    * 初期化処理
    */
   initForXUL : function () {
+    this.attachToWindow (window); // eslint-disable-line no-undef
     var {AkahukuContextMenus}
     = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
     this.initContextMenus (AkahukuContextMenus);
+  },
+  attachToWindow : function (window) {
+    var document = window.document;
+
     var tabbrowser = document.getElementById ("content");
     var tabMenu
     = document.getAnonymousElementByAttribute (tabbrowser,
@@ -55,6 +60,31 @@ var arAkahukuTab = {
     if (tabMenu) {
       tabMenu.addEventListener
         ("popupshowing", arAkahukuTab.setContextMenu , false);
+    }
+  },
+  dettachFromWindow : function (window) {
+    // remove event listener and menu items
+    var document = window.document;
+    var tabbrowser = document.getElementById ("content");
+    var tabMenu
+    = document.getAnonymousElementByAttribute (tabbrowser,
+                                               "anonid", "tabContextMenu");
+    tabMenu = tabMenu || document.getElementById ("tabContextMenu");
+
+    if (tabMenu) {
+      tabMenu.removeEventListener
+        ("popupshowing", arAkahukuTab.setContextMenu , false);
+      var ids = [
+        "akahuku-menuitem-tab-sort-all",
+        "akahuku-menuitem-tab-sort-all",
+        "akahuku-menuitem-tab-sort-thread",
+        "akahuku-menuitem-tab-sort-separator"];
+      for (var i = 0; i < ids.length; i ++) {
+        var elem = document.getElementById (ids [i]);
+        if (elem) {
+          elem.parentNode.removeChild (elem);
+        }
+      }
     }
   },
 

@@ -31,7 +31,11 @@ var arAkahukuUI = {
    * 初期化処理
    */
   initForXUL : function () {
+    this.attachToWindow (window);// eslint-disable-line no-undef
+  },
+  attachToWindow : function (window) {
     arAkahukuUI.managedWindows.push (window);
+    var document = window.document;
 
     // Construct popup menus for toolbar button action
     var {AkahukuContextMenus}
@@ -245,10 +249,29 @@ var arAkahukuUI = {
       }
     }
         
-    window.setTimeout
-    (function (win) {arAkahukuUI.modifyLocationbar (win)},
-     1000, window);
+    window.arAkahukuUI_modifyLocationbarTimerID
+      = window.setTimeout (function (win) {
+        arAkahukuUI.modifyLocationbar (win)
+      }, 1000, window);
   },
+  dettachFromWindow : function (window) {
+    var menu = window.document.getElementById ("contentAreaContextMenu");
+    if (menu) {
+      menu.removeEventListener
+        ("popupshowing", arAkahukuUI.setContextMenu, false);
+      menu.removeEventListener
+        ("popupshown", arAkahukuUI.onContextMenuShown, false);
+      menu.removeEventListener
+        ("popuphidden", arAkahukuUI.onContextMenuHidden, false);
+    }
+
+    //TODO: remove XUL elements created for bootstrap.js
+
+    window.clearTimeout (window.arAkahukuUI_modifyLocationbarTimerID);
+    delete window.arAkahukuUI_modifyLocationbarTimerID;
+    arAkahukuUI.modifyLocationbar (window, true);//to remove
+    arAkahukuUI.managedWindows.splice
+      (arAkahukuUI.managedWindows.indexOf (window), 1);
   },
     
   createXULToolbarButton : function (document, prop) {
@@ -336,7 +359,8 @@ var arAkahukuUI = {
   /**
    * ロケーションバーのメニューに P2P の [元のアドレスをコピー] を追加する
    */
-  modifyLocationbar : function () {
+  modifyLocationbar : function (window, doRemove) {
+    var document = window.document;
     var urlbar = document.getElementById ("urlbar");
     var nodes, nodes2;
     var nodes2;
@@ -380,7 +404,7 @@ var arAkahukuUI = {
       }
     }
         
-    if (menu) {
+    if (menu && !doRemove) {
       node = menu.firstChild;
       while (node) {
         if (node.getAttribute ("cmd") == "cmd_copy") {
@@ -400,10 +424,15 @@ var arAkahukuUI = {
         node = node.nextSibling;
       }
       menu.addEventListener
-      ("popupshowing", 
-       function () {
-        arAkahukuUI.setURLBarMenu (arguments [0]);
-      }, false);
+      ("popupshowing", arAkahukuUI.setURLBarMenu, false);
+    }
+    if (menu && doRemove) {
+      menu.removeEventListener
+      ("popupshowing", arAkahukuUI.setURLBarMenu, false);
+      var menuitem = document.getElementById ("akahuku-urlbar-copy-p2p-address");
+      if (menuitem) {
+        menuitem.parentNode.removeChild (menuitem);
+      }
     }
   },
     

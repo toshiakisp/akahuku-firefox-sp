@@ -199,6 +199,10 @@ var arAkahukuImage = {
    * 初期化処理
    */
   initForXUL : function () {
+    this.attachToWindow (window);// eslint-disable-line no-undef
+  },
+  attachToWindow : function (window) {
+    var document = window.document;
     var {AkahukuContextMenus}
     = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
     AkahukuContextMenus.create ({
@@ -207,6 +211,8 @@ var arAkahukuImage = {
       title: "akahuku-saveimage-popup",
       _onshowing: arAkahukuImage.setPopup,
     });
+  },
+  dettachFromWindow : function (window) {
   },
 
   initContextMenus : function (contextMenus) {

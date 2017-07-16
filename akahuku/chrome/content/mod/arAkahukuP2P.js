@@ -47,15 +47,17 @@ var arAkahukuP2P = {
     Components.utils.import ("resource://akahuku/p2p-service.jsm");
   },
   initForXUL : function () {
+    this.attachToWindow (window); // eslint-disable-line no-undef
     var {AkahukuContextMenus}
     = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
     this.initContextMenus (AkahukuContextMenus);
+  },
+  attachToWindow : function (window) {
     arAkahukuP2P.update ();
-    window.addEventListener
-    ("keydown",
-     function () {
-      arAkahukuP2P.onKeyDown (arguments [0]);
-    }, true);
+    window.addEventListener ("keydown", arAkahukuP2P.onKeyDown, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener ("keydown", arAkahukuP2P.onKeyDown, true);
   },
 
   term : function () {

@@ -20,11 +20,15 @@ var arAkahukuBloomer = {
    * 初期化処理
    */
   initForXUL : function () {
+    this.attachToWindow (window); // eslint-disable-line no-undef
+  },
+  attachToWindow : function (window) {
     window.addEventListener
-    ("keydown",
-     function () {
-      arAkahukuBloomer.onKeyDown (arguments [0]);
-    }, true);
+    ("keydown", arAkahukuBloomer.onKeyDown, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener
+    ("keydown", arAkahukuBloomer.onKeyDown, true);
   },
     
   /**

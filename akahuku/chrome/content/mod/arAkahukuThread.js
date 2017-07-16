@@ -250,12 +250,16 @@ var arAkahukuThread = {
    * 初期化処理
    */
   initForXUL : function () {
+    this.attachToWindow (window); //eslint-disable-line no-undef
+  },
+  attachToWindow : function (window) {
     /* タブの移動のイベントを監視 */
     window.addEventListener
-    ("TabMove",
-     function () {
-      arAkahukuThread.onTabMove (arguments [0]);
-    }, true);
+    ("TabMove", arAkahukuThread.onTabMove, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener
+    ("TabMove", arAkahukuThread.onTabMove, true);
   },
 
   /**

@@ -284,11 +284,15 @@ var arAkahukuPostForm = {
    * 初期化処理
    */
   initForXUL : function () {
+    this.attachToWindow (window);// eslint-disable-line no-undef
+  },
+  attachToWindow : function (window) {
     window.addEventListener
-    ("keydown",
-     function () {
-      arAkahukuPostForm.onKeyDown (arguments [0]);
-    }, true);
+    ("keydown", arAkahukuPostForm.onKeyDown, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener
+    ("keydown", arAkahukuPostForm.onKeyDown, true);
   },
     
   /**
