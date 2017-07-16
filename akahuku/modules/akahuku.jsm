@@ -103,6 +103,9 @@ load ("akahuku.js");
 
 load ("mod/arAkahukuCache.js");
 
+const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
+var arAkahukuIPC, arAkahukuIPCRoot;
+
 /**
  * startup jsm module
  */
@@ -126,9 +129,10 @@ Akahuku.startup = function () {
   // Prepare IPC staff (some XPCOM modules depends it)
   if (arAkahukuCompat.comparePlatformVersion ("37.*") > 0) { //38 or newer
     // Prepare IPC (MessageManager may be usable since Firefox 38)
-    Cu.import ("resource://akahuku/ipc.jsm", global);
-
-    if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
+    var ipc = AkahukuIPCManager.createRoot ("main");
+    arAkahukuIPC = ipc.child;
+    arAkahukuIPCRoot = ipc.root;
+    if (arAkahukuIPCRoot) {
       console.log ("startup: starting IPC Root")
       arAkahukuIPCRoot.init ();
       arAkahukuIPCRoot.initSubScriptScope (global);
@@ -260,13 +264,7 @@ Akahuku.shutdown = function () {
   unload ("resource://akahuku/XPCOM.jsm");
 
   if (arAkahukuCompat.comparePlatformVersion ("37.*") > 0) { //38 or newer
-    if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
-      arAkahukuIPC.term ();
-      arAkahukuIPCRoot.term ();
-    }
-    else { // child process
-      arAkahukuIPC.term ();
-    }
+    AkahukuIPCManager.termAll ();
     unload ("resource://akahuku/ipc.jsm");
   }
 

@@ -15,6 +15,16 @@ try {
 catch (e) {
 }
 
+try {
+  const {AkahukuIPCManager}
+  = Components.utils.import ("resource://akahuku/ipc.jsm", {});
+  var ipc = AkahukuIPCManager.createRoot ("main");
+  var arAkahukuIPCRoot = ipc.root;
+  var arAkahukuIPC = ipc.child;
+}
+catch (e) {
+  Components.utils.reportError (e);
+}
 
 if (Akahuku.useFrameScript) {
   // Boot as an e10s-ready extension by building extension modules
@@ -34,7 +44,6 @@ if (Akahuku.useFrameScript) {
   Akahuku.debug.prefix = "Akahuku debug(xul#main)";
 
   // Start Local inter-Process Call service in the main process
-  Components.utils.import ("resource://akahuku/ipc.jsm", this);
   arAkahukuIPCRoot.init ();
   // Prepare P2PServant IPC parent
   Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
@@ -71,7 +80,6 @@ else { // Boot as a classic XUL-overlay extension
     // Prepare IPC for compatiblility of akahuku.jsm in classic XUL mode
     // (ipc message manager may be usable since Firefox 38)
     try {
-      Components.utils.import ("resource://akahuku/ipc.jsm", this);
       arAkahukuIPCRoot.init ();
       arAkahukuIPCRoot.initSubScriptScope (this);
       arAkahukuIPCRoot.loadSubScript

@@ -92,7 +92,10 @@ function lazyGetter () {
       .getService (Ci.arIAkahukuP2PServant2);
   }
   if (isE10sReady) {
-    Cu.import ("resource://akahuku/ipc.jsm");
+    const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
+    var ipc = AkahukuIPCManager.createRoot ("main");
+    var arAkahukuIPCRoot = ipc.root;
+    var arAkahukuIPC = ipc.child;
 
     if (inMainProcess) {
       // chrome process (servant is available)
@@ -287,6 +290,9 @@ arAkahukuP2PService.utils = {
         file = fph.getFileFromURLSpec (targetFileURL);
       }
       else {
+        const {AkahukuIPCManager}
+          = Cu.import ("resource://akahuku/ipc.jsm", {});
+        var arAkahukuIPC = AkahukuIPCManager.getChild ("main");
         file = arAkahukuIPC.sendSyncCommand
           ("File/getFileFromURLSpec", [targetFileURL]);
       }

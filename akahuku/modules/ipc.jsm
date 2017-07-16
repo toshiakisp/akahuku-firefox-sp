@@ -10,8 +10,7 @@ const Cu = Components.utils;
 const Cr = Components.results;
 
 var EXPORTED_SYMBOLS = [
-  "arAkahukuIPC",
-  "arAkahukuIPCRoot",
+  "AkahukuIPCManager",
 ];
 
 Cu.import ("resource://akahuku/console.jsm");
@@ -590,6 +589,7 @@ function AkahukuIPC () {
 }
 AkahukuIPC.prototype = {
   messagePrefix : "akahuku.fx.sp@toshiakisp.github.io:IPC",
+  subKey : "",
   inMainProcess : false,
   isRoot : false,
   processID : -1,
@@ -611,16 +611,24 @@ AkahukuIPC.prototype = {
 
 
   get messageCall () { // 子プロセス->メインプロセス
-    return this.messagePrefix + "/Call";
+    return this.messagePrefix
+      + (this.subKey ? ":" + this.subKey : "")
+      + "/Call";
   },
   get messageResponse () { // メインプロセス->子プロセス(コールバック)
-    return this.messagePrefix + "/Response";
+    return this.messagePrefix
+      + (this.subKey ? ":" + this.subKey : "")
+      + "/Response";
   },
   get messageCallChild () { // メインプロセス->子プロセス (含broadcast)
-    return this.messagePrefix + "/CallChild";
+    return this.messagePrefix
+      + (this.subKey ? ":" + this.subKey : "")
+      + "/CallChild";
   },
   get messageDefine () { // 新コマンド追加
-    return this.messagePrefix + "/Define";
+    return this.messagePrefix
+      + (this.subKey ? ":" + this.subKey : "")
+      + "/Define";
   },
 
   /* _procedures : {
@@ -837,8 +845,9 @@ AkahukuIPC.prototype = {
         // in child node in the main processes
         return;
       }
-      var debugHeader = "AkahukuICP("
-        + (this.isRoot ? "root" : "child#" + this.processId) + "): ";
+      var debugHeader = "AkahukuICP"
+        + (this.subKey ? ":" + this.subKey : "")
+        + "(" + (this.isRoot ? "root" : "child#" + this.processId) + "): ";
       if (entry) {
         if (!entry.module) {
           throw Components.Exception
@@ -1227,10 +1236,14 @@ AkahukuIPC.prototype = {
     this.console = new AkahukuConsole ();
 
     if (this.inMainProcess) {
-      this.console.prefix = "Akahuku root-IPC (main)";
+      this.console.prefix = "Akahuku root-IPC"
+        + (this.subKey ? ":" + this.subKey : "")
+        + " (main)";
     }
     else {
-      this.console.prefix = "Akahuku root-IPC (content#" + this.processID + ")";
+      this.console.prefix = "Akahuku root-IPC"
+        + (this.subKey ? ":" + this.subKey : "")
+        + " (content#" + this.processID + ")";
     }
 
     // Start linstening for global frame message manager
@@ -1269,10 +1282,14 @@ AkahukuIPC.prototype = {
     this.console = new AkahukuConsole ();
 
     if (this.inMainProcess) {
-      this.console.prefix = "Akahuku child-IPC (main)";
+      this.console.prefix = "Akahuku child-IPC"
+        + (this.subKey ? ":" + this.subKey : "")
+        + " (main)";
     }
     else {
-      this.console.prefix = "Akahuku child-IPC (content#" + this.processID + ")";
+      this.console.prefix = "Akahuku child-IPC"
+        + (this.subKey ? ":" + this.subKey : "")
+        + " (content#" + this.processID + ")";
     }
 
     // 新しく追加される情報を反映するためのメッセージを待つ
@@ -1326,19 +1343,68 @@ AkahukuIPC.prototype = {
 };
 
 
-// Create singletons for each process
+var managedList = [];
+var AkahukuIPCManager = {
+  createRoot : function (key) {
+    for (var i = 0; i < managedList.length; i ++) {
+      if (managedList [i].key === key) {
+        // already created;
+        return managedList [i];
+      }
+    }
+    var entry = {key: key, root: null, child: null};
+    var ipc = new AkahukuIPC ();
+    if (ipc.inMainProcess) {
+      entry.root = ipc;
+      entry.root.init = entry.root.initAsRoot;
+      entry.root.subKey = String (key);
+      entry.child = new AkahukuIPC ();
+      entry.child.init = entry.child.initAsChild;
+      entry.child.subKey = String (key);
+    }
+    else {
+      entry.root = null;
+      entry.child = ipc;
+      entry.child.init = entry.child.initAsChild;
+      entry.child.subKey = String (key);
+    }
+    managedList.push (entry);
+    return entry;
+  },
 
-var appinfo
-  = Cc ["@mozilla.org/xre/app-info;1"]
-  .getService (Ci.nsIXULRuntime);
-if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
-  var arAkahukuIPCRoot = new AkahukuIPC ();
-  arAkahukuIPCRoot.init = arAkahukuIPCRoot.initAsRoot;
-}
-else {
-  var arAkahukuIPCRoot = {};
-}
+  _getEntry : function (key) {
+    for (var i = 0; i < managedList.length; i ++) {
+      if (managedList [i].key === key) {
+        return managedList [i];
+      }
+    }
+    return null;
+  },
 
-var arAkahukuIPC = new AkahukuIPC ();
-arAkahukuIPC.init = arAkahukuIPC.initAsChild;
+  getRoot : function (key) {
+    var entry = this._getEntry (key);
+    if (entry) {
+      return entry.root;
+    }
+    return null;
+  },
+
+  getChild : function (key) {
+    var entry = this._getEntry (key);
+    if (!entry) {
+      entry = this.createRoot (key);
+    }
+    return entry.child;
+  },
+
+  termAll : function () {
+    for (var i = 0; i < managedList.length; i ++) {
+      managedList [i].child.term ();
+      if (managedList [i].root) {
+        managedList [i].root.term ();
+      }
+    }
+    managedList.splice (0); // remove all
+  },
+};
 

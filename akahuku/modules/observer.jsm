@@ -535,10 +535,14 @@ var NotificationObserverFactory = {
 };
 
 if (isE10sReady) {
-  Cu.import ("resource://akahuku/ipc.jsm");
+  const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
   Cu.import ("resource://akahuku/ipc-proxy.jsm");
 
-  if (arAkahukuIPC.inMainProcess) {
+  var ipc = AkahukuIPCManager.createRoot ("observer");
+  var arAkahukuIPC = ipc.child;
+  if (ipc.root) {
+    ipc.root.init ();
+    var arAkahukuIPCRoot = ipc.root;
     // IPC メッセージの受入準備
 
     var factoryWrapper = {
@@ -576,6 +580,7 @@ if (isE10sReady) {
       return observerC;
     };
   }
+  ipc.child.init ();
 }
 
 /**

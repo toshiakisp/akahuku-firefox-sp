@@ -46,7 +46,8 @@ catch (e) {
 }
 
 if (!inMainProcess) {
-  Cu.import ("resource://akahuku/ipc.jsm");
+  const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
+  var arAkahukuIPC = AkahukuIPCManager.getChild ("main");
 }
 
 /**
