@@ -414,33 +414,7 @@ arAkahukuProtocolHandler.prototype = {
     }
   },
   _createThreadCacheDOMFileChannel : function (uri, path, loadInfo) {
-    try {
-      Cu.importGlobalProperties (["File"]);
-      var file;
-      if (typeof File.createFromFileName !== "undefined") {
-        // Firefox 52.0+ (Bug 1303518)
-        file = File.createFromFileName (path);
-        // file is a Promise in Firefox 54.0+
-      }
-      else {
-        file = new File (path);
-      }
-    }
-    catch (e) {
-      if (e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
-        return this._createThreadCacheFailChannel (uri, loadInfo);
-      }
-      Cu.reportError (e);
-      var file
-        = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
-      file.initWithPath (path);
-      if (!file.exists ()) {
-        return this._createThreadCacheFailChannel (uri, loadInfo);
-      }
-    }
-
-    var channel = new arAkahukuDOMFileChannel (uri, file, loadInfo);
+    var channel = new arAkahukuDOMFileChannel (uri, path, loadInfo);
     channel.contentType = "text/html";
     return channel;
   },
