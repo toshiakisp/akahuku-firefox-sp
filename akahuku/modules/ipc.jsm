@@ -1406,5 +1406,101 @@ var AkahukuIPCManager = {
     }
     managedList.splice (0); // remove all
   },
+
+  /**
+   * IPC-base module construction utililty (must be called in the main process first)
+   * @param Object props
+   *   { root: "main",
+   *     parentModule: {method1: function () {}, ...},
+   *     parentDefinitions: {method1: {module: "Module", pref: {}}, ...},
+   *     childModule: {method1: function () {}, ...},
+   *     childDefinitions: {method2: {module: "Module", pref: {}}, ...},
+   *   }
+   * @return Object new object that has functions from parent/child modules
+   */
+  createAndRegisterModule : function (props) {
+    var target = {};
+    var appinfo
+      = Cc ["@mozilla.org/xre/app-info;1"]
+      .getService (Ci.nsIXULRuntime);
+    if (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT) {
+      // Mixin (parent)
+      for (var c in props.parentModule) {
+        if (Object.prototype.hasOwnProperty.call (props.parentModule, c)) {
+          target [c] = props.parentModule [c];
+        }
+      }
+
+      if ("@mozilla.org/parentprocessmessagemanager;1" in Cc
+          && "@mozilla.org/globalmessagemanager;1" in Cc
+          && "nsIMessageListenerManager" in Ci
+          && "nsIContentFrameMessageManager" in Ci) {
+        // e10s-ready env
+        var ipc = AkahukuIPCManager.createRoot (props.root);
+        ipc.root.init ();
+
+        // define commands
+        var provider;
+        var pd = props.parentDefinitions;
+        for (var c in pd) {
+          provider = target;
+          if (pd [c].wrapper) {
+            provider = {_wrappedObject : target};
+            provider [c] = pd [c].wrapper;
+          }
+          var module = pd [c].module || props.defaultIPCModuleName;
+          try {
+            ipc.root.defineProc (provider, module, c, pd [c].pref);
+          }
+          catch (e) {
+            Cu.reportError (e);
+          }
+        }
+
+        // main-process child must be initialized after parent definitions
+        ipc.child.init ();
+      }
+      else {
+        // old non-e10s env
+        return target;
+      }
+    }
+    else { // child processes (e10s ready)
+      var ipc = AkahukuIPCManager.createRoot (props.root);
+      ipc.child.init ();
+
+      // Mixin (child)
+      for (var c in props.childModule) {
+        if (Object.prototype.hasOwnProperty.call (props.childModule, c)) {
+          target [c] = props.childModule [c];
+        }
+      }
+
+      // define commands
+      var provider;
+      var cd = props.childDefinitions;
+      for (var c in cd) {
+        provider = target;
+        if (cd [c].wrapper) {
+          provider = {};
+          provider [c] = cd [c].wrapper;
+        }
+        var module = cd [c].module || props.defaultIPCModuleName;
+        try {
+          ipc.root.defineProc (provider, module, c, cd [c].pref);
+        }
+        catch (e) {
+          Cu.reportError (e);
+        }
+      }
+    }
+
+    // link to IPC objects
+    target.IPC = ipc.child;
+    if (ipc.root) {
+      target.IPCRoot = ipc.root;
+    }
+    return target;
+  },
 };
 
