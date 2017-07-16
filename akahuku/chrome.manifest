@@ -9,26 +9,9 @@ overlay chrome://browser/content/pageinfo/pageInfo.xul    chrome://akahuku/conte
 
 resource akahuku modules/
 
-component   {87501060-b014-4b67-9a53-aa5e5af9d52c} components/arAkahukuContentPolicy.js
-contract    @unmht.org/akahuku-content-policy;1 {87501060-b014-4b67-9a53-aa5e5af9d52c}
-category    content-policy arAkahukuContentPolicy @unmht.org/akahuku-content-policy;1
-
-## directly implemented in arAkahukuProtocolHandler.js
-# interfaces  components/arIAkahukuP2PChannel.xpt
-# component   {6f220dbc-d883-43e7-a3aa-7336153dd076} components/arAkahukuP2PChannel.js
-# contract    @unmht.org/akahuku-p2p-channel;1 {6f220dbc-d883-43e7-a3aa-7336153dd076}
-
 interfaces  components/arIAkahukuP2PServant2.xpt
 interfaces  components/arIAkahukuP2PServantListener.xpt
 component   {e2470698-e238-40f5-8b09-c3e617aae84c} components/arAkahukuP2PServant2.js
 contract    @unmht.org/akahuku-p2p-servant;2 {e2470698-e238-40f5-8b09-c3e617aae84c}
 
 interfaces  components/arIAkahukuProtocolHandler.xpt
-component   {65e9b537-0fa4-4e73-ac9c-77a75fdf2c9f} components/arAkahukuProtocolHandler.js
-contract    @mozilla.org/network/protocol;1?name=akahuku {65e9b537-0fa4-4e73-ac9c-77a75fdf2c9f}
-
-component   {9d5fe646-b180-4f04-8a20-3069416a4886} components/arAkahukuLocalProtocolHandler.js
-contract    @mozilla.org/network/protocol;1?name=akahuku-local {9d5fe646-b180-4f04-8a20-3069416a4886}
-
-component   {74597554-7400-4074-8c10-a97c54da1989} components/arAkahukuSafeProtocolHandler.js
-contract    @mozilla.org/network/protocol;1?name=akahuku-safe {74597554-7400-4074-8c10-a97c54da1989}
