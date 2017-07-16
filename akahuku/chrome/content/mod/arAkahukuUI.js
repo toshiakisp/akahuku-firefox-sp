@@ -102,7 +102,8 @@ var arAkahukuUI = {
       id: "akahuku-statusbar-popup-sidebar",
       contexts: ["_xul_mainpopupset"],
       parentId: "akahuku-statusbar-popup",
-      title: "\u30B5\u30A4\u30C9\u30D0\u30FC", // サイドバー
+      // 赤福サイドバー
+      title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
       _xul_observes: "viewAkahukuSidebar",
       onclick: function (event) {
         var window = event.currentTarget.ownerDocument.defaultView.top;
@@ -113,7 +114,8 @@ var arAkahukuUI = {
       id: "akahuku-statusbar-popup-p2psidebar",
       contexts: ["_xul_mainpopupset"],
       parentId: "akahuku-statusbar-popup",
-      title: "P2P \u30B5\u30A4\u30C9\u30D0\u30FC", // P2P サイドバー
+      // 赤福 P2P サイドバー
+      title : "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC",
       _xul_observes: "viewAkahukuP2PSidebar",
       onclick: function (event) {
         var window = event.currentTarget.ownerDocument.defaultView.top;
@@ -140,6 +142,51 @@ var arAkahukuUI = {
       parentId: "akahuku-statusbar-popup",
       title: "\u30B5\u30A4\u30C8\u3092\u958B\u304F", // サイトを開く
       onclick: arAkahukuUI.openWebsite,
+    });
+
+    // toolbar buttons
+    arAkahukuUI.createXULToolbarButton (document, {
+      id : "akahuku-toolbarbutton-preferences",
+      label : "\u8D64\u798F", // 赤福
+      _xul_context : "akahuku-statusbar-popup",
+      onclick : arAkahukuUI.showPreferences,
+    });
+    arAkahukuUI.createXULToolbarButton (document, {
+      id : "akahuku-toolbarbutton-sidebar",
+      // 赤福サイドバー
+      title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
+      _xul_observes : "viewAkahukuSidebar",
+      onclick: function (event) {
+        var window = event.currentTarget.ownerDocument.defaultView.top;
+        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar", false, window);
+      },
+    });
+    arAkahukuUI.createXULToolbarButton (document, {
+      id : "akahuku-toolbarbutton-p2psidebar",
+      // 赤福 P2P サイドバー
+      title : "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC",
+      _xul_observes : "viewAkahukuP2PSidebar",
+      onclick: function (event) {
+        var window = event.currentTarget.ownerDocument.defaultView.top;
+        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar", false, window);
+      },
+    });
+    arAkahukuUI.createXULToolbarButton (document, {
+      id : "akahuku-toolbarbutton-p2pstatus",
+      // 赤福 P2P ステータス
+      label : "\u8D64\u798F P2P \u30B9\u30C6\u30FC\u30BF\u30B9",
+      type : "_labels",
+      _xul_children : [
+        {id:"akahuku-toolbarpanel-p2p-node", value:"\u63A5:0/0"},
+        {id:"akahuku-toolbarpanel-p2p-sep0", value:"/"},
+        {id:"akahuku-toolbarpanel-p2p-send", value:"\u653B:0"},
+        {id:"akahuku-toolbarpanel-p2p-sep1", value:"/"},
+        {id:"akahuku-toolbarpanel-p2p-recv", value:"\u53D7:0"},
+        {id:"akahuku-toolbarpanel-p2p-sep2", value:"/"},
+        {id:"akahuku-toolbarpanel-p2p-relay", value:"\u7D99:0"},
+        {id:"akahuku-toolbarpanel-p2p-sep3", value:"/"},
+        {id:"akahuku-toolbarpanel-p2p-futaba", value:"\u53CC:0"},
+      ],
     });
 
     arAkahukuUI.showPanelForWindow (window);
@@ -204,6 +251,88 @@ var arAkahukuUI = {
   },
   },
     
+  createXULToolbarButton : function (document, prop) {
+    var navtoolbox = document.getElementById ("navigator-toolbox");
+    if (!navtoolbox ) {
+      Akahuku.debug.warn ("no navigator-toolbox!");
+      return;
+    }
+    var button = document.getElementById (prop.id);
+    if (button) {
+      Akahuku.debug.warn ("button #" + prop.id, "already exists, skip it.");
+      return;
+    }
+    var ns = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    button = document.createElementNS (ns, "toolbarbutton");
+    if (!prop.type || prop.type == "button") {
+      button.setAttribute ("class", "toolbarbutton-1 chromeclass-toolbar-additional");
+    }
+    else if (prop.type == "_labels" && prop._xul_children) {
+      button.setAttribute ("class", "");
+      for (var i = 0; i < prop._xul_children.length; i ++) {
+        var label = document.createElementNS (ns, "label");
+        label.id = prop._xul_children [i].id;
+        label.setAttribute ("value", prop._xul_children [i].value);
+        label.setAttribute ("tooltiptext", prop.title);
+        label.setAttribute ("style", "margin: 0; paddin: 0;");
+        button.appendChild (label);
+      }
+    }
+    button.setAttribute ("status", "enabled");
+    button.id = prop.id;
+    button.setAttribute ("label", prop.title);
+    button.setAttribute ("tooltiptext", prop.title);
+    if (prop._xul_context) {
+      button.setAttribute ("context", prop._xul_context);
+    }
+    if (prop._xul_observes) {
+      button.setAttribute ("observes", prop._xul_observes);
+    }
+    if (prop.onclick) {
+      button.addEventListener ("command", prop.onclick, false);
+    }
+    if (prop.style) {
+      button.setAttribute ("style", prop.style);
+    }
+
+    if (document.readyState !== "complete") {
+      var palette = document.getElementById ("BrowserToolbarPalette");
+      if (!palette) {
+        Akahuku.debug.warn ("no BrowserToolbarPalette!");
+      }
+      palette.appendChild (button);
+      return;
+    }
+    navtoolbox.palette.appendChild (button);
+
+    // readyState=complete 後では BrowserToolbarPalette がもう無いので
+    // 起動後に復元するにはツールバー(addon-bar, nav-bar, ...)へ
+    // 手動で追加する必要あり
+    var toolbars = document.querySelectorAll ('toolbar[customizable="true"]');
+    for (var j = 0; j < toolbars.length; j ++) {
+      var toolbar = toolbars [j];
+      var currentset = toolbar.getAttribute ("currentset").split (",");
+      var index = currentset.indexOf (prop.id);
+      if (index >= 0) {
+        var nextElem = null;
+        for (var i = index + 1; i < currentset.length; i ++) {
+          nextElem = document.getElementById (currentset [i]);
+          if (nextElem) {
+            break;
+          }
+        }
+        toolbar.insertItem (prop.id, nextElem);
+        Akahuku.debug.log ("toolbarbutton#" + prop.id
+            + " is inserted to #" + toolbar.id);
+        break;
+      }
+      else {
+        Akahuku.debug.log ("toolbar currentset of #" + toolbar.id
+            + "'does not have " + prop.id);
+      }
+    }
+  },
+
   /**
    * ロケーションバーのメニューに P2P の [元のアドレスをコピー] を追加する
    */

@@ -136,52 +136,6 @@
     </statusbarpanel>
   </statusbar>
   
-  <toolbarpalette id="BrowserToolbarPalette">
-    <toolbarbutton id="akahuku-toolbarbutton-preferences"
-                   oncommand="arAkahukuUI.showPreferences (arguments [0]);"
-                   class="toolbarbutton-1 chromeclass-toolbar-additional"
-                   status="enabled"
-                   label="赤福"
-                   context="akahuku-statusbar-popup"
-                   tooltiptext="赤福" />
-    <toolbarbutton id="akahuku-toolbarbutton-sidebar"
-                   observes="viewAkahukuSidebar"
-                   class="toolbarbutton-1 chromeclass-toolbar-additional"
-                   status="enabled"
-                   label="赤福サイドバー"
-                   tooltiptext="赤福サイドバー" />
-    <toolbarbutton id="akahuku-toolbarbutton-p2psidebar"
-                   observes="viewAkahukuP2PSidebar"
-                   class="toolbarbutton-1 chromeclass-toolbar-additional"
-                   status="enabled"
-                   label="赤福 P2P サイドバー"
-                   tooltiptext="赤福 P2P サイドバー" />
-    <toolbarbutton id="akahuku-toolbarbutton-p2pstatus"
-                   class=""
-                   status="enabled"
-                   label="赤福 P2P ステータス"
-                   tooltiptext="赤福 P2P ステータス">
-      <label id="akahuku-toolbarpanel-p2p-node" value="接:0/0"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-sep0" value="/"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-send" value="攻:0"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-sep1" value="/"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-recv" value="受:0"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-sep2" value="/"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-relay" value="継:0"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-sep3" value="/"
-             tooltiptext="赤福" />
-      <label id="akahuku-toolbarpanel-p2p-futaba" value="双:0"
-             tooltiptext="赤福" />
-    </toolbarbutton>
-  </toolbarpalette>
-  
   <broadcasterset id="mainBroadcasterSet">
     <broadcaster id="viewAkahukuSidebar" autoCheck="false"
                  label="赤福サイドバー"
