@@ -501,6 +501,8 @@ var Akahuku = {
     }
   },
 
+
+  /**
    * ウィンドウが開かれたイベント
    */
   onLoad : function () {
