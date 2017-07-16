@@ -33,6 +33,12 @@ var arAkahukuQuote = {
   enableUntroll : false,           /* Boolean  芝刈りを解除する */
   enableFocus : false,             /* Boolean  検索したタブを選択する */
     
+  initForXUL : function () {
+    var {AkahukuContextMenus}
+    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
+    arAkahukuQuote.initContextMenus (AkahukuContextMenus);
+  },
+
   /**
    * 設定を読み込む
    */
@@ -107,6 +113,102 @@ var arAkahukuQuote = {
         = arAkahukuConfig
         .initPref ("bool", "akahuku.quickquote.focus", false);
     }
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator1",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-quote",
+      type: "normal",
+      // 引用
+      title: "\u5F15\u7528",
+      onclick: arAkahukuQuote.onClickQuoteWithMark,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-mail",
+      type: "normal",
+      // メール欄へ
+      title: "\u30E1\u30FC\u30EB\u6B04\u3078",
+      onclick: arAkahukuQuote.onClickQuoteToMailBox,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-name",
+      type: "normal",
+      // 名前欄へ
+      title: "\u540D\u524D\u6B04\u3078",
+      onclick: arAkahukuQuote.onClickQuoteToNameBox,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-comment",
+      type: "normal",
+      // コメントへ
+      title: "\u30B3\u30E1\u30F3\u30C8\u3078",
+      onclick: arAkahukuQuote.onClickQuoteAsComment,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator2",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-quote-copy",
+      type: "normal",
+      // 引用付きコピー
+      title: "\u5F15\u7528\u4ED8\u304D\u30B3\u30D4\u30FC",
+      onclick: arAkahukuQuote.onClickCopyToClipboard,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator3",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-quote-cont",
+      type: "normal",
+      // 引用 - 連続
+      title: "\u5F15\u7528 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteWithMarkCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-mail-cont",
+      type: "normal",
+      // メール欄へ - 連続
+      title: "\u30E1\u30FC\u30EB\u6B04\u3078 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteToMailBoxCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-name-cont",
+      type: "normal",
+      // 名前欄へ - 連続
+      title: "\u540D\u524D\u6B04\u3078 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteToNameBoxCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-comment-cont",
+      type: "normal",
+      // コメントへ - 連続
+      title: "\u30B3\u30E1\u30F3\u30C8\u3078 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteAsCommentCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator4",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-google-image",
+      type: "normal",
+      // イメぐぐる
+      title: "\u30A4\u30E1\u3050\u3050\u308B",
+      onclick: arAkahukuQuote.onClickGoogleImage,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-wikipedia",
+      type: "normal",
+      // ウィキペドる
+      title: "\u30A6\u30A3\u30AD\u30DA\u30C9\u308B",
+      onclick: arAkahukuQuote.onClickWikipedia,
+    });
   },
     
   /**

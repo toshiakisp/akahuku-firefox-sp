@@ -47,6 +47,9 @@ var arAkahukuP2P = {
     Components.utils.import ("resource://akahuku/p2p-service.jsm");
   },
   initForXUL : function () {
+    var {AkahukuContextMenus}
+    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
+    this.initContextMenus (AkahukuContextMenus);
     arAkahukuP2P.update ();
     window.addEventListener
     ("keydown",
@@ -64,6 +67,20 @@ var arAkahukuP2P = {
       catch (e) { Akahuku.debug.exception (e);
       }
     }
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator8",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-p2p-delete",
+      type: "normal",
+      // この画像の P2P キャッシュを削除
+      title: "\u3053\u306E\u753B\u50CF\u306E P2P \u30AD\u30E3\u30C3\u30B7\u30E5\u3092\u524A\u9664",
+      onclick: arAkahukuP2P.onClickDeleteCache,
+    });
   },
     
   /**

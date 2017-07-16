@@ -485,6 +485,22 @@ var Akahuku = {
     Akahuku.initialized = false;
   },
 
+  initContextMenus : function () {
+    try {
+      Components.utils.import ("resource://akahuku/xul-contextmenus.jsm");
+      var cm = AkahukuContextMenus;
+      arAkahukuQuote.initContextMenus (cm);
+      arAkahukuJPEG.initContextMenus (cm);
+      arAkahukuP2P.initContextMenus (cm);
+      arAkahukuLink.initContextMenus (cm);
+      arAkahukuImage.initContextMenus (cm);
+
+      arAkahukuTab.initContextMenus (cm);
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+  },
+
    * ウィンドウが開かれたイベント
    */
   onLoad : function () {
@@ -552,7 +568,10 @@ var Akahuku = {
     }*/
     
     // XUL の window に対する初期設定(イベント登録など)
+    arAkahukuQuote.initForXUL ();
+    arAkahukuJPEG.initForXUL ();
     arAkahukuP2P.initForXUL ();
+    arAkahukuLink.initForXUL ();
     arAkahukuTab.initForXUL ();
     arAkahukuBloomer.initForXUL ();
     arAkahukuImage.initForXUL ();

@@ -503,6 +503,99 @@ var arAkahukuLink = {
       this.historyService = null;
     }
   },
+
+  initForXUL : function () {
+    var {AkahukuContextMenus}
+    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
+    arAkahukuLink.initContextMenus (AkahukuContextMenus);
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator0",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-openlink",
+      type: "normal",
+      // リンクを新規ウインドウで開く
+      title: "\u30EA\u30F3\u30AF\u3092\u65B0\u898F\u30A6\u30A4\u30F3\u30C9\u30A6\u3067\u958B\u304F",
+      onclick: arAkahukuLink.onClickOpenLink,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-savelink",
+      type: "normal",
+      // 別名でリンク先を保存...
+      title: "\u5225\u540D\u3067\u30EA\u30F3\u30AF\u5148\u3092\u4FDD\u5B58...",
+      onclick: arAkahukuLink.onClickSaveLink,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-copylink",
+      type: "normal",
+      // リンク URL をコピー
+      title: "\u30EA\u30F3\u30AF URL \u3092\u30B3\u30D4\u30FC",
+      onclick: arAkahukuLink.onClickCopyLink,
+    });
+    //
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator6",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-user-add",
+      type: "normal",
+      // ユーザ指定文字列に追加
+      title: "\u30E6\u30FC\u30B6\u6307\u5B9A\u6587\u5B57\u5217\u306B\u8FFD\u52A0",
+      onclick: arAkahukuLink.onClickAddUser,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-open-as",
+      type: "normal",
+      // オートリンクとして開く
+      title: "\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF\u3068\u3057\u3066\u958B\u304F",
+      onclick: arAkahukuLink.onClickOpenAsAutoLink,
+    });
+
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator7",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-ext-auto",
+      type: "normal",
+      // 拡張子を指定 - 自動認識
+      title: "\u62E1\u5F35\u5B50\u3092\u6307\u5B9A - \u81EA\u52D5\u8A8D\u8B58",
+      onclick: arAkahukuLink.onClickSetExtAuto,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-ext-jpg",
+      type: "normal",
+      // 拡張子を指定 - jpg
+      title: "\u62E1\u5F35\u5B50\u3092\u6307\u5B9A - jpg",
+      onclick: arAkahukuLink.onClickSetExtJPEG,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-ext-png",
+      type: "normal",
+      // 拡張子を指定 - png
+      title: "\u62E1\u5F35\u5B50\u3092\u6307\u5B9A - png",
+      onclick: arAkahukuLink.onClickSetExtPNG,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-ext-gif",
+      type: "normal",
+      // 拡張子を指定 - gif
+      title: "\u62E1\u5F35\u5B50\u3092\u6307\u5B9A - gif",
+      onclick: arAkahukuLink.onClickSetExtGIF,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-autolink-ext-input",
+      type: "normal",
+      // 拡張子を指定 - 手入力
+      title: "\u62E1\u5F35\u5B50\u3092\u6307\u5B9A - \u624B\u5165\u529B",
+      onclick: arAkahukuLink.onClickSetExtManual,
+    });
+  },
   
   /**
    * パターン初期化

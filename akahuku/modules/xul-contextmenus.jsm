@@ -31,6 +31,7 @@ function XULMenuItem (props) {
   this.type = props.type || "normal";
   this.title = props.title;
   this.onclick = props.onclick;
+  this.observes = props._xul_observes;
   this.events = [];
 
   if (!props.contexts) {
@@ -136,11 +137,17 @@ XULMenuItem.prototype = {
     switch (this.type) {
       case "normal":
         item.setAttribute ("label", this.title);
+        if (this.observes) {
+          item.setAttribute ("observes", this.observes);
+        }
         break;
       case "checkbox":
         item.setAttribute ("label", this.title);
         item.setAttribute ("type", "checkbox");
         item.setAttribute ("autocheck", "false");
+        if (this.observes) {
+          item.setAttribute ("observes", this.observes);
+        }
         break;
       case "separator":
         break;

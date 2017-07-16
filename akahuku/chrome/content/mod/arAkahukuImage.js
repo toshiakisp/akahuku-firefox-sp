@@ -199,6 +199,21 @@ var arAkahukuImage = {
    * 初期化処理
    */
   initForXUL : function () {
+    var {AkahukuContextMenus}
+    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
+    AkahukuContextMenus.create ({
+      id: "akahuku-saveimage-popup",
+      contexts: ["_xul_mainpopupset"],
+      title: "akahuku-saveimage-popup",
+      _onshowing: arAkahukuImage.setPopup,
+    });
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator9",
+      type: "separator",
+    });
   },
     
   /**

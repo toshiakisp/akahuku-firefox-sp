@@ -43,6 +43,9 @@ if (Akahuku.useFrameScript) {
   Akahuku.debug = new AkahukuConsole ();
   Akahuku.debug.prefix = "Akahuku debug(xul#main)";
 
+  Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", this);
+  AkahukuContextMenusService.startup ();
+
   // ensure starting fileutil's ipc root in the main process
   Components.utils.import ("resource://akahuku/fileutil.jsm", {});
 
@@ -119,6 +122,9 @@ else { // Boot as a classic XUL-overlay extension
       },
     };
   }
+
+  Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", this);
+  AkahukuContextMenusService.startup ();
 
   Akahuku.init ();
 

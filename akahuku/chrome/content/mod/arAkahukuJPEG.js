@@ -11,6 +11,33 @@ var arAkahukuJPEG = {
   enableThumbnail : false,       /* Boolean  JPEG のサムネを見る */
   enableThumbnailError : false,  /* Boolean  見つからなかった場合に
                                   *   エラーを表示する */
+
+  initForXUL : function () {
+    var {AkahukuContextMenus}
+    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
+    arAkahukuJPEG.initContextMenus (AkahukuContextMenus);
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator5",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-jpeg-thumbnail",
+      type: "normal",
+      // サムネを見る
+      title: "\u30B5\u30E0\u30CD\u3092\u898B\u308B",
+      onclick: arAkahukuJPEG.onClickOpenThumbnail,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-jpeg-thumbnail-close",
+      type: "normal",
+      // サムネを閉じる
+      title: "\u30B5\u30E0\u30CD\u3092\u9589\u3058\u308B",
+      onclick: arAkahukuJPEG.onClickCloseThumbnail,
+    });
+  },
     
   /**
    * 設定を読み込む

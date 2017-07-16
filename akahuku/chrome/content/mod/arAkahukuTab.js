@@ -38,12 +38,15 @@ var arAkahukuTab = {
    * 初期化処理
    */
   initForXUL : function () {
+    var {AkahukuContextMenus}
+    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
+    this.initContextMenus (AkahukuContextMenus);
     var tabbrowser = document.getElementById ("content");
     var tabMenu
     = document.getAnonymousElementByAttribute (tabbrowser,
                                                "anonid", "tabContextMenu");
     var mode = 0;
-    if (!tabMenu) {
+    if (!tabMenu) { //Fx4+
       tabMenu
         = document.getElementById ("tabContextMenu");
       mode = 1;
@@ -51,44 +54,35 @@ var arAkahukuTab = {
     
     if (tabMenu) {
       tabMenu.addEventListener
-        ("popupshowing",
-         function () {
-          arAkahukuTab.setContextMenu ();
-        }, false);
-            
-      var insertPos = tabMenu.lastChild.previousSibling;
-            
-      var item;
-            
-      if (mode == 1) {
-        item = document.createElement ("menuseparator");
-        item.id = "akahuku-menuitem-tab-sort-separator";
-        tabMenu.insertBefore (item, insertPos);
-        insertPos = item;
-      }
-      
-      item = document.createElement ("menuitem");
-      item.id = "akahuku-menuitem-tab-sort-all";
-      item.setAttribute ("label", "\u5168\u3066\u30BD\u30FC\u30C8");
-      item.addEventListener ("command",
-          arAkahukuTab.onClickTabSortAll, false);
-      tabMenu.insertBefore (item, insertPos);
-      insertPos = item;
-            
-      item = document.createElement ("menuitem");
-      item.id = "akahuku-menuitem-tab-sort-thread";
-      item.setAttribute ("label", "\u30B9\u30EC\u3092\u30BD\u30FC\u30C8");
-      item.addEventListener ("command",
-          arAkahukuTab.onClickTabSortThreads, false);
-      tabMenu.insertBefore (item, insertPos);
-      insertPos = item;
-            
-      if (mode == 0) {
-        item = document.createElement ("menuseparator");
-        item.id = "akahuku-menuitem-tab-sort-separator";
-        tabMenu.insertBefore (item, insertPos);
-      }
+        ("popupshowing", arAkahukuTab.setContextMenu , false);
     }
+  },
+
+  initContextMenus : function (contextMenus) {
+    var separatorProp = {
+      id: "akahuku-menuitem-tab-sort-separator",
+      type: "separator",
+      contexts: ["tab"],
+    };
+    if (Akahuku.isFx4) {
+      contextMenus.create (separatorProp);
+    }
+    contextMenus.create ({
+      id: "akahuku-menuitem-tab-sort-all",
+      contexts: ["tab"],
+      title: "\u5168\u3066\u30BD\u30FC\u30C8", // 全てソート
+      onclick: arAkahukuTab.onClickTabSortAll,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-tab-sort-thread",
+      contexts: ["tab"],
+      title: "\u30B9\u30EC\u3092\u30BD\u30FC\u30C8", // スレをソート
+      onclick: arAkahukuTab.onClickTabSortThreads,
+    });
+    if (!Akahuku.isFx4) {
+      contextMenus.create (separatorProp);
+    }
+    // TODO update instead of listening popupshowing
   },
     
   /**
