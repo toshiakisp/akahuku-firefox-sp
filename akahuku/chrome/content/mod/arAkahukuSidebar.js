@@ -411,6 +411,56 @@ var arAkahukuSidebar = {
   },
 
   initForXUL : function () {
+    var doc = window.document;
+    var mainbc = doc.getElementById ("mainBroadcasterSet");
+    if (mainbc) {
+      var bc = doc.createElement ("broadcaster");
+      bc.id = "viewAkahukuSidebar";
+      bc.setAttribute ("type", "checkbox");
+      bc.setAttribute ("autocheck", "false");
+      bc.setAttribute ("group", "sidebar");
+      bc.setAttribute ("sidebarurl", "chrome://akahuku/content/sidebar.xul");
+      // 赤福サイドバー
+      var label = "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC";
+      bc.setAttribute ("label", label);
+      bc.setAttribute ("sidebartitle", label);
+      mainbc.appendChild (bc);
+
+      bc = doc.createElement ("broadcaster");
+      bc.id = "viewAkahukuP2PSidebar";
+      bc.setAttribute ("type", "checkbox");
+      bc.setAttribute ("autocheck", "false");
+      bc.setAttribute ("group", "sidebar");
+      bc.setAttribute ("sidebarurl", "chrome://akahuku/content/p2psidebar.xul");
+      // 赤福 P2P サイドバー
+      label = "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC";
+      bc.setAttribute ("label", label);
+      bc.setAttribute ("sidebartitle", label);
+      mainbc.appendChild (bc);
+    }
+    var viewsm = doc.getElementById ("viewSidebarMenu");
+    if (viewsm) {
+      var menuitem = doc.createElement ("menuitem");
+      menuitem.setAttribute ("observes", "viewAkahukuSidebar");
+      menuitem.id = "viewAkahukuSidebar-menuitem";
+      menuitem.addEventListener ("command", function (event) {
+        arAkahukuCompat.toggleSidebar
+        (event.currentTarget.id.replace (/-menuitem$/,""), false,
+         event.currentTarget.ownerDocument.defaultView.top);
+      }, true);
+      viewsm.appendChild (menuitem);
+
+      menuitem = doc.createElement ("menuitem");
+      menuitem.setAttribute ("observes", "viewAkahukuP2PSidebar");
+      menuitem.id = "viewAkahukuP2PSidebar-menuitem";
+      menuitem.addEventListener ("command", function (event) {
+        arAkahukuCompat.toggleSidebar
+        (event.currentTarget.id.replace (/-menuitem$/,""), false,
+         event.currentTarget.ownerDocument.defaultView.top);
+      }, true);
+      viewsm.appendChild (menuitem);
+    }
+
     arAkahukuSidebar.addSidebarParam (window);
     window.addEventListener
     ("keydown", arAkahukuSidebar.onKeyDown, true);

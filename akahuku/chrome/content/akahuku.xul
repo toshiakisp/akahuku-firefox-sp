@@ -136,21 +136,4 @@
     </statusbarpanel>
   </statusbar>
   
-  <broadcasterset id="mainBroadcasterSet">
-    <broadcaster id="viewAkahukuSidebar" autoCheck="false"
-                 label="赤福サイドバー"
-                 type="checkbox" group="sidebar"
-                 sidebarurl="chrome://akahuku/content/sidebar.xul"
-                 oncommand="arAkahukuCompat.toggleSidebar ('viewAkahukuSidebar', false, window);"/>
-    <broadcaster id="viewAkahukuP2PSidebar" autoCheck="false"
-                 label="赤福 P2P サイドバー"
-                 type="checkbox" group="sidebar"
-                 sidebarurl="chrome://akahuku/content/p2psidebar.xul"
-                 oncommand="arAkahukuCompat.toggleSidebar ('viewAkahukuP2PSidebar', false, window);"/>
-  </broadcasterset>
-  
-  <menupopup id="viewSidebarMenu">
-    <menuitem observes="viewAkahukuSidebar" />
-    <menuitem observes="viewAkahukuP2PSidebar" />
-  </menupopup>
 </overlay>
