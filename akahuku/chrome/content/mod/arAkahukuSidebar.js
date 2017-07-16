@@ -411,6 +411,7 @@ var arAkahukuSidebar = {
   },
 
   initForXUL : function () {
+    arAkahukuSidebar.addSidebarParam (window);
     window.addEventListener
     ("keydown", arAkahukuSidebar.onKeyDown, true);
   },
