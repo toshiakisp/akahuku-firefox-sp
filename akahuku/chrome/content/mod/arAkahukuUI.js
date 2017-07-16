@@ -547,20 +547,20 @@ var arAkahukuUI = {
     menuitem = document.getElementById ("akahuku-statusbar-popup-all");
     if (menuitem) {
       if (Akahuku.enableAll) {
-        menuitem.label = "\u5168\u6A5F\u80FD\u3092 OFF";
+        menuitem.setAttribute ("label", "\u5168\u6A5F\u80FD\u3092 OFF");
       }
       else {
-        menuitem.label = "\u5168\u6A5F\u80FD\u3092 ON";
+        menuitem.setAttribute ("label", "\u5168\u6A5F\u80FD\u3092 ON");
       }
     }
         
     menuitem = document.getElementById ("akahuku-statusbar-popup-p2p");
     if (menuitem) {
       if (arAkahukuP2P.enable) {
-        menuitem.label = "P2P \u3092 OFF";
+        menuitem.setAttribute ("label", "P2P \u3092 OFF");
       }
       else {
-        menuitem.label = "P2P \u3092 ON";
+        menuitem.setAttribute ("label", "P2P \u3092 ON");
       }
     }
         
@@ -568,10 +568,10 @@ var arAkahukuUI = {
     = document.getElementById ("akahuku-statusbar-popup-p2p-statusbar");
     if (menuitem) {
       if (arAkahukuP2P.enableStatusbar) {
-        menuitem.label = "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 OFF";
+        menuitem.setAttribute ("label", "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 OFF");
       }
       else {
-        menuitem.label = "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON";
+        menuitem.setAttribute ("label", "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON");
       }
     }
         
