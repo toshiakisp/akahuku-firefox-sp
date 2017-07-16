@@ -43,6 +43,9 @@ if (Akahuku.useFrameScript) {
   Akahuku.debug = new AkahukuConsole ();
   Akahuku.debug.prefix = "Akahuku debug(xul#main)";
 
+  // ensure starting fileutil's ipc root in the main process
+  Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+
   // Start Local inter-Process Call service in the main process
   arAkahukuIPCRoot.init ();
   // Prepare P2PServant IPC parent
@@ -84,6 +87,9 @@ else { // Boot as a classic XUL-overlay extension
       arAkahukuIPCRoot.initSubScriptScope (this);
       arAkahukuIPCRoot.loadSubScript
         ("chrome://akahuku/content/ipc/parent.js");
+
+      // ensure starting fileutil's ipc root in the main process
+      Components.utils.import ("resource://akahuku/fileutil.jsm", {});
     }
     catch (e) { Components.utils.reportError (e);
     }

@@ -645,6 +645,10 @@ arAkahukuLocalProtocolHandler.prototype = {
       = arAkahukuProtocolHandler.prototype
       .getAkahukuURIParam (uri.spec);
     if (param.type == "local") {
+      if (/^file:/.test (param.original)) {
+        // file:// access via preview channel will be blocked by sandbox
+        return this._createLocalFileChannel (uri, param, loadInfo);
+      }
       return arAkahukuProtocolHandler.prototype
         ._createPreviewChannel (uri, loadInfo);
     }
@@ -654,6 +658,12 @@ arAkahukuLocalProtocolHandler.prototype = {
 
   newChannel : function (uri) {
     return this.newChannel2 (uri, null);
+  },
+
+  _createLocalFileChannel : function (uri, param, loadInfo) {
+    const {AkahukuFileUtil} = Cu.import ("resource://akahuku/fileutil.jsm", {});
+    var path = AkahukuFileUtil.getNativePathFromURLSpec (param.original);
+    return new arAkahukuDOMFileChannel (uri, path, loadInfo);
   },
 };
 
