@@ -80,10 +80,10 @@ if (!Akahuku.initialized) {
 // to attach/dettach the global Akahuku module
 window.addEventListener
   ("load", function (event) {
-    Akahuku.attachToWindow (event.currentTarget);
+    Akahuku.attachToWindow (event.currentTarget, {});
   }, false);
 window.addEventListener
   ("unload", function (event) {
-    Akahuku.dettachFromWindow (event.currentTarget);
+    Akahuku.dettachFromWindow (event.currentTarget, {});
   }, false);
 

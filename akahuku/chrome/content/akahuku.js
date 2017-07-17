@@ -528,6 +528,7 @@ var Akahuku = {
       Akahuku.debug.warn ("already attached to given window, skip it.");
       return;
     }
+    Akahuku.attachedWindows.push (window);
 
     // XUL の window への適用(イベント登録など)
     arAkahukuP2P.attachToWindow (window);
