@@ -196,20 +196,17 @@ var arAkahukuImage = {
   lastTargetDirIndex : -1, /* Number  最後に保存したディレクトリのインデックス */
 
   attachToWindow : function (window) {
-    var document = window.document;
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    AkahukuContextMenus.create ({
-      id: "akahuku-saveimage-popup",
-      contexts: ["_xul_mainpopupset"],
-      title: "akahuku-saveimage-popup",
-      _onshowing: arAkahukuImage.setPopup,
-    });
   },
   dettachFromWindow : function (window) {
   },
 
   initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-saveimage-popup",
+      contexts: ["_xul_mainpopupset"],
+      title: "akahuku-saveimage-popup",
+      _onshowing: arAkahukuImage.setPopup,
+    });
     contextMenus.create ({
       id: "akahuku-menuitem-content-separator9",
       type: "separator",

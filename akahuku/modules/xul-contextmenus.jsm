@@ -100,7 +100,7 @@ XULMenuItem.prototype = {
     }
     var node = xulWindow.document.getElementById (this.id);
     if (node) { // same-id node exists
-      Cu.reportError (new Error ("same-id node exists"));
+      Cu.reportError (new Error ("same-id node exists: " + this.id));
       return false;
     }
 
