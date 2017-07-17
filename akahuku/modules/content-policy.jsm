@@ -600,6 +600,16 @@ arAkahukuContentPolicy.prototype = {
           // older firefox (at least 3.6.x)
           return chromeWindow.wrappedJSObject;
         }
+        else {
+          // bootstrap.js (no Akahuku in chromeWindow)
+          var scope = {};
+          try {
+            Cu.import ("resource://akahuku/akahuku.jsm", scope);
+            return scope;
+          }
+          catch (e) { this.console.exception (e);
+          }
+        }
       }
       else { // e10s: WindowRoot that is the top of a content frame
         // content-policy's process is the same with context,
