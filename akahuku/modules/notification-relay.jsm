@@ -102,8 +102,6 @@ if (isE10sReady) {
         },
       };
     }
-
-    console.log ("root notification relay is started.");
   }
   else { // in child processes
 
@@ -163,8 +161,6 @@ if (isE10sReady) {
         },
       };
     }
-
-    console.log ("child notification relay is started.");
   }
 
   for (var i = 0; i < observers.length; i ++) {

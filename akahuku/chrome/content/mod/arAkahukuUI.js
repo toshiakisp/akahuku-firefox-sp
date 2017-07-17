@@ -232,10 +232,6 @@ var arAkahukuUI = {
             + " is inserted to #" + toolbar.id);
         break;
       }
-      else {
-        Akahuku.debug.log ("toolbar currentset of #" + toolbar.id
-            + "'does not have " + prop.id);
-      }
     }
   },
 

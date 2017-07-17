@@ -564,7 +564,7 @@ var Akahuku = {
     }
 
     Akahuku.attachToWindowExtra (window);
-    Akahuku.debug.log ("initialized for a XUL window");
+    Akahuku.debug.log ("attached for a XUL window");
   },
 
   /**

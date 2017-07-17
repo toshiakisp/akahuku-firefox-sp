@@ -128,7 +128,6 @@ Akahuku.startup = function () {
   else {
     console.prefix = "Akahuku debug(jsm#" + appinfo.processID + ")";
   }
-  console.log ("startup: starting up Akahuku ...");
   Akahuku.debug = console;
 
   // Prepare IPC staff (some XPCOM modules depends it)
@@ -138,7 +137,6 @@ Akahuku.startup = function () {
     arAkahukuIPC = ipc.child;
     arAkahukuIPCRoot = ipc.root;
     if (arAkahukuIPCRoot) {
-      console.log ("startup: starting IPC Root")
       arAkahukuIPCRoot.init ();
       arAkahukuIPCRoot.initSubScriptScope (global);
       arAkahukuIPCRoot.loadSubScript
@@ -147,7 +145,6 @@ Akahuku.startup = function () {
       arAkahukuIPC.init ();
     }
     else { // child process
-      console.log ("startup: starting IPC child")
       arAkahukuIPC.init ();
       load ("ipc/child.js"); // applicable only for child proceseses
 
@@ -160,30 +157,16 @@ Akahuku.startup = function () {
 
   Cu.import ("resource://akahuku/XPCOM.jsm", global);
   Cu.import ("resource://akahuku/protocol-handler.jsm", global);
+  Cu.import ("resource://akahuku/content-policy.jsm", global);
   try {
     // akahuku:// protocol
     registerXPCOM (arAkahukuProtocolHandler);
-    console.log ("startup: arAkahukuProtocolHandler XPCOM registered")
     // akahuku-local://
     registerXPCOM (arAkahukuLocalProtocolHandler);
-    console.log ("startup: arAkahukuLocalProtocolHandler XPCOM registered")
     // akahuku-safe://
     registerXPCOM (arAkahukuSafeProtocolHandler);
-    console.log ("startup: arAkahukuSafeProtocolHandler XPCOM registered")
-  }
-  catch (e) {
-    if (e.result == Cr.NS_ERROR_FACTORY_EXISTS) {
-      // already registered
-    }
-    else {
-      console.exception (e);
-    }
-  }
-
-  Cu.import ("resource://akahuku/content-policy.jsm", global);
-  try {
+    // content policy
     registerXPCOM (arAkahukuContentPolicy);
-    console.log ("startup: arAkahukuContentPolicy XPCOM registered")
   }
   catch (e) {
     if (e.result == Cr.NS_ERROR_FACTORY_EXISTS) {

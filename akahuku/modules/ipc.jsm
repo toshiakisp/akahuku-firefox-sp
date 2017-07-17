@@ -1269,7 +1269,7 @@ AkahukuIPC.prototype = {
     this.defineProc (test, "test", "hello");
     this.defineProc (test, "test", "echo");
 
-    this.console.log ("AkahukuIPC initialized as root");
+    //this.console.log ("AkahukuIPC initialized as root");
   },
 
   initAsChild : function () {
@@ -1308,7 +1308,7 @@ AkahukuIPC.prototype = {
       this.console.exception (e);
     }
 
-    this.console.log ("AkahukuIPC initialized as a child");
+    //this.console.log ("AkahukuIPC initialized as a child");
   },
 
   term : function () {
@@ -1329,14 +1329,14 @@ AkahukuIPC.prototype = {
         .getService (Ci.nsIMessageListenerManager);
       gpmm.removeMessageListener (this.messageCall, this);
       gpmm.removeMessageListener (this.messageDefine, this);
-      this.console.log ("AkahukuIPC root is terminated.");
+      //this.console.log ("AkahukuIPC root is terminated.");
     }
     else {
       var mlm = Cc ['@mozilla.org/childprocessmessagemanager;1']
         .getService (Ci.nsIMessageListenerManager);
       mlm.removeMessageListener (this.messageDefine, this);
       mlm.removeMessageListener (this.messageCallChild, this);
-      this.console.log ("AkahukuIPC child is terminated.");
+      //this.console.log ("AkahukuIPC child is terminated.");
     }
   },
 

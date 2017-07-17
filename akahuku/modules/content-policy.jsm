@@ -202,7 +202,6 @@ arAkahukuContentPolicy.prototype = {
         };
       }
     }
-    this.console.log ("initialized.");
 
     /* 設定を取得する */
     this._updateEnabled ();
