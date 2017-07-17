@@ -504,12 +504,6 @@ var arAkahukuLink = {
     }
   },
 
-  initForXUL : function () {
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    arAkahukuLink.initContextMenus (AkahukuContextMenus);
-  },
-
   initContextMenus : function (contextMenus) {
     contextMenus.create ({
       id: "akahuku-menuitem-content-separator0",

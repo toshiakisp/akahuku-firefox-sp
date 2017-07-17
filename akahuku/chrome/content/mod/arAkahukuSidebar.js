@@ -410,11 +410,7 @@ var arAkahukuSidebar = {
     }
   },
 
-  initForXUL : function () {
-    this.attachToWindow (window);// eslint-disable-line no-undef
-  },
-  attachToWindow : function (window)
-  {
+  attachToWindow : function (window) {
     var doc = window.document;
     var mainbc = doc.getElementById ("mainBroadcasterSet");
     if (mainbc) {
@@ -480,7 +476,7 @@ var arAkahukuSidebar = {
       "viewAkahukuP2PSidebar",
       "viewAkahukuSidebar"];
     for (var i = 0; i < ids.length; i ++) {
-      var elem = document.getElementById (ids [i]);
+      var elem = window.document.getElementById (ids [i]);
       if (elem) {
         elem.parentNode.removeChild (elem);
       }

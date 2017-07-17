@@ -16,12 +16,6 @@ var arAkahukuBloomer = {
   modifiersShift : false, /* Boolean  ショートカットキーの Shift */
   file : "",              /* String  ブルマ女将の場所 */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window); // eslint-disable-line no-undef
-  },
   attachToWindow : function (window) {
     window.addEventListener
     ("keydown", arAkahukuBloomer.onKeyDown, true);

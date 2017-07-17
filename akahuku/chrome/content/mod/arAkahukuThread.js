@@ -246,12 +246,6 @@ var arAkahukuThread = {
     
   enableMoveButton : false, /* Boolean  前後に移動ボタン */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window); //eslint-disable-line no-undef
-  },
   attachToWindow : function (window) {
     /* タブの移動のイベントを監視 */
     window.addEventListener

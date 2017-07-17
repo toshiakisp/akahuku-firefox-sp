@@ -1138,12 +1138,6 @@ var arAkahukuMHT = {
     }
   },
 
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window);// eslint-disable-line no-undef
-  },
   attachToWindow : function (window) {
     window.addEventListener
     ("keydown", arAkahukuMHT.onKeyDown, true);

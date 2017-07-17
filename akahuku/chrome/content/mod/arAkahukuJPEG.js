@@ -12,12 +12,6 @@ var arAkahukuJPEG = {
   enableThumbnailError : false,  /* Boolean  見つからなかった場合に
                                   *   エラーを表示する */
 
-  initForXUL : function () {
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    arAkahukuJPEG.initContextMenus (AkahukuContextMenus);
-  },
-
   initContextMenus : function (contextMenus) {
     contextMenus.create ({
       id: "akahuku-menuitem-content-separator5",

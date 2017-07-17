@@ -46,12 +46,7 @@ var arAkahukuP2P = {
   init : function () {
     Components.utils.import ("resource://akahuku/p2p-service.jsm");
   },
-  initForXUL : function () {
-    this.attachToWindow (window); // eslint-disable-line no-undef
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    this.initContextMenus (AkahukuContextMenus);
-  },
+
   attachToWindow : function (window) {
     arAkahukuP2P.update ();
     window.addEventListener ("keydown", arAkahukuP2P.onKeyDown, true);
@@ -528,12 +523,7 @@ var arAkahukuP2P = {
     }
     
 
-    if (typeof window !== "undefined") {
-      arAkahukuP2P.updatePanelForWindow (window);
-    }
-    else {
-      arAkahukuWindow.forEachWindow (arAkahukuP2P.updatePanelForWindow);
-    }
+    arAkahukuWindow.forEachWindow (arAkahukuP2P.updatePanelForWindow);
         
     if (Akahuku.enableAll && arAkahukuP2P.enable) {
       var noaccept, started, port;

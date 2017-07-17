@@ -27,126 +27,9 @@ var arAkahukuUI = {
 
   managedWindows : [],
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window);// eslint-disable-line no-undef
-  },
   attachToWindow : function (window) {
     arAkahukuUI.managedWindows.push (window);
     var document = window.document;
-
-    // Construct popup menus for toolbar button action
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup",
-      contexts: ["_xul_mainpopupset"],
-      title: "akahuku-statusbar-popup",
-      _onshowing: arAkahukuUI.setStatusbarPopup,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-all",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u5168\u6A5F\u80FD\u3092 ON", // 全機能を ON
-      onclick: arAkahukuUI.switchDisabled,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-p2p",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "P2P \u3092 ON", // P2P を ON
-      onclick: arAkahukuUI.switchP2PDisabled,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-p2p-statusbar",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // P2P ステータスバーを ON
-      title: "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON",
-      onclick: arAkahukuUI.switchP2PStatusbarDisabled,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-preferences",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u8A2D\u5B9A", // 設定
-      onclick: arAkahukuUI.showPreferences,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-separator1",
-      type: "separator",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-apply",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // レス送信モードで動かす
-      title: "\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u52D5\u304B\u3059",
-      onclick: arAkahukuUI.applyFocusedDocument,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-external",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u5916\u90E8\u677F\u306B\u767B\u9332", // 外部板に登録
-      onclick: arAkahukuUI.addFocusedToExternalBoards,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-separator2",
-      type: "separator",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-sidebar",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // 赤福サイドバー
-      title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
-      _xul_observes: "viewAkahukuSidebar",
-      onclick: function (event) {
-        var window = event.currentTarget.ownerDocument.defaultView.top;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar", false, window);
-      },
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-p2psidebar",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // 赤福 P2P サイドバー
-      title : "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC",
-      _xul_observes: "viewAkahukuP2PSidebar",
-      onclick: function (event) {
-        var window = event.currentTarget.ownerDocument.defaultView.top;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar", false, window);
-      },
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-respanel",
-      type: "checkbox",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u30EC\u30B9\u30D1\u30CD\u30EB\u3092\u8868\u793A", // レスパネルを表示
-      onclick: arAkahukuUI.switchResPanelShowing,
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-separator3",
-      type: "separator",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-    });
-    AkahukuContextMenus.create ({
-      id: "akahuku-statusbar-popup-openwebsite",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u30B5\u30A4\u30C8\u3092\u958B\u304F", // サイトを開く
-      onclick: arAkahukuUI.openWebsite,
-    });
 
     // toolbar buttons
     arAkahukuUI.createXULToolbarButton (document, {
@@ -354,6 +237,116 @@ var arAkahukuUI = {
             + "'does not have " + prop.id);
       }
     }
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup",
+      contexts: ["_xul_mainpopupset"],
+      title: "akahuku-statusbar-popup",
+      _onshowing: arAkahukuUI.setStatusbarPopup,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-all",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      title: "\u5168\u6A5F\u80FD\u3092 ON", // 全機能を ON
+      onclick: arAkahukuUI.switchDisabled,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-p2p",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      title: "P2P \u3092 ON", // P2P を ON
+      onclick: arAkahukuUI.switchP2PDisabled,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-p2p-statusbar",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      // P2P ステータスバーを ON
+      title: "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON",
+      onclick: arAkahukuUI.switchP2PStatusbarDisabled,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-preferences",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      title: "\u8A2D\u5B9A", // 設定
+      onclick: arAkahukuUI.showPreferences,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-separator1",
+      type: "separator",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-apply",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      // レス送信モードで動かす
+      title: "\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u52D5\u304B\u3059",
+      onclick: arAkahukuUI.applyFocusedDocument,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-external",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      title: "\u5916\u90E8\u677F\u306B\u767B\u9332", // 外部板に登録
+      onclick: arAkahukuUI.addFocusedToExternalBoards,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-separator2",
+      type: "separator",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-sidebar",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      // 赤福サイドバー
+      title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
+      _xul_observes: "viewAkahukuSidebar",
+      onclick: function (event) {
+        var window = event.currentTarget.ownerDocument.defaultView.top;
+        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar", false, window);
+      },
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-p2psidebar",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      // 赤福 P2P サイドバー
+      title : "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC",
+      _xul_observes: "viewAkahukuP2PSidebar",
+      onclick: function (event) {
+        var window = event.currentTarget.ownerDocument.defaultView.top;
+        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar", false, window);
+      },
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-respanel",
+      type: "checkbox",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      title: "\u30EC\u30B9\u30D1\u30CD\u30EB\u3092\u8868\u793A", // レスパネルを表示
+      onclick: arAkahukuUI.switchResPanelShowing,
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-separator3",
+      type: "separator",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+    });
+    contextMenus.create ({
+      id: "akahuku-statusbar-popup-openwebsite",
+      contexts: ["_xul_mainpopupset"],
+      parentId: "akahuku-statusbar-popup",
+      title: "\u30B5\u30A4\u30C8\u3092\u958B\u304F", // サイトを開く
+      onclick: arAkahukuUI.openWebsite,
+    });
   },
 
   /**

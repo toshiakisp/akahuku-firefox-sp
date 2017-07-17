@@ -33,12 +33,6 @@ var arAkahukuQuote = {
   enableUntroll : false,           /* Boolean  芝刈りを解除する */
   enableFocus : false,             /* Boolean  検索したタブを選択する */
     
-  initForXUL : function () {
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    arAkahukuQuote.initContextMenus (AkahukuContextMenus);
-  },
-
   /**
    * 設定を読み込む
    */

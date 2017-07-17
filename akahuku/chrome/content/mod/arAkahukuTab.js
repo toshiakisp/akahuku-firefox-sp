@@ -34,15 +34,6 @@ var arAkahukuTab = {
   sortOrderOther : 1,             /* Number  タブの並び - その他 */
   sortBoardOrder : "",            /* String  板の順番 */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window); // eslint-disable-line no-undef
-    var {AkahukuContextMenus}
-    = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
-    this.initContextMenus (AkahukuContextMenus);
-  },
   attachToWindow : function (window) {
     var document = window.document;
 

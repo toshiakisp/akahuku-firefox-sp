@@ -575,6 +575,9 @@ arAkahukuWindow.focusTabForWindow = function (targetWindow) {
 
 
 
+Akahuku.initContextMenus = function () {
+  // no need in context processes
+};
 Akahuku.getFocusedDocumentParam = function () {
   var focusedDocument
     = arAkahukuIPC.sendSyncCommand ("Akahuku/getFocusedDocument", []);

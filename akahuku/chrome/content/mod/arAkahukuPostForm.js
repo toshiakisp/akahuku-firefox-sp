@@ -280,12 +280,6 @@ var arAkahukuPostForm = {
   enableBottom : false,      /* Boolean  ページ末尾に置く */
   enableBottomFormOnly : false,      /* Boolean  ページ末尾にフォームだけを置く */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window);// eslint-disable-line no-undef
-  },
   attachToWindow : function (window) {
     window.addEventListener
     ("keydown", arAkahukuPostForm.onKeyDown, true);

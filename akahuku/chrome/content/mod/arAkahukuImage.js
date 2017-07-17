@@ -195,12 +195,6 @@ var arAkahukuImage = {
   currentNormal : false,   /* Boolean  保存先選択中のボタンが通常のボタンか */
   lastTargetDirIndex : -1, /* Number  最後に保存したディレクトリのインデックス */
 
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    this.attachToWindow (window);// eslint-disable-line no-undef
-  },
   attachToWindow : function (window) {
     var document = window.document;
     var {AkahukuContextMenus}
