@@ -77,7 +77,7 @@ Akahuku.Cache = new function () {
   this.onBodyUnload = function (targetDocument, documentParam) {
     try {
       if (documentParam.cachedimages)
-        documentParam.cachedimages.destruct ();
+        documentParam.cachedimages.destruct (targetDocument);
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -524,7 +524,7 @@ Akahuku.Cache = new function () {
     /**
      * データを開放する
      */
-    destruct : function () {
+    destruct : function (targetDocument) {
       var CacheEtimeRestorer = function (t) {
         this.originalExpirationTime = t;
       };
@@ -550,8 +550,8 @@ Akahuku.Cache = new function () {
       catch (e) {
       }
 
-      var source = {url: ""}; // no contextWindow for destruct
       for (var i=0; i < this.keys.length; i++) {
+        var source = {url: "", contextWindow: targetDocument.defaultView};
         var t = this.originalExpireTimes [this.keys [i]];
         var listener = new CacheEtimeRestorer (t);
         try {
