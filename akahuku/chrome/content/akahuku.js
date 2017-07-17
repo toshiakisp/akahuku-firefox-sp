@@ -2000,7 +2000,8 @@ var Akahuku = {
    */
   onImageDocumentActivity : function (event) {
     var doc = event.originalTarget;
-    var gBrowser = event.currentTarget;
+    var window = event.currentTarget.ownerDocument.defaultView.top;
+    var gBrowser = window.gBrowser;
     if (event.target && "nodeName" in event.target
         && event.target.nodeName == "tab") {
       var browser = gBrowser.getBrowserForTab (event.target);
@@ -2008,7 +2009,7 @@ var Akahuku = {
         doc = browser.contentDocument;
       }
     }
-    if (!(doc instanceof ImageDocument)) {
+    if (!(doc instanceof window.ImageDocument)) {
       return;
     }
 
