@@ -6,6 +6,11 @@
 
 var EXPORTED_SYMBOLS = [
   "Akahuku",
+  // necessary for bootstrap
+  "arAkahukuCompat",
+  // necessary for sidebar.js
+  "arAkahukuSidebar",
+  "arAkahukuWindow",
   // belows are necessary for akahuku content-policy
   "arAkahukuP2P",
   "arAkahukuDelBanner",
