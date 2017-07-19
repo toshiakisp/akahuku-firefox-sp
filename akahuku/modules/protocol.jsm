@@ -1,12 +1,11 @@
 /*
  * akahuku/protocol.jsm
  *
- *   arIAkahukuProtocolHandler の実装
- *
+ *   akahuku*: プロトコルのURIを利用するための関数群
+ *   (arAkahukuProtocolHandler XPCOM とスコープ共有)
  */
 
 var EXPORTED_SYMBOLS = [
-  // arIAkahukuProtocolHandler
   "enAkahukuURI", 
   "isAkahukuURI",
   "deAkahukuURI",
@@ -218,7 +217,7 @@ var akahuku_scheme_key = "";
 
   /**
    * akahuku:// 形式の URI にする
-   *   arIAkahukuProtocolHandler.enAkahukuURI
+   *   EXPORTED_SYMBOLS
    *
    * @param  String type
    *         種類
@@ -302,7 +301,7 @@ var akahuku_scheme_key = "";
     
   /**
    * akahuku:// 形式の URI かどうかを返す
-   *   arIAkahukuProtocolHandler.isAkahukuURI
+   *   EXPORTED_SYMBOLS
    *
    * @param  String uri
    *         URI
@@ -320,7 +319,7 @@ var akahuku_scheme_key = "";
     
   /**
    * akahuku:// 形式の URI を元に戻す
-   *   arIAkahukuProtocolHandler.deAkahukuURI
+   *   EXPORTED_SYMBOLS
    *
    * @param  String uri
    *         akahuku:// 形式の URI
@@ -338,7 +337,7 @@ var akahuku_scheme_key = "";
     
   /**
    * akahuku:// 形式の URI の情報を取得する
-   *   arIAkahukuProtocolHandler.getAkahukuURIParam
+   *   EXPORTED_SYMBOLS
    *
    * @param  String uri
    *         akahuku:// 形式の URI

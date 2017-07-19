@@ -13,5 +13,3 @@ interfaces  components/arIAkahukuP2PServant2.xpt
 interfaces  components/arIAkahukuP2PServantListener.xpt
 component   {e2470698-e238-40f5-8b09-c3e617aae84c} components/arAkahukuP2PServant2.js
 contract    @unmht.org/akahuku-p2p-servant;2 {e2470698-e238-40f5-8b09-c3e617aae84c}
-
-interfaces  components/arIAkahukuProtocolHandler.xpt

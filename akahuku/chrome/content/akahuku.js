@@ -10,8 +10,7 @@
  * 本体
  */
 var Akahuku = {
-  protocolHandler : null,        /* arIAkahukuProtocolHandler
-                                  *   プロトコルハンドカ */
+  protocolHandler : {},          /* プロトコルハンドラ */
   documentParams : new Array (), /* Array  ドキュメントごとの情報 */
   latestParam : null,            /* arAkahukuDocumentParam
                                   *   最近使ったドキュメントごとの情報 */
@@ -400,21 +399,8 @@ var Akahuku = {
       return;
     }
 
-    try {
-      if ("import" in Components.utils) {
-        // e10s-compatible method to share the singleton
-        var scope = {};
-        Components.utils.import ("resource://akahuku/protocol.jsm", scope);
-        Akahuku.protocolHandler = scope;
-      }
-      else {
-        Akahuku.protocolHandler
-          = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-          .getService (Components.interfaces.arIAkahukuProtocolHandler);
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    Components.utils.import ("resource://akahuku/protocol.jsm",
+        Akahuku.protocolHandler);
 
     Akahuku.isFx9 = arAkahukuCompat.comparePlatformVersion ("8.*") > 0;
 
@@ -492,7 +478,7 @@ var Akahuku = {
     if ("unload" in Components.utils) {
       Components.utils.unload ("resource://akahuku/protocol.jsm");
     }
-    Akahuku.protocolHandler = null;
+    Akahuku.protocolHandler = {};
 
     Akahuku.initialized = false;
   },

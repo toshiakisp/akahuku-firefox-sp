@@ -33,7 +33,7 @@ var arAkahukuProtocolHandlerKey = "";
 /**
  * 本体
  * akahuku プロトコルからチャネルを生成する
- *   Inherits From: nsIProtocolHandler, arIAkahukuProtocolHandler
+ *   Inherits From: nsIProtocolHandler
  */
 function arAkahukuProtocolHandler () {
   this.init ();
@@ -91,8 +91,7 @@ arAkahukuProtocolHandler.prototype = {
    */
   QueryInterface : function (iid) {
     if (iid.equals (Ci.nsISupports)
-        || iid.equals (Ci.nsIProtocolHandler)
-        || iid.equals (Ci.arIAkahukuProtocolHandler)) {
+        || iid.equals (Ci.nsIProtocolHandler)) {
       return this;
     }
         
