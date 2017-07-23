@@ -95,6 +95,14 @@ var arAkahukuCompat = new function () {
         var usePrivacyAware = true;
       }
 
+      if (typeof file === "string") {
+        var filePath = file;
+        file
+          = Cc ["@mozilla.org/file/local;1"]
+          .createInstance (Ci.nsILocalFile);
+        file.initWithPath (filePath);
+      }
+
       if (this._version36) {
         // Firefox 36
         if (usePrivacyAware) {
