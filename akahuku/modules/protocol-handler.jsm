@@ -227,30 +227,7 @@ arAkahukuProtocolHandler.prototype = {
       return this._createEmptyChannel (uri, loadInfo);
     }
         
-    var contentType = "";
-    var tmp = param.original;
-    tmp = tmp.replace (/\?.*/, "");
-    if (tmp.match (/\.jpe?g$/i)) {
-      contentType = "image/jpeg";
-    }
-    else if (tmp.match (/\.gif$/i)) {
-      contentType = "image/gif";
-    }
-    else if (tmp.match (/\.png$/i)) {
-      contentType = "image/png";
-    }
-    else if (/\.bmp$/i.test (tmp)) {
-      contentType = "image/bmp";
-    }
-    else if (/\.swf$/i.test (tmp)) {
-      contentType = "application/x-shockwave-flash";
-    }
-    else if (/\.webm$/i.test (tmp)) {
-      contentType = "video/webm";
-    }
-    else if (/\.mp4$/i.test (tmp)) {
-      contentType = "video/mp4";
-    }
+    var contentType = this._expectContentTypeFromParam (param);
         
     var channel = new arAkahukuBypassChannel
       (uri.spec, param.original, contentType, loadInfo);
@@ -267,7 +244,34 @@ arAkahukuProtocolHandler.prototype = {
         
     return channel;
   },
-    
+
+  _expectContentTypeFromParam : function (param) {
+    var filename = param.original;
+    filename = filename.replace (/\?.*/, "");
+    if (/\.jpe?g$/i.test (filename)) {
+      return "image/jpeg";
+    }
+    if (/\.gif$/i.test (filename)) {
+      return "image/gif";
+    }
+    if (/\.png$/i.test (filename)) {
+      return "image/png";
+    }
+    if (/\.bmp$/i.test (filename)) {
+      return "image/bmp";
+    }
+    if (/\.swf$/i.test (filename)) {
+      return "application/x-shockwave-flash";
+    }
+    if (/\.webm$/i.test (filename)) {
+      return "video/webm";
+    }
+    if (/\.mp4$/i.test (filename)) {
+      return "video/mp4";
+    }
+    return "";
+  },
+
   /**
    * unescape の代替品
    * 旧バージョンの場合このスコープでは未定義なので使用する
@@ -662,7 +666,10 @@ arAkahukuLocalProtocolHandler.prototype = {
   _createLocalFileChannel : function (uri, param, loadInfo) {
     const {AkahukuFileUtil} = Cu.import ("resource://akahuku/fileutil.jsm", {});
     var path = AkahukuFileUtil.getNativePathFromURLSpec (param.original);
-    return new arAkahukuDOMFileChannel (uri, path, loadInfo);
+    var channel = new arAkahukuDOMFileChannel (uri, path, loadInfo);
+    channel.contentType = arAkahukuProtocolHandler.prototype
+      ._expectContentTypeFromParam (param);
+    return channel;
   },
 };
 
