@@ -13,14 +13,7 @@ var Cu = Components.utils;
 
 Cu.import ("resource://akahuku/xul-window-observer.jsm");
 
-var UPromise;
-if (typeof Promise !== "undefined") {
-  UPromise = Promise;
-}
-else {
-  var {akPromise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
-  UPromise = akPromise;
-}
+var {Promise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
 
 /**
  * Pan-window XUL menuitem handler
@@ -223,15 +216,15 @@ ContextMenuRegistry.prototype = {
   update : function (id, updateProperties) {
     var item = this.getById (id);
     item.update (updateProperties);
-    return UPromise.resolve ();
+    return Promise.resolve ();
   },
   remove : function (id) {
     this.unregister (id);
-    return UPromise.resolve ();
+    return Promise.resolve ();
   },
   removeAll : function () {
     this.unregisterAll ();
-    return UPromise.resolve ();
+    return Promise.resolve ();
   },
 
   register : function (item) {

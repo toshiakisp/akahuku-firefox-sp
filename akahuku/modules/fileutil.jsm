@@ -74,25 +74,9 @@ var FileUtilP = {
     if (this.Promise) {
       return;
     }
-    if (typeof Promise !== "undefined") {
-      this.Promise = Promise;
-    }
-    else {
-      // Firefox -28.*
-      var scope = {};
-      try {
-        // requires Firefox 24.0+
-        Cu.import ("resource://gre/modules/Promise.jsm", scope);
-        this.Promise = scope.Promise;
-      }
-      catch (e) {
-        if (e.result !== Components.results.NS_ERROR_FILE_NOT_FOUND) {
-          Cu.reportError (e);
-        }
-        Cu.import ("resource://akahuku/promise-polyfill.jsm", scope);
-        this.Promise = scope.akPromise;
-      }
-    }
+    var scope = {};
+    Cu.import ("resource://akahuku/promise-polyfill.jsm", scope);
+    this.Promise = scope.Promise;
   },
   _prepareGlobals : function () {
     this._prepareFile ();

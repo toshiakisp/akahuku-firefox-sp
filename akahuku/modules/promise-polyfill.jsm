@@ -5,7 +5,7 @@
  */
 /* global Components, Symbol */
 var EXPORTED_SYMBOLS = [
-  "akPromise",
+  "Promise", // export global Promise or polyfill
 ];
 
 // easy Function.bind polyfill
@@ -341,3 +341,23 @@ catch (e) {
     tm.mainThread.dispatch (r, f);
   }
 }
+
+// export global Promise or polyfill
+if (typeof Promise !== "undefined") {
+  this.Promise = Promise;// eslint-disable-line: no-undef
+}
+else { // Firefox -28.*
+  var scope = {};
+  try {
+    // Firefox 24.0+
+    Components.utils.import ("resource://gre/modules/Promise.jsm", scope);
+    this.Promise = scope.Promise;
+  }
+  catch (e) {
+    if (e.result !== Components.results.NS_ERROR_FILE_NOT_FOUND) {
+      Components.utils.reportError (e);
+    }
+    this.Promise = akPromise;
+  }
+}
+
