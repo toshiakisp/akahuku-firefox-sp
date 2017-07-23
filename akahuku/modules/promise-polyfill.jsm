@@ -38,7 +38,8 @@ function akPromise (executor) {
 }
 
 function isPromise (x) {
-  if ("_state" in x &&
+  if (typeof x == "object" &&
+      "_state" in x &&
       "_result" in x &&
       "_fulfillReactions" in x &&
       "_rejectReactions" in x) {
@@ -122,7 +123,7 @@ akPromise.all = function (iterable) {
   let C = this;
   let resultCapability = new PromiseCapability (C);
   // simply support ArrayLike object, not iterable object
-  if (typeof iterable.length !== "undefined") {
+  if (typeof iterable.length == "undefined") {
     // IfAbruptRejectPromise
     resultCapability.reject.call (null, TypeError ("not a ArrayLike"));
     return resultCapability.promise;
@@ -137,28 +138,27 @@ akPromise.all = function (iterable) {
         remainingElementsCount --;
         if (remainingElementsCount == 0) {
           resultCapability.resolve.call (null, values);
-          return resultCapability.promise;
         }
+        return resultCapability.promise;
       }
       let nextValue = iterable [index];
       values.push (undefined);
       let nextPromise = C.resolve (nextValue);
+      let resolveElement_alreadyCalled = false;
+      let resolveElement_index = index;
       let resolveElement = function (x) {
         // Promise.all Resolve Element Functions
-        if (this.alreadyCalled) {
+        if (resolveElement_alreadyCalled) {
           return undefined;
         }
-        this.alreadyCalled = true;
-        values [this.index] = x;
+        resolveElement_alreadyCalled = true;
+        values [resolveElement_index] = x;
         remainingElementsCount --;
         if (remainingElementsCount == 0) {
-          resultCapability.resolve.call (null, values);
-          return resultCapability.promise;
+          return resultCapability.resolve.call (null, values);
         }
         return undefined;
       };
-      resolveElement.alreadyCalled = false;
-      resolveElement.index = index;
       remainingElementsCount ++;
       nextPromise.then (resolveElement, resultCapability.reject);
       index ++;
@@ -177,7 +177,7 @@ akPromise.race = function (iterable) {
   let C = this;
   let resultCapability = new PromiseCapability (C);
   // simply support ArrayLike object, not iterable object
-  if (typeof iterable.length !== "undefined") {
+  if (typeof iterable.length == "undefined") {
     // IfAbruptRejectPromise
     resultCapability.reject.call (null, TypeError ("not a ArrayLike"));
     return resultCapability.promise;
@@ -191,8 +191,8 @@ akPromise.race = function (iterable) {
   }
   catch (e) {
     resultCapability.reject.call (null, e);
-    return resultCapability.promise;
   }
+  return resultCapability.promise;
 };
 
 /**
