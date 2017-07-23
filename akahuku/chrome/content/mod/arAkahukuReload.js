@@ -3722,14 +3722,10 @@ var arAkahukuReload = {
         && !info.isFutasuke) {
       /* 続きを読んでも画像が来ない場合は見てない事になってしまうので
        * 手動で板のリストを更新する */
-      if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-          != "undefined") {
-        var servant
-        = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-        .getService (Components.interfaces.arIAkahukuP2PServant2);
-                
-        servant.visitBoard (info.server + "/" + info.dir);
-      }
+      var {arAkahukuP2PService}
+      = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+      arAkahukuP2PService
+        .servant.visitBoard (info.server + "/" + info.dir);
     }
   },
 

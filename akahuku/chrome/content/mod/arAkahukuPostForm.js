@@ -2158,17 +2158,11 @@ var arAkahukuPostForm = {
         n.value = n.value.replace (/\s*=AKA[^=]+=\s*/g, "");
       }
       else {
-        if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-            != "undefined") {
-          var servant
-            = Components.classes
-            ["@unmht.org/akahuku-p2p-servant;2"].getService
-            (Components.interfaces.arIAkahukuP2PServant2);
-                    
-          var nodeName = servant.encodeNodeName
-            (arAkahukuP2P.address, arAkahukuP2P.port);
-          n.value = nodeName + " " + n.value;
-        }
+        var {arAkahukuP2PService}
+        = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+        var nodeName = arAkahukuP2PService.servant
+          .encodeNodeName (arAkahukuP2P.address, arAkahukuP2P.port);
+        n.value = nodeName + " " + n.value;
       }
             
       n.setSelectionRange (n.value.length, n.value.length);

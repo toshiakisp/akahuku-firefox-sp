@@ -135,14 +135,12 @@ var AkahukuP2PSidebar = {
     var text = document.getElementById ("nodes").value;
     document.getElementById ("nodes").value = "";
         
-    if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-        == "undefined") {
+    var {arAkahukuP2PService}
+    = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+    var servant = arAkahukuP2PService.servant;
+    if (!servant) {
       return;
     }
-        
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
               
     var now = (new Date ()).getTime ();
         
@@ -198,9 +196,12 @@ var AkahukuP2PSidebar = {
     var button = document.getElementById ("clear");
     button.disabled = true;
     button.label = "\u524A\u9664\u4E2D";
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
+    var {arAkahukuP2PService}
+    = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+    var servant = arAkahukuP2PService.servant;
+    if (!servant) {
+      return;
+    }
         
     if (!servant.forceClearCache ()) {
       fail1.hidden = false;
@@ -212,10 +213,9 @@ var AkahukuP2PSidebar = {
    * P2P の状態を表示する
    */
   check : function () {
-    if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-        == "undefined") {
-      return;
-    }
+    var {arAkahukuP2PService}
+    = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+    var servant = arAkahukuP2PService.servant;
         
     var locked = document.getElementById ("lock").checked;
         
@@ -240,9 +240,9 @@ var AkahukuP2PSidebar = {
         
     var now = (new Date ()).getTime ();
         
-    var servant
-    = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-    .getService (Components.interfaces.arIAkahukuP2PServant2);
+    if (!servant) {
+      return;
+    }
         
     var button = document.getElementById ("clear");
     if (!servant.getClearCacheState ()) {
