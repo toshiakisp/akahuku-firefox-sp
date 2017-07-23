@@ -35,6 +35,9 @@ function needsSerialize (value) {
   if (value instanceof Ci.nsILocalFile) {
     return true;
   }
+  if (value instanceof Ci.nsIXPCException) {
+    return true;
+  }
   return false;
 }
 function serialize (value) {
@@ -46,6 +49,14 @@ function serialize (value) {
   else if (value instanceof Ci.nsILocalFile) {
     ret.type = "nsILocalFile";
     ret.value = value.path;
+  }
+  else if (value instanceof Ci.nsIXPCException) {
+    ret.type = "nsIXPCException";
+    ret.value = {
+      result: value.result,
+      message: value.message || value.name,
+      stack: value.stack.toString (),
+    };
   }
   return ret;
 }
@@ -62,6 +73,11 @@ function deserialize (sobj) {
         .createInstance (Ci.nsILocalFile);
       file.initWithPath (sobj.value);
       ret = file;
+      break;
+    case "nsIXPCException":
+      ret = new Components.Exception (sobj.value.message
+          + " [" + sobj.value.stack + "]",
+          sobj.value.result);
       break;
   }
   return ret;

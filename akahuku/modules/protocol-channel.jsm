@@ -1590,6 +1590,7 @@ function arAkahukuDOMFileChannel (uri, path, loadInfo) {
   const {AkahukuFileUtil} = Cu.import ("resource://akahuku/fileutil.jsm", {});
   var promise = AkahukuFileUtil.createFromFileName (path);
   this._expectPromiseToFile (promise);
+  this._path = path;
   this._reader = null;
   this._listener = null;
   this._context = null;
@@ -1800,7 +1801,14 @@ arAkahukuDOMFileChannel.prototype = {
         that._startReadDOMFile ();
       }
     }, function (reason) {
-      Cu.reportError ("arAkahukuDOMFileChannel: promise is rejected; " + reason);
+      if (reason.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+        Cu.reportError ("arAkahukuDOMFileChannel: not found; "
+          + that._path);
+      }
+      else {
+        Cu.reportError ("arAkahukuDOMFileChannel: promise is rejected for "
+          + reason + "; " + that._path);
+      }
       that._domFilePending = false;
       that._onError (reason.result || Cr.NS_ERROR_UNEXPECTED);
     });
