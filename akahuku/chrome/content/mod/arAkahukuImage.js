@@ -927,14 +927,14 @@ var arAkahukuImage = {
       }
       var {AkahukuFileUtil} = Components.utils
         .import ("resource://akahuku/fileutil.jsm", {});
-      var dirUrl = AkahukuFileUtil.getURLSpecFromNativePath (dirPath);
+      var dirUrl = AkahukuFileUtil.getURLSpecFromNativeDirPath (dirPath);
       if (dir) {
-        dirUrl += "/" + dir;
+        dirUrl += dir + "/";
         dirPath = AkahukuFileUtil.getNativePathFromURLSpec (dirUrl);
         arAkahukuFile.createDirectory (dirPath);
       }
             
-      var fileUrl = dirUrl + "/" + leafName;
+      var fileUrl = dirUrl + leafName;
       var filePath = AkahukuFileUtil.getNativePathFromURLSpec (fileUrl);
       arAkahukuImage.saveImageCore (target, filePath, uri, leafName, normal);
     }

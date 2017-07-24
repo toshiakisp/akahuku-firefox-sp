@@ -346,31 +346,25 @@ arAkahukuProtocolHandler.prototype = {
         extCacheFileBase = unescape (prefBranch.getCharPref (prefName));
       }
 
-      var targetFile
-        = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
-      targetFile.initWithPath (extCacheFileBase);
-
-      var fileProtocolHandler
+      const {AkahukuFileUtil}
+        = Cu.import ("resource://akahuku/fileutil.jsm", {});
+      var base
+        = AkahukuFileUtil.getURLSpecFromNativePath (extCacheFileBase);
+      base = base.replace (/\/?$/, "/"); // ensure directory
+      var ios
         = Cc ["@mozilla.org/network/io-service;1"]
-        .getService (Ci.nsIIOService)
-        .getProtocolHandler ("file")
-        .QueryInterface (Ci.nsIFileProtocolHandler);
-      var base = fileProtocolHandler.getURLSpecFromFile (targetFile);
+        .getService (Ci.nsIIOService);
+      var baseUri = ios.newURI (base, null, null);
       var path = param.original
-        .replace (/^https?:\/\//, "");
-
+        .replace (/^https?:\/\//, "./");
+      path = AkahukuFileUtil
+        .getNativePathFromURLSpec (baseUri.resolve (path));
 
       if (this.inMainProcess && !loadInfo) {
-        path = fileProtocolHandler.getFileFromURLSpec (base + path).path;
         // create nsIInputStreamChannel directly
         return this._createThreadCacheFileChannel (uri, path);
       }
       else { // in content process or init by newChannel2 (Firefox 36+)
-        // Require Firefox 29 (OS.Path.fromFileURI)
-        var scope = {};
-        Cu.import ("resource://gre/modules/osfile.jsm",scope);
-        path = scope.OS.Path.fromFileURI (base + path);
         return this._createThreadCacheDOMFileChannel (uri, path, loadInfo);
       }
     }

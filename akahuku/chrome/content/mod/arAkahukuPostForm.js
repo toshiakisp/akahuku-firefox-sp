@@ -474,7 +474,7 @@ var arAkahukuPostForm = {
         else if (arAkahukuPostForm.shimonkinType == "custom") {
           types = ["submit"];
           base
-          = arAkahukuFile.getURLSpecFromFilename
+          = arAkahukuFile.getURLSpecFromDirname
           (arAkahukuFile.systemDirectory);
         }
         type = types [parseInt (Math.random () * types.length)];

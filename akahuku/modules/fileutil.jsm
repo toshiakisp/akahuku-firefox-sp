@@ -87,6 +87,21 @@ var FileUtilP = {
 var FileUtilC = {};
 var FileUtilPDef = {};
 
+function getFileProtocolHandler () {
+  return Cc ["@mozilla.org/network/io-service;1"]
+    .getService (Ci.nsIIOService)
+    .getProtocolHandler ("file")
+    .QueryInterface (Ci.nsIFileProtocolHandler);
+}
+
+function createNsiFile (path) {
+  var nsfile
+    = Cc ["@mozilla.org/file/local;1"]
+    .createInstance (Ci.nsILocalFile);
+  nsfile.initWithPath (path);
+  return nsfile;
+}
+
 /**
  * AkahukuFileUtil.createFromFileName
  * @param String filename
@@ -125,11 +140,7 @@ FileUtilC.createFromFileName = function () {
  */
 FileUtilP.getNativePathFromURLSpec = function (url) {
   // classic way depending on nsIFile
-  var fileProtocolHandler
-    = Cc ["@mozilla.org/network/io-service;1"]
-    .getService (Ci.nsIIOService)
-    .getProtocolHandler ("file")
-    .QueryInterface (Ci.nsIFileProtocolHandler);
+  var fileProtocolHandler = getFileProtocolHandler ();
   var nsfile = fileProtocolHandler.getFileFromURLSpec (url);
   return nsfile.path;
 };
@@ -147,15 +158,8 @@ FileUtilC.getNativePathFromURLSpec = function (url) {
  */
 FileUtilP.getURLSpecFromNativePath = function (path) {
   // classic way depending on nsIFile
-  var fileProtocolHandler
-    = Cc ["@mozilla.org/network/io-service;1"]
-    .getService (Ci.nsIIOService)
-    .getProtocolHandler ("file")
-    .QueryInterface (Ci.nsIFileProtocolHandler);
-  var nsfile
-    = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
-  nsfile.initWithPath (path);
+  var fileProtocolHandler = getFileProtocolHandler ();
+  var nsfile = createNsiFile (path);
   return fileProtocolHandler.getURLSpecFromFile (nsfile);
 };
 FileUtilC.getURLSpecFromNativePath = function (path) {
@@ -163,6 +167,28 @@ FileUtilC.getURLSpecFromNativePath = function (path) {
   // (OS.Path.toFileURI requires Firefox 29+; Bug 803188)
   const {OS} = Cu.import ("resource://gre/modules/osfile.jsm", {});
   return OS.Path.toFileURI (path);
+};
+
+/**
+ * AkahukuFileUtil.getURLSpecFromNativeDirPath
+ * @param String path Native directory path
+ * @return String url ending with "/"
+ */
+FileUtilP.getURLSpecFromNativeDirPath = function (path) {
+  // classic way depending on nsIFile
+  var fileProtocolHandler = getFileProtocolHandler ();
+  var nsfile = createNsiFile (path);
+  return fileProtocolHandler.getURLSpecFromDir (nsfile);
+};
+FileUtilC.getURLSpecFromNativeDirPath = function (path) {
+  // Use OS.Path to not create nsIFile in content processes
+  // (OS.Path.toFileURI requires Firefox 29+; Bug 803188)
+  const {OS} = Cu.import ("resource://gre/modules/osfile.jsm", {});
+  var dir = OS.Path.toFileURI (path);
+  if (!(/\/$/.test (dir))) {
+    dir += "/";
+  }
+  return dir;
 };
 
 
