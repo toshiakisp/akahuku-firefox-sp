@@ -204,6 +204,34 @@ FileUtilC.getURLSpecFromNativeDirPath = function (path) {
   return dir;
 };
 
+/**
+ * AkahukuFileUtil.getLastModified
+ * @param File file
+ * @return Number last modified time
+ */
+FileUtilP.getLastModified  = function (file) {
+  if (typeof file.lastModified !== "undefined") {
+    return file.lastModified;
+  }
+  if (typeof file.lastModifiedDate !== "undefined") {
+    // 15+, deprecated since Fx49
+    return file.lastModifiedDate.getTime ();
+  }
+  // for old implementation without lastModified[Date] (-14.* ?)
+  if (typeof file.mozFullPath !== "undefined") {
+    try {
+      var path = file.mozFullPath;
+      var nsfile = createNsiFile (path);
+      return nsfile.lastModifiedTime;
+    }
+    catch (e) {
+      Cu.reportError (e);
+      return 0;
+    }
+  }
+  return 0;
+};
+
 
 const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
 var AkahukuFileUtil = AkahukuIPCManager.createAndRegisterModule ({

@@ -161,8 +161,7 @@ Akahuku.Cache = new function () {
     var url = source.url;
     var p = Akahuku.protocolHandler.getAkahukuURIParam (url);
     if (p.type === "filecache") {
-      var status = _getFilecacheStatus (p.original);
-      callback.apply (null, [status]);
+      _asyncGetFilecacheStatus (p.original, callback);
     }
     else if (p.type === "cache") {
       var candidates = [p.original, p.original + ".backup"];
@@ -265,28 +264,32 @@ Akahuku.Cache = new function () {
     httpStatusText : "No HTTP response",
     header : {},
   };
-  function _getFilecacheStatus (originalUrl) {
+  function _asyncGetFilecacheStatus (originalUrl, callback) {
     var status = new CacheStatus (originalUrl);
     if (!(/^https?:/.test (originalUrl))) {
-      return status;
+      callback.apply (null, [status]);
+      return;
     }
     // from arAkahukuReloadCacheWriter.createFile ()
-    var path = originalUrl.replace (/^https?:\/\//, "");
+    var {AkahukuFileUtil} = Components.utils
+      .import ("resource://akahuku/fileutil.jsm", {});
     var base
-      = arAkahukuFile.getURLSpecFromDirname
+      = AkahukuFileUtil.getURLSpecFromNativeDirPath
       (arAkahukuReload.extCacheFileBase);
-    path = arAkahukuFile.getFilenameFromURLSpec (base + path);
-
-    var targetFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-    targetFile.initWithPath (path);
-    if (targetFile.exists ()) {
-      status.isExist = true;
-      status.key = path;
-      status.lastModified = targetFile.lastModifiedTime;
-    }
-    return status;
+    var path = originalUrl.replace (/^https?:\/\//, "");
+    path = AkahukuFileUtil.getNativePathFromURLSpec (base + path);
+    AkahukuFileUtil.createFromFileName (path)
+      .then (function (file) { // file exists
+        status.isExist = true;
+        status.key = path;
+        status.lastModified = AkahukuFileUtil.getLastModified (file);
+      }, function () { // not exist
+        Akahuku.debug.log ("filecache doesn't exist: " + path);
+      })
+      .then (function () {
+        callback.apply (null, [status]);
+      });
+    return;
   }
 
   /**
