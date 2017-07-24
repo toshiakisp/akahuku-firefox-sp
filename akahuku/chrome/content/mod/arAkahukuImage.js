@@ -1500,18 +1500,7 @@ var arAkahukuImage = {
       var promise = AkahukuFileUtil
         .createFromFileName (filename)
         .then (function (file) {
-          try {
-            if ((typeof file.fileSize !== "undefined"
-                ? file.fileSize > 0 : file.size > 0)) {
-              return Promise.reject ({i: index, file: file});
-            }
-          }
-          catch (e) {
-            if (e.result !== Components.results.NS_ERROR_FILE_NOT_FOUND) {
-              Akahuku.debug.exception (e);
-            }
-          }
-          return Promise.resolve (true);
+          return Promise.reject ({i: index, file: file});
         }, function (reason) {
           return Promise.resolve (true);
         });

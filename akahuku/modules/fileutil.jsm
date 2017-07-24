@@ -112,8 +112,21 @@ FileUtilP.createFromFileName = function (filename) {
   var file, promise;
   if (typeof this.File.createFromFileName !== "function") {
     // Firefox 8.0-51.0
-    file = new this.File (filename);
-    promise = this.Promise.resolve (file);
+    try {
+      file = new this.File (filename);
+      // Ensure file existence by accessing the property
+      // for old implementation (at most Firefox 6.*)
+      if (typeof file.fileSize !== "undefined"
+          && file.fileSize > 0) {
+      }
+      promise = this.Promise.resolve (file);
+    }
+    catch (e) {
+      if (e.result !== Components.results.NS_ERROR_FILE_NOT_FOUND) {
+        Cu.reportError (e);
+      }
+      promise = this.Promise.reject (e);
+    }
   }
   else {
     promise = this.File.createFromFileName (filename);
