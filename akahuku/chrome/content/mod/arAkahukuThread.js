@@ -2775,7 +2775,7 @@ var arAkahukuThread = {
         || (imageStatus.requestURI 
             && (imageStatus.requestURI.schemeIs ("akahuku")
               || imageStatus.requestURI.schemeIs ("akahuku-safe"))
-            && /^\/(?:(?:file)?cache\/|preview\.)/.test (imageStatus.requestURI.path))
+            && /^\/(?:(?:file)?cache\/|preview\.)/.test (arAkahukuCompat.nsIURI.getPathQueryRef (imageStatus.requestURI)))
        ){ // 即リロードするべき対象・状態では無い
       return;
     }

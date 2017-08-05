@@ -6699,7 +6699,8 @@ var arAkahukuCatalog = {
     if (!matched)
       return;
     var server = matched [1];
-    matched = aURI.path.match (/^\/([^\/]+)\/(?:res\/|futaba\.php\?res=)(\d+)/);
+    var path = arAkahukuCompat.nsIURI.getPathQueryRef (aURI);
+    matched = path.match (/^\/([^\/]+)\/(?:res\/|futaba\.php\?res=)(\d+)/);
     if (!matched)
       return;
     var dir = matched [1], id = matched [2];
