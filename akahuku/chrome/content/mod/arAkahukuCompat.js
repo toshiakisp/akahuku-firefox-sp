@@ -384,6 +384,23 @@ var arAkahukuCompat = new function () {
     }
   };
 
+  this.nsIURI = new function () {
+    /**
+     * pathQueryRef (rename from path) [Bug 1326520] Fx57+
+     */
+    this.getPathQueryRef = function (uri) {
+      return uri.pathQueryRef || uri.path;
+    };
+    this.setPathQueryRef = function (uri, newPath) {
+      if (typeof uri.pathQueryRef !== "undefined") {
+        uri.pathQueryRef = newPath;
+      }
+      else {
+        uri.path = newPath;
+      }
+    };
+  };
+
 
   // Cache service v2
   

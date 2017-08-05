@@ -1165,10 +1165,12 @@ var arAkahukuImage = {
         }
         href = arAkahukuP2P.deP2P (href);
         var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
-        uri.path = uri.path.replace (/\/(red|d)\//, "/src/");
+        arAkahukuCompat.nsIURI.setPathQueryRef (uri,
+            arAkahukuCompat.nsIURI.getPathQueryRef (uri)
+            .replace (/\/(red|d)\//, "/src/"));
             
         var dirs = new Array ();
-        dirs = uri.path.split (/\//);
+        dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
         href = info.escapeForFilename (uri.host);
         for (var i = 0; i < dirs.length; i ++) {
           if (dirs [i]) {
@@ -1225,10 +1227,12 @@ var arAkahukuImage = {
     else {
       href = arAkahukuP2P.deP2P (href);
       var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
-      uri.path = uri.path.replace (/\/(red|d)\//, "/src/");
+      arAkahukuCompat.nsIURI.setPathQueryRef (uri,
+          arAkahukuCompat.nsIURI.getPathQueryRef (uri)
+          .replace (/\/(red|d)\//, "/src/"));
       
       var dirs = new Array ();
-      dirs = uri.path.split (/\//);
+      dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
       href = info.escapeForFilename (uri.host);
       for (var i = 0; i < dirs.length; i ++) {
         if (dirs [i]) {

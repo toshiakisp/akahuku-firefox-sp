@@ -135,10 +135,17 @@ arAkahukuProtocolHandler.prototype = {
       // 相対アドレスを正しく解決させるために preamble を除外しておく
       baseURI = baseURI.clone ();
       var r = /^\/(?:p2p|preview\.[^\/]+|jpeg|(?:file)?cache)\/\w+\.\d(?=\/)/;
-      var match = r.exec (baseURI.path);
+      var path = baseURI.pathQueryRef || baseURI.path;
+      var match = r.exec (path);
       if (match) {
         preamble = match [0];
-        baseURI.path = baseURI.path.substr (preamble.length);
+        path = path.substr (preamble.length);
+        if (typeof baseURI.pathQueryRef !== "undefined") {
+          baseURI.pathQueryRef = path;
+        }
+        else {
+          baseURI.path = path;
+        }
         // filecache からの相対アドレスはただの cache へ変換
         preamble = preamble.replace (/^\/filecache/,"/cache");
       }

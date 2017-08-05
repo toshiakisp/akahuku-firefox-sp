@@ -492,7 +492,8 @@ arAkahukuContentPolicy.prototype = {
     if (uri.host.match (/([^\.\/]+)\.2chan\.net/)) {
       server = RegExp.$1;
     }
-    if (uri.path.match (/^\/(?:(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\//)) {
+    var path = uri.pathQueryRef || uri.path;
+    if (path.match (/^\/(?:(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\//)) {
       dir = (RegExp.$1 ? RegExp.$1 + "-" + RegExp.$2 : RegExp.$2);
     }
     name = server + ":" + dir;

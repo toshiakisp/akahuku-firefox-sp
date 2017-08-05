@@ -68,7 +68,7 @@ var arAkahukuUtil = new function () {
           uri.asciiHostPort !== uri.hostPort) {
         url = uri.scheme + "://" +
           (uri.userPass ? url += uri.userPass + "@" : "") +
-          uri.asciiHostPort + uri.path;
+          uri.asciiHostPort + arAkahukuCompat.nsIURI.getPathQueryRef (uri);
       }
     }
     catch (e) { Cu.reportError (e);
@@ -344,7 +344,8 @@ var arAkahukuUtil = new function () {
     try {
       var uri = this.newURI (url);
       for (var k = 0; k < URL2MIME.length; k ++) {
-        if (URL2MIME [k][0].test (uri.path)) {
+        var path = arAkahukuCompat.nsIURI.getPathQueryRef (uri);
+        if (URL2MIME [k][0].test (path)) {
           return URL2MIME [k][1];
         }
       }
