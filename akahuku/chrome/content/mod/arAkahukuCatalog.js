@@ -2615,10 +2615,7 @@ var arAkahukuCatalog = {
           = arAkahukuFile.systemDirectory
           + arAkahukuFile.separator + "lastcells.txt";
         try {
-          var file
-            = Components.classes ["@mozilla.org/file/local;1"]
-            .createInstance (Components.interfaces.nsILocalFile);
-          file.initWithPath (filename);
+          var file = arAkahukuFile.initFile (filename);
           file.remove (false);
         }
         catch (e) {

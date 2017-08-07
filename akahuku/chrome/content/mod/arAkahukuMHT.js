@@ -78,7 +78,7 @@ arAkahukuMHTRedirectCacheWriter.prototype = {
  * P2P キャッシュの情報
  *   Inherits From: nsICacheEntryDescriptor
  *
- * @param  nsILocalFile targetFile
+ * @param  nsIFile targetFile
  *         P2P のキャッシュファイル
  */
 function arAkahukuP2PCacheEntryDescriptor (targetFile, ownerDocument) {
@@ -88,7 +88,7 @@ function arAkahukuP2PCacheEntryDescriptor (targetFile, ownerDocument) {
   this.ownerDocument = ownerDocument;
 }
 arAkahukuP2PCacheEntryDescriptor.prototype = {
-  targetFile : null,  /* nsILocalFile  P2P のキャッシュファイル */
+  targetFile : null,  /* nsIFile  P2P のキャッシュファイル */
   fstream : null,     /* nsIFileInputStream  キャッシュファイルの
                        *   入力ストリーム */
     
@@ -343,10 +343,7 @@ arAkahukuMHTFileData.prototype = {
       + arAkahukuFile.separator
       + uinfo.leafNameExt;
             
-      var targetFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-      targetFile.initWithPath (targetFileName);
+      var targetFile = arAkahukuFile.initFile (targetFileName);
       if (targetFile.exists ()) {
         if (uinfo.isRedirect) {
           location
@@ -913,8 +910,8 @@ arAkahukuMHTParam.prototype = {
   checkTimerID : null,   /* Number  ファイルチェックのタイマー ID */
   files : null,          /* Array  mht ファイルデータ
                           *   [arAkahukuMHTFileData, ...] */
-  file : null,           /* nsILocalFile  保存先のファイル */
-  tmpFile : null,        /* nsILocalFile  一時保存先のファイル */
+  file : null,           /* nsIFile  保存先のファイル */
+  tmpFile : null,        /* nsIFile  一時保存先のファイル */
   targetDocument : null, /* HTMLDocument  対象のドキュメント */
   cloneDocument : null,  /* HTMLDocument  処理中のドキュメント */
     
@@ -3545,13 +3542,8 @@ var arAkahukuMHT = {
     if (dirname_base) {
       dirname_base = arAkahukuMHT.base + arAkahukuFile.separator + dirname_base;
             
-      try {
-        var dir
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        dir.initWithPath (dirname_base);
-      }
-      catch (e) {
+      var dir = arAkahukuFile.initFile (dirname_base);
+      if (!dir) {
         /* ベースのディレクトリが不正 */
         throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
       }
@@ -3568,15 +3560,9 @@ var arAkahukuMHT = {
       /* ファイル選択を省略しているので、デフォルトのディレクトリ以下に作成する */
             
       try {
-        var file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-        try {
-          file.initWithPath (dirname_base
-                             + arAkahukuFile.separator
-                             + filename);
-        }
-        catch (e) {
+        var file = arAkahukuFile
+          .initFile (dirname_base + arAkahukuFile.separator + filename);
+        if (!file) {
           /* ベースのディレクトリが不正 */
           throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
         }
@@ -3586,15 +3572,9 @@ var arAkahukuMHT = {
               && param.lastFilename) {
             /* 上書きする設定の場合で前のファイル名が違う場合、削除する */
             var file2
-            = Components.classes ["@mozilla.org/file/local;1"]
-            .createInstance (Components.interfaces
-                             .nsILocalFile);
-            try {
-              file2.initWithPath (dirname_base
-                                  + arAkahukuFile.separator
-                                  + param.lastFilename);
-            }
-            catch (e) {
+            = arAkahukuFile.initFile
+            (dirname_base + arAkahukuFile.separator + param.lastFilename);
+            if (!file2) {
               /* ベースのディレクトリが不正 */
               throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
             }
@@ -3668,13 +3648,10 @@ var arAkahukuMHT = {
       }
             
       param.file = file;
-      param.tmpFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
+      param.tmpFile = arAkahukuFile.initFile (param.file.parent);
       var tmpFileName
       = new Date ().getTime ()
       + "_" + Math.floor (Math.random () * 1000);
-      param.tmpFile.initWithFile (param.file.parent);
       param.tmpFile.appendRelativePath (tmpFileName);
             
       window.setTimeout
@@ -3702,18 +3679,12 @@ var arAkahukuMHT = {
         param.file = file;
         if (!param.file.leafName.match (/\.mht$/)) {
           var path = param.file.path + ".mht";
-          param.file
-            = Components.classes ["@mozilla.org/file/local;1"]
-            .createInstance (Components.interfaces.nsILocalFile);
-          param.file.initWithPath (path);
+          param.file = arAkahukuFile.initFile (path);
         }
-        param.tmpFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
+        param.tmpFile = arAkahukuFile.initFile (dir.path);
         var tmpFileName
           = new Date ().getTime ()
           + "_" + Math.floor (Math.random () * 1000);
-        param.tmpFile.initWithPath (dir.path);
         param.tmpFile.appendRelativePath (tmpFileName);
                 
         window.setTimeout
@@ -3761,16 +3732,9 @@ var arAkahukuMHT = {
     filePicker.defaultString = filename;
     filePicker.appendFilters
       (Components.interfaces.nsIFilePicker.filterAll);
-    try {
-      var dir
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      dir.initWithPath (dirname_base);
-
+    var dir = arAkahukuFile.initFile (dirname_base);
+    if (dir) {
       filePicker.displayDirectory = dir;
-    }
-    catch (e) {
-      /* ベースのディレクトリが不正 */
     }
 
     arAkahukuCompat.FilePicker.open

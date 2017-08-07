@@ -383,9 +383,10 @@ arAkahukuProtocolHandler.prototype = {
   },
   _createThreadCacheFileChannel : function (uri, path) {
     try {
+      var nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
       var targetFile
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       targetFile.initWithPath (path);
       if (!targetFile.exists ()) {
         return this._createThreadCacheFailChannel (uri);

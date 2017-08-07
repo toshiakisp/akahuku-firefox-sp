@@ -13,6 +13,8 @@ const Cc = Components.classes;
 const Cr = Components.results;
 const Cu = Components.utils;
 
+const nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
+
 var loader
 = Cc ["@mozilla.org/moz/jssubscript-loader;1"]
 .getService (Ci.mozIJSSubScriptLoader);
@@ -370,7 +372,7 @@ arAkahukuP2PChannel.prototype = {
   _getCacheChannel : function () {
     var targetFile
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
     targetFile.initWithPath (this._targetFileName);
         
     if (!targetFile.exists ()) {
@@ -402,7 +404,7 @@ arAkahukuP2PChannel.prototype = {
             
       targetFile
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       targetFile.initWithPath (this._targetFileName);
             
     }
@@ -453,7 +455,7 @@ arAkahukuP2PChannel.prototype = {
             
     var cacheFile
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
     cacheFile.initWithPath (this._targetFileName + ".conv");
     var ofstream
     = Components.classes
@@ -468,7 +470,7 @@ arAkahukuP2PChannel.prototype = {
         
     targetFile
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
     targetFile.initWithPath (this._targetFileName);
             
     var servant = arAkahukuP2PService.servant;
@@ -679,7 +681,7 @@ arAkahukuP2PChannel.prototype = {
         && this._cacheFileName) {
       var cacheFile
       = Cc ["@mozilla.org/file/local;1"]
-      .createInstance (Ci.nsILocalFile);
+      .createInstance (nsIFile);
       cacheFile.initWithPath (this._cacheFileName);
       this._cacheFileName = null; // to ensure 'run once'
       if (httpStatus < 400) {
@@ -697,7 +699,7 @@ arAkahukuP2PChannel.prototype = {
             /* ハッシュを作成 */
             var targetFile
             = Cc ["@mozilla.org/file/local;1"]
-            .createInstance (Ci.nsILocalFile);
+            .createInstance (nsIFile);
             targetFile.initWithPath (this._targetFileName);
             servant.createHashFile (targetFile,
                                     this._targetFileLeafName, "");
@@ -791,7 +793,7 @@ arAkahukuP2PChannel.prototype = {
   _getFromWeb : function () {
     var targetDir
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
     targetDir.initWithPath (this._targetDirName);
     if (!targetDir.exists ()) {
       if (inMainProcess) {
@@ -813,7 +815,7 @@ arAkahukuP2PChannel.prototype = {
       // 直接 _targetFileName へ保存させる
       var targetFile
       = Cc ["@mozilla.org/file/local;1"]
-      .createInstance (Ci.nsILocalFile);
+      .createInstance (nsIFile);
       targetFile.initWithPath (this._targetFileName);
 
       // Use a wrapper of WebBrowserPersist in arAkahukuImage
@@ -845,7 +847,7 @@ arAkahukuP2PChannel.prototype = {
 
     var cacheFile
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
     cacheFile.initWithPath (this._cacheFileName);
         
     var webBrowserPersist
@@ -869,7 +871,7 @@ arAkahukuP2PChannel.prototype = {
   _onSave : function () {
     var targetFile
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
     targetFile.initWithPath (this._targetFileName);
         
     if (targetFile.exists ()) {
@@ -900,7 +902,7 @@ arAkahukuP2PChannel.prototype = {
             
           targetFile
             = Cc ["@mozilla.org/file/local;1"]
-            .createInstance (Ci.nsILocalFile);
+            .createInstance (nsIFile);
           targetFile.initWithPath (this._targetFileName);
             
         }

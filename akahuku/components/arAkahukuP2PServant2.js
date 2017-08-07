@@ -17,7 +17,9 @@ const nsISocketTransportService = Components.interfaces.nsISocketTransportServic
 const nsITransportEventSink     = Components.interfaces.nsITransportEventSink;
 
 const nsIFile      = Components.interfaces.nsIFile;
-const nsILocalFile = Components.interfaces.nsILocalFile;
+const nsILocalFile = ("nsILocalFile" in Components.interfaces
+  ? Components.interfaces.nsILocalFile
+  : Components.interfaces.nsIFile);
 
 const nsIFileInputStream       = Components.interfaces.nsIFileInputStream;
 const nsIBinaryInputStream     = Components.interfaces.nsIBinaryInputStream;
@@ -2625,7 +2627,7 @@ var arAkahukuP2PServant2 = {
   /**
    * キャッシュの量を制限する
    *
-   * @param  nsILocalFile dir
+   * @param  nsIFile dir
    *         制限するディレクトリ
    * @param  Number limit
    *         制限する個数
@@ -3170,7 +3172,7 @@ var arAkahukuP2PServant2 = {
   /**
    * ファイルのハッシュを算出する
    *
-   * @param  nsILocalFile targetFile
+   * @param  nsIFile targetFile
    *         対象のファイル
    * @param  String leafName
    *         対象のファイルのファイル名
@@ -3212,7 +3214,7 @@ var arAkahukuP2PServant2 = {
   /**
    * ハッシュファイルからハッシュを取得する
    *
-   * @param  nsILocalFile targetFile
+   * @param  nsIFile targetFile
    *         対象のファイル
    * @return Boolean
    *         正しいファイルか
@@ -3254,7 +3256,7 @@ var arAkahukuP2PServant2 = {
    * ファイルのハッシュファイルを作成する
    *   arIAkahukuP2PServant2.createHash
    *
-   * @param  nsILocalFile targetFile
+   * @param  nsIFile targetFile
    *         対象のファイル
    * @param  String leafName
    *         ファイル名
@@ -4544,7 +4546,7 @@ var arAkahukuP2PServant2 = {
    *
    * @param  arAkahukuP2PNode node
    *         対象のノード
-   * @param  nsILocalFile targetFile
+   * @param  nsIFile targetFile
    *         送信するファイル
    * @param  String path
    *         リクエストのパス

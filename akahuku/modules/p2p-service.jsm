@@ -10,6 +10,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
+const nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
+
 Cu.import ("resource://akahuku/console.jsm");
 var console = new AkahukuConsole ();
 console.prefix = "Akahuku debug(p2p-service)";
@@ -275,7 +277,7 @@ arAkahukuP2PService.utils = {
     try {
       var cacheBaseDir
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       cacheBaseDir.initWithPath (cacheBase);
       var fph
         = Cc ["@mozilla.org/network/io-service;1"]
@@ -344,7 +346,7 @@ arAkahukuP2PService.utils = {
       }
       file
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       file.initWithPath (targetFileName + ".hash");
       if (file.exists ()) {
         file.remove (true);

@@ -97,10 +97,7 @@ var arAkahukuCompat = new function () {
 
       if (typeof file === "string") {
         var filePath = file;
-        file
-          = Cc ["@mozilla.org/file/local;1"]
-          .createInstance (Ci.nsILocalFile);
-        file.initWithPath (filePath);
+        file = arAkahukuFile.initFile (filePath);
       }
 
       if (this._version36) {

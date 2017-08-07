@@ -32,7 +32,11 @@ function needsSerialize (value) {
   if (value instanceof Ci.nsIURI) {
     return true;
   }
-  if (value instanceof Ci.nsILocalFile) {
+  if (typeof Ci.nsILocalFile !== "undefined"
+      && value instanceof Ci.nsILocalFile) {
+    return true;
+  }
+  if (value instanceof Ci.nsIFile) {
     return true;
   }
   if (value instanceof Ci.nsIXPCException) {
@@ -46,8 +50,13 @@ function serialize (value) {
     ret.type = "nsIURI";
     ret.value = value.spec;
   }
-  else if (value instanceof Ci.nsILocalFile) {
+  else if (typeof Ci.nsILocalFile !== "undefined"
+      && value instanceof Ci.nsILocalFile) {
     ret.type = "nsILocalFile";
+    ret.value = value.path;
+  }
+  else if (value instanceof Ci.nsIFile) {
+    ret.type = "nsIFile";
     ret.value = value.path;
   }
   else if (value instanceof Ci.nsIXPCException) {
@@ -67,6 +76,12 @@ function deserialize (sobj) {
       var ios = Cc ["@mozilla.org/network/io-service;1"]
         .getService (Ci.nsIIOService);
       ret = ios.newURI (sobj.value, null, null);
+      break;
+    case "nsIFile":
+      var file = Cc ["@mozilla.org/file/local;1"]
+        .createInstance (Ci.nsIFile);
+      file.initWithPath (sobj.value);
+      ret = file;
       break;
     case "nsILocalFile":
       var file = Cc ["@mozilla.org/file/local;1"]

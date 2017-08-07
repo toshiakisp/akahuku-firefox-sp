@@ -167,6 +167,10 @@ var AkahukuOptions = {
   prefBranch : null,    /* nsIPrefBranch/nsIPrefBranch2  pref サービス */
   
   loadedTabs : new Object (), /* Object  ロードしたタブ */     
+
+  nsIFile : ("nsILocalFile" in Components.interfaces
+      ? Components.interfaces.nsILocalFile
+      : Components.interfaces.nsIFile,
   
   prefList : { /* Object  設定一覧 */
     "title" : [
@@ -2544,7 +2548,7 @@ var AkahukuOptions = {
   openSystemDirectory : function () {
     var file
       = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
+      .createInstance (AkahukuOptions.nsIFile);
     file.initWithPath (arAkahukuFile.systemDirectory);
     file.reveal ();
   },
@@ -2629,7 +2633,7 @@ var AkahukuOptions = {
             
       var dir
         = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
+        .createInstance (AkahukuOptions.nsIFile);
       dir.initWithPath (base);
             
       filePicker.displayDirectory = dir;
@@ -2641,7 +2645,7 @@ var AkahukuOptions = {
       if (ret == Components.interfaces.nsIFilePicker.returnOK) {
         document.getElementById (id).value
         = filePicker.file
-        .QueryInterface (Components.interfaces.nsILocalFile).path;
+        .QueryInterface (AkahukuOptions.nsIFile).path;
       }
     });
   },
@@ -4347,7 +4351,7 @@ var AkahukuOptions = {
 
         var file
           = filePicker.file
-          .QueryInterface (Components.interfaces.nsILocalFile);
+          .QueryInterface (AkahukuOptions.nsIFile);
                 
         var fstream
           = Components
@@ -4427,7 +4431,7 @@ var AkahukuOptions = {
         }
         var file
           = filePicker.file
-          .QueryInterface (Components.interfaces.nsILocalFile);
+          .QueryInterface (AkahukuOptions.nsIFile);
                 
         var fstream
           = Components

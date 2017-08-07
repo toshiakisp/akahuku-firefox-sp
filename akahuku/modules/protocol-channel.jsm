@@ -555,7 +555,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
   _originalURI : "",  /* String  本来の URI */
   _listener : null,   /* nsIStreamListener  チャネルのリスナ */
   _context : null,    /* nsISupports  ユーザ定義のコンテキスト */
-  _targetFile : null, /* nsILocalFile  保存対象のファイル */
+  _targetFile : null, /* nsIFile  保存対象のファイル */
   _isPending : false, /* Boolean  リクエストの途中かどうか */
     
   /* nsIRequest のメンバ */

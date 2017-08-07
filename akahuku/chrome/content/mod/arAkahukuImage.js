@@ -11,7 +11,7 @@
 function arAkahukuImageListener () {
 }
 arAkahukuImageListener.prototype = {
-  file : null,   /* nsILocalFile  保存先のファイル */
+  file : null,   /* nsIFile  保存先のファイル */
   saveLeafName : "", /* String  保存先のファイル名 */
   finished : false,
   callback : null,
@@ -37,10 +37,7 @@ arAkahukuImageListener.prototype = {
   },
 
   setFilePath : function (filePath, tmpfilePath) {
-    this.file
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-    this.file.initWithPath (filePath);
+    this.file = arAkahukuFile.initFile (filePath);
     this.saveLeafName = this.file.leafName;
     this.file.initWithPath (tmpfilePath);
   },
@@ -955,10 +952,7 @@ var arAkahukuImage = {
     filePicker.appendFilters (Components.interfaces.nsIFilePicker.filterAll);
 
     try {
-      var dir
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      dir.initWithPath (dirname);
+      var dir = arAkahukuFile.initFile (dirname);
       if (!dir.exists ()) {
         arAkahukuFile.createDirectory (dir.path);
       }
@@ -1353,10 +1347,7 @@ var arAkahukuImage = {
         
     arAkahukuImage.asyncCheckImageFileExist (target, leafName)
       .then (function (result) {
-        var file
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-        file.initWithPath (result.path);
+        var file = arAkahukuFile.initFile (result.path);
         arAkahukuFile.remove (file, true);
       }, function () {
         // no file, no special care

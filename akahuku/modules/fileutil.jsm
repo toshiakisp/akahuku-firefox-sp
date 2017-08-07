@@ -95,9 +95,10 @@ function getFileProtocolHandler () {
 }
 
 function createNsiFile (path) {
+  var nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
   var nsfile
     = Cc ["@mozilla.org/file/local;1"]
-    .createInstance (Ci.nsILocalFile);
+    .createInstance (nsIFile);
   nsfile.initWithPath (path);
   return nsfile;
 }

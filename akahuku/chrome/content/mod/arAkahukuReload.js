@@ -2211,11 +2211,8 @@ var arAkahukuReload = {
           = arAkahukuFile.getFilenameFromURLSpec
           (base + path);
                 
-        var targetFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        targetFile.initWithPath (path);
-        if (targetFile.exists ()) {
+        var targetFile = arAkahukuFile.initFile (path);
+        if (targetFile && targetFile.exists ()) {
           var fstream = arAkahukuFile.createFileInputStream
             (targetFile, 0x01, 292/*0o444*/, 0,
              targetDocument.defaultView);

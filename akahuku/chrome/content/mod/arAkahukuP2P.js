@@ -1091,11 +1091,7 @@ var arAkahukuP2P = {
           + arAkahukuFile.separator
           + leafName;
                 
-        var targetFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        targetFile.initWithPath (targetFileName);
-                
+        var targetFile = arAkahukuFile.initFile (targetFileName);
         if (targetFile.exists ()) {
           saved ++;
           continue;
