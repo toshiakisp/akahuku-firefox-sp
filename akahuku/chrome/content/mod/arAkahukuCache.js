@@ -77,7 +77,7 @@ Akahuku.Cache = new function () {
   this.onBodyUnload = function (targetDocument, documentParam) {
     try {
       if (documentParam.cachedimages)
-        documentParam.cachedimages.destruct ();
+        documentParam.cachedimages.destruct (targetDocument);
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -131,7 +131,7 @@ Akahuku.Cache = new function () {
 
   this.showCacheNotification = function (browser, text) {
     try {
-      var tabbrowser = document.getElementById ("content");
+      var tabbrowser = browser.ownerDocument.getElementById ("content");
       var box = tabbrowser.getNotificationBox (browser);
       var oldItem = box.getNotificationWithValue (Akahuku.Cache);
       box.appendNotification
@@ -161,8 +161,7 @@ Akahuku.Cache = new function () {
     var url = source.url;
     var p = Akahuku.protocolHandler.getAkahukuURIParam (url);
     if (p.type === "filecache") {
-      var status = _getFilecacheStatus (p.original);
-      callback.apply (null, [status]);
+      _asyncGetFilecacheStatus (p.original, callback);
     }
     else if (p.type === "cache") {
       var candidates = [p.original, p.original + ".backup"];
@@ -218,8 +217,13 @@ Akahuku.Cache = new function () {
         try {
           var text = descriptor.getMetaDataElement ("response-head");
         }
-        catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-          text = "";
+        catch (e) {
+          if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+            text = "";
+          }
+          else {
+            throw e;
+          }
         }
         if (text) {
           var headers = text.match (/[^\r\n]*\r\n/g);
@@ -260,28 +264,32 @@ Akahuku.Cache = new function () {
     httpStatusText : "No HTTP response",
     header : {},
   };
-  function _getFilecacheStatus (originalUrl) {
+  function _asyncGetFilecacheStatus (originalUrl, callback) {
     var status = new CacheStatus (originalUrl);
     if (!(/^https?:/.test (originalUrl))) {
-      return status;
+      callback.apply (null, [status]);
+      return;
     }
     // from arAkahukuReloadCacheWriter.createFile ()
-    var path = originalUrl.replace (/^https?:\/\//, "");
+    var {AkahukuFileUtil} = Components.utils
+      .import ("resource://akahuku/fileutil.jsm", {});
     var base
-      = arAkahukuFile.getURLSpecFromDirname
+      = AkahukuFileUtil.getURLSpecFromNativeDirPath
       (arAkahukuReload.extCacheFileBase);
-    path = arAkahukuFile.getFilenameFromURLSpec (base + path);
-
-    var targetFile
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-    targetFile.initWithPath (path);
-    if (targetFile.exists ()) {
-      status.isExist = true;
-      status.key = path;
-      status.lastModified = targetFile.lastModifiedTime;
-    }
-    return status;
+    var path = originalUrl.replace (/^https?:\/\//, "");
+    path = AkahukuFileUtil.getNativePathFromURLSpec (base + path);
+    AkahukuFileUtil.createFromFileName (path)
+      .then (function (file) { // file exists
+        status.isExist = true;
+        status.key = path;
+        status.lastModified = AkahukuFileUtil.getLastModified (file);
+      }, function () { // not exist
+        Akahuku.debug.log ("filecache doesn't exist: " + path);
+      })
+      .then (function () {
+        callback.apply (null, [status]);
+      });
+    return;
   }
 
   /**
@@ -432,8 +440,13 @@ Akahuku.Cache = new function () {
       try {
         entry.dataSize;
       }
-      catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+          return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+        }
+        else {
+          throw e;
+        }
       }
       return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
     },
@@ -477,8 +490,13 @@ Akahuku.Cache = new function () {
       try {
         var head = descriptor.getMetaDataElement ("response-head");
       }
-      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-        head = "";
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+          head = "";
+        }
+        else {
+          throw e;
+        }
       }
       var httpStatusCode = "000";
       if (head && head.match (/^HTTP\/\d\.\d (\d{3}) ([^\r\n]+)/)) {
@@ -509,7 +527,7 @@ Akahuku.Cache = new function () {
     /**
      * データを開放する
      */
-    destruct : function () {
+    destruct : function (targetDocument) {
       var CacheEtimeRestorer = function (t) {
         this.originalExpirationTime = t;
       };
@@ -535,8 +553,8 @@ Akahuku.Cache = new function () {
       catch (e) {
       }
 
-      var source = {url: ""}; // no contextWindow for destruct
       for (var i=0; i < this.keys.length; i++) {
+        var source = {url: "", contextWindow: targetDocument.defaultView};
         var t = this.originalExpireTimes [this.keys [i]];
         var listener = new CacheEtimeRestorer (t);
         try {
@@ -647,8 +665,9 @@ Akahuku.Cache = new function () {
         }
       }
     }
-    if (!source.contextWindow && typeof window !== "undefined") {
-      source.contextWindow = window;
+    if (!source.contextWindow) {
+      Akahuku.debug.warn ("Cache._ensureSourceObject:",
+          "no source.contextWindow;", source);
     }
     return source;
   }

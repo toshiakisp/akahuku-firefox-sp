@@ -25,9 +25,9 @@ arAkahukuGZIPReader.prototype = {
    *         this
    */
   QueryInterface : function (iid) {
-    if (iid.equals (nsISupports)
-        || iid.equals (nsIStreamListener)
-        || iid.equals (nsIRequestObserver)) {
+    if (iid.equals (Components.interfaces.nsISupports)
+        || iid.equals (Components.interfaces.nsIStreamListener)
+        || iid.equals (Components.interfaces.nsIRequestObserver)) {
       return this;
     }
         
@@ -108,6 +108,11 @@ var arAkahukuFile = {
     /* 各種ディレクトリを作る */
     arAkahukuFile.makeSystemDirectory ();
   },
+
+  term : function () {
+    arAkahukuFile.fileProtocolHandler = null;
+    arAkahukuFile.systemDirectory = "";
+  },
     
   /**
    * 現在のユーザの Profile ディレクトリを取得する
@@ -154,21 +159,26 @@ var arAkahukuFile = {
         
     arAkahukuFile.createDirectory (arAkahukuFile.systemDirectory);
   },
+
+  // nsILocalFile is removed since Fx57, being merged to nsIFile
+  nsIFile : ("nsILocalFile" in Components.interfaces
+             ? Components.interfaces.nsILocalFile
+             : Components.interfaces.nsIFile),
     
   /**
-   * nsILocalFile オプジェクトを作成する
+   * nsIFile オプジェクトを作成する
    * ファイルの実体は作成しない
    *
    * @param  String filename
    *         ファイル名
-   * @return nsILocalFile
+   * @return nsIFile
    */
   initFile : function (filename) {
     var file = null;
     try {
       file
         = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
+        .createInstance (arAkahukuFile.nsIFile);
       file.initWithPath (filename);
     }
     catch (e) {
@@ -287,12 +297,12 @@ var arAkahukuFile = {
           fstream.write (text, text.length);
           fstream.close ();
         }
-        catch (e if e instanceof Components.interfaces.nsIXPCException) {
-          Components.utils.reportError (e.message);
-          callback.apply (null, [e.result]);
-          return;
-        }
         catch (e) {
+          if (e instanceof Components.interfaces.nsIXPCException) {
+            Components.utils.reportError (e.message);
+            callback.apply (null, [e.result]);
+            return;
+          }
           Components.utils.reportError (e.message);
           callback.apply (null, [Components.results.NS_ERROR_FAILURE]);
           return;
@@ -442,7 +452,7 @@ var arAkahukuFile = {
     try {
       var dir
       = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
+      .createInstance (arAkahukuFile.nsIFile);
       dir.initWithPath (dirname);
       if (!dir.exists ()) {
         dir.create (0x01, 493/*0o755*/);
@@ -507,7 +517,7 @@ var arAkahukuFile = {
   /**
    * ファイルを file プロトコルに変換する
    *
-   * @param  nsILocalFile file
+   * @param  nsIFile file
    *         ファイル
    * @return String
    *         file プロトコル

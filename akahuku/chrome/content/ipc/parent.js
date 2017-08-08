@@ -4,6 +4,9 @@
 
 (function () {
 
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+
 var arAkahukuCacheIPCWrapper = {
   asyncGetHttpCacheStatus : function (source, noRedirect, callback)
   {
@@ -34,8 +37,11 @@ var arAkahukuCacheIPCWrapper = {
         try {
           entry.dataSize;
         }
-        catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-          return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+        catch (e) {
+          if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+            return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+          }
+          throw e;
         }
         return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
       },
@@ -71,6 +77,38 @@ arAkahukuIPCRoot.defineProc
    "Cache", "asyncOpenCache",
    {async: true, callback: 3,
      callbackObjectMethod: ["onCacheEntryCheck","onCacheEntryAvaiable"]});
+
+
+
+var arAkahukuCatalogIPCWrapper = {
+  asyncFocusByThreadURI : function (uri, context, callback) {
+    var result = false;
+    var params = Akahuku.getDocumentParamsByURI (uri);
+    if (params.length > 0) {
+      try {
+        var targetBrowser = params [0].targetBrowser;
+        var tab = arAkahukuWindow.getTabForBrowser (targetBrowser);
+        if (tab) {
+          result = true;// to be success
+          arAkahukuWindow.focusTabForBrowser (targetBrowser);
+          if (arAkahukuCatalog.enableObserveOpenedReload) {
+            arAkahukuReload.reloadOnDemandForBrowser (targetBrowser);
+          }
+        }
+        else {
+          result = false;
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    callback.apply (null, [result]);
+  },
+};
+arAkahukuIPCRoot.defineProc
+  (arAkahukuCatalogIPCWrapper,
+   "Catalog", "asyncFocusByThreadURI",
+   {async: true, callback: 3});
 
 
 
@@ -172,12 +210,9 @@ arAkahukuIPCRoot.defineProc
 
 var arAkahukuImageIPC = {
   openXULSaveImagePopup : function (node, rect, x, y) {
-    // store mm to be responsed when command is called
-    // for future use in selectSaveImageDirFromXUL.
     // messageTarget is <xul:browser> in the chrome process.
-    arAkahukuImage.__IPC_popupFrame
-      = arAkahukuIPCRoot.messageTarget.messageManager;
-    arAkahukuImage.openXULSaveImagePopup (node, rect, x, y);
+    var window = arAkahukuIPCRoot.messageTarget.ownerDocument.defaultView;
+    arAkahukuImage.openXULSaveImagePopup (null, rect, x, y, window);
   },
   asyncOpenSaveImageFilePicker : function (browser, filename, dirname, callback) {
     // replace actual browser for message
@@ -208,11 +243,25 @@ arAkahukuIPCRoot.defineProc
 
 
 
+var arAkahukuLinkIPCWrapper = {
+  openLinkInXUL : function (href, to, focus, target, isPrivate) {
+    var browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
+    arAkahukuLink.openLinkInXUL
+      (href, to, focus, browser, isPrivate);
+  },
+  makeURLSafeInNoscript : function (targetUrl, docUrl, browser) {
+    browser = arAkahukuIPCRoot.messageTarget;//is xul:browser
+    arAkahukuLink.makeURLSafeInNoscript (targetUrl, docUrl, browser);
+  },
+};
 arAkahukuIPCRoot.defineProc
-  (arAkahukuLink, "Link", "openLinkInXUL",
+  (arAkahukuLinkIPCWrapper, "Link", "openLinkInXUL",
    {async: true, callback: 0, frame: true});
 arAkahukuIPCRoot.defineProc
   (arAkahukuLink, "Link", "setContextMenuContentData");
+arAkahukuIPCRoot.defineProc
+  (arAkahukuLinkIPCWrapper, "Link", "makeURLSafeInNoscript",
+   {async: false, frame: true});
 
 
 
@@ -243,30 +292,49 @@ arAkahukuIPCRoot.defineProc
 
 
 
+var arAkahukuQuoteIPC = {
+  searchInNewTabXUL : function (href, focus, browser) {
+    browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuQuote.searchInNewTabXUL (href, focus, browser);
+  },
+};
 arAkahukuIPCRoot.defineProc
-  (arAkahukuQuote, "Quote", "searchInNewTabXUL", {async: true});
+  (arAkahukuQuoteIPC,
+   "Quote", "searchInNewTabXUL",
+   {async: true, frame: true});
 
 
 
+var arAkahukuSidebarIPC = {
+  hasTabForBoard : function (name, browser) {
+    browser = arAkahukuIPCRoot.messageTarget;
+    return arAkahukuSidebar.hasTabForBoard (name, browser);
+  },
+  hasBoard : function (name, browser) {
+    browser = arAkahukuIPCRoot.messageTarget;
+    return arAkahukuSidebar.hasBoard (name, browser);
+  },
+  getThread : function (boardName, threadNumber, browser) {
+    browser = arAkahukuIPCRoot.messageTarget;
+    return arAkahukuSidebar.getThread (boardName, threadNumber, browser);
+  },
+  resetCatalogOrder : function (name, browser) {
+    browser = arAkahukuIPCRoot.messageTarget;
+    return arAkahukuSidebar.resetCatalogOrder (name, browser);
+  },
+};
 arAkahukuIPCRoot.defineProc
   (arAkahukuSidebar, "Sidebar", "updateThreadItem", {async: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "hasTabForBoard");
+  (arAkahukuSidebarIPC, "Sidebar", "hasTabForBoard", {frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "hasBoard");
+  (arAkahukuSidebarIPC, "Sidebar", "hasBoard", {frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "getThread");
+  (arAkahukuSidebarIPC, "Sidebar", "getThread", {frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "asyncUpdateVisited",
-   {async: true, callback: 2});
+  (arAkahukuSidebar, "Sidebar", "asyncUpdateVisited", {async: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "sort");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "resetCatalogOrder");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "updateMarked");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuSidebar, "Sidebar", "update");
+  (arAkahukuSidebarIPC, "Sidebar", "resetCatalogOrder", {frame: true});
 
 
 
@@ -302,18 +370,32 @@ arAkahukuIPCRoot.defineProc
 
 
 
+var arAkahukuUIIPC = {
+  setStatusPanelText : function (text, type) {
+    var browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuUI.setStatusPanelText (text, type, browser);
+  },
+  clearStatusPanelText : function (text) {
+    var browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuUI.clearStatusPanelText (text, browser);
+  },
+  getStatusPanelText : function () {
+    var browser = arAkahukuIPCRoot.messageTarget;
+    arAkahukuUI.getStatusPanelText (browser);
+  },
+};
 arAkahukuIPCRoot.defineProc
-  (arAkahukuUI,
+  (arAkahukuUIIPC,
    "UI", "setStatusPanelText",
-   {async: false, callback: 0, frame: false});
+   {async: false, callback: 0, frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuUI,
+  (arAkahukuUIIPC,
    "UI", "clearStatusPanelText",
-   {async: false, callback: 0, frame: false});
+   {async: false, callback: 0, frame: true});
 arAkahukuIPCRoot.defineProc
-  (arAkahukuUI,
+  (arAkahukuUIIPC,
    "UI", "getStatusPanelText",
-   {async: false, callback: 0, frame: false});
+   {async: false, callback: 0, frame: true});
 
 
 
@@ -332,18 +414,24 @@ arAkahukuIPCRoot.defineProc
 
 // In e10s XUL, document params are registered by linking its browser.
 var AkahukuIPCWrapper = {
-  addDocumentParam : function (targetBrowser, info) {
-    Akahuku.addDocumentParam (arAkahukuIPCRoot.messageTarget, info);
+  addDocumentParamForBrowser : function (targetBrowser, info) {
+    Akahuku.addDocumentParamForBrowser (arAkahukuIPCRoot.messageTarget, info);
   },
-  removeDocumentParam : function (targetBrowser) {
-    Akahuku.removeDocumentParam (arAkahukuIPCRoot.messageTarget);
+  deleteDocumentParam : function (innerWindowID) {
+    Akahuku.deleteDocumentParam (innerWindowID);
+  },
+
+  getChromeEnvironmentFlags : function (browser) {
+    browser = arAkahukuIPCRoot.messageTarget;
+    return Akahuku.getChromeEnvironmentFlags (browser);
   },
 
   // utiliy IPC command
   getFocusedDocument : function () {
-    var focusedBrowser = document.commandDispatcher.focusedElement;
+    var window = arAkahukuWindow.getMostRecentWindow ();
+    var focusedBrowser = window.document.commandDispatcher.focusedElement;
     if (!focusedBrowser
-        || !focusedBrowser instanceof Components.interfaces.nsIDOMXULElement
+        || !(focusedBrowser instanceof Components.interfaces.nsIDOMXULElement)
         || !/(?:xul:)?browser/i.test (focusedBrowser.nodeName)) {
       return null;
     }
@@ -365,15 +453,30 @@ var AkahukuIPCWrapper = {
   },
 };
 arAkahukuIPCRoot.defineProc
-  (AkahukuIPCWrapper, "Akahuku", "addDocumentParam", {frame: true});
+  (AkahukuIPCWrapper, "Akahuku", "addDocumentParamForBrowser", {frame: true});
 arAkahukuIPCRoot.defineProc
-  (AkahukuIPCWrapper, "Akahuku", "removeDocumentParam", {frame: true});
+  (AkahukuIPCWrapper, "Akahuku", "deleteDocumentParam", {frame: false, async:true});
 arAkahukuIPCRoot.defineProc
   (AkahukuIPCWrapper, "Akahuku", "getFocusedDocument", {frame: true});
+arAkahukuIPCRoot.defineProc
+  (AkahukuIPCWrapper, "Akahuku", "getChromeEnvironmentFlags", {frame: true});
 arAkahukuIPCRoot.defineProc
   (AkahukuIPCWrapper, "Akahuku", "setDocumentParamFlag", {frame: true});
 arAkahukuIPCRoot.defineProc
   (AkahukuIPCWrapper, "Akahuku", "unsetDocumentParamFlag", {frame: true});
+
+
+
+// Special methods for the parent process
+var AkahukuIPCSpecial = {
+  hasDocumentParamForURIAsync : function (url, callback) {
+    var ret = Akahuku.hasDocumentParamForURI (url);
+    callback.apply (null, [ret]);
+  },
+};
+arAkahukuIPCRoot.defineProc
+  (AkahukuIPCSpecial, "Akahuku", "hasDocumentParamForURIAsync",
+   {async: true, callback: 2});
 
 
 

@@ -10,6 +10,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
+const nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
+
 Cu.import ("resource://akahuku/console.jsm");
 var console = new AkahukuConsole ();
 console.prefix = "Akahuku debug(p2p-service)";
@@ -61,6 +63,13 @@ try {
     .getService (Ci.nsIXULRuntime);
   if (typeof appinfo.browserTabsRemoteAutostart !== "undefined") {
     isE10sReady = true;
+
+    // Check Palemoon 25+ (Goanna)
+    var ai = Cc ["@mozilla.org/xre/app-info;1"]
+      .getService (Ci.nsIXULAppInfo);
+    if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
+      isE10sReady = false;
+    }
   }
   if (appinfo.processType !== appinfo.PROCESS_TYPE_DEFAULT) {
     inMainProcess = false;
@@ -85,7 +94,10 @@ function lazyGetter () {
       .getService (Ci.arIAkahukuP2PServant2);
   }
   if (isE10sReady) {
-    Cu.import ("resource://akahuku/ipc.jsm");
+    const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
+    var ipc = AkahukuIPCManager.createRoot ("main");
+    var arAkahukuIPCRoot = ipc.root;
+    var arAkahukuIPC = ipc.child;
 
     if (inMainProcess) {
       // chrome process (servant is available)
@@ -188,7 +200,7 @@ arAkahukuP2PService.utils = {
         if (typeof treatAsSame === "undefined") {
           treatAsSame = arAkahukuP2PService.servant.getTreatAsSame ();
         }
-        if (treatAsAame) {
+        if (treatAsSame) {
           p.server = sdir;
         }
         else {
@@ -265,7 +277,7 @@ arAkahukuP2PService.utils = {
     try {
       var cacheBaseDir
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       cacheBaseDir.initWithPath (cacheBase);
       var fph
         = Cc ["@mozilla.org/network/io-service;1"]
@@ -280,6 +292,9 @@ arAkahukuP2PService.utils = {
         file = fph.getFileFromURLSpec (targetFileURL);
       }
       else {
+        const {AkahukuIPCManager}
+          = Cu.import ("resource://akahuku/ipc.jsm", {});
+        var arAkahukuIPC = AkahukuIPCManager.getChild ("main");
         file = arAkahukuIPC.sendSyncCommand
           ("File/getFileFromURLSpec", [targetFileURL]);
       }
@@ -325,12 +340,13 @@ arAkahukuP2PService.utils = {
     }
 
     try {
+      var targetFileName = file.path;
       if (file.exists ()) {
         file.remove (true);
       }
       file
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       file.initWithPath (targetFileName + ".hash");
       if (file.exists ()) {
         file.remove (true);

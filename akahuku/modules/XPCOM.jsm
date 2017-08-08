@@ -11,6 +11,7 @@ const Cr = Components.results;
 
 var EXPORTED_SYMBOLS = [
   "registerXPCOM",
+  "unregisterXPCOM",
 ];
 
 /**
@@ -18,7 +19,7 @@ var EXPORTED_SYMBOLS = [
  *
  * @param func コンストラクタ
  */
-function registerXPCOM (func) {
+function registerXPCOM (func, doDelete) {
   var classID = func.prototype.classID;
   var classDesc = func.prototype.classDescription;
   var contractID = func.prototype.contractID;
@@ -27,7 +28,12 @@ function registerXPCOM (func) {
 
   var registrar = Components.manager
     .QueryInterface (Ci.nsIComponentRegistrar);
-  registrar.registerFactory (classID, classDesc, contractID, factory);
+  if (doDelete) {
+    registrar.unregisterFactory (classID, factory);
+  }
+  else {
+    registrar.registerFactory (classID, classDesc, contractID, factory);
+  }
 
   if (categories && categories.length) {
     var cm = Cc ["@mozilla.org/categorymanager;1"]
@@ -43,10 +49,20 @@ function registerXPCOM (func) {
         if (categories [i].service)
           value = "service," + contractID;
       }
+      if (doDelete) {
+        cm.deleteCategoryEntry (categories [i].category,
+            categories [i].entry || classDesc,
+          false);
+        continue;
+      }
       cm.addCategoryEntry (categories [i].category,
           categories [i].entry || classDesc,
           value, false, true);
     }
   }
+}
+
+function unregisterXPCOM (func) {
+  registerXPCOM (func, true);
 }
 

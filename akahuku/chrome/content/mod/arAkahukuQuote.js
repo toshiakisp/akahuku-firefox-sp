@@ -108,6 +108,102 @@ var arAkahukuQuote = {
         .initPref ("bool", "akahuku.quickquote.focus", false);
     }
   },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator1",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-quote",
+      type: "normal",
+      // 引用
+      title: "\u5F15\u7528",
+      onclick: arAkahukuQuote.onClickQuoteWithMark,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-mail",
+      type: "normal",
+      // メール欄へ
+      title: "\u30E1\u30FC\u30EB\u6B04\u3078",
+      onclick: arAkahukuQuote.onClickQuoteToMailBox,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-name",
+      type: "normal",
+      // 名前欄へ
+      title: "\u540D\u524D\u6B04\u3078",
+      onclick: arAkahukuQuote.onClickQuoteToNameBox,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-comment",
+      type: "normal",
+      // コメントへ
+      title: "\u30B3\u30E1\u30F3\u30C8\u3078",
+      onclick: arAkahukuQuote.onClickQuoteAsComment,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator2",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-quote-copy",
+      type: "normal",
+      // 引用付きコピー
+      title: "\u5F15\u7528\u4ED8\u304D\u30B3\u30D4\u30FC",
+      onclick: arAkahukuQuote.onClickCopyToClipboard,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator3",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-quote-cont",
+      type: "normal",
+      // 引用 - 連続
+      title: "\u5F15\u7528 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteWithMarkCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-mail-cont",
+      type: "normal",
+      // メール欄へ - 連続
+      title: "\u30E1\u30FC\u30EB\u6B04\u3078 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteToMailBoxCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-name-cont",
+      type: "normal",
+      // 名前欄へ - 連続
+      title: "\u540D\u524D\u6B04\u3078 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteToNameBoxCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-comment-cont",
+      type: "normal",
+      // コメントへ - 連続
+      title: "\u30B3\u30E1\u30F3\u30C8\u3078 - \u9023\u7D9A",
+      onclick: arAkahukuQuote.onClickQuoteAsCommentCont,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator4",
+      type: "separator",
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-google-image",
+      type: "normal",
+      // イメぐぐる
+      title: "\u30A4\u30E1\u3050\u3050\u308B",
+      onclick: arAkahukuQuote.onClickGoogleImage,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-wikipedia",
+      type: "normal",
+      // ウィキペドる
+      title: "\u30A6\u30A3\u30AD\u30DA\u30C9\u308B",
+      onclick: arAkahukuQuote.onClickWikipedia,
+    });
+  },
     
   /**
    * メニューが開かれるイベント
@@ -118,6 +214,8 @@ var arAkahukuQuote = {
    */
   setContextMenu : function (event) {
     var menuitem;
+    var document = event.currentTarget.ownerDocument;
+    var gContextMenu = document.defaultView.gContextMenu;
         
     menuitem
     = document
@@ -589,23 +687,6 @@ var arAkahukuQuote = {
   },
     
   /**
-   * フォーカスのあるウィンドウを取得する
-   *
-   * @param  Window
-   *         対象のウィンドウ
-   * @return String
-   *         選択文字列
-   */
-  getFocusedWindow : function () {
-    var targetWindow = document.commandDispatcher.focusedWindow;
-    if (targetWindow == window) {
-      targetWindow = content;
-    }
-        
-    return targetWindow;
-  },
-    
-  /**
    * 選択文字列を取得する
    *
    * @param  Window
@@ -627,10 +708,11 @@ var arAkahukuQuote = {
    *         プレフィックスを追加するかどうか
    * @param  Boolean focusTextArea
    *         コメント欄にフォーカスを移すかどうか
+   * @param  HTMLElement originNode
+   *         対象ドキュメントの要素
    */
-  quote : function (addQuotePrefix, focusTextArea, optTarget) {
-    var target = optTarget || gContextMenu.target;
-    var targetDocument = target.ownerDocument;
+  quote : function (addQuotePrefix, focusTextArea, originNode) {
+    var targetDocument = originNode.ownerDocument;
     var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
@@ -667,12 +749,28 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
     }
   },
+  onClickQuote : function (event, addQuotePrefix, focusTextArea) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    var target = window.gContextMenu.target;
+    arAkahukuQuote.quote (addQuotePrefix, focusTextArea, target);
+  },
+  onClickQuoteWithMark : function (event) {
+    arAkahukuQuote.onClickQuote (event, true, true);
+  },
+  onClickQuoteAsComment : function (event) {
+    arAkahukuQuote.onClickQuote (event, false, true);
+  },
+  onClickQuoteWithMarkCont : function (event) {
+    arAkahukuQuote.onClickQuote (event, true, false);
+  },
+  onClickQuoteAsCommentCont : function (event) {
+    arAkahukuQuote.onClickQuote (event, false, false);
+  },
     
   /**
    * 選択文字列にプレフィックスを追加してコピーする
    */
-  copyToClipboard : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  copyToClipboard : function (target) {
     var targetDocument = target.ownerDocument;
     var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
@@ -685,6 +783,10 @@ var arAkahukuQuote = {
     catch (e) { Akahuku.debug.exception (e);
     }
   },
+  onClickCopyToClipboard : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuQuote.copyToClipboard (window.gContextMenu.target);
+  },
     
   /**
    * 選択文字列をメール欄に引用する
@@ -692,8 +794,7 @@ var arAkahukuQuote = {
    * @param  Boolean focusMailBox
    *         メール欄にフォーカスを移すかどうか
    */
-  quoteToMailBox : function (focusMailBox, optTarget) {
-    var target = optTarget || gContextMenu.target;
+  quoteToMailBox : function (focusMailBox, target) {
     var targetDocument = target.ownerDocument;
     var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
@@ -715,6 +816,17 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
     }
   },
+  onClickQuoteToMailBoxCore : function (event, focusMailBox) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    var target = window.gContextMenu.target;
+    arAkahukuQuote.quoteToMailBox (focusMailBox, target);
+  },
+  onClickQuoteToMailBox : function (event) {
+    arAkahukuQuote.onClickQuoteToMailBoxCore (event, true);
+  },
+  onClickQuoteToMailBoxCont : function (event) {
+    arAkahukuQuote.onClickQuoteToMailBoxCore (event, false);
+  },
     
   /**
    * 選択文字列を名前欄に引用する
@@ -722,8 +834,7 @@ var arAkahukuQuote = {
    * @param  Boolean focusNameBox
    *         名前欄にフォーカスを移すかどうか
    */
-  quoteToNameBox : function (focusNameBox, optTarget) {
-    var target = optTarget || gContextMenu.target;
+  quoteToNameBox : function (focusNameBox, target) {
     var targetDocument = target.ownerDocument;
     var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
@@ -745,12 +856,22 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
     }
   },
+  onClickQuoteToNameBoxCore : function (event, focusNameBox) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    var target = window.gContextMenu.target;
+    arAkahukuQuote.quoteToNameBox (focusNameBox, target);
+  },
+  onClickQuoteToNameBox : function (event) {
+    arAkahukuQuote.onClickQuoteToNameBoxCore (event, true);
+  },
+  onClickQuoteToNameBoxCont : function (event) {
+    arAkahukuQuote.onClickQuoteToNameBoxCore (event, false);
+  },
     
   /**
    * 選択文字列を Google Image で検索する
    */
-  googleImage : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  googleImage : function (target) {
     var targetWindow = target.ownerDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
@@ -761,14 +882,18 @@ var arAkahukuQuote = {
     = "http://www.google.com/images?hl=ja&q="
     + encodeURIComponent (s);
 
-    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus);
+    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
+    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
+  },
+  onClickGoogleImage : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuQuote.googleImage (window.gContextMenu.target);
   },
     
   /**
    * 選択文字列を Wikipedia で検索する
    */
-  wikipedia : function (optTarget) {
-    var target = optTarget || gContextMenu.target;
+  wikipedia : function (target) {
     var targetWindow = target.ownerDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
@@ -779,11 +904,16 @@ var arAkahukuQuote = {
     = "http://ja.wikipedia.org/wiki/%E7%89%B9%E5%88%A5:Search?search="
     + encodeURIComponent (s) + "&go=%E8%A1%A8%E7%A4%BA";
         
-    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus);
+    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
+    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
+  },
+  onClickWikipedia : function (event) {
+    var window = event.currentTarget.ownerDocument.defaultView;
+    arAkahukuQuote.wikipedia (window.gContextMenu.target);
   },
 
-  searchInNewTabXUL : function (href, focus) {
-    var tabbrowser = document.getElementById ("content");
+  searchInNewTabXUL : function (href, focus, browser) {
+    var tabbrowser = browser.ownerDocument.getElementById ("content");
     var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
     if (focus) {
       tabbrowser.selectedTab = newTab;

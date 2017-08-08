@@ -16,14 +16,18 @@ var arAkahukuUtil = new function () {
     if (!("_isGecko2orAbove" in this)) {
       this._isGecko2orAbove = false;
       try {
-        Cu.import ("resource://gre/modules/Services.jsm");
-        if (Services.vc.compare (Services.appinfo.platformVersion, "2.0") >= 0) {
+        var s = {};
+        Cu.import ("resource://gre/modules/Services.jsm", s);
+        if (s.Services.vc.compare (s.Services.appinfo.platformVersion, "2.0") >= 0) {
           this._isGecko2orAbove = true;
         }
       }
-      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
-      }
-      catch (e) { Cu.reportError (e);
+      catch (e) {
+        if (e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+        }
+        else {
+          Cu.reportError (e);
+        }
       }
     }
     if (!this._isGecko2orAbove
@@ -64,7 +68,7 @@ var arAkahukuUtil = new function () {
           uri.asciiHostPort !== uri.hostPort) {
         url = uri.scheme + "://" +
           (uri.userPass ? url += uri.userPass + "@" : "") +
-          uri.asciiHostPort + uri.path;
+          uri.asciiHostPort + arAkahukuCompat.nsIURI.getPathQueryRef (uri);
       }
     }
     catch (e) { Cu.reportError (e);
@@ -340,7 +344,8 @@ var arAkahukuUtil = new function () {
     try {
       var uri = this.newURI (url);
       for (var k = 0; k < URL2MIME.length; k ++) {
-        if (URL2MIME [k][0].test (uri.path)) {
+        var path = arAkahukuCompat.nsIURI.getPathQueryRef (uri);
+        if (URL2MIME [k][0].test (path)) {
           return URL2MIME [k][1];
         }
       }
@@ -400,11 +405,13 @@ var arAkahukuUtil = new function () {
         status.isErrored = ((request.imageStatus & errorMask) != 0);
       }
     }
-    catch (e if e.result == Cr.NS_ERROR_NO_INTERFACE) {
-      status.isImage = false;
-    }
     catch (e) {
-      Cu.reportError (e);
+      if (e.result == Cr.NS_ERROR_NO_INTERFACE) {
+        status.isImage = false;
+      }
+      else {
+        Cu.reportError (e);
+      }
     }
 
     return status;

@@ -56,7 +56,8 @@ var appinfo
   .getService (Ci.nsIXULRuntime);
 
 if (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT) {
-  if ("@mozilla.org/parentprocessmessagemanager;1" in Cc) {
+  if ("@mozilla.org/parentprocessmessagemanager;1" in Cc
+      && "nsIMessageListenerManager" in Ci) {
     // e10s-ready platform
     Cu.import ("resource://akahuku/ipc-proxy.jsm");
     var proxy = new arIPCProxyParent (AkahukuStorage.local);

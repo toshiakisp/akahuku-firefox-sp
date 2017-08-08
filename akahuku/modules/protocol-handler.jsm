@@ -33,7 +33,7 @@ var arAkahukuProtocolHandlerKey = "";
 /**
  * 本体
  * akahuku プロトコルからチャネルを生成する
- *   Inherits From: nsIProtocolHandler, arIAkahukuProtocolHandler
+ *   Inherits From: nsIProtocolHandler
  */
 function arAkahukuProtocolHandler () {
   this.init ();
@@ -91,8 +91,7 @@ arAkahukuProtocolHandler.prototype = {
    */
   QueryInterface : function (iid) {
     if (iid.equals (Ci.nsISupports)
-        || iid.equals (Ci.nsIProtocolHandler)
-        || iid.equals (Ci.arIAkahukuProtocolHandler)) {
+        || iid.equals (Ci.nsIProtocolHandler)) {
       return this;
     }
         
@@ -136,10 +135,17 @@ arAkahukuProtocolHandler.prototype = {
       // 相対アドレスを正しく解決させるために preamble を除外しておく
       baseURI = baseURI.clone ();
       var r = /^\/(?:p2p|preview\.[^\/]+|jpeg|(?:file)?cache)\/\w+\.\d(?=\/)/;
-      var match = r.exec (baseURI.path);
+      var path = baseURI.pathQueryRef || baseURI.path;
+      var match = r.exec (path);
       if (match) {
         preamble = match [0];
-        baseURI.path = baseURI.path.substr (preamble.length);
+        path = path.substr (preamble.length);
+        if (typeof baseURI.pathQueryRef !== "undefined") {
+          baseURI.pathQueryRef = path;
+        }
+        else {
+          baseURI.path = path;
+        }
         // filecache からの相対アドレスはただの cache へ変換
         preamble = preamble.replace (/^\/filecache/,"/cache");
       }
@@ -147,9 +153,14 @@ arAkahukuProtocolHandler.prototype = {
     try {
       url.init (Ci.nsIStandardURL.URLTYPE_AUTHORITY, -1, spec, charset, baseURI);
     }
-    catch (e if e.result == Cr.NS_ERROR_MALFORMED_URI) {
-      // "akahuku:///"
-      url.init (Ci.nsIStandardURL.URLTYPE_NO_AUTHORITY, -1, spec, charset, baseURI);
+    catch (e) {
+      if (e.result == Cr.NS_ERROR_MALFORMED_URI) {
+        // "akahuku:///"
+        url.init (Ci.nsIStandardURL.URLTYPE_NO_AUTHORITY, -1, spec, charset, baseURI);
+      }
+      else {
+        throw e;
+      }
     }
     var uri = url.QueryInterface (Ci.nsIURI);
     if (preamble && uri.spec != spec) {
@@ -223,30 +234,7 @@ arAkahukuProtocolHandler.prototype = {
       return this._createEmptyChannel (uri, loadInfo);
     }
         
-    var contentType = "";
-    var tmp = param.original;
-    tmp = tmp.replace (/\?.*/, "");
-    if (tmp.match (/\.jpe?g$/i)) {
-      contentType = "image/jpeg";
-    }
-    else if (tmp.match (/\.gif$/i)) {
-      contentType = "image/gif";
-    }
-    else if (tmp.match (/\.png$/i)) {
-      contentType = "image/png";
-    }
-    else if (/\.bmp$/i.test (tmp)) {
-      contentType = "image/bmp";
-    }
-    else if (/\.swf$/i.test (tmp)) {
-      contentType = "application/x-shockwave-flash";
-    }
-    else if (/\.webm$/i.test (tmp)) {
-      contentType = "video/webm";
-    }
-    else if (/\.mp4$/i.test (tmp)) {
-      contentType = "video/mp4";
-    }
+    var contentType = this._expectContentTypeFromParam (param);
         
     var channel = new arAkahukuBypassChannel
       (uri.spec, param.original, contentType, loadInfo);
@@ -263,7 +251,34 @@ arAkahukuProtocolHandler.prototype = {
         
     return channel;
   },
-    
+
+  _expectContentTypeFromParam : function (param) {
+    var filename = param.original;
+    filename = filename.replace (/\?.*/, "");
+    if (/\.jpe?g$/i.test (filename)) {
+      return "image/jpeg";
+    }
+    if (/\.gif$/i.test (filename)) {
+      return "image/gif";
+    }
+    if (/\.png$/i.test (filename)) {
+      return "image/png";
+    }
+    if (/\.bmp$/i.test (filename)) {
+      return "image/bmp";
+    }
+    if (/\.swf$/i.test (filename)) {
+      return "application/x-shockwave-flash";
+    }
+    if (/\.webm$/i.test (filename)) {
+      return "video/webm";
+    }
+    if (/\.mp4$/i.test (filename)) {
+      return "video/mp4";
+    }
+    return "";
+  },
+
   /**
    * unescape の代替品
    * 旧バージョンの場合このスコープでは未定義なので使用する
@@ -338,31 +353,25 @@ arAkahukuProtocolHandler.prototype = {
         extCacheFileBase = unescape (prefBranch.getCharPref (prefName));
       }
 
-      var targetFile
-        = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
-      targetFile.initWithPath (extCacheFileBase);
-
-      var fileProtocolHandler
+      const {AkahukuFileUtil}
+        = Cu.import ("resource://akahuku/fileutil.jsm", {});
+      var base
+        = AkahukuFileUtil.getURLSpecFromNativePath (extCacheFileBase);
+      base = base.replace (/\/?$/, "/"); // ensure directory
+      var ios
         = Cc ["@mozilla.org/network/io-service;1"]
-        .getService (Ci.nsIIOService)
-        .getProtocolHandler ("file")
-        .QueryInterface (Ci.nsIFileProtocolHandler);
-      var base = fileProtocolHandler.getURLSpecFromFile (targetFile);
+        .getService (Ci.nsIIOService);
+      var baseUri = ios.newURI (base, null, null);
       var path = param.original
-        .replace (/^https?:\/\//, "");
-
+        .replace (/^https?:\/\//, "./");
+      path = AkahukuFileUtil
+        .getNativePathFromURLSpec (baseUri.resolve (path));
 
       if (this.inMainProcess && !loadInfo) {
-        path = fileProtocolHandler.getFileFromURLSpec (base + path).path;
         // create nsIInputStreamChannel directly
         return this._createThreadCacheFileChannel (uri, path);
       }
       else { // in content process or init by newChannel2 (Firefox 36+)
-        // Require Firefox 29 (OS.Path.fromFileURI)
-        var scope = {};
-        Cu.import ("resource://gre/modules/osfile.jsm",scope);
-        path = scope.OS.Path.fromFileURI (base + path);
         return this._createThreadCacheDOMFileChannel (uri, path, loadInfo);
       }
     }
@@ -374,9 +383,10 @@ arAkahukuProtocolHandler.prototype = {
   },
   _createThreadCacheFileChannel : function (uri, path) {
     try {
+      var nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
       var targetFile
         = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
+        .createInstance (nsIFile);
       targetFile.initWithPath (path);
       if (!targetFile.exists ()) {
         return this._createThreadCacheFailChannel (uri);
@@ -409,31 +419,7 @@ arAkahukuProtocolHandler.prototype = {
     }
   },
   _createThreadCacheDOMFileChannel : function (uri, path, loadInfo) {
-    try {
-      Cu.importGlobalProperties (["File"]);
-      if (typeof File.createFromFileName !== "undefined") {
-        // Firefox 52.0+ (Bug 1303518)
-        file = File.createFromFileName (path);
-      }
-      else {
-        file = new File (path);
-      }
-    }
-    catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
-      return this._createThreadCacheFailChannel (uri, loadInfo);
-    }
-    catch (e) {
-      Cu.reportError (e);
-      var file
-        = Cc ["@mozilla.org/file/local;1"]
-        .createInstance (Ci.nsILocalFile);
-      file.initWithPath (path);
-      if (!file.exists ()) {
-        return this._createThreadCacheFailChannel (uri, loadInfo);
-      }
-    }
-
-    var channel = new arAkahukuDOMFileChannel (uri, file, loadInfo);
+    var channel = new arAkahukuDOMFileChannel (uri, path, loadInfo);
     channel.contentType = "text/html";
     return channel;
   },
@@ -664,6 +650,10 @@ arAkahukuLocalProtocolHandler.prototype = {
       = arAkahukuProtocolHandler.prototype
       .getAkahukuURIParam (uri.spec);
     if (param.type == "local") {
+      if (/^file:/.test (param.original)) {
+        // file:// access via preview channel will be blocked by sandbox
+        return this._createLocalFileChannel (uri, param, loadInfo);
+      }
       return arAkahukuProtocolHandler.prototype
         ._createPreviewChannel (uri, loadInfo);
     }
@@ -673,6 +663,15 @@ arAkahukuLocalProtocolHandler.prototype = {
 
   newChannel : function (uri) {
     return this.newChannel2 (uri, null);
+  },
+
+  _createLocalFileChannel : function (uri, param, loadInfo) {
+    const {AkahukuFileUtil} = Cu.import ("resource://akahuku/fileutil.jsm", {});
+    var path = AkahukuFileUtil.getNativePathFromURLSpec (param.original);
+    var channel = new arAkahukuDOMFileChannel (uri, path, loadInfo);
+    channel.contentType = arAkahukuProtocolHandler.prototype
+      ._expectContentTypeFromParam (param);
+    return channel;
   },
 };
 

@@ -27,9 +27,9 @@ var arAkahukuWindow = {
     //       (not a browser object, but it is possible set/get attribute)
     try {
       var handler = targetWindow
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebNavigation)
-        .QueryInterface (Ci.nsIDocShell)
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsIDocShell)
         .chromeEventHandler;
       if (!("setAttribute" in handler)) {
         // WindowRoot (e10s) lacks *Attribute functions, define them
@@ -51,26 +51,6 @@ var arAkahukuWindow = {
     }
     catch (e) {
     }
-    // code works only for XUL overlay (depends on document global)
-    var tabbrowser = document.getElementById ("content");
-    if ("getBrowserForDocument" in tabbrowser) {
-      return tabbrowser.getBrowserForDocument (targetWindow.document);
-    }
-    /* 古いコード */
-    if (tabbrowser.mTabContainer) {
-      for (var i = 0; i < tabbrowser.mTabContainer.childNodes.length; i ++) {
-        var tab = tabbrowser.mTabContainer.childNodes [i];
-        if (tab.linkedBrowser
-            && tab.linkedBrowser
-            .contentWindow == targetWindow) {
-          return tab.linkedBrowser;
-        }
-      }
-    }
-    else if (tabbrowser.contentWindow == targetWindow) {
-      return tabbrowser;
-    }
-        
     return null;
   },
   /**
@@ -80,10 +60,10 @@ var arAkahukuWindow = {
   getWebProgressForWindow : function (targetWindow) {
     try {
       return targetWindow
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebNavigation)
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebProgress);
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebProgress);
     }
     catch (e) { Akahuku.debug.exception (e);
       // classic method
@@ -97,20 +77,20 @@ var arAkahukuWindow = {
    */
   getMessageManagerForWindow : function (targetWindow) {
     return targetWindow
-      .QueryInterface (Ci.nsIInterfaceRequestor)
-      .getInterface (Ci.nsIWebNavigation)
-      .QueryInterface (Ci.nsIInterfaceRequestor)
-      .QueryInterface (Ci.nsIDocShell)
-      .QueryInterface (Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIContentFrameMessageManager);
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIWebNavigation)
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .QueryInterface (Components.interfaces.nsIDocShell)
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIContentFrameMessageManager);
   },
 
   isContentWindowPrivate : function (targetWindow) {
     try {
       return targetWindow
-        .QueryInterface (Ci.nsIInterfaceRequestor)
-        .getInterface (Ci.nsIWebNavigation)
-        .QueryInterface (Ci.nsILoadContext)
+        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+        .getInterface (Components.interfaces.nsIWebNavigation)
+        .QueryInterface (Components.interfaces.nsILoadContext)
         .usePrivateBrowsing;
     }
     catch (e) {
@@ -201,6 +181,29 @@ var arAkahukuWindow = {
     }
     parentWindow = arAkahukuWindow.unwrapXPCNative (parentWindow);
     return parentWindow;
+  },
+
+  getChromeWindowForBrowser : function (browser) {
+    var chromeWindow = browser.ownerDocument.defaultView.top;
+    return arAkahukuWindow.unwrapXPCNative (chromeWindow);
+  },
+
+  getMostRecentWindow : function () {
+    return Components.classes ["@mozilla.org/appshell/window-mediator;1"]
+      .getService (Components.interfaces.nsIWindowMediator)
+      .getMostRecentWindow ("navigator:browser");
+  },
+
+  forEachWindow : function (callback) {
+    var entries
+      = Components.classes
+      ["@mozilla.org/appshell/window-mediator;1"]
+      .getService (Components.interfaces.nsIWindowMediator)
+      .getEnumerator ("navigator:browser");
+    while (entries.hasMoreElements ()) {
+      var window = entries.getNext ();
+      callback.apply (null, [window]);
+    }
   },
 
   focusAkahukuTabByURI : function (uri, optWindow, optNoEnumerate) {

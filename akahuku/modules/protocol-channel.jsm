@@ -555,7 +555,7 @@ arAkahukuJPEGThumbnailChannel.prototype = {
   _originalURI : "",  /* String  本来の URI */
   _listener : null,   /* nsIStreamListener  チャネルのリスナ */
   _context : null,    /* nsISupports  ユーザ定義のコンテキスト */
-  _targetFile : null, /* nsILocalFile  保存対象のファイル */
+  _targetFile : null, /* nsIFile  保存対象のファイル */
   _isPending : false, /* Boolean  リクエストの途中かどうか */
     
   /* nsIRequest のメンバ */
@@ -1051,8 +1051,11 @@ arAkahukuCacheChannel.prototype = {
     try {
       entry.dataSize;
     }
-    catch (e if e.result == Cr.NS_ERROR_IN_PROGRESS) {
-      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    catch (e) {
+      if (e.result == Cr.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
+      throw e;
     }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
@@ -1137,7 +1140,7 @@ arAkahukuCacheChannel.prototype = {
             that._listener
               .onDataAvailable (that, that._context, ist, offset, c);
             if (that._canceled) {
-              req.cancel (e.result);
+              req.cancel (that.status);
               that._close (that.status);
             }
           }
@@ -1221,8 +1224,12 @@ arAkahukuCacheChannel.prototype = {
 
     try {
       channel = channel.QueryInterface (Ci.nsIInputStreamChannel);
-    } catch (e if e.result == Cr.NS_ERROR_NO_INTERFACE) {
-      return;
+    }
+    catch (e) {
+      if (e.result == Cr.NS_ERROR_NO_INTERFACE) {
+        return;
+      }
+      throw e;
     }
     // 既知のコンテンツ情報を引き継ぐ
     if (this.contentType)
@@ -1425,10 +1432,13 @@ arAkahukuAsyncRedirectVerifyHelper.prototype = {
           ["@mozilla.org/contentsecuritymanager;1"]
           .getService (Ci.nsIChannelEventSink);
       }
-      catch (e if e.result == Cr.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
-        // no nsIChannelEventSink (Gecko < 46)
-      }
-      catch (e) { Components.utils.reportError (e);
+      catch (e) {
+        if (e.result == Cr.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
+          // no nsIChannelEventSink (Gecko < 46)
+        }
+        else {
+          Components.utils.reportError (e);
+        }
       }
     }
     if (!gsink && "@mozilla.org/netwerk/global-channel-event-sink;1" in Components.classes) {
@@ -1570,31 +1580,17 @@ arAkahukuAsyncRedirectVerifyHelper.Event.prototype = {
 
 /**
  * ファイル読み込みチャンネル
- * (require Gecko 8.0: new File)
+ *
  * [e10s] File と FileReader はコンテントプロセスでも使える
+ * (ただし File.createFrom* はコンテントプロセスでは基本使えないため
+ *  親プロセスに生成してもらってメッセージ経由で得る必要がある)
  */
-function arAkahukuDOMFileChannel (uri, file, loadInfo) {
-  Cu.importGlobalProperties (["File"]);
-  if (file instanceof File) {
-    this._domFile = file;
-  }
-  else {
-    // assuming file instanceof Ci.nsIFile
-    try {
-      if (typeof File.createFromNsIFile !== "undefined") {
-        // Firefix 52.0+
-        this._domFile = File.createFromNsIFile (file);
-      }
-      else {
-        this._domFile = new File (file); // Firefix 8.0-51.0
-      }
-    }
-    catch (e) {
-      throw Components.Exception
-        ("DOMFile construction failed from " + file,
-         e.result || Cr.NS_ERROR_ILLEGAL_VALUE);
-    }
-  }
+function arAkahukuDOMFileChannel (uri, path, loadInfo) {
+  this._domFilePending = true;
+  const {AkahukuFileUtil} = Cu.import ("resource://akahuku/fileutil.jsm", {});
+  var promise = AkahukuFileUtil.createFromFileName (path);
+  this._expectPromiseToFile (promise);
+  this._path = path;
   this._reader = null;
   this._listener = null;
   this._context = null;
@@ -1638,7 +1634,7 @@ arAkahukuDOMFileChannel.prototype = {
   loadInfo : null,
 
   cancel : function (status) {
-    if (this._reader) {
+    if (this._reader && this._reader.readyState == this._reader.LOADING) {
       this._reader.abort ();
     }
     this.status = status;
@@ -1662,10 +1658,22 @@ arAkahukuDOMFileChannel.prototype = {
         ("arAkahukuDOMFileChannel is already opened",
          Cr.NS_ERROR_ALREADY_OPENED, Components.stack.caller);
     }
+    if (!this._domFilePending && !this._domFile) {
+      throw Components.Exception
+        ("arAkahukuDOMFileChannel is not initialized properly",
+         Cr.NS_ERROR_DOM_INVALID_STATE_ERR, Components.stack.caller);
+    }
     this._listener = listener;
     this._context = context;
 
-    var reader = new FileReader ();
+    if (typeof FileReader !== "undefined") {
+      var reader = new FileReader ();
+    }
+    else {
+      var reader
+        =  Cc ["@mozilla.org/files/filereader;1"]
+        .createInstance (Ci.nsIDOMFileReader);
+    }
     reader.onloadstart = (function (channel) {
       return function (event) {
         channel._onReaderLoadStart (event.target);
@@ -1681,8 +1689,10 @@ arAkahukuDOMFileChannel.prototype = {
         channel._onReaderError (event);
       };
     })(this);
-    reader.readAsArrayBuffer (this._domFile);
     this._reader = reader;
+    if (!this._domFilePending) {
+      this._startReadDOMFile ();
+    }
     this._isPending = true;
     this._isOpened = true;
     if (this.loadGroup) {
@@ -1692,6 +1702,15 @@ arAkahukuDOMFileChannel.prototype = {
   asyncOpen2 : function (listener) {
     channel_asyncOpen2 (this, listener);
   },
+  _startReadDOMFile : function () {
+    if ("@mozilla.org/io/arraybuffer-input-stream;1" in Cc) {
+      this._reader.readAsArrayBuffer (this._domFile);
+    }
+    else {
+      // old way for no existence of nsIArrayBufferInputStream
+      this._reader.readAsBinaryString (this._domFile);
+    }
+  },
   _onReaderLoadStart : function (reader) {
     if (!this._isStarted) {
       this._listener.onStartRequest (this, this._context);
@@ -1700,11 +1719,23 @@ arAkahukuDOMFileChannel.prototype = {
   },
   _onReaderLoaded : function (event) {
     var reader = event.target;
-    var dataLength = reader.result.byteLength;
-    var istream
-      = Cc ["@mozilla.org/io/arraybuffer-input-stream;1"]
-      .createInstance (Ci.nsIArrayBufferInputStream);
-    istream.setData (reader.result, 0, reader.result.byteLength);
+    var dataLength = -1;
+    var istream;
+    if ("@mozilla.org/io/arraybuffer-input-stream;1" in Cc) {
+      // requires Firefox 23.0+
+      dataLength = reader.result.byteLength;
+      istream
+        = Cc ["@mozilla.org/io/arraybuffer-input-stream;1"]
+        .createInstance (Ci.nsIArrayBufferInputStream);
+      istream.setData (reader.result, 0, reader.result.byteLength);
+    }
+    else {
+      dataLength = reader.result.length;
+      istream
+        = Cc ["@mozilla.org/io/string-input-stream;1"]
+        .createInstance (Ci.nsIStringInputStream);
+      istream.setData (reader.result, reader.result.length);
+    }
     this.contentLength = dataLength;
 
     try {
@@ -1725,7 +1756,6 @@ arAkahukuDOMFileChannel.prototype = {
     }
   },
   _onReaderError : function (event) {
-    this.status = Cr.NS_BINDING_FAILED;
     if (event.target.error.name) { // DOMError (Gecko 13.0)
       Cu.reportError ("arAkahukuDOMFileChannel: FileReader.onerror => "
           + event.target.error.name);
@@ -1734,11 +1764,18 @@ arAkahukuDOMFileChannel.prototype = {
       Cu.reportError ("arAkahukuDOMFileChannel: FileReader.onerror => "
           + "error.code = " + event.target.error.code);
     }
+    this._onError (Cr.NS_BINDING_FAILED);
+  },
+  _onError : function (status) {
+    this.status = status;
     try {
-      if (!this._isStarted) {
-        this._listener.onStartRequest (this, this._context);
+      if (this._isPending) {
+        if (!this._isStarted) {
+          this._listener.onStartRequest (this, this._context);
+        }
+        this._listener.onStopRequest (this, this._context, this.status);
+        this._isPending = false;
       }
-      this._listener.onStopRequest (this, this._context, this.status);
     }
     catch (e) { Cu.reportError (e);
       this._isPending = false;
@@ -1748,6 +1785,33 @@ arAkahukuDOMFileChannel.prototype = {
     if (this.loadGroup) {
       this.loadGroup.removeRequest (this, null, this.status);
     }
+  },
+  _expectPromiseToFile : function (promise) {
+    this._domFilePending = true;
+    var that = this;
+    promise.then (function (file) {
+      that._domFilePending = false;
+      if (!file) {
+        Cu.reportError ("arAkahukuDOMFileChannel: promise resulted in " + file);
+        that._onError (Cr.NS_ERROR_UNEXPECTED);
+        return;
+      }
+      that._domFile = file;
+      if (that._isPending) { // asyncOpen has been called
+        that._startReadDOMFile ();
+      }
+    }, function (reason) {
+      if (reason.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+        Cu.reportError ("arAkahukuDOMFileChannel: not found; "
+          + that._path);
+      }
+      else {
+        Cu.reportError ("arAkahukuDOMFileChannel: promise is rejected for "
+          + reason + "; " + that._path);
+      }
+      that._domFilePending = false;
+      that._onError (reason.result || Cr.NS_ERROR_UNEXPECTED);
+    });
   },
 };
 

@@ -280,15 +280,13 @@ var arAkahukuPostForm = {
   enableBottom : false,      /* Boolean  ページ末尾に置く */
   enableBottomFormOnly : false,      /* Boolean  ページ末尾にフォームだけを置く */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
+  attachToWindow : function (window) {
     window.addEventListener
-    ("keydown",
-     function () {
-      arAkahukuPostForm.onKeyDown (arguments [0]);
-    }, true);
+    ("keydown", arAkahukuPostForm.onKeyDown, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener
+    ("keydown", arAkahukuPostForm.onKeyDown, true);
   },
     
   /**
@@ -337,6 +335,7 @@ var arAkahukuPostForm = {
    *         対象のイベント
    */
   onKeyDown : function (event) {
+    var document = event.currentTarget.document;
     if (arAkahukuPostForm.enableCommentboxShortcut) {
       if (arAkahukuPostForm.commentboxShortcutKeycode
           == event.keyCode
@@ -475,7 +474,7 @@ var arAkahukuPostForm = {
         else if (arAkahukuPostForm.shimonkinType == "custom") {
           types = ["submit"];
           base
-          = arAkahukuFile.getURLSpecFromFilename
+          = arAkahukuFile.getURLSpecFromDirname
           (arAkahukuFile.systemDirectory);
         }
         type = types [parseInt (Math.random () * types.length)];
@@ -1113,14 +1112,8 @@ var arAkahukuPostForm = {
         }
                 
         if (filename) {
-          try {
-            var file
-              = Components.classes ["@mozilla.org/file/local;1"]
-              .createInstance (Components.interfaces
-                               .nsILocalFile);
-            file.initWithPath (filename);
-          }
-          catch (e) {
+          var file = arAkahukuFile.initFile (filename);
+          if (!file) {
             /* ファイルが存在しない */
             filename = "";
           }
@@ -1527,8 +1520,14 @@ var arAkahukuPostForm = {
           if (history.count > 1) {
             history.PurgeHistory (history.count - 1);
           }
+          else {
+            return;
+          }
+          // no e10s support bellow because of no need for recent firefox
+          var w = arAkahukuWindow
+          .getParentWindowInChrome (targetDocument.defaultView);
           var backCommand
-          = document.getElementById ("Browser:Back");
+          = w.document.getElementById ("Browser:Back");
           if (backCommand) {
             backCommand.setAttribute ("disabled", "true");
           }
@@ -2153,17 +2152,11 @@ var arAkahukuPostForm = {
         n.value = n.value.replace (/\s*=AKA[^=]+=\s*/g, "");
       }
       else {
-        if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-            != "undefined") {
-          var servant
-            = Components.classes
-            ["@unmht.org/akahuku-p2p-servant;2"].getService
-            (Components.interfaces.arIAkahukuP2PServant2);
-                    
-          var nodeName = servant.encodeNodeName
-            (arAkahukuP2P.address, arAkahukuP2P.port);
-          n.value = nodeName + " " + n.value;
-        }
+        var {arAkahukuP2PService}
+        = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+        var nodeName = arAkahukuP2PService.servant
+          .encodeNodeName (arAkahukuP2P.address, arAkahukuP2P.port);
+        n.value = nodeName + " " + n.value;
       }
             
       n.setSelectionRange (n.value.length, n.value.length);
@@ -3056,7 +3049,7 @@ var arAkahukuPostForm = {
 
     var commentFocused = false;
         
-    var focusedElement = arAkahukuCompat.Document.activeElement (targetDocument);
+    var focusedElement = targetDocument.activeElement;
     var form = arAkahukuDOM.findParentNode (focusedElement, "form");
     if (form
         && "id" in form
@@ -3223,8 +3216,7 @@ var arAkahukuPostForm = {
       }
       param = param.postform_param;
             
-      if ((typeof gContextMenu !== "undefined" && gContextMenu != null)
-          && arAkahukuUI.contextMenuShown) {
+      if (arAkahukuUI.contextMenuShown) {
         /* コンテキストメニューが表示されていたら何もしない */
         return;
       }
@@ -3608,28 +3600,13 @@ var arAkahukuPostForm = {
           // 以下で処理することになる添付ファイル名を記憶する
           param.upfile = filename;
         }
-        var file;
-        if (filename) {
-          file = arAkahukuFile.initFile (filename);
-        }
-        if (!file) {
-          /* ファイル名が不正 (含クリア) */
-          container.style.display = "none";
-          preview.removeAttribute ("__size");
-          preview.removeAttribute ("src");
-          previewV.removeAttribute ("src");
-          previewV.load (); // リソース解放に必要
-          arAkahukuDOM.setText (bytes, "");
-          arAkahukuDOM.setText (width, "");
-          arAkahukuDOM.setText (height, "");
-          arAkahukuDOM.setText (appendix, "");
-          return;
-        }
-                    
-        try {
-          if (file.exists ()) {
+        var {AkahukuFileUtil}
+        = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+        AkahukuFileUtil.createFromFileName (filename)
+        .then (function (file) {
+          try {
             var readableSize
-              = arAkahukuPostForm.getReadableSize (file.fileSize);
+              = arAkahukuPostForm.getReadableSize (file.size || file.fileSize);
                         
             preview.setAttribute ("__size", readableSize);
                         
@@ -3682,10 +3659,21 @@ var arAkahukuPostForm = {
             container.style.display = "";
             return;
           }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-        container.style.display = "none";
+          catch (e) { Akahuku.debug.exception (e);
+          }
+          container.style.display = "none";
+        }, function (reason) {// not exist
+          /* ファイル名が不正 (含クリア) */
+          container.style.display = "none";
+          preview.removeAttribute ("__size");
+          preview.removeAttribute ("src");
+          previewV.removeAttribute ("src");
+          previewV.load (); // リソース解放に必要
+          arAkahukuDOM.setText (bytes, "");
+          arAkahukuDOM.setText (width, "");
+          arAkahukuDOM.setText (height, "");
+          arAkahukuDOM.setText (appendix, "");
+        });
       }
     }
   },
@@ -4055,14 +4043,13 @@ var arAkahukuPostForm = {
   },
     
   /**
-   * コメント欄の背景画像のアドレスを返す
+   * コメント欄の背景画像のアドレスを決定する
    *
    * @param  String original
    *         板のアドレス
-   * @return String
-   *         画像のアドレス
+   * @return Promise 決まったurlへ解決される(""の場合も)
    */
-  getCommentboxBGImageURL : function (location) {
+  asyncGetCommentboxBGImageURL : function (location, callback) {
     var board = "";
         
     var url = "";
@@ -4073,51 +4060,60 @@ var arAkahukuPostForm = {
       if (uinfo) {
         board = uinfo.board;
             
-        var file
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        try {
-          var path;
-          path
-            = arAkahukuFile.systemDirectory
-            + arAkahukuFile.separator
-            + "bg_" + board + ".png";
-          file.initWithPath (path);
-          if (file.exists ()) {
-            url = arAkahukuFile.getURLSpecFromFilename (path);
-          }
-          else {
+        var {AkahukuFileUtil}
+          = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+        var path
+          = arAkahukuFile.systemDirectory
+          + arAkahukuFile.separator
+          + "bg_" + board + ".png";
+        var promise
+          = AkahukuFileUtil.createFromFileName (path)
+          .then (function (file) {
+            return arAkahukuFile.getURLSpecFromFilename (path);
+          }, function (reason) {// not exist
             path
               = arAkahukuFile.systemDirectory
               + arAkahukuFile.separator
               + "bg_default.png";
-            file.initWithPath (path);
-            if (file.exists ()) {
-              url = arAkahukuFile.getURLSpecFromFilename (path);
+            return AkahukuFileUtil.createFromFileName (path)
+            .then (function (file) {
+              return arAkahukuFile.getURLSpecFromFilename (path);
+            }, function (reason) {
+              return "";
+            });
+          })
+          .then (function (url) {
+            if (arAkahukuPostForm.enableCommentboxBGCustom == "mix"
+                && (url == "" || Math.random () > 0.5)) {
+              url
+                = arAkahukuP2P.getImageURL
+                (location, parseInt (Math.random () * 10000));
+              url = url.replace (/\/p2p_/, "/bg_");
             }
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
+            if (url) {
+              url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
+            }
+            return url;
+          });
+        return promise;
       }
     }
         
     if (arAkahukuPostForm.enableCommentboxBGCustom == "no"
         || arAkahukuPostForm.enableCommentboxBGCustom == "mix") {
-      if (url == ""
-          || Math.random () > 0.5) {
-        url = arAkahukuP2P.getImageURL
-        (location,
-         parseInt (Math.random () * 10000));
-        url = url.replace (/\/p2p_/, "/bg_");
-      }
+      url = arAkahukuP2P.getImageURL
+        (location, parseInt (Math.random () * 10000));
+      url = url.replace (/\/p2p_/, "/bg_");
     }
         
     if (url != "") {
       url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
     }
-        
-    return url;
+
+    var {Promise}
+      = Components.utils
+      .import ("resource://akahuku/promise-polyfill.jsm", {});
+    return Promise.resolve (url);
   },
     
   /**
@@ -4132,14 +4128,13 @@ var arAkahukuPostForm = {
       return;
     }
         
-    var url
-    = arAkahukuPostForm.getCommentboxBGImageURL
-    ("http://www.nijibox5.com/futabafiles/tubu/");
-    if (url) {
+    arAkahukuPostForm.asyncGetCommentboxBGImageURL
+    ("http://www.nijibox5.com/futabafiles/tubu/")
+    .then (function (url) {
       commentbox.style.backgroundImage = "url(\'" + url + "\')";
       commentbox.style.backgroundRepeat = "no-repeat";
       commentbox.style.backgroundPosition = "right 35%";
-    }
+    });
   },
 
   /**
@@ -4224,8 +4219,14 @@ var arAkahukuPostForm = {
                 if (history.count > 1) {
                   history.PurgeHistory (history.count - 1);
                 }
+                else {
+                  return;
+                }
+                // no e10s support bellow because of no need for recent firefox
+                var w = arAkahukuWindow
+                .getParentWindowInChrome (targetDocument.defaultView);
                 var backCommand
-                  = document.getElementById ("Browser:Back");
+                = w.document.getElementById ("Browser:Back");
                 if (backCommand) {
                   backCommand.setAttribute ("disabled", "true");
                 }
@@ -4791,16 +4792,15 @@ var arAkahukuPostForm = {
         }
         
         if (arAkahukuPostForm.enableCommentboxBG) {
-          var url
-            = arAkahukuPostForm.getCommentboxBGImageURL
-            (targetDocument.location.href);
-          if (url) {
+          arAkahukuPostForm.asyncGetCommentboxBGImageURL
+          (targetDocument.location.href)
+          .then (function (url) {
             commentbox.style.backgroundImage
               = "url(\'" + url + "\')";
             commentbox.style.backgroundRepeat = "no-repeat";
             commentbox.style.backgroundPosition = "right bottom";
             commentbox.style.minHeight = "150px";
-          }
+          });
           if (arAkahukuPostForm.enableCommentboxBGFrame) {
             try {
               commentbox.style.textShadow = "#ffffff 1px 1px 0px";

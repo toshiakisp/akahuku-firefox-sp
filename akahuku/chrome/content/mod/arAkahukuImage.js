@@ -11,7 +11,7 @@
 function arAkahukuImageListener () {
 }
 arAkahukuImageListener.prototype = {
-  file : null,   /* nsILocalFile  保存先のファイル */
+  file : null,   /* nsIFile  保存先のファイル */
   saveLeafName : "", /* String  保存先のファイル名 */
   finished : false,
   callback : null,
@@ -34,6 +34,12 @@ arAkahukuImageListener.prototype = {
     }
         
     throw Components.results.NS_ERROR_NO_INTERFACE;
+  },
+
+  setFilePath : function (filePath, tmpfilePath) {
+    this.file = arAkahukuFile.initFile (filePath);
+    this.saveLeafName = this.file.leafName;
+    this.file.initWithPath (tmpfilePath);
   },
     
   /**
@@ -195,34 +201,22 @@ var arAkahukuImage = {
   currentNormal : false,   /* Boolean  保存先選択中のボタンが通常のボタンか */
   lastTargetDirIndex : -1, /* Number  最後に保存したディレクトリのインデックス */
 
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
-    var popup;
-    popup = document.getElementById ("akahuku-saveimage-popup");
-    if (!popup) {
-      /* Mozilla Suite では mainPopupSet が無いためオーバーレイできない */
-            
-      var mainWindow = document.getElementById ("main-window");
-      if (mainWindow) {
-        var targetDocument = mainWindow.ownerDocument;
-        var popupset = targetDocument.createElement ("popupset");
-                
-        var label, command;
-                
-        popup = targetDocument.createElement ("popup");
-        popup.id = "akahuku-saveimage-popup";
-        popup.setAttribute ("position", "after_start");
-        popup.addEventListener ("popupshowing", function () {
-          arAkahukuImage.setPopup ();
-        }, false);
-                
-        popupset.appendChild (popup);
-                
-        mainWindow.appendChild (popupset);
-      }
-    }
+  attachToWindow : function (window) {
+  },
+  dettachFromWindow : function (window) {
+  },
+
+  initContextMenus : function (contextMenus) {
+    contextMenus.create ({
+      id: "akahuku-saveimage-popup",
+      contexts: ["_xul_mainpopupset"],
+      title: "akahuku-saveimage-popup",
+      _onshowing: arAkahukuImage.setPopup,
+    });
+    contextMenus.create ({
+      id: "akahuku-menuitem-content-separator9",
+      type: "separator",
+    });
   },
     
   /**
@@ -345,7 +339,6 @@ var arAkahukuImage = {
                 }
               }
               if (dialog_keep == "o") {
-                subdir_type = "s";
                 subdir = "0";
               }
               
@@ -415,6 +408,13 @@ var arAkahukuImage = {
    */
   setContextMenu : function (event) {
     var popup = event.target;
+    var document = event.currentTarget.ownerDocument;
+    var gContextMenu = document.defaultView.gContextMenu;
+    var browser = gContextMenu.browser;
+    if (!browser) {
+      var contentWindow = gContextMenu.target.ownerDocument.defaultView;
+      browser = arAkahukuWindow.getBrowserForWindow (contentWindow);
+    }
         
     var label, menuitem;
         
@@ -470,7 +470,7 @@ var arAkahukuImage = {
       menuitem.className = "__akahuku_saveimage";
       menuitem.addEventListener ("command", (function (i) {
         return function () {
-          arAkahukuImage.selectSaveImageDirFromXUL (i, false);
+          arAkahukuImage.selectSaveImageDirFromXUL (i, false, browser);
         }
       })(i), false);
       popup.insertBefore (menuitem, sep.nextSibling);
@@ -756,7 +756,13 @@ var arAkahukuImage = {
     }
   },
 
-  openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY) {
+  openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY, window) {
+    if (!window && targetContentNode) { // non-e10s
+      window
+        = arAkahukuWindow.getParentWindowInChrome
+        (targetContentNode.ownerDocument.defaultView);
+    }
+    var document = window.document;
     var popup = document.getElementById ("akahuku-saveimage-popup");
 
     if (targetContentNode && "openPopup" in popup) {
@@ -787,7 +793,7 @@ var arAkahukuImage = {
     }
   },
 
-  selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu) {
+  selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu, browser) {
     arAkahukuImage.onSaveImageClick
       (null, targetDirIndex, undefined, linkmenu);
   },
@@ -853,8 +859,6 @@ var arAkahukuImage = {
 
     var uri = arAkahukuUtil.newURIViaNode (href, null);
         
-    var file;
-        
     var targetDocument = target.ownerDocument;
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
@@ -864,26 +868,20 @@ var arAkahukuImage = {
       ext = RegExp.$1;
     }
         
+    var dirPath = arAkahukuImage.baseList [targetDirIndex].dir;
+    if (!dirPath) {
+      /* ベースのディレクトリが不正 */
+      arAkahukuImage.onSave
+      (target, false,
+       "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
+      return;
+    }
     if (arAkahukuImage.baseList [targetDirIndex].dialog) {
-      try {
-        var dir
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        dir.initWithPath (arAkahukuImage.baseList [targetDirIndex].dir);
-      }
-      catch (e) {
-        /* ベースのディレクトリが不正 */
-        arAkahukuImage.onSave
-        (target, false,
-         "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
-        return;
-      }
-
       var browser
         = arAkahukuWindow.getBrowserForWindow
         (target.ownerDocument.defaultView);
       arAkahukuImage.asyncOpenSaveImageFilePicker
-        (browser, leafName, dir.path, function (ret, file, dir) {
+        (browser, leafName, dirPath, function (ret, file, dir) {
 
         if (ret != Components.interfaces.nsIFilePicker.returnOK
             && ret != Components.interfaces.nsIFilePicker.returnReplace) {
@@ -902,35 +900,16 @@ var arAkahukuImage = {
           arAkahukuImage.saveBaseList ();
         }
                 
+        var path = file.path;
         if (file.leafName.indexOf (ext)
             != file.leafName.length - ext.length) {
-          var path = file.path + ext;
-          file
-            = Components.classes ["@mozilla.org/file/local;1"]
-            .createInstance (Components.interfaces.nsILocalFile);
-          file.initWithPath (path);
+          path = file.path + ext;
         }
-        arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
+        arAkahukuImage.saveImageCore (target, path, uri, leafName, normal);
       });
     }
     else {
-      file
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-      try {
-        file.initWithPath (arAkahukuImage.baseList [targetDirIndex].dir);
-      }
-      catch (e) {
-        /* ベースのディレクトリが不正 */
-        arAkahukuImage.onSave
-        (target, false,
-         "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
-        return;
-      }
-            
-      if (!file.exists ()) {
-        arAkahukuFile.createDirectory (file.path);
-      }
+      arAkahukuFile.createDirectory (dirPath);
             
       ; /* インデント用 */
       var dir
@@ -943,15 +922,18 @@ var arAkahukuImage = {
            "\u30B9\u30EC\u756A\u53F7\u306F\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u3057\u304B\u4F7F\u3048\u307E\u305B\u3093", "", normal);
         return;
       }
+      var {AkahukuFileUtil} = Components.utils
+        .import ("resource://akahuku/fileutil.jsm", {});
+      var dirUrl = AkahukuFileUtil.getURLSpecFromNativeDirPath (dirPath);
       if (dir) {
-        file.appendRelativePath (dir);
-      }
-      if (!file.exists ()) {
-        arAkahukuFile.createDirectory (file.path);
+        dirUrl += dir + "/";
+        dirPath = AkahukuFileUtil.getNativePathFromURLSpec (dirUrl);
+        arAkahukuFile.createDirectory (dirPath);
       }
             
-      file.appendRelativePath (leafName);
-      arAkahukuImage.saveImageCore (target, file, uri, leafName, normal);
+      var fileUrl = dirUrl + leafName;
+      var filePath = AkahukuFileUtil.getNativePathFromURLSpec (fileUrl);
+      arAkahukuImage.saveImageCore (target, filePath, uri, leafName, normal);
     }
   },
   /**
@@ -970,10 +952,7 @@ var arAkahukuImage = {
     filePicker.appendFilters (Components.interfaces.nsIFilePicker.filterAll);
 
     try {
-      var dir
-        = Components.classes ["@mozilla.org/file/local;1"]
-        .createInstance (Components.interfaces.nsILocalFile);
-      dir.initWithPath (dirname);
+      var dir = arAkahukuFile.initFile (dirname);
       if (!dir.exists ()) {
         arAkahukuFile.createDirectory (dir.path);
       }
@@ -1005,10 +984,6 @@ var arAkahukuImage = {
       + arAkahukuFile.separator
       + "." + new Date ().getTime ()
       + "_" + Math.floor (Math.random () * 1000);
-    var file
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-    file.initWithPath (filename);
 
     var targetDocument = target.ownerDocument;
     var isPrivate = false;
@@ -1051,23 +1026,23 @@ var arAkahukuImage = {
       targetDocument.defaultView
       .setTimeout (function () {
         arAkahukuImage.saveImage
-          (target, index, newHref, leafName, normal);
+          (target, targetDirIndex, newHref, leafName, normal);
       }, wait)
     };
     arAkahukuImage.asyncSaveImageToFile
-      (file, uri, isPrivate, onFileSaved);
+      (filename, uri, isPrivate, onFileSaved);
   },
 
   /**
    * 画像を保存先に保存させて表示を更新する
    *
    * @param  HTMLElement target ボタン
-   * @param  nsIFile file 保存先のファイル情報
+   * @param  String filePath 保存先のファイルパス
    * @param  nsIURI uri 保存するアドレス
    * @param  String leafName ファイル名
    * @param  Boolean normal 通常のボタンか
    */
-  saveImageCore : function (target, file, uri, leafName, normal) {
+  saveImageCore : function (target, filePath, uri, leafName, normal) {
     var targetDocument = target.ownerDocument;
     var isPrivate = false;
     try {
@@ -1081,7 +1056,7 @@ var arAkahukuImage = {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-    arAkahukuImage.asyncSaveImageToFile (file, uri, isPrivate,
+    arAkahukuImage.asyncSaveImageToFile (filePath, uri, isPrivate,
         function (success, savedFile, msg) {
           if (!success && savedFile) {
             arAkahukuFile.remove (savedFile, true);
@@ -1106,15 +1081,18 @@ var arAkahukuImage = {
   /**
    * 画像を保存先に保存する
    *
-   * @param  nsIFile file 保存先のファイル情報
+   * @param  String filePath 保存先のファイルパス
    * @param  nsIURI uri 保存するアドレス
    * @param  Boolean isPrivate プライベートブラウジングか
    * @param  Function callback 保存終了時のコールバック関数
    */
-  asyncSaveImageToFile : function (file, uri, isPrivate, callback) {
+  asyncSaveImageToFile : function (filePath, uri, isPrivate, callback) {
+    var tmpFilePath
+      = filePath
+      + "." + new Date ().getTime ()
+      + "_" + Math.floor (Math.random () * 1000);
     var listener = new arAkahukuImageListener ();
-    listener.file = file;
-    listener.saveLeafName = file.leafName;
+    listener.setFilePath (filePath, tmpFilePath);
     listener.callback = callback;
 
     try {
@@ -1137,10 +1115,6 @@ var arAkahukuImage = {
     catch (e) { Akahuku.debug.exception (e);
     }
         
-    file.initWithPath (file.path
-                       + "." + new Date ().getTime ()
-                       + "_" + Math.floor (Math.random () * 1000));
-        
     var webBrowserPersist
     = Components.classes
     ["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"]
@@ -1150,7 +1124,7 @@ var arAkahukuImage = {
     webBrowserPersist.persistFlags = flags;
     webBrowserPersist.progressListener = listener;
 
-    var args = {uri: uri, file: file, isPrivate: isPrivate};
+    var args = {uri: uri, file: tmpFilePath, isPrivate: isPrivate};
     arAkahukuCompat.WebBrowserPersist.saveURI
       (webBrowserPersist, args);
   },
@@ -1185,10 +1159,12 @@ var arAkahukuImage = {
         }
         href = arAkahukuP2P.deP2P (href);
         var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
-        uri.path = uri.path.replace (/\/(red|d)\//, "/src/");
+        arAkahukuCompat.nsIURI.setPathQueryRef (uri,
+            arAkahukuCompat.nsIURI.getPathQueryRef (uri)
+            .replace (/\/(red|d)\//, "/src/"));
             
         var dirs = new Array ();
-        dirs = uri.path.split (/\//);
+        dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
         href = info.escapeForFilename (uri.host);
         for (var i = 0; i < dirs.length; i ++) {
           if (dirs [i]) {
@@ -1245,10 +1221,12 @@ var arAkahukuImage = {
     else {
       href = arAkahukuP2P.deP2P (href);
       var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
-      uri.path = uri.path.replace (/\/(red|d)\//, "/src/");
+      arAkahukuCompat.nsIURI.setPathQueryRef (uri,
+          arAkahukuCompat.nsIURI.getPathQueryRef (uri)
+          .replace (/\/(red|d)\//, "/src/"));
       
       var dirs = new Array ();
-      dirs = uri.path.split (/\//);
+      dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
       href = info.escapeForFilename (uri.host);
       for (var i = 0; i < dirs.length; i ++) {
         if (dirs [i]) {
@@ -1273,8 +1251,18 @@ var arAkahukuImage = {
   /**
    * ポップアップメニューの内容を設定する
    */
-  setPopup : function () {
-    var popup = document.getElementById ("akahuku-saveimage-popup");
+  setPopup : function (event) {
+    var popup = event.target;
+    var document = event.currentTarget.ownerDocument;
+    var browser;
+    var w = document.commandDispatcher.focusedWindow;
+    if (w && !(w instanceof Components.interfaces.nsIDOMChromeWindow)) {
+      browser = arAkahukuWindow.getBrowserForWindow (w);
+    }
+    else { // for e10s
+      browser = document.commandDispatcher.focusedElement;
+      w = null;
+    }
         
     var label, menuitem;
         
@@ -1300,7 +1288,7 @@ var arAkahukuImage = {
       menuitem.setAttribute ("label", label);
       menuitem.addEventListener ("command", (function (i) {
         return function () {
-          arAkahukuImage.selectSaveImageDirFromXUL (i, false);
+          arAkahukuImage.selectSaveImageDirFromXUL (i, false, browser);
         }
       })(i), false);
       popup.appendChild (menuitem);
@@ -1357,34 +1345,19 @@ var arAkahukuImage = {
     var leafName = target.getAttribute ("dummyleafname");
     var href = target.getAttribute ("dummyhref");
         
-    var file
-    = Components.classes ["@mozilla.org/file/local;1"]
-    .createInstance (Components.interfaces.nsILocalFile);
-    try {
-      for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-        var filename = arAkahukuImage.baseList [i].dir
-          + arAkahukuFile.separator;
-        var dir
-          = arAkahukuImage.createSubdirName
-          (arAkahukuImage.baseList [i], info, href);
-        if (dir == null) {
-          continue;
-        }
-        if (dir) {
-          filename += dir + arAkahukuFile.separator;
-        }
-        filename += leafName;
-        file.initWithPath (filename);
-        if (file.exists ()) {
-          arAkahukuFile.remove (file, true);
-        }
+    arAkahukuImage.asyncCheckImageFileExist (target, leafName)
+      .then (function (result) {
+        var file = arAkahukuFile.initFile (result.path);
+        arAkahukuFile.remove (file, true);
+      }, function () {
+        // no file, no special care
+        Akahuku.debug.warn ("no file for " +  leafName);
+      })
+      .then (function () {
         arAkahukuImage.updateContainer (target.parentNode,
                                         false, false);
         arAkahukuImage.changeImage (target, false);
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+      });
   },
     
   /**
@@ -1422,74 +1395,42 @@ var arAkahukuImage = {
     }
         
     var targetDocument = target.ownerDocument;
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
-        
-    var href = target.getAttribute ("dummyhref");
     
     if (saved) {
-      var exists = false;
-      var instantsrc = false;
-            
       if (normal) {
-        var file
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        try {
-          for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-            var filename = arAkahukuImage.baseList [i].dir
-              + arAkahukuFile.separator;
-            var dir
-              = arAkahukuImage.createSubdirName
-              (arAkahukuImage.baseList [i], info, href);
-            if (dir == null) {
-              continue;
-            }
-            if (dir) {
-              filename += dir + arAkahukuFile.separator;
-            }
-            filename += leafName;
-            file.initWithPath (filename);
-            if (file.exists ()) {
-              exists = true;
-              instantsrc = arAkahukuImage.baseList [i].instantsrc;
-              break;
-            }
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-      }
-            
-      stopNode.style.display = "none";
-      if (exists) {
-        arAkahukuDOM.setText (messageNode, null);
-        arAkahukuImage.updateContainer
-          (target.parentNode, true,
-           instantsrc);
-        if (instantsrc) {
-          arAkahukuImage.changeImage (target, true);
-        }
-      }
-      else {
-        arAkahukuDOM.setText
-          (messageNode,
-           "\u4FDD\u5B58\u3057\u307E\u3057\u305F");
-                
-        if (normal) {
-          arAkahukuImage.updateContainer
-            (target.parentNode, false, false);
-        }
-        else {
-          target.style.display = "";
-        }
-                
-        targetDocument.defaultView.setTimeout
-          (function (messageNode) {
+        arAkahukuImage.asyncCheckImageFileExist (target, leafName)
+          .then (function (result) {
+            // file exists
+            var instantsrc = arAkahukuImage
+              .baseList [result.baseListId].instantsrc;
+            stopNode.style.display = "none";
             arAkahukuDOM.setText (messageNode, null);
-          }, 5000, messageNode);
+            arAkahukuImage.updateContainer
+              (target.parentNode, true,
+               instantsrc);
+            if (instantsrc) {
+              arAkahukuImage.changeImage (target, true, result.path);
+            }
+          }, function (values) {
+            // no file exist
+            stopNode.style.display = "none";
+            arAkahukuDOM.setText
+              (messageNode,
+               "\u4FDD\u5B58\u3057\u307E\u3057\u305F");
+            if (normal) {
+              arAkahukuImage.updateContainer
+                (target.parentNode, false, false);
+            }
+            else {
+              target.style.display = "";
+            }
+            targetDocument.defaultView.setTimeout
+              (function (messageNode) {
+                arAkahukuDOM.setText (messageNode, null);
+              }, 5000, messageNode);
+          });
       }
-            
+
       arAkahukuSound.playSaveImage ();
             
       return;
@@ -1517,6 +1458,63 @@ var arAkahukuImage = {
       arAkahukuDOM.setText (messageNode, null);
     }, 5000, messageNode);
   },
+
+  /**
+   * 保存ディレクトリのどれかに保存されているか調べる
+   * @param  HTMLAnchorElement target 画像を保存ボタン
+   * @param  String leafName ファイル名(だけ)
+   * @return Promise
+   */
+  asyncCheckImageFileExist : function (target, leafName) {
+    var targetDocument = target.ownerDocument;
+    var info = Akahuku.getDocumentParam (targetDocument).location_info;
+    var href = target.getAttribute ("dummyhref");
+
+    var {Promise} = Components.utils
+      .import ("resource://akahuku/promise-polyfill.jsm", {});
+    var {AkahukuFileUtil} = Components.utils
+      .import ("resource://akahuku/fileutil.jsm", {});
+    var dirCandidates = [];
+    var promises = [];
+    for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
+      var filename = arAkahukuImage.baseList [i].dir
+        + arAkahukuFile.separator;
+      dirCandidates.push (String (filename));
+      var dir
+        = arAkahukuImage.createSubdirName
+        (arAkahukuImage.baseList [i], info, href);
+      if (dir == null) {
+        continue;
+      }
+      if (dir) {
+        filename += dir + arAkahukuFile.separator;
+      }
+      dirCandidates [i] = String (filename);
+      filename += leafName;
+      let index = i;
+      var promise = AkahukuFileUtil
+        .createFromFileName (filename)
+        .then (function (file) {
+          return Promise.reject ({i: index, file: file});
+        }, function (reason) {
+          return Promise.resolve (true);
+        });
+      promises.push (promise);
+    }
+    return Promise.all (promises)
+    .then (function (values) {
+      return Promise.reject ("no file exist");
+    }, function (result) {
+      // file exists
+      var value = {
+        baseListId: result.i,
+        basedir: dirCandidates [result.i],
+        path: dirCandidates [result.i] + leafName,
+        file: result.file,
+      };
+      return Promise.resolve (value);
+    });
+  },
     
   /**
    * サムネ／元画像を入れ替える
@@ -1525,8 +1523,9 @@ var arAkahukuImage = {
    *         サムネ／元画像 ボタン
    * @param  Boolean isSrc
    *         元画像か
+   * @param  String optFilePath ファイル名(既知の場合)
    */
-  changeImage : function (target, isSrc) {
+  changeImage : function (target, isSrc, optFilePath) {
     var href = target.getAttribute ("dummyhref");
     var leafName = target.getAttribute ("dummyleafname");
         
@@ -1729,36 +1728,20 @@ var arAkahukuImage = {
           + "/" + uinfo.leafNameExt;
         url = arAkahukuP2P.enP2P (url);
       }
-      else {
-        var filename;
-        for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-          filename = arAkahukuImage.baseList [i].dir
-            + arAkahukuFile.separator;
-          var subdir
-            = arAkahukuImage.createSubdirName
-            (arAkahukuImage.baseList [i], info, href);
-          if (subdir == null) {
-            continue;
-          }
-          if (subdir) {
-            filename += subdir + arAkahukuFile.separator;
-          }
-          filename += leafName;
-          var file
-            = Components.classes ["@mozilla.org/file/local;1"]
-            .createInstance (Components.interfaces.nsILocalFile);
-          try {
-            file.initWithPath (filename);
-            if (file.exists ()) {
-              break;
-            }
-          }
-          catch (e) {
-          }
-        }
-                
-        url = arAkahukuFile.getURLSpecFromFilename (filename);
+      else if (optFilePath) {
+        url = arAkahukuFile.getURLSpecFromFilename (optFilePath);
         url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
+      }
+      else {
+        url = null;
+        arAkahukuImage.asyncCheckImageFileExist (target, leafName)
+          .then (function (result) {
+            var url = arAkahukuFile.getURLSpecFromFilename (result.path);
+            url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
+            srcImage.src = url;
+          }, function () {
+            Akahuku.debug.warn ("no file exist for: " + leafName);
+          });
       }
             
       srcImage.addEventListener
@@ -1772,7 +1755,9 @@ var arAkahukuImage = {
         catch (e) {
         }
       }, true);
-      srcImage.src = url;
+      if (url) {
+        srcImage.src = url;
+      }
       image.parentNode.insertBefore (srcImage, image);
     }
   },
@@ -1932,47 +1917,19 @@ var arAkahukuImage = {
         }
       }
             
-      var exists = false;
-      var instantsrc = false;
-      var instantsrc_always = false;
+      arAkahukuImage.updateContainer (container, false, false);
             
-      var file
-      = Components.classes ["@mozilla.org/file/local;1"]
-      .createInstance (Components.interfaces.nsILocalFile);
-      try {
-        for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-          var filename = arAkahukuImage.baseList [i].dir
-            + arAkahukuFile.separator;
-          var subdir
-            = arAkahukuImage.createSubdirName
-            (arAkahukuImage.baseList [i], info, linkNode.href);
-          if (subdir == null) {
-            continue;
+      arAkahukuImage.asyncCheckImageFileExist (srcButton, leafName)
+        .then (function (result) {
+          var base = arAkahukuImage.baseList [result.baseListId];
+          arAkahukuImage.updateContainer (container, true, false);
+          if (base.instantsrc && base.instantsrc_always) {
+            arAkahukuImage.changeImage (srcButton, true, result.path);
+            arAkahukuImage.updateContainer (container, true, true);
           }
-          if (subdir) {
-            filename += subdir + arAkahukuFile.separator;
-          }
-          filename += leafName;
-          file.initWithPath (filename);
-          if (file.exists ()) {
-            exists = true;
-            instantsrc = arAkahukuImage.baseList [i].instantsrc;
-            instantsrc_always = arAkahukuImage.baseList [i].instantsrc_always;
-            break;
-          }
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-            
-      arAkahukuImage.updateContainer (container, exists, false);
-            
-      if (exists
-          && instantsrc
-          && instantsrc_always) {
-        arAkahukuImage.changeImage (srcButton, true);
-        arAkahukuImage.updateContainer (container, exists, true);
-      }
+        }, function () {
+          // no file, no reaction
+        });
     }
   },
     

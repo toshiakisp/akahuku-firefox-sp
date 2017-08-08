@@ -2,3 +2,4 @@
 *.jar
 *.xpi
 Makefile.in
+node_modules

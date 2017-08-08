@@ -56,7 +56,7 @@ Akahuku.Cache.asyncOpenCache = function (source, flag, callback) {
       : arAkahukuIPC.getChildProcessMessageManager (),
     onCacheEntryAvaiable : function (entry, isNew, appCache, status) {
       if (entry) {
-        Cu.import ("resource://akahuku/ipc-cache.jsm");
+        Components.utils.import ("resource://akahuku/ipc-cache.jsm");
         entry = new arCacheEntryChild (entry);
         entry.attachIPCMessageManager (this.messageManager);
       }
@@ -102,6 +102,22 @@ arAkahukuCatalog.init = function () {
 };
 arAkahukuCatalog.term = function () {
   // arAkahukuIPC remove proc?
+};
+arAkahukuCatalog.isOpenedAsync = function (uri, callback) {
+  // just query for the parent process
+  arAkahukuIPC.sendAsyncCommand
+    ("Akahuku/hasDocumentParamForURIAsync", [uri, function (opened) {
+      if (typeof callback === "function") {
+        callback.apply (null, [opened]);
+      }
+      else {
+        callback.isOpened.apply (callback, [uri, opened]);
+      }
+    }]);
+};
+arAkahukuCatalog.asyncFocusByThreadURI = function (uri, anchor, callback) {
+  arAkahukuIPC.sendAsyncCommand
+    ("Catalog/asyncFocusByThreadURI", [uri, null, callback]);
 };
 
 
@@ -172,7 +188,7 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
     .sendSyncCommand ("File/createFileOutputStream",
         [file, ioFlags, perm, behaviorFlags], contentWindow);
   if (fstream) {
-    Cu.import ("resource://akahuku/ipc-stream.jsm");
+    Components.utils.import ("resource://akahuku/ipc-stream.jsm");
     fstream = new arOutputStreamChild (fstream);
     var mm = (contentWindow
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
@@ -193,7 +209,7 @@ arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFla
     .sendSyncCommand ("File/createFileInputStream",
         [file, ioFlags, perm, behaviorFlags], contentWindow);
   if (fstream) {
-    Cu.import ("resource://akahuku/ipc-stream.jsm");
+    Components.utils.import ("resource://akahuku/ipc-stream.jsm");
     var fstreamC = new arInputStreamChild (fstream);
     var mm = (contentWindow
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
@@ -276,10 +292,15 @@ arAkahukuIPC.defineProc
   (arAkahukuLink, "Link", "copyLink", {async: true, remote: true});
 arAkahukuIPC.defineProc
   (arAkahukuLink, "Link", "openAsAutoLink", {async: true, remote: true});
-arAkahukuLink.openLinkInXUL = function (href, to, focus, targetDocument, isPrivate) {
+arAkahukuLink.openLinkInXUL = function (href, to, focus, target, isPrivate) {
   arAkahukuIPC.sendAsyncCommand
-    ("Link/openLinkInXUL", [href, to, focus, targetDocument, isPrivate],
-     targetDocument.defaultView);
+    ("Link/openLinkInXUL", [href, to, focus, null, isPrivate],
+     target.defaultView);
+};
+arAkahukuLink.makeURLSafeInNoscript = function (targetUrl, docUrl, browser) {
+  arAkahukuIPC.sendSyncCommand
+    ("Link/makeURLSafeInNoscript", [targetUrl, docUrl, null],
+     browser.ownerGlobal);
 };
 
 
@@ -359,8 +380,10 @@ arAkahukuIPC.defineProc
 arAkahukuIPC.defineProc
   (arAkahukuQuote, "Quote", "wikipedia", {async: true, remote: true});
 
-arAkahukuQuote.searchInNewTabXUL = function () {
-  arAkahukuIPC.sendAsyncCommand ("Quote/searchInNewTabXUL", arguments);
+arAkahukuQuote.searchInNewTabXUL = function (href, focus, browser) {
+  arAkahukuIPC.sendAsyncCommand
+    ("Quote/searchInNewTabXUL", [href, focus],
+     browser.ownerGlobal);
 };
 
 
@@ -373,39 +396,48 @@ var arAkahukuReloadIPCWrapper = {
     };
     arAkahukuReload.diffReloadForBrowser (browser, doSync);
   },
+  reloadOnDemandForBrowser : function (browser, doSync) {
+    // minimum equivalent
+    browser = {
+      contentDocument: arAkahukuIPC.messageTarget.content.document,
+    };
+    arAkahukuReload.reloadOnDemandForBrowser (browser, doSync);
+  },
 };
 arAkahukuIPC.defineProc
   (arAkahukuReloadIPCWrapper,
    "Reload", "diffReloadForBrowser", {async: true, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuReloadIPCWrapper,
+   "Reload", "reloadOnDemandForBrowser", {async: true, remote: true});
 
 
 
 arAkahukuSidebar.updateThreadItem = function () {
   arAkahukuIPC.sendAsyncCommand ("Sidebar/updateThreadItem", arguments);
 };
-arAkahukuSidebar.hasTabForBoard = function () {
-  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasTabForBoard", arguments);
+arAkahukuSidebar.hasTabForBoard = function (name, browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Sidebar/hasTabForBoard", [name, null],
+     browser.ownerGlobal);
 };
-arAkahukuSidebar.hasBoard = function () {
-  return arAkahukuIPC.sendSyncCommand ("Sidebar/hasBoard", arguments);
+arAkahukuSidebar.hasBoard = function (boardName, browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Sidebar/hasBoard", [boardName, null],
+     browser.ownerGlobal);
 };
-arAkahukuSidebar.getThread = function () {
-  return arAkahukuIPC.sendSyncCommand ("Sidebar/getThread", arguments);
+arAkahukuSidebar.getThread = function (boardName, threadNumber, browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Sidebar/getThread", [boardName, threadNumber, null],
+     browser.ownerGlobal);
 };
-arAkahukuSidebar.asyncUpdateVisited = function () {
-  arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", arguments);
+arAkahukuSidebar.asyncUpdateVisited = function (name) {
+  arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", [name]);
 }
-arAkahukuSidebar.sort = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/sort", arguments);
-};
-arAkahukuSidebar.resetCatalogOrder = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/resetCatalogOrder", arguments);
-};
-arAkahukuSidebar.updateMarked = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/updateMarked", arguments);
-};
-arAkahukuSidebar.update = function () {
-  arAkahukuIPC.sendSyncCommand ("Sidebar/update", arguments);
+arAkahukuSidebar.resetCatalogOrder = function (name, originBrowser) {
+  arAkahukuIPC.sendSyncCommand
+    ("Sidebar/resetCatalogOrder", [name, null],
+     originBrowser.ownerGlobal);
 };
 arAkahukuSidebar.term = function () {
   // don't save in child processes
@@ -471,23 +503,55 @@ arAkahukuIPC.defineProc
 
 
 
-arAkahukuUI.setStatusPanelText = function () {
+arAkahukuUI.setStatusPanelText = function (text, type, browser) {
   arAkahukuIPC.sendSyncCommand
-    ("UI/setStatusPanelText", arguments);
+    ("UI/setStatusPanelText", [text, type],
+     browser.ownerGlobal);
 };
-arAkahukuUI.clearStatusPanelText = function () {
+arAkahukuUI.clearStatusPanelText = function (optText, browser) {
   arAkahukuIPC.sendSyncCommand
-    ("UI/clearStatusPanelText", arguments);
+    ("UI/clearStatusPanelText", [optText],
+     browser.ownerGlobal);
 };
-arAkahukuUI.getStatusPanelText = function () {
+arAkahukuUI.getStatusPanelText = function (browser) {
   return arAkahukuIPC.sendSyncCommand
-    ("UI/getStatusPanelText", []);
+    ("UI/getStatusPanelText", [],
+     browser.ownerGlobal);
 };
 arAkahukuUI.showPanel = function () {
   // no action need from content processes
 };
 arAkahukuUI.setPanelStatus = function () {
 };
+arAkahukuUI._ContentContextMenuShowing = false;
+var arAkahukuUIIPCWrapper = {
+  onContextMenuHidden : function () {
+    if (arAkahukuUI._ContentContextMenuShowing) {
+      arAkahukuUI._ContentContextMenuShowing = false;
+      arAkahukuUI.onContextMenuHidden ();
+    }
+  },
+  addDocumentToExternalBoards : function () {
+    var targetDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuUI.addDocumentToExternalBoards (targetDocument);
+  },
+  applyDocument : function () {
+    var targetDocument = arAkahukuIPC.messageTarget.content.document;
+    arAkahukuUI.applyDocument (targetDocument);
+  },
+};
+arAkahukuIPC.defineProc
+  (arAkahukuUIIPCWrapper,
+   "UI", "addDocumentToExternalBoards",
+   {async: true, callback: 0, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuUIIPCWrapper,
+   "UI", "applyDocument",
+   {async: true, callback: 0, remote: true});
+arAkahukuIPC.defineProc
+  (arAkahukuUIIPCWrapper,
+   "UI", "onContextMenuHidden",
+   {async: true, remote: true});
 
 
 
@@ -511,11 +575,18 @@ arAkahukuWindow.focusTabForWindow = function (targetWindow) {
 
 
 
+Akahuku.initContextMenus = function () {
+  // no need in context processes
+};
 Akahuku.getFocusedDocumentParam = function () {
   var focusedDocument
     = arAkahukuIPC.sendSyncCommand ("Akahuku/getFocusedDocument", []);
-  Akahuku.debug.log ("getFocusedDocumentParam", focusedDocument);
   return Akahuku.getDocumentParam (focusedDocument);
+};
+Akahuku.getChromeEnvironmentFlags = function (browser) {
+  return arAkahukuIPC.sendSyncCommand
+    ("Akahuku/getChromeEnvironmentFlags", [null],
+     browser.ownerGlobal);
 };
 
 //
@@ -525,15 +596,26 @@ Akahuku._addDocumentParamOrig = Akahuku.addDocumentParam;
 Akahuku.addDocumentParam = function (targetDocument, info) {
   Akahuku._addDocumentParamOrig (targetDocument, info);
   arAkahukuIPC.sendSyncCommand
-    ("Akahuku/addDocumentParam", [null, info],
+    ("Akahuku/addDocumentParamForBrowser", [null, info],
      targetDocument.defaultView);
 };
-Akahuku._removeDocumentParamOrig = Akahuku.removeDocumentParam;
-Akahuku.removeDocumentParam = function (targetDocument) {
-  arAkahukuIPC.sendSyncCommand
-    ("Akahuku/removeDocumentParam", [null],
-     targetDocument.defaultView);
-  Akahuku._removeDocumentParamOrig (targetDocument);
+Akahuku._deleteDocumentParamOrig = Akahuku.deleteDocumentParam;
+Akahuku.deleteDocumentParam = function (targetDocument) {
+  // sendSyncCommand nor sendAsyncCommand with frame is not capable (why?)
+  var innerWindowID = -1;
+  try {
+    var contextWinUtil
+      = targetDocument.defaultView
+      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
+      .getInterface (Components.interfaces.nsIDOMWindowUtils);
+    // requires Gekco 2.0 (Firefox 4) or above
+    innerWindowID = contextWinUtil.currentInnerWindowID || -1;
+  }
+  catch (e) { Akahuku.debug.exception (e);
+  }
+  arAkahukuIPC.sendAsyncCommand
+    ("Akahuku/deleteDocumentParam", [innerWindowID]);
+  Akahuku._deleteDocumentParamOrig (targetDocument);
 };
 
 

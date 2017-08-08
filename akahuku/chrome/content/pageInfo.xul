@@ -13,9 +13,8 @@
         }
         if (!AkahukuPageInfo.errored && img && img [col]) {
           try {
-            var protocolHandler
-            = Components.classes ["@mozilla.org/network/protocol;1?name=akahuku"]
-            .getService (Components.interfaces.arIAkahukuProtocolHandler);
+            var protocolHandler = {};
+            Components.utils.import ("resource://akahuku/protocol.jsm", protocolHandler);
             var param = protocolHandler.getAkahukuURIParam (img [col]);
             if ("original" in param && param.original) {
               var imgOrig = [];

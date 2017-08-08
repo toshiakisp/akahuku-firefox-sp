@@ -451,8 +451,13 @@ arAkahukuReloadParam.prototype = {
       try {
         var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
       }
-      catch (e if e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-        charset = "Shift_JIS";
+      catch (e) {
+        if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
+          charset = "Shift_JIS";
+        }
+        else {
+          throw e;
+        }
       }
       var responseHead = "";
       try {
@@ -539,8 +544,11 @@ arAkahukuReloadParam.prototype = {
     try {
       entry.dataSize;
     }
-    catch (e if e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-      return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
+      }
+      throw e;
     }
     return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
   },
@@ -825,11 +833,14 @@ arAkahukuReloadParam.prototype = {
         }
       }
     }
-    catch (e if e.result === Components.results.NS_ERROR_NOT_AVAILABLE) {
-      // responseStatus が無い (接続失敗時など)
-      errorStatus = "\u63A5\u7D9A\u5931\u6557?"; // "接続失敗?"
-    }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
+      if (e.result === Components.results.NS_ERROR_NOT_AVAILABLE) {
+        // responseStatus が無い (接続失敗時など)
+        errorStatus = "\u63A5\u7D9A\u5931\u6557?"; // "接続失敗?"
+      }
+      else {
+        Akahuku.debug.exception (e);
+      }
     }
         
     /* 避難所 patch */
@@ -910,10 +921,12 @@ arAkahukuReloadParam.prototype = {
                 var name;
                 name = info.server + "_" + info.dir;
                                 
-                if (arAkahukuSidebar.hasBoard (name)) {
+                var browser = arAkahukuWindow
+                  .getBrowserForWindow (this.targetDocument.defaultView);
+                if (arAkahukuSidebar.hasBoard (name, browser)) {
                   var ok = true;
                   if (!arAkahukuSidebar.enableBackground) {
-                    ok = arAkahukuSidebar.hasTabForBoard (name);
+                    ok = arAkahukuSidebar.hasTabForBoard (name, browser);
                   }
                   if (ok) {
                     arAkahukuSidebar.onThreadExpired
@@ -1001,11 +1014,13 @@ arAkahukuReloadParam.prototype = {
           try {
             var name;
             name = info.server + "_" + info.dir;
+            var browser = arAkahukuWindow
+              .getBrowserForWindow (this.targetDocument.defaultView);
                                 
-            if (arAkahukuSidebar.hasBoard (name)) {
+            if (arAkahukuSidebar.hasBoard (name, browser)) {
               var ok = true;
               if (!arAkahukuSidebar.enableBackground) {
-                ok = arAkahukuSidebar.hasTabForBoard (name);
+                ok = arAkahukuSidebar.hasTabForBoard (name, browser);
               }
               if (ok) {
                 arAkahukuSidebar.onThreadExpired
@@ -2014,11 +2029,13 @@ var arAkahukuReload = {
           ? "[\u540C\u671F] " // "[同期] "
           : "[\u7D9A\u304D\u3092\u8AAD\u3080] " // "[続きを読む] "
           ) + message;
-      arAkahukuUI.setStatusPanelText (statusText, "overLink");
+      var browser = arAkahukuWindow
+        .getBrowserForWindow (targetDocument.defaultView);
+      arAkahukuUI.setStatusPanelText (statusText, "overLink", browser);
       // permanent フラグとは関係無く全てのメッセージを時間でクリア
       targetDocument.defaultView
       .setTimeout (function () {
-        arAkahukuUI.clearStatusPanelText (statusText);
+        arAkahukuUI.clearStatusPanelText (statusText, browser);
       }, 5000);
     }
         
@@ -2194,11 +2211,8 @@ var arAkahukuReload = {
           = arAkahukuFile.getFilenameFromURLSpec
           (base + path);
                 
-        var targetFile
-          = Components.classes ["@mozilla.org/file/local;1"]
-          .createInstance (Components.interfaces.nsILocalFile);
-        targetFile.initWithPath (path);
-        if (targetFile.exists ()) {
+        var targetFile = arAkahukuFile.initFile (path);
+        if (targetFile && targetFile.exists ()) {
           var fstream = arAkahukuFile.createFileInputStream
             (targetFile, 0x01, 292/*0o444*/, 0,
              targetDocument.defaultView);
@@ -2574,19 +2588,34 @@ var arAkahukuReload = {
     var aimaHandler2 = function () {};
         
     try {
-      if (typeof Aima_Aimani != "undefined") {
+      var scope = {};
+      if (documentParam.flags.existsAimaAimani) {
+        try {
+          Components.utils.import
+            ("chrome://aima_aimani/content/aima_aimani.jsm", scope);
+          if (scope.Aima_Aimani.useAkahukuCustomEvents) {
+            // sp version uses custom events instead of handlers
+            scope = null;
+          }
+        }
+        catch (e2) {
+          scope = arAkahukuWindow
+            .getParentWindowInChrome (targetDocument.defaultView);
+        }
+      }
+      if (scope) {
         if (!arAkahukuConfig.isObserving) {
           /* 監視していない場合にのみ設定を取得する */
-          if (Aima_Aimani.loadNGWord) {
-            Aima_Aimani.loadNGWord ();
+          if (scope.Aima_Aimani.loadNGWord) {
+            scope.Aima_Aimani.loadNGWord ();
           }
         }
                 
-        if ("hideNGNumberHandler" in Aima_Aimani) {
-          aimaHandler = Aima_Aimani.hideNGNumberHandler;
+        if ("hideNGNumberHandler" in scope.Aima_Aimani) {
+          aimaHandler = scope.Aima_Aimani.hideNGNumberHandler;
         }
-        if ("hideNGNumberHandler2" in Aima_Aimani) {
-          aimaHandler2 = Aima_Aimani.hideNGNumberHandler2;
+        if ("hideNGNumberHandler2" in scope.Aima_Aimani) {
+          aimaHandler2 = scope.Aima_Aimani.hideNGNumberHandler2;
         }
       }
     }
@@ -3436,11 +3465,13 @@ var arAkahukuReload = {
         var name, reply, expire, warning, lastNum;
             
         name = info.server + "_" + info.dir;
+        var browser = arAkahukuWindow
+          .getBrowserForWindow (targetDocument.defaultView);
             
-        if (arAkahukuSidebar.hasBoard (name)) {
+        if (arAkahukuSidebar.hasBoard (name, browser)) {
           var ok = true;
           if (!arAkahukuSidebar.enableBackground) {
-            ok = arAkahukuSidebar.hasTabForBoard (name);
+            ok = arAkahukuSidebar.hasTabForBoard (name, browser);
           }
           if (ok) {
             var nodes = Akahuku.getMessageBQ (targetDocument);
@@ -3688,14 +3719,10 @@ var arAkahukuReload = {
         && !info.isFutasuke) {
       /* 続きを読んでも画像が来ない場合は見てない事になってしまうので
        * 手動で板のリストを更新する */
-      if (typeof (Components.interfaces.arIAkahukuP2PServant2)
-          != "undefined") {
-        var servant
-        = Components.classes ["@unmht.org/akahuku-p2p-servant;2"]
-        .getService (Components.interfaces.arIAkahukuP2PServant2);
-                
-        servant.visitBoard (info.server + "/" + info.dir);
-      }
+      var {arAkahukuP2PService}
+      = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+      arAkahukuP2PService
+        .servant.visitBoard (info.server + "/" + info.dir);
     }
   },
 
@@ -3780,6 +3807,11 @@ var arAkahukuReload = {
     if (doDiffReload) {
       arAkahukuReload.diffReloadCore (doc, trySync, false);
     }
+  },
+
+  reloadOnDemandForBrowser : function (browser, trySync) {
+    var targetDocument = browser.contentDocument;
+    arAkahukuReload.reloadOnDemand (targetDocument, trySync);
   },
 
   _checkElementYInScreen : function (targetNode, checkWhole, marginTop, marginBottom) {

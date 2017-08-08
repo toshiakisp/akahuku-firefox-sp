@@ -2393,13 +2393,6 @@
                     label="設定ダイアログのアイコンを表示する" />
         </groupbox>
         <groupbox orient="vertical">
-          <caption label="ツールバー" />
-          <label control="toolbar_preferences"
-                 value="Firefox では、ツールバーのカスタマイズから追加してください" class="warning" />
-          <checkbox id="toolbar_preferences" checked="false"
-                    label="設定ダイアログのアイコンを表示する" />
-        </groupbox>
-        <groupbox orient="vertical">
           <caption>
             <checkbox id="statusbar_order" checked="false"
                       label="ステータスバーのアイコンの並べ替え"

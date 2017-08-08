@@ -16,15 +16,13 @@ var arAkahukuBloomer = {
   modifiersShift : false, /* Boolean  ショートカットキーの Shift */
   file : "",              /* String  ブルマ女将の場所 */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
+  attachToWindow : function (window) {
     window.addEventListener
-    ("keydown",
-     function () {
-      arAkahukuBloomer.onKeyDown (arguments [0]);
-    }, true);
+    ("keydown", arAkahukuBloomer.onKeyDown, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener
+    ("keydown", arAkahukuBloomer.onKeyDown, true);
   },
     
   /**
@@ -79,7 +77,8 @@ var arAkahukuBloomer = {
           && arAkahukuBloomer.modifiersCtrl == event.ctrlKey
           && arAkahukuBloomer.modifiersMeta == event.metaKey
           && arAkahukuBloomer.modifiersShift == event.shiftKey) {
-        arAkahukuBloomer.openBloomer ();
+        var w = event.currentTarget.ownerDocument.defaultView;
+        arAkahukuBloomer.openBloomer (w);
         event.preventDefault ();
       }
     }
@@ -88,7 +87,8 @@ var arAkahukuBloomer = {
   /**
    * ブルマ女将を開く
    */
-  openBloomer : function () {
+  openBloomer : function (window) {
+    var document = window.document;
     if (Akahuku.enableAll
         && arAkahukuBloomer.enable) {
       var tabbrowser = document.getElementById ("content");

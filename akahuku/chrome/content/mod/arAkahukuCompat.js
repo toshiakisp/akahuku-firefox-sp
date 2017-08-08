@@ -47,6 +47,20 @@ var arAkahukuCompat = new function () {
     }
   };
 
+  this.getPlatformType = function () {
+    try {
+      // Gecko 1.8+
+      var ai = Cc ["@mozilla.org/xre/app-info;1"]
+        .getService (Ci.nsIXULAppInfo);
+      if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
+        return "Goanna";
+      }
+    }
+    catch (e) {
+    }
+    return "Gecko";
+  };
+
   this.WebBrowserPersist = {
     _versionChecked : false,
     _version3_6: false,
@@ -59,6 +73,11 @@ var arAkahukuCompat = new function () {
         this._version36 = arAkahukuCompat.comparePlatformVersion ("35.*") > 0;
         this._version18 = arAkahukuCompat.comparePlatformVersion ("17.*") > 0;
         this._version3_6 = arAkahukuCompat.comparePlatformVersion ("1.9.2") >= 0;
+        if (arAkahukuCompat.getPlatformType () === "Goanna"
+            && arAkahukuCompat.comparePlatformVersion ("27.0") >= 0) {
+          // Palemoon 27+ has newer API
+          this._version36 = true;
+        }
       }
 
       var uri = _getArg (args, 'uri', null);
@@ -74,6 +93,11 @@ var arAkahukuCompat = new function () {
       if (privacyContext == null && args.hasOwnProperty ("isPrivate")) {
         var isPrivate = _getArg (args, 'isPrivate', false);
         var usePrivacyAware = true;
+      }
+
+      if (typeof file === "string") {
+        var filePath = file;
+        file = arAkahukuFile.initFile (filePath);
       }
 
       if (this._version36) {
@@ -206,16 +230,17 @@ var arAkahukuCompat = new function () {
   };
 
   this.gBrowser = new function () {
-    this.getStatusPanel = function () {
+    this.getStatusPanel = function (window) {
       try {
         // since Firefox 26.0a1 [Bug 821687 (mozilla.org)]
-        return gBrowser.getStatusPanel ();
+        if (window && typeof window.gBrowser !== "undefined") {
+          return window.gBrowser.getStatusPanel ();
+        }
       }
       catch (e) {
       }
-      if (typeof document !== "undefined"
-          && document instanceof Ci.nsIDOMXULDocument) {
-        return document.getElementById ("statusbar-display");
+      if (window.document instanceof Ci.nsIDOMXULDocument) {
+        return window.document.getElementById ("statusbar-display");
       }
       else {
         return null;
@@ -223,33 +248,6 @@ var arAkahukuCompat = new function () {
     };
   };
 
-  this.Document = new function () {
-    /**
-     * Document.activeElement [LS]
-     * (Basic support at Firefox 3.0 (Gecko 1.9.0))
-     */
-    function activeElementReal (targetDocument) {
-      return targetDocument.activeElement;
-    }
-    function activeElementCompat (targetDocument) {
-      // Note: this code requires running in XUL browser.
-      var focusedElement = document.commandDispatcher.focusedElement;
-      if (focusedElement && focusedElement.ownerDocument === targetDocument) {
-        return focusedElement;
-      }
-      return targetDocument;
-    }
-    this.activeElement = function (targetDocument) {
-      // on-demand initialization
-      if (arAkahukuCompat.comparePlatformVersion ("1.9.0") >= 0) {
-        this.activeElement = activeElementReal;
-      }
-      else {
-        this.activeElement = activeElementCompat;
-      }
-      return this.activeElement (targetDocument);
-    }
-  };
   this.HTMLInputElement = {
     /**
      * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]
@@ -326,6 +324,7 @@ var arAkahukuCompat = new function () {
         });
         return;
       }
+      callback.apply (null, [file]);
     }
     else {
       // Gecko (6.0)-51.0
@@ -336,26 +335,33 @@ var arAkahukuCompat = new function () {
 
 
   this.losslessDecodeURI = function (uri) {
-    if (typeof window !== "undefined"
-        && "losslessDecodeURI" in window) {
-      try {
-        return window.losslessDecodeURI (uri);
-      }
-      catch (e) { Cu.reportError (e);
-      }
+    try {
+      return Cc ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (Ci.nsIWindowMediator)
+        .getMostRecentWindow ("navigator:browser")
+        .losslessDecodeURI (uri);
+    }
+    catch (e) { Cu.reportError (e);
     }
     return uri.spec;
   };
 
   this.AddonManager = new function () {
     this.getAddonByID = function (id, callback) {
+      var hasAddonManager = false;
       try {
         var scope = {};
         Cu.import ("resource://gre/modules/AddonManager.jsm", scope);
+        hasAddonManager = true;
         this.getAddonByID = scope.AddonManager.getAddonByID;
         this.getAddonByID (id, callback);
       }
-      catch (e if e.result == Cr.NS_ERROR_FILE_NOT_FOUND) {
+      catch (e) {
+        if (e.result != Cr.NS_ERROR_FILE_NOT_FOUND) {
+          Cu.reportError (e);
+        }
+      }
+      if (!hasAddonManager) {
         this.getAddonByID = function getAddonByIDCompat (id, callback) {
           // obsolete gecko 2.0
           var extMan = Cc ["@mozilla.org/extensions/manager;1"]
@@ -373,10 +379,24 @@ var arAkahukuCompat = new function () {
           callback (addon);
         };
       }
-      catch (e) {
-        Cu.reportError (e);
-      }
     }
+  };
+
+  this.nsIURI = new function () {
+    /**
+     * pathQueryRef (rename from path) [Bug 1326520] Fx57+
+     */
+    this.getPathQueryRef = function (uri) {
+      return uri.pathQueryRef || uri.path;
+    };
+    this.setPathQueryRef = function (uri, newPath) {
+      if (typeof uri.pathQueryRef !== "undefined") {
+        uri.pathQueryRef = newPath;
+      }
+      else {
+        uri.path = newPath;
+      }
+    };
   };
 
 
@@ -445,7 +465,10 @@ var arAkahukuCompat = new function () {
       try {
         this._session.asyncOpenCacheEntry (uri.spec, accessMode, wrappedcb);
       }
-      catch (e if e.result === Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+      catch (e) {
+        if (e.result !== Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
+          throw e;
+        }
         // fake async call
         arAkahukuUtil.executeSoon (function () {
           wrappedcb.onCacheEntryAvailable (null, false, e.result);
@@ -520,9 +543,12 @@ var arAkahukuCompat = new function () {
       return null;
     }
     function getRootContentLocation_old (url) {
-      var param = UnMHT.protocolHandler.getUnMHTURIParam (url);
+      var w = Cc ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (Ci.nsIWindowMediator)
+        .getMostRecentWindow ("navigator:browser");
+      var param = w.UnMHT.protocolHandler.getUnMHTURIParam (url);
       if (param && param.original) {
-        var extractor = UnMHT.getExtractor (param.original);
+        var extractor = w.UnMHT.getExtractor (param.original);
         if (extractor && extractor.rootFile) {
           return extractor.rootFile.contentLocation;
         }
@@ -572,7 +598,10 @@ var arAkahukuCompat = new function () {
     function getMHTFileURI_old (contentLocation, requestOrigin) {
       contentLocation = arAkahukuUtil.newURIViaNode (contentLocation, null);
       requestOrigin = arAkahukuUtil.newURIViaNode (requestOrigin, null);
-      var uri = UnMHT.getMHTFileURI (contentLocation, requestOrigin);
+      var w = Cc ["@mozilla.org/appshell/window-mediator;1"]
+        .getService (Ci.nsIWindowMediator)
+        .getMostRecentWindow ("navigator:browser");
+      var uri = w.UnMHT.getMHTFileURI (contentLocation, requestOrigin);
       if (uri) {
         return uri.spec;
       }
@@ -622,17 +651,17 @@ var arAkahukuCompat = new function () {
     }
   };
 
-  this.toggleSidebar = function (commandID, forceOpen) {
-    if (typeof SidebarUI !== "undefined") {
+  this.toggleSidebar = function (commandID, forceOpen, window) {
+    if (typeof window.SidebarUI !== "undefined") {
       if (forceOpen) {
-        SidebarUI.show (commandID);
+        window.SidebarUI.show (commandID);
       }
       else {
-        SidebarUI.toggle (commandID);
+        window.SidebarUI.toggle (commandID);
       }
     }
     else {
-      toggleSidebar (commandID, forceOpen);
+      window.toggleSidebar (commandID, forceOpen);
     }
   };
 };

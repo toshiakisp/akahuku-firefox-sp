@@ -202,7 +202,6 @@ arAkahukuContentPolicy.prototype = {
         };
       }
     }
-    this.console.log ("initialized.");
 
     /* 設定を取得する */
     this._updateEnabled ();
@@ -493,7 +492,8 @@ arAkahukuContentPolicy.prototype = {
     if (uri.host.match (/([^\.\/]+)\.2chan\.net/)) {
       server = RegExp.$1;
     }
-    if (uri.path.match (/^\/(?:(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\//)) {
+    var path = uri.pathQueryRef || uri.path;
+    if (path.match (/^\/(?:(apr|jan|feb|tmp|up|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\//)) {
       dir = (RegExp.$1 ? RegExp.$1 + "-" + RegExp.$2 : RegExp.$2);
     }
     name = server + ":" + dir;
@@ -599,6 +599,16 @@ arAkahukuContentPolicy.prototype = {
         else if ("Akahuku" in chromeWindow.wrappedJSObject) {
           // older firefox (at least 3.6.x)
           return chromeWindow.wrappedJSObject;
+        }
+        else {
+          // bootstrap.js (no Akahuku in chromeWindow)
+          var scope = {};
+          try {
+            Cu.import ("resource://akahuku/akahuku.jsm", scope);
+            return scope;
+          }
+          catch (e) { this.console.exception (e);
+          }
         }
       }
       else { // e10s: WindowRoot that is the top of a content frame

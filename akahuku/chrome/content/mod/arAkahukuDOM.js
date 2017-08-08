@@ -712,19 +712,16 @@ arAkahukuDOM.Style = new function () {
 /**
  * factory of DOM Mutation Observer for DOM3/4
  */
-arAkahukuDOM.createMutationObserver = function (callback, optNode) {
-  if (optNode && optNode instanceof Components.interfaces.nsIDOMDocument
-      && "MutationObserver" in optNode.defaultView) {
-    return new optNode.defaultView
+arAkahukuDOM.createMutationObserver = function (callback, node) {
+  if (node && node instanceof Components.interfaces.nsIDOMDocument
+      && "MutationObserver" in node.defaultView) {
+    return new node.defaultView
       .MutationObserver (callback);
   }
-  if (optNode && optNode instanceof Components.interfaces.nsIDOMElement
-      && "MutationObserver" in optNode.ownerDocument.defaultView) {
-    return new optNode.ownerDocumenet.defaultView
+  if (node && node instanceof Components.interfaces.nsIDOMElement
+      && "MutationObserver" in node.ownerDocument.defaultView) {
+    return new node.ownerDocumenet.defaultView
       .MutationObserver (callback);
-  }
-  if (typeof (MutationObserver) != "undefined") {
-    return new MutationObserver (callback);
   }
 
   return new arAkahukuDOM.MutationObserverOnDOM3 (callback);
@@ -739,6 +736,7 @@ arAkahukuDOM.MutationObserverOnDOM3 = function (callback) {
   this._options = [];
   this._handles = [];
   this._timer = null;
+  this._timer_window = null;
   this._queue = [];
   this._incomingQueue = [];
   this._applying = false;
@@ -780,10 +778,12 @@ arAkahukuDOM.MutationObserverOnDOM3.prototype = {
       mo._appendToQueue (record);
 
       if (!mo._timer) {
+        mo._timer_window = target.ownerDocument.defaultView;
         mo._timer
-        = target.ownerDocument.defaultView.setTimeout
+        = mo._timer_window.setTimeout
         (function () {
           mo._timer = null;
+          mo._timer_window = null;
           mo._applying = true;
           try {
             // "Invoke _mo_'s callback with _queue_ as first argument,
@@ -818,7 +818,10 @@ arAkahukuDOM.MutationObserverOnDOM3.prototype = {
     this._targets.splice (0);
     this._options.splice (0);
     this._handles.splice (0);
-    window.clearTimeout (this._timer);
+    if (this._timer_window) {
+      this._timer_window.clearTimeout (this._timer);
+      this._timer_window = null;
+    }
     // "empty context object's record queue."
     this._queue.splice (0);
     this._incomingQueue.splice (0);

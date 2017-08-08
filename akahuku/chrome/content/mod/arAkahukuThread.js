@@ -246,16 +246,14 @@ var arAkahukuThread = {
     
   enableMoveButton : false, /* Boolean  前後に移動ボタン */
     
-  /**
-   * 初期化処理
-   */
-  initForXUL : function () {
+  attachToWindow : function (window) {
     /* タブの移動のイベントを監視 */
     window.addEventListener
-    ("TabMove",
-     function () {
-      arAkahukuThread.onTabMove (arguments [0]);
-    }, true);
+    ("TabMove", arAkahukuThread.onTabMove, true);
+  },
+  dettachFromWindow : function (window) {
+    window.removeEventListener
+    ("TabMove", arAkahukuThread.onTabMove, true);
   },
 
   /**
@@ -1815,7 +1813,7 @@ var arAkahukuThread = {
                * 修正しなければならない
                */
               try {
-                var s, e;
+                var s, e, style;
                 style = targetBrowser.ownerDocument.defaultView
                   .getComputedStyle (node, "");
                 s = style.getPropertyCSSValue ("margin-left").getFloatValue (CSSPrimitiveValue.CSS_PX) + "px";
@@ -1943,6 +1941,7 @@ var arAkahukuThread = {
    *         対象のイベント
    */
   onTabMove : function (event) {
+    var document = event.currentTarget.document;
     if (arAkahukuThread.enableTabIcon
         && arAkahukuThread.enableTabIconSize) {
       /* タブのアイコンをサムネにする */
@@ -2528,14 +2527,7 @@ var arAkahukuThread = {
   showResPanel : function (targetDocument) {
     var frame, header, content, button, resizer, scroll, bar;
         
-    if (targetDocument) {
-      params = Akahuku.getDocumentParam (targetDocument);
-    }
-    else {
-      params = Akahuku.getFocusedDocumentParam ();
-      targetDocument = params.targetDocument;
-    }
-        
+    var params = Akahuku.getDocumentParam (targetDocument);
     if (!params) {
       return;
     }
@@ -2738,21 +2730,16 @@ var arAkahukuThread = {
             
     targetDocument.body.appendChild (frame);
   },
+  showResPanelForBrowser : function (targetBrowser) {
+    var targetDocument = targetBrowser.contentDocument;
+    arAkahukuThread.showResPanel (targetDocument);
+  },
     
   /**
    * レスパネルを閉じる
    */
   closeResPanel : function (targetDocument) {
-    var document_param;
-    if (targetDocument) {
-      document_param
-        = Akahuku.getDocumentParam (targetDocument);
-    }
-    else {
-      document_param
-        = Akahuku.getFocusedDocumentParam ();
-    }
-        
+    var document_param = Akahuku.getDocumentParam (targetDocument);
     if (!document_param || !document_param.respanel_param) {
       return;
     }
@@ -2767,6 +2754,10 @@ var arAkahukuThread = {
       param.destruct ();
       document_param.respanel_param = null;
     }
+  },
+  closeResPanelForBrowser : function (targetBrowser) {
+    var targetDocument = targetBrowser.contentDocument;
+    arAkahukuThread.closeResPanel (targetDocument);
   },
     
   /**
@@ -2784,7 +2775,7 @@ var arAkahukuThread = {
         || (imageStatus.requestURI 
             && (imageStatus.requestURI.schemeIs ("akahuku")
               || imageStatus.requestURI.schemeIs ("akahuku-safe"))
-            && /^\/(?:(?:file)?cache\/|preview\.)/.test (imageStatus.requestURI.path))
+            && /^\/(?:(?:file)?cache\/|preview\.)/.test (arAkahukuCompat.nsIURI.getPathQueryRef (imageStatus.requestURI)))
        ){ // 即リロードするべき対象・状態では無い
       return;
     }

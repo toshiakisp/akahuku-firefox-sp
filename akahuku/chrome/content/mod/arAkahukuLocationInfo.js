@@ -248,7 +248,7 @@ arAkahukuLocationInfo.prototype = {
                     
           if (sdir) {
             sdir = sdir.replace (/\//, "");
-            this._targetFileDir = sdir + "-" + uinfo.dir;
+            this._targetFileDir = sdir + "-" + this.dir;
           }
           path = "";
           break;
@@ -761,6 +761,7 @@ arAkahukuLocationInfo.prototype = {
     var generatedFragment;
     var i;
     var tmp;
+    var text;
         
     switch (nodeName) {
       case "x-analyze-string":
