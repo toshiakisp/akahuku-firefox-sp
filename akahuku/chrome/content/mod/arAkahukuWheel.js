@@ -119,7 +119,7 @@ var arAkahukuWheel = {
       }
 
       if (wheelDelta < 0
-          || scrollY < targetWindow.scrollMaxY) {
+          || scrollY <= targetWindow.scrollMaxY - 1) {
         /* ページ末尾以外、もしくは上方向 */
         ok = false;
       }
@@ -360,7 +360,7 @@ var arAkahukuWheel = {
       var targetWindow = targetDocument.defaultView;
       var delta = (isWheel ? event.deltaY : event.detail);
       var scrollY = targetWindow.scrollY;
-      if (!(delta > 0 && scrollY >= targetWindow.scrollMaxY)
+      if (!(delta > 0 && scrollY > targetWindow.scrollMaxY - 1)
         && !(delta < 0 && scrollY <= 0)) {
         isScrolling = true; // 上端でも下端でもない
       }
