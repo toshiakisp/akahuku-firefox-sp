@@ -170,7 +170,7 @@ var AkahukuOptions = {
 
   nsIFile : ("nsILocalFile" in Components.interfaces
       ? Components.interfaces.nsILocalFile
-      : Components.interfaces.nsIFile,
+      : Components.interfaces.nsIFile),
   
   prefList : { /* Object  設定一覧 */
     "title" : [
