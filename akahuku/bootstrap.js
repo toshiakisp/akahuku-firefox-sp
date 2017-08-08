@@ -3,6 +3,9 @@
 // The script gets executed in a privileged sandbox,
 // which is cached until the extension is shut down.
 
+/* global Components, ADDON_INSTALL, ADDON_UNINSTALL
+ * AkahukuConsole, arAkahukuCompat, Akahuku, XULWindowObserver */
+
 var global = this;
 
 var C = Components;
@@ -25,7 +28,6 @@ var cssURL = "chrome://akahuku/content/akahuku.css";
 
 var debug = null;
 var winobserver;
-var AkahukuNotificationRelay, AkahukuIPCManager;
 
 // Entry points of the bootstrap extension
 
@@ -83,12 +85,12 @@ function startup (data, reason) {
 
   if (Akahuku.useFrameScript) {
     // load e10s-specific module(s)
-    {AkahukuNotificationRelay}
+    var {AkahukuNotificationRelay}
     = Cu.import ("resource://akahuku/notification-relay.jsm", {});
     // AkahukuNotificationRelay.startup ();// auto start
 
     // Overwrite content-dependent methods
-    {AkahukuIPCManager}
+    var {AkahukuIPCManager}
     = Cu.import ("resource://akahuku/ipc.jsm", {});
     AkahukuIPCManager.getRoot ("main")
     .loadSubScript ("chrome://akahuku/content/ipc/parent_content.js");
@@ -110,9 +112,15 @@ function shutdown (data, reason) {
 
   try {
     Akahuku.shutdown ();
+    var {AkahukuContextMenusService}
+    = Cu.import ("resource://akahuku/xul-contextmenus.jsm", {});
     AkahukuContextMenusService.shutdown ();
     if (Akahuku.useFrameScript) {
+      var {AkahukuNotificationRelay}
+      = Cu.import ("resource://akahuku/notification-relay.jsm", {});
       AkahukuNotificationRelay.shutdown ();
+      var {AkahukuIPCManager}
+      = Cu.import ("resource://akahuku/ipc.jsm", {});
       AkahukuIPCManager.termAll ();
     }
   }
