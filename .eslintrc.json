@@ -1,0 +1,54 @@
+{
+    "extends": ["eslint:recommended"],
+    "plugins": ["mozilla"],
+    "parserOptions": { "ecmaVersion": 6 },
+    "env": {
+	  "browser": false
+    },
+    "globals": {
+	  "atob": false,
+	  "btoa": false,
+	  "XSLTProcessor": false,
+	  "XMLSerializer": false,
+	  "CSSPrimitiveValue": false,
+	  "XPCNativeWrapper": false,
+	  "Components": false
+	},
+    "rules": {
+	//es6
+	  "arrow-body-style": "error",
+	  "arrow-parens": "error",
+	  "arrow-spacing": "error",
+	  "generator-star-spacing": "error",
+	  "no-duplicate-imports": "error",
+	  "no-useless-computed-key": "error",
+	  "no-useless-constructor": "error",
+	  "no-useless-rename": "error",
+	  //"no-var": "error",
+	  //"object-shorthand": "error",
+	  //"prefer-arrow-callback": "error",
+	  //"prefer-const": "error",
+	  //"prefer-rest-params": "error",
+	  //"prefer-spread": "error",
+	  //"prefer-template": "error",
+	  "rest-spread-spacing": "error",
+	  "template-curly-spacing": "error",
+	  "yield-star-spacing": "error",
+	//
+	  "no-unexpected-multiline": "off",
+	  "no-empty": "off",
+	  "no-control-regex": "off",
+	  "no-useless-escape": "off",
+	  "no-func-assign": "warn",
+	  "no-self-assign": "off",
+	  "no-irregular-whitespace": "warn",
+	  "no-inner-declarations": "warn",
+	  "no-unused-vars": "off", // "warn"
+	  "no-constant-condition" : "off", // "warn"
+	  "no-fallthrough": "off", // "warn"
+	  "no-redeclare": "off", // "warn"
+	  "no-extra-semi": "off", // "warn"
+	  "no-unreachable": "off", // "warn"
+	  "no-mixed-spaces-and-tabs": "off" // "error"
+	}
+}
