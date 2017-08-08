@@ -133,7 +133,12 @@ FileUtilP.createFromFileName = function (filename) {
     if (!filename) {
       return this.Promise.reject (new Error ("no filename specified"));
     }
-    promise = this.File.createFromFileName (filename);
+    try {
+      promise = this.File.createFromFileName (filename);
+    }
+    catch (e) {
+      return this.Promise.reject (e);
+    }
     if (promise instanceof this.File) {
       // Firefox 52.0-53.0
       file = promise;
