@@ -324,6 +324,7 @@ var arAkahukuCompat = new function () {
         });
         return;
       }
+      callback.apply (null, [file]);
     }
     else {
       // Gecko (6.0)-51.0
