@@ -1618,7 +1618,7 @@ var arAkahukuSidebar = {
         .getSidebarDocument ("viewAkahukuSidebar", param.targetWindow);
     }
     if (!sidebarDocument) {
-      Akahuku.debug.log ("Sidebar.update: no sidebar document");
+      // 赤福サイドバーを開いていない
       return;
     }
     var chromeWindow
