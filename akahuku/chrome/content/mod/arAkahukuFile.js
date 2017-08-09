@@ -182,7 +182,7 @@ var arAkahukuFile = {
       file.initWithPath (filename);
     }
     catch (e) {
-      Components.utils.reportError (e.message);
+      Components.utils.reportError (e.message + "; '" + filename + "'");
     }
         
     return file;

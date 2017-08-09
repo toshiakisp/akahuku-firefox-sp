@@ -3648,7 +3648,7 @@ var arAkahukuMHT = {
       }
             
       param.file = file;
-      param.tmpFile = arAkahukuFile.initFile (param.file.parent);
+      param.tmpFile = arAkahukuFile.initFile (param.file.parent.path);
       var tmpFileName
       = new Date ().getTime ()
       + "_" + Math.floor (Math.random () * 1000);
