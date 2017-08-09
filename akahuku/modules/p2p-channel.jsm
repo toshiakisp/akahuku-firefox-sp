@@ -841,7 +841,7 @@ arAkahukuP2PChannel.prototype = {
       }
       arAkahukuIPC.sendAsyncCommand
         ("Image/asyncSaveImageToFile",
-         [targetFile, uri, isPrivate, callback]);
+         [this._targetFileName, uri, isPrivate, callback]);
       return;
     }
 
