@@ -34,7 +34,7 @@ var arAkahukuUI = {
     // toolbar buttons
     arAkahukuUI.createXULToolbarButton (document, {
       id : "akahuku-toolbarbutton-preferences",
-      label : "\u8D64\u798F", // 赤福
+      title : "\u8D64\u798F", // 赤福
       _xul_context : "akahuku-statusbar-popup",
       onclick : arAkahukuUI.showPreferences,
     });
@@ -61,7 +61,7 @@ var arAkahukuUI = {
     arAkahukuUI.createXULToolbarButton (document, {
       id : "akahuku-toolbarbutton-p2pstatus",
       // 赤福 P2P ステータス
-      label : "\u8D64\u798F P2P \u30B9\u30C6\u30FC\u30BF\u30B9",
+      title : "\u8D64\u798F P2P \u30B9\u30C6\u30FC\u30BF\u30B9",
       type : "_labels",
       _xul_children : [
         {id:"akahuku-toolbarpanel-p2p-node", value:"\u63A5:0/0"},
