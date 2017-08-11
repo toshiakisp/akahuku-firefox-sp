@@ -636,7 +636,7 @@ arAkahukuContentPolicy.prototype = {
    * @param  nsIURI contentLocation
    *         対象の URI
    * @param  nsIURI requestOrigin
-   *         呼び出し元の URI
+   *         呼び出し元の URI (or null)
    * @param  Browser/HTMLElement context
    *         ロード先
    * @param  String mimeTypeGuess
@@ -694,6 +694,7 @@ arAkahukuContentPolicy.prototype = {
       if (contentLocation.host.indexOf ("2chan.net") != -1) {
         /* 2chan.net 内の画像の場合 */
         if (!this._enableP2PTatelog
+            && requestOrigin
             && requestOrigin.spec.match
             (/catalog\/dat\/view.php?(.+)$/)) {
           var q = RegExp.$1;
@@ -714,7 +715,7 @@ arAkahukuContentPolicy.prototype = {
           /* カタログ、サムネ、元画像の場合 */
           var ext = RegExp.$3;
                     
-          if (requestOrigin.schemeIs ("unmht")) {
+          if (requestOrigin && requestOrigin.schemeIs ("unmht")) {
             return ACCEPT;
           }
                     
@@ -841,12 +842,14 @@ arAkahukuContentPolicy.prototype = {
         return ACCEPT;
       }
 
-      if (!(/^(?:https?|akahuku)$/.test (requestOrigin.scheme))) {
+      if (requestOrigin
+          && !(/^(?:https?|akahuku)$/.test (requestOrigin.scheme))) {
         /* 呼出し元が http(s) akahuku 以外の場合は許可する */
         return ACCEPT;
       }
             
-      if (requestOrigin.host.indexOf ("2chan.net") != -1) {
+      if (requestOrigin
+          && requestOrigin.host.indexOf ("2chan.net") != -1) {
         /* 2chan.net からの呼び出しの場合チェックする */
 
         if (this._isExcludeBoard (requestOrigin)) {
