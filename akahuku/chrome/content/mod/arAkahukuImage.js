@@ -1430,6 +1430,17 @@ var arAkahukuImage = {
               }, 5000, messageNode);
           });
       }
+      else {
+        stopNode.style.display = "none";
+        arAkahukuDOM.setText
+          (messageNode,
+           "\u4FDD\u5B58\u3057\u307E\u3057\u305F");
+        target.style.display = "";
+        targetDocument.defaultView.setTimeout
+          (function (messageNode) {
+            arAkahukuDOM.setText (messageNode, null);
+          }, 5000, messageNode);
+      }
 
       arAkahukuSound.playSaveImage ();
             
