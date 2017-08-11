@@ -84,6 +84,7 @@ window.addEventListener
   }, false);
 window.addEventListener
   ("unload", function (event) {
-    Akahuku.dettachFromWindow (event.currentTarget, {});
+    Akahuku.dettachFromWindow (event.currentTarget,
+      {shutdown: false, unload: true});
   }, false);
 

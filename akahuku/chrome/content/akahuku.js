@@ -701,7 +701,7 @@ var Akahuku = {
       }
     }
 
-    if (!opt.unload || !opt.shutdown) {
+    if (opt.shutdown) {
       // ウィンドウが閉じない場合:
       // 既に開かれているコンテンツでの無効化
       Akahuku.ensureDocumentParamsSane ();
