@@ -828,22 +828,22 @@ var Akahuku = {
     }
         
     if (href.match
-        (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)
+        (/^https?:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)
         || href.match
-        (/^http:\/\/www\.nijibox4\.com\/akahuku\/catalog\/dat\/(view\.php\?mode=cat2?)/)
+        (/^https?:\/\/www\.nijibox4\.com\/akahuku\/catalog\/dat\/(view\.php\?mode=cat2?)/)
         || href.match
-        (/^http:\/\/www\.nijibox\.com\/futaba\/catalog\/img\/(view\.php\?mode=cat2?)/)) {
+        (/^https?:\/\/www\.nijibox\.com\/futaba\/catalog\/img\/(view\.php\?mode=cat2?)/)) {
       /* dat のタテログ */
       return true;
     }
 
-    if (/^http:\/\/appsweets\.net\/tatelog\/(?:dat|img)\/thread\/[0-9]+$/.test (href)) {
+    if (/^https?:\/\/appsweets\.net\/tatelog\/(?:dat|img)\/thread\/[0-9]+$/.test (href)) {
       // タテログのログ
       return false; //まだ自動適用は無し
     }
     
     if (href.match
-        (/^http:\/\/(?:[^\.\/]+\.)?tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
+        (/^https?:\/\/(?:[^\.\/]+\.)?tsumanne\.net\/[a-z]+\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
       /* サッチー */
       return true;
     }
@@ -999,7 +999,7 @@ var Akahuku = {
         
     if (Akahuku.enableAll) {
       if (targetDocument.documentURI.match
-          (/^http:\/\/www\.nijibox[256]\.com\/futabafiles\/(tubu|kobin|mid|001|003)\/((.+)\.html|$)/)) {
+          (/^https?:\/\/www\.nijibox[256]\.com\/futabafiles\/(tubu|kobin|mid|001|003)\/((.+)\.html|$)/)) {
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.applyPreview (targetDocument, true);
         }

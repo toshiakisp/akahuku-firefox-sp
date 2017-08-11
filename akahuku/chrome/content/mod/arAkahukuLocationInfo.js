@@ -165,7 +165,7 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/appsweets\.net\/tatelog\/(dat|img)\/thread\/([0-9]+)$/)) {
+             (/^https?:\/\/appsweets\.net\/tatelog\/(dat|img)\/thread\/([0-9]+)$/)) {
       // タテログのログ
       this.server = "tatelog" + RegExp.$1;
       this.dir = "tatelog";
@@ -178,7 +178,7 @@ arAkahukuLocationInfo.prototype = {
       this.mode = "\u8FD4\u4FE1";//"返信"
     }
     else if (location.match
-             (/^http:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
+             (/^https?:\/\/appsweets\.net\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
       /* dat のタテログ */
       this.server = "dat";
       this.dir = "b";
@@ -187,7 +187,7 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/www\.nijibox4\.com\/akahuku\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
+             (/^https?:\/\/www\.nijibox4\.com\/akahuku\/catalog\/dat\/(view\.php\?mode=cat2?)/)) {
       /* dat のタテログ */
       this.server = "dat";
       this.dir = "b";
@@ -196,7 +196,7 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/www\.nijibox\.com\/futaba\/catalog\/img\/(view\.php\?mode=cat2?)/)) {
+             (/^https?:\/\/www\.nijibox\.com\/futaba\/catalog\/img\/(view\.php\?mode=cat2?)/)) {
       /* img のタテログ */
       this.server = "img";
       this.dir = "b";
@@ -205,7 +205,7 @@ arAkahukuLocationInfo.prototype = {
       this.isFutaba = true;
     }
     else if (location.match
-             (/^http:\/\/(?:[^\.\/]+\.)?(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
+             (/^https?:\/\/(?:[^\.\/]+\.)?(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/)) {
       /* サッチー */
       this.server = RegExp.$1;
       this.dir = RegExp.$1;
@@ -362,7 +362,7 @@ arAkahukuLocationInfo.prototype = {
       
       if (this.isMht) {
         this.isTsumanne =
-          /^http:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
+          /^https?:\/\/(tsumanne)\.net\/([a-z]+)\/data\/[0-9]+\/[0-9]+\/[0-9]+\/[0-9]+\/$/
           .test (arAkahukuCompat.UnMHT.getRootContentLocation (location));
       }
     }
@@ -1240,7 +1240,7 @@ var arAkahukuImageURL = {
     }
     else if (tubu
              && url.match
-             (/^http:\/\/www\.(nijibox)5\.com\/futabafiles\/(tubu)\/(src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
+             (/^https?:\/\/www\.(nijibox)5\.com\/futabafiles\/(tubu)\/(src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
       uinfo = new arAkahukuImageURLInfo ();
             
       uinfo.server = RegExp.$1;
