@@ -347,17 +347,7 @@ if (typeof Promise !== "undefined") {
   this.Promise = Promise;// eslint-disable-line: no-undef
 }
 else { // Firefox -28.*
-  var scope = {};
-  try {
-    // Firefox 24.0+
-    Components.utils.import ("resource://gre/modules/Promise.jsm", scope);
-    this.Promise = scope.Promise;
-  }
-  catch (e) {
-    if (e.result !== Components.results.NS_ERROR_FILE_NOT_FOUND) {
-      Components.utils.reportError (e);
-    }
-    this.Promise = akPromise;
-  }
+  // Promise.jsm (24.0+) is not standard-compliant
+  this.Promise = akPromise;
 }
 
