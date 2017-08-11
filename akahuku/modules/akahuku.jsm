@@ -11,6 +11,8 @@ var EXPORTED_SYMBOLS = [
   // necessary for sidebar.js
   "arAkahukuSidebar",
   "arAkahukuWindow",
+  // necessary for toolbar button command
+  "arAkahukuUI",
   // belows are necessary for akahuku content-policy
   "arAkahukuP2P",
   "arAkahukuDelBanner",

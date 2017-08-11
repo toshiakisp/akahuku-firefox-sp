@@ -26,6 +26,7 @@ var arAkahukuUI = {
   prefDialog : null, /* ChromeWindow  設定ダイアログ */
 
   managedWindows : [],
+  toolbarButtons : [],
     
   attachToWindow : function (window) {
     arAkahukuUI.managedWindows.push (window);
@@ -168,6 +169,9 @@ var arAkahukuUI = {
       Akahuku.debug.warn ("button #" + prop.id, "already exists, skip it.");
       return;
     }
+
+    arAkahukuUI.toolbarButtons.push (prop);
+
     var ns = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
     button = document.createElementNS (ns, "toolbarbutton");
     if (!prop.type || prop.type == "button") {
@@ -194,9 +198,7 @@ var arAkahukuUI = {
     if (prop._xul_observes) {
       button.setAttribute ("observes", prop._xul_observes);
     }
-    if (prop.onclick) {
-      button.addEventListener ("command", prop.onclick, false);
-    }
+    button.setAttribute ("oncommand", "arAkahukuUI.onCommandToolbarButton (event);");
     if (prop.style) {
       button.setAttribute ("style", prop.style);
     }
@@ -231,6 +233,18 @@ var arAkahukuUI = {
         Akahuku.debug.log ("toolbarbutton#" + prop.id
             + " is inserted to #" + toolbar.id);
         break;
+      }
+    }
+  },
+
+  onCommandToolbarButton : function (event) {
+    for (var i = 0; i < arAkahukuUI.toolbarButtons.length; i ++) {
+      var props = arAkahukuUI.toolbarButtons [i];
+      if (props.id == event.target.id) {
+        if (props.onclick) {
+          props.onclick.apply (null, [event]);
+        }
+        return;
       }
     }
   },
