@@ -74,6 +74,14 @@ XULWindowObserver.prototype = {
       var w = wins.getNext ();
       var type = w.document.documentElement.getAttribute ("windowtype");
       if (type === this.targetType) {
+        if (w.document.readyState !== "complete") {
+          w.addEventListener ("load", function () {
+            // wait for readyState == "complete"
+            w.removeEventListener ("load", arguments.callee, false);
+            callback.apply (null, [w]);
+          }, false);
+          continue;
+        }
         try {
           callback.apply (null, [w]);
         }

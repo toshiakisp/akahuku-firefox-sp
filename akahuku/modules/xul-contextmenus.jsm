@@ -229,10 +229,7 @@ ContextMenuRegistry.prototype = {
 
   register : function (item) {
     this.menuitems.push (item);
-    if (this.observing) {
-      this.windowObserver.attachListenerToExistingWindows (item);
-    }
-    else {
+    if (!this.observing) {
       this.windowObserver = new XULWindowObserver (this);
       this.windowObserver.startup ();
       this.observing = true;
