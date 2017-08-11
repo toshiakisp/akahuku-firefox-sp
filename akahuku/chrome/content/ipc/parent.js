@@ -233,13 +233,6 @@ arAkahukuIPCRoot.defineProc
   (arAkahukuImage,
    "Image", "asyncSaveImageToFile",
    {async: true, callback: 4});
-arAkahukuIPCRoot.defineProc
-  (arAkahukuImage, "Image", "setContextMenuContentData");
-
-
-
-arAkahukuIPCRoot.defineProc
-  (arAkahukuJPEG, "JPEG", "setContextMenuContentData");
 
 
 
@@ -257,8 +250,6 @@ var arAkahukuLinkIPCWrapper = {
 arAkahukuIPCRoot.defineProc
   (arAkahukuLinkIPCWrapper, "Link", "openLinkInXUL",
    {async: true, callback: 0, frame: true});
-arAkahukuIPCRoot.defineProc
-  (arAkahukuLink, "Link", "setContextMenuContentData");
 arAkahukuIPCRoot.defineProc
   (arAkahukuLinkIPCWrapper, "Link", "makeURLSafeInNoscript",
    {async: false, frame: true});
@@ -281,8 +272,6 @@ arAkahukuIPCRoot.defineProc
 
 
 
-arAkahukuIPCRoot.defineProc
-  (arAkahukuP2P, "P2P", "setContextMenuContentData");
 arAkahukuIPCRoot.defineProc
   (arAkahukuP2P, "P2P", "deleteCacheFiles", {async: true});
 arAkahukuIPCRoot.defineProc
@@ -384,6 +373,8 @@ var arAkahukuUIIPC = {
     arAkahukuUI.getStatusPanelText (browser);
   },
 };
+arAkahukuIPCRoot.defineProc
+  (arAkahukuUI, "UI", "setContextMenuContentData");
 arAkahukuIPCRoot.defineProc
   (arAkahukuUIIPC,
    "UI", "setStatusPanelText",

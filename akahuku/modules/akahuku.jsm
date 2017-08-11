@@ -304,15 +304,12 @@ Akahuku.addFrame = function addFrame (frame) {
  */
 function handleContentContextMenu (subject) {
   var target = subject.wrappedJSObject.event.target;
-  var data;
-  data = arAkahukuLink.getContextMenuContentData (target);
-  arAkahukuIPC.sendSyncCommand ("Link/setContextMenuContentData", [data]);
-  data = arAkahukuImage.getContextMenuContentData (target);
-  arAkahukuIPC.sendSyncCommand ("Image/setContextMenuContentData", [data]);
-  data = arAkahukuJPEG.getContextMenuContentData (target);
-  arAkahukuIPC.sendSyncCommand ("JPEG/setContextMenuContentData", [data]);
-  data = arAkahukuP2P.getContextMenuContentData (target);
-  arAkahukuIPC.sendSyncCommand ("P2P/setContextMenuContentData", [data]);
+  var data = {};
+  data.link = arAkahukuLink.getContextMenuContentData (target);
+  data.image = arAkahukuImage.getContextMenuContentData (target);
+  data.jpeg = arAkahukuJPEG.getContextMenuContentData (target);
+  data.p2p = arAkahukuP2P.getContextMenuContentData (target);
+  arAkahukuIPC.sendSyncCommand ("UI/setContextMenuContentData", [data]);
 
   // turn flag on in content processes at this timing
   // (while turn off via arAkahukuUI.onContextMenuHidden IPC command)

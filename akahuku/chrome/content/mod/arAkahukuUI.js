@@ -496,6 +496,13 @@ var arAkahukuUI = {
       arAkahukuP2P.setContextMenu (event);
     }
   },
+
+  setContextMenuContentData : function (data) {
+    arAkahukuLink.setContextMenuContentData (data.link);
+    arAkahukuImage.setContextMenuContentData (data.image);
+    arAkahukuJPEG.setContextMenuContentData (data.jpeg);
+    arAkahukuP2P.setContextMenuContentData (data.p2p);
+  },
     
   /**
    * 設定を読み込む
