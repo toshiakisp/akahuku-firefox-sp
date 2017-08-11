@@ -141,6 +141,11 @@ Akahuku.startup = function () {
       arAkahukuIPCRoot.initSubScriptScope (global);
       arAkahukuIPCRoot.loadSubScript
         ("chrome://akahuku/content/ipc/parent.js");
+      if (Akahuku.useFrameScript) {
+        // Overwrite content-dependent methods
+        arAkahukuIPCRoot.loadSubScript
+          ("chrome://akahuku/content/ipc/parent_content.js");
+      }
       // only init a child module in the main process
       arAkahukuIPC.init ();
     }

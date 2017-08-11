@@ -48,12 +48,6 @@ if (!Akahuku.initialized) {
       var {AkahukuNotificationRelay}
       = Components.utils.import ("resource://akahuku/notification-relay.jsm", {});
       // AkahukuNotificationRelay.startup ();// auto start
-
-      // Overwrite content-dependent methods
-      const {AkahukuIPCManager}
-      = Components.utils.import ("resource://akahuku/ipc.jsm", {});
-      AkahukuIPCManager.getRoot ("main")
-      .loadSubScript ("chrome://akahuku/content/ipc/parent_content.js");
     }
 
     // Observe to shutdown global Akahuku module properly

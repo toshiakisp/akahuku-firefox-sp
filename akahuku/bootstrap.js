@@ -88,12 +88,6 @@ function startup (data, reason) {
     var {AkahukuNotificationRelay}
     = Cu.import ("resource://akahuku/notification-relay.jsm", {});
     // AkahukuNotificationRelay.startup ();// auto start
-
-    // Overwrite content-dependent methods
-    var {AkahukuIPCManager}
-    = Cu.import ("resource://akahuku/ipc.jsm", {});
-    AkahukuIPCManager.getRoot ("main")
-    .loadSubScript ("chrome://akahuku/content/ipc/parent_content.js");
   }
 
   // For bootstrap.js,
