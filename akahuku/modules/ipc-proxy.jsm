@@ -3,8 +3,9 @@
  * Akahuku IPC Proxy - プロセス間でのプロパティアクセスを中継するプロキシ
  *
  * Require: Gecko 18 (Proxy)
- * Globals: Components, Proxy
  */
+
+/* global Components, Proxy */
 
 var EXPORTED_SYMBOLS = [
   "arIPCProxyParent",

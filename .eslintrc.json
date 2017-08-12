@@ -6,13 +6,6 @@
 	  "browser": false
     },
     "globals": {
-	  "atob": false,
-	  "btoa": false,
-	  "XSLTProcessor": false,
-	  "XMLSerializer": false,
-	  "CSSPrimitiveValue": false,
-	  "XPCNativeWrapper": false,
-	  "Components": false
 	},
     "rules": {
 	//es6

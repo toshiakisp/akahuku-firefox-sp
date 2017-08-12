@@ -2,6 +2,8 @@
  * arAkahukuP2PService - wrapper of P2P XPCOM and related utils
  */
 
+/* global Components */
+
 var EXPORTED_SYMBOLS = [
   "arAkahukuP2PService",
 ];

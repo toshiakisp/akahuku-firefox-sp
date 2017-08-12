@@ -1,7 +1,8 @@
 
-/**
- * Require: arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
- *          arAkahukuBoard
+/* global Components,
+ *   Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
+ *   arAkahukuBoard, arAkahukuWindow, arAkahukuP2P, arAkahukuFile,
+ *   arAkahukuReload, arAkahukuMergeItemCallbackList,
  */
 
 /**

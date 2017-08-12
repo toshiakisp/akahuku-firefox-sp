@@ -1,8 +1,6 @@
 
-/** 
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuLink,
- *          arAkahukuThread
+/* global Akahuku, arAkahukuConfig, arAkahukuConverter,
+ *   arAkahukuDOM, arAkahukuLink, arAkahukuThread
  */
 
 /**

@@ -1,9 +1,16 @@
 
-/**
- * Require: arAkahukuConfig,
- *          arAkahukuDocumentParam, arAkahukuLocationInfo,
- *          arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
- *          arAkahukuBoard,
+/* global Components,
+ *   arAkahukuLocationInfo, arAkahukuDocumentParam,
+ *   arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
+ *   arAkahukuWindow,
+ *   arAkahukuFile, arAkahukuFileName, arAkahukuWheel, arAkahukuDelBanner,
+ *   arAkahukuSound, arAkahukuLink, arAkahukuCatalog, arAkahukuTitle,
+ *   arAkahukuBoard, arAkahukuConverter, arAkahukuP2P, arAkahukuConfig,
+ *   arAkahukuStyle, arAkahukuSidebar,
+ *   arAkahukuQuote, arAkahukuJPEG, arAkahukuImage, arAkahukuTab,
+ *   arAkahukuUI, arAkahukuBloomer, arAkahukuThread, arAkahukuMHT,
+ *   arAkahukuPostForm, arAkahukuPopupQuote,
+ *   arAkahukuReload, arAkahukuScroll, arAkahukuThreadOperator,
  */
 
 /**

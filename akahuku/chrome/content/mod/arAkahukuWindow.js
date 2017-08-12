@@ -1,7 +1,5 @@
 
-/**
- * Require: Akahuku
- */
+/* global Components, XPCNativeWrapper, Akahuku */
 
 /**
  * ウィンドウ管理

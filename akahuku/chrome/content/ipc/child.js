@@ -5,6 +5,13 @@
  *  in order to work in the e10s message manager framework.
  */
 
+/* global Components, arAkahukuIPC,
+ *   Akahuku, arAkahukuCatalog, arAkahukuClipboard, arAkahukuCompat,
+ *   arAkahukuConfig, arAkahukuFile, arAkahukuImage, arAkahukuJPEG,
+ *   arAkahukuLink, arAkahukuMHT, arAkahukuP2P, arAkahukuPostForm,
+ *   arAkahukuQuote, arAkahukuReload, arAkahukuSidebar, arAkahukuSound,
+ *   arAkahukuStyle, arAkahukuThread, arAkahukuUI, arAkahukuWindow,
+ */
 
 Akahuku.Cache.asyncGetHttpCacheStatus = function (source, noRedirect, callback) {
   var contextWindow = null;

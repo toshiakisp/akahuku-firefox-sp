@@ -1,8 +1,9 @@
 
-/**
- * Require: arAkahukuBoard, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuFileName, arAkahukuConverter,
- *          arAkahukuTitle, arAkahukuUtil, arAkahukuP2P
+/* global Components, XMLSerializer, XSLTProcessor,
+ *   Akahuku, arAkahukuCompat, arAkahukuConverter,
+ *   arAkahukuFile, arAkahukuFileName, arAkahukuUtil,
+ *   arAkahukuTitle, arAkahukuP2P,
+ *   arAkahukuBoard, arAkahukuDOM,
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
  */

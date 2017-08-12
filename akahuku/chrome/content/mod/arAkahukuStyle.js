@@ -1,10 +1,10 @@
 
-/**
- * Require: Akahuku, arAkahukuFile, arAkahukuUtil,
- *          arAkahukuCatalog, arAkahukuDelBanner,
- *          arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
- *          arAkahukuReload, arAkahukuScroll,
- *          arAkahukuThread, arAkahukuTitle
+/* global Components,
+ *   Akahuku, arAkahukuCompat, arAkahukuFile, arAkahukuUtil,
+ *   arAkahukuCatalog, arAkahukuDelBanner,
+ *   arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
+ *   arAkahukuThread, arAkahukuReload, arAkahukuScroll,
+ *   arAkahukuTitle, arAkahukuPopupQuote, arAkahukuThreadOperator,
  */
 
 /**
@@ -149,7 +149,8 @@ var arAkahukuStyle = {
       return;
     }
     try {
-      Components.utils.import ("resource://akahuku/css-injector.jsm");
+      var {AkahukuCSSInjector}
+      = Components.utils.import ("resource://akahuku/css-injector.jsm", {});
     }
     catch (e) { Akahuku.debug.exception (e);
       arAkahukuStyle._modifyStyleFileLegacy (register);

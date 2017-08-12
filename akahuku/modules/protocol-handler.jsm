@@ -5,6 +5,12 @@
  *   カスタムプロトコル(akahuku:)を実現する XPCOM サービス用
  */
 
+/* global Components,
+ *   arAkahukuBypassChannel, arAkahukuJPEGThumbnailChannel,
+ *   arAkahukuCacheChannel, arAkahukuAsyncRedirectVerifyHelper,
+ *   arAkahukuDOMFileChannel, arAkahukuP2PChannel,
+ */
+
 var EXPORTED_SYMBOLS = [
   "arAkahukuProtocolHandler",
   "arAkahukuSafeProtocolHandler",

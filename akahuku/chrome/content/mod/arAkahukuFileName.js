@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConfig
- */
+/* global arAkahukuConfig, AkahukuOptions */
 
 var arAkahukuFileName = {
   defaultConvertList : [

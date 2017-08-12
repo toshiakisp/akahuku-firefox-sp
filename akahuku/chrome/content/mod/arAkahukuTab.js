@@ -1,7 +1,5 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuBoard
- */
+/* global Akahuku, arAkahukuConfig, arAkahukuBoard, arAkahukuLocationInfo */
 
 /**
  * ソート用のタブのデータ

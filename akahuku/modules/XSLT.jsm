@@ -5,6 +5,7 @@
  *     "error:ReferenceError: XSLTProcessor is not defined"
  *     "error:ReferenceError: XMLSerializer is not defined"
  */
+/* global Components */
 
 var EXPORTED_SYMBOLS = [
   "XSLTProcessor",

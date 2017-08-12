@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConfig, arAkahukuDOM
- */
+/* global Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuImageURL */
 
 /**
  * 広告削除管理

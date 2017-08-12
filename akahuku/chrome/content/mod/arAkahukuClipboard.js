@@ -1,7 +1,5 @@
 
-/**
- * Require: Akahuku
- */
+/* global Components, Akahuku */
 
 /**
  * クリップボード処理

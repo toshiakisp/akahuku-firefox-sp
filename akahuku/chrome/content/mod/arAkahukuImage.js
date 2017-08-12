@@ -1,7 +1,8 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuP2P, arAkahukuSound, arAkahukuUtil
+/* global Components,
+ *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
+ *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
+ *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil
  */
 
 /**

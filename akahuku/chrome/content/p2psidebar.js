@@ -1,6 +1,6 @@
 
-/**
- * Require: arAkahukuServerName
+/* global Components, document, window,
+ *   arAkahukuServerShortName
  */
 
 /**

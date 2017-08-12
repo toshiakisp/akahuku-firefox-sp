@@ -1,8 +1,9 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuFile, arAkahukuLink,
- *          arAkahukuP2P, arAkahukuSound, arAkahukuThread, arAkahukuCompat
+/* global btoa, atob, Components,
+ *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
+ *   arAkahukuDOM, arAkahukuFile, arAkahukuLink,
+ *   arAkahukuP2P, arAkahukuSound, arAkahukuThread, arAkahukuCompat,
+ *   arAkahukuUtil, arAkahukuWindow, arAkahukuImageURL,
  */
 
 /**

@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuUtil
- */
+/* global Components, arAkahukuUtil */
 
 /**
  * gzip ファイル展開用

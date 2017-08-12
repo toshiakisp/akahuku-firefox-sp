@@ -1,7 +1,7 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
- *          arAkahukuDOM, arAkahukuPostForm, arAkahukuClipboard
+/* global atob,
+ *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuWindow,
+ *   arAkahukuDOM, arAkahukuPostForm, arAkahukuClipboard
  */
 
 /**

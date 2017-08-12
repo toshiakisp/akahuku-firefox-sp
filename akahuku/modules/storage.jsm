@@ -1,6 +1,7 @@
 /**
  * Process-wide simple temporal storage
  */
+/* global Components */
 var EXPORTED_SYMBOLS = [
   "AkahukuStorage",
 ];

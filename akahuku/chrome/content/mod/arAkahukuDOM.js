@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConverter
- */
+/* global Components, Akahuku, arAkahukuConverter */
 
 /**
  * DOM 拡張

@@ -1,9 +1,9 @@
 
 /**
  * Akahuku IPC support for nsIInputStream and nsIOutpuStream
- *
- * Globals: Components,
  */
+
+/* global Components */
 
 var EXPORTED_SYMBOLS = [
   "arInputStreamParent",

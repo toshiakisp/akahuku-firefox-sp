@@ -3,6 +3,8 @@
  * with webRequest-like interface for http-on-* (not fully implemented)
  */
 
+/* global Components */
+
 var EXPORTED_SYMBOLS = [
   "AkahukuObserver",
 ];

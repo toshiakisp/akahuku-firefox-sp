@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConfig
- */
+/* global Components, Akahuku, arAkahukuConfig, arAkahukuServerData */
 
 function arAkahukuBoardInfo (id) {
   this.id = id;

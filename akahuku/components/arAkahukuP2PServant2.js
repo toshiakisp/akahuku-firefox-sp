@@ -1,4 +1,6 @@
 
+/* global Components */
+
 const arIAkahukuP2PServant2 = Components.interfaces.arIAkahukuP2PServant2;
 
 const arIAkahukuP2PServantListener = Components.interfaces.arIAkahukuP2PServantListener;

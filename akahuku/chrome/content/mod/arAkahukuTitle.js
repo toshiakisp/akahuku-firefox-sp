@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConfig, arAkahukuConverter, arAkahukuDOM
- */
+/* global Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM */
 
 /**
  * タイトル管理

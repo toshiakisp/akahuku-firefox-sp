@@ -2,6 +2,9 @@
 /**
  * akahuku/protocol-channel.jsm
  */
+/* global Components, FileReader,
+ *   arAkahukuUtil, arAkahukuCompat,
+ */
 
 var EXPORTED_SYMBOLS = [
   "arAkahukuBypassChannel",

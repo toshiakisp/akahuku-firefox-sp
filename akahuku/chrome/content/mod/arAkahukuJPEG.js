@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConfig
- */
+/* global Components, Akahuku, arAkahukuConfig */
 
 /**
  * JPEG のサムネ管理

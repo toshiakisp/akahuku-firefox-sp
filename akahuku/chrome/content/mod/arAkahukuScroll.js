@@ -1,7 +1,6 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuDocumentParam,
- *          arAkahukuDOM, arAkahukuThread, arAkahukuWheel, arAkahukuWindow
+/* global Akahuku, arAkahukuConfig,
+ *   arAkahukuDOM, arAkahukuThread, arAkahukuWheel, arAkahukuWindow
  */
 
 /**

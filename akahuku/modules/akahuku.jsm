@@ -1,7 +1,16 @@
-/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+
 /**
  * akahuku.jsm - per-process instance of Akahuku using JavaScript Module
  *
+ */
+
+/* global Components,
+ *   registerXPCOM, unregisterXPCOM,
+ *   arAkahukuProtocolHandler, arAkahukuLocalProtocolHandler,
+ *   arAkahukuSafeProtocolHandler, arAkahukuContentPolicy,
+ *   Akahuku, arAkahukuCompat,
+ *   arAkahukuLink, arAkahukuImage, arAkahukuJPEG, arAkahukuP2P,
+ *   arAkahukuUI,
  */
 
 var EXPORTED_SYMBOLS = [

@@ -1,7 +1,7 @@
 
-/** 
- * Require: arAkahukuConfig, arAkahukuFile,
- *   arAkahukuCompat, arAkahukuUtil
+/* global Components, Akahuku, AkahukuVersion, arAkahukuConfig,
+ * arAkahukuFile, arAkahukuWindow, arAkahukuUtil,
+ * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL,
  */
 
 /**

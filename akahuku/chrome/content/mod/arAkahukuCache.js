@@ -1,7 +1,7 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuUtil,
- *          arAkahukuReload, arAkahukuFile, arAkahukuCompat
+/* global Components,
+ *   Akahuku, arAkahukuCompat, arAkahukuUtil, arAkahukuWindow,
+ *   arAkahukuReload,
  */
 
 /**
@@ -62,7 +62,6 @@ Akahuku.Cache = new function () {
    * 設定を読み込む
    */
   this.getConfig = function () {
-    //= arAkahukuConfig.initPref ("bool", "akahuku.cache", false);
   };
 
   /**

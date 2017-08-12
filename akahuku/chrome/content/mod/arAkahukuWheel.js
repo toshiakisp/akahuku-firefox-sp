@@ -1,7 +1,7 @@
 
-/**
- * Require: Akahuku, arAkahukuCatalog, arAkahukuConfig, arAkahukuReload,
- *          arAkahukuWheel, arAkahukuWindow, arAkahukuCompat
+/* global Components,
+ *   Akahuku, arAkahukuCatalog, arAkahukuConfig, arAkahukuReload,
+ *   arAkahukuWindow, arAkahukuCompat, arAkahukuUI,
  */
 
 /**

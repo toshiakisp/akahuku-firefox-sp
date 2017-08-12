@@ -1,5 +1,6 @@
 
 // Frame script
+/* global Components, Akahuku */
 
 Components.utils.import("resource://akahuku/akahuku.jsm");
 Akahuku.startup (); // if necessary for a process

@@ -1,9 +1,10 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuImage, arAkahukuLink,
- *          arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
- *          arAkahukuThread, arAkahukuTitle, Akahuku.Cache, arAkahukuCompat
+/* global Components,
+ *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
+ *   arAkahukuDOM, arAkahukuImage, arAkahukuLink,
+ *   arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
+ *   arAkahukuThread, arAkahukuTitle, arAkahukuCompat, arAkahukuFile,
+ *   arAkahukuWindow, arAkahukuUI, arAkahukuBoard,
  */
 
 /**

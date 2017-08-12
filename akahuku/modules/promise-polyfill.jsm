@@ -3,7 +3,8 @@
  *
  * Specification: http://www.ecma-international.org/ecma-262/6.0/
  */
-/* global Components, Symbol */
+/* global Components, Symbol, Promise */
+
 var EXPORTED_SYMBOLS = [
   "Promise", // export global Promise or polyfill
 ];
@@ -344,7 +345,7 @@ catch (e) {
 
 // export global Promise or polyfill
 if (typeof Promise !== "undefined") {
-  this.Promise = Promise;// eslint-disable-line: no-undef
+  this.Promise = Promise;
 }
 else { // Firefox -28.*
   // Promise.jsm (24.0+) is not standard-compliant

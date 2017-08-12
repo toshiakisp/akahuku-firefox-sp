@@ -1,4 +1,6 @@
 
+/* global Components, File, arAkahukuFile, arAkahukuUtil */
+
 /**
  * Firefox/Gecko バージョン間の差異を吸収する
  */

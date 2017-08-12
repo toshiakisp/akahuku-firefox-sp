@@ -4,6 +4,8 @@
  * Broadcast simple notification topics from a process to other processes
  */
 
+/* global Components */
+
 var EXPORTED_SYMBOLS = [
   "AkahukuNotificationRelay",
 ];

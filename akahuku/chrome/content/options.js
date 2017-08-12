@@ -1,7 +1,7 @@
 
-/**
- * Require: arAkahukuLocationInfo, arAkahukuFile, arAkahukuServerName,
- *          arAkahukuCompat
+/* global Components, document, window, navigator,
+ *   AkahukuVersion, arAkahukuCompat, arAkahukuFile, arAkahukuFileName,
+ *   arAkahukuServerName, arAkahukuLocationInfo,
  */
 
 /**

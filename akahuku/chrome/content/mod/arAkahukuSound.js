@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuConfig, arAkahukuFile, arAkahukuWindow
- */
+/* global Components, arAkahukuConfig, arAkahukuFile, arAkahukuWindow */
 
 /**
  * 音管理

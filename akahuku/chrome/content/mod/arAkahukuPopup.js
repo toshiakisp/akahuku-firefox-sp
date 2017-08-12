@@ -1,7 +1,5 @@
 
-/** 
- * Require: arAkahukuCatalog
- */
+/* global arAkahukuCatalog */
 
 /**
  * ポップアップ画像のキャッシュデータ

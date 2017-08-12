@@ -1,9 +1,9 @@
 
 /**
  * Akahuku IPC support for nsICacheEntry
- *
- * Globals: Components,
  */
+
+/* global Components */
 
 var EXPORTED_SYMBOLS = [
   "arCacheEntryParent",

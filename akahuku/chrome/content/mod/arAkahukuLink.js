@@ -1,8 +1,9 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
- *          arAkahukuImage, arAkahukuP2P, arAkahukuCompat, arAkahukuUtil
- *          arAkahukuClipboard
+/* global btoa, Components,
+ *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
+ *   arAkahukuImage, arAkahukuP2P, arAkahukuCompat, arAkahukuUtil,
+ *   arAkahukuWindow, arAkahukuUI, arAkahukuMHT, arAkahukuThread,
+ *   arAkahukuClipboard
  */
 
 /**

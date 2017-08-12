@@ -1,4 +1,6 @@
 
+/* global Components */
+
 /**
  * 文字コード変換器
  */

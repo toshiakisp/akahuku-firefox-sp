@@ -1,9 +1,9 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter,
- *          (arAkahukuDocumentParam), arAkahukuDOM, arAkahukuP2P,
- *          arAkahukuWindow, arAkahukuBoard,
- *          arAkahukuUtil, arAkahukuTitle,
+/* global Components, CSSPrimitiveValue,
+ *   Akahuku, arAkahukuConfig, arAkahukuConverter,
+ *   arAkahukuDOM, arAkahukuP2P, arAkahukuCompat, arAkahukuImageURL,
+ *   arAkahukuWindow, arAkahukuBoard,
+ *   arAkahukuUtil, arAkahukuTitle,
  */
 
 /**

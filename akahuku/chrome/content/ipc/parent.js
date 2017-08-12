@@ -2,6 +2,14 @@
  * This js defines IPC command in the parent process.
  */
 
+/* global Components,
+ *   Akahuku, arAkahukuCompat, arAkahukuWindow, arAkahukuCatalog,
+ *   arAkahukuReload, arAkahukuClipboard, arAkahukuConfig, arAkahukuFile,
+ *   arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuP2P,
+ *   arAkahukuQuote, arAkahukuSidebar, arAkahukuSound, arAkahukuThread,
+ *   arAkahukuUI, arAkahukuIPCRoot,
+ */
+
 (function () {
 
 var Ci = Components.interfaces;

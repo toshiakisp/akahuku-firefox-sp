@@ -3,6 +3,7 @@
  *
  *   utility for XPCOM component registration
  */
+/* global Components */
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;

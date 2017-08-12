@@ -1,4 +1,6 @@
 
+/* global Components, arAkahukuCompat */
+
 /**
  * XPCOM周りの頻出処理を簡単にするモジュール
  */

@@ -1,12 +1,13 @@
 
-/**
- * Require: Akahuku, arAkahukuBloomer, arAkahukuBoard, arAkahukuCatalog,
- *          arAkahukuDelBanner, arAkahukuImage, arAkahukuJPEG,
- *          arAkahukuLink, arAkahukuMHT, arAkahukuP2P, arAkahukuPopupQuote,
- *          arAkahukuPostForm, arAkahukuQuote, arAkahukuReload,
- *          arAkahukuScroll, arAkahukuSidebar, arAkahukuSound, arAkahukuStyle,
- *          arAkahukuTab, arAkahukuThread, arAkahukuThreadOperator,
- *          arAkahukuTitle, arAkahukuUI, arAkahukuWheel
+/* global Components,
+ * Akahuku, AkahukuVersion, arAkahukuBloomer, arAkahukuBoard, arAkahukuCatalog,
+ * arAkahukuDelBanner, arAkahukuImage, arAkahukuJPEG,
+ * arAkahukuLink, arAkahukuMHT, arAkahukuP2P, arAkahukuPopupQuote,
+ * arAkahukuPostForm, arAkahukuQuote, arAkahukuReload,
+ * arAkahukuScroll, arAkahukuSidebar, arAkahukuSound, arAkahukuStyle,
+ * arAkahukuTab, arAkahukuThread, arAkahukuThreadOperator,
+ * arAkahukuTitle, arAkahukuUI, arAkahukuWheel,
+ * arAkahukuCompat, arAkahukuFileName,
  */
 
 /**

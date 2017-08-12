@@ -1,10 +1,12 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
- *          arAkahukuDocumentParam, arAkahukuDOM, arAkahukuFile,
- *          arAkahukuP2P, arAkahukuReload, arAkahukuScroll,
- *          arAkahukuStyle, arAkahukuSound, arAkahukuThread,
- *          arAkahukuUI, arAkahukuWindow, arAkahukuBoard
+/* global Components, XPCNativeWrapper,
+ *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
+ *   arAkahukuDOM, arAkahukuStyle,
+ *   arAkahukuFile, arAkahukuUtil,
+ *   arAkahukuSound, arAkahukuClipboard, arAkahukuWindow, arAkahukuUI,
+ *   arAkahukuP2P, arAkahukuReload, arAkahukuLink, arAkahukuScroll,
+ *   arAkahukuThread, arAkahukuBoard,
+ *   arAkahukuImageURL,
  */
 
 /**

@@ -1,8 +1,7 @@
 
-/**
- * Require: Akahuku, arAkahukuConfig, arAkahukuDocumentParam,
- *          arAkahukuMHT, arAkahukuPopup, arAkahukuPostForm, arAkahukuReload,
- *          arAkahukuStyle
+/* global Akahuku, arAkahukuConfig, arAkahukuStyle,
+ *   arAkahukuMHT, arAkahukuPopup, arAkahukuPopupParam,
+ *   arAkahukuPostForm, arAkahukuReload, arAkahukuThread,
  */
 
 /**

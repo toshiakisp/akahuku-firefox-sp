@@ -2,6 +2,8 @@
  * Akahuku's content CSS injection manager
  */
 
+/* global Components */
+
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 

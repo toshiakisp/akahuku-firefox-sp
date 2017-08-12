@@ -1,7 +1,5 @@
 
-/**
- * Require: arAkahukuSidebar
- */
+/* global Components, window document */
 
 /**
  * サイドバー

@@ -1,9 +1,10 @@
 
-/**
- * Require: Akahuku, arAkahukuBloomer, arAkahukuBoard, arAkahukuConfig,
- *          arAkahukuJPEG, arAkahukuLink, arAkahukuP2P, arAkahukuQuote,
- *          arAkahukuStyle, arAkahukuTab, arAkahukuClipboard,
- *          arAkahukuCompat
+/* global Components,
+ *   Akahuku, AkahukuVersion,
+ *   arAkahukuBloomer, arAkahukuBoard, arAkahukuConfig,
+ *   arAkahukuJPEG, arAkahukuLink, arAkahukuP2P, arAkahukuQuote,
+ *   arAkahukuStyle, arAkahukuTab, arAkahukuClipboard,
+ *   arAkahukuCompat, arAkahukuImage, arAkahukuThread,
  */
 
 /**

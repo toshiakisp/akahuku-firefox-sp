@@ -3,6 +3,12 @@
  * main process so that XUL-dependent (UI) codes cooperates e10s
  * Akahuku modules in the content process.
  */
+/* global Components, arAkahukuIPCRoot,
+ *   arAkahukuImage, arAkahukuJPEG, arAkahukuLink, arAkahukuMHT,
+ *   arAkahukuQuote, arAkahukuThread,
+ *   Akahuku, arAkahukuCatalog, arAkahukuP2P, arAkahukuPostForm,
+ *   arAkahukuReload, arAkahukuBoard, arAkahukuUI,
+ */
 
 (function () {
 

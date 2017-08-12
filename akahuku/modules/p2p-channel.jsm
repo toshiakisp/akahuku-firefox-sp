@@ -3,6 +3,8 @@
  * akahuku/p2p-channel.jsm
  */
 
+/* global Components, arAkahukuCompat */
+
 var EXPORTED_SYMBOLS = [
   "arAkahukuGZIPFileData",
   "arAkahukuP2PChannel",

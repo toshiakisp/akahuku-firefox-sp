@@ -1,6 +1,6 @@
 
-/**
- * Require: arAkahukuConfig, arAkahukuFile
+/* global Components,
+ *   Akahuku, arAkahukuConfig, arAkahukuFile
  */
 
 /**

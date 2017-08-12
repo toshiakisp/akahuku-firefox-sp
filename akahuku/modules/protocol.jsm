@@ -5,6 +5,8 @@
  *   (arAkahukuProtocolHandler XPCOM とスコープ共有)
  */
 
+/* global Components */
+
 var EXPORTED_SYMBOLS = [
   "enAkahukuURI", 
   "isAkahukuURI",
