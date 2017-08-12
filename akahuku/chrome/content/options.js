@@ -4,41 +4,6 @@
  *          arAkahukuCompat
  */
 
-/* Unicode をエスケープ解除できない場合に unescape を定義しなおす */
-if (unescape ("%u3042") == "%u3042") {
-  unescape = function (text) {
-    var converter
-    = Components.classes ["@mozilla.org/intl/scriptableunicodeconverter"]
-    .getService (Components.interfaces.nsIScriptableUnicodeConverter);
-    converter.charset = "utf-8";
-        
-    text = text
-    .replace (/((%[0-9A-Fa-f][0-9A-Fa-f])+)|%u([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])/g,
-              function (match, part1, part2, part3) {
-                if (part1) {
-                  var t = part1
-                  .replace (/%([0-9A-Fa-f][0-9A-Fa-f])/g,
-                            function (submatch, subpart1) {
-                              return String
-                              .fromCharCode (parseInt ("0x"
-                                                       + subpart1));
-                            });
-                  try {
-                    t = converter.ConvertToUnicode (t);
-                  }
-                  catch (e) {
-                  }
-                  return t;
-                }
-                else {
-                  return String
-                  .fromCharCode (parseInt ("0x" + part3));
-                }
-              });
-    return text;
-  }
-}
-
 /**
  * キーの名前
  */
