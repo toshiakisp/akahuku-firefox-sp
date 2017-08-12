@@ -30,10 +30,12 @@ catch (e) {
   Components.utils.reportError (e);
 }
 
-Cu.import ("resource://akahuku/p2p-service.jsm");
+var {arAkahukuP2PService}
+= Cu.import ("resource://akahuku/p2p-service.jsm", {});
 var protocolHandler = {};
 Cu.import ("resource://akahuku/protocol.jsm", protocolHandler);
-Cu.import ("resource://akahuku/console.jsm");
+var {AkahukuConsole}
+= Cu.import ("resource://akahuku/console.jsm", {});
 var console = new AkahukuConsole ();
 console.prefix = "Akahuku P2P channel";
 

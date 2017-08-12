@@ -172,7 +172,8 @@ arAkahukuContentPolicy.prototype = {
     = Cc ["@mozilla.org/moz/jssubscript-loader;1"]
     .getService (Ci.mozIJSSubScriptLoader);
     try {
-      Cu.import ("resource://akahuku/console.jsm");
+      var {AkahukuConsole}
+      = Cu.import ("resource://akahuku/console.jsm", {});
       this.console = new AkahukuConsole ();
       this.console.prefix = "Akahuku debug ContentPolicy";
       var appinfo

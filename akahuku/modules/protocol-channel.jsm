@@ -37,7 +37,8 @@ catch (e) {
   Components.utils.reportError (e);
 }
 
-Cu.import ("resource://akahuku/observer.jsm");
+var {AkahukuObserver}
+= Cu.import ("resource://akahuku/observer.jsm", {});
 
 /**
  * チャネルの nsIInterfaceRequestor.getInterface 用 base impl.

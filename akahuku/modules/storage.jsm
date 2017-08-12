@@ -60,7 +60,8 @@ if (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT) {
   if ("@mozilla.org/parentprocessmessagemanager;1" in Cc
       && "nsIMessageListenerManager" in Ci) {
     // e10s-ready platform
-    Cu.import ("resource://akahuku/ipc-proxy.jsm");
+    var {arIPCProxyParent}
+    = Cu.import ("resource://akahuku/ipc-proxy.jsm", {});
     var proxy = new arIPCProxyParent (AkahukuStorage.local);
     proxy.id = id;
     var gpmm
@@ -70,7 +71,8 @@ if (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT) {
   }
 }
 else { // child processes (e10s ready)
-  Cu.import ("resource://akahuku/ipc-proxy.jsm");
+  var {arIPCProxyChild}
+  = Cu.import ("resource://akahuku/ipc-proxy.jsm", {});
 
   var proxy = new arIPCProxyChild (AkahukuStorageArea.prototype);
   proxy.parentId = id;

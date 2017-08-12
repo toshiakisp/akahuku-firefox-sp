@@ -5070,7 +5070,8 @@ function NSGetModule (compMgr, fileSpec) {
   return arAkahukuP2PServant2Module;
 }
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+var {XPCOMUtils}
+= Components.utils.import ("resource://gre/modules/XPCOMUtils.jsm", {});
 
 /**
  * デバッグ用出力 debug.console
@@ -5078,7 +5079,8 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
  *   実行時に import するよう lazy getter として用意する
  */
 XPCOMUtils.defineLazyGetter (debug, "console", function () {
-  Components.utils.import ("resource://akahuku/console.jsm");
+  var {AkahukuConsole}
+  = Components.utils.import ("resource://akahuku/console.jsm", {});
   var console = new AkahukuConsole ();
   console.prefix = "Akahuku P2P XPCOM";
   return console;

@@ -14,7 +14,8 @@ const Cu = Components.utils;
 
 const nsIFile = ("nsILocalFile" in Ci ? Ci.nsILocalFile : Ci.nsIFile);
 
-Cu.import ("resource://akahuku/console.jsm");
+var {AkahukuConsole}
+= Cu.import ("resource://akahuku/console.jsm", {});
 var console = new AkahukuConsole ();
 console.prefix = "Akahuku debug(p2p-service)";
 
@@ -83,7 +84,8 @@ catch (e) {
 
 var arAkahukuP2PService = {};
 
-Cu.import ("resource://gre/modules/XPCOMUtils.jsm");
+var {XPCOMUtils}
+= Cu.import ("resource://gre/modules/XPCOMUtils.jsm", {});
 
 /**
  * arAkahukuP2PService.servant

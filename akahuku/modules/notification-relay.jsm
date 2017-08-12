@@ -23,7 +23,8 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-Cu.import ("resource://akahuku/console.jsm");
+var {AkahukuConsole}
+= Cu.import ("resource://akahuku/console.jsm", {});
 var console = new AkahukuConsole ();
 console.prefix = "Akahuku debug(topic-relay#root)";
 

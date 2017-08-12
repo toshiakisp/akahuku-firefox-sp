@@ -3257,7 +3257,8 @@ var arAkahukuLink = {
       image.style.borderWidth = "0px";
       image.title = uri;
       // HTTPレスポンスを直に監視してエラー情報を得る
-      Components.utils.import ("resource://akahuku/observer.jsm");
+      var {AkahukuObserver}
+       = Components.utils.import ("resource://akahuku/observer.jsm", {});
       var listener = function (details) {
         if (!(200 <= details.statsuCode && details.statsuCode < 300)) {
           // エラーの情報をノードに記録

@@ -131,7 +131,8 @@ Akahuku.startup = function () {
   }
   startedup = true;
 
-  Cu.import ("resource://akahuku/console.jsm");
+  var {AkahukuConsole}
+  = Cu.import ("resource://akahuku/console.jsm", {});
   console = new AkahukuConsole ();
   if (appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT) {
     console.prefix = "Akahuku debug(jsm#main)";

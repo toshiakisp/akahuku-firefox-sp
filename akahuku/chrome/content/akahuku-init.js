@@ -57,6 +57,8 @@ if (!Akahuku.initialized) {
       observe : function (subject, topic, data) {
         if (topic == "quit-application") {
           Akahuku.shutdown ();
+          var {AkahukuContextMenusService}
+          = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
           AkahukuContextMenusService.shutdown ();
           if (typeof AkahukuNotificationRelay !== "undefined") {
             AkahukuNotificationRelay.shutdown ();

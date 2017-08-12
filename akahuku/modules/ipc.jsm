@@ -13,7 +13,8 @@ var EXPORTED_SYMBOLS = [
   "AkahukuIPCManager",
 ];
 
-Cu.import ("resource://akahuku/console.jsm");
+var {AkahukuConsole}
+= Cu.import ("resource://akahuku/console.jsm", {});
 var console = new AkahukuConsole ();
 
 

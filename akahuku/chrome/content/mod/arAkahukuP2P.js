@@ -40,11 +40,15 @@ var arAkahukuP2P = {
   shortcutModifiersMeta : false,    /* Boolean  ショートカットキーの Meta */
   shortcutModifiersShift : false,   /* Boolean  ショートカットキーの Shift */
     
+  service : null,
+
   /**
    * 初期化処理
    */
   init : function () {
-    Components.utils.import ("resource://akahuku/p2p-service.jsm");
+    var {arAkahukuP2PService}
+    = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+    arAkahukuP2P.service = arAkahukuP2PService;
   },
 
   attachToWindow : function (window) {
@@ -56,7 +60,7 @@ var arAkahukuP2P = {
   },
 
   term : function () {
-    var servant = arAkahukuP2PService.servant;
+    var servant = arAkahukuP2P.service.servant;
     if (servant) {
       try {
         arAkahukuP2P.saveNodeList ();
@@ -466,7 +470,7 @@ var arAkahukuP2P = {
    *         ない場合は null
    */
   getCacheFile : function (uri) {
-    return arAkahukuP2PService.utils.getCacheFileIfExists (uri);
+    return arAkahukuP2P.service.utils.getCacheFileIfExists (uri);
   },
   
   /**
@@ -492,7 +496,7 @@ var arAkahukuP2P = {
       return;
     }
 
-    arAkahukuP2PService.utils.deleteCache (src);
+    arAkahukuP2P.service.utils.deleteCache (src);
   },
   onClickDeleteCache : function (event) {
     var window = event.currentTarget.ownerDocument.defaultView;
@@ -516,9 +520,9 @@ var arAkahukuP2P = {
    * P2P の状態を更新する
    */
   update : function () {
-    var servant = arAkahukuP2PService.servant;
+    var servant = arAkahukuP2P.service.servant;
     if (!servant) {
-      Akahuku.debug.error ("no arAkahukuP2PService.servant !");
+      Akahuku.debug.error ("no arAkahukuP2P.service.servant !");
       return;
     }
     
@@ -778,7 +782,7 @@ var arAkahukuP2P = {
    * ノードリストを保存する
    */
   saveNodeList : function () {
-    var servant = arAkahukuP2PService.servant;
+    var servant = arAkahukuP2P.service.servant;
     var nodeList = servant.getNodeList ();
     if (nodeList) {
       arAkahukuConfig.setCharPref
@@ -791,7 +795,7 @@ var arAkahukuP2P = {
    * P2P ステータスバーを更新する
    */
   updateStatusbar : function (param) {
-    var servant = arAkahukuP2PService.servant;
+    var servant = arAkahukuP2P.service.servant;
     if (!servant) {
       Akahuku.debug.warn ("P2P.updateStatusbar: no p2p servant available!")
       return;
@@ -1014,7 +1018,7 @@ var arAkahukuP2P = {
    *            Number キューにあった数, Number キューに突っ込んだ個数]
    */
   applyP2P : function (targetDocument, targetNode, prefetchOnly) {
-    var servant = arAkahukuP2PService.servant;
+    var servant = arAkahukuP2P.service.servant;
     if (!servant) {
       Akahuku.debug.warn ("no p2p servant available!")
       return [-1, -1, -1, -1];
@@ -1164,7 +1168,7 @@ var arAkahukuP2P = {
         return;
       }
       var path = target.path;
-      var servant = arAkahukuP2PService.servant;
+      var servant = arAkahukuP2P.service.servant;
       servant.prefetchFile (path, null);
     }
         

@@ -20,7 +20,8 @@ const CE = Components.Exception;
 
 const PR_UINT32_MAX = 0xffffffff;
 
-Cu.import ("resource://akahuku/ipc-proxy.jsm");
+var {arIPCProxyParent, arIPCProxyChild}
+= Cu.import ("resource://akahuku/ipc-proxy.jsm", {});
 
 
 /**

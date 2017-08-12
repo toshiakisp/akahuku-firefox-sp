@@ -55,7 +55,8 @@ var arAkahukuCacheIPCWrapper = {
       },
       onCacheEntryAvailable : function (entry, isNew, appCache, status) {
         if (entry) {
-          Cu.import ("resource://akahuku/ipc-cache.jsm");
+          var {arCacheEntryParent}
+          = Cu.import ("resource://akahuku/ipc-cache.jsm", {});
           var entryP = new arCacheEntryParent (entry);
           entryP.attachIPCMessageManager (messageManager);
           entry = entryP.createIPCTransferable ();
@@ -183,7 +184,8 @@ var arAkahukuFileIPC = {
   createFileOutputStream : function (file, ioFlags, perm, behaviorFlags) {
     var fstream = arAkahukuFile.createFileOutputStream (file, ioFlags, perm, behaviorFlags);
     if (fstream) {
-      Cu.import ("resource://akahuku/ipc-stream.jsm");
+      var {arOutputStreamParent}
+      = Cu.import ("resource://akahuku/ipc-stream.jsm", {});
       fstream = new arOutputStreamParent (fstream);
       var mm = arAkahukuIPCRoot.messageTarget.messageManager;
       if (!mm) { // via child process message manager
@@ -197,7 +199,8 @@ var arAkahukuFileIPC = {
   createFileInputStream : function (file, ioFlags, perm, behaviorFlags) {
     var fstream = arAkahukuFile.createFileInputStream (file, ioFlags, perm, behaviorFlags);
     if (fstream) {
-      Cu.import ("resource://akahuku/ipc-stream.jsm");
+      var {arInputStreamParent}
+      = Cu.import ("resource://akahuku/ipc-stream.jsm", {});
       fstream = new arInputStreamParent (fstream);
       var mm = arAkahukuIPCRoot.messageTarget.messageManager;
       if (!mm) { // via child process message manager

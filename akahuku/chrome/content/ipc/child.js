@@ -63,7 +63,8 @@ Akahuku.Cache.asyncOpenCache = function (source, flag, callback) {
       : arAkahukuIPC.getChildProcessMessageManager (),
     onCacheEntryAvaiable : function (entry, isNew, appCache, status) {
       if (entry) {
-        Components.utils.import ("resource://akahuku/ipc-cache.jsm");
+        var {arCacheEntryChild}
+        = Components.utils.import ("resource://akahuku/ipc-cache.jsm", {});
         entry = new arCacheEntryChild (entry);
         entry.attachIPCMessageManager (this.messageManager);
       }
@@ -195,7 +196,8 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
     .sendSyncCommand ("File/createFileOutputStream",
         [file, ioFlags, perm, behaviorFlags], contentWindow);
   if (fstream) {
-    Components.utils.import ("resource://akahuku/ipc-stream.jsm");
+    var {arOutputStreamChild}
+    = Components.utils.import ("resource://akahuku/ipc-stream.jsm", {});
     fstream = new arOutputStreamChild (fstream);
     var mm = (contentWindow
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)
@@ -216,7 +218,8 @@ arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFla
     .sendSyncCommand ("File/createFileInputStream",
         [file, ioFlags, perm, behaviorFlags], contentWindow);
   if (fstream) {
-    Components.utils.import ("resource://akahuku/ipc-stream.jsm");
+    var {arInputStreamChild}
+    = Components.utils.import ("resource://akahuku/ipc-stream.jsm", {});
     var fstreamC = new arInputStreamChild (fstream);
     var mm = (contentWindow
         ? arAkahukuIPC.getContentFrameMessageManager (contentWindow)

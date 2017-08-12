@@ -412,7 +412,8 @@ var akahuku_scheme_key = "";
     
 
   this.initKey = function () {
-    Cu.import ("resource://akahuku/storage.jsm");
+    var {AkahukuStorage}
+    = Cu.import ("resource://akahuku/storage.jsm", {});
     akahuku_scheme_key
       = AkahukuStorage.local.get ("protocol/akahuku_scheme_key") || "";
     if (akahuku_scheme_key.length == 0) {

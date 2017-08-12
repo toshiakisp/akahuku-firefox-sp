@@ -16,7 +16,8 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-Cu.import ("resource://akahuku/console.jsm");
+var {AkahukuConsole}
+= Cu.import ("resource://akahuku/console.jsm", {});
 var console = new AkahukuConsole ();
 console.prefix = "Akahuku debug(observer)";
 
@@ -538,7 +539,8 @@ var NotificationObserverFactory = {
 
 if (isE10sReady) {
   const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
-  Cu.import ("resource://akahuku/ipc-proxy.jsm");
+  var {arIPCProxyParent, arIPCProxyChild}
+  = Cu.import ("resource://akahuku/ipc-proxy.jsm", {});
 
   var ipc = AkahukuIPCManager.createRoot ("observer");
   var arAkahukuIPC = ipc.child;

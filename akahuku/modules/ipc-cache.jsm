@@ -16,8 +16,11 @@ const Cu = Components.utils;
 const Cr = Components.results;
 const CE = Components.Exception;
 
-Cu.import ("resource://akahuku/ipc-proxy.jsm");
-Cu.import ("resource://akahuku/ipc-stream.jsm");
+var {arIPCProxyParent, arIPCProxyChild}
+= Cu.import ("resource://akahuku/ipc-proxy.jsm", {});
+var {arInputStreamParent, arInputStreamChild,
+  arOutputStreamParent, arOutputStreamChild}
+= Cu.import ("resource://akahuku/ipc-stream.jsm", {});
 
 
 /**
