@@ -124,7 +124,7 @@ var AkahukuP2PSidebar = {
       AkahukuP2PSidebar.check ();
             
       AkahukuP2PSidebar.timerID
-      = setInterval (AkahukuP2PSidebar.check, 1000);
+      = window.setInterval (AkahukuP2PSidebar.check, 1000);
     }
   },
     
@@ -181,7 +181,7 @@ var AkahukuP2PSidebar = {
     .setCharPref ("akahuku.savepref",
                   String (new Date ().getTime ()));
         
-    setTimeout (AkahukuP2PSidebar.check, 1000);
+    window.setTimeout (AkahukuP2PSidebar.check, 1000);
   },
     
   /**
@@ -596,7 +596,7 @@ var AkahukuP2PSidebar = {
    */
   unload : function () {
     if (AkahukuP2PSidebar.timerID != null) {
-      clearInterval (AkahukuP2PSidebar.timerID);
+      window.clearInterval (AkahukuP2PSidebar.timerID);
       AkahukuP2PSidebar.timerID = null;
     }
   }

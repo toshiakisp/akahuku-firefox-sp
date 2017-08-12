@@ -1948,7 +1948,7 @@ var arAkahukuThread = {
             
       var tabbrowser = document.getElementById ("content");
                 
-      function setTabIconForDocument (targetDocument) {
+      var setTabIconForDocument = function (targetDocument) {
         var thumbnail
           = targetDocument.getElementById ("akahuku_thumbnail");
         if (thumbnail) {
@@ -1958,7 +1958,7 @@ var arAkahukuThread = {
           arAkahukuThread.setTabIcon
             (targetDocument, info, thumbnail);
         }
-      }
+      };
 
       if ("visibleTabs" in tabbrowser) {
         /* Firefox4/Gecko2.0 */
@@ -2921,7 +2921,7 @@ var arAkahukuThread = {
        * @return HTMLDivElement
        *         移動ボタン
        */
-      function createMoveButton () {
+      var createMoveButton = function () {
         var div, a;
         div = targetDocument.createElement ("div");
         div.id
@@ -2958,7 +2958,7 @@ var arAkahukuThread = {
                          ("]"));
                 
         return div;
-      }
+      };
       
       /**
        * レスの末尾にスレの消滅情報を追加する
@@ -2966,7 +2966,7 @@ var arAkahukuThread = {
        * @param  HTMLQuoteElement node
        *         最後の blockquote 要素
        */
-      function addStatus (node) {
+      var addStatus = function (node) {
         // enableBottomStatus に関わらず最新レス番号を更新する
         var lastReplyNumber
           = lastReply ? Akahuku.getMessageNum (lastReply) : 0;
@@ -3029,7 +3029,7 @@ var arAkahukuThread = {
           }
         }
         isDel = false;
-      }
+      };
             
       var nodes = Akahuku.getMessageBQ (targetDocument);
       var node, nodeName;

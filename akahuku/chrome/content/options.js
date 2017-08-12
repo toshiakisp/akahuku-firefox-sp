@@ -1319,7 +1319,7 @@ var AkahukuOptions = {
           }
           var listitem, listcell;
           for (var i = 0; i < list.length; i ++) {
-            name = list [i];
+            var name = list [i];
             listitem = document.createElement ("listitem");
             listcell = document.createElement ("listcell");
             listcell.setAttribute ("value", name);
@@ -1401,7 +1401,7 @@ var AkahukuOptions = {
           value.subdir_url
             = document.getElementById ("saveimage_base_subdir_url").checked;
           value.subdir_board
-            =　document.getElementById ("saveimage_base_subdir_board").checked;
+            = document.getElementById ("saveimage_base_subdir_board").checked;
           value.subdir_server
             = document.getElementById ("saveimage_base_subdir_server").checked;
           value.subdir_dir

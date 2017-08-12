@@ -2433,7 +2433,7 @@ var arAkahukuReload = {
         startTag : "<td bgcolor=", // レスのコンテナの開始文字列
         endTag : "</td>", // レスのコンテナの終端文字列(1)
         endTag2 : null, // 終端文字列(1)の後にある真の終端文字列
-        tagStop : ">", //　レスコンテナのタグの終端文字列
+        tagStop : ">", // レスコンテナのタグの終端文字列
         checkBGColor : true, // コンテナの bgcolor の値まで判定するかどうか
         inputTagAttrForNum : "name=", // スレ文&レス固有のinput要素を特定する属性のパターン
         containerIsTable : true, // レスのコンテナの親が TABLE かどうか

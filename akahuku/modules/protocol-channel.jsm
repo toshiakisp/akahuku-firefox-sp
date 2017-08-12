@@ -1113,9 +1113,9 @@ arAkahukuCacheChannel.prototype = {
             try {
               request.cancel (that.status);
             }
-            finally {
-              return that._close (that.status);
+            catch (e) {
             }
+            return that._close (that.status);
           }
           try {
             that._started = true;

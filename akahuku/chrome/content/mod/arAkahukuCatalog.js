@@ -4381,7 +4381,7 @@ var arAkahukuCatalog = {
     var columns = 10;
 
     // index順以外の共通評価関数
-    function compareForReorderToWidth (x, y) {
+    var compareForReorderToWidth = function (x, y) {
       if (arAkahukuCatalog.enableReorderSticky) {
         if (x.isSticky && !y.isSticky) {
           return -1;
@@ -4419,7 +4419,7 @@ var arAkahukuCatalog = {
         return x.index - y.index;
       }
       return 0;
-    }
+    };
     if (!arAkahukuCatalog.enableReloadLeftBefore
         && !arAkahukuCatalog.enableReorderNew
         && !arAkahukuCatalog.enableReorderSticky
@@ -6256,7 +6256,7 @@ var arAkahukuCatalog = {
          * @param  String content
          *         アンカーの内容
          */
-        function createReorderOrderButton (aid, content, reorderWidth) {
+        var createReorderOrderButton = function (aid, content, reorderWidth) {
           var anchor = targetDocument.createElement ("a");
           anchor.id = aid;
           anchor.className = "akahuku_catalog_reorder";
@@ -6279,7 +6279,7 @@ var arAkahukuCatalog = {
           paragraph.appendChild (targetDocument.createTextNode ("["));
           paragraph.appendChild (anchor);
           paragraph.appendChild (targetDocument.createTextNode ("]"));
-        }
+        };
                 
         var columns = arAkahukuCatalog.reorderWidth;
         if (columns == 0) {

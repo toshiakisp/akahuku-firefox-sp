@@ -418,7 +418,7 @@ var arAkahukuPopupQuote = {
        * @param  Boolean isReply
        *         レスか
        */
-      function copyPopup (blockquote, td, isReply) {
+      var copyPopup = function (blockquote, td, isReply) {
         var lastText = "";
         var result = "";
         for (var node = blockquote; node; node = node.previousSibling) {
@@ -588,7 +588,7 @@ var arAkahukuPopupQuote = {
             td.appendChild (newNode);
           }
         }
-      }
+      };
             
       /**
        * 引用対象を取得する
@@ -610,7 +610,7 @@ var arAkahukuPopupQuote = {
        *         引用元
        *         見付からなかった場合は null
        */
-      function getQuoteOriginal (quoted, currentBlockQuote,
+      var getQuoteOriginal = function (quoted, currentBlockQuote,
                                  currentTd, type, info) {
         var innerText = arAkahukuDOM.getInnerText2 (quoted);
         var index = -1;
@@ -1010,7 +1010,7 @@ var arAkahukuPopupQuote = {
         }
                 
         return null;
-      }
+      };
             
       var node = param.target;
       var container = null, blockquote = null;

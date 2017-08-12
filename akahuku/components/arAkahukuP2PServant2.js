@@ -41,6 +41,9 @@ const nsIWindowMediator     = Components.interfaces.nsIWindowMediator;
 const nsIIOService       = Components.interfaces.nsIIOService;
 const nsIObserverService = Components.interfaces.nsIObserverService;
 
+const nsIRequestObserver = Components.interfaces.nsIRequestObserver;
+const nsIStreamListener  = Components.interfaces.nsIStreamListener;
+
 const nsIThread = Components.interfaces.nsIThread;
 const nsIThreadManager = Components.interfaces.nsIThreadManager;
 const nsIEventTarget = Components.interfaces.nsIEventTarget;
@@ -321,7 +324,7 @@ arAkahukuP2PNode.prototype = {
     var priority = 0;
         
     /* 見ている板が同じ数だけ優先度を上げる */
-    for (board in this.boardList) {
+    for (var board in this.boardList) {
       if (board in arAkahukuP2PServant2.boardList) {
         priority += 100;
       }
@@ -889,6 +892,7 @@ var arAkahukuP2PServant2 = {
     
   /* ノード関連 */
   nodeList : new Array (),       /* Array  保持しているノード
+                                  *   接続していないノードも含む
                                   *   [arAkahukuP2PNode, ...] */
   activeNodeList : new Array (), /* Array  使用中の接続
                                   *   [arAkahukuP2PNode, ...] */
@@ -906,9 +910,6 @@ var arAkahukuP2PServant2 = {
                                 *     [Boolean 終了前に接続していたか,
                                 *      Number  追加した時刻 [s],
                                 *      String  板のリスト]> */
-  nodeList : new Array (),     /* Array  保持しているノード
-                                *   接続していないノードも含む
-                                *   [arAkahukuP2PNode, ...] */
   requestList : new Object (), /* Object  取得中のリクエスト
                                 *   <String id, arAkahukuP2PRequest> */
   requestCount : 0,            /* Number  取得中のリクエストの数 */
@@ -1872,7 +1873,7 @@ var arAkahukuP2PServant2 = {
           arAkahukuP2PServant2.resetServer (now);
         }
             
-        arakahukup2pservant2.boardCheckCount ++;
+        arAkahukuP2PServant2.boardCheckCount ++;
         if (arAkahukuP2PServant2.boardCheckCount
             >= arAkahukuP2PServant2.BOARD_CHECK_INTERVAL) {
           arAkahukuP2PServant2.boardCheckCount = 0;
@@ -1903,7 +1904,7 @@ var arAkahukuP2PServant2 = {
     var boardCount = 0;
     var diff;
         
-    for (board in arAkahukuP2PServant2.boardList) {
+    for (var board in arAkahukuP2PServant2.boardList) {
       diff
         = parseInt (now / 1000)
         - arAkahukuP2PServant2.boardList [board];
@@ -2164,7 +2165,7 @@ var arAkahukuP2PServant2 = {
     arAkahukuP2PServant2.addList = new Object ();
         
     /* 追加ノードのうち、保持しているものは更新する */
-    for (nodeName in addList) {
+    for (var nodeName in addList) {
       for (i = 0; i < arAkahukuP2PServant2.nodeList.length; i ++) {
         node = arAkahukuP2PServant2.nodeList [i];
         if (node.nodeName == nodeName) {
@@ -3701,7 +3702,7 @@ var arAkahukuP2PServant2 = {
           + "|" + node.status
           + "|" + node.lastAliveTime
           + "|";
-        for (board in node.boardList) {
+        for (var board in node.boardList) {
           nodeList
             += board + ":" + node.boardList [board] + ";";
         }
@@ -4473,7 +4474,7 @@ var arAkahukuP2PServant2 = {
       body
         += node.nodeName + ","
         + node.lastAliveTime + ",";
-      for (board in node.boardList) {
+      for (var board in node.boardList) {
         body
           += board + ":" + node.boardList [board] + ";";
       }
@@ -4815,7 +4816,7 @@ var arAkahukuP2PServant2 = {
       body
         += node2.nodeName + ","
         + node2.lastAliveTime + ",";
-      for (board in node2.boardList) {
+      for (var board in node2.boardList) {
         body
           += board + ":" + node2.boardList [board] + ";";
       }
@@ -4858,7 +4859,7 @@ var arAkahukuP2PServant2 = {
         
     body
     += arAkahukuP2PServant2.nodeName + ",";
-    for (board in arAkahukuP2PServant2.boardList) {
+    for (var board in arAkahukuP2PServant2.boardList) {
       body
         += board + ":" + arAkahukuP2PServant2.boardList [board] + ";";
     }
