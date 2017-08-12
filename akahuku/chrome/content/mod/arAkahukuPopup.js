@@ -1,11 +1,10 @@
 
-/* global arAkahukuCatalog */
-
 /**
  * ポップアップ画像のキャッシュデータ
  */
 function arAkahukuCacheImageData () {
   this.caches = new Array ();
+  this.limit = 1;
 }
 arAkahukuCacheImageData.prototype = {
   caches : null, /* Array  画像のキャッシュ
@@ -84,7 +83,7 @@ arAkahukuCacheImageData.prototype = {
   register : function (key, image) {
     if (!this.exists (key)) {
       this.caches.push ([key, image]);
-      while (this.caches.length > arAkahukuCatalog.zoomCacheCount) {
+      while (this.caches.length > this.limit) {
         this.caches [0][1] = null;
         this.caches.shift ();
       }

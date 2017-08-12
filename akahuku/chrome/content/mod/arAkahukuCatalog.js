@@ -6353,6 +6353,15 @@ var arAkahukuCatalog = {
       /* ズーム用にマウスのイベントを検出する */
       if (arAkahukuCatalog.enableZoom) {
         var param2 = new arAkahukuPopupParam (10, targetDocument);
+        try { // Firefox 4+
+          Object.defineProperty (param2.cacheImageData, "limit", {
+            get : function () {
+              return arAkahukuCatalog.zoomCacheCount;
+            }})
+        }
+        catch (e) {
+          param2.cacheImageData.limit = arAkahukuCatalog.zoomCacheCount;
+        }
         Akahuku.getDocumentParam (targetDocument)
         .catalogpopup_param = param2;
                 
