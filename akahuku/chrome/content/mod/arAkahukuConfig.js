@@ -54,7 +54,6 @@ var arAkahukuConfig = {
     }
     arAkahukuConfig.setCharPref ("akahuku.version", AkahukuVersion);
         
-    if (typeof (arAkahukuConfig.prefBranch.addObserver) === "function") {
       /* 設定を取得する */
       Akahuku.getConfig ();
       arAkahukuTab.getConfig ();
@@ -86,13 +85,6 @@ var arAkahukuConfig = {
                                               arAkahukuConfig,
                                               false);
       arAkahukuConfig.isObserving = true;
-    }
-    else {
-      Akahuku.getConfig ();
-      arAkahukuBloomer.getConfig ();
-      arAkahukuBoard.getConfig ();
-      arAkahukuP2P.getConfig ();
-    }
   },
     
   /**

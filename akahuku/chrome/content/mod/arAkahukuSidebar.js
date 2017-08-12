@@ -1607,12 +1607,6 @@ var arAkahukuSidebar = {
    * @param  arAkahukuSidebarParam param
    */
   update : function (name, sidebarDocument, param) {
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuConfig.loadPrefBranch ();
-      arAkahukuSidebar.getConfig ();
-    }
-        
     if (!sidebarDocument) { // 互換性のため
       sidebarDocument
         = arAkahukuSidebar
@@ -2978,11 +2972,6 @@ var arAkahukuSidebar = {
       item.addEventListener ("command", sort_reply_delta_most, false);
     }
 
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuSidebar.getConfig ();
-    }
-        
     // ソート順の選択をUIに反映
     arAkahukuSidebar.updateSortOrderUI (sidebarDocument);
         

@@ -3470,12 +3470,6 @@ var arAkahukuMHT = {
       arAkahukuConfig.setTime (arAkahukuMHT.limitTime);
     }
         
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuConfig.loadPrefBranch ();
-      arAkahukuMHT.getConfig ();
-    }
-        
     arAkahukuDOM.setText (button, "\u4E2D\u65AD");
     if (button2) {
       arAkahukuDOM.setText (button2, "\u4E2D\u65AD");

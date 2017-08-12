@@ -1,9 +1,9 @@
 
 /* global Components,
  *   Akahuku, AkahukuVersion,
- *   arAkahukuBloomer, arAkahukuBoard, arAkahukuConfig,
+ *   arAkahukuBoard, arAkahukuConfig,
  *   arAkahukuJPEG, arAkahukuLink, arAkahukuP2P, arAkahukuQuote,
- *   arAkahukuStyle, arAkahukuTab, arAkahukuClipboard,
+ *   arAkahukuStyle, arAkahukuClipboard,
  *   arAkahukuCompat, arAkahukuImage, arAkahukuThread,
  */
 
@@ -567,14 +567,6 @@ var arAkahukuUI = {
     var optionsURL = "chrome://akahuku/content/options.xul";
     var features = "chrome,titlebar,toolbar,centerscreen,resizable";
     arAkahukuUI.prefDialog = window.openDialog (optionsURL, "", features);
-        
-    if (!arAkahukuConfig.isObserving) {
-      arAkahukuUI.prefDialog.addEventListener
-        ("unload",
-         function () {
-          arAkahukuUI.setPanelStatus ();
-        }, false);
-    }
   },
     
   /**
@@ -870,17 +862,6 @@ var arAkahukuUI = {
         
     if (param) {
       return;
-    }
-        
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuConfig.loadPrefBranch ();
-      Akahuku.getConfig ();
-      arAkahukuTab.getConfig ();
-      arAkahukuQuote.getConfig ();
-      arAkahukuJPEG.getConfig ();
-      arAkahukuBloomer.getConfig ();
-      arAkahukuBoard.getConfig ();
     }
         
     Akahuku.apply (targetDocument, true);

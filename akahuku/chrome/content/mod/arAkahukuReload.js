@@ -2605,13 +2605,6 @@ var arAkahukuReload = {
         }
       }
       if (scope) {
-        if (!arAkahukuConfig.isObserving) {
-          /* 監視していない場合にのみ設定を取得する */
-          if (scope.Aima_Aimani.loadNGWord) {
-            scope.Aima_Aimani.loadNGWord ();
-          }
-        }
-                
         if ("hideNGNumberHandler" in scope.Aima_Aimani) {
           aimaHandler = scope.Aima_Aimani.hideNGNumberHandler;
         }

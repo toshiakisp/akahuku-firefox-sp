@@ -3,7 +3,7 @@
  *   arAkahukuLocationInfo, arAkahukuDocumentParam,
  *   arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
  *   arAkahukuWindow,
- *   arAkahukuFile, arAkahukuFileName, arAkahukuWheel, arAkahukuDelBanner,
+ *   arAkahukuFile, arAkahukuWheel, arAkahukuDelBanner,
  *   arAkahukuSound, arAkahukuLink, arAkahukuCatalog, arAkahukuTitle,
  *   arAkahukuBoard, arAkahukuConverter, arAkahukuP2P, arAkahukuConfig,
  *   arAkahukuStyle, arAkahukuSidebar,
@@ -950,26 +950,9 @@ var Akahuku = {
    */
   onDOMContentLoaded : function (event) {
     var targetDocument = event.target.defaultView.document;
-    
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuConfig.loadPrefBranch ();
-      Akahuku.getConfig ();
-    }
-        
     var needApply = false;
         
     if (Akahuku.enableAll) {
-      if (!arAkahukuConfig.isObserving) {
-        /* 監視していない場合にのみ設定を取得する */
-        arAkahukuTab.getConfig ();
-        arAkahukuQuote.getConfig ();
-        arAkahukuJPEG.getConfig ();
-        arAkahukuBloomer.getConfig ();
-        arAkahukuBoard.getConfig ();
-        arAkahukuFileName.getConfig ();
-      }
-      
       needApply = Akahuku.getNeedApply (targetDocument,
                                         targetDocument.documentURI);
       
@@ -1093,10 +1076,6 @@ var Akahuku = {
       }
     } ticlog += "\n  addCheckboxID "+tic.toc();
     
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuSound.getConfig ();
-    }
     arAkahukuSound.apply (targetDocument, info);
         
     if (href.match (/futaba\.php$/)
@@ -1107,23 +1086,6 @@ var Akahuku = {
       /* futaba: 負荷があるだけなので外部には対応しない */
       return;
     }
-    
-    if (!arAkahukuConfig.isObserving) {
-      /* 監視していない場合にのみ設定を取得する */
-      arAkahukuTitle.getConfig ();
-      arAkahukuScroll.getConfig ();
-      arAkahukuDelBanner.getConfig ();
-      arAkahukuWheel.getConfig ();
-      arAkahukuMHT.getConfig ();
-      arAkahukuImage.getConfig ();
-      arAkahukuPostForm.getConfig ();
-      arAkahukuReload.getConfig ();
-      arAkahukuThreadOperator.getConfig ();
-      arAkahukuThread.getConfig ();
-      arAkahukuLink.getConfig ();
-      arAkahukuPopupQuote.getConfig ();
-      arAkahukuCatalog.getConfig ();
-    } ticlog += "\n  getConfig "+tic.toc();
     
     if (arAkahukuBoard.enableSelect) {
       /* 板を制限する場合はチェックする */
