@@ -81,6 +81,7 @@ arAkahukuContentPolicy.prototype = {
   _enableBoardSelect : false,        /* Boolean  動作する板を指定するか */
   _boardSelectExList : new Object (),/* Object  動作しない板
                                       *   <String 板名, Boolean ダミー> */
+  _board : null,
 
   // required for XPCOM registration by XPCOMUtils
   classDescription: "Akahuku Content Policy JS Component",
@@ -184,10 +185,8 @@ arAkahukuContentPolicy.prototype = {
         // minimum initialization for arAkahukuConfig.initPref ()
         arAkahukuConfig.prefBranch = this._pref;
       }
-      if (typeof arAkahukuBoard === "undefined") {
-        loader.loadSubScript
-          ("chrome://akahuku/content/mod/arAkahukuBoardLoader.js");
-      }
+      var {arAkahukuBoard} = Cu.import ("resource://akahuku/board.jsm", {});
+      this._board = arAkahukuBoard;
     }
     catch (e) {
       Cu.reportError (e);
@@ -331,18 +330,18 @@ arAkahukuContentPolicy.prototype = {
     this._enableP2PTatelog
     = enableAll && enableP2P && enableP2PTatelog;
         
-    if (arAkahukuBoard) {
-      arAkahukuBoard.getConfig ();
+    if (this._board) {
+      this._board.getConfig ();
       this._enableBoardExternal
-      = enableAll && arAkahukuBoard.enableExternal;
+      = enableAll && this._board.enableExternal;
       if (this._enableBoardExternal) {
-        this._boardExternalList = arAkahukuBoard.externalList;
+        this._boardExternalList = this._board.externalList;
       }
 
       this._enableBoardSelect
-      = enableAll && arAkahukuBoard.enableSelect;
+      = enableAll && this._board.enableSelect;
       if (this._enableBoardSelect) {
-        this._boardSelectExList = arAkahukuBoard.selectExList;
+        this._boardSelectExList = this._board.selectExList;
       }
     }
   },
