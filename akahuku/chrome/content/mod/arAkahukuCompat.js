@@ -338,7 +338,7 @@ var arAkahukuCompat = new function () {
     }
     else {
       // Gecko (6.0)-51.0
-      file = new File (file);
+      file = new File (localfile);
       callback.apply (null, [file]);
     }
   };
