@@ -122,7 +122,8 @@ arAkahukuIPCRoot.defineProc
 
 
 arAkahukuIPCRoot.defineProc
-  (arAkahukuClipboard, "Clipboard", "getFile");
+  (arAkahukuClipboard, "Clipboard", "getFile",
+   {async:true, promise: true});
 
 
 

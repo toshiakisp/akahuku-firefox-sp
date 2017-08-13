@@ -131,7 +131,7 @@ arAkahukuCatalog.asyncFocusByThreadURI = function (uri, anchor, callback) {
 
 
 arAkahukuClipboard.getFile = function () {
-  return arAkahukuIPC.sendSyncCommand ("Clipboard/getFile", []);
+  return arAkahukuIPC.sendAsyncCommand ("Clipboard/getFile", []);
 };
 
 

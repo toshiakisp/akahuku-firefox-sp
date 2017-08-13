@@ -42,7 +42,9 @@ arAkahukuPostFormParam.prototype = {
   targetURL : "",                 /* String  フォームの送信先の URL */
   added : false,                  /* Boolean  リスナに登録したか */
     
-  upfile : "",                    /* String  添付ファイル */
+  upfilePath : "",                /* String  添付ファイルパス */
+  upfileFile : null,              /* File  添付ファイル */
+  upfileObjectURL : null,         /* String  添付ファイル URL */
     
   bottomFormAlignTimerID : null,  /* Number  末尾位置フォームの整形タイマー ID */
     
@@ -2847,18 +2849,16 @@ var arAkahukuPostForm = {
         if (event.clipboardData.types [i] === "text/plain") {
           return; // テキスト貼付け可能時は何もしない
         }
-        else if (event.clipboardData.types [i] === "application/x-moz-file") {
+        else if (event.clipboardData.types [i] === "Files") {
           // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
-          var file = event.clipboardData.mozGetDataAt ("application/x-moz-file", i);
-          if (filebox && file instanceof Components.interfaces.nsIFile) {
-            if (param.testAttachableExt (file.path)) {
-              arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
-                if (arAkahukuPostForm.enablePreview) {
-                  arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-                }
-              });
-              return; // 貼り付け成功時はそこで終了
-            }
+          var file = event.clipboardData.files [0];
+          if (param.testAttachableExt (file.name)) {
+            arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+              if (arAkahukuPostForm.enablePreview) {
+                arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+              }
+            });
+            return; // 貼り付け成功時はそこで終了
           }
         }
       }
@@ -2868,19 +2868,31 @@ var arAkahukuPostForm = {
            + event.clipboardData.types.length+": "+typesText);
       }
     }
+    else if (!event.clipboardData) {
+      // Firefox -21.*, or js-created "paste" event from pastebutton
+      Akahuku.debug.log ("onPasteFromClipboard: no clipboardData");
+    }
 
-    var file = arAkahukuClipboard.getFile ();
-    if (file) {
-      if (param.testAttachableExt (file.path)) {
+    // クリップボードから直接取得
+    arAkahukuClipboard.getFile ()
+    .then (function (file) {
+      if (param.testAttachableExt (file.name)) {
         arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
           if (arAkahukuPostForm.enablePreview) {
             arAkahukuPostForm.onPreviewChangeCore (targetDocument);
           }
         });
-        return; // 貼り付け成功時はそこで終了
       }
-    }
+      else {
+        Akahuku.debug.log ("onPasteFromClipboard: file has un-attachable ext");
+      }
+    }, function (reason) {
+      // 画像としての取得に挑戦
+      arAkahukuPostForm.tryPasteImageFromClipboard (targetDocument);
+    });
+  },
 
+  tryPasteImageFromClipboard : function (targetDocument) {
     var flavor = "image/jpg";
     var imageBin = arAkahukuClipboard.getImage (flavor);
     if (imageBin === null) {
@@ -2888,6 +2900,10 @@ var arAkahukuPostForm = {
       return;
     }
 
+    var filebox = targetDocument.getElementsByName ("upfile") [0];
+    if (!filebox) {
+      return;
+    }
     filebox.value = "";
     if (arAkahukuPostForm.enablePreview) {
       arAkahukuPostForm.onPreviewChangeCore (targetDocument);
@@ -3533,11 +3549,23 @@ var arAkahukuPostForm = {
     if (filebox && filebox [0]) {
       filebox = filebox [0];
       var filename = filebox.value;
+      var fullpath = filename;
+      var file = null;
+
+      if (filebox.files && filebox.files.length > 0) {
+        file = filebox.files [0];// DOM File
+      }
+      if (!filename && file) {
+        // e10s content: DataTransfer から取得した File をセットした場合
+        // value からパス名は取得できない
+        filename = file.name;
+        fullpath = null;
+      }
             
       var documentParam = Akahuku.getDocumentParam (targetDocument);
       if (documentParam) {
         var param = documentParam.postform_param;
-        if (param.upfile == filename) {
+        if (fullpath ? param.upfilePath === fullpath : param.upfileFile === file) {
           /* ファイルが変わってない場合は何もしない */
           return;
         }
@@ -3557,7 +3585,7 @@ var arAkahukuPostForm = {
         mimeType = "video/webm";
       }
 
-      if (!param.testAttachableExt (filename)) {
+      if (param && !param.testAttachableExt (filename)) {
         // 添付可能なファイル以外はプレビュー無し
         mimeType = "";
       }
@@ -3600,12 +3628,10 @@ var arAkahukuPostForm = {
       if (container && preview && bytes) {
         if (documentParam && param) {
           // 以下で処理することになる添付ファイル名を記憶する
-          param.upfile = filename;
+          param.upfilePath = fullpath;
+          param.upfileFile = file;
         }
-        var {AkahukuFileUtil}
-        = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
-        AkahukuFileUtil.createFromFileName (filename)
-        .then (function (file) {
+        if (file) {
           try {
             var readableSize
               = arAkahukuPostForm.getReadableSize (file.size || file.fileSize);
@@ -3637,11 +3663,38 @@ var arAkahukuPostForm = {
               previewT.style.maxHeight
                 = arAkahukuPostForm.previewSize + "px";
 
-              previewT.src
-                = Akahuku.protocolHandler.enAkahukuURI
-                ("local",
-                 arAkahukuFile.getURLSpecFromFilename
-                 (filename));
+              var URL = targetDocument.defaultView.URL;
+              if (URL && URL.createObjectURL) {
+                try {
+                  // Web APIs: URL and createObjectURL (Firefox 4+)
+                  previewT.src = URL.createObjectURL (file);
+                  try {
+                    if (param) {
+                      if (param.upfileObjectURL) {
+                        URL.revokeObjectURL (param.upfileObjectURL);
+                      }
+                      param.upfileObjectURL = previewT.src;
+                    }
+                  }
+                  catch (e) {
+                    Akahuku.debug.exception (e);
+                  }
+                }
+                catch (e) {
+                  Akahuku.debug.exception (e);
+                  previewT.src = "";
+                }
+              }
+              else if (fullpath) { // Fx 3.*
+                previewT.src
+                  = Akahuku.protocolHandler.enAkahukuURI
+                  ("local",
+                   arAkahukuFile.getURLSpecFromFilename (fullpath));
+              }
+              else {
+                Akahuku.debug.warn ("THIS MUST NOT BE POSSIBLE");
+                previewT.src = "";
+              }
             }
             else {
               width.style.display = "none";
@@ -3664,7 +3717,8 @@ var arAkahukuPostForm = {
           catch (e) { Akahuku.debug.exception (e);
           }
           container.style.display = "none";
-        }, function (reason) {// not exist
+        }
+        else {
           /* ファイル名が不正 (含クリア) */
           container.style.display = "none";
           preview.removeAttribute ("__size");
@@ -3675,7 +3729,7 @@ var arAkahukuPostForm = {
           arAkahukuDOM.setText (width, "");
           arAkahukuDOM.setText (height, "");
           arAkahukuDOM.setText (appendix, "");
-        });
+        }
       }
     }
   },

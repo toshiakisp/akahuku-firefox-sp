@@ -292,12 +292,20 @@ var arAkahukuCompat = new function () {
             filebox.mozSetFileArray ([file]);
           }
         }
-        else if ("mozSetFileNameArray" in filebox) {
-          filebox.mozSetFileNameArray ([file.path], 1);
-        }
         else {
-          // classic way
-          filebox.value = arAkahukuFile.getURLSpecFromFile (file);
+          var filepath = "";
+          if (file && "mozFullPath" in file) { // DOM File
+            filepath = file.mozFullPath;
+          }
+          else if ("path" in file) { // nsIFile
+            filepath = file.path;
+          }
+          if (filepath) {
+            filebox.mozSetFileNameArray ([filepath], 1);
+          }
+          else {
+            Akahuku.debug.error ("mozSetFile: no filepath;", file);
+          }
         }
       }
       // Call directly callback after classical sync operations

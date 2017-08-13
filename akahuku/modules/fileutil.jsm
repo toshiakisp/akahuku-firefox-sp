@@ -53,20 +53,22 @@ var FileUtilP = {
         .getService (Ci.nsIAppShellService)
         .hiddenDOMWindow;
       this.File = hiddenDOMWindow.File;
+      // Polyfill via input element from hidden DOM window
+      var that = this;
+      this.FilePolyfill = function (path) {
+        var doc = hiddenDOMWindow.document;
+        var input = doc.createElement ("input");
+        input.setAttribute ("type", "file");
+        input.value = that.getURLSpecFromNativePath (path);
+        var file = input.files [0];
+        input.value = "";
+        input = null;
+        return file;
+      };
       if (typeof this.File !== "function") {
         // before Firefox 7?, no File ctor.
-        // Use trick via input element from hidden DOM window
-        var that = this;
-        this.File = function (path) {
-          var doc = hiddenDOMWindow.document;
-          var input = doc.createElement ("input");
-          input.setAttribute ("type", "file");
-          input.value = that.getURLSpecFromNativePath (path);
-          var file = input.files [0];
-          input.value = "";
-          input = null;
-          return file;
-        };
+        this.File = this.FilePolyfill
+        this.FilePolyfill = null; // no futher falldown
       }
     }
   },
@@ -119,6 +121,25 @@ FileUtilP.createFromFileName = function (filename) {
       // for old implementation (at most Firefox 6.*)
       if (typeof file.fileSize !== "undefined"
           && file.fileSize > 0) {
+      }
+      if (!file.mozFullPath) {
+        // ESR17 is OK, but ESR24 or higher cause this problem.
+        // ESR31+: allows mozFullPath only from nsIFile
+        var nsfile = createNsiFile (filename);
+        file = new this.File (nsfile);
+        file.fileSize;
+        if (!file.mozFullPath) { // ESR24
+          if (this.FilePolyfill) {
+            // fallback to polyfill using hidden input element
+            this.File = this.FilePolyfill;
+            this.FilePolyfill = null;// once
+            file = new this.File (filename);
+            file.fileSize;
+          }
+          else {
+            Cu.reportError ("File lacks mozFullPath");
+          }
+        }
       }
       promise = this.Promise.resolve (file);
     }

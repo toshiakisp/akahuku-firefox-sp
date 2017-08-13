@@ -149,22 +149,31 @@ var arAkahukuClipboard = {
     return null;
   },
 
+  /**
+   * クリップボードからファイルを取得
+   * @return Promise to be a DOM File
+   */
   getFile : function () {
     var flavor = "application/x-moz-file";
     var trans = arAkahukuClipboard.getTransferable (flavor);
     var data = {};
+    var {Promise}
+    = Components.utils.import ("resource://akahuku/promise-polyfill.jsm", {});
     try {
       trans.getTransferData (flavor, data, {});
-      return data.value.QueryInterface (Components.interfaces.nsIFile);
+      var nsfile = data.value.QueryInterface (Components.interfaces.nsIFile);
+      var {AkahukuFileUtil}
+      = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+      return AkahukuFileUtil.createFromFileName (nsfile.path);
     }
     catch (e) {
       if (e.result == Components.results.NS_ERROR_FAILURE) {
         Akahuku.debug.warn ("failed to obtain nsIFile from clipboard");
-        return null;
       }
       else {
-        throw e;
+        Akahuku.debug.exception (e);
       }
+      return Promise.reject (e);
     }
   },
 
