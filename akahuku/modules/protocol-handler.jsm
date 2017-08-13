@@ -22,17 +22,8 @@ const Cc = Components.classes;
 const Cr = Components.results;
 const Cu = Components.utils;
 
-if ("import" in Cu) {
-  Cu.import ("resource://akahuku/protocol-channel.jsm");
-  Cu.import ("resource://akahuku/p2p-channel.jsm");
-}
-else {
-  var loader
-    = Cc ["@mozilla.org/moz/jssubscript-loader;1"]
-    .getService (Ci.mozIJSSubScriptLoader);
-  loader.loadSubScript ("resource://akahuku/protocol-channel.jsm");
-  loader.loadSubScript ("resource://akahuku/p2p-channel.jsm");
-}
+Cu.import ("resource://akahuku/protocol-channel.jsm");
+Cu.import ("resource://akahuku/p2p-channel.jsm");
 
 var arAkahukuProtocolHandlerKey = "";
 
@@ -567,14 +558,8 @@ if ("URI_LOADABLE_BY_ANYONE" in Ci.nsIProtocolHandler) {
  * 関連APIとキーは別JSM (protocol.jsm) のスコープとし
  * Frame script からは protocol.jsm のみを使う
  */
-if ("import" in Cu) {
-  Cu.import ("resource://akahuku/protocol.jsm",
-      arAkahukuProtocolHandler.prototype);
-}
-else {
-  loader.loadSubScript ("resource://akahuku/protocol.jsm",
-      arAkahukuProtocolHandler.prototype);
-}
+Cu.import ("resource://akahuku/protocol.jsm",
+    arAkahukuProtocolHandler.prototype);
 
 arAkahukuProtocolHandler.prototype.initKey ();
 
