@@ -2938,21 +2938,15 @@ var arAkahukuPostForm = {
    * 要素への drop イベントで添付ファイルを設定する
    */
   onDropToAttatchFile : function (event) {
-    var type = "application/x-moz-file";
-    if (event.dataTransfer.types.contains (type)) {
-      event.preventDefault ();
-    }
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile") [0];
     var file = null;
-    // Try HTML5 way
+    var dt = event.dataTransfer;
     try {
-      var dt = event.dataTransfer;
       if ("items" in dt) { // DataTransferItemList (Fx50+)
         for (var n=0; n < dt.items.length && !file; n ++) {
           if (dt.items [n].kind == "file") {
             file = dt.items [n].getAsFile (); // DOM File
-            event.preventDefault ();
             break;
           }
         }
@@ -2961,28 +2955,12 @@ var arAkahukuPostForm = {
     catch (e) { Akahuku.debug.exception (e);
       file = null;
     }
-    // Classical way
-    for (var n=0; n < event.dataTransfer.mozItemCount && !file; n ++) {
-      var types = event.dataTransfer.mozTypesAt (n);
-      for (var i=0; i < types.length && !file; i ++) {
-        if (types [i] === type) {
-          file = event.dataTransfer.mozGetDataAt (types [i], n);
-          try {
-            file = file.QueryInterface (Components.interfaces.nsIFile);
-          }
-          catch (e) { // this may cause in a content process (e10s)
-            file = null;
-          }
-        }
-        else if (types [i] === "text/x-moz-url") {
-          // fail safe for e10s
-          var url = event.dataTransfer.mozGetDataAt (types [i], n);
-          file = arAkahukuFile.initFile
-            (arAkahukuFile.getFilenameFromURLSpec (url));
-        }
-      }
+    if (!file && dt.files && dt.files.length > 0) {
+      // via DataTransfer.files (Fx3.5+)
+      file = dt.files [0]; // DOM File
     }
     if (filebox && file) {
+      event.preventDefault ();
       arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
         if (arAkahukuPostForm.enablePreview) {
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
@@ -2992,7 +2970,7 @@ var arAkahukuPostForm = {
   },
 
   checkForDropToAttatchFile : function (event) {
-    if (event.dataTransfer.types.contains ("application/x-moz-file")) {
+    if (event.dataTransfer.types.contains ("Files")) {
       event.preventDefault (); // ドロップ受け入れ
     }
   },
