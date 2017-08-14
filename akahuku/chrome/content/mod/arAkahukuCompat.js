@@ -304,7 +304,7 @@ var arAkahukuCompat = new function () {
             filebox.mozSetFileNameArray ([filepath], 1);
           }
           else {
-            Akahuku.debug.error ("mozSetFile: no filepath;", file);
+            throw new Error ("no path from a file: " + file);
           }
         }
       }
