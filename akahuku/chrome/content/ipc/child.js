@@ -140,10 +140,6 @@ arAkahukuCompat.AsyncHistory.isURIVisited = function () {
   arAkahukuIPC.sendAsyncCommand
     ("CompatAsyncHistory/isURIVisited", arguments);
 };
-arAkahukuCompat.createFileFromNsIFile = function () {
-  arAkahukuIPC.sendAsyncCommand
-    ("Compat/createFileFromNsIFile", arguments);
-};
 arAkahukuCompat.losslessDecodeURI = function () {
   return arAkahukuIPC.sendSyncCommand
     ("Compat/losslessDecodeURI", arguments);

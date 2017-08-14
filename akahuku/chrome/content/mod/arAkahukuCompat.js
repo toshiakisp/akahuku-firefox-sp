@@ -1,5 +1,5 @@
 
-/* global Components, File, arAkahukuFile, arAkahukuUtil */
+/* global Components, arAkahukuFile, arAkahukuUtil */
 
 /**
  * Firefox/Gecko バージョン間の差異を吸収する
@@ -256,49 +256,20 @@ var arAkahukuCompat = new function () {
      * required for e10s content process
      *
      * @param filebox HTMLInputElement
-     * @param file  a url string, nsIFile, or File
-     * @param callback Function
+     * @param file  File
      */
-    mozSetFile : function (filebox, file, callback) {
-      if (!(filebox instanceof Ci.nsIDOMHTMLInputElement
-          && filebox.type == "file")) {
-        throw Components.Exception (
-            "must be called for nsIDOMHTMLInputElement type=file",
-            Cr.NS_ERROR_NO_INTERFACE, Components.stack.caller)
-      }
+    mozSetFile : function (filebox, file) {
       if (!file) {
         filebox.value = "";
       }
       else {
-        if (typeof file == "string") {
-          file = arAkahukuFile.initFile (
-              arAkahukuFile.getFilenameFromURLSpec (file));
-        }
         if ("mozSetFileArray" in filebox) { // since Firefox 38 [Bug 1068838]
-          if (typeof File == "undefined") {
-            // necessary for frame scripts, requiring Firefox 28 and up
-            Components.utils.importGlobalProperties (["File"]);
-          }
-          if (!(file instanceof File)) {
-            arAkahukuCompat.createFileFromNsIFile (file, function (domfile) {
-              filebox.mozSetFileArray ([domfile]);
-              if (typeof callback === "function") {
-                callback.apply (null, []);
-              }
-            });
-            return;
-          }
-          else {
-            filebox.mozSetFileArray ([file]);
-          }
+          filebox.mozSetFileArray ([file]);
         }
         else {
           var filepath = "";
           if (file && "mozFullPath" in file) { // DOM File
             filepath = file.mozFullPath;
-          }
-          else if ("path" in file) { // nsIFile
-            filepath = file.path;
           }
           if (filepath) {
             filebox.mozSetFileNameArray ([filepath], 1);
@@ -308,39 +279,7 @@ var arAkahukuCompat = new function () {
           }
         }
       }
-      // Call directly callback after classical sync operations
-      if (typeof callback === "function") {
-        callback.apply (null, []);
-      }
     },
-  };
-
-  /**
-   * Async File.createFromNsIFile
-   * (requires Fx6+, not ready for content processes)
-   */
-  this.createFileFromNsIFile = function (localfile, callback) {
-    if (typeof File == "undefined") {
-      // necessary for frame scripts, requiring Firefox 28 and up
-      Components.utils.importGlobalProperties (["File"]);
-    }
-    if (typeof File.createFromNsIFile !== "undefined") {
-      // Firefox 52.0+ (Bug 1303518)
-      var file = File.createFromNsIFile (localfile);
-      if (!(file instanceof File) && "then" in file) {
-        // 54.0+: createFromNsIFile returns a Promise (Bug 1335536)
-        file.then (function (file) {
-          callback.apply (null, [file]);
-        });
-        return;
-      }
-      callback.apply (null, [file]);
-    }
-    else {
-      // Gecko (6.0)-51.0
-      file = new File (localfile);
-      callback.apply (null, [file]);
-    }
   };
 
 

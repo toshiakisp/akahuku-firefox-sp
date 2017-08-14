@@ -2846,11 +2846,10 @@ var arAkahukuPostForm = {
           // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
           var file = event.clipboardData.files [0];
           if (param.testAttachableExt (file.name)) {
-            arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
-              if (arAkahukuPostForm.enablePreview) {
-                arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-              }
-            });
+            arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
+            if (arAkahukuPostForm.enablePreview) {
+              arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+            }
             return; // 貼り付け成功時はそこで終了
           }
         }
@@ -2870,11 +2869,10 @@ var arAkahukuPostForm = {
     arAkahukuClipboard.getFile ()
     .then (function (file) {
       if (param.testAttachableExt (file.name)) {
-        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
-          if (arAkahukuPostForm.enablePreview) {
-            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-          }
-        });
+        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
+        if (arAkahukuPostForm.enablePreview) {
+          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+        }
       }
       else {
         Akahuku.debug.log ("onPasteFromClipboard: file has un-attachable ext");
@@ -2910,20 +2908,27 @@ var arAkahukuPostForm = {
       = arAkahukuFile.createUnique
       (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420/*0o644*/);
     filename = file.path;
+    file = null;
     arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
       if (!Components.isSuccessCode (code)) {
         Akahuku.debug.error (arAkahukuUtil.resultCodeToString (code)
           + "in saving " + filename);
         return;
       }
-      var filebox = targetDocument.getElementsByName ("upfile")[0];
-      if (filebox) {
-        arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
+      var {AkahukuFileUtil}
+        = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+      AkahukuFileUtil.createFromFileName (filename)
+      .then (function (file) { // DOM File
+        var filebox = targetDocument.getElementsByName ("upfile")[0];
+        if (filebox) {
+          arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
           if (arAkahukuPostForm.enablePreview) {
             arAkahukuPostForm.onPreviewChangeCore (targetDocument);
           }
-        });
-      }
+        }
+      }, function (reason) {
+        Akahuku.debug.error ("tryPasteImageFromClipboard: failed " + reason.name);
+      });
     });
   },
 
@@ -2954,11 +2959,10 @@ var arAkahukuPostForm = {
     }
     if (filebox && file) {
       event.preventDefault ();
-      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file, function () {
-        if (arAkahukuPostForm.enablePreview) {
-          arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-        }
-      });
+      arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
+      if (arAkahukuPostForm.enablePreview) {
+        arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+      }
     }
   },
 
