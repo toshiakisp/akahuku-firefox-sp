@@ -1,7 +1,7 @@
 /**
  * Utilities for privilege DOM File operations
  */
-/* global Components, Promise, File */
+/* global Components, Promise, File, FileReader */
 
 var EXPORTED_SYMBOLS = [
   "AkahukuFileUtil",
@@ -72,6 +72,20 @@ var FileUtilP = {
       }
     }
   },
+  _prepareFileReader : function () {
+    if (this.FileReader) {
+      return;
+    }
+    if (typeof FileReader !== "undefined") {
+      this.FileReader = FileReader;
+    }
+    else {
+      this.FileReader = function () {
+        return Cc ["@mozilla.org/files/filereader;1"]
+          .createInstance (Ci.nsIDOMFileReader);
+      };
+    }
+  },
   _preparePromise : function () {
     if (this.Promise) {
       return;
@@ -82,6 +96,7 @@ var FileUtilP = {
   },
   _prepareGlobals : function () {
     this._prepareFile ();
+    this._prepareFileReader ();
     this._preparePromise ();
   },
 };
@@ -262,6 +277,77 @@ FileUtilP.getLastModified  = function (file) {
   return 0;
 };
 
+/**
+ * AkahukuFileUtil.exists
+ * @param File file
+ * @return Promise for File that exists (readable)
+ */
+FileUtilP.exists  = function (file) {
+  try {
+    this._prepareGlobals ();
+    var reader = new this.FileReader ();
+    return new this.Promise (function (resolve, reject) {
+      var callbacked = false;
+      reader.onprogress = function (event) {
+        if (event.loaded > 0) {
+          reader.abort (); // no more data needed
+        }
+      };
+      reader.onloadend = function (event) {
+        if (callbacked) return;
+        callbacked = true;
+        resolve (file);
+      };
+      reader.onerror = function (event) {
+        if (callbacked) return;
+        callbacked = true;
+        var error = {name: ""};
+        if (typeof reader.error.code != "undefined") {
+          switch (reader.error.code) {
+            case 1: // FileError.NOT_FOUND_ERR
+              error.name = "NotFoundError";
+              break;
+            default:
+              error.name = "SecurityError";
+          }
+        }
+        else {
+          error.name = reader.error.name;
+        }
+        reject (error);
+      };
+      try {
+        reader.readAsText (file);
+      }
+      catch (e) {
+        var error = {name: "UnknownError"};
+        switch (e.name) {
+          case "NS_ERROR_FILE_NOT_FOUND":
+            error.name = "NotFoundError";
+            break;
+          case "NS_ERROR_FILE_ACCESS_DENIED":
+          case "NS_ERROR_FILE_IS_LOCKED":
+            error.name = "SecurityError";
+            break;
+          default:
+            Cu.reportError (e);
+        }
+        return reject (error);
+      }
+    });
+  }
+  catch (e) {
+    Cu.reportError (e);
+    var error = {name: "UnknownError"};
+    return this.Promise.reject (error);
+  }
+};
+FileUtilPDef.exists = {
+  pref: {async: true, promise: true},
+};
+FileUtilC.exists = function () {
+  return this.IPC.sendAsyncCommand ("FileUtil/exists", arguments);
+};
 
 const {AkahukuIPCManager} = Cu.import ("resource://akahuku/ipc.jsm", {});
 var AkahukuFileUtil = AkahukuIPCManager.createAndRegisterModule ({

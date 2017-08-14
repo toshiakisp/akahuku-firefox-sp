@@ -1083,8 +1083,6 @@ var arAkahukuPostForm = {
       return;
     }
         
-    var commentbox = arAkahukuPostForm.findCommentbox (targetDocument);
-        
     var div = targetDocument.getElementById ("akahuku_reply_status");
     if (div) {
       div.parentNode.removeChild (div);
@@ -1100,36 +1098,31 @@ var arAkahukuPostForm = {
     var filebox = targetDocument.getElementsByName ("upfile");
     if (textonly && textonly [0]
         && filebox && filebox [0]) {
-      var filename = filebox [0].value;
+      var file = filebox [0].files [0];
             
-      if (!textonly [0].checked && filename) {
-        /* ファイルをアップする設定の場合 */
-        if (filename.match (/^file:/)) {
-          try {
-            filename
-              = arAkahukuFile.getFilenameFromURLSpec (filename);
-          }
-          catch (e) {
-            /* ファイル名が不正 */
-            filename = "";
-          }
-        }
-                
-        if (filename) {
-          var file = arAkahukuFile.initFile (filename);
-          if (!file) {
-            /* ファイルが存在しない */
-            filename = "";
-          }
-        }
-                
-        if (filename == "") {
-          /* ファイルが存在しない場合中断する */
+      if (!textonly [0].checked && file) {
+        var {AkahukuFileUtil}
+        = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+        AkahukuFileUtil.exists (file)
+        .then (function (file) {
+          // ファイルが存在しない警告があればクリア
+          filebox [0].style.border = "";
+          arAkahukuPostForm
+          .submit2 (formElementId, target, info, targetDocument);
+        }, function (reason) {
+          // ファイルが存在しない場合submitを続けない
+          Akahuku.debug.log ("submit: existence check failed;", reason.name);
           filebox [0].style.border = "2px solid red";
-          return;
-        }
+        });
+        return;
       }
-      filebox [0].style.border = "";
+    }
+    arAkahukuPostForm.submit2 (formElementId, target, info, targetDocument);
+  },
+  submit2 : function (formElementId, target, info, targetDocument) {
+    var formElement = targetDocument.getElementById (formElementId);
+    if (!formElement) {
+      return;
     }
         
     if (arAkahukuReload.enable
