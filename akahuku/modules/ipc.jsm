@@ -20,6 +20,27 @@ var console = new AkahukuConsole ();
 
 
 
+function warnForCaller (message) {
+  var stackOrigin = Components.stack
+  var stack = stackOrigin.caller;
+  if (!stackOrigin.filename) {
+    return;
+  }
+  while (stack && stackOrigin.filename == stack.filename) {
+    stack = stack.caller;
+  }
+  if (stack) {
+    var scriptError
+      = Cc ["@mozilla.org/scripterror;1"]
+      .createInstance (Ci.nsIScriptError);
+    scriptError.init ("Akahuku IPC: " + message + " [" + stack.name + "]",
+        stack.filename, null, stack.lineNumber,
+        null, scriptError.warningFlag, null);
+    Cc ["@mozilla.org/consoleservice;1"]
+    .getService (Ci.nsIConsoleService)
+    .logMessage (scriptError);
+  }
+}
 
 function needsCPOW (value)
 {
@@ -53,10 +74,12 @@ function serialize (value) {
   }
   else if (typeof Ci.nsILocalFile !== "undefined"
       && value instanceof Ci.nsILocalFile) {
+    warnForCaller ("Passing nsILocalFile is deprecated");
     ret.type = "nsILocalFile";
     ret.value = value.path;
   }
   else if (value instanceof Ci.nsIFile) {
+    warnForCaller ("Passing nsIFile is deprecated");
     ret.type = "nsIFile";
     ret.value = value.path;
   }
