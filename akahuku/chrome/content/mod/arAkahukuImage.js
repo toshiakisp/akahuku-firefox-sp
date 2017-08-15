@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global Components, Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
  *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
  *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil
@@ -1482,8 +1482,6 @@ var arAkahukuImage = {
     var info = Akahuku.getDocumentParam (targetDocument).location_info;
     var href = target.getAttribute ("dummyhref");
 
-    var {Promise} = Components.utils
-      .import ("resource://akahuku/promise-polyfill.jsm", {});
     var {AkahukuFileUtil} = Components.utils
       .import ("resource://akahuku/fileutil.jsm", {});
     var dirCandidates = [];

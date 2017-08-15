@@ -42,6 +42,8 @@ var shutdowned = false;
 var appinfo =
   Cc ["@mozilla.org/xre/app-info;1"].getService (Ci.nsIXULRuntime);
 
+const {Promise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
+
 // subscript loder
 var load = (function () {
   var base = "chrome://akahuku/content/";

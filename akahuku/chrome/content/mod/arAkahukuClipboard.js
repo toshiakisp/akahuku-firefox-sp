@@ -1,5 +1,5 @@
 
-/* global Components, Akahuku */
+/* global Components, Promise, Akahuku */
 
 /**
  * クリップボード処理
@@ -157,8 +157,6 @@ var arAkahukuClipboard = {
     var flavor = "application/x-moz-file";
     var trans = arAkahukuClipboard.getTransferable (flavor);
     var data = {};
-    var {Promise}
-    = Components.utils.import ("resource://akahuku/promise-polyfill.jsm", {});
     try {
       trans.getTransferData (flavor, data, {});
       var nsfile = data.value.QueryInterface (Components.interfaces.nsIFile);

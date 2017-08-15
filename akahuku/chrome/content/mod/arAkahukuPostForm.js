@@ -1,5 +1,5 @@
 
-/* global Components, XPCNativeWrapper,
+/* global Components, XPCNativeWrapper, Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *   arAkahukuDOM, arAkahukuStyle,
  *   arAkahukuFile, arAkahukuUtil,
@@ -4141,9 +4141,6 @@ var arAkahukuPostForm = {
       url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
     }
 
-    var {Promise}
-      = Components.utils
-      .import ("resource://akahuku/promise-polyfill.jsm", {});
     return Promise.resolve (url);
   },
     
