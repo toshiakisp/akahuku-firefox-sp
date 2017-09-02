@@ -64,6 +64,9 @@ function needsSerialize (value) {
   if (value instanceof Ci.nsIXPCException) {
     return true;
   }
+  if (value instanceof Error) {
+    return true;
+  }
   return false;
 }
 function serialize (value) {
@@ -88,6 +91,17 @@ function serialize (value) {
     ret.value = {
       result: value.result,
       message: value.message || value.name,
+      stack: value.stack.toString (),
+    };
+  }
+  else if (value instanceof Error) {
+    ret.type = "Error";
+    ret.value = {
+      name: value.name,
+      message: value.message || value.name,
+      fileName: value.fileName,
+      lineNumber: value.lineNumber,
+      columnNumber: value.columnNumber,
       stack: value.stack.toString (),
     };
   }
@@ -117,6 +131,12 @@ function deserialize (sobj) {
       ret = new Components.Exception (sobj.value.message
           + " [" + sobj.value.stack + "]",
           sobj.value.result);
+      break;
+    case "Error":
+      ret = new Error (sobj.value.message, sobj.value.fileName, sobj.value.lineNumber);
+      ret.name = sobj.value.name;
+      ret.columnNumber = sobj.value.columnNumber;
+      // sobj.value.stack;
       break;
   }
   return ret;
