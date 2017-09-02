@@ -992,6 +992,9 @@ AkahukuIPC.prototype = {
         // コールバックメッセージの待ち受けを解除させる
         request.sendErrorResponse (e);
       }
+      else if (entry.def.promise) {
+        request.promiseHandler.onRejected (e);
+      }
     }
   },
 
