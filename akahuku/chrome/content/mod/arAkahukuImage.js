@@ -3,6 +3,7 @@
  *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
  *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
  *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil
+ *   AkahukuFileUtil,
  */
 
 /**
@@ -923,8 +924,6 @@ var arAkahukuImage = {
            "\u30B9\u30EC\u756A\u53F7\u306F\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u3057\u304B\u4F7F\u3048\u307E\u305B\u3093", "", normal);
         return;
       }
-      var {AkahukuFileUtil} = Components.utils
-        .import ("resource://akahuku/fileutil.jsm", {});
       var dirUrl = AkahukuFileUtil.getURLSpecFromNativeDirPath (dirPath);
       if (dir) {
         dirUrl += dir + "/";
@@ -1482,8 +1481,6 @@ var arAkahukuImage = {
     var info = Akahuku.getDocumentParam (targetDocument).location_info;
     var href = target.getAttribute ("dummyhref");
 
-    var {AkahukuFileUtil} = Components.utils
-      .import ("resource://akahuku/fileutil.jsm", {});
     var dirCandidates = [];
     var promises = [];
     for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {

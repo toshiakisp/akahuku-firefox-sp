@@ -2,7 +2,7 @@
 /* global Components, XPCNativeWrapper, Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *   arAkahukuDOM, arAkahukuStyle,
- *   arAkahukuFile, arAkahukuUtil,
+ *   arAkahukuFile, arAkahukuUtil, AkahukuFileUtil
  *   arAkahukuSound, arAkahukuClipboard, arAkahukuWindow, arAkahukuUI,
  *   arAkahukuP2P, arAkahukuReload, arAkahukuLink, arAkahukuScroll,
  *   arAkahukuThread, arAkahukuBoard,
@@ -1101,8 +1101,6 @@ var arAkahukuPostForm = {
       var file = filebox [0].files [0];
             
       if (!textonly [0].checked && file) {
-        var {AkahukuFileUtil}
-        = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
         AkahukuFileUtil.exists (file)
         .then (function (file) {
           // ファイルが存在しない警告があればクリア
@@ -2915,8 +2913,6 @@ var arAkahukuPostForm = {
           + "in saving " + filename);
         return;
       }
-      var {AkahukuFileUtil}
-        = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
       AkahukuFileUtil.createFromFileName (filename)
       .then (function (file) { // DOM File
         var filebox = targetDocument.getElementsByName ("upfile")[0];
@@ -4091,8 +4087,6 @@ var arAkahukuPostForm = {
       if (uinfo) {
         board = uinfo.board;
             
-        var {AkahukuFileUtil}
-          = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
         var path
           = arAkahukuFile.systemDirectory
           + arAkahukuFile.separator

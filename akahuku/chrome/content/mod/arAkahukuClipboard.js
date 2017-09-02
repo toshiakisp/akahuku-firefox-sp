@@ -1,5 +1,5 @@
 
-/* global Components, Promise, Akahuku */
+/* global Components, Promise, Akahuku, AkahukuFileUtil */
 
 /**
  * クリップボード処理
@@ -160,8 +160,6 @@ var arAkahukuClipboard = {
     try {
       trans.getTransferData (flavor, data, {});
       var nsfile = data.value.QueryInterface (Components.interfaces.nsIFile);
-      var {AkahukuFileUtil}
-      = Components.utils.import ("resource://akahuku/fileutil.jsm", {});
       return AkahukuFileUtil.createFromFileName (nsfile.path);
     }
     catch (e) {

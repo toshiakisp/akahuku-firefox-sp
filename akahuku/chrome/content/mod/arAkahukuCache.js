@@ -1,7 +1,7 @@
 
 /* global Components,
  *   Akahuku, arAkahukuCompat, arAkahukuUtil, arAkahukuWindow,
- *   arAkahukuReload,
+ *   arAkahukuReload, AkahukuFileUtil,
  */
 
 /**
@@ -270,8 +270,6 @@ Akahuku.Cache = new function () {
       return;
     }
     // from arAkahukuReloadCacheWriter.createFile ()
-    var {AkahukuFileUtil} = Components.utils
-      .import ("resource://akahuku/fileutil.jsm", {});
     var base
       = AkahukuFileUtil.getURLSpecFromNativeDirPath
       (arAkahukuReload.extCacheFileBase);
