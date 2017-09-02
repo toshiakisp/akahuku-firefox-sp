@@ -685,6 +685,13 @@ AkahukuIPC.prototype = {
       .getService (Ci.nsISyncMessageSender);
   },
 
+  getProcessMessageListenerManager : function () {
+    return Cc [this.inMainProcess
+      ? "@mozilla.org/parentprocessmessagemanager;1"
+      : "@mozilla.org/childprocessmessagemanager;1"]
+      .getService (Ci.nsIMessageListenerManager);
+  },
+
   /**
    * IPCコマンドを実行中のみセットされる message.event
    */

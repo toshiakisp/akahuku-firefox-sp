@@ -5,12 +5,13 @@
  * Require: Gecko 18 (Proxy)
  */
 
-/* global Components, Proxy */
+/* global Components, Proxy, Promise */
 
 var EXPORTED_SYMBOLS = [
   "arIPCProxyParent",
   "arIPCProxyChild",
   "arIPCProxyAsyncChild",
+  "arIPCPromisedProxyChild",
 ];
 
 const Cc = Components.classes;
@@ -19,6 +20,7 @@ const Cu = Components.utils;
 const Cr = Components.results;
 const CE = Components.Exception;
 
+const {Promise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
 
 /**
  * arIPCProxyParent
@@ -68,6 +70,33 @@ arIPCProxyParent.prototype = {
               .apply (this.target, args);
           }
           break;
+        case "callAsync":
+          var args = unconvArguments (data.value, this.messageManager);
+          var sender = new PromiseParentSender (data.callback);
+          sender.attachIPCMessageManager (message.target);
+          try {
+            if (this.hasOwnProperty (data.name)) {
+              ret.value = this [data.name].apply (this, args);
+            }
+            else {
+              ret.value = this.target [data.name]
+                .apply (this.target, args);
+            }
+            if (typeof ret.value.then == "function") {
+              ret.value.then (function (value) {
+                sender.resolve (value);
+              }, function (e) {
+                sender.reject (e);
+              });
+            }
+            else {
+              sender.resolve (ret.value);
+            }
+          }
+          catch (e) {
+            sender.reject (e);
+          }
+          return null;
         case "detach":
           this.detachIPCMessageManager ();
           return null;
@@ -364,3 +393,199 @@ function unwrapTransfered (value, mm) {
   }
   return value.value;
 }
+
+
+/**
+ * arIPCPromisedProxyChild
+ *   関数呼び出しを Promise を返しつつ async な IPC メッセージ化する
+ *   (chrome process からでも扱える)
+ *
+ *   + arIPCPromisedProxyChild.prototype 自身のプロパティは set/get 可能
+ *   + 指定した prototype 自身のプロパティ:
+ *     + 関数の場合: IPC メッセージ化する関数を get 可能
+ *     + 関数以外:
+ *       + optTarget 指定時: それ自身のプロパティなら get 可能
+ *         (元オブジェクトのプロパティを静的にコピーしておける)
+ *       + 未指定時: throw TypeError (同期的に取得不能なため)
+ *   + その他のプロパティ: undefined
+ */
+function arIPCPromisedProxyChild (prototype, parentId, optTarget) {
+  if (!parentId) {
+    throw CE ("arIPCPromisedProxyChild: parentId must be given");
+  }
+  var target = optTarget || {};
+  target.parenetId = parentId;
+  var handler = {
+    get : function (target, property, receiver) {
+      if (Object.prototype.hasOwnProperty.call
+          (arIPCPromisedProxyChild.prototype, property)) {
+        // 自身のプロトタイプに存在するものはそのままアクセス
+        if (Object.prototype.hasOwnProperty.call (target, property)) {
+          return target [property];
+        }
+        return arIPCPromisedProxyChild.prototype [property];
+      }
+      else if (Object.prototype
+          .hasOwnProperty.call (prototype, property)) {
+        // 指定されたプロトタイプに存在するプロパティ
+        var desc = Object.getOwnPropertyDescriptor (prototype, property);
+        if (desc && "function" == typeof desc.value) {
+          // target の同名関数を優先 (cached)
+          desc = Object.getOwnPropertyDescriptor (target, property);
+          if (desc && "function" == typeof desc.value) {
+            return target [property];
+          }
+          // IPCメッセージ化(async)
+          return target [property] = function () {
+            var args = arguments;
+            return new Promise (function (resolve, reject) {
+              args = convArgumentsForIPC (args, receiver.messageManager);
+              var listener = new PromiseChildListener (resolve, reject);
+              listener.attachIPCMessageManager (receiver.messageManager);
+              var data = {type: "callAsync",
+                name: property, value: args, callback: listener.id};
+              var message = "arIPCProxy:" + parentId;
+              receiver.messageManager.sendAsyncMessage (message, data);
+            });
+          };
+        }
+        else if (Object.prototype.hasOwnProperty.call (target, property)) {
+          // 関数ではないプロパティなら target を参照
+          return target [property];
+        }
+        else {
+          throw TypeError
+            ("arIPCPromisedProxyChild: invalid property '" + property + "'");
+        }
+      }
+      return undefined;
+    },
+    set : function (target, property, value, receiver) {
+      if (arIPCPromisedProxyChild.prototype.hasOwnProperty (property)) {
+        target [property] = value;
+        return true;
+      }
+      return false; // strict-mode TypeError
+    },
+  };
+  return new Proxy (target, handler);
+}
+
+arIPCPromisedProxyChild.prototype = {
+  messageManager : null,
+  parentId: null,
+  attachIPCMessageManager : function (mm) {
+    this.messageManager = mm;
+  },
+  detachIPCMessageManager : function () {
+    var data = {type: "detach", name: "", value: ""};
+    var message = "arIPCProxy:" + this.parentId;
+    this.messageManager.sendAsyncMessage (message, data);
+    this.messageManager = null;
+    this.parentId = null;
+  },
+};
+
+/**
+ * Promise の結果をIPC経由で待ちコールバックする
+ */
+function PromiseChildListener (resolve, reject) {
+  this.resolve = resolve;
+  this.reject = reject;
+  this.id = arIPCProxyParent.createId ();
+  this.messageManager = null;
+};
+PromiseChildListener.prototype = {
+  MESSAGE_PREFIX : "arIPCProxyChild",
+  attachIPCMessageManager : function (mm) {
+    var message = this.MESSAGE_PREFIX + ":" + this.id;
+    mm.addMessageListener (message, this, false);
+    this.messageManager = mm;
+  },
+  detachIPCMessageManager : function () {
+    if (this.messageManager) {
+      var message = this.MESSAGE_PREFIX + ":" + this.id;
+      this.messageManager.removeMessageListener (message, this);
+    }
+    this.messageManager = null;
+    this.resolve = null;
+    this.reject = null;
+  },
+
+  receiveMessage : function (message) {
+    var data = message.data;
+    try {
+      if (data.type == "resolve") {
+        try {
+          var value = unwrapTransfered (data.value, this.messageManager);
+          this.resolve.call (null, value);
+        }
+        catch (e) {
+          this.reject.call (null, e);
+        }
+      }
+      else { // "reject"
+        var reason = unwrapTransfered (data.value, this.messageManager);
+        this.reject.call (null, reason);
+      }
+    }
+    finally {
+      this.detachIPCMessageManager ();
+    }
+  },
+};
+
+/**
+ * Promise のIPCコールバックを送信する
+ */
+function PromiseParentSender (id) {
+  this.callbackId = id;
+  this.messageManager = null;
+  this.callbacked = false;
+}
+PromiseParentSender.prototype = {
+  MESSAGE_PREFIX : "arIPCProxyChild",
+  attachIPCMessageManager : function (mm) {
+    this.messageManager = mm;
+    if (typeof mm.sendAsyncMessage !== "function"
+        && typeof mm.broadcastAsyncMessage !== "function") {
+      throw new TypeError ("invalid message manager: " + mm);
+    }
+  },
+  detachIPCMessageManager : function () {
+    if (!this.callbacked) {
+      this.callbacked = true;
+      var data = {type: "detach", value: {name: "AbortError"}};
+      var message = this.MESSAGE_PREFIX + ":" + this.callbackId;
+      if (typeof this.messageManager.sendAsyncMessage == "function") {
+        this.messageManager.sendAsyncMessage (message, data);
+      }
+      else {
+        this.messageManager.broadcastAsyncMessage (message, data);
+      }
+    }
+    this.messageManager = null;
+    this.callbackId = null;
+  },
+
+  _callback : function (type, value) {
+    value = wrapToTransfer (value, this.messageManager);
+    var data = {type: type, value: value};
+    var message = this.MESSAGE_PREFIX + ":" + this.callbackId;
+    if (typeof this.messageManager.sendAsyncMessage == "function") {
+      this.messageManager.sendAsyncMessage (message, data);
+    }
+    else {
+      this.messageManager.broadcastAsyncMessage (message, data);
+    }
+    this.callbacked = true;
+    this.detachIPCMessageManager ();
+  },
+  resolve : function (value) {
+    this._callback ("resolve", value);
+  },
+  reject : function (reason) {
+    this._callback ("reject", reason);
+  },
+};
+
