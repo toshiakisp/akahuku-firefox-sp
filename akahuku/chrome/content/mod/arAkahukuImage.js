@@ -883,7 +883,7 @@ var arAkahukuImage = {
         = arAkahukuWindow.getBrowserForWindow
         (target.ownerDocument.defaultView);
       arAkahukuImage.asyncOpenSaveImageFilePicker
-        (browser, leafName, dirPath, function (ret, file, dir) {
+        (browser, leafName, dirPath, function (ret, filePath, dirPath) {
 
         if (ret != Components.interfaces.nsIFilePicker.returnOK
             && ret != Components.interfaces.nsIFilePicker.returnReplace) {
@@ -895,17 +895,18 @@ var arAkahukuImage = {
         }
                 
         if (arAkahukuImage.baseList [targetDirIndex].dialog_keep) {
-          var newBase = dir.path;
+          var newBase = dirPath;
                     
           arAkahukuImage.baseList [targetDirIndex].dir = newBase;
                     
           arAkahukuImage.saveBaseList ();
         }
                 
-        var path = file.path;
-        if (file.leafName.indexOf (ext)
-            != file.leafName.length - ext.length) {
-          path = file.path + ext;
+        var path = filePath;
+        var leafName = AkahukuFileUtil.Path.basename (filePath);
+        if (leafName.indexOf (ext)
+            != leafName.length - ext.length) {
+          path = filePath + ext;
         }
         arAkahukuImage.saveImageCore (target, path, uri, leafName, normal);
       });
@@ -972,7 +973,7 @@ var arAkahukuImage = {
           file = filePicker.file;
           dir = file.parent;
         }
-        callback.apply (null, [ret, file, dir]);
+        callback.apply (null, [ret, file.path, dir.path]);
       });
   },
 
