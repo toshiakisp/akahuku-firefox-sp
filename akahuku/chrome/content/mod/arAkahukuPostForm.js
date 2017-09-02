@@ -93,7 +93,7 @@ arAkahukuPostFormParam.prototype = {
         pat += this.attachableExt [i];
       }
       pat += ")$";
-      this.attachableExtRegExp = new RegExp (pat);
+      this.attachableExtRegExp = new RegExp (pat, "i");
     }
     return this.attachableExtRegExp.test (filepath);
   },
