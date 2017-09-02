@@ -652,6 +652,12 @@ AkahukuIPC.prototype = {
   terminated : false,
   console : null,
 
+  get debugHeader () {
+    return "AkahukuIPC"
+      + (this.subKey ? ":" + this.subKey : "")
+      + "(" + (this.isRoot ? "root" : "child#" + this.processID) + "): ";
+  },
+
   getContentFrameMessageManager : getContentFrameMessageManager,
 
   getChildProcessMessageManager : function () {
@@ -900,21 +906,18 @@ AkahukuIPC.prototype = {
         // in child node in the main processes
         return;
       }
-      var debugHeader = "AkahukuICP"
-        + (this.subKey ? ":" + this.subKey : "")
-        + "(" + (this.isRoot ? "root" : "child#" + this.processId) + "): ";
       if (entry) {
         if (!entry.module) {
           throw Components.Exception
-            (debugHeader + "can not execute '"
+            (this.debugHeader + "can not execute '"
              + rcvRequest.name + "' because of no module");
         }
         throw Components.Exception
-          (debugHeader + "'" + entry.command + "' is disabled");
+          (this.debugHeader + "'" + entry.command + "' is disabled");
       }
       else {
         throw Components.Exception
-          (debugHeader + "'" + rcvRequest.name+ "' is not defined.");
+          (this.debugHeader + "'" + rcvRequest.name+ "' is not defined.");
       }
     }
   },
@@ -1041,24 +1044,24 @@ AkahukuIPC.prototype = {
     var entry = this._getCommandEntry (command);
     if (!(entry && entry.def.enable)) {
       throw Components.Exception
-        ("AkahukuIPC: unregistered command; " + command,
+        (this.debugHeader + "unregistered command; " + command,
          Cr.NS_ERROR_FAILURE, Components.stack.caller);
     }
     if (entry.def.async) {
       throw Components.Exception
-        ("AkahukuIPC: command is for asyncronus requests; " + command,
+        (this.debugHeader + "command is for asyncronus requests; " + command,
          Cr.NS_ERROR_FAILURE, Components.stack.caller);
     }
     if (entry.def.remote) {
       throw Components.Exception
-        ("AkahukuIPC: command is for remote requests; " + command,
+        (this.debugHeader + "command is for remote requests; " + command,
          Cr.NS_ERROR_FAILURE, Components.stack.caller);
     }
     if (entry.def.frame
         && !(optContentWindow
           && optContentWindow instanceof Ci.nsIDOMWindow)) {
       throw Components.Exception
-        ("AkahukuIPC: command requires an additional argument of the content window; " + command,
+        (this.debugHeader + "command requires an additional argument of the content window; " + command,
          Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
     }
 
@@ -1114,12 +1117,12 @@ AkahukuIPC.prototype = {
       else {
         this.console.info (rets);
         throw Components.Exception
-          ("AkahukuIPC: unexpected structure returned; " + command,
+          (this.debugHeader + "unexpected structure returned; " + command,
            Cr.NS_ERROR_FAILURE, Components.stack.caller);
       }
     }
     throw Components.Exception
-      ("AkahukuIPC: no response for " + command,
+      (this.debugHeader + "no response for " + command,
        Cr.NS_ERROR_FAILURE, Components.stack.caller);
   },
 
@@ -1139,19 +1142,19 @@ AkahukuIPC.prototype = {
     var entry = this._getCommandEntry (command);
     if (!(entry && entry.def.enable)) {
       throw Components.Exception
-        ("AkahukuIPC: invalid command; " + command,
+        (this.debugHeader + "Invalid command; '" + command + "'",
          Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
     }
     if (!entry.def.async) {
       throw Components.Exception
-        ("AkahukuIPC: command is for syncronus requests; " + command,
+        (this.debugHeader + "Command is for syncronus requests; " + command,
          Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
     }
     if (entry.def.frame
         && !(optContentWindow
           && optContentWindow instanceof Ci.nsIDOMWindow)) {
       throw Components.Exception
-        ("AkahukuIPC: command requires an additional argument of the content window; " + command,
+        (this.debugHeader + "Command requires an additional argument of the content window; " + command,
          Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
     }
     if (entry.def.remote) {
@@ -1160,14 +1163,14 @@ AkahukuIPC.prototype = {
               && entry.def.callback == 0 && !entry.def.promise
               && !optTarget && !optContentWindow)) {
           throw Components.Exception
-            ("AkahukuIPC: invalid arguments for broadcasting; " + command,
+            (this.debugHeader + "Invalid arguments for broadcasting; " + command,
              Cr.NS_ERROR_ILLEGAL_VALUE, Components.stack.caller);
         }
       }
       else {
         if (!(optTarget && "sendAsyncMessage" in optTarget)) {
           throw Components.Exception
-            ("AkahukuIPC: no valid target frames specified; " + command,
+            (this.debugHeader + "No valid target frames specified; " + command,
              Cr.NS_ERROR_NOT_AVAILABLE, Components.stack.caller);
         }
       }
