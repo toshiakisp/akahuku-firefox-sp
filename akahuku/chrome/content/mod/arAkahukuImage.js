@@ -1166,14 +1166,13 @@ var arAkahukuImage = {
             
         var dirs = new Array ();
         dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
-        href = info.escapeForFilename (uri.host);
+        var pathParts = [info.escapeForFilename (uri.host)];
         for (var i = 0; i < dirs.length; i ++) {
           if (dirs [i]) {
-            href
-              += arAkahukuFile.separator
-              + info.escapeForFilename (dirs [i]);
+            pathParts.push (info.escapeForFilename (dirs [i]));
           }
         }
+        href = AkahukuFileUtil.Path.join.apply (null, pathParts);
             
         dir += href;
       }
@@ -1485,9 +1484,10 @@ var arAkahukuImage = {
     var dirCandidates = [];
     var promises = [];
     for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-      var filename = arAkahukuImage.baseList [i].dir
-        + arAkahukuFile.separator;
+      var pathParts = [];
+      var filename = arAkahukuImage.baseList [i].dir;
       dirCandidates.push (String (filename));
+      pathParts.push (filename);
       var dir
         = arAkahukuImage.createSubdirName
         (arAkahukuImage.baseList [i], info, href);
@@ -1495,10 +1495,10 @@ var arAkahukuImage = {
         continue;
       }
       if (dir) {
-        filename += dir + arAkahukuFile.separator;
+        pathParts.push (dir);
       }
-      dirCandidates [i] = String (filename);
-      filename += leafName;
+      dirCandidates [i] = AkahukuFileUtil.Path.join.apply (null, pathParts);
+      filename = AkahukuFileUtil.Path.join (dirCandidates [i], leafName);
       let index = i;
       var promise = AkahukuFileUtil
         .createFromFileName (filename)
@@ -1514,10 +1514,11 @@ var arAkahukuImage = {
       return Promise.reject ("no file exist");
     }, function (result) {
       // file exists
+      var dir = dirCandidates [result.i];
       var value = {
         baseListId: result.i,
-        basedir: dirCandidates [result.i],
-        path: dirCandidates [result.i] + leafName,
+        basedir: dir,
+        path: AkahukuFileUtil.Path.join (dir, leafName),
         file: result.file,
       };
       return Promise.resolve (value);
@@ -1737,14 +1738,14 @@ var arAkahukuImage = {
         url = arAkahukuP2P.enP2P (url);
       }
       else if (optFilePath) {
-        url = arAkahukuFile.getURLSpecFromFilename (optFilePath);
+        url = AkahukuFileUtil.getURLSpecFromNativePath (optFilePath);
         url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
       }
       else {
         url = null;
         arAkahukuImage.asyncCheckImageFileExist (target, leafName)
           .then (function (result) {
-            var url = arAkahukuFile.getURLSpecFromFilename (result.path);
+            var url = AkahukuFileUtil.getURLSpecFromNativePath (result.path);
             url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
             srcImage.src = url;
           }, function () {
