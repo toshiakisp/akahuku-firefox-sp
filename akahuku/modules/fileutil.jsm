@@ -359,3 +359,97 @@ var AkahukuFileUtil = AkahukuIPCManager.createAndRegisterModule ({
   childDefinitions: {}, // no child-process listener
 });
 
+
+/*
+ * Minimum implementation of OS.Path for all Firefox versions
+ */
+var OS = {
+  Windows : function () {
+    // lazy build
+    var xulRuntime
+      = Components.classes ["@mozilla.org/xre/app-info;1"]
+      .getService (Components.interfaces.nsIXULRuntime);
+    this.Windows = /^WIN/.test (xulRuntime.OS);
+    return this.Windows;
+  },
+};
+
+OS.Path = {};
+OS.Path.basename = function (path) {
+  if (OS.Windows) {
+    // "C:\path_to_dir\basename", "C:basename",
+    // "\path...", "\\host\path..." (UNC path)
+    // "path_to_dir\basename", "basename", (relative path)
+    var index = path.lastIndexOf ("\\");
+    if (path.charAt (0) == "\\") {
+      if (index == 1) { // "\\host"
+        return "";
+      }
+      return path.slice (index + 1);
+    }
+    if (index < 0) { // "C:basename" or "basename"
+      return path.slice (path.lastIndexOf (":") + 1);
+    }
+    else { // "C:\path..."
+      return path.slice (index + 1);
+    }
+  }
+  else { // Unix (Mac)
+    return path.slice (path.lastIndexOf ("/") + 1);
+  }
+};
+OS.Path.dirname = function (path) {
+  if (OS.Windows) {
+    var index = path.lastIndexOf ("\\");
+    if (index == -1) { // "C:basename", "C:", or "basename"
+      index = path.lastIndexOf (":");
+      if (index == -1) {
+        return ".";
+      }
+      return path.slice (0, index + 1);
+    }
+    if (index == 1 && path.charAt (0) == "\\") { // "\\host"
+      return path;
+    }
+    // ensure that the number of final "\\" is 1
+    --index;
+    while (index >= 0 && path [index] == "\\") {
+      --index;
+    }
+    return path.slice (0, index + 1);
+  }
+  else { // Unix (Mac)
+    var index = path.lastIndexOf ("/");
+    if (index < 0) { // "basename"
+      return ".";
+    }
+    // ensure that the number of final "/" is 1
+    --index;
+    while (index >= 0 && path [index] == "/") {
+      --index;
+    }
+    return path.slice (0, index + 1);
+  }
+};
+OS.Path.join = function () {
+  var paths = [];
+  var regexpTrimLast = (OS.Windows ? /^\\+|\\+$/g : /^\/+|\/+$/g);
+  var regexpTrimBoth = (OS.Windows ? /\\+$/ : /\/+$/);
+  for (var i = 0; i < arguments.length; i ++) {
+    var subpath = arguments [i];
+    if (!subpath) {
+      continue;
+    }
+    if (paths.length > 0) {
+      subpath = subpath.replace (regexpTrimBoth, "");
+    }
+    else {
+      subpath = subpath.replace (regexpTrimLast, "");
+    }
+    paths.push (subpath);
+  }
+  return OS.Windows ? paths.join ("\\") : paths.join ("/");
+};
+
+AkahukuFileUtil.Path = OS.Path;
+
