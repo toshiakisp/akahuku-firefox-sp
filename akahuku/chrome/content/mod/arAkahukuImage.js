@@ -970,10 +970,10 @@ var arAkahukuImage = {
         var dir = null;
         if (ret == Components.interfaces.nsIFilePicker.returnOK
             || ret == Components.interfaces.nsIFilePicker.returnReplace) {
-          file = filePicker.file;
-          dir = file.parent;
+          file = filePicker.file.path;
+          dir = filePicker.file.parent.path;
         }
-        callback.apply (null, [ret, file.path, dir.path]);
+        callback.apply (null, [ret, file, dir]);
       });
   },
 
