@@ -60,7 +60,7 @@ arAkahukuSidebarThread.prototype = {
       && this.imageWidth >= 0
       && this.imageHeight >= 0
       && this.imageBytes >= 0
-      && /^(?:|jpg|gif|png)$/i.test (this.imageExt)
+      && /^(?:|jpg|gif|png|webm)$/i.test (this.imageExt)
       && typeof (this.threadLink) === "string"
     if (!valid) {
       return false;
