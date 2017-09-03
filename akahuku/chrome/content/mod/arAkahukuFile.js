@@ -87,8 +87,6 @@ arAkahukuGZIPReader.prototype = {
  * ファイル管理
  */
 var arAkahukuFile = {
-  fileProtocolHandler : null, /* nsIFileProtocolHandler  プロトコルの変換器 */
-    
   separator : "\\",           /* String  ネイティブパスのセパレータ */
   systemDirectory : "",       /* String  システムディレクトリ
                                *   Profile ディレクトリ/Akahuku となる */
@@ -97,18 +95,11 @@ var arAkahukuFile = {
    * 初期化
    */
   init : function () {
-    arAkahukuFile.fileProtocolHandler
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService)
-    .getProtocolHandler ("file")
-    .QueryInterface (Components.interfaces.nsIFileProtocolHandler);
-        
     /* 各種ディレクトリを作る */
     arAkahukuFile.makeSystemDirectory ();
   },
 
   term : function () {
-    arAkahukuFile.fileProtocolHandler = null;
     arAkahukuFile.systemDirectory = "";
   },
     
@@ -458,124 +449,6 @@ var arAkahukuFile = {
     }
     catch (e) {
     }
-  },
-    
-  /**
-   * ネイティブパスを file プロトコルに変換する
-   *
-   * @param  String filename
-   *         ネイティブパス
-   * @return String
-   *         file プロトコル
-   */
-  getURLSpecFromFilename : function (filename) {
-    var targetFile = arAkahukuFile.initFile (filename);
-        
-    var url = "";
-
-    try {
-      url
-        = arAkahukuFile.fileProtocolHandler
-        .getURLSpecFromFile (targetFile);
-    }
-    catch (e) {
-    }
-        
-    return url;
-  },
-
-  /**
-   * ネイティブパスを file プロトコルに変換する
-   *
-   * @param  String dirname
-   *         ネイティブパス
-   * @return String
-   *         file プロトコル(末尾に"/"が付く)
-   */
-  getURLSpecFromDirname : function (dirname) {
-    var targetFile = arAkahukuFile.initFile (dirname);
-    var url = "";
-    var ph = arAkahukuFile.fileProtocolHandler;
-    try {
-      if ("getURLSpecFromDir" in ph) { // requires Gecko >= 1.9.2
-        url = ph.getURLSpecFromDir (targetFile);
-      }
-      else {
-        url = ph.getURLSpecFromFile (targetFile);
-        if (url.charAt (url.length - 1) != "/") {
-          url += "/";
-        }
-      }
-    }
-    catch (e) {
-    }
-    return url;
-  },
-    
-  /**
-   * ファイルを file プロトコルに変換する
-   *
-   * @param  nsIFile file
-   *         ファイル
-   * @return String
-   *         file プロトコル
-   */
-  getURLSpecFromFile : function (file) {
-    var url = null;
-        
-    try {
-      url
-        = arAkahukuFile.fileProtocolHandler
-        .getURLSpecFromFile (file)
-        }
-    catch (e) {
-    }
-        
-    return url;
-  },
-    
-  /**
-   * file プロトコルをネイティブパスに変換する
-   *
-   * @param  String uri
-   *         file プロトコル
-   * @return String
-   *         ネイティブパス
-   */
-  getFilenameFromURLSpec : function (uri) {
-    var filename = "";
-        
-    try {
-      filename
-        = arAkahukuFile.fileProtocolHandler
-        .getFileFromURLSpec (uri).path;
-    }
-    catch (e) {
-    }
-        
-    return filename;
-  },
-    
-  /**
-   * file プロトコルをファイルに変換する
-   *
-   * @param  String uri
-   *         file プロトコル
-   * @return nsIFile
-   *         ファイル、もしくは
-   */
-  getFileFromURLSpec : function (uri) {
-    var file = null;
-        
-    try {
-      file
-        = arAkahukuFile.fileProtocolHandler
-        .getFileFromURLSpec (uri);
-    }
-    catch (e) {
-    }
-        
-    return file;
   },
   
   /**

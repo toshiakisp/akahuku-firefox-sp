@@ -174,10 +174,6 @@ arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "remove");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "createDirectory");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuFile, "File", "getFilenameFromURLSpec");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuFile, "File", "getFileFromURLSpec");
 var arAkahukuFileIPC = {
   createFileOutputStream : function (file, ioFlags, perm, behaviorFlags) {
     var fstream = arAkahukuFile.createFileOutputStream (file, ioFlags, perm, behaviorFlags);

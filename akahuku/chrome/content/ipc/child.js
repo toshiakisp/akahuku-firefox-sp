@@ -235,15 +235,6 @@ arAkahukuFile.createDirectory = function () {
   arAkahukuIPC.sendSyncCommand ("File/createDirectory", arguments);
 };
 
-arAkahukuFile.getFilenameFromURLSpec  = function () {
-  return arAkahukuIPC.sendSyncCommand
-    ("File/getFilenameFromURLSpec", arguments);
-};
-arAkahukuFile.getFileFromURLSpec = function () {
-  return arAkahukuIPC.sendSyncCommand
-    ("File/getFileFromURLSpec", arguments);
-};
-
 
 
 arAkahukuImage.openXULSaveImagePopup = function (node, rect, x, y) {
