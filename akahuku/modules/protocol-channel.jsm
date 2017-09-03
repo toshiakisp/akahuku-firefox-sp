@@ -1670,11 +1670,18 @@ arAkahukuDOMFileChannel.prototype = {
     this._listener = listener;
     this._context = context;
 
+    var reader = null;
     if (typeof FileReader !== "undefined") {
-      var reader = new FileReader ();
+      try {
+        reader = new FileReader ();
+      }
+      catch (e) {
+        // ESR24-38 causes NS_ERROR_FAILURE while page loading
+        Cu.reportError (e);
+      }
     }
-    else {
-      var reader
+    if (!reader) {
+      reader
         =  Cc ["@mozilla.org/files/filereader;1"]
         .createInstance (Ci.nsIDOMFileReader);
     }
