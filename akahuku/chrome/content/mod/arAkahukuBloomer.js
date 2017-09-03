@@ -77,7 +77,7 @@ var arAkahukuBloomer = {
           && arAkahukuBloomer.modifiersCtrl == event.ctrlKey
           && arAkahukuBloomer.modifiersMeta == event.metaKey
           && arAkahukuBloomer.modifiersShift == event.shiftKey) {
-        var w = event.currentTarget.ownerDocument.defaultView;
+        var w = event.currentTarget;
         arAkahukuBloomer.openBloomer (w);
         event.preventDefault ();
       }
