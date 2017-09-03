@@ -2569,8 +2569,18 @@ var arAkahukuCatalog = {
             = AkahukuFileUtil.Path
             .join (arAkahukuFile.systemDirectory, "lastcells.txt");
             
-          arAkahukuCatalog.lastCellsText
-            = arAkahukuFile.readFile (filename);
+          try {
+            arAkahukuCatalog.lastCellsText
+              = arAkahukuFile.readFile (filename);
+          }
+          catch (e) {
+            if (e.result == Components.results.NS_ERROR_FILE_NOT_FOUND) {
+              // 無いなら無視
+            }
+            else {
+              Akahuku.debug.exception (e);
+            }
+          }
           var currentBoard = "";
             
           arAkahukuCatalog.lastCellsText.replace
