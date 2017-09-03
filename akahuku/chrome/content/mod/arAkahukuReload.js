@@ -4,7 +4,7 @@
  *   arAkahukuDOM, arAkahukuImage, arAkahukuLink,
  *   arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
  *   arAkahukuThread, arAkahukuTitle, arAkahukuCompat, arAkahukuFile,
- *   arAkahukuWindow, arAkahukuUI, arAkahukuBoard,
+ *   arAkahukuWindow, arAkahukuUI, arAkahukuBoard, AkahukuFileUtil,
  */
 
 /**
@@ -263,7 +263,7 @@ arAkahukuReloadCacheWriter.prototype = {
   createFile : function (location) {
     try {
       var base
-      = arAkahukuFile.getURLSpecFromDirname
+      = AkahukuFileUtil.getURLSpecFromNativeDirPath
       (arAkahukuReload.extCacheFileBase);
       var path = location
       .replace (/^https?:\/\//, "");
@@ -272,7 +272,7 @@ arAkahukuReloadCacheWriter.prototype = {
       path = path.replace (/\/[^\/]+\.php\?res=(\d+)$/, "/res/$1.htm");
                         
       path
-      = arAkahukuFile.getFilenameFromURLSpec (base + path);
+      = AkahukuFileUtil.getNativePathFromURLSpec (base + path);
             
       var text
         = this.head
@@ -2200,7 +2200,7 @@ var arAkahukuReload = {
             
       if (arAkahukuReload.enableExtCacheFile) {
         var base
-          = arAkahukuFile.getURLSpecFromDirname
+          = AkahukuFileUtil.getURLSpecFromNativeDirPath
           (arAkahukuReload.extCacheFileBase);
         var path = location
           .replace (/^https?:\/\//, "");
@@ -2209,7 +2209,7 @@ var arAkahukuReload = {
         path = path.replace (/\/[^\/]+\.php\?res=(\d+)$/, "/res/$1.htm");
                 
         path
-          = arAkahukuFile.getFilenameFromURLSpec
+          = AkahukuFileUtil.getNativePathFromURLSpec
           (base + path);
                 
         var targetFile = arAkahukuFile.initFile (path);

@@ -3,6 +3,7 @@
  *   Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
  *   arAkahukuBoard, arAkahukuWindow, arAkahukuP2P, arAkahukuFile,
  *   arAkahukuReload, arAkahukuMergeItemCallbackList,
+ *   AkahukuFileUtil,
  */
 
 /**
@@ -344,8 +345,8 @@ var arAkahukuSidebar = {
     arAkahukuSidebar.getConfig ();
     if (arAkahukuSidebar.enableSave) {
       var filename
-        = arAkahukuFile.systemDirectory
-        + arAkahukuFile.separator + "sidebar.txt";
+        = AkahukuFileUtil
+        .Path.join (arAkahukuFile.systemDirectory, "sidebar.txt");
             
       var text = arAkahukuFile.readFile (filename);
       var currentBoard = "";
@@ -515,8 +516,8 @@ var arAkahukuSidebar = {
   termSidebarParam : function (param) {
     if (arAkahukuSidebar.enableSave) {
       var filename
-      = arAkahukuFile.systemDirectory
-      + arAkahukuFile.separator + "sidebar.txt";
+      = AkahukuFileUtil
+      .Path.join (arAkahukuFile.systemDirectory, "sidebar.txt");
       var text = "";
       var name, board, thread;
             

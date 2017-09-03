@@ -1,5 +1,5 @@
 
-/* global Components, arAkahukuConfig, arAkahukuFile, arAkahukuWindow */
+/* global Components, arAkahukuConfig, AkahukuFileUtil, arAkahukuWindow */
 
 /**
  * 音管理
@@ -106,7 +106,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.reload.normal.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.reloadNormalFile = ios.newURI (url, null, null);
@@ -127,7 +127,7 @@ var arAkahukuSound = {
       
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.reloadReplyFile = ios.newURI (url, null, null);
@@ -150,7 +150,7 @@ var arAkahukuSound = {
     if (arAkahukuSound.enableNewReply) {
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.newReplyFile = ios.newURI (url, null, null);
@@ -169,7 +169,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.reload.catalog.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.reloadCatalogFile = ios.newURI (url, null, null);
@@ -188,7 +188,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.expire.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.expireFile = ios.newURI (url, null, null);
@@ -207,7 +207,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.makethread.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.makeThreadFile = ios.newURI (url, null, null);
@@ -226,7 +226,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.reply.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.replyFile = ios.newURI (url, null, null);
@@ -245,7 +245,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.reply_fail.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.replyFailFile = ios.newURI (url, null, null);
@@ -264,7 +264,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.savemht.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.saveMHTFile = ios.newURI (url, null, null);
@@ -283,7 +283,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.savemht.error.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.saveMHTErrorFile = ios.newURI (url, null, null);
@@ -302,7 +302,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.saveimage.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.saveImageFile = ios.newURI (url, null, null);
@@ -321,7 +321,7 @@ var arAkahukuSound = {
         .initPref ("char", "akahuku.sound.saveimage.error.file", "");
       filename = unescape (filename);
             
-      url = arAkahukuFile.getURLSpecFromFilename (filename);
+      url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
         arAkahukuSound.saveImageErrorFile

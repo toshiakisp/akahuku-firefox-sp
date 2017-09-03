@@ -1,6 +1,6 @@
 
 /* global Components,
- *   Akahuku, arAkahukuConfig, arAkahukuFile
+ *   Akahuku, arAkahukuConfig, AkahukuFileUtil
  */
 
 /**
@@ -96,7 +96,7 @@ var arAkahukuBloomer = {
       var targetLocation = "about:blank";
       try {
         targetLocation
-          = arAkahukuFile.getURLSpecFromFilename
+          = AkahukuFileUtil.getURLSpecFromNativePath
           (arAkahukuBloomer.file);
       }
       catch (e) {

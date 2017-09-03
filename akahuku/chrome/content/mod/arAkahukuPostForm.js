@@ -478,7 +478,7 @@ var arAkahukuPostForm = {
         else if (arAkahukuPostForm.shimonkinType == "custom") {
           types = ["submit"];
           base
-          = arAkahukuFile.getURLSpecFromDirname
+          = AkahukuFileUtil.getURLSpecFromNativeDirPath
           (arAkahukuFile.systemDirectory);
         }
         type = types [parseInt (Math.random () * types.length)];
@@ -2900,8 +2900,8 @@ var arAkahukuPostForm = {
 
     // 一時フォルダにユニークなファイル名で画像保存して添付する
     var filename
-      = arAkahukuFile.getDirectory ("TmpD")
-      + arAkahukuFile.separator + "akahuku-clip.jpg";
+      = AkahukuFileUtil
+      .Path.join (arAkahukuFile.getDirectory ("TmpD"), "akahuku-clip.jpg");
     var file
       = arAkahukuFile.createUnique
       (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420/*0o644*/);
@@ -3660,7 +3660,7 @@ var arAkahukuPostForm = {
                 previewT.src
                   = Akahuku.protocolHandler.enAkahukuURI
                   ("local",
-                   arAkahukuFile.getURLSpecFromFilename (fullpath));
+                   AkahukuFileUtil.getURLSpecFromNativePath (fullpath));
               }
               else {
                 Akahuku.debug.warn ("THIS MUST NOT BE POSSIBLE");
@@ -4088,21 +4088,19 @@ var arAkahukuPostForm = {
         board = uinfo.board;
             
         var path
-          = arAkahukuFile.systemDirectory
-          + arAkahukuFile.separator
-          + "bg_" + board + ".png";
+          = AkahukuFileUtil.Path
+          .join (arAkahukuFile.systemDirectory, "bg_" + board + ".png");
         var promise
           = AkahukuFileUtil.createFromFileName (path)
           .then (function (file) {
-            return arAkahukuFile.getURLSpecFromFilename (path);
+            return AkahukuFileUtil.getURLSpecFromNativePath (path);
           }, function (reason) {// not exist
             path
-              = arAkahukuFile.systemDirectory
-              + arAkahukuFile.separator
-              + "bg_default.png";
+              = AkahukuFileUtil.Path
+              .join (arAkahukuFile.systemDirectory, "bg_default.png");
             return AkahukuFileUtil.createFromFileName (path)
             .then (function (file) {
-              return arAkahukuFile.getURLSpecFromFilename (path);
+              return AkahukuFileUtil.getURLSpecFromNativePath (path);
             }, function (reason) {
               return "";
             });

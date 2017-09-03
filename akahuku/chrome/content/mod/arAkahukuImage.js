@@ -981,10 +981,10 @@ var arAkahukuImage = {
     var uri = arAkahukuUtil.newURIViaNode (href, null);
 
     var filename
-      = arAkahukuFile.systemDirectory
-      + arAkahukuFile.separator
-      + "." + new Date ().getTime ()
+      = "." + new Date ().getTime ()
       + "_" + Math.floor (Math.random () * 1000);
+    filename = AkahukuFileUtil.Path
+      .join (arAkahukuFile.systemDirectory, filename);
 
     var targetDocument = target.ownerDocument;
     var isPrivate = false;

@@ -5,6 +5,7 @@
  *   arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
  *   arAkahukuThread, arAkahukuReload, arAkahukuScroll,
  *   arAkahukuTitle, arAkahukuPopupQuote, arAkahukuThreadOperator,
+ *   AkahukuFileUtil,
  */
 
 /**
@@ -177,8 +178,8 @@ var arAkahukuStyle = {
   },
   _modifyStyleFileLegacy : function (register) {
     var filename
-    = arAkahukuFile.systemDirectory
-    + arAkahukuFile.separator + "userContent.css";
+    = AkahukuFileUtil
+    .Path.join (arAkahukuFile.systemDirectory, "userContent.css");
         
     var styleSheetService
     = Components.classes ["@mozilla.org/content/style-sheet-service;1"]
@@ -189,8 +190,8 @@ var arAkahukuStyle = {
     = Components.classes ["@mozilla.org/network/io-service;1"]
     .getService (Components.interfaces.nsIIOService);
     var uri
-    = ios.newURI (arAkahukuFile
-                  .getURLSpecFromFilename (filename), null, null);
+    = ios.newURI (AkahukuFileUtil.getURLSpecFromNativePath (filename),
+                  null, null);
         
     if (register) {
       var style = new arAkahukuStyleData ();

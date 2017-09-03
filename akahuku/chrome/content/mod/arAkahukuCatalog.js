@@ -2,7 +2,7 @@
 /* global Components,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *   arAkahukuDOM, arAkahukuThread, arAkahukuSidebar,
- *   arAkahukuFile, arAkahukuWindow, arAkahukuUtil,
+ *   arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil,
  *   arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuPopupParam,
  *   arAkahukuSound, arAkahukuBoard, arAkahukuReload,
  */
@@ -2566,8 +2566,8 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableReloadLeftBeforeSave) {
           /* 状態をロード */
           var filename
-            = arAkahukuFile.systemDirectory
-            + arAkahukuFile.separator + "lastcells.txt";
+            = AkahukuFileUtil.Path
+            .join (arAkahukuFile.systemDirectory, "lastcells.txt");
             
           arAkahukuCatalog.lastCellsText
             = arAkahukuFile.readFile (filename);
@@ -2613,8 +2613,8 @@ var arAkahukuCatalog = {
         // lastcells.txt を削除
         // (設定をオンオフする場合等で古いデータが使われないように)
         var filename
-          = arAkahukuFile.systemDirectory
-          + arAkahukuFile.separator + "lastcells.txt";
+          = AkahukuFileUtil.Path
+          .join (arAkahukuFile.systemDirectory, "lastcells.txt");
         try {
           var file = arAkahukuFile.initFile (filename);
           file.remove (false);
@@ -3088,8 +3088,8 @@ var arAkahukuCatalog = {
         && info.isFutaba) {
       /* 状態を保存 */
       var filename
-      = arAkahukuFile.systemDirectory
-      + arAkahukuFile.separator + "lastcells.txt";
+      = AkahukuFileUtil.Path
+      .join (arAkahukuFile.systemDirectory, "lastcells.txt");
       var text = "";
             
       var lastCells = newTable.getElementsByTagName ("td");

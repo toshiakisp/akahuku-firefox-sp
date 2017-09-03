@@ -1,7 +1,7 @@
 
 /* global Components, XMLSerializer, XSLTProcessor,
  *   Akahuku, arAkahukuCompat, arAkahukuConverter,
- *   arAkahukuFile, arAkahukuFileName, arAkahukuUtil,
+ *   AkahukuFileUtil, arAkahukuFileName, arAkahukuUtil,
  *   arAkahukuTitle, arAkahukuP2P,
  *   arAkahukuBoard, arAkahukuDOM,
  *
@@ -939,21 +939,20 @@ arAkahukuLocationInfo.prototype = {
    */
   escapeForFilename : function (filename, sep) {
     var parts = filename.split (/<separator ?\/>/);
-    filename = "";
-    var dirname = new Array ();
     for (var i = 0; i < parts.length; i ++) {
-      if (i == parts.length - 1) {
-        dirname = filename;
-        filename = "";
+      if (!sep && i < parts.length - 1) {
+        continue;
       }
-      if (filename) {
-        filename += arAkahukuFile.separator;
-      }
-      
-      filename += arAkahukuFileName.escapeForFilename (parts [i]);
+      parts [i] = arAkahukuFileName.escapeForFilename (parts [i]);
     }
+    filename = (parts.length > 0 ? parts [parts.length-1] : "");
         
     if (sep) {
+      var dirname = "";
+      parts.pop (); // drop filename
+      if (parts.length > 0) {
+        dirname = AkahukuFileUtil.Path.join.apply (null, parts);
+      }
       return [dirname, filename];
     }
         

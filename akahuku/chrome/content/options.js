@@ -4,6 +4,9 @@
  *   arAkahukuServerName, arAkahukuLocationInfo,
  */
 
+const {AkahukuFileUtil}
+= Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+
 /**
  * キーの名前
  */
@@ -2463,7 +2466,7 @@ var AkahukuOptions = {
     var ios = Components.classes ["@mozilla.org/network/io-service;1"]
     .getService (Components.interfaces.nsIIOService);
         
-    var url = arAkahukuFile.getURLSpecFromFilename (filename);
+    var url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
     if (url) {
       var uri = ios.newURI (url, null, null);

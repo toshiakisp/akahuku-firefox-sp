@@ -1,6 +1,6 @@
 
 /* global Components, Akahuku, AkahukuVersion, arAkahukuConfig,
- * arAkahukuFile, arAkahukuWindow, arAkahukuUtil,
+ * arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil,
  * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL,
  */
 
@@ -207,8 +207,7 @@ var arAkahukuP2P = {
           = arAkahukuFile.systemDirectory;
       }
       arAkahukuP2P.cacheBase
-      += arAkahukuFile.separator
-      + "p2p";
+        = AkahukuFileUtil.Path.join (arAkahukuP2P.cacheBase, "p2p");
             
       arAkahukuP2P.enableShortcut
       = arAkahukuConfig
@@ -568,8 +567,9 @@ var arAkahukuP2P = {
         if (!arAkahukuP2P.enableNoAccept) {
           servant.setPort (arAkahukuP2P.port);
         }
-        servant.setCacheBase (arAkahukuP2P.cacheBase,
-                              arAkahukuFile.separator);
+        var separator
+          = AkahukuFileUtil.Path.join ("a", "a").slice (1, -1);
+        servant.setCacheBase (arAkahukuP2P.cacheBase, separator);
                 
         servant.start (arAkahukuP2P.enableNoAccept);
       }
@@ -1085,15 +1085,9 @@ var arAkahukuP2P = {
         found ++;
                 
         var targetFileName
-          = arAkahukuP2P.cacheBase
-          + arAkahukuFile.separator
-          + uinfo.server
-          + arAkahukuFile.separator
-          + uinfo.dir
-          + arAkahukuFile.separator
-          + "src"
-          + arAkahukuFile.separator
-          + leafName;
+          = AkahukuFileUtil.Path
+          .join (arAkahukuP2P.cacheBase,
+                 uinfo.server, uinfo.dir, "src", leafName);
                 
         var targetFile = arAkahukuFile.initFile (targetFileName);
         if (targetFile.exists ()) {

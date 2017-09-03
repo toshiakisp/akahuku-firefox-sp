@@ -1,7 +1,7 @@
 
 /* global btoa, atob, Components,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
- *   arAkahukuDOM, arAkahukuFile, arAkahukuLink,
+ *   arAkahukuDOM, arAkahukuFile, arAkahukuLink, AkahukuFileUtil,
  *   arAkahukuP2P, arAkahukuSound, arAkahukuThread, arAkahukuCompat,
  *   arAkahukuUtil, arAkahukuWindow, arAkahukuImageURL,
  */
@@ -334,15 +334,9 @@ arAkahukuMHTFileData.prototype = {
       }
             
       var targetFileName
-      = arAkahukuP2P.cacheBase
-      + arAkahukuFile.separator
-      + uinfo.server
-      + arAkahukuFile.separator
-      + uinfo.dir
-      + arAkahukuFile.separator
-      + uinfo.type
-      + arAkahukuFile.separator
-      + uinfo.leafNameExt;
+      = AkahukuFileUtil.Path
+      .join (arAkahukuP2P.cacheBase,
+             uinfo.server, uinfo.dir, uinfo.type, uinfo.leafNameExt);
             
       var targetFile = arAkahukuFile.initFile (targetFileName);
       if (targetFile.exists ()) {
@@ -3535,7 +3529,8 @@ var arAkahukuMHT = {
     filename = filename_base + ".mht";
         
     if (dirname_base) {
-      dirname_base = arAkahukuMHT.base + arAkahukuFile.separator + dirname_base;
+      dirname_base
+        = AkahukuFileUtil.Path.join (arAkahukuMHT.base, dirname_base);
             
       var dir = arAkahukuFile.initFile (dirname_base);
       if (!dir) {
@@ -3556,7 +3551,7 @@ var arAkahukuMHT = {
             
       try {
         var file = arAkahukuFile
-          .initFile (dirname_base + arAkahukuFile.separator + filename);
+          .initFile (AkahukuFileUtil.Path.join (dirname_base, filename));
         if (!file) {
           /* ベースのディレクトリが不正 */
           throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
@@ -3568,7 +3563,7 @@ var arAkahukuMHT = {
             /* 上書きする設定の場合で前のファイル名が違う場合、削除する */
             var file2
             = arAkahukuFile.initFile
-            (dirname_base + arAkahukuFile.separator + param.lastFilename);
+            (AkahukuFileUtil.Path.join (dirname_base, param.lastFilename));
             if (!file2) {
               /* ベースのディレクトリが不正 */
               throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
