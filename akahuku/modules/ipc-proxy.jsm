@@ -20,7 +20,7 @@ const Cu = Components.utils;
 const Cr = Components.results;
 const CE = Components.Exception;
 
-const {Promise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
+var {Promise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
 
 /**
  * arIPCProxyParent
