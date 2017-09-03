@@ -56,6 +56,7 @@ var FileUtilP = {
       // Polyfill via input element from hidden DOM window
       var that = this;
       this.FilePolyfill = function (path) {
+        createNsiFile (path).fileSize; // Check file existence
         var doc = hiddenDOMWindow.document;
         var input = doc.createElement ("input");
         input.setAttribute ("type", "file");
