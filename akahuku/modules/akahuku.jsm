@@ -290,14 +290,15 @@ Akahuku.addFrame = function addFrame (frame) {
   // Fire a custom event that Akahuku is ready for a frame.
   // Listeing this event is a simple way to detect that Akahuku with
   // custom events for cooperations is active.
-  frame.addEventListener ("DOMWindowCreated", function (event) {
+  var onDOMWindowCreated = function (event) {
     // Ensure to fire an event once for a frame
-    frame.removeEventListener (event.type, arguments.callee);
+    frame.removeEventListener (event.type, onDOMWindowCreated);
     var targetDocument = event.target;
     var ev = targetDocument.createEvent ("Events");
     ev.initEvent ("AkahukuFrameLoaded", false, false);
     frame.dispatchEvent (ev);
-  });
+  };
+  frame.addEventListener ("DOMWindowCreated", onDOMWindowCreated);
 
   frame.addEventListener ("DOMContentLoaded", function (event) {
     Akahuku.onDOMContentLoaded (event);
