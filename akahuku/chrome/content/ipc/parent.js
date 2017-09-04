@@ -161,17 +161,9 @@ arAkahukuIPCRoot.defineProc
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "getDirectory");
 arAkahukuIPCRoot.defineProc
-  (arAkahukuFile, "File", "create");
-arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "createUnique");
 arAkahukuIPCRoot.defineProc
-  (arAkahukuFile, "File", "readFile");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuFile, "File", "readBinaryFile");
-arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "moveTo");
-arAkahukuIPCRoot.defineProc
-  (arAkahukuFile, "File", "remove");
 arAkahukuIPCRoot.defineProc
   (arAkahukuFile, "File", "createDirectory");
 var arAkahukuFileIPC = {

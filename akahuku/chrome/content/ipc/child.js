@@ -181,9 +181,6 @@ arAkahukuConfig.restoreTime = function () {
 arAkahukuFile.getDirectory = function () {
   return arAkahukuIPC.sendSyncCommand ("File/getDirectory", arguments);
 };
-arAkahukuFile.create = function () {
-  return arAkahukuIPC.sendSyncCommand ("File/create", arguments);
-};
 arAkahukuFile.createUnique = function () {
   return arAkahukuIPC.sendSyncCommand ("File/createUnique", arguments);
 };
@@ -203,12 +200,6 @@ arAkahukuFile.createFileOutputStream = function (file, ioFlags, perm, behaviorFl
   }
   return fstream;
 };
-arAkahukuFile.readFile = function () {
-  return arAkahukuIPC.sendSyncCommand ("File/readFile", arguments);
-};
-arAkahukuFile.readBinaryFile = function () {
-  return arAkahukuIPC.sendSyncCommand ("File/readBinaryFile", arguments);
-};
 arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFlags, contentWindow) {
   var fstream = arAkahukuIPC
     .sendSyncCommand ("File/createFileInputStream",
@@ -227,9 +218,6 @@ arAkahukuFile.createFileInputStream = function (file, ioFlags, perm, behaviorFla
 };
 arAkahukuFile.moveTo = function () {
   arAkahukuIPC.sendSyncCommand ("File/moveTo", arguments);
-};
-arAkahukuFile.remove = function () {
-  arAkahukuIPC.sendSyncCommand ("File/remove", arguments);
 };
 arAkahukuFile.createDirectory = function () {
   arAkahukuIPC.sendSyncCommand ("File/createDirectory", arguments);

@@ -181,21 +181,6 @@ var arAkahukuFile = {
   DIRECTORY_TYPE : 1,
 
   /**
-   * ファイル/ディレクトリが無ければ作成する
-   *   (必要な親ディレクトリも作成される)
-   * @param  String パス
-   * @param  Number NORMAL_FILE_TYPE or DIRECTORY_TYPE
-   * @param  Number UNIX-style permission value
-   */
-  create : function (filename, type, permissions) {
-    var file = arAkahukuFile.initFile (filename);
-    if (!file.exists ()) {
-      file.create (type, permissions);
-    }
-    return file;
-  },
-
-  /**
    * ユニークな名前を持つファイル/ディレクトリを作成する
    * @param  String ファイル名(候補)
    * @param  Number NORMAL_FILE_TYPE or DIRECTORY_TYPE
@@ -205,100 +190,6 @@ var arAkahukuFile = {
     var file = arAkahukuFile.initFile (filename);
     file.createUnique (type, permissions);
     return file;
-  },
-    
-  /**
-   * ファイルを作成する
-   *
-   * @param  String filename
-   *         ファイル名
-   * @param  String text
-   *         ファイルの内容
-   */
-  createFile : function (filename, text) {
-    var file = arAkahukuFile.create (filename, 0, 420/*0o644*/);
-    if (file) {
-      try {
-        var fstream
-        = arAkahukuFile.createFileOutputStream
-        (file, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
-        fstream.write (text, text.length);
-        fstream.close ();
-      }
-      catch (e) {
-        Components.utils.reportError (e.message);
-      }
-    }
-  },
-
-  /**
-   * ファイルを作成する(非同期)
-   *
-   * @param  String filename
-   *         ファイル名
-   * @param  String text
-   *         ファイルの内容
-   * @param  function callback
-   *         コールバック関数
-   */
-  asyncCreateFile : function (filename, text, callback) {
-    var fstream = null;
-    var file = arAkahukuFile.create (filename, 0, 420/*0o644*/);
-    try {
-      fstream
-      = arAkahukuFile.createFileOutputStream
-      (file, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0);
-    }
-    catch (e) {
-      Components.utils.reportError (e.message);
-      fstream = null;
-    }
-
-    if (!fstream) {
-      if (typeof callback === "function") {
-        arAkahukuUtil.executeSoon
-          (callback, [Components.results.NS_ERROR_FAILURE]);
-      }
-      return;
-    }
-
-    if ("nsIAsyncStreamCopier" in Components.interfaces) {
-      var istream
-      = Components.classes ["@mozilla.org/io/string-input-stream;1"]
-      .createInstance (Components.interfaces.nsIStringInputStream);
-      istream.setData (text, text.length);
-      var copier
-      = Components.classes ["@mozilla.org/network/async-stream-copier;1"]
-      .createInstance (Components.interfaces.nsIAsyncStreamCopier);
-      copier.init (istream, fstream, null, true, false, 0x8000, true, true);
-      var observer = {
-        onStartRequest: function (r, c) {},
-        onStopRequest: function (r, c, statusCode) {
-          callback (statusCode);
-        }
-      }
-      copier.asyncCopy (observer, null);
-    }
-    else {
-      // 非対応環境で非同期呼び出しを模擬
-      arAkahukuUtil.executeSoon (function () {
-        try {
-          fstream.write (text, text.length);
-          fstream.close ();
-        }
-        catch (e) {
-          if (e instanceof Components.interfaces.nsIXPCException) {
-            Components.utils.reportError (e.message);
-            callback.apply (null, [e.result]);
-            return;
-          }
-          Components.utils.reportError (e.message);
-          callback.apply (null, [Components.results.NS_ERROR_FAILURE]);
-          return;
-        }
-        callback.apply (null, [Components.results.NS_OK]);
-      });
-    }
   },
 
   /**
@@ -318,77 +209,6 @@ var arAkahukuFile = {
       .createInstance (Components.interfaces.nsIFileOutputStream);
     fstream.init (file, ioFlags, perm, behaviorFlags);
     return fstream;
-  },
-    
-  /**
-   * ファイルを読み込む
-   *
-   * @param  String filename
-   *         ファイル名
-   * @return String
-   *         ファイルの内容
-   */
-  readFile : function (filename) {
-    var text = "";
-    var file = arAkahukuFile.initFile (filename);
-        
-    if (file) {
-      try {
-        var fstream
-        = arAkahukuFile.createFileInputStream
-        (file, 0x01, 292/*0o444*/, 0);
-        var sstream
-        = Components
-        .classes ["@mozilla.org/scriptableinputstream;1"]
-        .createInstance (Components.interfaces
-                         .nsIScriptableInputStream);
-        sstream.init (fstream);
-        text = sstream.read (-1);
-        sstream.close ();
-        fstream.close ();
-      }
-      catch (e) {
-        Components.utils.reportError (e.message);
-        text = "";
-      }
-    }
-        
-    return text;
-  },
-    
-  /**
-   * バイナリファイルを読み込む
-   *
-   * @param  String filename
-   *         ファイル名
-   * @return String
-   *         ファイルの内容
-   */
-  readBinaryFile : function (filename) {
-    var bindata = "";
-    var file = arAkahukuFile.initFile (filename);
-        
-    if (file) {
-      try {
-        var fstream
-        = arAkahukuFile.createFileInputStream
-        (file, 0x01, 292/*0o444*/, 0);
-        var bstream
-        = Components
-        .classes ["@mozilla.org/binaryinputstream;1"]
-        .createInstance (Components.interfaces.nsIBinaryInputStream);
-        bstream.setInputStream (fstream);
-        bindata = bstream.readBytes (file.fileSize);
-        bstream.close ();
-        fstream.close ();
-      }
-      catch (e) {
-        Components.utils.reportError (e);
-        bindata = "";
-      }
-    }
-        
-    return bindata;
   },
 
   /**
@@ -421,16 +241,6 @@ var arAkahukuFile = {
     file.moveTo (newParentDir, newName);
   },
 
-  /**
-   * ファイルを削除する
-   *
-   * @param  nsIFile file
-   * @param  boolean recursive
-   */
-  remove : function (file, recursive) {
-    file.remove (recursive);
-  },
-    
   /**
    * ディレクトリを作成する
    *
