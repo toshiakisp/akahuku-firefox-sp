@@ -1525,7 +1525,9 @@ var AkahukuIPCManager = {
           && "nsIContentFrameMessageManager" in Ci) {
         // e10s-ready env
         var ipc = AkahukuIPCManager.createRoot (props.root);
-        ipc.root.init ();
+        if (!ipc.root.initialized) {
+          ipc.root.init ();
+        }
 
         // define commands
         var provider;
@@ -1546,7 +1548,9 @@ var AkahukuIPCManager = {
         }
 
         // main-process child must be initialized after parent definitions
-        ipc.child.init ();
+        if (!ipc.child.initialized) {
+          ipc.child.init ();
+        }
       }
       else {
         // old non-e10s env
@@ -1555,7 +1559,9 @@ var AkahukuIPCManager = {
     }
     else { // child processes (e10s ready)
       var ipc = AkahukuIPCManager.createRoot (props.root);
-      ipc.child.init ();
+      if (!ipc.child.initialized) {
+        ipc.child.init ();
+      }
 
       // Mixin (child)
       for (var c in props.childModule) {
