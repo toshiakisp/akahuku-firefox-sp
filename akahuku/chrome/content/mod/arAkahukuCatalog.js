@@ -2,7 +2,7 @@
 /* global Components,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *   arAkahukuDOM, arAkahukuThread, arAkahukuSidebar,
- *   arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil,
+ *   arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil, AkahukuFSUtil,
  *   arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuPopupParam,
  *   arAkahukuSound, arAkahukuBoard, arAkahukuReload,
  */
@@ -2569,23 +2569,11 @@ var arAkahukuCatalog = {
             = AkahukuFileUtil.Path
             .join (arAkahukuFile.systemDirectory, "lastcells.txt");
             
-          try {
-            arAkahukuCatalog.lastCellsText
-              = arAkahukuFile.readFile (filename);
-          }
-          catch (e) {
-            if (e.result == Components.results.NS_ERROR_FILE_NOT_FOUND) {
-              // 無いなら無視
-            }
-            else {
-              Akahuku.debug.exception (e);
-            }
-          }
-          var currentBoard = "";
-            
-          arAkahukuCatalog.lastCellsText.replace
-            (/([^\n\r]+)[\r\n]+/g,
-             function (matched, line) {
+          AkahukuFSUtil.loadNativeFileAsString (filename)
+          .then (function (text) {
+            arAkahukuCatalog.lastCellsText = text;
+            var currentBoard = "";
+            var parser = function (matched, line) {
               if (line.indexOf (",") == -1) {
                 currentBoard = line;
                 var cells = new Array ();
@@ -2609,7 +2597,11 @@ var arAkahukuCatalog = {
                 i ++;
                 arAkahukuCatalog.lastCells [currentBoard].push (cell);
               }
-            });
+            };
+            text.replace (/([^\n\r]+)[\r\n]+/g, parser);
+          }, function (e) {
+            Akahuku.debug.warn ("loading lastcells.txt faild; " + e.name);
+          });
         }
       }
       else {
@@ -3212,7 +3204,10 @@ var arAkahukuCatalog = {
       newText += name + "\n" + text;
             
       arAkahukuCatalog.lastCellsText = newText;
-      arAkahukuFile.createFile (filename, newText);
+      AkahukuFSUtil.saveStringToNativeFile (filename, newText, "plain/text")
+      .catch (function (e) {
+        Akahuku.debug.exception (e);
+      });
             
     }
   },

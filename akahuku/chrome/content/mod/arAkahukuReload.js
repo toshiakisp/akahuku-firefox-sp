@@ -5,6 +5,7 @@
  *   arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
  *   arAkahukuThread, arAkahukuTitle, arAkahukuCompat, arAkahukuFile,
  *   arAkahukuWindow, arAkahukuUI, arAkahukuBoard, AkahukuFileUtil,
+ *   AkahukuFSUtil,
  */
 
 /**
@@ -27,6 +28,8 @@ arAkahukuReloadCacheWriter.prototype = {
   foot : "",         /* String  キャッシュの内容 最後のレスの後から */
     
   charset : "",      /* String  文字コード */
+
+  pending : false,
     
   /**
    * キャッシュの各パートを構築する
@@ -261,6 +264,11 @@ arAkahukuReloadCacheWriter.prototype = {
    *         ファイルの場所
    */
   createFile : function (location) {
+    if (this.pending) {
+      Akahuku.debug.warn ("arAkahukuReloadCacheWriter:",
+          "Abort createFile() because of pending");
+      return;
+    }
     try {
       var base
       = AkahukuFileUtil.getURLSpecFromNativeDirPath
@@ -283,7 +291,15 @@ arAkahukuReloadCacheWriter.prototype = {
         + this.warning
         + this.body
         + this.foot;
-      arAkahukuFile.createFile (path, text);
+
+      var writer = this;
+      writer.pending = true;
+      AkahukuFSUtil.saveStringToNativeFile (path, text, "plain/text")
+      .catch (function (e) {
+        Akahuku.debug.exception (e);
+      }).then (function () {
+        writer.pending = false;
+      });
     }
     catch (e) { Akahuku.debug.exception (e);
     }

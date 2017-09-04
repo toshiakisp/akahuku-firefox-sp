@@ -3,7 +3,7 @@
  *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
  *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
  *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil
- *   AkahukuFileUtil,
+ *   AkahukuFileUtil, AkahukuFS,
  */
 
 /**
@@ -13,8 +13,9 @@
 function arAkahukuImageListener () {
 }
 arAkahukuImageListener.prototype = {
-  file : null,   /* nsIFile  保存先のファイル */
+  storage : null, /* Promise or FileStorage 保存先のストレージ */
   saveLeafName : "", /* String  保存先のファイル名 */
+  tmpLeafName : "",
   finished : false,
   callback : null,
   expectedContentTypePattern : /^image\//,
@@ -39,9 +40,12 @@ arAkahukuImageListener.prototype = {
   },
 
   setFilePath : function (filePath, tmpfilePath) {
-    this.file = arAkahukuFile.initFile (filePath);
-    this.saveLeafName = this.file.leafName;
-    this.file.initWithPath (tmpfilePath);
+    this.saveLeafName = AkahukuFS.Path.basename (filePath);
+    this.tmpLeafName = AkahukuFS.Path.basename (tmpfilePath);
+    var dirname = AkahukuFS.Path.dirname (tmpfilePath);
+    var that = this;
+    this.storage = AkahukuFS.getFileStorage ({name: dirname})
+    .then (function (value) { that.storage = value; });
   },
     
   /**
@@ -103,57 +107,83 @@ arAkahukuImageListener.prototype = {
     try {
     if (stateFlags
         & Components.interfaces.nsIWebProgressListener.STATE_STOP) {
+      this.finished = true;
+      var that = this;
       if (httpStatus == 0) {
         /* P2P */
                 
-        if (this.file
-            && this.file.exists ()
-            && this.file.fileSize > 0) {
-          this.file.moveTo (null, this.saveLeafName);
-          this.finished = true;
-          this.callback (true, this.file, "");
-        }
-        else {
-          if (this.file
-              && this.file.exists ()) {
-            this.file.remove (true);
+        Promise.resolve (this.storage).then (function () {
+          return that.storage.get (that.tmpLeafName);
+        }).then (function (file) {
+          if (file.size > 0) {
+            that.storage.move (that.tmpLeafName, that.saveLeafName)
+            .then (function () {
+              return that.storage.get (that.saveLeafName);
+            }).then (function (file) {
+              try {
+                that.callback (true, file, that.storage, "");
+              }
+              catch (e) {
+              }
+            }).catch (function (error) {
+              that.callback (false, null, null, "");
+            });
+            return true;
           }
+          else {
+            that.storage.remove (that.tmpLeafName)
+            .catch (function (error) {
+              Akahuku.debug.error (error.name);
+            });
+            return Promise.reject ({name:"FileSizeIsZero"});
+          }
+        }).catch (function (error) {
           var msg = "";
-          if (this.httpStatusAtStart == 404) {
+          if (that.httpStatusAtStart == 404) {
             // "ファイルがないよ"
             msg = "\u30D5\u30A1\u30A4\u30EB\u304C\u306A\u3044\u3088";
           }
-          else if (this.httpStatusAtStart > 0) {
+          else if (that.httpStatusAtStart > 0) {
             // 一度正常にスタートした後のエラー
             msg = "\u4FDD\u5B58\u5931\u6557" // "保存失敗"
-              + "(HTTP " + this.httpStatusAtStart + ")";
+              + "(HTTP " + that.httpStatusAtStart + ")";
           }
-          this.finished = true;
-          this.callback (false, null, msg);
-        }
+          that.callback (false, null, null, msg);
+        });
       }
       else if (httpSucceeded) {
         if (this.expectedContentTypePattern &&
             this.expectedContentTypePattern.test (request.contentType)) {
-          this.file.moveTo (null, this.saveLeafName);
-          this.finished = true;
-          this.callback (true, this.file, "");
+          Promise.resolve (this.storage).then (function () {
+            return that.storage.move (that.tmpLeafName, that.saveLeafName);
+          }).then (function () {
+            return that.storage.get (that.saveLeafName);
+          }).then (function (file) {
+            that.callback (true, file, that.storage, "");
+          }).catch (function (error) {
+            Akahuku.debug.error (error.name + ": " + error);
+          });
         }
         else {
           // 画像ではないがどうするかはコールバック次第
-          this.finished = true;
           Akahuku.debug.warn ("arAkahukuImageListener: "
               + "Unexpected Content-Type: " + request.contentType);
-          this.callback (false, this.file, "");
+          Promise.resolve (this.storage).then (function () {
+            return that.storage.get (that.tmpLeafName);
+          }).then (function (file) {
+            that.callback (false, file, that.storage, "");
+          }).catch (function (error) {
+            Akahuku.debug.error (error.name + ": " + error);
+          });
         }
       }
       else {
-        if (this.file
-            && this.file.exists ()) {
-          this.file.remove (true);
-        }
-        this.finished = true;
-        this.callback (false, null, "");
+        Promise.resolve (this.storage).then (function () {
+          return that.storage.remove (that.tmpLeafName);
+        }).catch (function (error) {
+          Akahuku.debug.error (error.name + ": " + error);
+        });
+        this.callback (false, null, null, "");
       }
     }
     else if (stateFlags
@@ -1000,35 +1030,54 @@ var arAkahukuImage = {
     catch (e) { Akahuku.debug.exception (e);
     }
 
-    var onFileSaved = function (success, savedFile, msg) {
+    var onFileSaved = function (success, savedFile, storage, msg) {
       var newHref = null;
       var wait = 0;
+      var promise;
       if (savedFile) {
-        var text = arAkahukuFile.readFile (savedFile.path);
-        arAkahukuFile.remove (savedFile, true);
+        promise = storage.getPromisedFile (savedFile.name)
+        .then (function (pfile) {
+          var fh = pfile.open ("readonly");
+          return fh.readAsText (-1, 0)
+          .then (function (data) {
+            fh.close ();
+            storage.remove (savedFile.name);
+            return data;
+          }).catch (function (e) {
+            fh.close ();
+            Akahuku.debug.warn (e);
+            return "";
+          });
+        });
+      }
+      else {
+        promise = Promise.resolve ("");
+      }
+      promise.then (function (text) {
         var result = Akahuku.getSrcURL (text, href);
         if (result [0]) {
-          newHref = result [0];
-          wait = result [1];
+          return result;
         }
-      }
-      if (newHref == null) {
         if (arAkahukuP2P.enable) {
           // P2P の場合、キャッシュからの取得を試みる
           var baseDir = arAkahukuUtil.newURIViaNode (href, null);
-          newHref = baseDir.resolve ("../src/" + leafName);
+          var newHref = baseDir.resolve ("../src/" + leafName);
+          return [newHref, 0];
         }
         else {
           arAkahukuImage.onSave
             (target, false, msg, "", normal);
-          return;
+          return Promise.reject (0);
         }
-      }
-      targetDocument.defaultView
-      .setTimeout (function () {
-        arAkahukuImage.saveImage
-          (target, targetDirIndex, newHref, leafName, normal);
-      }, wait)
+      }).then (function (result) {
+        var newHref = result [0];
+        var wait = result [1];
+        targetDocument.defaultView
+        .setTimeout (function () {
+          arAkahukuImage.saveImage
+            (target, targetDirIndex, newHref, leafName, normal);
+        }, wait)
+      });
     };
     arAkahukuImage.asyncSaveImageToFile
       (filename, uri, isPrivate, onFileSaved);
@@ -1058,9 +1107,9 @@ var arAkahukuImage = {
     catch (e) { Akahuku.debug.exception (e);
     }
     arAkahukuImage.asyncSaveImageToFile (filePath, uri, isPrivate,
-        function (success, savedFile, msg) {
+        function (success, savedFile, storage, msg) {
           if (!success && savedFile) {
-            arAkahukuFile.remove (savedFile, true);
+            storage.remove (savedFile.name);
             if (!msg || msg.length == 0) {
               // "保存失敗(Content-Type)"
               msg = "\u4FDD\u5B58\u5931\u6557(Content-Type)";
@@ -1073,7 +1122,7 @@ var arAkahukuImage = {
           else {
             if (savedFile) {
               // 中断されたため削除
-              arAkahukuFile.remove (savedFile, true);
+              storage.remove (savedFile.name);
             }
           }
         });
@@ -1347,16 +1396,22 @@ var arAkahukuImage = {
         
     arAkahukuImage.asyncCheckImageFileExist (target, leafName)
       .then (function (result) {
-        var file = arAkahukuFile.initFile (result.path);
-        arAkahukuFile.remove (file, true);
+        var dir = AkahukuFS.Path.dirname (result.path);
+        return AkahukuFS.getFileStorage ({name: dir})
+        .then (function (storage) {
+          return [storage, result.file];
+        });
       }, function () {
-        // no file, no special care
-        Akahuku.debug.warn ("no file for " +  leafName);
-      })
-      .then (function () {
+        throw new Error ("No file for " +  leafName);
+      }).then (function (args) {
+        var [storage, file] = args;
+        return storage.remove (file.name);
+      }).then (function () {
         arAkahukuImage.updateContainer (target.parentNode,
                                         false, false);
         arAkahukuImage.changeImage (target, false);
+      }).catch (function (e) {
+        Akahuku.debug.exception (e);
       });
   },
     

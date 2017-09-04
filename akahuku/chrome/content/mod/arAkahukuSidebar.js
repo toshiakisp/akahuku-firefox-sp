@@ -1,7 +1,7 @@
 
 /* global Components,
  *   Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
- *   arAkahukuBoard, arAkahukuWindow, arAkahukuP2P, arAkahukuFile,
+ *   arAkahukuBoard, arAkahukuWindow, arAkahukuP2P, arAkahukuFile, AkahukuFSUtil,
  *   arAkahukuReload, arAkahukuMergeItemCallbackList,
  *   AkahukuFileUtil,
  */
@@ -348,16 +348,17 @@ var arAkahukuSidebar = {
         = AkahukuFileUtil
         .Path.join (arAkahukuFile.systemDirectory, "sidebar.txt");
             
-      var text = arAkahukuFile.readFile (filename);
-      var currentBoard = "";
-            
-      text.replace
-        (/([^\n\r]+)[\r\n]+/g,
-         function (matched, line) {
+      AkahukuFSUtil.loadNativeFileAsString (filename)
+      .then (function (text) {
+        var currentBoard = "";
+        var parser = function (matched, line) {
           if (line.indexOf (",") == -1) {
             currentBoard = line;
-            board = new arAkahukuSidebarBoard ();
-            param.boards [currentBoard] = board;
+            if (!param.boards [currentBoard]) {
+              // taking care for async file load
+              board = new arAkahukuSidebarBoard ();
+              param.boards [currentBoard] = board;
+            }
           }
           else {
             var values = line.split (/,/);
@@ -405,10 +406,12 @@ var arAkahukuSidebar = {
             i ++;
             param.boards [currentBoard].addThread (thread);
           }
-        });
-      if (arAkahukuSidebar.enableMarked) {
-        arAkahukuSidebar.updateMarked (param);
-      }
+        };
+        text.replace (/([^\n\r]+)[\r\n]+/g, parser);
+        if (arAkahukuSidebar.enableMarked) {
+          arAkahukuSidebar.updateMarked (param);
+        }
+      });
     }
   },
 
@@ -552,7 +555,10 @@ var arAkahukuSidebar = {
         }
       }
             
-      arAkahukuFile.createFile (filename, text);
+      AkahukuFSUtil.saveStringToNativeFile (filename, text, "plain/text")
+      .catch (function (e) {
+        Akahuku.debug.exception (e);
+      });
     }
   },
     

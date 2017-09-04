@@ -2,7 +2,7 @@
 /* global Components, XPCNativeWrapper, Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *   arAkahukuDOM, arAkahukuStyle,
- *   arAkahukuFile, arAkahukuUtil, AkahukuFileUtil
+ *   arAkahukuFile, arAkahukuUtil, AkahukuFileUtil, AkahukuFSUtil,
  *   arAkahukuSound, arAkahukuClipboard, arAkahukuWindow, arAkahukuUI,
  *   arAkahukuP2P, arAkahukuReload, arAkahukuLink, arAkahukuScroll,
  *   arAkahukuThread, arAkahukuBoard,
@@ -2907,12 +2907,8 @@ var arAkahukuPostForm = {
       (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420/*0o644*/);
     filename = file.path;
     file = null;
-    arAkahukuFile.asyncCreateFile (filename, imageBin, function (code) {
-      if (!Components.isSuccessCode (code)) {
-        Akahuku.debug.error (arAkahukuUtil.resultCodeToString (code)
-          + "in saving " + filename);
-        return;
-      }
+    AkahukuFSUtil.saveStringToNativeFile (filename, imageBin, "image/jpeg")
+    .then (function () {
       AkahukuFileUtil.createFromFileName (filename)
       .then (function (file) { // DOM File
         var filebox = targetDocument.getElementsByName ("upfile")[0];
@@ -2925,6 +2921,8 @@ var arAkahukuPostForm = {
       }, function (reason) {
         Akahuku.debug.error ("tryPasteImageFromClipboard: failed " + reason.name);
       });
+    }, function (err) {
+      Akahuku.debug.error ("Error occured in saving", filename, err);
     });
   },
 

@@ -5,7 +5,7 @@
  *   arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
  *   arAkahukuThread, arAkahukuReload, arAkahukuScroll,
  *   arAkahukuTitle, arAkahukuPopupQuote, arAkahukuThreadOperator,
- *   AkahukuFileUtil,
+ *   AkahukuFileUtil, AkahukuFSUtil,
  */
 
 /**
@@ -210,18 +210,15 @@ var arAkahukuStyle = {
             
       style = null;
             
-      arAkahukuFile.asyncCreateFile (filename, text, function (statusCode) {
-        if (!Components.isSuccessCode (statusCode)) {
-          Akahuku.debug.error ("Error in creating userContent.css: "
-           + arAkahukuUtil.resultCodeToString (statusCode));
-          return;
-        }
+      AkahukuFSUtil.saveStringToNativeFile (filename, text, "plain/text")
+      .then (function () {
         if (styleSheetService.sheetRegistered (uri, type)) {
           styleSheetService.unregisterSheet (uri, type);
         }
         styleSheetService.loadAndRegisterSheet (uri, type);
+      }, function (err) {
+        Akahuku.debug.error ("Error in creating userContent.css:", err);
       });
-            
     }
     else {
       if (styleSheetService.sheetRegistered (uri, type)) {

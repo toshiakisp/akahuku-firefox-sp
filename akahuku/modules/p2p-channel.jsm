@@ -828,11 +828,10 @@ arAkahukuP2PChannel.prototype = {
         isPrivate = this.loadInfo.usePrivateBrowsing;
       }
       var self = this;
-      var callback = function (success, savedFile, msg) {
+      var callback = function (success, savedFile, storage, msg) {
         if (!success) {
           if (savedFile) {
-            arAkahukuIPC.sendSyncCommand
-              ("File/remove", [savedFile, false]);
+            storage.remove (savedFile.name);
           }
           self.status = Cr.NS_BINDING_FAILED;
           self._onFail ();
