@@ -1,5 +1,5 @@
 
-/* global Components */
+/* global Components, Symbol */
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -104,7 +104,7 @@ AkahukuConsole.prototype = {
   _toString : function (message)
   {
     var str = "";
-    if (typeof message === "object") {
+    if (message !== null && typeof message === "object") {
       if ("nodeName" in message) { // Node
         str += this._NodeToString (message);
       }
@@ -115,7 +115,14 @@ AkahukuConsole.prototype = {
         str += String (message);
       }
       else if (typeof JSON === "object") {
-        str += "[" + typeof message + "]";
+        str += "[" + typeof message;
+        if (typeof Symbol !== "undefined"
+            && typeof Symbol.toStringTag !== "undefined"
+            && message [Symbol.toStringTag]) {
+          // require Firefox 51.0+
+          str += " " + message [Symbol.toStringTag];
+        }
+        str += "]";
         try {
           str += JSON.stringify (message);
         }
