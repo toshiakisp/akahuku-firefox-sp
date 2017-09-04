@@ -277,6 +277,7 @@ FileUtilP.getLastModified  = function (file) {
   }
   return 0;
 };
+FileUtilC.getLastModified = FileUtilP.getLastModified;
 
 /**
  * AkahukuFileUtil.exists
