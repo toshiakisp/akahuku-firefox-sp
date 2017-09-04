@@ -44,6 +44,8 @@ var appinfo =
 
 var {Promise} = Cu.import ("resource://akahuku/promise-polyfill.jsm", {});
 const {AkahukuFileUtil} = Cu.import ("resource://akahuku/fileutil.jsm", {});
+const {AkahukuFSUtil, AkahukuFS}
+= Cu.import ("resource://akahuku/filestorage.jsm", {});
 
 // subscript loder
 var load = (function () {

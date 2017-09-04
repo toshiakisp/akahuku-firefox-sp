@@ -19,6 +19,7 @@
   AkahukuContextMenusService.startup (); // if not yet started
   // ensure starting module's ipc root in the main process
   Components.utils.import ("resource://akahuku/fileutil.jsm", {});
+  Components.utils.import ("resource://akahuku/filestorage.jsm", {});
   Components.utils.import ("resource://akahuku/observer.jsm", {});
 })();
 
