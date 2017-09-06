@@ -124,9 +124,11 @@ arAkahukuImageListener.prototype = {
                 that.callback (true, file, that.storage, "");
               }
               catch (e) {
+                Akahuku.debug.exception (e);
               }
             }).catch (function (error) {
               that.callback (false, null, null, "");
+              Akahuku.debug.error (error.name + ": " + error);
             });
             return true;
           }
@@ -159,8 +161,14 @@ arAkahukuImageListener.prototype = {
           }).then (function () {
             return that.storage.get (that.saveLeafName);
           }).then (function (file) {
-            that.callback (true, file, that.storage, "");
+            try {
+              that.callback (true, file, that.storage, "");
+            }
+            catch (e) {
+              Akahuku.debug.exception (e);
+            }
           }).catch (function (error) {
+            that.callback (false, null, null, "");
             Akahuku.debug.error (error.name + ": " + error);
           });
         }
@@ -171,8 +179,14 @@ arAkahukuImageListener.prototype = {
           Promise.resolve (this.storage).then (function () {
             return that.storage.get (that.tmpLeafName);
           }).then (function (file) {
-            that.callback (false, file, that.storage, "");
+            try {
+              that.callback (false, file, that.storage, "");
+            }
+            catch (e) {
+              Akahuku.debug.exception (e);
+            }
           }).catch (function (error) {
+            that.callback (false, null, null, "");
             Akahuku.debug.error (error.name + ": " + error);
           });
         }

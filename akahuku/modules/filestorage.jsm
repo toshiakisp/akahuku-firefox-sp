@@ -28,7 +28,13 @@ var {arIPCProxyParent, arIPCPromisedProxyChild}
 function createNsIFile (path) {
   var file = Cc ["@mozilla.org/file/local;1"]
   .createInstance (Ci.nsILocalFile || Ci.nsIFile);
-  file.initWithPath (path);
+  try {
+    file.initWithPath (path);
+  }
+  catch (e) {
+    Cu.reportError (e);
+    throw new Error (e.name + ": '" + path + "'");
+  }
   return file;
 }
 
