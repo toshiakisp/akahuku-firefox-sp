@@ -366,13 +366,14 @@ var AkahukuFileUtil = AkahukuIPCManager.createAndRegisterModule ({
  * Minimum implementation of OS.Path for all Firefox versions
  */
 var OS = {
-  Windows : function () {
-    // lazy build
+  get Windows () {
+    // lazy getter
     var xulRuntime
       = Components.classes ["@mozilla.org/xre/app-info;1"]
       .getService (Components.interfaces.nsIXULRuntime);
-    this.Windows = /^WIN/.test (xulRuntime.OS);
-    return this.Windows;
+    var isWindows = /^WIN/.test (xulRuntime.OS);
+    delete this.Windows;
+    return this.Windows = isWindows;
   },
 };
 
@@ -435,8 +436,8 @@ OS.Path.dirname = function (path) {
 };
 OS.Path.join = function () {
   var paths = [];
-  var regexpTrimLast = (OS.Windows ? /^\\+|\\+$/g : /^\/+|\/+$/g);
-  var regexpTrimBoth = (OS.Windows ? /\\+$/ : /\/+$/);
+  var regexpTrimBoth = (OS.Windows ? /^\\+|\\+$/g : /^\/+|\/+$/g);
+  var regexpTrimLast = (OS.Windows ? /\\+$/ : /\/+$/);
   for (var i = 0; i < arguments.length; i ++) {
     var subpath = arguments [i];
     if (!subpath) {
