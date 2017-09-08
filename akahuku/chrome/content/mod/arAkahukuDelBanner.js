@@ -146,17 +146,18 @@ var arAkahukuDelBanner = {
   /**
    * 画像広告を削除する
    *
-   * @param  HTMLDocument targetDocument
-   *         対象のドキュメント
+   * @param  Element|Document targetElement
+   *         対象の要素
    * @param  arAkahukuLocationInfo info
    *         アドレスの情報
    * @param  Boolean all
    *         全て削除する
    */
-  deleteImage : function (targetDocument, info, all) {
-    var images = targetDocument.getElementsByTagName ("img");
-    var iframes = targetDocument.getElementsByTagName ("iframe");
-    var objects = targetDocument.getElementsByTagName ("object");
+  deleteImage : function (targetElement, info, all) {
+    var ownerDocument = targetElement.ownerDocument || targetElement;
+    var images = targetElement.getElementsByTagName ("img");
+    var iframes = targetElement.getElementsByTagName ("iframe");
+    var objects = targetElement.getElementsByTagName ("object");
     var src = "";
     var nodes = new Array ();
     var i;
@@ -298,6 +299,15 @@ var arAkahukuDelBanner = {
       if (delTarget || all) {
         /* 削除対象 */
         if (parent) {
+          if (!parent.parentNode) {
+            // script で挿入しようとしているノードのトップなど
+            // このタイミングでは removeChild できないので見送る
+            Akahuku.debug.log ("arAkahukuDelBanner.deleteImage:",
+                "Skip deleting an out-of-tree element", nodes [i],
+                "in", ownerDocument);
+            parent.setAttribute ("__akahuku_contentpolicy_hide", "1");
+            continue;
+          }
           if (parent.parentNode.nodeName.toLowerCase () == "div") {
             if (parent.parentNode.childNodes.length == 1) {
               parent = parent.parentNode;
