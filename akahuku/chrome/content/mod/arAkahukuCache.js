@@ -630,7 +630,14 @@ Akahuku.Cache = new function () {
       var uri = ios.newURI (url, null, null);
       cacheStorage.asyncOpenURI (uri, "", flag, callback);
     }
-    catch (e) { Akahuku.debug.exception (e);
+    catch (e) {
+      if (e.result == Components.results.NS_ERROR_MALFORMED_URI) {
+        Akahuku.debug.warn ("Cache.asyncOpenCache: NS_ERROR_MALFORMED_URI; ", url);
+      }
+      else {
+        Akahuku.debug.exception (e);
+      }
+      callback.onCacheEntryAvailable (null, false, false, e.result);
     }
   };
   this.asyncOpenCacheToWrite = function (url, callback) {
