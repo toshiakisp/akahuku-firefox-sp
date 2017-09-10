@@ -321,12 +321,22 @@ Akahuku.addFrame = function addFrame (frame) {
  * to get and send content-base data
  */
 function handleContentContextMenu (subject) {
-  var target = subject.wrappedJSObject.event.target;
+  // 57.0a1 [Bug 1360406] causes a change of the property name for Event
+  // (The use of contextMenu.getTarget() may be better, but how?)
+  subject = subject.wrappedJSObject;
+  var event = subject.event || subject.aEvent;
+
   var data = {};
-  data.link = arAkahukuLink.getContextMenuContentData (target);
-  data.image = arAkahukuImage.getContextMenuContentData (target);
-  data.jpeg = arAkahukuJPEG.getContextMenuContentData (target);
-  data.p2p = arAkahukuP2P.getContextMenuContentData (target);
+  try {
+    var target = event.target;
+    data.link = arAkahukuLink.getContextMenuContentData (target);
+    data.image = arAkahukuImage.getContextMenuContentData (target);
+    data.jpeg = arAkahukuJPEG.getContextMenuContentData (target);
+    data.p2p = arAkahukuP2P.getContextMenuContentData (target);
+  }
+  catch (e) {
+    Akahuku.debug.exception (e);
+  }
   arAkahukuIPC.sendSyncCommand ("UI/setContextMenuContentData", [data]);
 
   // turn flag on in content processes at this timing
