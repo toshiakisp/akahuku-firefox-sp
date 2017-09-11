@@ -1,7 +1,7 @@
 
 /* global atob,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuWindow,
- *   arAkahukuDOM, arAkahukuPostForm, arAkahukuClipboard
+ *   arAkahukuDOM, arAkahukuPostForm, arAkahukuClipboard, arAkahukuUI,
  */
 
 /**
@@ -750,8 +750,7 @@ var arAkahukuQuote = {
     }
   },
   onClickQuote : function (event, addQuotePrefix, focusTextArea) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    var target = window.gContextMenu.target;
+    var target = arAkahukuUI.contextMenuContentTarget;
     arAkahukuQuote.quote (addQuotePrefix, focusTextArea, target);
   },
   onClickQuoteWithMark : function (event) {
@@ -784,8 +783,8 @@ var arAkahukuQuote = {
     }
   },
   onClickCopyToClipboard : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuQuote.copyToClipboard (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.copyToClipboard (target);
   },
     
   /**
@@ -817,8 +816,7 @@ var arAkahukuQuote = {
     }
   },
   onClickQuoteToMailBoxCore : function (event, focusMailBox) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    var target = window.gContextMenu.target;
+    var target = arAkahukuUI.contextMenuContentTarget;
     arAkahukuQuote.quoteToMailBox (focusMailBox, target);
   },
   onClickQuoteToMailBox : function (event) {
@@ -857,8 +855,7 @@ var arAkahukuQuote = {
     }
   },
   onClickQuoteToNameBoxCore : function (event, focusNameBox) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    var target = window.gContextMenu.target;
+    var target = arAkahukuUI.contextMenuContentTarget;
     arAkahukuQuote.quoteToNameBox (focusNameBox, target);
   },
   onClickQuoteToNameBox : function (event) {
@@ -886,8 +883,8 @@ var arAkahukuQuote = {
     arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
   },
   onClickGoogleImage : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuQuote.googleImage (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.googleImage (target);
   },
     
   /**
@@ -908,8 +905,8 @@ var arAkahukuQuote = {
     arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
   },
   onClickWikipedia : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuQuote.wikipedia (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.wikipedia (target);
   },
 
   searchInNewTabXUL : function (href, focus, browser) {

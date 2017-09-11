@@ -23,6 +23,7 @@ var arAkahukuUI = {
   contextMenuShown : false,      /* Boolean
                                   *   コンテキストメニューが
                                   *   表示されているかどうか */
+  contextMenuContentTarget : null,
     
   prefDialog : null, /* ChromeWindow  設定ダイアログ */
 
@@ -483,8 +484,12 @@ var arAkahukuUI = {
   /**
    * メニューが開かれたイベント
    */
-  onContextMenuShown : function () {
+  onContextMenuShown : function (event) {
     arAkahukuUI.contextMenuShown = true;
+    if (!arAkahukuUI.contextMenuContentTarget) {
+      // For e10s content processes
+      arAkahukuUI.setContextMenuContentTargetFor (event);
+    }
   },
     
   /**
@@ -492,6 +497,19 @@ var arAkahukuUI = {
    */
   onContextMenuHidden : function () {
     arAkahukuUI.contextMenuShown = false;
+    arAkahukuUI.contextMenuContentTarget = null;
+  },
+
+  setContextMenuContentTargetFor : function (event) {
+    if (event.target && event.target.nodeName
+        && event.target.nodeName != "menupopup") {
+      // For e10s content processes
+      arAkahukuUI.contextMenuContentTarget = event.target;
+    }
+    else {
+      var gContextMenu = event.currentTarget.ownerDocument.defaultView.gContextMenu;
+      arAkahukuUI.contextMenuContentTarget = gContextMenu.target;
+    }
   },
     
   /**
@@ -504,6 +522,7 @@ var arAkahukuUI = {
   setContextMenu : function (event) {
     var gContextMenu = event.currentTarget.ownerDocument.defaultView.gContextMenu;
     if (gContextMenu && event.target.id == "contentAreaContextMenu") {
+      arAkahukuUI.setContextMenuContentTargetFor (event);
       arAkahukuLink.setContextMenu (event);
       arAkahukuImage.setContextMenu (event);
       arAkahukuQuote.setContextMenu (event);

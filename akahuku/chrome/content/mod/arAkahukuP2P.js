@@ -1,7 +1,7 @@
 
 /* global Components, Akahuku, AkahukuVersion, arAkahukuConfig,
  * arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil,
- * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL,
+ * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL, arAkahukuUI,
  */
 
 /**
@@ -412,9 +412,9 @@ var arAkahukuP2P = {
   setContextMenu : function (event) {
     var menuitem;
     var document = event.currentTarget.ownerDocument;
-    var gContextMenu = document.defaultView.gContextMenu;
             
-    var c = arAkahukuP2P.getContextMenuContentData (gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    var c = arAkahukuP2P.getContextMenuContentData (target);
         
     menuitem
     = document
@@ -498,8 +498,8 @@ var arAkahukuP2P = {
     arAkahukuP2P.service.utils.deleteCache (src);
   },
   onClickDeleteCache : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuP2P.deleteCache (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuP2P.deleteCache (target);
   },
     
   /**

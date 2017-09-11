@@ -2,7 +2,7 @@
 /* global Components, Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
  *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
- *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil
+ *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil, arAkahukuUI,
  *   AkahukuFileUtil, AkahukuFS,
  */
 
@@ -455,10 +455,11 @@ var arAkahukuImage = {
   setContextMenu : function (event) {
     var popup = event.target;
     var document = event.currentTarget.ownerDocument;
+    var target = arAkahukuUI.contextMenuContentTarget;
     var gContextMenu = document.defaultView.gContextMenu;
     var browser = gContextMenu.browser;
     if (!browser) {
-      var contentWindow = gContextMenu.target.ownerDocument.defaultView;
+      var contentWindow = target.ownerDocument.defaultView;
       browser = arAkahukuWindow.getBrowserForWindow (contentWindow);
     }
         
@@ -490,7 +491,7 @@ var arAkahukuImage = {
       return;
     }
 
-    var c = arAkahukuImage.getContextMenuContentData (gContextMenu.target);
+    var c = arAkahukuImage.getContextMenuContentData (target);
     if (!c.isSaveImageLink) {
       return;
     }

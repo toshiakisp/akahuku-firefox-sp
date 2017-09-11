@@ -25,14 +25,14 @@ arAkahukuJPEG.onClickOpenThumbnail = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("JPEG/openThumbnail",
-     [window.gContextMenu.target],
+     [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuJPEG.onClickCloseThumbnail = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
     ("JPEG/closeThumbnail",
-     [window.gContextMenu.target],
+     [null],
      window.gContextMenu.browser.messageManager);
 };
 
@@ -41,37 +41,37 @@ arAkahukuJPEG.onClickCloseThumbnail = function (event) {
 arAkahukuLink.onClickSetExt = function (event, type, ext) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/setExt", [type, ext, window.gContextMenu.target],
+    ("Link/setExt", [type, ext, null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuLink.onClickAddUser = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/addUser", [window.gContextMenu.target],
+    ("Link/addUser", [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuLink.onClickOpenLink = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/openLink", [window.gContextMenu.target],
+    ("Link/openLink", [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuLink.onClickSaveLink = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/saveLink", [window.gContextMenu.target],
+    ("Link/saveLink", [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuLink.onClickCopyLink = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/copyLink", [window.gContextMenu.target],
+    ("Link/copyLink", [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuLink.onClickOpenAsAutoLink = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Link/openAsAutoLink", [window.gContextMenu.target, event.shiftKey],
+    ("Link/openAsAutoLink", [null, event.shiftKey],
      window.gContextMenu.browser.messageManager);
 };
 
@@ -88,37 +88,37 @@ arAkahukuMHT.saveMHTForBrowser = function (browser) {
 arAkahukuQuote.onClickQuote = function (event, addQuotePrefix, focusTextArea) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/quote", [addQuotePrefix, focusTextArea, window.gContextMenu.target],
+    ("Quote/quote", [addQuotePrefix, focusTextArea, null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuQuote.onClickQuoteToMailBox = function (event, focusMailBox) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/quoteToMailBox", [focusMailBox, window.gContextMenu.target],
+    ("Quote/quoteToMailBox", [focusMailBox, null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuQuote.onClickQuoteToNameBox = function (event, focusNameBox) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/quoteToNameBox", [focusNameBox, window.gContextMenu.target],
+    ("Quote/quoteToNameBox", [focusNameBox, null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuQuote.onClickGoogleImage = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/googleImage", [window.gContextMenu.target],
+    ("Quote/googleImage", [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuQuote.onClickWikipedia = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/wikipedia", [window.gContextMenu.target],
+    ("Quote/wikipedia", [null],
      window.gContextMenu.browser.messageManager);
 };
 arAkahukuQuote.onClickCopyToClipboard = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("Quote/copyToClipboard", [window.gContextMenu.target],
+    ("Quote/copyToClipboard", [null],
      window.gContextMenu.browser.messageManager);
 };
 
@@ -177,7 +177,7 @@ arAkahukuLink.onVisit = function (aURI, aVisitID, aTime, aSessionID,
 arAkahukuP2P.onClickDeleteCache = function (event) {
   var window = event.currentTarget.ownerDocument.defaultView;
   arAkahukuIPCRoot.sendAsyncCommandToFrame
-    ("P2P/deleteCache", [window.gContextMenu.target],
+    ("P2P/deleteCache", [null],
      window.gContextMenu.browser.messageManager);
 };
 

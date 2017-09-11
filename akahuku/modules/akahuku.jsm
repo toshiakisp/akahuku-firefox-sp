@@ -341,7 +341,7 @@ function handleContentContextMenu (subject) {
 
   // turn flag on in content processes at this timing
   // (while turn off via arAkahukuUI.onContextMenuHidden IPC command)
-  arAkahukuUI.onContextMenuShown ();
+  arAkahukuUI.onContextMenuShown (event);
   arAkahukuUI._ContentContextMenuShowing = true;
 };
 

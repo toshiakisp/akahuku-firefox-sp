@@ -254,29 +254,65 @@ arAkahukuIPC.defineProc
 
 
 
+var arAkahukuJPEGIPC = {
+  openThumbnail : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuJPEG.openThumbnail (target);
+  },
+  closeThumbnail : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuJPEG.closeThumbnail (target);
+  },
+};
 arAkahukuIPC.defineProc
-  (arAkahukuJPEG,
+  (arAkahukuJPEGIPC,
    "JPEG", "openThumbnail",
    {async: true, callback: 0, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuJPEG,
+  (arAkahukuJPEGIPC,
    "JPEG", "closeThumbnail",
    {async: true, callback: 0, remote: true});
 
 
 
+var arAkahukuLinkIPC = {
+  setExt : function (type, ext, target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.setExt (type, ext, target);
+  },
+  addUser : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.addUser (target);
+  },
+  openLink : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.openLink (target);
+  },
+  saveLink : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.saveLink (target);
+  },
+  copyLink : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.copyLink (target);
+  },
+  openAsAutoLink : function (target, shiftKey) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.openAsAutoLink (target, shiftKey);
+  },
+};
 arAkahukuIPC.defineProc
-  (arAkahukuLink, "Link", "setExt", {async: true, remote: true});
+  (arAkahukuLinkIPC, "Link", "setExt", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuLink, "Link", "addUser", {async: true, remote: true});
+  (arAkahukuLinkIPC, "Link", "addUser", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuLink, "Link", "openLink", {async: true, remote: true});
+  (arAkahukuLinkIPC, "Link", "openLink", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuLink, "Link", "saveLink", {async: true, remote: true});
+  (arAkahukuLinkIPC, "Link", "saveLink", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuLink, "Link", "copyLink", {async: true, remote: true});
+  (arAkahukuLinkIPC, "Link", "copyLink", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuLink, "Link", "openAsAutoLink", {async: true, remote: true});
+  (arAkahukuLinkIPC, "Link", "openAsAutoLink", {async: true, remote: true});
 arAkahukuLink.openLinkInXUL = function (href, to, focus, target, isPrivate) {
   arAkahukuIPC.sendAsyncCommand
     ("Link/openLinkInXUL", [href, to, focus, null, isPrivate],
@@ -313,9 +349,14 @@ arAkahukuIPC.defineProc
    {async: true, remote: true});
 
 
-
+var arAkahukuP2PIPC = {
+  deleteCache : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuP2P.deleteCache (target);
+  },
+};
 arAkahukuIPC.defineProc
-  (arAkahukuP2P, "P2P", "deleteCache", {async: true, remote: true});
+  (arAkahukuP2PIPC, "P2P", "deleteCache", {async: true, remote: true});
 
 arAkahukuP2P.deleteCacheFiles = function () {
   arAkahukuIPC.sendAsyncCommand
@@ -352,18 +393,44 @@ arAkahukuIPC.defineProc
 
 
 
+var arAkahukuQuoteIPC = {
+  quote : function (addQuotePrefix, focusTextArea, target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.quote (addQuotePrefix, focusTextArea, target);
+  },
+  quoteToMailBox : function (focusMailBox, target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.quoteToMailBox (focusMailBox, target);
+  },
+  quoteToNameBox : function (focusNameBox, target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.quoteToNameBox (focusNameBox, target);
+  },
+  copyToClipboard : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.copyToClipboard (target);
+  },
+  googleImage : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.googleImage (target);
+  },
+  wikipedia : function (target) {
+    target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuQuote.wikipedia (target);
+  },
+};
 arAkahukuIPC.defineProc
-  (arAkahukuQuote, "Quote", "quote", {async: true, remote: true});
+  (arAkahukuQuoteIPC, "Quote", "quote", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuQuote, "Quote", "quoteToMailBox", {async: true, remote: true});
+  (arAkahukuQuoteIPC, "Quote", "quoteToMailBox", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuQuote, "Quote", "quoteToNameBox", {async: true, remote: true});
+  (arAkahukuQuoteIPC, "Quote", "quoteToNameBox", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuQuote, "Quote", "copyToClipboard", {async: true, remote: true});
+  (arAkahukuQuoteIPC, "Quote", "copyToClipboard", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuQuote, "Quote", "googleImage", {async: true, remote: true});
+  (arAkahukuQuoteIPC, "Quote", "googleImage", {async: true, remote: true});
 arAkahukuIPC.defineProc
-  (arAkahukuQuote, "Quote", "wikipedia", {async: true, remote: true});
+  (arAkahukuQuoteIPC, "Quote", "wikipedia", {async: true, remote: true});
 
 arAkahukuQuote.searchInNewTabXUL = function (href, focus, browser) {
   arAkahukuIPC.sendAsyncCommand

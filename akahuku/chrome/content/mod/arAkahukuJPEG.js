@@ -1,5 +1,5 @@
 
-/* global Components, Akahuku, arAkahukuConfig */
+/* global Components, Akahuku, arAkahukuConfig, arAkahukuUI */
 
 /**
  * JPEG のサムネ管理
@@ -60,9 +60,9 @@ var arAkahukuJPEG = {
   setContextMenu : function (event) {
     var menuitem;
     var document = event.currentTarget.ownerDocument;
-    var gContextMenu = document.defaultView.gContextMenu;
             
-    var c = arAkahukuJPEG.getContextMenuContentData (gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    var c = arAkahukuJPEG.getContextMenuContentData (target);
 
     menuitem
     = document
@@ -158,8 +158,8 @@ var arAkahukuJPEG = {
     }
   },
   onClickOpenThumbnail : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuJPEG.openThumbnail (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuJPEG.openThumbnail (target);
   },
     
   /**
@@ -183,8 +183,8 @@ var arAkahukuJPEG = {
     target.removeAttribute ("__akahuku_jpeg_thumbnail_opened");
   },
   onClickCloseThumbnail : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuJPEG.closeThumbnail (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuJPEG.closeThumbnail (target);
   },
     
   /**

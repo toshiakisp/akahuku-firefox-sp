@@ -1574,7 +1574,8 @@ var arAkahukuLink = {
     var document = event.currentTarget.ownerDocument;
     var gContextMenu = document.defaultView.gContextMenu;
         
-    var c = arAkahukuLink.getContextMenuContentData (gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    var c = arAkahukuLink.getContextMenuContentData (target);
 
     menuitem
     = document
@@ -1813,8 +1814,8 @@ var arAkahukuLink = {
     arAkahukuLink.setExt2 (ext, targetDocument, targetNode, extNode);
   },
   onClickSetExt : function (event, type, ext) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuLink.setExt (type, ext, window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.setExt (type, ext, target);
   },
   onClickSetExtAuto : function (event) {
     arAkahukuLink.onClickSetExt (event, 2, "");
@@ -1954,8 +1955,8 @@ var arAkahukuLink = {
     }
   },
   onClickAddUser : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuLink.addUser (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.addUser (target);
   },
     
   /**
@@ -2225,8 +2226,8 @@ var arAkahukuLink = {
         false, target.ownerDocument, isPrivate);
   },
   onClickOpenLink : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuLink.openLink (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.openLink (target);
   },
     
   /**
@@ -2239,8 +2240,8 @@ var arAkahukuLink = {
         false, target.ownerDocument, isPrivate);
   },
   onClickSaveLink : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuLink.saveLink (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.saveLink (target);
   },
     
   /**
@@ -2257,8 +2258,8 @@ var arAkahukuLink = {
     }
   },
   onClickCopyLink : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuLink.copyLink (window.gContextMenu.target);
+    var target = arAkahukuUI.contextMenuContentTarget;
+    arAkahukuLink.copyLink (target);
   },
     
   /**
@@ -2405,8 +2406,7 @@ var arAkahukuLink = {
     }
   },
   onClickOpenAsAutoLink : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    var target = window.gContextMenu.target;
+    var target = arAkahukuUI.contextMenuContentTarget;
     arAkahukuLink.openAsAutoLink (target, event.shiftKey);
   },
     
