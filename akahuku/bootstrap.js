@@ -36,9 +36,13 @@ function startup (data, reason) {
 
   // chrome.manifest equivalent:
   // 1) register: resource akahuku modules/
-  var aliasContent = ios.newURI (ios.newFileURI (data.installPath)
+  var installURI = ios.newFileURI (data.installPath);
+  if (!data.installPath.isDirectory ()) {
+    installURI = ios.newURI ("jar:" + installURI.spec + "!/", null, null);
+  }
+  var aliasContent = ios.newURI (installURI
       .resolve ("./contenet/"), null, null);
-  var aliasModules = ios.newURI (ios.newFileURI (data.installPath)
+  var aliasModules = ios.newURI (installURI
       .resolve ("./modules/"), null, null);
   resource.setSubstitution ("akahuku", aliasModules);
   resource.setSubstitution ("akahuku-content", aliasContent);
