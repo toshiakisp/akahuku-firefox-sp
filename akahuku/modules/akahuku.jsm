@@ -165,6 +165,11 @@ Akahuku.startup = function () {
       }
       // only init a child module in the main process
       arAkahukuIPC.init ();
+
+      // for child-process shutdown (dummy definition)
+      arAkahukuIPC.defineProc
+        ({shutdown: function () {}}, "Akahuku", "shutdown",
+         {async: true, callback: 0, remote: true});
     }
     else { // child process
       arAkahukuIPC.init ();
