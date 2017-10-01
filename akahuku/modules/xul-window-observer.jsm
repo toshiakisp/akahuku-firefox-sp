@@ -18,6 +18,7 @@ const Cu = Components.utils;
 var XULWindowObserver = function (listener) {
   this.ww = null;
   this.listener = listener;
+  this.windowParams = [];
 }
 XULWindowObserver.prototype = {
   targetType : "navigator:browser",
@@ -28,6 +29,10 @@ XULWindowObserver.prototype = {
     this.forEachExistingWindow (function (win) {
       // listen load/unload events for window
       var param = that.register (win);
+      if (!param) {
+        Cu.reportError (new Error ("window is already registered"));
+        return;
+      }
       if (win.document.readyState == "complete") {
         // directly attach to existing windows with complete xul document
         var listener = that.listener;
@@ -60,12 +65,10 @@ XULWindowObserver.prototype = {
     }
   },
 
-  windowParams : [],
-
   register : function (win) {
     for (var i = 0; i < this.windowParams.length; i ++) {
       if (this.windowParams [i].window == win) {
-        return; // already registered
+        return null; // already registered
       }
     }
     var param = {
