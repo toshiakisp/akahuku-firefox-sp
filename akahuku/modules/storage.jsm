@@ -46,6 +46,10 @@ AkahukuStorageArea.prototype = {
 
 var AkahukuStorage = {
   local : new AkahukuStorageArea (),
+
+  shutdown : function () {
+    AkahukuStorage.local = null;
+  },
 };
 
 // Constant id for accessing the parent-process storage
@@ -68,6 +72,11 @@ if (appinfo.processType == appinfo.PROCESS_TYPE_DEFAULT) {
       = Cc ["@mozilla.org/parentprocessmessagemanager;1"]
       .getService (Ci.nsIMessageListenerManager);
     proxy.attachIPCMessageManager (gpmm);
+
+    AkahukuStorage.shutdown = function () {
+      proxy.detachIPCMessageManager ();
+      AkahukuStorage.local = null;
+    };
   }
 }
 else { // child processes (e10s ready)
@@ -82,5 +91,9 @@ else { // child processes (e10s ready)
   proxy.attachIPCMessageManager (mm);
 
   AkahukuStorage.local = proxy;
+  AkahukuStorage.shutdown = function () {
+    proxy.detachIPCMessageManager ();
+    AkahukuStorage.local = null;
+  };
 }
 
