@@ -54,6 +54,7 @@ catch (e) {
 }
 
 var messageTopic = ipcBaseName + "Topic";
+var messageShutdown = ipcBaseName + "Shutdown";
 
 var rootListener = null;
 var childListener = null;
@@ -72,6 +73,9 @@ if (isE10sReady) {
 
     rootListener = {
       receiveMessage : function (message) {
+        if (message.name !== messageTopic) {
+          return;
+        }
         // Analyze message
         var obj = message.data;
         var subject = Cc ["@mozilla.org/supports-string;1"]
@@ -109,7 +113,13 @@ if (isE10sReady) {
   else { // in child processes
 
     childListener = {
+      messageTopic : messageTopic,
+      messageShutdown : messageShutdown,
       receiveMessage : function (message) {
+        if (message.name == this.messageShutdown) {
+          this.shutdown ();
+          return;
+        }
         // Analyze data
         var obj = message.data;
         var subject = Cc ["@mozilla.org/supports-string;1"]
@@ -141,7 +151,21 @@ if (isE10sReady) {
     var cpmm = Cc ['@mozilla.org/childprocessmessagemanager;1']
       .getService (Ci.nsIMessageListenerManager);
     cpmm.addMessageListener (messageTopic, childListener, false);
+    cpmm.addMessageListener (messageShutdown, childListener, false);
 
+    childListener.shutdown = (function (cpmm, os, observers, childListener) {
+      // bind variables for shutdown in child processes *after unload*
+      return function () {
+        cpmm.removeMessageListener (this.messageTopic, childListener);
+        cpmm.removeMessageListener (this.messageShutdown, childListener);
+        for (var i = 0; i < observers.length; i ++) {
+          if (observers [i].observed) {
+            os.removeObserver (observers [i], observers [i].topic);
+          }
+        }
+        observers.splice (0, observers.length)
+      };
+    }) (cpmm, os, observers, childListener);
 
     var mm = Cc ['@mozilla.org/childprocessmessagemanager;1']
       .getService (Ci.nsIMessageSender);
@@ -191,19 +215,22 @@ var AkahukuNotificationRelay = {
         gpmm.removeMessageListener (messageTopic, rootListener);
         rootListener = null;
       }
+      // broadcast all child-process relays to shutdown
+      broadcaster.broadcastAsyncMessage (messageShutdown, null);
     }
     else {
       if (childListener) {
         cpmm.removeMessageListener (messageTopic, childListener);
+        cpmm.removeMessageListener (messageShutdown, childListener);
         childListener = null;
       }
     }
     for (var i = 0; i < observers.length; i ++) {
       if (observers [i].observed) {
-        os.removeObserver (observers [i], observers [i].topic, false);
+        os.removeObserver (observers [i], observers [i].topic);
       }
     }
-    observers = [];
+    observers.splice (0, observers.length)
   },
 };
 
