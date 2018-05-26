@@ -19,6 +19,8 @@ const ACCEPT = Ci.nsIContentPolicy.ACCEPT;
 const REJECT_SERVER = Ci.nsIContentPolicy.REJECT_SERVER;
 const REJECT_OTHER = Ci.nsIContentPolicy.REJECT_OTHER;
 
+var xpcomInstance = null;
+
 /**
  * 本体
  * 広告のブロック、リロードのフックを行う
@@ -104,7 +106,17 @@ arAkahukuContentPolicy.prototype = {
         /* 統合する対象がある場合はエラー */
         throw Cr.NS_ERROR_NO_AGGREGATION;
       }
-      return new arAkahukuContentPolicy ().QueryInterface (iid);
+      if (!xpcomInstance) {
+        xpcomInstance = new arAkahukuContentPolicy ().QueryInterface (iid);
+      }
+      return xpcomInstance;
+    }
+  },
+  _xpcom_jsm_destroy : { // special for akahuku's XPCOM.jsm
+    destroy : function () {
+      if (xpcomInstance) {
+        xpcomInstance._destroy ();
+      }
     }
   },
 
@@ -209,6 +221,27 @@ arAkahukuContentPolicy.prototype = {
     this._updateEnabled ();
     this._updateBlockList ();
   },
+
+  /**
+   * 終了処理
+   */
+  _destroy : function () {
+    if (typeof (this._pref.addObserver) === "function") {
+      /* オブザーバの登録を削除する */
+      this._observerService.removeObserver (this, "xpcom-shutdown");
+      this._pref.removeObserver (this._prefAllName, this);
+      this._pref.removeObserver (this._prefCheckName, this);
+      this._pref.removeObserver (this._prefP2PName, this);
+      this._pref.removeObserver (this._prefDelBannerSitesImageName, this);
+      this._pref.removeObserver (this._prefDelBannerSitesObjectName, this);
+      this._pref.removeObserver (this._prefDelBannerSitesIframeName, this);
+      this._pref.removeObserver (this._prefBoardExternalName , this);
+      this._pref.removeObserver (this._prefBoardExternalPatternsName , this);
+      this._pref.removeObserver (this._prefBoardExternalPatterns2Name , this);
+      this._pref.removeObserver (this._prefBoardSelectName , this);
+      this._pref.removeObserver (this._prefBoardSelectExListName , this);
+    }
+  },
     
   /**
    * 設定の変更、および終了のイベント
@@ -224,20 +257,7 @@ arAkahukuContentPolicy.prototype = {
   observe : function (subject, topic, data) {
     if (topic == "xpcom-shutdown") {
       /* 終了の場合 */
-            
-      /* オブザーバの登録を削除する */
-      this._observerService.removeObserver (this, "xpcom-shutdown");
-      this._pref.removeObserver (this._prefAllName, this);
-      this._pref.removeObserver (this._prefCheckName, this);
-      this._pref.removeObserver (this._prefP2PName, this);
-      this._pref.removeObserver (this._prefDelBannerSitesImageName, this, false);
-      this._pref.removeObserver (this._prefDelBannerSitesObjectName, this, false);
-      this._pref.removeObserver (this._prefDelBannerSitesIframeName, this, false);
-      this._pref.removeObserver (this._prefBoardExternalName , this, false);
-      this._pref.removeObserver (this._prefBoardExternalPatternsName , this, false);
-      this._pref.removeObserver (this._prefBoardExternalPatterns2Name , this, false);
-      this._pref.removeObserver (this._prefBoardSelectName , this, false);
-      this._pref.removeObserver (this._prefBoardSelectExListName , this, false);
+      this._destroy ();
     }
     else if (topic == "nsPref:changed") {
       /* 設定の変更の場合 */

@@ -26,6 +26,7 @@ function registerXPCOM (func, doDelete) {
   var contractID = func.prototype.contractID;
   var factory = func.prototype._xpcom_factory;
   var categories = func.prototype._xpcom_categories;
+  var destructor = func.prototype._xpcom_jsm_destroy;
 
   var registrar = Components.manager
     .QueryInterface (Ci.nsIComponentRegistrar);
@@ -60,6 +61,10 @@ function registerXPCOM (func, doDelete) {
           categories [i].entry || classDesc,
           value, false, true);
     }
+  }
+
+  if (doDelete && destructor && typeof destructor.destroy == "function") {
+    destructor.destroy.call ();
   }
 }
 
