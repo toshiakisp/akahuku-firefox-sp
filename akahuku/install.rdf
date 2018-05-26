@@ -39,6 +39,7 @@
     
     <em:bootstrap>false</em:bootstrap>
     <em:multiprocessCompatible>true</em:multiprocessCompatible>
+    <em:hasEmbeddedWebExtension>true</em:hasEmbeddedWebExtension>
   </Description>
   
 </RDF>

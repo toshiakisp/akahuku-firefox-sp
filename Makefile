@@ -6,7 +6,7 @@ VERSION := $(BASE_VERSION).$(PATCH_VERSION)
 all: version xpt
 	
 xpi: version xpt
-	(cd akahuku && zip -q -r -9 ../akahuku-$(VERSION).xpi chrome components modules chrome.manifest install.rdf license.txt -x "*/Makefile" "*/Makefile.in" "*.template")
+	(cd akahuku && zip -q -r -9 ../akahuku-$(VERSION).xpi chrome components modules webextension chrome.manifest install.rdf bootstrap.js license.txt -x "*/Makefile" "*/Makefile.in" "*.template")
 
 version: akahuku/install.rdf akahuku/chrome/content/version.js update.rdf
 

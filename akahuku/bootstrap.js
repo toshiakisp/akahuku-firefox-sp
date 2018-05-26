@@ -100,6 +100,19 @@ function startup (data, reason) {
   winobserver = new XULWindowObserver (Akahuku);
   winobserver.startup ();
 
+  // Embedded WebExtension
+  if (typeof data.webExtension !== "undefined") {
+    data.webExtension.startup ()
+    .then (function (api) {
+      debug.log ("Embedded WE started.");
+      var handleMessage = function (msg, sender, sendReply) {
+        debug.log ("EmbeddedWE: onMessage msg=" + msg, sender);
+        sendReply ({content: "reply from akahuku legacy extension"});
+      };
+      api.browser.runtime.onMessage.addListener (handleMessage);
+    });
+  }
+
   debug.log ("startup() finished");
 }
 
