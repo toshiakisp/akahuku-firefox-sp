@@ -62,10 +62,22 @@
 
 <p>オリジナル版をアップデートする形で導入でき(※sp_rev.32以降は別のアドオンのため古い方を一度削除する必要があります)、設定項目などは基本的にオリジナル版を引き継ぎます。(自動)更新の対象はこの改変版に切り替わります。手動でインストールしなおせばオリジナル版に戻すことはできます。</p>
 
-<p><strong>※注意！</strong>：<a href="https://support.mozilla.org/ja/kb/add-on-signing-in-firefox">Firefox アドオンの署名</a>の導入に伴い、このサイトで配布されている拡張も Mozilla の署名を付けて配布するようになりました。
-その影響で、sp_rev.32より<strong>アドオンのIDが変更されました</strong>。
-つまり便宜上これまでとは別のアドオンとなるため、<strong style="color:red">古い赤福は手動で削除する必要があります！</strong>
-(従来通り設定は共通のため再設定の必要はないはずです)</p>
+<div style="border: 2px solid gray; border-radius: 1.5em; padding: 1ex; margin-bottom:1em;">
+<h3>WebExtension版について</h3>
+<p>Firefox 60以上にのみ対応のWebExtension移植版をやっつけ中です。
+現在、そこそこの機能が動くようになった<span style="color:red">アルファテスト版</span>としてxpiのみ提供中。</p>
+<p style="
+  color: black;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 226, 0, 0.1),
+    rgba(255, 226, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 20px
+  );
+  "><strong style="color:red">注意: 機能が多々あり、設定によっては全体が機能しなくなったりします</strong>。特にファイル保存,タブ操作,サイドバー,スタイル変更,ショートカットキー...は全体的に未実装です。P2Pは削除予定です。また、従来の拡張機能とは同じIDのため<strong style="color:red">上書きインストールになりますが、現状では設定の自動移行はできません</strong>。以前にエクスポートしておいたものがあるならインポートは出来るはずです。また、現状では設定画面未実装のためにインポートは出来ても編集できない項目があります。</p>
+<p style="text-align: center"><a href="akahuku-ext-6.0a1.xpi">非公式 Extended版 6.0a1 2018/09/08 (署名済)</a></p>
+</div>
 
 <h3>改変版の主な要素</h3>
 <ul>
@@ -79,6 +91,7 @@
 <li>ちょっとした新機能、新設定オプションの追加</li>
 </ul>
 <p>ほか、詳しくはGitHubの<a href="https://github.com/toshiakisp/akahuku-firefox-sp/wiki">Wikiページ</a>や下記の「他のリソース」(旧情報)を参照のこと。</p>
+
 <h3>注意</h3>
 <p>古い Firefox (3.6系も)では不具合が生じる可能性があります。(一応できるだけ互換を考慮してはいるけれど、ほとんどテストしてないため)</p>
 
