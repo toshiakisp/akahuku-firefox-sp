@@ -3297,8 +3297,12 @@
 
   if (!global['TextEncoder'])
     global['TextEncoder'] = TextEncoder;
+  else
+    global['PolyFillTextEncoder'] = TextEncoder;
   if (!global['TextDecoder'])
     global['TextDecoder'] = TextDecoder;
+  else
+    global['PolyFillTextDecoder'] = TextDecoder;
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = {
