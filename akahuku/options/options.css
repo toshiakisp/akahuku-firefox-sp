@@ -1,0 +1,337 @@
+
+body {
+  -moz-user-select: none;
+  user-select: none;
+  background-color: var(--bg-color);
+}
+
+.box-orient-vertical {
+  display: flex;
+  flex-direction: column;
+}
+.box-orient-horizontal {
+  display: flex;
+  flex-direction: row;
+}
+
+.spacer-flex {
+  width: 0px;
+  height: 0px;
+  visibility: hidden;
+}
+.box-orient-horizontal > .spacer-flex {
+  margin-left: auto;
+}
+.box-orient-vertical > .spacer-flex {
+  margin-top: auto;
+}
+
+.align-center {
+  align-items: center;
+}
+.align-end {
+  align-items: flex-end;
+}
+.align-start {
+  align-items: flex-start;
+}
+.align-strech {
+  align-items: stretch;
+}
+
+
+.box-orient-vertical.sub {
+  margin-left: 1em;
+  margin-bottom: 0.5em;
+}
+
+.box-orient-vertical>*{
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+.box-orient-horizontal>*{
+  margin-left: 1ex;
+  margin-right: 1ex;
+}
+
+.box-orient-horizontal > .box-orient-horizontal.flex,
+.box-orient-vertical > .box-orient-horizontal.flex,
+.box-orient-horizontal > .box-orient-vertical.flex,
+.box-orient-vertical > .box-orient-vertical.flex {
+  flex: 1 1 auto;
+}
+
+.border {
+  padding: 5px;
+  border: 2px groove lightgray;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  max-width: 50vw;
+  background-color: white;
+  color: black;
+  text-align: left;
+  padding: 2px 5px;
+  border: 1px solid black;
+  font-size: 9pt;
+
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+.tooltip .tooltiptext:hover {
+  visibility: hidden;
+}
+
+.groupbox {
+  position: relative;
+  padding: 1em 5px 5px 5px;
+  border: 2px groove lightgray;
+  margin-top: 0.7em;
+}
+.groupbox > .caption:first-of-type {
+  position: absolute;
+  padding-left: 5px;
+  padding-right: 5px;
+  top: -0.8em;
+  left: 5px;
+  background-color: var(--bg-color, white);
+}
+
+/* Grouping by indent, without border */
+.group.box-orient-vertical {
+  padding-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+.group.box-orient-vertical>*:first-child {
+  margin-left: -1.5em;
+}
+
+textarea {
+  resize: none;
+}
+
+input[type=text].flex,
+input[type=number].flex {
+  flex: 1 1 auto;
+}
+
+input[type=number] {
+  width: 9ex;
+}
+input[type=number].size8 {
+  width: 11ex;
+}
+input[type=number].size4 {
+  width: 7ex;
+}
+input[type=number].size3 {
+  width: 6ex;
+}
+input[type=number].size2 {
+  width: 5ex;
+}
+
+input[type=button] {
+  min-width: 74px;
+  min-height: 26px;
+}
+
+.deck {
+  position: relative;
+}
+.deck > *:not(:first-child){
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+.deck > *:first-child{
+  visibility: hidden;
+}
+
+.tab_container {
+  display: grid;
+  grid-template-columns: 11em 1fr;
+  grid-template-rows: repeat(max-content, 1em);
+}
+.tab_container > input[type=radio] {
+  display: none;
+}
+.tab_container > label {
+  display: block;
+  box-sizing: border-box;
+  margin-right: auto;
+  width: 11em;
+  padding: 0 0 0 5px;
+  background-color: white;
+  border-style: solid;
+  border-color: white;
+  border-right-color: gray;
+  border-width: 0 1px 1px 1px;
+  color: gray;
+}
+.tab_container> input[type=radio]:checked + label {
+  background-color: var(--bg-color);
+  border-right-color: var(--bg-color);
+  border-bottom-color: gray;
+  border-left-color: white;
+  color: black;
+}
+.tab_container> input[type=radio]:not(:checked) + label:hover {
+  background-color: lightblue;
+  color: white;
+}
+.tab_container > .tab_content_area {
+  grid-column-start: 2;
+  grid-column-end: -1;
+  grid-row-start: 2;
+  grid-row-end: 9999;
+
+  margin-left: 1em;
+}
+
+.tab_container .tab_content {
+  display: none;
+  clear: both;
+  overflow: hidden;
+  height: 100%;
+}
+
+.tab_container > .tab_header {
+  grid-column-start: 1;
+  grid-column-end: -1;
+  grid-row-start: 1;
+  grid-row-end: 1;
+}
+
+table.listbox {
+  border-collapse: collapse;
+  border: 1px solid gray;
+  table-layout: fixed;
+  width: 100%;
+}
+table.listbox.flex {
+  flex: 1 1 auto;
+}
+table.listbox td {
+  padding: 3px;
+  height: 1em;
+}
+table.listbox thead td {
+  background-color: var(--bg-color);
+  border-right: 1px solid lightgray;
+  border-bottom: 1px solid lightgray;
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: hidden;
+}
+table.listbox thead td:last-child {
+  border-right-width: 0;
+}
+table.listbox tbody tr {
+  background-color: white;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+}
+table.listbox:hover tbody tr[data-selected="true"] {
+  background-color: #cde8ff;
+  border-bottom-color: #a5d6ff;
+}
+table.listbox:not(:hover) tbody tr[data-selected="true"] {
+  background-color: #d9d9d9;
+  border-bottom-color: #cccccc;
+}
+table.listbox tbody td {
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+table.listbox tfoot td{
+  background-color: white;
+  height: auto;
+  margin-top: auto;
+}
+table.listbox tbody td.listcell-iconic {
+  background-position: left 4px center;
+  background-repeat: no-repeat;
+  min-width: 24px;
+}
+table.listbox tbody td.listcell-iconic[data-checked="true"] {
+  background-image: url(../content/images/check_o.png);
+}
+table.listbox tbody td.listcell-iconic:not([data-checked="true"]) {
+  background-image: url(../content/images/check_x.png);
+}
+
+
+input[type=checkbox][data-pref-checked="false"]:checked,
+input[type=checkbox][data-pref-checked="true"]:not(:checked),
+input[type=radio][data-pref-checked="false"]:checked {
+  box-shadow: 0 0 0 3px cyan;
+}
+
+a[href], a[href]:visited {
+  color: #0000FF;
+}
+
+.sp:after {
+  content: ".sp";
+  color: blue;
+  font-size: smaller;
+}
+.warning {
+  color: red;
+  font-size: smaller;
+}
+.ineffective {
+  text-decoration: line-through;
+}
+
+.notyetimplemented {
+  height: 200px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 226, 0, 0.1),
+    rgba(255, 226, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 20px
+  );
+}
+
+.ext_obsolete {
+  color: gray;
+}
+.ext_obsolete .notyetimplemented {
+  background: var(--bg-color);
+}
+.ext_doesnotwork {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 226, 0, 0.1),
+    rgba(255, 226, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 10px,
+    rgba(0, 0, 0, 0.1) 20px
+  );
+}
+.ext_doesnotwork .ext_doesnotwork {
+  background: none;
+}
+

@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>赤福 設定</title>
+  <link href="options.css" rel="stylesheet">
+  <link href="../content/images/icon.png" rel="shortcut icon">
+  <style>
+  :root {
+    --bg-color: #f9f9fa;
+  }
+  /* tabs */
+  #anchor_title:checked ~ * #tab_title,
+  #anchor_scroll:checked ~ * #tab_scroll,
+  #anchor_banner:checked ~ * #tab_banner,
+  #anchor_wheel:checked ~ * #tab_wheel,
+  #anchor_tab:checked ~ * #tab_tab,
+  #anchor_menu:checked ~ * #tab_menu,
+  #anchor_savemht:checked ~ * #tab_savemht,
+  #anchor_filename_convert:checked ~ * #tab_filename_convert,
+  #anchor_saveimage1:checked ~ * #tab_saveimage1,
+  #anchor_saveimage2:checked ~ * #tab_saveimage2,
+  #anchor_mail_comment:checked ~ * #tab_mail_comment,
+  #anchor_form:checked ~ * #tab_form,
+  #anchor_reload:checked ~ * #tab_reload,
+  #anchor_throp:checked ~ * #tab_throp,
+  #anchor_link:checked ~ * #tab_link,
+  #anchor_thread:checked ~ * #tab_thread,
+  #anchor_popupquote:checked ~ * #tab_popupquote,
+  #anchor_hidetroll:checked ~ * #tab_hidetroll,
+  #anchor_res:checked ~ * #tab_res,
+  #anchor_autolink:checked ~ * #tab_autolink,
+  #anchor_p2p:checked ~ * #tab_p2p,
+  #anchor_catalog1:checked ~ * #tab_catalog1,
+  #anchor_catalog2:checked ~ * #tab_catalog2,
+  #anchor_sidebar:checked ~ * #tab_sidebar,
+  #anchor_board:checked ~ * #tab_board,
+  #anchor_external:checked ~ * #tab_external,
+  #anchor_bloomer:checked ~ * #tab_bloomer,
+  #anchor_sound:checked ~ * #tab_sound,
+  #anchor_other:checked ~ * #tab_other,
+  #anchor_extra:checked ~ * #tab_extra,
+  #anchor_format:checked ~ * #tab_format {
+    display: block;
+  }
+  </style>
+</head>
+<body class="tab_container" style="font-size: 80%">
+
+<div class="box-orient-vertical tab_header">
+  <div class="box-orient-horizontal border align-center">
+    <label><input form=prefs type=checkbox name=all checked=false>全機能</label>
+    <div class="spacer-flex"></div>
+    <a href="https://toshiakisp.github.io/akahuku-firefox-sp/" target="_blank">赤福:非公式 Extended 版</a>
+    <label>Ver.<input form=prefs type=hidden name=version><span class="hiddeninput-label"></span></label>
+  </div>
+  <div class="box-orient-horizontal align-end">
+    <div class="spacer-flex"></div>
+    <button form="prefs" type="button" id="save-button" disabled="true">保存</button>
+    <button form="prefs" type="button" id="cancel-button" disabled="true">リセット</button>
+  </div>
+</div>
+
+
+<input type=radio name=tab id="anchor_title" checked>
+<label for="anchor_title">タイトル</label>
+<input type=radio name=tab id="anchor_scroll">
+<label for="anchor_scroll">スクロール</label>
+<input type=radio name=tab id="anchor_banner">
+<label for="anchor_banner">広告</label>
+<input type=radio name=tab id="anchor_wheel">
+<label for="anchor_wheel">ホイール</label>
+<input type=radio name=tab id="anchor_tab">
+<label for="anchor_tab">タブ</label>
+<input type=radio name=tab id="anchor_menu">
+<label for="anchor_menu">メニュー/引用</label>
+<input type=radio name=tab id="anchor_savemht">
+<label for="anchor_savemht">MHT で保存</label>
+<input type=radio name=tab id="anchor_filename_convert">
+<label for="anchor_filename_convert">ファイル名変換</label>
+<input type=radio name=tab id="anchor_saveimage1">
+<label for="anchor_saveimage1">画像を保存1</label>
+<input type=radio name=tab id="anchor_saveimage2">
+<label for="anchor_saveimage2">画像を保存2</label>
+<input type=radio name=tab id="anchor_mail_comment">
+<label for="anchor_mail_comment">メール／コメント欄</label>
+<input type=radio name=tab id="anchor_form">
+<label for="anchor_form">フォーム</label>
+<input type=radio name=tab id="anchor_reload">
+<label for="anchor_reload">続きを読む</label>
+<input type=radio name=tab id="anchor_throp">
+<label for="anchor_throp">スレ操作パネル</label>
+<input type=radio name=tab id="anchor_link">
+<label for="anchor_link">リンク</label>
+<input type=radio name=tab id="anchor_thread">
+<label for="anchor_thread">スレ</label>
+<input type=radio name=tab id="anchor_popupquote">
+<label for="anchor_popupquote">引用のポップアップ</label>
+<input type=radio name=tab id="anchor_hidetroll">
+<label for="anchor_hidetroll">芝刈り</label>
+<input type=radio name=tab id="anchor_res">
+<label for="anchor_res">レス一般</label>
+<input type=radio name=tab id="anchor_autolink">
+<label for="anchor_autolink">オートリンク</label>
+<input type=radio name=tab id="anchor_p2p">
+<label for="anchor_p2p">P2P</label>
+<input type=radio name=tab id="anchor_catalog1">
+<label for="anchor_catalog1">カタログ1</label>
+<input type=radio name=tab id="anchor_catalog2">
+<label for="anchor_catalog2">カタログ2</label>
+<input type=radio name=tab id="anchor_sidebar">
+<label for="anchor_sidebar">サイドバー</label>
+<input type=radio name=tab id="anchor_board">
+<label for="anchor_board">板</label>
+<input type=radio name=tab id="anchor_external">
+<label for="anchor_external">外部の板</label>
+<input type=radio name=tab id="anchor_bloomer">
+<label for="anchor_bloomer">ブルマ女将</label>
+<input type=radio name=tab id="anchor_sound">
+<label for="anchor_sound">音</label>
+<input type=radio name=tab id="anchor_other">
+<label for="anchor_other">その他</label>
+<!--
+<input type=radio name=tab id="anchor_extra">
+<label for="anchor_extra">Extra</label>
+-->
+<input type=radio name=tab id="anchor_format">
+<label for="anchor_format">フォーマット</label>
+
+<form id="prefs" class="box-orient-vertical tab_content_area"> 
+  <div id="tab_title" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class="caption">
+        <label><input type=checkbox name=title>タイトルを修正</label>
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type="radio" name="title.type" value="simple">簡易設定</label>
+        <label><input type="radio" name="title.type" value="expert" checked>詳細設定</label>
+        <div class=spacer-flex></div>
+        <input type=button id="title_format_init" value="初期化">
+      </div>
+      <div class="deck" id="title_type_deck" data-deck-selector="title.type">
+        <div data-deck-name="simple" class="box-orient-vertical">
+          <label><input type=checkbox name="title.comment">スレ本文の先頭</label>
+          <label><input type=checkbox name="title.mode">[ページ n]、[返信] 等</label>
+          <label><input type=checkbox name="title.thread_info">スレの消滅情報</label>
+          <label class="tooltip"><input type=checkbox name="title.incoming_reply"
+            class="sp" ><span class="tooltiptext">(デフォルト：無効) 新着レス数をタイトルの頭に (1) の用に付ける。新着レス数は他タブでのカタログやスレ等の観覧により判定されリアルタイムで更新される。</span
+            >スレの新着レス数</label>
+        </div>
+        <div data-deck-name="expert" class="box-orient-vertical">
+          <textarea name="title.format" rows="3"></textarea>
+          <input type=text id="title_format_sample" disabled="true" class="disable">
+        </div>
+      </div>
+    </div>
+    <div class="box-orient-horizontal align-center">
+      <label>スレ本文の先頭の長さ
+      <input type=number name="title.comment.length" min=0></label>
+      <select name="title.comment.length.type" data-pref-type="int">
+        <option value="0">文字</option>
+        <option value="1">バイト</option>
+      </select>
+      <label>まで <small>(&amp;message;と&amp;message2;の長さ)</small></label>
+    </div>
+    <div class="sub box-orient-vertical">
+      <label class="sp tooltip"><input type=checkbox name="title.comment.multiline"><span
+        class="tooltiptext">(デフォルト：無効) 最初の行だけでなく、複数行に渡るスレ本文を連結してから「スレ本文の先頭」を抽出する。</span
+        >複数行から</label>
+    </div>
+    <div class="box-orient-vertical">
+      <label><input type=checkbox name="comment.fixup"
+        >本文なしを適当に修正する</label>
+      <label><input type=checkbox name="subtitle"
+        >レスの一部をサブタイトルにする</label>
+    </div>
+  </div>
+
+  <div id="tab_scroll" class="box-orient-vertical tab_content">
+    <div class="group box-orient-vertical">
+      <label><input type=checkbox name="scroll.lock"
+        >リロード時に位置のズレを直す</label>
+      <label><input type=checkbox name="scroll.lock.reply"
+        >レス送信モードのみ</label>
+    </div>
+    <label><input type=checkbox name="scroll.gotop"
+      >0〜10 ページのリロード時に先頭へ</label>
+    <div class="group box-orient-vertical">
+      <label><input type=checkbox name="scroll.gocurrent.reload"
+        >レス送信モードでリロード時に最新位置へ</label>
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="scroll.gocurrent.rule"
+          >区切り</label>
+        <label><input type=checkbox name="scroll.gocurrent.rule.zeroheight"
+          >ズレないようにする</label>
+        <label><input type=checkbox name="scroll.gocurrent.rule.random"
+          >ランダム</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_banner" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="delbanner"
+        >広告を隠す</label>
+      </div>
+      <div class="groupbox box-orient-vertical">
+        <div class=caption>
+          <label>外部サイトをブロック</label>
+        </div>
+        <div class="box-orient-horizontal">
+          <label><input type=checkbox name="delbanner.image"
+            >バナー広告</label>
+          <label><input type=checkbox name="delbanner.image.404"
+            >404 ページの広告</label>
+        </div>
+        <tooltip id="delbanner_sites_tooltip"
+                 orient="vertical">
+          <label value="ブロックリスト:"/>
+          <box class="sub" orient="vertical">
+            <label value="ふたばのページからの読み込みをブロックさせたいURLやホスト名を空白区切りで入力する"/>
+            <label value="(ホスト名指定は後方一致、URL指定は完全一致だがワイルドカード(*)が使える)"/>
+            <label value="例: http://mushoku.com/banner.jpg munen.org "/>
+            <label value="例2: http://*.2chan.net/bin/radif.htm http://*.hoge.jp/fuga?*"/>
+            <label value="例3: http*://mushoku.com/banner.jpg //munen.org/ad.htm"/>
+          </box>
+        </tooltip>
+        <div class="sub box-orient-vertical">
+          <div class="box-orient-horizontal align-center">
+            <label>画像ブロックリスト</label>
+            <input type=text name="delbanner.sites.image" class="flex">
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>IFRAMEブロックリスト</label>
+            <input type=text name="delbanner.sites.iframe" class="flex">
+          </div>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="delbanner.flash"
+            >Flash 広告 (埋込オブジェクト)</label>
+          <div class="box-orient-horizontal align-center">
+            <label>OBJECTブロックリスト</label>
+            <input type=text name="delbanner.sites.object" class="flex">
+          </div>
+        </div>
+        <div class="sub box-orient-horizontal">
+          <div class="spacer-flex"></div>
+          <small>
+          ブロックリスト:<br>
+          ふたばのページからの読み込みをブロックさせたいURLやホスト名を空白区切りで入力する<br>
+          (ホスト名指定は後方一致、URL指定は完全一致だがワイルドカード(*)が使える)<br>
+          例: http://mushoku.com/banner.jpg munen.org <br>
+          例2: http://*.2chan.net/bin/radif.htm http://*.hoge.jp/fuga?*<br>
+          例3: http*://mushoku.com/banner.jpg //munen.org/ad.htm
+          </small>
+        </div>
+      </div>
+      <label><input type=checkbox name="delbanner.text"
+        >テキスト広告</label>
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="delbanner.movetailad"
+          >末尾の広告を横に置く (ある程度の横幅が必要です)</label>
+        <label class="sp tooltip"><input type=checkbox name="delbanner.movetailad.all"
+          ><span class="tooltiptext">(デフォルト：無効) Amazon以外のバナーも全て横に置く</span
+          >全て横に</label>
+      </div>
+      <label class="sp tooltip"><input type=checkbox name="delbanner.monotonize"
+        ><span class="tooltiptext">(デフォルト：無効) 広告の見た目を CSS でモノトーンに色変換して表示する。CPU や GPU への負荷がかかるため注意。Firefox 35 以降が必要。</span
+        >モノトーン化</label>
+    </div>
+  </div>
+
+  <div id="tab_wheel" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class="caption orient-horizontal align-center">
+        <label><input type=checkbox name="wheel.reload"
+          >ページ末尾のホイール</label>
+        <label><input type=number name="wheel.reload.threshold" min=1
+          >回操作でリロード</label>
+      </div>
+      
+      <label><input type=checkbox name="wheel.reload.0"
+        >通常モード 0 ページ</label>
+      <label><input type=checkbox name="wheel.reload.1"
+        >通常モード 1 ページ〜 </label>
+      <label><input type=checkbox name="wheel.reload.loop"
+        >通常モードの上下でループする</label>
+      
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="wheel.reload.reply"
+          >レス送信モード</label>
+        <label><input type=checkbox name="wheel.reload.reply.sync"
+          >同期する</label>
+      </div>
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="wheel.reload.catalog"
+          >カタログモード</label>
+        <label class="sp tooltip"><input type=checkbox name="wheel.reload.catalog.up"
+          ><span class="tooltiptext">(デフォルト：有効) 上端での上スクロールでもリロードする</span
+          >ページ上端でも</label>
+      </div>
+      <label><input type=checkbox name="wheel.reload.all"
+        >全てのページ</label>
+    </div>
+  </div>
+
+  <div id="tab_tab" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="tab.sort"
+          >ソート</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label><input type=checkbox name="tab.sort.thread"
+          >スレをソート</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="tab.sort.all"
+            >全てソート</label>
+          <div class="box-orient-horizontal align-center">
+            <label>1: </label>
+            <select name="tab.sort.order.1">
+              <option value="normal">通常モード</option>
+              <option value="reply">レス送信モード</option>
+              <option value="catalog">カタログモード</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>2: </label>
+            <select name="tab.sort.order.2">
+              <option value="normal">通常モード</option>
+              <option value="reply">レス送信モード</option>
+              <option value="catalog">カタログモード</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>3: </label>
+            <select name="tab.sort.order.3">
+              <option value="normal">通常モード</option>
+              <option value="reply">レス送信モード</option>
+              <option value="catalog">カタログモード</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>4: </label>
+            <select name="tab.sort.order.4">
+              <option value="normal">通常モード</option>
+              <option value="reply">レス送信モード</option>
+              <option value="catalog">カタログモード</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <label><input type=checkbox name="tab.sort.invert.thread"
+            >スレの並びを反転</label>
+        </div>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label>板の順番</label>
+        <div class="box-orient-horizontal">
+          <div class="box-orient-vertical flex">
+            <table name="tab.sort.board_order.list" id="tab_sort_board_order_list" class="listbox flex" style="height:14em"
+              data-listbox-seltype="multiple">
+              <tbody>
+                <tr>
+                </tr>
+              </tbody>
+              <tfoot><tr><td></td></tr></tfoot>
+            </table>
+          </div>
+          <div class="box-orient-vertical">
+            <input type=button id="tab_sort_board_order_moveup" value="上に">
+            <input type=button id="tab_sort_board_order_movedown" value="下に">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label><input type=checkbox name="tabicon"
+          >アイコンを変更する</label>
+      </div>
+      <div class="box-orient-horizonaral align-center">
+        <label><input type=checkbox name="tabicon.size" disabled class="disable"
+          >サイズを</label>
+        <label><input type=number name="tabicon.size.max" disabled class="disable"
+          >px にする</label>
+      </div>
+      <label class="sp tooltip ext_obsolete"><input type=checkbox name="tabicon.asfavicon" disabled class="disable"
+        ><span class="tooltiptext">(デフォルト：無効) ブックマーク、履歴、サイトアイコンなど、タブ以外の全てに適用されるよう登録する</span
+        >favicon として登録する</label>
+    </div>
+  </div>
+  
+  <div id="tab_menu" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal">
+      <div class=caption>
+        <label><input type=checkbox name="quickquote"
+          >引用/コンテキストメニュー</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="quickquote.menu"
+            >メニュー</label>
+          <label><input type=checkbox name="quickquote.menu.quote"
+            >引用</label>
+          <label><input type=checkbox name="quickquote.menu.mail"
+            >メール欄へ</label>
+          <label><input type=checkbox name="quickquote.menu.name"
+            >名前欄へ</label>
+          <label><input type=checkbox name="quickquote.menu.comment"
+            >コメント欄へ</label>
+          <label><input type=checkbox name="quickquote.menu.separator"
+            >区切り</label>
+          <label><input type=checkbox name="quickquote.menu.copy"
+            >引用付きコピー</label>
+          <label><input type=checkbox name="quickquote.menu.cont"
+            >- 連続</label>
+          <label><input type=checkbox name="quickquote.menu.google.image"
+            >イメぐぐる</label>
+          <label><input type=checkbox name="quickquote.menu.wikipedia"
+            >ウィキペドる</label>
+        </div>
+	<span class="warning">WebExtensionでは複数項目はサブメニュー化されます</span>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="quickquote.number"
+            >番号をクリックで引用</label>
+          <select name="quickquote.number.type" data-pref-type="int">
+              <option value="0">番号</option>
+              <option value="1">No. + 番号</option>
+              <option value="2">メッセージ</option>
+              <option value="3">メッセージ (非引用部分のみ)</option>
+          </select>
+          
+          <label><input type=checkbox name="quickquote.number.clear"
+            >番号で引用する時にコメント欄をクリア</label>
+          <label><input type=checkbox name="quickquote.number.nocomment"
+            >本文なしの場合に番号にする</label>
+          <label class="sp tooltip"><input type=checkbox name="quickquote.number.onlyquote"
+            ><span class=tooltiptext>(デフォルト：無効) メッセージ本文が引用文のみの場合にNo.+番号を引用する</span
+            >メッセージが引用のみの場合に番号にする</label>
+        </div>
+        <label><input type=checkbox name="quickquote.clear"
+          >メニューから引用する時にコメント欄をクリア</label>
+        <label><input type=checkbox name="quickquote.untroll"
+          >引用時に芝刈りを解除する</label>
+        <label><input type=checkbox name="quickquote.focus"
+          >検索したタブを選択する</label>
+      </div>
+    </div>
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="jpeg.thumbnail"
+          >JPEG のサムネを見る</label>
+      </div>
+      <label><input type=checkbox name="jpeg.thumbnail.error"
+        >見付からなかった場合にエラーを表示する</label>
+    </div>
+  </div>
+
+  <div id="tab_savemht" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label><input type=checkbox name="savemht"
+          >[MHT で保存] ボタン</label>
+      </div>
+      <label class="warning">UnMHT の mht で保存とは全く別のものです</label>
+      <div class="box-orient-horizontal align-center ext_doesnotwork">
+        <label>保存先のディレクトリ</label>
+        <input type=text name="savemht.base" class="flex">
+        <input type=button id="savemht_base_select" value="変更" disabled class="disable">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label>デフォルトのファイル名: </label>
+        <label><input type=radio name="savemht.default.type" value="simple" checked>簡易設定</label>
+        <label><input type=radio name="savemht.default.type" value="expert">詳細設定</label>
+        <div class="spacer-flex"></div>
+        <input type=button id="savemht_default_format_init" value="初期化" disabled class="disable">
+      </div>
+      <div class=deck data-deck-selector="savemht.default.type">
+        <div class="box-orient-vertical flex" data-deck-name="expert"> 
+          <textarea name="savemht.default.format" rows="3"></textarea>
+          <input type=text name="savemht.default.format.sample" value="" disabled="true" class="disable">
+        </div>
+        <div class="box-orient-vertical flex" data-deck-name="simple">
+          <label><input type=checkbox name="savemht.default.server"
+            >サーバ名</label>
+          <label><input type=checkbox name="savemht.default.dir"
+            >ディレクトリ名</label>
+          <label><input type=checkbox name="savemht.default.thread"
+            >スレの番号</label>
+          <label><input type=checkbox name="savemht.default.title"
+            >タイトル</label>
+        </div>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          <div class="group box-orient-vertical ext_doesnotwork">
+            <label><input type=checkbox name="savemht.auto"
+              >ファイル選択を省く</label>
+            <label><input type=checkbox name="savemht.auto.unique"
+              >上書きしない</label>
+            <label><input type=checkbox name="savemht.auto.saveas"
+              >別名で保存ボタン</label>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label><input type=checkbox name="savemht.nolimit"
+              >保存中はスクリプトの制限時間を</label>
+            <label><input type=number name="savemht.nolimit.time" value="" min=0
+              >秒にする</label>
+          </div>
+          <label><input type=checkbox name="savemht.close_nocachelist"
+            >キャッシュに無かったファイルのリストを閉じる</label>
+          <label><input type=checkbox name="savemht.usenetwork"
+            >ネットワークからも取得する (元画像以外)</label>
+          <div class="group box-orient-vertical ext_doesnotwork">
+            <label><input type=checkbox name="savemht.shortcut"
+              >ショートカットキー</label>
+            <div class="box-orient-horizontal align-top">
+              <input type=text id="savemht_shortcut_input" placeholder="ここで入力">
+              <select name="savemht.shortcut.keycode"
+                      class="keycode_menu"
+                      data-keycode-input="savemht_shortcut_input"
+                      data-keycode-input-alt="savemht_shortcut_modifiers_alt"
+                      data-keycode-input-ctrl="savemht_shortcut_modifiers_ctrl"
+                      data-keycode-input-meta="savemht_shortcut_modifiers_meta"
+                      data-keycode-input-shift="savemht_shortcut_modifiers_shift">
+              </select>
+            </div>
+            <div class="box-orient-horizontal align-top">
+              <label><input type=checkbox name="savemht.shortcut.modifiers.alt" id="savemht_shortcut_modifiers_alt"
+                >Alt</label>
+              <label><input type=checkbox name="savemht.shortcut.modifiers.ctrl" id="savemht_shortcut_modifiers_ctrl"
+                >Ctrl</label>
+              <label><input type=checkbox name="savemht.shortcut.modifiers.meta" id="savemht_shortcut_modifiers_meta"
+                >Meta</label>
+              <label><input type=checkbox name="savemht.shortcut.modifiers.shift" id="savemht_shortcut_modifiers_shift"
+                >Shift</label>
+            </div>
+          </div>
+        </div>
+        <div class="box-orient-vertical flex">
+          <label><input type=checkbox name="savemht.use8bit"
+            >HTML 部分を 8bit で保存する</label>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="savemht.imagelink"
+              >サムネ表示の場合に元画像も保存する</label>
+            <label><input type=checkbox name="savemht.imagelink.thread"
+              >スレ画像のみ</label>
+            <label><input type=checkbox name="savemht.imagelink.perthread"
+              >スレごとに設定</label>
+          </div>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="savemht.preview"
+              >プレビューで表示中の画像も保存する</label>
+            <label><input type=checkbox name="savemht.preview.count"
+              >保存した数と総数を表示する</label>
+          </div>
+          <label><input type=checkbox name="savemht.aima.hide_entire_res"
+             >合間合間に で消したレスを無かった事にする</label>
+          <label><input type=checkbox name="savemht.aima.show_res"
+             >合間合間に で消したレスを復活させる</label>
+        </div>
+      </div>
+    </div>
+    <div class="box-orient-horizontal align-center">
+      <label><input type=checkbox name="cleanup"
+        >[保存用に整形] ボタン</label>
+      <label class="warning">[mht で保存] を使用する場合には不要です</label>
+    </div>
+  </div>
+
+  <div id="tab_saveimage1" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical flex ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="saveimage"
+          >画像を保存ボタン</label>
+      </div>
+      <label><input type=checkbox name="saveimage.autolink.preview"
+        >オートリンクのプレビューにも付ける</label>
+      <label><input type=checkbox name="saveimage.linkmenu"
+        >リンクのコンテキストメニューから保存</label>
+      <div class="box-orient-horizonaral align-center">
+        <label>ボタンサイズ指定
+        <input type=text name="saveimage.buttonsize" size="6"></label>
+      </div>
+      <label class="ineffective"><input type=checkbox name="saveimage.buttons"
+        >メニューの代わりにボタンを表示する</label>
+      <div class="groupbox box-orient-vertical">
+        <div class=caption>
+          <label>保存した画像の表示 ([元画像]ボタン)</label>
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <label><input type=checkbox name="saveimage.limit"
+            >最大サイズ指定</label>
+          <input type=number name="saveimage.limit.width"
+                   title="幅(w)" min="0">
+          ×
+          <input type=number name="saveimage.limit.height"
+                   title="高さ(h)" min="0">
+          <select name="saveimage.limit.unit"
+                    title="(デフォルト:px) 幅と高さの単位。ビューポート相対(.sp)はドキュメント表示領域の幅と高さに対する相対値(%)で、画面、ウィンドウ、フレームのサイズで動的に決まる。">
+            <option value="px">ピクセル(px)</option>
+            <option value="view">ビューポート相対(vw,vh)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_saveimage2" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical flex ext_doesnotwork">
+      <div class=caption>
+        <label>保存先のディレクトリ</label>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          <div class="box-orient-horizontal align-center">
+            <label for="saveimage_base_name">表示名</label>
+            <input type=text id="saveimage_base_name" class="flex">
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label for="saveimage_base_dir">ディレクトリ</label>
+            <input type=text id="saveimage_base_dir" class="flex">
+            <input type=button id="saveimage_base_dir_select" value="変更">
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>サブディレクトリ:</label>
+            <label><input type=radio name="saveimage.base.subdir" value="simple" checked>簡易設定</label>
+            <label><input type=radio name="saveimage.base.subdir" value="expert">詳細設定</label>
+          </div>
+          <div class=deck data-deck-selector="saveimage.base.subdir">
+            <div class="box-orient-vertical flex" data-deck-name="expert">
+              <textarea id="saveimage_base_subdir_format" rows="3"></textarea>
+              <input type=text id="saveimage_base_subdir_format_sample" value="" disabled="true" class="disable">
+            </div>
+            <div class="box-orient-horizontal flex align-top" data-deck-name="simple">
+              <label><input type=checkbox id="saveimage_base_subdir_url"
+                >URL</label>
+              <label><input type=checkbox id="saveimage_base_subdir_board"
+                >板名</label>
+              <label><input type=checkbox id="saveimage_base_subdir_server"
+                >サーバ</label>
+              <label><input type=checkbox id="saveimage_base_subdir_dir"
+                >ディレクトリ</label>
+              <label><input type=checkbox id="saveimage_base_subdir_thread"
+                >スレ番号</label>
+              <label class="sp tooltip"><input type=checkbox id="saveimage_base_subdir_msg8b"
+                ><span class="tooltiptext">スレ本文の最初の4文字を使う</span
+                >本文4文字</label>
+            </div>
+          </div>
+          <div class="box-orient-horizontal">
+            <div class="box-orient-vertical">
+              <div class="group box-orient-vertical">
+                <label><input type=checkbox id="saveimage_base_dialog"
+                  >ダイアログを表示する</label>
+                <label><input type=checkbox id="saveimage_base_dialog_keep"
+                  >前回使用したディレクトリを保持する</label>
+              </div>
+              <div class="box-orient-horizontal align-center">
+                <label>アクセスキー
+                <input type=text id="saveimage_base_key" size="6"></label>
+              </div>
+            </div>
+            <div class="box-orient-vertical">
+              <div class="group box-orient-vertical">
+                <label><input type=checkbox id="saveimage_base_instantsrc"
+                  >保存すると元画像を表示する</label>
+                <label><input type=checkbox id="saveimage_base_instantsrc_always"
+                  >元画像があればロード時に表示する</label>
+              </div>
+            </div>
+          </div>
+          <label id="saveimage_base_illegal" class="warning"></label>
+        </div>
+        <div class="box-orient-vertical">
+          <input type=button id="saveimage_base_add" value="追加">
+          <input type=button id="saveimage_base_modify" value="修正">
+          <input type=button id="saveimage_base_moveup" value="上に">
+          <input type=button id="saveimage_base_movedown" value="下に">
+          <input type=button id="saveimage_base_delete" value="削除">
+        </div>
+      </div>
+      <table name="saveimage.base.list2" id="saveimage_base_list" class="listbox flex" style="height:14em"
+        data-listbox-seltype="multiple">
+        <thead>
+          <tr>
+            <td data-listitem-name="name" style="width: 30%; min-width: 6em;">表示名</td>
+            <td data-listitem-name="dir" style="width: 70%; min-width: 6em;">ディレクトリ</td>
+            <td data-listitem-name="subdir" style="width: 6em">サブ</td>
+            <td data-listitem-name="dialog" style="width: 6em">ダイアログ</td>
+            <td data-listitem-name="dialog_keep" style="width: 4em">保持</td>
+            <td data-listitem-name="key" style="width: 4em">キー</td>
+            <td data-listitem-name="instantsrc" style="width: 2em">元</td>
+            <td data-listitem-name="instantsrc_always" style="width: 2em">ロ</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+          </tr>
+        </tbody>
+        <tfoot><tr><td colspan="8"></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab_mail_comment" class="box-orient-vertical tab_content">
+    <div class="box-orient-horizontal">
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label>メール欄</label>
+        </div>
+        <label><input type=checkbox name="mailbox.sagebutton"
+          >sage ボタン</label>
+        <div class="group box-orient-vertical ext_doesnotwork">
+          <label><input type=checkbox name="mailbox.sagebutton.key"
+            >ショートカットキー</label>
+          <div class="box-orient-horizontal align-center">
+            <input type=text id="mailbox_sagebutton_key_input" placeholder="ここで入力" size="8">
+            <select name="mailbox.sagebutton.key.keycode"
+                    class="keycode_menu"
+                    data-keycode-input="mailbox_sagebutton_key_input"
+                    data-keycode-input-alt="mailbox_sagebutton_key_modifiers_alt"
+                    data-keycode-input-ctrl="mailbox_sagebutton_key_modifiers_ctrl"
+                    data-keycode-input-meta="mailbox_sagebutton_key_modifiers_meta"
+                    data-keycode-input-shift="mailbox_sagebutton_key_modifiers_shift">
+            </select>
+          </div>
+          <div class="box-orient-horizontal align-top">
+            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.alt" id="mailbox_sagebutton_key_modifiers_alt"
+              >Alt</label>
+            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.ctrl" id="mailbox_sagebutton_key_modifiers_ctrl"
+              >Ctrl</label>
+            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.meta" id="mailbox_sagebutton_key_modifiers_meta"
+              >Meta</label>
+            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.shift" id="mailbox_sagebutton_key_modifiers_shift"
+              >Shift</label>
+          </div>
+        </div>
+        <label><input type=checkbox name="mailbox.extend"
+          >メール欄の幅を1.5倍</label>
+        <label><input type=checkbox name="mailbox.memory"
+          >通常の送信で内容を保持する</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="mailbox.clear"
+            >連携の送信で内容を消す</label>
+          <label><input type=checkbox name="mailbox.clear.sage"
+            >sage は残す</label>
+        </div>
+      </div>
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label>コメント欄</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="commentbox.status"
+            >コメントの行数監視</label>
+          <label><input type=checkbox name="commentbox.status.bytes"
+            >バイト数も監視する</label>
+          <label><input type=checkbox name="commentbox.status.limit"
+            >オーバーしたら送信しない</label>
+          <label><input type=checkbox name="commentbox.status.size"
+            >スクロールバーが出ないように拡張する</label>
+        </div>
+        <div class="box-orient-horizonaral align-center">
+          <label><input type=checkbox name="commentbox.setrows"
+            >コメント欄の行数を指定する</label>
+          <label><input type=number name="commentbox.setrows.count" min=1>
+          行</label>
+        </div>
+        <label><input type=checkbox name="commentbox.scroll"
+          >コメント欄内からスクロールする</label>
+        <label><input type=checkbox name="commentbox.ime"
+          >IME をオンにする</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="commentbox.bg"
+            >背景画像を表示する</label>
+          <label><input type=checkbox name="commentbox.bg.frame"
+            >文字の影を白くする (Fx3.1以降)</label>
+          <label>カスタム画像
+            <select name="commentbox.bg.custom">
+              <option value="no">使用しない</option>
+              <option value="mix">既存 + カスタム</option>
+              <option value="only">カスタムのみ</option>
+            </select>
+          </label>
+          <label class="ext_doesnotwork">カスタムは使い方参照</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="commentbox.preview"
+            >画像をプレビュー</label>
+          <label>サイズ: 
+          <input type=number name="commentbox.preview.size" min=0>
+          px</label>
+        </div>
+        <div class="group box-orient-vertical ext_doesnotwork">
+          <label><input type=checkbox name="commentbox.shortcut"
+            >ショートカット</label>
+          <div class="box-orient-horizontal align-center">
+            <input type=text id="commentbox_shortcut_input" placeholder="ここで入力" size="8">
+            <select name="commentbox.shortcut.keycode"
+                    class="keycode_menu"
+                    data-keycode-input="commentbox_shortcut_input"
+                    data-keycode-input-alt="commentbox_shortcut_modifiers_alt"
+                    data-keycode-input-ctrl="commentbox_shortcut_modifiers_ctrl"
+                    data-keycode-input-meta="commentbox_shortcut_modifiers_meta"
+                    data-keycode-input-shift="commentbox_shortcut_modifiers_shift">
+            </select>
+          </div>
+          <div class="box-orient-horizontal align-top">
+            <label><input type=checkbox name="commentbox.shortcut.modifiers.alt" id="commentbox_shortcut_modifiers_alt"
+              >Alt</label>
+            <label><input type=checkbox name="commentbox.shortcut.modifiers.ctrl" id="commentbox_shortcut_modifiers_ctrl"
+              >Ctrl</label>
+            <label><input type=checkbox name="commentbox.shortcut.modifiers.meta" id="commentbox_shortcut_modifiers_meta"
+              >Meta</label>
+            <label><input type=checkbox name="commentbox.shortcut.modifiers.shift" id="commentbox_shortcut_modifiers_shift"
+              >Shift</label>
+          </div>
+        </div>
+        <label class="sp tooltip"><input type=checkbox name="commentbox.submit_shortcut"
+          ><span class="tooltiptext">(デフォルト：無効) コメント欄内からショートカットキーShift-Enterでレスを送信する</span
+          >Shift-Enterで送信</label>
+      </div>
+    </div>
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label>コメント欄のカスタム背景画像について</label>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          赤福システムフォルダ(ディレクトリ)に特定の名前の画像があれば背景画像として使われます<br>
+          ファイル名: bg_default.png (デフォルト), bg_img_b.png など(板固有)
+        </div>
+        <div class="box-orient-horizontal">
+          <input type=button id="commentbox_open_systemdir_button" value="フォルダを開く" disabled>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_form" class="box-orient-vertical tab_content">
+    <div class="box-orient-horizontal">
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label>0〜10 ページ</label>
+        </div>
+        <label><input type=checkbox name="postform.normal.hide"
+          >フォームをデフォルトで閉じる</label>
+        <label class="ext_doesnotwork"><input type=checkbox name="postform.normal.purge_history"
+          >スレを立てたら戻れなくする</label>
+        <label><input type=checkbox name="postform.normal.newtab"
+          >スレを新しいウィンドウに表示</label>
+      </div>
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label>レス送信モード</label>
+        </div>
+        <label><input type=checkbox name="postform.reply.hide"
+          >フォームをデフォルトで閉じる</label>
+        <label><input type=checkbox name="postform.reply.sendclose"
+          >送信すると閉じる</label>
+        <label><input type=checkbox name="postform.reply.thread"
+          >スレを立てられるようにする</label>
+      </div>
+    </div>
+    <div class="box-orient-horizontal">
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label><input type=checkbox name="floatpostform"
+            >フォームを固定</label>
+        </div>
+        <div class="box-orient-horizontal align-center flex">
+          <div class="box-orient-vertical">
+            <div class="box-orient-horizontal">
+              <label><input type=radio name="floatpostform.position" value="topleft">左上</label>
+              <label><input type=radio name="floatpostform.position" value="topright">右上</label>
+            </div>
+            <div class="box-orient-horizontal">
+              <label><input type=radio name="floatpostform.position" value="bottomleft">左下</label>
+              <label><input type=radio name="floatpostform.position" value="bottomright">右下</label>
+            </div>
+          </div>
+          から
+          <div class="box-orient-vertical">
+            <div class="box-orient-horizonaral align-center">
+              <label>x
+              <input type=number name="floatpostform.position.x">
+              px</label>
+            </div>
+            <div class="box-orient-horizonaral align-center">
+              <label>y
+              <input type=number name="floatpostform.position.y">
+              px</label>
+            </div>
+          </div>
+        </div>
+        <label>幅
+          <input type=text name="floatpostform.width" size="10">
+        </label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="floatpostform.clickopen"
+            >クリックで開閉</label>
+          <label><input type=checkbox name="floatpostform.clickclose"
+            >外をクリックで閉じる</label>
+        </div>
+        <label><input type=checkbox name="floatpostform.hidebutton"
+          >[消す] ボタン</label>
+        <label><input type=checkbox name="floatpostform.minimize"
+          >アイコン化</label>
+        <label><input type=checkbox name="floatpostform.alpha"
+          >半透明</label>
+      </div>
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label>その他</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="postform.preview"
+            >添付ファイルをプレビュー</label>
+          <div class="box-orient-horizontal align-center">
+            <label>サイズ
+            <input type=number name="postform.preview.size" min=0>
+            px</label>
+          </div>
+        </div>
+        <label class="tooltip ext_obsolete"><input type=checkbox name="postform.save.attachment" disabled="true" class="disable"
+          ><span class=tooltiptext>Firefox 3.5beta1 (Gecko 1.9.1b1) 以降は不要</span
+          >添付ファイルを再起動時に保持</label>
+        <label class="sp tooltip ext_doesnotwork"><input type=checkbox name="postform.paste_image_from_clipboard"
+          ><span class="tooltiptext">(デフォルト：無効) コメント欄内で、Ctrl-V等でクリップボードから画像が貼り付けられた際に、一時フォルダにJPEG画像として自動的に保存して添付Fileとする</span
+          >クリップボードから画像を添付 ([貼り付け] [クリア]ボタン)</label>
+        <label><input type=checkbox name="postform.delform.hide"
+          >削除フォームを消す</label>
+        <label><input type=checkbox name="postform.delform.left"
+          >削除フォームを左に</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="postform.shimonkin"
+            >送信ボタンを変える</label>
+          <select name="postform.shimonkin.type">
+            <option value="shimon">しもんきん</option>
+            <option value="shimon2">しもんきん2</option>
+            <option value="aka">赤ふ子さん</option>
+            <option value="sage">sage れたん</option>
+            <option value="all">全部</option>
+            <option value="custom">カスタム</option>
+          </select>
+          カスタムは使い方参照
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="postform.bottom"
+            >ページ末尾に置く</label>
+          <label class="sp tooltip"><input type=checkbox name="postform.bottom_formonly"
+            ><span class="tooltiptext">(デフォルト：無効) ふたばの「フォーム位置切替」機能と同様にフォームだけをページ末尾へ置く</span
+            >フォーム位置だけ</label>
+        </div>
+      </div>
+    </div>
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label>カスタム送信ボタンについて</label>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          赤福システムフォルダ(ディレクトリ)に指定の画像があれば使われます(48x36)<br>
+          ファイル名: submit.png, submit_disabled.png, submit_hover.png, submit_push.png
+        </div>
+        <div class="box-orient-horizontal">
+          <input type=button id="postform_open_systemdir_button" value="フォルダを開く">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_reload" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal">
+      <div class=caption>
+        <label><input type=checkbox name="reload"
+          >続きを読む</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="reload.range.syncbutton"
+            >[同期] ボタン</label>
+          <label><input type=checkbox name="reload.range.syncbutton.nodelete"
+            >l削除されたレスを残す</label>
+          <label class="sp tooltip"><input type=checkbox name="reload.range.syncbutton.id"
+            ><span class="tooltiptext">(デフォルト：有効) 同期時に、スレ本文とレスのIDの付加＆消滅も現在の表示に反映されるようにします</span
+            >IDも同期する</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="reload.rule"
+            >区切り</label>
+          <label><input type=checkbox name="reload.rule.zeroheight"
+            >ズレないようにする</label>
+          <label><input type=checkbox name="reload.rule.random"
+            >ランダム</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="reload.reply"
+            >レス送信と連携</label>
+          <label><input type=checkbox name="reload.reply.scroll"
+            >最新位置にスクロール</label>
+        </div>
+        <div class="group box-orient-vertical ext_doesnotwork">
+          <label><input type=checkbox name="reload.hook"
+            >リロードの代わりに続きを読む</label>
+          <label><input type=checkbox name="reload.hook.sync"
+            >同期する</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label class="sp tooltip"><input type=checkbox name="reload.ondemand"
+            ><span class="tooltiptext">(デフォルト:無効) スレをフォーカスした時に自動的に続きを読む。スレッドの末尾まで表示している場合か、新着レスがあることわかっている場合に実行される。</span
+            >必要に応じて自動的に続きを読む (Gecko 18~)</span>
+          </label>
+          <label><input type=checkbox name="reload.ondemand.sync"
+            >同期する</label>
+        </div>
+        <label><input type=checkbox name="reload.status.random"
+          >スレが消えたときのメッセージをランダムに</label>
+        
+        <div class="group box-orient-vertical">
+          <div class="box-orient-horizontal align-center">
+            <label><input type=checkbox name="reload.partial.on"
+              >デフォルトで最新</label>
+            <label><input type=number name="reload.partial.count" min=0
+              >件表示</label>
+          </div>
+          <label>(レスを全件表示せず省略する)</label>
+          
+          <div class="box-orient-horizontal align-center">
+            <label>前に
+            <input type=number name="reload.partial.up" min=1>
+            件ずつ戻る</label>
+          </div>
+        </div>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label><input type=checkbox name="reload.status.hold"
+          >ステータスを消さない</label>
+        <label><input type=checkbox name="reload.timestamp"
+          >更新時刻を表示する</label>
+        <div class="box-orient-horizontal align-center ext_obsolete">
+          <label><input type=checkbox name="reload.nolimit"
+            >更新中はスクリプトの制限時間を</label>
+          <label><input type=number name="reload.nolimit.time" value="" min=0
+            >秒にする</label>
+        </div>
+        <label><input type=checkbox name="reload.status_no_count"
+          >ステータスにレス数を表示しない</label>
+        <div class="group box-orient-vertical ext_doesnotwork">
+          <label><input type=checkbox name="reload.extcache"
+            >スレが消えても表示できるようにする</label>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="reload.extcache.file"
+              >スレをファイルに保存する</label>
+            <div class="box-orient-horizontal align-center">
+              <input type=text name="reload.extcache.file.base" class="flex">
+              <input type=button id="reload_extcache_file_base_select" value="変更">
+            </div>
+          </div>
+          <label class="warning">ファイルに保存した場合古くなっても削除されません</label>
+        </div>
+        <label class="sp tooltip ext_doesnotwork"><input type=checkbox name="reload.extcache.images"
+          ><span class="tooltiptext">(デフォルト:無効) スレ/レスが消えた時に、表示されているサムネ画像のキャッシュの有効期限を無期限にして、ページを開いている限り表示/保存できるようにします</span
+          >消えそうな画像のキャッシュを保護する</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_throp" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal">
+      <div class=caption>
+        <label><input type=checkbox name="thread_operator"
+          >スレ操作パネル</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label>表示するもの</label>
+        <div class="sub box-orient-vertical">
+          <label><input type=checkbox name="thread_operator.show.move"
+            >移動</label>
+          <label><input type=checkbox name="thread_operator.show.thumbnail"
+            >サムネ固定のチェックボックス</label>
+          <label><input type=checkbox name="thread_operator.show.reload"
+            >続きを読む</label>
+          <label><input type=checkbox name="thread_operator.show.savemht"
+            >MHT で保存</label>
+        </div>
+        <label>表示位置</label>
+        <div class="sub box-orient-vertical">
+          <div class="box-orient-horizonaral align-center">
+            <label>x
+            <input type=number name="thread_operator.position.x">
+            px</label>
+          </div>
+          <div class="box-orient-horizonaral align-center">
+            <label>y
+            <input type=number name="thread_operator.position.y">
+            px</label>
+          </div>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="thread_operator.clickopen"
+            >クリックで開閉</label>
+          <label><input type=checkbox name="thread_operator.clickclose"
+            >外をクリックで閉じる</label>
+          <label><input type=checkbox name="thread_operator.hide"
+            >デフォルトで閉じる</label>
+        </div>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label><input type=checkbox name="thread_operator.threadtime"
+          >スレの立った時刻を表示</label>
+        <label><input type=checkbox name="thread_operator.expire_diff"
+          >残り時間、番号を表示する</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="thread_operator.thumbnail"
+            >サムネも固定する</label>
+          <label><input type=checkbox name="thread_operator.thumbnail.only"
+            >サムネだけ</label>
+          <label><input type=checkbox name="thread_operator.thumbnail.alpha"
+            >半透明</label>
+          <label><input type=checkbox name="thread_operator.thumbnail.roll"
+            >巻き上げ</label>
+          <label>表示サイズ<label>
+          <div class="sub box-orient-vertical">
+            <label><input type=radio name="thread_operator.thumbnail.size" value="0">フルサイズ</label>
+            <label><input type=radio name="thread_operator.thumbnail.size" value="1">ハーフ</label>
+            <div class="sub box-orient-vertical">
+              <label><input type=checkbox name="thread_operator.thumbnail.size.zoom"
+                >ズーム</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_link" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>リンクを新しいタブで開く</label>
+      </div>
+      <label><input type=checkbox name="thread.newtab"
+        >返信</label>
+      <label><input type=checkbox name="thread.back_new"
+        >掲示板に戻る</label>
+      <label><input type=checkbox name="thread.catalog_new"
+        >カタログ</label>
+      <label><input type=checkbox name="del.newtab"
+        >del</label>
+    </div>
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>ページ末尾に追加</label>
+      </div>
+      <label><input type=checkbox name="thread.back_on_bottom"
+        >[掲示板に戻る]</label>
+      <label><input type=checkbox name="thread.catalog_on_bottom"
+        >[カタログ]</label>
+      <label><input type=checkbox name="reload_on_bottom"
+        >リロードボタン (通常モード)</label>
+    </div>
+    
+    <div class="box-orient-vertical">
+      <label><input type=checkbox name="thread.move_button"
+        >前後に移動ボタン</label>
+      <label><input type=checkbox name="del.inline"
+        >del フォームをインラインで開く</label>
+    </div>
+  </div>
+
+  <div id="tab_thread" class="box-orient-vertical tab_content">
+    <div class="box-orient-horizontal align-center">
+      <label><input type=checkbox name="thread.numbering"
+        >レス番号を</label>
+      <label><input type=number name="thread.numbering.max" min=0
+        >まで振る</label>
+    </div>
+    <div class="group box-orient-vertical">
+      <label><input type=checkbox name="thread.bottom_status"
+        >末尾にステータス表示</label>
+      <label><input type=checkbox name="thread.bottom_status.diff"
+        >スレが消えるまでの時間を表示</label>
+      <label><input type=checkbox name="thread.bottom_status.hidden"
+        >非表示になったレス数を表示</label>
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="thread.bottom_status.num"
+          >スレ番号 + 保持数 - 最終レス番号 を表示</label>
+        <label><input type=checkbox name="thread.bottom_status.num.random"
+          >ランダム</label>
+        <label><input type=checkbox name="thread.bottom_status.num.short"
+          >短いのだけ</label>
+        <label class="tooltip"><input type=checkbox name="thread.bottom_status.num.entire"
+          ><span class=tooltiptext>スレ操作パネルの「残り時間、番号を表示」にも影響</span
+          >板全体の最新レスを反映する</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_popupquote" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label><input type=checkbox name="popupquote"
+          >引用のポップアップ</label>
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label>表示まで
+        <input type=number name="popupquote.delay" min=0>
+        [ms]</label>
+      </div>
+      <label><input type=checkbox name="popupquote.clickhide"
+        >ポップアップ以外をクリックで即非表示</label>
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="popupquote.image"
+          >画像も含める</label>
+        <select name="popupquote.image.size" data-pref-type="int">
+          <option value="0">フルサイズ</option>
+          <option value="1">ハーフ</option>
+          <option value="2">クオーター</option>
+        </select>
+        <div class="group box-orient-vertical">
+          <label class="sp tooltip"><input type=checkbox name="popupquote.image.preview"
+            ><span class="tooltiptext">(デフォルト:有効) 引用元にオートリンク機能によるプレビューがある場合にポップアップに含める</span
+            >オートリンクプレビューを含める</label>
+          <label class="sp tooltip"><input type=checkbox name="popupquote.image.preview.all"
+            ><span class="tooltiptext">(デフォルト:有効) SWFなどのプレビューもポップアップに含める</span
+            >画像以外も</label>
+        </div>
+      </div>
+      <label><input type=checkbox name="popupquote.nearest"
+        >現在のレスから近い方を表示</label>
+      <label class="sp tooltip"><input type=checkbox name="popupquote.matchbol"
+        ><span class="tooltiptext">(デフォルト：無効) 引用に行単位で合うコメントを優先して検索することで引用元をより正確にポップアップする</span
+        >行単位で合うレスを優先して検索</label>
+      <label><input type=checkbox name="popupquote.bottomup"
+        >ポップアップを上に延ばす</label>
+    </div>
+  </div>
+
+  <div id="tab_hidetroll" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label><input type=checkbox name="hidetrolls"
+          >芝刈り</label>
+      </div>
+      <div class="box-orient-vertical align-start">
+        <label><input type=radio name="hidetrolls.mode" value="normal">......</label>
+        <label><input type=radio name="hidetrolls.mode" value="hide">隠す</label>
+        <label><input type=radio name="hidetrolls.mode" value="user">指定</label>
+        <div class="sub box-orient-vertical">
+          <input type=text name="hidetrolls.user" class="flex">
+          <label><input type=checkbox name="hidetrolls.random"
+            >ランダムで切り替える</label>
+          <div class="sub box-orient-vertical">
+            <label>カンマで区切って複数並べてください</label>
+          </div>
+        </div>
+      </div>
+      <div class="group box-orient-vertical">
+        <label><input type=checkbox name="hidetrolls.red"
+          >色を変える</label>
+        <div class="box-orient-horizontal align-center">
+          <label>通常
+            <input type=text name="hidetrolls.red.color" size="8">
+          </label>
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <label>引用
+            <input type=text name="hidetrolls.red.color.quote" size="8">
+          </label>
+        </div>
+      </div>
+      <label><input type=checkbox name="hidetrolls.nocat"
+        >カタログでは刈らない</label>
+    </div>
+  </div>
+
+  <div id="tab_res" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="cutefont"
+          >フォント変更</label>
+      </div>
+      <label id="cutefont_family_example">&nbsp;</label>
+      <div class="box-orient-horizontal">
+        <input type=text name="cutefont.family" class="flex">
+        <input type=button name="cutefont.family.init" value="初期化">
+      </div>
+    </div>
+    <div class="box-orient-horizontal align-center tooltip ext_doesnotwork sp">
+      <span class=tooltiptext>(デフォルト：無効) 基準となるbody要素の文字サイズを設定する。適用後リロード無しで設定反映。</span>
+      <label><input type=checkbox name="style.body_font"
+        >基準となる文字サイズを</label>
+      <label><input type=number name="style.body_font.size" min=8 max=24 step=0.5
+        > pt にする (8-24)</label>
+    </div>
+    <div class="groupbox box-orient-vertical ext_doesnotwork ">
+      <div class=caption>
+        <label><input type=checkbox name="style.ignore_default"
+          >デフォルトのスタイルを無視する</label>
+      </div>
+      <label class="warning">無視した結果はふたばのレイアウト次第です (非推奨)</label>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="style.ignore_default.font"
+          >文字のサイズを</label>
+        <label><input type=number name="style.ignore_default.font.size" min=8 max=24 step=0.5
+          > pt にする (8-24)</label>
+      </div>
+      <label class="sp tooltip"><input type=checkbox name="style.ignore_default.minimum_res"
+        ><span class=tooltiptext>(デフォルト:有効) レスの背景色と「…」の位置に関するスタイルを追加する</span
+        >最低限のレスのスタイルを追加する</label>
+    </div>
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>その他</label>
+      </div>
+      <label><input type=checkbox name="showmail"
+        >メール欄表示</label>
+      <label><input type=checkbox name="showmail.popup"
+        >メール欄ポップアップ</label>
+      <label><input type=checkbox name="reply.limitwidth"
+        >横長のレスを途中で消す</label>
+      <label><input type=checkbox name="reply.avoidwrap"
+        >Firefox 3 で不要な折り返しを回避する</label>
+      <label><input type=checkbox name="reply.marginbottom"
+        >レスの下にマージンをとる</label>
+      <label><input type=checkbox name="reply.nomargintop"
+        >レスの上のマージンを消す</label>
+      <label><input type=checkbox name="reply.nomarginbottom"
+        >レスの下のマージンを消す</label>
+      <label><input type=checkbox name="alertgif"
+        >GIF 画像や動画を赤字で表示</label>
+    </div>
+  </div>
+
+  <div id="tab_autolink" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal">
+      <div class=caption>
+        <label><input type=checkbox name="autolink"
+          >オートリンク</label>
+      </div>
+      <div class="box-orient-vertical">
+        <label><input type=checkbox name="autolink.focus"
+          >開いたタブを選択する</label>
+        <label><input type=checkbox name="autolink.user"
+          >ユーザ指定文字列</label>
+        <label><input type=checkbox name="autolink.as"
+          >板以外で選択範囲をオートリンクとして開く</label>
+        <label><input type=checkbox name="autolink.subject_name"
+          >題名と名前も対象にする</label>
+      </div>
+      <div class="box-orient-vertical">
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="autolink.preview"
+            >プレビュー</label>
+          <label><input type=checkbox name="autolink.preview.multi"
+            >複数表示する</label>
+          <div class="box-orient-horizontal align-center">
+            <label>swf のサイズ
+            <input type=number name="autolink.preview.swf.width" min=0>
+            px ×
+            <input type=number name="autolink.preview.swf.height" min=0>
+            px</label>
+          </div>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="autolink.preview.autoopen"
+              >P2P のキャッシュにある場合自動で開く</label>
+            <label><input type=checkbox name="autolink.preview.autoopen.noquote"
+              >引用では開かない</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="groupbox box-orient-horizontal flex ext_doesnotwork">
+      <div class=caption>
+        <label>ユーザ指定文字列</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="box-orient-horizontal align-center">
+          <label for="autolink_user_pattern">パターン</label>
+          <input type=text id="autolink_user_pattern" class="flex">
+          <label><input type=checkbox id="autolink_user_r"
+            >正規表現</label>
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <label for="autolink_user_url">リンク先</label>
+          <input type=text id="autolink_user_url" class="flex">
+        </div>
+        <label id="autolink_user_illegal" class="warning">&nbsp;</label>
+        <table name="autolink.user.patterns2" id="autolink_user_list" class="listbox flex" style="height:14em"
+          data-listbox-seltype="multiple">
+          <thead>
+            <tr>
+              <td data-listitem-name="pattern" style="min-width: 8em; width: 60%;">パターン</td>
+              <td data-listitem-name="r" style="width: 6em;">正規表現</td>
+              <td data-listitem-name="link" style="min-width: 8em; width: 40%;">リンク先</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+            </tr>
+          </tbody>
+          <tfoot><tr><td colspan="8"></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="box-orient-vertical">
+        <input type=button id="autolink_user_add" value="追加">
+        <input type=button id="autolink_user_modify" value="修正">
+        <input type=button id="autolink_user_moveup" value="上に">
+        <input type=button id="autolink_user_movedown" value="下に">
+        <input type=button id="autolink_user_delete" value="削除">
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_p2p" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="p2p"
+          >画像を P2P 経由で取得する</label>
+      </div>
+      <label class="warning">この機能はテスト段階です</label>
+      <input type=hidden name="p2p.nodelist2">
+      <div class="box-orient-vertical border">
+        <div class="box-orient-horizontal align-center">
+          <label>動作モード: </label>
+          <label><input type=radio name="p2p.connection.type" value="accept"
+            >誘い可</label>
+          <label><input type=radio name="p2p.connection.type" value="noaccept"
+            >襲い専</label>
+        </div>
+        <div class="sub box-orient-vertical">
+          <div class="box-orient-horizontal align-center">
+            <label id="p2p_address_label" control="p2p_address"
+              >自分のアドレス</label>
+            <div class="box-orient-vertical flex">
+              <div class="box-orient-horizontal align-center">
+                <label><input type=radio name="p2p.address.type" value="static">固定／(D)DNS</label>
+                <input type=text name="p2p.address" class="flex">
+              </div>
+              <label><input type=radio name="p2p.address.type" value="dynamic">可変 (自動更新)</label>
+            </div>
+          </div>
+          <label id="p2p_address_warning" class="warning">&nbsp;</label>
+          <div class="box-orient-horizontal align-center">
+            <label>ポート番号
+            <input type=number name="p2p.port" class="size8" min=0></label>
+            <input type=button id="p2p_port_init" value="初期化">
+          </div>
+        </div>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          <div class="box-orient-horizontal align-center">
+            <label>キャッシュチェックの間隔
+            <input type=number name="p2p.cache.check_interval" min=0>
+            分</label>
+          </div>
+          <div class="sub box-orient-vertical">
+            <label>(最低 30 分, 0 で手動のみ)</label>
+          </div>
+          <label>キャッシュの最大個数</label>
+          <div class="sub box-orient-vertical">
+            <div class="box-orient-horizontal align-center">
+              <label>src
+              <input type=number name="p2p.cache.src_limit" min=0>
+              個</label>
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label>thumb
+              <input type=number name="p2p.cache.thumb_limit" min=0>
+              個</label>
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label>cat
+              <input type=number name="p2p.cache.cat_limit" min=0>
+              個</label>
+            </div>
+            <label>(最低 200 個, 0 で無制限)</label>
+          </div>
+          <label>キャッシュのディレクトリ</label>
+          <div class="sub box-orient-vertical">
+            <div class="box-orient-horizontal align-center">
+              <input type=text name="p2p.cache.base" class="flex">
+              <input type=button id="p2p_cache_base_select" value="変更">
+            </div>
+          </div>
+          <label><input type=checkbox name="p2p.treat_as_same"
+            >別サーバのキャッシュをまとめる</label>
+        </div>
+        <div class="box-orient-vertical flex">
+          <div class="box-orient-horizontal align-center">
+            <label>最大誘い人数 (3 〜 29)
+            <input type=number name="p2p.accept_slot" min=3 max=29></label>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>送信帯域制限
+            <input type=number name="p2p.transfer.limit" min=10>
+            [KBytes/s] (10 〜)</label>
+          </div>
+          <label><input type=checkbox name="p2p.statusbar"
+            >ステータスバーに状況を表示する</label>
+          <label><input type=checkbox name="p2p.nocat"
+            >カタログ画像は P2P を経由しない</label>
+          <label><input type=checkbox name="p2p.prefetch.src"
+            >src 画像を P2P からプリフェッチする</label>
+          <label><input type=checkbox name="p2p.tatelog"
+            >タテログのふつーモードでも有効にする</label>
+          <label class="warning">「見たスレ」が正しく動作しなくなります</label>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="savemht.usep2p"
+              >[元画像を P2P から取得する] ボタン</label>
+            <label>[MHT で保存] の横に表示されます</label>
+          </div>
+          <div class="group box-orient-vertical ext_doesnotwork">
+            <label><input type=checkbox name="p2p.sidebar.shortcut"
+              >サイドバーのショートカットキー</label>
+            <div class="box-orient-horizontal align-top">
+              <input type=text id="p2p_sidebar_shortcut_input" placeholder="ここで入力">
+              <select name="p2p.sidebar.shortcut.keycode"
+                      class="keycode_menu"
+                      data-keycode-input="p2p_sidebar_shortcut_input"
+                      data-keycode-input-alt="p2p_sidebar_shortcut_modifiers_alt"
+                      data-keycode-input-ctrl="p2p_sidebar_shortcut_modifiers_ctrl"
+                      data-keycode-input-meta="p2p_sidebar_shortcut_modifiers_meta"
+                      data-keycode-input-shift="p2p_sidebar_shortcut_modifiers_shift">
+              </select>
+            </div>
+            <div class="box-orient-horizontal align-top">
+              <label><input type=checkbox name="p2p.sidebar.shortcut.modifiers.alt" id="p2p_sidebar_shortcut_modifiers_alt"
+                >Alt</label>
+              <label><input type=checkbox name="p2p.sidebar.shortcut.modifiers.ctrl" id="p2p_sidebar_shortcut_modifiers_ctrl"
+                >Ctrl</label>
+              <label><input type=checkbox name="p2p.sidebar.shortcut.modifiers.meta" id="p2p_sidebar_shortcut_modifiers_meta"
+                >Meta</label>
+              <label><input type=checkbox name="p2p.sidebar.shortcut.modifiers.shift" id="p2p_sidebar_shortcut_modifiers_shift"
+                >Shift</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_catalog1" class="box-orient-vertical tab_content">
+    <div class="box-orient-horizontal">
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label><input type=checkbox name="catalog.reorder"
+            >ソート</label>
+        </div>
+        <div class="box-orient-horizonaral align-center">
+          <label>指定幅
+          <input type=number name="catalog.reorder.width" min=0>
+          (0 で板のデフォルト)</label>
+        </div>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="catalog.reorder.save"
+            >デフォルトの順番を指定 (記憶)</label>
+          <select name="catalog.reorder.save.type" data-pref-type="int">
+            <option value="0">通常</option>
+            <option value="1">ページごと</option>
+            <option value="2">通常順に指定幅ずつ</option>
+            <option value="-1">スレの立った順に指定幅ずつ</option>
+            <option value="3">増加数順に指定幅ずつ .sp</option>
+          </select>
+        </div>
+        <div class="groupbox box-orient-vertical">
+          <div class=caption>
+            <label>詳細</label>
+          </div>
+          <label class="warning">指定幅ずつ時のみ有効</label>
+          <label><input type=checkbox name="catalog.reorder.visited"
+            >未読と既読で分ける</label>
+          <label><input type=checkbox name="catalog.reorder.new"
+            >最新に更新で新規を分ける</label>
+          <label><input type=checkbox name="catalog.reorder.fill"
+            >合間合間に で消した分を詰める</label>
+          <div class="group box-orient-vertical">
+            <label class="sp tooltip"><input type=checkbox name="catalog.reorder.stick-by-text.enable"
+              ><span class="tooltiptext">(デフォルト:無効) パターンに合致する本文のスレを最上段(φ)に分けて並べる。「～順に指定幅ずつ」でソートする必要あり。</span
+              >本文で分ける</label>
+            <div class="box-orient-horizontal align-center">
+              <label class="tooltip">パターン</label>
+              <input type=text name="catalog.reorder.stick-by-text.pattern" class="flex"
+                title="部分一致検索のための文字列か正規表現(/.../)をコンマ区切りで入力する。文字列では、半角英数記号は大文字小文字の区別無く全角にもマッチする。コンマ自体は\でエスケープ。 例: firefox, 赤福, a\,b, /^>/m, /\bs[upqz][1-9]/">
+              <label>
+            </div>
+          </div>
+        </div>
+        <div class="group box-orient-vertical">
+          <label class="sp tooltip"><input type=checkbox name="catalog.reorder.info"
+            ><span class=tooltiptext>(デフォルト:無効) 各行にソート順に関する情報を表示する (スレの立った時間帯,増加数)</span
+            >各行に情報を表示する</label>
+          <label class="warning">スレの立った順・増加数順でのみ有効</label>
+        </div>
+      </div>
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label><input type=checkbox name="catalog.zoom"
+            >ズーム</label>
+        </div>
+        <label><input type=checkbox name="catalog.zoom.click"
+          >クリックで開く</label>
+        <label><input type=checkbox name="catalog.zoom.noanim"
+          >アニメーションしない</label>
+        <div class="box-orient-horizontal align-center">
+          <label>表示まで
+          <input type=number name="catalog.zoom.delay" min=0>
+          [ms]</label>
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <label>サイズ
+          <input type=number name="catalog.zoom.size" min=50 max=300></label>
+          <select name="catalog.zoom.sizetype" title="(デフォルト:px) サイズの単位" data-pref-type="int">
+            <option value="0">px</option>
+            <option value="1">%</option>
+          </select>
+          <label> (50 〜 300)</label>
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <label>キャッシュ
+          <input type=number name="catalog.zoom.cache.count" min=0>
+          個</label>
+        </div>
+        <div class="group box-orient-vertical ext_doesnotwork">
+          <label><input type=checkbox name="catalog.zoom.comment"
+            >コメントを全文表示</label>
+          <label class="warning">サイドバー必須</label>
+          <label>表示まで
+          <input type=number name="catalog.zoom.comment.delay" min=0>
+          [ms]</label>
+        </div>
+      </div>
+    </div>
+    <div class="box-orient-horizontal">
+      <div class="box-orient-vertical">
+        <div class="groupbox box-orient-vertical ext_doesnotwork">
+          <div class=caption>
+            <label class="sp tooltip"><input type=checkbox name="catalog.cellwidth.enable"
+              ><span class=tooltiptext>(デフォルト: 無効) カタログでスレの幅を制限し、指定幅より大きいサムネや本文を幅に収める。このグループの設定変更はOK/適用すると既存タブにも即反映。</span
+              >スレの幅を固定</label>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>サイズ
+              <input type=number name="catalog.cellwidth.num" class="size4"
+                title="(初期値: 50.0) 幅の値(CSSの長さ)"
+                min="0" value="50" step="0.1">
+            </label>
+            <select name="catalog.cellwidth.unit"
+              title="(初期値: px) 幅の単位(CSS)。vw, vh はFirefox 19以降が必要。">
+              <option value="px">px (ピクセル数)</option>
+              <option value="vw">vw (ビューポート幅%)</option>
+              <option value="vh">vh (ビューポート高%)</option>
+              <option value="rem">rem (基準フォントサイズ比)</option>
+            </select>
+          </div>
+          <div class="sub box-orient-vertical">
+            <label class="tooltip"><input type=checkbox name="catalog.cellwidth.scale-thumb"
+              ><span class=tooltiptext>(初期値: 無効) サムネを表示する領域の縦横サイズもレス幅に揃え、その中央にサムネを表示する。サムネが小さい場合は拡大もする。Firefox 38以降が必要(それより前ではアスペクト比維持や中央揃えにやや難あり)。</span
+              >サムネ表示領域も</label>
+          </div>
+          <div class="box-orient-horizontal align-center">
+            <label>本文は最大
+            <input type=number name="catalog.cellwidth.max-lines" class="size2"
+              title="(初期値: 1.0) 本文表示領域の高さを行数で指定。収まりきらなかった分はスクロールで見られる。ある程度の大きさにするとFirefoxはスクロールバーを表示する。"
+              min="0" step="0.1">
+            行まで表示</label>
+          </div>
+        </div>
+      </div>
+      <div class="box-orient-vertical">
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_catalog2" class="box-orient-vertical tab_content">
+    <div class="box-orient-horizontal">
+      <div class="groupbox box-orient-vertical flex">
+        <div class=caption>
+          <label><input type=checkbox name="catalog.reload"
+            >最新に更新</label>
+        </div>
+        <label><input type=checkbox name="catalog.reload.reply_number_delta"
+          >レスの増加数を表示</label>
+        <label><input type=checkbox name="catalog.reload.status.hold"
+          >ステータスを消さない</label>
+        <div class="box-orient-horizontal align-center">
+          <label><input type=checkbox name="catalog.reload.update_cache"
+            >キャッシュに反映させる</label>
+          <label class="warning">※反映させるのが普通です .sp</label>
+        </div>
+        <label class="ext_doesnotwork"><input type=checkbox name="catalog.reload.hook"
+          >リロードの代わりに最新に更新</label>
+        <label><input type=checkbox name="catalog.reload.timestamp"
+          >更新時刻を表示する</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="catalog.reload.left_before"
+            >更新前を残す</label>
+          <label class="ineffective">更新順に指定幅のみ</label>
+          <label class="ineffective">未読と既読や新規を分けると不可</label>
+          <label class="sp">合間合間に で消した分 + 新規や既読を分けた分</label>
+          <div class="box-orient-horizontal align-center">
+            <label><input type=checkbox name="catalog.reload.left_before.more"
+              >多めに残す</label>
+            <input type=text name="catalog.reload.left_before.more.num" size="6">
+            <label> (2→2個、2L→2行)</label>
+          </div>
+          <label class="ext_doesnotwork"><input type=checkbox name="catalog.reload.left_before.save"
+            >状態を保存する</label>
+        </div>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="groupbox box-orient-vertical ext_doesnotwork">
+          <div class=caption>
+            <label><input type=checkbox name="catalog.sidebar"
+              >サイドバーと連携</label>
+          </div>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="catalog.sidebar.comment"
+              >本文を長めに表示</label>
+            <label>最大
+            <input type=number name="catalog.sidebar.comment.length" min=0>
+            文字</label>
+          </div>
+        </div>
+        <div class="groupbox box-orient-vertical">
+          <div class=caption>
+            <label class="sp tooltip"><input type=checkbox name="catalog.observe"
+              ><span class=tooltiptext>(デフォルト：無効) 別タブの通常・返信モードと連携してカタログにスレ情報を反映させる</span
+              >通常・返信モードと連携</label>
+          </div>
+          <label class="sp tooltip"><input type=checkbox name="catalog.observe.replynum"
+            ><span class=tooltiptext>(デフォルト：無効) 返信モードでのレス数変化をカタログに即座に反映する</span
+            >レス数を即座に反映</label>
+          <div class="group box-orient-vertical">
+            <label class="sp tooltip"><input type=checkbox name="catalog.observe.opened"
+              ><span class=tooltiptext>(デフォルト：無効) 別タブ等で開いている返信モードのスレを判断してマーク(既読扱い&amp;枠スタイル変更)し、クリック時はそのスレのタブへフォーカスを切り替える。</span
+              >既に開いているスレを配慮する</label>
+            <label class="sp tooltip ext_doesnotwork"><input type=checkbox name="catalog.observe.opened.reload"
+              ><span class=tooltiptext>(デフォルト：有効) スレのタブへフォーカス切り替えと同時にリロードする。「続きを読む」が有効の場合は続きを読む。</span
+              >開いているスレに移動後リロード</label>
+          </div>
+        </div>
+        <label><input type=checkbox name="catalog.clickable"
+          >空白の本文を強制リンク</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="catalog.visited"
+            >一度見たスレをマーク</label>
+          <label class="warning">※ブラウザの履歴に依存します .sp</label>
+        </div>
+        <label><input type=checkbox name="catalog.red"
+          >古いスレを赤くする</label>
+        <label><input type=checkbox name="catalog.left"
+          >カタログを左寄せ</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_sidebar" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical flex ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="sidebar"
+          >サイドバーを使用する</label>
+      </div>
+      
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          <div class="groupbox box-orient-vertical">
+            <div class=caption>
+              <label>スレの情報</label>
+            </div>
+            <label>表示したページから取得</label>
+            <div class="sub box-orient-vertical">
+              <div class="box-orient-horizontal">
+                <label><input type=checkbox name="sidebar.check.normal"
+                  >通常</label>
+                <label><input type=checkbox name="sidebar.check.reply"
+                  >レス送信モード</label>
+                <label><input type=checkbox name="sidebar.check.catalog"
+                  >カタログ</label>
+              </div>
+              <label><input type=checkbox name="sidebar.background"
+                >サイドバーが非表示の間も</label>
+            </div>
+            <label>更新ボタン (0ページ, カタログ)</label>
+            <div class="sub box-orient-vertical">
+              <div class="box-orient-horizontal align-center">
+                <label>カタログ種類</label>
+                <select name="sidebar.refresh.catalog.type" data-pref-type="int">
+                  <option value="0">カタログ</option>
+                  <option value="1">新順</option>
+                  <option value="2">古順</option>
+                  <option value="3">多順</option>
+                  <option value="4">少順</option>
+                </select>
+              </div>
+            </div>
+            <label><input type=checkbox name="sidebar.save"
+              >終了時にスレ情報を保存する</label>
+          </div>
+          <div class="groupbox box-orient-vertical">
+            <div class=caption>
+              <label>スレの表示</label>
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label>サムネのサイズ (px)
+              <input type=number name="sidebar.thumbnail.size" class="size4"
+                       min="8" max="250"></label>
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label>表示順</label>
+              <select name="sidebar.sort.type" data-pref-type="int">
+                <option value="1">最終レス番号順</option>
+                <option value="0">スレの新しい順</option>
+                <option value="2">レスの古い順</option>
+                <option value="5">カタログ順</option>
+                <option value="3">レスの多い順</option>
+                <option value="4">レスの少ない順</option>
+                <option value="6">レスの増加数順</option>
+              </select>
+            </div>
+            <div class="box-orient-vertical sub">
+              <div class="box-orient-horizontal">
+                <label><input type=checkbox name="sidebar.sort.visited"
+                  >既読を上に</label>
+                <label><input type=checkbox name="sidebar.sort.marked"
+                  >マークを上に</label>
+                <label><input type=checkbox name="sidebar.sort.invert"
+                  >反転</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="box-orient-vertical flex">
+          <div class="groupbox box-orient-vertical">
+            <div class=caption>
+              <label><input type=checkbox name="sidebar.tab.show"
+                >板毎のタブの表示</label>
+            </div>
+            <label><input type=checkbox name="sidebar.tab.hidden"
+              >タブを表示しない</label>
+            <div class="box-orient-horizontal">
+              <label><input type=checkbox name="sidebar.tab.vertical"
+                >横に表示(縦並び)</label>
+              <label><input type=checkbox name="sidebar.tab.menu"
+                >タブ一覧ボタンを表示</label>
+            </div>
+            <label><input type=checkbox name="sidebar.markedtab"
+              >マークされたスレを別タブに表示</label>
+          </div>
+          <div class="groupbox box-orient-vertical">
+            <div class=caption>
+              <label>詳細</label>
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label for="sidebar_max_view">表示するスレの数/板</label>
+              <input type=number name="sidebar.max.view" id="sidebar_max_view" class="size3" step="10">
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label for="sidebar_max_cache">内部で保持する数/板</label>
+              <input type=number name="sidebar.max.cache" id="sidebar_max_cache" class="size3" step="10">
+            </div>
+            <div class="box-orient-horizontal align-center sp">
+              <label>既存のスレをクリック時</label>
+              <select name="sidebar.threadclick.after"
+                title="(デフォルト:タブ切替のみ) タブ切替を行った後にリロード等を行える。一部アクション(*)は「続きを読む」機能の有効化が必要。">
+                <option value="none">タブ切替のみ</option>
+                <option value="reload">リロード</option>
+                <option value="diff">続きを読む *</option>
+                <option value="sync">同期 *</option>
+              </select>
+            </div>
+          </div>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="sidebar.shortcut"
+              >ショートカットキー</label>
+            <div class="box-orient-horizontal align-top">
+              <input type=text id="sidebar_shortcut_input" placeholder="ここで入力" size="16">
+              <select name="sidebar.shortcut.keycode"
+                      class="keycode_menu"
+                      data-keycode-input="sidebar_shortcut_input"
+                      data-keycode-input-alt="sidebar_shortcut_modifiers_alt"
+                      data-keycode-input-ctrl="sidebar_shortcut_modifiers_ctrl"
+                      data-keycode-input-meta="sidebar_shortcut_modifiers_meta"
+                      data-keycode-input-shift="sidebar_shortcut_modifiers_shift">
+              </select>
+            </div>
+            <div class="box-orient-horizontal align-top">
+              <label><input type=checkbox name="sidebar.shortcut.modifiers.alt" id="sidebar_shortcut_modifiers_alt"
+                >Alt</label>
+              <label><input type=checkbox name="sidebar.shortcut.modifiers.ctrl" id="sidebar_shortcut_modifiers_ctrl"
+                >Ctrl</label>
+              <label><input type=checkbox name="sidebar.shortcut.modifiers.meta" id="sidebar_shortcut_modifiers_meta"
+                >Meta</label>
+              <label><input type=checkbox name="sidebar.shortcut.modifiers.shift" id="sidebar_shortcut_modifiers_shift"
+                >Shift</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="groupbox box-orient-horizontal flex">
+        <div class=caption>
+          <label>表示する板</label>
+        </div>
+        <div class="box-orient-vertical flex">
+          <label>表示する</label>
+          <table name="sidebar.list" id="autolink_user_list" class="listbox flex" style="height:14em"
+            data-listbox-seltype="multiple">
+            <tbody>
+              <tr>
+              </tr>
+            </tbody>
+            <tfoot><tr><td colspan="8"></td></tr></tfoot>
+          </table>
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <div class="box-orient-vertical">
+            <input type=button id="sidebar_board_select_add" value="←">
+            <input type=button id="sidebar_board_select_delete" value="→">
+            <input type=button id="sidebar_board_moveup" value="上に">
+            <input type=button id="sidebar_board_movedown" value="下に">
+          </div>
+        </div>
+        <div class="box-orient-vertical flex">
+          <label>表示しない</label>
+          <table name="sidebar.board.select_ex" id="autolink_user_list" class="listbox flex" style="height:14em"
+            data-listbox-seltype="multiple">
+            <tbody>
+              <tr>
+              </tr>
+            </tbody>
+            <tfoot><tr><td colspan="8"></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_board" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal flex ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="board_select"
+          >動作する板を指定する</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label>動作する</label>
+        <table name="board_select.in_list" id="board_select_in_list" class="listbox flex" style="height:14em"
+          data-listbox-seltype="multiple">
+          <thead>
+            <tr>
+              <td>板</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+            </tr>
+          </tbody>
+          <tfoot><tr><td></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <div class="box-orient-vertical">
+          <input type=button id="board_select_add" value="←">
+          <input type=button id="board_select_delete" value="→">
+        </div>
+      </div>
+      <div class="box-orient-vertical flex">
+        <label>動作しない</label>
+        <table name="board_select.ex_list" id="board_select_ex_list" class="listbox flex" style="height:14em"
+          data-listbox-seltype="multiple">
+          <thead>
+            <tr>
+              <td>板</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+            </tr>
+          </tbody>
+          <tfoot><tr><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_external" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal flex">
+      <div class=caption>
+        <label><input type=checkbox name="board_external"
+          >外部の板でも動作させる</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="box-orient-horizontal align-center">
+          <label>パターン</label>
+          <input type=text id="board_external_pattern" class="flex">
+        </div>
+        <div class="box-orient-horizontal align-center">
+          <label><input type=checkbox id="board_external_monaca"
+            >monaca.php</label>
+          <label><input type=checkbox id="board_external_prefix"
+            >前方一致</label>
+        </div>
+        <p>前方一致でないパターンは<br>
+        $1: サーバ名、 $2: ディレクトリ名、 $3: パス<br>
+        となるようにしてください<br>
+        例: ^http://([^\.]+)\.2chan\.net/([^/]+)/(.*)$</p>
+        <label id="board_external_illegal" class="warning">&nbsp;</label>
+        <table name="board_external.patterns2" id="board_external_list" class="listbox flex" style="height:14em"
+          data-listbox-seltype="multiple">
+          <thead>
+            <tr>
+              <td data-listitem-name="pattern" style="min-width: 8em; width: 100%;">パターン/プレフィックス</td>
+              <td data-listitem-name="monaca" style="width: 6em">monaca.php</td>
+              <td data-listitem-name="prefix" style="width: 6em">前方一致</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+            </tr>
+          </tbody>
+          <tfoot><tr><td colspan="8"></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="box-orient-vertical ext_doesnotwork">
+        <input type=button id="board_external_add" value="追加">
+        <input type=button id="board_external_modify" value="修正">
+        <input type=button id="board_external_moveup" value="上に">
+        <input type=button id="board_external_movedown" value="下に">
+        <input type=button id="board_external_delete" value="削除">
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_bloomer" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label><input type=checkbox name="bloomer"
+          >ブルマ女将</label>
+      </div>
+      <label>ショートカットキー</label>
+      <div class="sub box-orient-vertical">
+        <div class="box-orient-horizontal align-top">
+          <input type=text id="bloomer_input" placeholder="ここで入力">
+          <select name="bloomer.keycode"
+                  class="keycode_menu"
+                  data-keycode-input="bloomer_input"
+                  data-keycode-input-alt="bloomer_modifiers_alt"
+                  data-keycode-input-ctrl="bloomer_modifiers_ctrl"
+                  data-keycode-input-meta="bloomer_modifiers_meta"
+                  data-keycode-input-shift="bloomer_modifiers_shift">
+          </select>
+        </div>
+        <div class="box-orient-horizontal align-top">
+          <label><input type=checkbox name="bloomer.modifiers.alt" id="bloomer_modifiers_alt"
+            >Alt</label>
+          <label><input type=checkbox name="bloomer.modifiers.ctrl" id="bloomer_modifiers_ctrl"
+            >Ctrl</label>
+          <label><input type=checkbox name="bloomer.modifiers.meta" id="bloomer_modifiers_meta"
+            >Meta</label>
+          <label><input type=checkbox name="bloomer.modifiers.shift" id="bloomer_modifiers_shift"
+            >Shift</label>
+        </div>
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label>ブルマ女将の場所</label>
+        <input type=text name="bloomer.file" class="flex">
+        <input type=button id="bloomer_file_select" value="変更">
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_sound" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical ext_doesnotwork">
+      <div class=caption>
+        <label>動作の完了時に音を鳴らす</label>
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.reload.normal"
+          >リロード (通常モード)</label>
+        <input type=text name="sound.reload.normal.file" class=flex>
+        <input type=button id="sound_reload_normal_file_select" value="変更">
+        <input type=button id="sound_reload_normal_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.reload.reply"
+          >リロード (レス送信モード)</label>
+        <input type=text name="sound.reload.reply.file" class=flex>
+        <input type=button id="sound_reload_reply_file_select" value="変更">
+        <input type=button id="sound_reload_reply_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.new.reply"
+          >新着あり (レス送信モード)</label>
+        <input type=text name="sound.new.reply.file" class=flex>
+        <input type=button id="sound_new_reply_file_select" value="変更">
+        <input type=button id="sound_new_reply_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.reload.catalog"
+          >リロード (カタログモード)</label>
+        <input type=text name="sound.reload.catalog.file" class=flex>
+        <input type=button id="sound_reload_catalog_file_select" value="変更">
+        <input type=button id="sound_reload_catalog_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.expire"
+          >消滅警告 (続きを読む 時)</label>
+        <input type=text name="sound.expire.file" class=flex>
+        <input type=button id="sound_expire_file_select" value="変更">
+        <input type=button id="sound_expire_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.makethread"
+          >スレ立て</label>
+        <input type=text name="sound.makethread.file" class=flex>
+        <input type=button id="sound_makethread_file_select" value="変更">
+        <input type=button id="sound_makethread_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.reply"
+          >レス送信</label>
+        <input type=text name="sound.reply.file" class=flex>
+        <input type=button id="sound_reply_file_select" value="変更">
+        <input type=button id="sound_reply_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.reply_fail"
+          >レス送信失敗 (連携時)</label>
+        <input type=text name="sound.reply_fail.file" class=flex>
+        <input type=button id="sound_reply_fail_file_select" value="変更">
+        <input type=button id="sound_reply_fail_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.savemht"
+          >mht で保存</label>
+        <input type=text name="sound.savemht.file" class=flex>
+        <input type=button id="sound_savemht_file_select" value="変更">
+        <input type=button id="sound_savemht_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.savemht.error"
+          >mht で保存失敗</label>
+        <input type=text name="sound.savemht.error.file" class=flex>
+        <input type=button id="sound_savemht_error_file_select" value="変更">
+        <input type=button id="sound_savemht_error_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.saveimage"
+          >画像を保存</label>
+        <input type=text name="sound.saveimage.file" class=flex>
+        <input type=button id="sound_saveimage_file_select" value="変更">
+        <input type=button id="sound_saveimage_file_play" value="再生">
+      </div>
+      <div class="box-orient-horizontal align-center">
+        <label><input type=checkbox name="sound.saveimage.error"
+          >画像を保存失敗</label>
+        <input type=text name="sound.saveimage.error.file" class=flex>
+        <input type=button id="sound_saveimage_error_file_select" value="変更">
+        <input type=button id="sound_saveimage_file_error_play" value="再生">
+      </div>
+    </div>
+    <div class="box-orient-horizontal align-center">
+      <div class="groupbox box-orient-horizontal ext_obsolete">
+        <div class=caption>
+          <label>ページ内メディアのデフォルト音量</label>
+        </div>
+        <div class="box-orient-vertical align-center">
+          <div class="box-orient-horizontal align-center flex">
+            <input type=range id="sound_volume" min=0 max=100 step=1 value=100 disabled=true class="disable">
+            <label id="sound_volume_textshow">100%</label>
+          </div>
+        </div>
+        <div class="box-orient-vertical">
+          <p>※Firefox 全体の設定です<br>
+          ("media.default_volume"に即反映)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_other" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>高速化</label>
+      </div>
+      <label><input type=checkbox name="add_checkbox_id"
+        >チェックボックスに id を付ける</label>
+      <label class="sp tooltip"><input type=checkbox name="ext.boost_by_xpath"><span
+        class="tooltiptext">(デフォルト：有効) DOMツリーをいちいち調べていく方法のかわりにXPathで一気に抽出する。ツリー構造の変化に弱い可能性あり。</span
+        >レスの要素を高速検索(XPath)</label>
+      <label class="sp tooltip"><input type=checkbox name="ext.cache_bq"><span
+        class="tooltiptext">(デフォルト：有効) 返信モードで全てのレス文の要素を一々抽出せず、キャッシュとして記憶しておく。</span
+        >返信モードでレス要素をキャッシュ</label>
+    </div>
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>デバッグ</label>
+      </div>
+      <label class="sp"><input type=checkbox name="ext.debug"
+	>デバッグログを有効にする</label>
+    </div>
+    <div class="groupbox box-orient-vertical ext_obsolete">
+      <div class=caption>
+        <label>ステータスバー</label>
+      </div>
+      <label><input type=checkbox name="statusbar.preferences" disabled class="disable"
+        >設定ダイアログのアイコンを表示する</label>
+    </div>
+    <div class="groupbox box-orient-vertical ext_obsolete">
+      <div class=caption>
+        <label><input type=checkbox name="statusbar.order" disabled class="disable"
+          >ステータスバーのアイコンの並べ替え</label>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          <table name="statusbar.order.list" id="statusbar_order_list" class="listbox flex" style="height:14em"
+            data-listbox-seltype="multiple">
+            <tbody>
+              <tr>
+              </tr>
+            </tbody>
+            <tfoot><tr><td colspan="8"></td></tr></tfoot>
+          </table>
+        </div>
+        <div class="box-orient-vertical">
+          <input type=button id="statusbar_order_moveup" value="上に" disabled class="disable">
+          <input type=button id="statusbar_order_movedown" value="下に" disabled class="disable">
+        </div>
+      </div>
+    </div>
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>設定のインポート／エクスポート／初期化</label>
+      </div>
+      <div class="box-orient-horizontal flex">
+	<input type=file id="importfile">
+        <input type=button id="import" value="インポート" disabled>
+      </div>
+      <div class="box-orient-horizontal flex">
+        <input type=button id="export" value="エクスポート" disabled>
+        <input type=button id="export2" value="エクスポート [個人情報削除]" disabled>
+        <input type=button id="init" value="初期化" disabled>
+      </div>
+      <p class="warning">
+      mht で保存、画像を保存、P2P、ブルマ女将、音の設定は個人情報に繋がる可能性があります<br>
+      他人に公開する場合は [個人情報削除] の方でエクスポートしてください</p>
+      <label id="import_export_message">&nbsp;</label>
+    </div>
+  </div>
+
+  <div id="tab_filename_convert" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-horizontal flex">
+      <div class=caption>
+        <label>ファイル名変換</label>
+      </div>
+      <div class="box-orient-vertical flex">
+        <div class="box-orient-horizontal align-center">
+          <input type=text id="filename_convert_from" class=flex>
+          <label>→</label>
+          <input type=text id="filename_convert_to" class=flex>
+        </div>
+        <label id="filename_convert_illegal" class="warning">&nbsp;</label>
+        <table name="filename_convert.list" id="filename_convert_list" class="listbox flex" style="height:14em"
+          data-listbox-seltype="multiple">
+          <thead>
+            <tr>
+              <td data-listitem-name="from" style="min-width: 8em; width: 50%;">変換元</td>
+              <td data-listitem-name="to"   style="min-width: 8em; width: 50%;">変換先</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+            </tr>
+          </tbody>
+          <tfoot><tr><td colspan="8"></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="box-orient-vertical">
+        <input type=button id="filename_convert_add" value="追加" />
+        <input type=button id="filename_convert_modify" value="修正" />
+        <input type=button id="filename_convert_moveup" value="上に" />
+        <input type=button id="filename_convert_movedown" value="下に" />
+        <input type=button id="filename_convert_delete" value="削除" />
+        <input type=button id="filename_convert_init" value="初期化">
+      </div>
+    </div>
+  </div>
+
+  <div id="tab_extra" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>Extra hidden preferences</label>
+      </div>
+      <label class="sp"><input type=checkbox name="ext.download_lastdir_hack"
+        >Enable hack for download.lastdir</label>
+      <label class="sp">Max image retries
+        <input type=number name="ext.maximageretries" min=0></label>
+      <label>Timestamp (savepref):
+        <input type=hidden name="savepref"><span class="hiddeninput-label"></span></label>
+    </div>
+  </div>
+
+  <div id="tab_format" class="box-orient-vertical tab_content">
+    <div class="groupbox box-orient-vertical">
+      <div class=caption>
+        <label>詳細設定のフォーマット中で使える実体参照</label>
+      </div>
+      <div class="box-orient-horizontal">
+        <div class="box-orient-vertical flex">
+          <label>&amp;YY; 年</label>
+          <label>&amp;MM; 月</label>
+          <label>&amp;DD; 日</label>
+          <label>&amp;DDD; 曜日</label>
+          <label>&amp;hh; 時</label>
+          <label>&amp;mm; 分</label>
+          <label>&amp;ss; 秒</label>
+          <label>&amp;board; 板名</label>
+          <label>&amp;board2; サーバ名無しの板名</label>
+          <label>&amp;board3; 本来の板名</label>
+          <label>&amp;server; サーバ名</label>
+          <label>&amp;dir; ディレクトリ名</label>
+          <label>&amp;page; ページ番号</label>
+          <label>&amp;thread; スレの番号</label>
+          <label>&amp;replycount; レス数</label>
+          <label class="sp">&amp;incomingreply; 新着レス数</label>
+          <label>&amp;url; URL ([画像を保存] のみ)</label>
+        </div>
+        <div class="box-orient-vertical flex">
+          <label>&amp;message; 本文の最初</label>
+          <label>&amp;message2; 本来の本文の最初</label>
+          <label class="sp">&amp;message8byte; 本来の本文の最初の４文字</label>
+          <label>&amp;entiremessage; 本文全体</label>
+          <label>&amp;name; 名前</label>
+          <label>&amp;mail; メル欄</label>
+          <label>&amp;subject; 題</label>
+          <label>&amp;ip; IP アドレス</label>
+          <label>&amp;id; ID</label>
+          <label>&amp;viewer; 見ている人数</label>
+          <label>&amp;expire; 消滅時刻</label>
+          <label>&amp;warning; 消滅情報</label>
+          <label>&amp;separator; ディレクトリの区切り</label>
+          <label>&amp;amp; 「&amp;」</label>
+          <label>&amp;lt; 「&lt;」</label>
+          <label>&amp;gt; 「&gt;」</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script src="options.js"></script>
+</body>
+</html>
