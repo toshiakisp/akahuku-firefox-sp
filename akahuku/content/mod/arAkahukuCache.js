@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global
  *   Akahuku, arAkahukuCompat, arAkahukuUtil, arAkahukuWindow,
  *   arAkahukuReload, AkahukuFileUtil,
  */
@@ -129,22 +129,14 @@ Akahuku.Cache = new function () {
   };
 
   this.showCacheNotification = function (browser, text) {
-    try {
-      var tabbrowser = browser.ownerDocument.getElementById ("content");
-      var box = tabbrowser.getNotificationBox (browser);
-      var oldItem = box.getNotificationWithValue (Akahuku.Cache);
-      box.appendNotification
-        (text,
-         Akahuku.Cache,
-         "chrome://akahuku/content/images/icon_small.png",
-         box.PRIORITY_WARNING_LOW,
-         []);
-      if (oldItem) {
-        box.removeNotification (oldItem);
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    return;
+    /*
+    var contentWindow = browser.ownerGlobal;
+    arAkahukuIPC.sendAsyncCommand
+      ("Cache/showCacheNotification", [null, text],
+       contentWindow);
+    */
   },
 
 
@@ -186,69 +178,23 @@ Akahuku.Cache = new function () {
     }
   };
   this.asyncGetHttpCacheStatus = function (source, noRedirect, callback) {
-    source = _ensureSourceObject (source);
-    var key = source.url;
-    var status = new CacheStatus (key);
-    var finder = new Akahuku.Cache.RedirectedCacheFinder ();
-    finder.init (source.contextWindow);
-    if (noRedirect) {
-      finder.maxRedirections = 0;
+    var contextWindow = null;
+    if (typeof source == "object") {
+      if (source.contextWindow) {
+        contextWindow = source.contextWindow;
+      }
+      else if (source.triggeringNode) {
+        var doc = source.triggeringNode.ownerDocument || source.triggeringNode;
+        contextWindow = doc.defaultView;
+      }
+      source = source.url;// simplify for tranfering
     }
-    var callbackStatus = callback;
-    if (!callbackStatus) {
-      Akahuku.debug.warn ("aborted by invalid callback");
-      return;
-    }
-    try {
-      finder.asyncOpen (key, function (descriptor) {
-        if (!descriptor) {
-          callbackStatus.apply (null, [status]);
-          return;
-        }
+    Akahuku.debug.error('NotYetImplemented');
+    return;
+  };
 
-        status.isExist = true;
-        status.key = descriptor.key;
-        status.expires = descriptor.expirationTime;
-        status.dataSize = descriptor.dataSize;
-        status.lastModified = descriptor.lastModified * 1000; //[ms]
-
-        // HTTP status
-        try {
-          var text = descriptor.getMetaDataElement ("response-head");
-        }
-        catch (e) {
-          if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-            text = "";
-          }
-          else {
-            throw e;
-          }
-        }
-        if (text) {
-          var headers = text.match (/[^\r\n]*\r\n/g);
-          if (headers.length > 0) {
-            status.header = {};
-            var re = headers [0].match
-              (/^HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/);
-            if (re) {
-              status.httpStatusCode = re [1];
-              status.httpStatusText = re [2];
-            }
-          }
-          for (var i = 1; i < headers.length; i ++) {
-            var matches = headers [i].match (/^([^:\s]+):\s*([^\s].*)\r\n/);
-            if (!matches) continue;
-            status.header [matches [1]] = matches [2];
-          }
-        }
-
-        descriptor.close ();
-        callbackStatus.apply (null, [status]);
-      });
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      callbackStatus.apply (null, [status]);
-    }
+  this.isSuccessCode = function (code) {
+    return (code == 0);
   };
 
   function CacheStatus (key) {
@@ -397,20 +343,6 @@ Akahuku.Cache = new function () {
     maxRedirections : 10,
     init : function (targetWindow)
     {
-      var Ci = Components.interfaces;
-      var loadContextInfo = null;
-      try {
-        if ("fromLoadContext" in arAkahukuCompat.LoadContextInfo) {
-          loadContextInfo =
-            arAkahukuCompat.LoadContextInfo.fromLoadContext
-            (targetWindow.QueryInterface (Ci.nsIInterfaceRequestor)
-             .getInterface (Ci.nsIWebNavigation)
-             .QueryInterface (Ci.nsILoadContext),
-             false);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
       this._contextWindow = targetWindow;
     },
     isPending : function () { return this._isPending },
@@ -424,7 +356,7 @@ Akahuku.Cache = new function () {
     {
       this._redirected = 0;
       if (this._isPending)
-        throw Components.results.NS_ERROR_IN_PROGRESS;
+        throw new Error('NS_ERROR_IN_PROGRESS');
       this._callback = callback;
       this._lastEntry = null;
       this._isPending = true;
@@ -438,7 +370,7 @@ Akahuku.Cache = new function () {
         entry.dataSize;
       }
       catch (e) {
-        if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+        if (e.message == 'NS_ERROR_IN_PROGRESS') {
           return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
         }
         else {
@@ -458,7 +390,7 @@ Akahuku.Cache = new function () {
         this._callback = null;
         return;
       }
-      if (Components.isSuccessCode (result)) {
+      if (result == 0) {
         if (this._lastEntry)
           this._lastEntry.close ();
         this._lastEntry = entry;
@@ -488,12 +420,7 @@ Akahuku.Cache = new function () {
         var head = descriptor.getMetaDataElement ("response-head");
       }
       catch (e) {
-        if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-          head = "";
-        }
-        else {
-          throw e;
-        }
+        head = ""; //NS_ERROR_NOT_AVAILABLE
       }
       var httpStatusCode = "000";
       if (head && head.match (/^HTTP\/\d\.\d (\d{3}) ([^\r\n]+)/)) {
@@ -531,7 +458,7 @@ Akahuku.Cache = new function () {
       CacheEtimeRestorer.prototype = {
         onCacheEntryAvailable : function (entry, isNew, appCache, status)
         {
-          if (Components.isSuccessCode (status)) {
+          if (status == 0) {
             if (entry.expirationTime == 0xFFFFFFFF) {
               entry.setExpirationTime (this.originalExpirationTime);
             }
@@ -604,41 +531,21 @@ Akahuku.Cache = new function () {
    * キャッシュを開く
    */
   this.asyncOpenCache = function (source, flag, callback) {
-    source = _ensureSourceObject (source);
-    var url = source.url;
-    var Ci = Components.interfaces;
-    var loadContextInfo = null;
+    var contextWindow = null;
+    if (typeof source == "object") {
+      if (source.contextWindow) {
+        contextWindow = source.contextWindow;
+      }
+      else if (source.triggeringNode) {
+        var doc = source.triggeringNode.ownerDocument || source.triggeringNode;
+        contextWindow = doc.defaultView;
+      }
+      source = source.url;// simplify for tranfering
+    }
 
-    if ("fromLoadContext" in arAkahukuCompat.LoadContextInfo) {
-      try {
-        loadContextInfo =
-          arAkahukuCompat.LoadContextInfo.fromLoadContext
-          (source.contextWindow.QueryInterface (Ci.nsIInterfaceRequestor)
-           .getInterface (Ci.nsIWebNavigation)
-           .QueryInterface (Ci.nsILoadContext), false);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-    try {
-      var cacheStorage
-        = arAkahukuCompat.CacheStorageService
-        .diskCacheStorage (loadContextInfo, false);
-      var ios = Components.classes
-        ["@mozilla.org/network/io-service;1"]
-        .getService (Ci.nsIIOService);
-      var uri = ios.newURI (url, null, null);
-      cacheStorage.asyncOpenURI (uri, "", flag, callback);
-    }
-    catch (e) {
-      if (e.result == Components.results.NS_ERROR_MALFORMED_URI) {
-        Akahuku.debug.warn ("Cache.asyncOpenCache: NS_ERROR_MALFORMED_URI; ", url);
-      }
-      else {
-        Akahuku.debug.exception (e);
-      }
-      callback.onCacheEntryAvailable (null, false, false, e.result);
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    callback.onCacheEntryAvailable (null, false, null, 0x8000FFFF);//NS_ERROR_CACHE_KEY_NOT_FOUND
+    return;
   };
   this.asyncOpenCacheToWrite = function (url, callback) {
     var flag = arAkahukuCompat.CacheStorage.OPEN_TRUNCATE;

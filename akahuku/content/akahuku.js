@@ -1,8 +1,7 @@
 
-/* global Components,
+/* global
  *   arAkahukuLocationInfo, arAkahukuDocumentParam,
- *   arAkahukuUtil, arAkahukuCompat, arAkahukuDOM,
- *   arAkahukuWindow,
+ *   arAkahukuUtil, arAkahukuDOM,
  *   arAkahukuFile, arAkahukuWheel, arAkahukuDelBanner,
  *   arAkahukuSound, arAkahukuLink, arAkahukuCatalog, arAkahukuTitle,
  *   arAkahukuBoard, arAkahukuConverter, arAkahukuP2P, arAkahukuConfig,
@@ -14,17 +13,35 @@
  */
 
 /**
- * 本体
+ * 本体 (Content)
  */
 var Akahuku = {
-  protocolHandler : {},          /* プロトコルハンドラ */
-  documentParams : new Array (), /* Array  ドキュメントごとの情報 */
+  protocolHandler : {
+    // Dummy definitions
+    enAkahukuURI: function (type, uri) {
+      if (type == 'local') {
+        if (uri.startsWith('chrome://akahuku/content/')) {
+          // Convert to web_accessible_resource (moz-extension://)
+          return browser.extension.getURL(uri.substring(17));
+        }
+      }
+      return uri;
+    },
+    isAkahukuURI: function (uri) {
+      return false;
+    },
+    deAkahukuURI: function (uri) {
+      return uri;
+    },
+    getAkahukuURIParam: function (uri) {
+      return {};
+    },
+  },
+
   latestParam : null,            /* arAkahukuDocumentParam
                                   *   最近使ったドキュメントごとの情報 */
-  attachedWindows : [],
+  managedEventHandlers : [],
     
-  isFx9 : false,
-
   isRunningOnWindows : false,
   isRunningOnMac : false,
     
@@ -38,9 +55,9 @@ var Akahuku = {
   partialUp : 100,               /* Number  前に n 件ずつ戻る */
 
   useFrameScript : false,
-  useCSSTransition : false,
+  useCSSTransition : true,
 
-  isXPathAvailable : false,
+  isXPathAvailable : true,
 
   enableBQCache : false,
   enableBoostByXPath : false,
@@ -57,36 +74,19 @@ var Akahuku = {
   addDocumentParam : function (targetDocument, info) {
     var documentParam = new arAkahukuDocumentParam ();
     documentParam.targetDocument = targetDocument;
-    documentParam.ID = Akahuku.getDocumentID (targetDocument);
+    documentParam.url = targetDocument.documentURI;
     if (info) {
       documentParam.location_info = info;
     }
     Akahuku.collectLinks (documentParam);
-    Akahuku.detectEnvironment (documentParam);
-    Akahuku.documentParams.push (documentParam);
     Akahuku.latestParam = documentParam;
-  },
 
-  /**
-   * ドキュメントごとの情報を追加する (e10s, main process ready)
-   *
-   * @param  Browser targetBrowser
-   *         対象のドキュメントを持つ Browser
-   */
-  addDocumentParamForBrowser : function (targetBrowser, info) {
-    var documentParam = new arAkahukuDocumentParam ();
-    documentParam.targetDocument = {
-      // dummy fo getDocumentParamsByURI
-      documentURIObject: targetBrowser.currentURI.clone (),
-    };
-    documentParam.ID = targetBrowser.innerWindowID;
-    documentParam.targetBrowser = targetBrowser;
-    if (info) {
-      documentParam.location_info = info;
-    }
-    Akahuku.detectEnvironment (documentParam);
-    Akahuku.documentParams.push (documentParam);
-    Akahuku.latestParam = documentParam;
+    let cleanParam = JSON.parse(JSON.stringify(documentParam));
+    AkahukuCentral.register('param', cleanParam)
+      .then((res) => {
+        documentParam.id = res.id;
+      })
+      .catch((e) => Akahuku.debug.exception(e));
   },
     
   /**
@@ -96,45 +96,9 @@ var Akahuku = {
    *         対象のドキュメント
    */
   deleteDocumentParam : function (targetDocument) {
-    Akahuku.ensureDocumentParamsSane ();
-    var targetID = Akahuku.getDocumentID (targetDocument);
-    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-      var tmp = Akahuku.documentParams [i];
-      if (tmp.ID == targetID) {
-        Akahuku.documentParams.splice (i, 1);
-        tmp.targetDocument = null;
-        tmp.targetBrowser = null;
-        tmp.ID = null;
-        tmp.location_info = null;
-        tmp.links = null;
-        tmp = null;
-        break;
-      }
-    }
+    let documentParam = Akahuku.latestParam;
+    AkahukuCentral.unregister('param', {id: documentParam.id});
     Akahuku.latestParam = null;
-  },
-
-  /**
-   * Document の識別子を得る
-   */
-  getDocumentID : function (target) {
-    if (target instanceof Components.interfaces.nsIDOMDocument) {
-      if (!target.defaultView) { // cloned documents
-        return target;
-      }
-      try {
-        var contextWinUtil
-          = target.defaultView
-          .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-          .getInterface (Components.interfaces.nsIDOMWindowUtils);
-        // requires Gekco 2.0 (Firefox 4) or above
-        return contextWinUtil.currentInnerWindowID || target;
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-    // fail safe
-    return target;
   },
 
   /*
@@ -146,140 +110,26 @@ var Akahuku = {
    *         ドキュメントごとの情報
    */
   getDocumentParam : function (targetDocument) {
-    Akahuku.ensureDocumentParamsSane ();
-    var id = Akahuku.getDocumentID (targetDocument);
-    var latest = Akahuku.latestParam;
-    if (latest && latest.ID == id) {
-      return latest;
-    }
-    
-    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-      if (Akahuku.documentParams [i].ID == id) {
-        Akahuku.latestParam = Akahuku.documentParams [i];
-        return Akahuku.documentParams [i];
-      }
-    }
-    
-    return null;
+    return this.latestParam;
   },
 
   /**
    * URI に合致するドキュメントごとの情報を得る
-   * @param  nsIURI uri
-   *         対象のURI (Stringでも可)
+   * @param  String uri
+   *         対象のURI
    * @return Array
    *         [arAkahukuDocumentParam,...]
    */
   getDocumentParamsByURI : function (uri, optFirstOnly) {
-    Akahuku.ensureDocumentParamsSane ();
     var ret = [];
-    if (Akahuku.documentParams.length == 0) {
-      return ret;
-    }
-
-    if (!(uri instanceof Components.interfaces.nsIURI)) {
-      try {
-        uri = arAkahukuUtil.newURIViaNode (uri, null);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-        return ret;
-      }
-    }
-
-    var checkURI;
-    if ("equalsExceptRef" in uri) { // requires Gecko 6.0+
-      checkURI = function (param, uri) {
-        return uri.equalsExceptRef (param.targetDocument.documentURIObject);
-      };
-    }
-    else {
-      checkURI = function (param, uri) {
-        if ("documentURIObject" in param.targetDocument) {
-          // requires Gecko 1.9+
-          return uri.equals (param.targetDocument.documentURIObject);
-        }
-        else {
-          return uri.spec === param.targetDocument.documentURI;
-        }
-      };
-    }
-
-    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-      if (checkURI (Akahuku.documentParams [i], uri)) {
-        ret.push (Akahuku.documentParams [i]);
-        if (optFirstOnly) break;
-      }
+    if (this.latestParam.url == uri) {
+      ret.push(this.latestParam);
     }
     return ret;
   },
 
   hasDocumentParamForURI : function (uri) {
     return (Akahuku.getDocumentParamsByURI (uri, true).length > 0);
-  },
-
-  getDocumentParamForBrowser : function (browser) {
-    if (Akahuku.useFrameScript) { // e10s
-      if (!("innerWindowID" in browser)) { // < Fx 45(?)
-        Akahuku.debug.error ("no innerWindowID in browser; " + browser);
-        return null;
-      }
-      for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-        if (Akahuku.documentParams [i].ID
-            == browser.innerWindowID) {
-          Akahuku.latestParam = Akahuku.documentParams [i];
-          return Akahuku.documentParams [i];
-        }
-      }
-      return null;
-    }
-    else {
-      if (browser.contentDocument) {
-        return Akahuku.getDocumentParam (browser.contentDocument);
-      }
-      else {
-        Akahuku.debug.warn ("no contentDocument on browser: " + browser);
-        return null;
-      }
-    }
-  },
-
-  /**
-   * documentParams から dead object なものを掃除
-   */
-  ensureDocumentParamsSane : function () {
-    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-      var param = Akahuku.documentParams [i];
-      if (arAkahukuCompat.isDeadWrapper (param.targetDocument)) {
-        Akahuku.debug.warn ("drop an document param with dead object");
-        Akahuku.documentParams.splice (i, 1);
-        i --;
-      }
-    }
-    if (Akahuku.latestParam &&
-        arAkahukuCompat.isDeadWrapper (Akahuku.latestParam.targetDocument)) {
-      Akahuku.debug.warn ("drop the latest document param with dead object");
-      Akahuku.latestParam = null;
-    }
-  },
-
-  /*
-   * フォーカスされているドキュメントの情報を取得する
-   * (フレーム内のドキュメントでも)
-   *
-   * @return arAkahukuDocumentParam
-   *         ドキュメントごとの情報
-   */
-  getFocusedDocumentParam : function (window) {
-    var document = window.document;
-    var wnd = document.commandDispatcher.focusedWindow;
-    if (window == wnd || !wnd) {
-      wnd = window.content;
-    }
-    if (!(wnd instanceof Components.interfaces.nsIDOMWindow)
-        ||wnd instanceof Components.interfaces.nsIDOMChromeWindow) {
-      return null;
-    }
-    return Akahuku.getDocumentParam (wnd.document);
   },
 
   /**
@@ -340,31 +190,6 @@ var Akahuku = {
   },
 
   /**
-   * 実行時環境情報を収集してparamに記録
-   * @param arAkahukuDocumentParam param
-   */
-  detectEnvironment : function (param) {
-    var targetWindow = param.targetDocument.defaultView;
-    var browser
-      = param.targetBrowser
-      || arAkahukuWindow.getBrowserForWindow (targetWindow);
-    var flags = Akahuku.getChromeEnvironmentFlags (browser);
-    for (var key in flags) {
-      if (Object.prototype.hasOwnProperty.call (flags, key)) {
-        param.flags [key] = flags [key];
-      }
-    }
-  },
-  getChromeEnvironmentFlags : function (browser) {
-    var chromeWindow = browser.ownerDocument.defaultView;
-    var flags = {
-      existsNoScriptOverlay : "noscriptOverlay" in chromeWindow,
-      existsAimaAimani : "Aima_Aimani" in chromeWindow,
-    };
-    return flags;
-  },
-
-  /**
    * 設定を読み込む
    */
   getConfig : function () {
@@ -399,41 +224,11 @@ var Akahuku = {
   },
     
   /**
-   * 初期化(XUL windowに依存しない部分)
+   * 初期化
    */
   init : function () {
     if (Akahuku.initialized) {
       return;
-    }
-
-    Components.utils.import ("resource://akahuku/protocol.jsm",
-        Akahuku.protocolHandler);
-
-    Akahuku.isFx9 = arAkahukuCompat.comparePlatformVersion ("8.*") > 0;
-
-    try {
-      var xulRuntime
-        = Components.classes ["@mozilla.org/xre/app-info;1"]
-        .getService (Components.interfaces.nsIXULRuntime);
-      if (/^WIN/.test (xulRuntime.OS)) {
-        Akahuku.isRunningOnWindows = true;
-      }
-      else if (xulRuntime.OS == "Darwin") {
-        Akahuku.isRunningOnMac = true;
-      }
-
-      // e10s 環境でのみ CSS Transition (requires Firefox 16)を有効化
-      if (arAkahukuCompat.comparePlatformVersion ("15.*") > 0) {
-        if (xulRuntime.processType !== xulRuntime.PROCESS_TYPE_DEFAULT) {
-          Akahuku.useCSSTransition = true;
-        }
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-
-    if ("nsIDOMXPathResult" in Components.interfaces) {
-      Akahuku.isXPathAvailable = true;
     }
 
     // 各種サービスの初期化
@@ -454,22 +249,26 @@ var Akahuku = {
   },
 
   /**
-   * 終了(XUL windowに依存しない部分)
+   * 終了
    */
   term : function () {
     if (!Akahuku.initialized) {
       return;
     }
 
-    for (var i = 0; i < Akahuku.attachedWindows.length; i ++) {
+    // For terminating applied documenets
+    Akahuku.removeAllManagedEventHandlers ();
+    if (Akahuku.latestParam) {
       try {
-        Akahuku.dettachFromWindow (Akahuku.attachedWindows [i], {});
+        var target = Akahuku.latestParam.targetDocument;
+        if (target && target.nodeType == 9) {  // 9 == DOCUMENT_TYPE
+          Akahuku.onBodyUnload (target, {})
+        }
       }
-      catch (e) {
-        Akahuku.debug.exception (e);
+      catch (e) { Akahuku.debug.exception (e);
       }
     }
-    Akahuku.attachedWindows.splice (0);// remove all
+    Akahuku.latestParam = null;
 
     arAkahukuSidebar.term ();
     arAkahukuStyle.term ();
@@ -482,18 +281,14 @@ var Akahuku = {
     arAkahukuSound.term ();
     arAkahukuFile.term ();
 
-    if ("unload" in Components.utils) {
-      Components.utils.unload ("resource://akahuku/protocol.jsm");
-    }
     Akahuku.protocolHandler = {};
 
     Akahuku.initialized = false;
   },
 
   initContextMenus : function () {
+    /*
     try {
-      const {AkahukuContextMenus}
-      = Components.utils.import ("resource://akahuku/xul-contextmenus.jsm", {});
       var cm = AkahukuContextMenus;
       arAkahukuQuote.initContextMenus (cm);
       arAkahukuJPEG.initContextMenus (cm);
@@ -506,258 +301,10 @@ var Akahuku = {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
+    */
   },
 
-  /**
-   * ウィンドウ (load後) で Akahuku を有効にする
-   * @param ChromeWindow window
-   * @param Object opt flags
-   */
-  attachToWindow : function (window, opt) {
-    if (!Akahuku.initialized) {
-      throw new Error ("Akahuku is not initialized");
-    }
-    if (Akahuku.attachedWindows.indexOf (window) >= 0) {
-      Akahuku.debug.warn ("already attached to given window, skip it.");
-      return;
-    }
-    Akahuku.attachedWindows.push (window);
 
-    // XUL の window への適用(イベント登録など)
-    arAkahukuP2P.attachToWindow (window);
-    arAkahukuTab.attachToWindow (window);
-    arAkahukuBloomer.attachToWindow (window);
-    arAkahukuImage.attachToWindow (window);
-    arAkahukuThread.attachToWindow (window);
-    arAkahukuMHT.attachToWindow (window);
-    arAkahukuPostForm.attachToWindow (window);
-    arAkahukuUI.attachToWindow (window);
-    arAkahukuSidebar.attachToWindow (window);
-
-    if (Akahuku.useFrameScript) {
-      // 既に開かれている＆将来開くコンテンツへの適用
-      window.messageManager.loadFrameScript
-        ("chrome://akahuku/content/akahuku-frame.js", true);
-    }
-    else { // non-e10s
-      // コンテンツのロードのイベントを監視
-      var appcontent = window.document.getElementById ("appcontent");
-      if (appcontent) {
-        appcontent.addEventListener
-          ("DOMContentLoaded", Akahuku.onDOMContentLoaded, false);
-      }
-      // TODO:既に開かれているコンテンツへの自動適用
-    }
-
-    var sidebar = window.document.getElementById ("sidebar");
-    if (sidebar) {
-      sidebar.addEventListener
-        ("DOMContentLoaded",
-         Akahuku.onSidebarLoaded,
-         false);
-    }
-
-    Akahuku.attachToWindowExtra (window);
-    Akahuku.debug.log ("attached for a XUL window");
-  },
-
-  /**
-   * 開かれたウィンドウに対する追加処理
-   */
-  attachToWindowExtra : function (window) {
-    var document = window.document;
-    /* ScrapBook で akahuku の保存を有効にする
-     * saver.js の 638 行目 */
-    try {
-      if (typeof (window.sbContentSaver) != "undefined"
-          && "download" in window.sbContentSaver
-          && typeof (window.sbContentSaver.download) == "function") {
-        window.sbContentSaver.download
-        = eval (("(" + window.sbContentSaver.download.toString () + ")")
-                .replace (/\|\|[ \r\n\t]*aURL[ \r\n\t]*\.[ \r\n\t]*schemeIs[ \r\n\t]*\([ \r\n\t]*\"ftp\"[ \r\n\t]*\)/,
-                          "|| aURL.schemeIs(\"ftp\") || aURL.schemeIs(\"akahuku\")"));
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-        
-    /* ThumbnailZoomPlus で akahuku のズームを有効にする
-     * filterService.js の 494 行目 (ver.2.1) */
-    try {
-      if (typeof (window.ThumbnailZoomPlus) != "undefined"
-          && "FilterService" in window.ThumbnailZoomPlus
-          && "getZoomImage" in window.ThumbnailZoomPlus.FilterService
-          && typeof (window.ThumbnailZoomPlus.FilterService.getZoomImage) === "function") {
-        var origfunc, newfunc;
-        origfunc = window.ThumbnailZoomPlus.FilterService.getZoomImage.toString ();
-        newfunc = origfunc.replace (
-            /(\bif\s*\(\s*!\s*\/\^)(\()?https\?(?!\|([^|]*\|)*akahuku)/,
-            function (m,pre,par) {
-              return pre + (par ?"(https?|akahuku" : "(https?|akahuku)")
-            });
-        if (newfunc != origfunc) {
-          window.ThumbnailZoomPlus.FilterService.getZoomImage
-          = eval ("(" + newfunc + ")");
-        }
-        else {
-          Akahuku.debug.warn ("patch for ThumbnailZoomPuls failed.")
-        }
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-    
-    /* 合間合間にで Akahuku より後にイベント処理を遅らせる */
-    var appcontent = document.getElementById ("appcontent");
-    if (appcontent && !Akahuku.useFrameScript) {
-      try {
-        if (typeof window.Aima_Aimani != "undefined") {
-          /* Aima_Aimani よりも先に動くために
-           * イベントの順番を入れ替える */
-          appcontent.removeEventListener
-            ("DOMContentLoaded",
-             window.Aima_Aimani.onDOMContentLoaded,
-             false);
-          appcontent.addEventListener
-            ("DOMContentLoaded",
-             window.Aima_Aimani.onDOMContentLoaded,
-             false);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-    var sidebar = document.getElementById ("sidebar");
-    if (sidebar) {
-      try {
-        var aimaXUL;
-        if (typeof window.Aima_AimaniXUL != "undefined"
-            && typeof window.Aima_AimaniXUL.onSidebarLoaded == "function") {
-          // e10s 対応済 sp版の場合
-          aimaXUL = window.Aima_AimaniXUL;
-        }
-        else if (typeof window.Aima_Aimani != "undefined"
-            && typeof window.Aima_Aimani.onSidebarLoaded == "function") {
-          aimaXUL = window.Aima_Aimani;
-        }
-        if (aimaXUL) {
-          /* Aima_Aimani よりも先に動くために
-           * イベントの順番を入れ替える */
-          sidebar.removeEventListener
-            ("DOMContentLoaded",
-             aimaXUL.onSidebarLoaded,
-             false);
-          sidebar.addEventListener
-            ("DOMContentLoaded",
-             aimaXUL.onSidebarLoaded,
-             false);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-
-    /* 画像鯖では保存場所を覚えさせないハック (Fx 7.0 以降) */
-    try {
-      if (Akahuku.enableDownloadLastDirHack
-          && arAkahukuCompat.comparePlatformVersion ("6.*") > 0) {
-        /* 保存する直前/直後を捉える方法がわからないので、やっつけ */
-        window.gBrowser.addEventListener
-          ("pageshow", Akahuku.onImageDocumentActivity, true);
-        window.gBrowser.addEventListener
-          ("pagehide", Akahuku.onImageDocumentActivity, true);
-        window.gBrowser.addEventListener
-          ("focus", Akahuku.onImageDocumentActivity, true);
-        window.gBrowser.addEventListener
-          ("blur", Akahuku.onImageDocumentActivity, true);
-        window.gBrowser.tabContainer.addEventListener
-          ("TabClose", Akahuku.onImageDocumentActivity, true);
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-  },
-
-  /**
-   * ウィンドウから Akahuku の適用を取り消す
-   * @param ChromeWindow window
-   * @param Object opt flags
-   */
-  dettachFromWindow : function (window, opt) {
-    if (!Akahuku.initialized) {
-      throw new Error ("Akahuku is not initialized");
-    }
-    var index = Akahuku.attachedWindows.indexOf (window);
-    if (index < 0) {
-      Akahuku.debug.warn ("Akahuku is not attached to the window");
-      return;
-    }
-    Akahuku.attachedWindows.splice (index, 1);
-
-    Akahuku.dettachFromWindowExtra (window);
-
-    if (Akahuku.useFrameScript) {
-      window.messageManager.removeDelayedFrameScript
-        ("chrome://akahuku/content/akahuku-frame.js");
-    }
-    else {
-      var appcontent = window.document.getElementById ("appcontent");
-      if (appcontent) {
-        appcontent.removeEventListener
-          ("DOMContentLoaded", Akahuku.onDOMContentLoaded, false);
-      }
-    }
-
-    if (opt.shutdown) {
-      // ウィンドウが閉じない場合:
-      // 既に開かれているコンテンツでの無効化
-      Akahuku.ensureDocumentParamsSane ();
-      for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-        try {
-          var param = Akahuku.documentParams [i];
-          var targetChromeWindow = null;
-          var targetBrowser = null;
-          if (param.targetBrowser) {
-            targetBrowser = param.targetBrowser;
-          }
-          else if (param.targetDocument) {
-            targetBrowser
-              = arAkahukuWindow.getBrowserForWindow
-              (param.targetDocument.defaultView);
-          }
-          if (targetBrowser) {
-            targetChromeWindow = targetBrowser.ownerDocument.defaultView;
-          }
-          if (targetChromeWindow == window) {
-            // TODO: もう少し穏便な無効化手法
-            window.setTimeout ((function (browser) {return function () {
-              // 強制リロード
-              browser.reloadWithFlags (browser.webNavigation.LOAD_FLAGS_NONE);
-            }; }) (targetBrowser), 10);
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-      }
-      Akahuku.latestParam = null;
-    }
-
-    arAkahukuP2P.dettachFromWindow (window);
-    arAkahukuTab.dettachFromWindow (window);
-    arAkahukuBloomer.dettachFromWindow (window);
-    arAkahukuImage.dettachFromWindow (window);
-    arAkahukuThread.dettachFromWindow (window);
-    arAkahukuMHT.dettachFromWindow (window);
-    arAkahukuPostForm.dettachFromWindow (window);
-    arAkahukuUI.dettachFromWindow (window);
-    arAkahukuSidebar.dettachFromWindow (window);
-
-    Akahuku.debug.log ("Akahuku is dettached from a XUL window");
-  },
-
-  dettachFromWindowExtra : function (window) {
-  },
-    
   /**
    * body の unload イベント
    * 各種データを削除する
@@ -769,6 +316,7 @@ var Akahuku = {
    */
   onBodyUnload : function (targetDocument, event) {
     Akahuku.clearContextTasks (targetDocument);
+    Akahuku.removeAllManagedEventHandlers (targetDocument);
     /* リロード前にページトップにスクロール */
     var documentParam = Akahuku.getDocumentParam (targetDocument);
     if (documentParam == null) {
@@ -926,23 +474,6 @@ var Akahuku = {
   },
     
   /**
-   * サイドバーで何かがロードされたイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onSidebarLoaded : function (event) {
-    var browser = event.target.getElementById ("web-panels-browser");
-        
-    if (browser) {
-      browser.addEventListener
-        ("DOMContentLoaded",
-         Akahuku.onDOMContentLoaded,
-         false);
-    }
-  },
-    
-  /**
    * コンテンツがロードされたイベント
    *
    * @param  Event event
@@ -965,15 +496,6 @@ var Akahuku = {
         targetDocument.dispatchEvent (ev);
         
         Akahuku.apply(targetDocument, false);
-        /*
-        arAkahukuThreadManager.withThread(
-          function() {
-            arAkahukuThreadManager.withMainThread(
-              function() {
-                Akahuku.apply(targetDocument, false);
-              });
-          });
-        */
 
         // カスタムイベント: 赤福より後に動きたい他の拡張機能をトリガー
         ev = targetDocument.createEvent ("Events");
@@ -984,7 +506,7 @@ var Akahuku = {
         
     if (!needApply) {
       /* ホイールリロードはふたば外でも動く */
-      arAkahukuWheel.apply (targetDocument, null);
+      //arAkahukuWheel.apply (targetDocument, null);
     }
         
     if (Akahuku.enableAll) {
@@ -997,15 +519,6 @@ var Akahuku = {
           arAkahukuPostForm.applyCommentboxBGSio (targetDocument);
         }
       }
-    }
-        
-    /* 状態の変更を UnMHT に通知する */
-    try {
-      var cw = arAkahukuWindow
-        .getParentWindowInChrome (targetDocument.defaultView);
-      cw.UnMHTBrowserProgressListener.onLocationChange ();
-    }
-    catch (e) {
     }
   },
   
@@ -1114,8 +627,8 @@ var Akahuku = {
       = bqnodes;
     }
 
-    targetWindow.addEventListener
-    ("unload",
+    Akahuku.addEventListener
+    (targetWindow, "unload",
      function () {
       Akahuku.onBodyUnload (targetDocument, arguments [0]);
     }, true);
@@ -1490,8 +1003,7 @@ var Akahuku = {
     if (Akahuku.isXPathAvailable && Akahuku.enableBoostByXPath
         && doc.defaultView) {
       try {
-        var itType = Components.interfaces
-          .nsIDOMXPathResult.ORDERED_NODE_ITERATOR_TYPE;
+        var itType = XPathResult.ORDERED_NODE_ITERATOR_TYPE;
         var iterator =
           doc.evaluate
           (".//blockquote[count(ancestor::center)=0][count(ancestor::table[@border='1' or @class='ama'])=0][count(ancestor::div[@id='akahuku_respanel_content' or @class='ama'])=0]",
@@ -1516,7 +1028,7 @@ var Akahuku = {
         if (newNodes.length == 0) {
           // タテログのログ対応 patch
           var xpath = ".//div[count(ancestor::div[@class='thread'])=1]";
-          if (targetNode instanceof Components.interfaces.nsIDOMDocument) {
+          if (targetNode instanceof Document) {
             xpath = ".//div[@class='thread']//div";
           }
           iterator =
@@ -1949,96 +1461,6 @@ var Akahuku = {
   },
 
   /**
-   * 画像ドキュメントのタブのイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onImageDocumentActivity : function (event) {
-    var doc = event.originalTarget;
-    var window = event.currentTarget.ownerDocument.defaultView.top;
-    var gBrowser = window.gBrowser;
-    if (event.target && "nodeName" in event.target
-        && event.target.nodeName == "tab") {
-      var browser = gBrowser.getBrowserForTab (event.target);
-      if (browser) {
-        doc = browser.contentDocument;
-      }
-    }
-    if (!(doc instanceof window.ImageDocument)) {
-      return;
-    }
-
-    try {
-      const {Services}
-      = Components.utils.import
-        ("resource://gre/modules/Services.jsm", {});
-      var aURI = doc.documentURIObject;
-      try {
-        var host = aURI.host;
-      } catch (e) {
-        return; // ie. data scheme 
-      }
-
-      if (/^(apr|feb|jan|mar|jul|aug|sep|oct|rrd|sv[a-f])\.2chan\.net$/
-          .test (host)) { /* 画像鯖 */
-        var doFake = false;
-        if (!Akahuku.isFx9) {
-          // 9.0より前はPBモード時の処理が特殊 (参考:Bug 684107)
-          var pbsvc = null;
-          if ("@mozilla.org/privatebrowsing;1" in Components.classes) {
-            pbsvc = Components.classes ["@mozilla.org/privatebrowsing;1"]
-            .getService (Components.interfaces.nsIPrivateBrowsingService);
-          }
-          if (pbsvc && pbsvc.privateBrowsingEnabled) {
-            doFake = true;
-          }
-        }
-        if (doFake) {
-          const {gDownloadLastDir}
-          = Components.utils.import
-            ("resource://gre/modules/DownloadLastDir.jsm", {});
-          var lastdir = gDownloadLastDir.getFile ();
-          var targetdir = gDownloadLastDir.getFile (aURI);
-          if (lastdir && lastdir.path != targetdir.path) {
-            /* 設定は消せないが最後の場所で上書きする */
-            gDownloadLastDir.setFile (aURI, lastdir);
-          }
-        }
-        else {
-          /* ContentPrefs から設定を消す */
-          var LAST_DIR_PREF = "browser.download.lastDir";
-          var loadContext = null; // required for Firefox 19+
-          try {
-            loadContext
-              = doc.defaultView
-              .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-              .getInterface (Components.interfaces.nsIWebNavigation)
-              .QueryInterface (Components.interfaces.nsILoadContext);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-          }
-          if ("nsIContentPrefService2" in Components.interfaces) {
-            var cps2
-              = Components.classes ["@mozilla.org/content-pref/service;1"]
-              .getService (Components.interfaces.nsIContentPrefService2);
-            cps2.removeByDomainAndName (aURI.spec, LAST_DIR_PREF, loadContext);
-          }
-          else {
-            // nsIContentPrefService has been deprecated scince Gecko 20
-            var group = Services.contentPrefs.grouper.group (aURI);
-            if (Services.contentPrefs.hasPref (group, LAST_DIR_PREF, loadContext)) {
-              Services.contentPrefs.removePref (group, LAST_DIR_PREF, loadContext);
-            }
-          }
-        }
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-  },
-
-  /**
    * 指定されたタイプの akahuku: スキーム URL を元に戻す
    *
    * @param  String spec
@@ -2072,15 +1494,15 @@ var Akahuku = {
    */
   queueContextTask : function (handlerOwner, handlerName, context)
   {
-    if (!(context instanceof Components.interfaces.nsIDOMNode)) {
+    if (!(context instanceof Node)) {
       Akahuku.debug.warn
-        ("queueContextTasks: context is not an instance of nsIDOMNode.");
+        ("queueContextTasks: context is not an instance of Node.");
       return;
     }
     var contextDocument = context.ownerDocument || context;
-    if (!(contextDocument instanceof Components.interfaces.nsIDOMDocument)) {
+    if (!(contextDocument instanceof Document)) {
       Akahuku.debug.warn
-        ("queueContextTasks: no nsIDOMDocument retrieved via context.");
+        ("queueContextTasks: no Document retrieved via context.");
       return;
     }
     var args = new Array (context);
@@ -2144,12 +1566,66 @@ var Akahuku = {
     Akahuku.contextTasksArray.push (tasks);
     // タスクリストの消去保証
     // (apply されず onBodyUnload が呼ばれない場合がある)
-    targetDocument.defaultView.addEventListener
-      ("unload",
+    Akahuku.addEventListener
+      (targetDocument.defaultView, "unload",
        function (event) {
          Akahuku.clearContextTasks (event.target);
        }, false);
     return tasks;
+  },
+
+  addEventListener : function (target, name, handler, flag) {
+    target.addEventListener (name, handler, flag);
+    // taretDocument = target.ownerDocument || target;
+    Akahuku.managedEventHandlers.push ({
+      node: target,
+      name: name,
+      handler: handler,
+      flag: flag,
+    });
+  },
+
+  popManagedEventHandlersForDocument : function (targetDocument) {
+    var list = []
+    for (var i = 0; i < Akahuku.managedEventHandlers.length; i ++) {
+      try {
+        var entry = Akahuku.managedEventHandlers [i];
+        var ownerDocument = entry.node.ownerDocument || entry.node;
+        if (ownerDocument == targetDocument) {
+          list.push (entry);
+          Akahuku.managedEventHandlers.splice (i, 1);
+          i --;
+        }
+      }
+      catch (e) {
+        // TypeError: can't access dead object
+        // などが起こったらそのエントリーは破棄
+        Akahuku.managedEventHandlers.splice (i, 1);
+        i --;
+      }
+    }
+    return list;
+  },
+
+  removeAllManagedEventHandlers : function (targetDocument) {
+    var e;
+    if (targetDocument) {
+      e = Akahuku.popManagedEventHandlersForDocument (targetDocument);
+    }
+    else { // All
+      e = Akahuku.managedEventHandlers.splice (0, Akahuku.managedEventHandlers.length);
+    }
+    for (var i = 0; i < e.length; i ++) {
+      try {
+        e [i].node.removeEventListener (e [i].name, e [i].handler, e [i].flag);
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+  },
+
+  onUnloadForContextTasks : function (event) {
+    Akahuku.clearContextTasks (event.target);
   },
 
   getContextTasks : function (targetDocument)

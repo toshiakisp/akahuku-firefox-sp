@@ -1,5 +1,5 @@
 
-/* global Components, XPCNativeWrapper, Promise,
+/* global Promise, KeyEvent,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
  *   arAkahukuDOM, arAkahukuStyle,
  *   arAkahukuFile, arAkahukuUtil, AkahukuFileUtil, AkahukuFSUtil,
@@ -11,7 +11,6 @@
 
 /**
  * 送信フォーム管理のデータ
- *   Inherits From: nsIWebProgressListener
  */
 function arAkahukuPostFormParam (doc) {
   this.targetDocument = doc;
@@ -97,96 +96,6 @@ arAkahukuPostFormParam.prototype = {
     }
     return this.attachableExtRegExp.test (filepath);
   },
-
-  /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsIWebProgressListener
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsISupportsWeakReference)
-        || iid.equals (Components.interfaces.nsIWebProgressListener)) {
-      return this;
-    }
-        
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  },
-    
-  /**
-   * 監視ウィンドウのロケーションが変わった時のイベント
-   *   nsIWebProgressListener.onLocationChange
-   * 未使用
-   */
-  onLocationChange : function (webProgress, request, location) {
-  },
-    
-  /**
-   * 進行状況が変わった時のイベント
-   *   nsIWebProgressListener.onProgressChange
-   * 未使用
-   */
-  onProgressChange: function (webProgress , request,
-                              curSelfProgress, maxSelfProgress,
-                              curTotalProgress, maxTotalProgress) {
-  },
-    
-  /**
-   * プロトコルのセキュリティ設定が変わった時のイベント
-   *   nsIWebProgressListener.onSecurityChange
-   * 未使用
-   */
-  onSecurityChange : function (webProgress, request, state) {
-  },
-    
-  /**
-   * 状況が変わった時のイベント
-   *   nsIWebProgressListener.onStateChange
-   * 終了したらファイルを展開する
-   *
-   * @param  nsIWebProgress webProgress
-   *         呼び出し元
-   * @param  nsIRequest request
-   *         状況の変わったリクエスト
-   * @param  Number stateFlags
-   *         変わった状況のフラグ
-   * @param  nsresult status
-   *         エラーコード
-   */
-  onStateChange : function (webProgress, request, stateFlags, status) {
-    if (request.name == this.targetURL
-        && stateFlags & Components.interfaces.nsIWebProgressListener.STATE_STOP
-        && stateFlags & Components.interfaces.nsIWebProgressListener.STATE_IS_NETWORK) {
-      try {
-        var param
-        = Akahuku.getDocumentParam (this.targetDocument).reload_param;
-                
-        if (param.replying) {
-          var iframe
-            = this.targetDocument.getElementById
-            ("akahuku_reply_target_frame");
-          arAkahukuPostForm.onIFrameLoad
-            (iframe, this.targetDocument, true);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-        /* 閉じている場合 */
-      }
-    }
-  },
-    
-  /**
-   * ステータスバーに表示するメッセージが変わった時のイベント
-   *   nsIWebProgressListener.onStatusChange
-   * 未使用
-   */
-  onStatusChange : function (webProgress, request, status, message) {
-  }
 };
 /**
  * 送信フォーム管理
@@ -272,8 +181,6 @@ var arAkahukuPostForm = {
   enablePreview : false, /* Boolean  添付ファイルをプレビュー */
   previewSize : 250,     /* Boolean  プレビューのサイズ */
     
-  enableSaveAttachment : false, /* Boolean  添付ファイルを再起動時に保持 */
-    
   enablePasteImageFromClipboard : false, /* Boolean  クリップボードから添付画像貼り付け */
 
   enableShimonkin : false,   /* Boolean  送信ボタンを変える */
@@ -283,15 +190,6 @@ var arAkahukuPostForm = {
     
   enableBottom : false,      /* Boolean  ページ末尾に置く */
   enableBottomFormOnly : false,      /* Boolean  ページ末尾にフォームだけを置く */
-    
-  attachToWindow : function (window) {
-    window.addEventListener
-    ("keydown", arAkahukuPostForm.onKeyDown, true);
-  },
-  dettachFromWindow : function (window) {
-    window.removeEventListener
-    ("keydown", arAkahukuPostForm.onKeyDown, true);
-  },
     
   /**
    * フォームにスクロールする
@@ -777,7 +675,7 @@ var arAkahukuPostForm = {
         value
           = unescape (value);
         arAkahukuPostForm.mailboxSageButtonKeyKeycode
-          = Components.interfaces.nsIDOMKeyEvent ["DOM_" + value];
+          = KeyEvent ["DOM_" + value];
                 
         var defAlt, defCtrl, defMeta, defShift;
         defAlt = false;
@@ -883,7 +781,7 @@ var arAkahukuPostForm = {
       value
         = unescape (value);
       arAkahukuPostForm.commentboxShortcutKeycode
-        = Components.interfaces.nsIDOMKeyEvent ["DOM_" + value];
+        = KeyEvent ["DOM_" + value];
                 
       arAkahukuPostForm.commentboxShortcutModifiersAlt
         = arAkahukuConfig
@@ -927,13 +825,9 @@ var arAkahukuPostForm = {
     = arAkahukuConfig
     .initPref ("bool", "akahuku.postform.reply.thread", false);
         
-    var value;
-    value
-    = arAkahukuConfig
-    .initPref ("bool", "akahuku.floatpostform.sendclose", true);
     arAkahukuPostForm.enableReplySendClose
     = arAkahukuConfig
-    .initPref ("bool", "akahuku.postform.reply.sendclose", value);
+    .initPref ("bool", "akahuku.postform.reply.sendclose", true);
         
     arAkahukuPostForm.enableFloat
     = arAkahukuConfig
@@ -980,13 +874,6 @@ var arAkahukuPostForm = {
         .initPref ("int",  "akahuku.postform.preview.size", 250);
     }
         
-    arAkahukuPostForm.enableSaveAttachment = false;
-    if (arAkahukuCompat.comparePlatformVersion ("1.9.1b1") < 0) {
-      arAkahukuPostForm.enableSaveAttachment
-      = arAkahukuConfig
-      .initPref ("bool", "akahuku.postform.save_attachment", false);
-    }
-
     arAkahukuPostForm.enablePasteImageFromClipboard
     = arAkahukuConfig
     .initPref ("bool", "akahuku.postform.paste_image_from_clipboard", false);
@@ -1158,11 +1045,8 @@ var arAkahukuPostForm = {
         param.targetURL = formElement.action;
         param.added = true;
                 
-        var webProgress
-          = arAkahukuWindow.getWebProgressForWindow
-          (targetDocument.defaultView);
-        webProgress.addProgressListener
-          (param, Components.interfaces.nsIWebProgress.NOTIFY_ALL);
+        // TODO: Detect cancel
+        // arAkahukuPostForm.onIFrameLoad (event.currentTarget, targetDocument, true);
       }
             
       targetDocument.body.insertBefore (iframe,
@@ -1203,12 +1087,8 @@ var arAkahukuPostForm = {
       if (arAkahukuPostForm.enableMailboxMemory) {
         var mailbox = targetDocument.getElementById ("akahuku_mailbox");
         if (mailbox) {
-          var browser
-            = arAkahukuWindow.getBrowserForWindow
-            (targetDocument.defaultView);
-          if (browser) {
-            browser.__akahuku_mailbox_memory = mailbox.value;
-          }
+          targetDocument.defaultView.sessionStorage
+            .setItem('__akahuku_mailbox_memory', mailbox.value);
         }
       }
       formElement.target = target;
@@ -1251,7 +1131,8 @@ var arAkahukuPostForm = {
    */
   onIFrameLoad : function (iframe, targetDocument, forceStop) {
     if (!forceStop
-        && iframe.contentDocument.location.href == "about:blank") {
+        && (!iframe.contentDocument
+          || iframe.contentDocument.location.href == "about:blank")) {
       return;
     }
         
@@ -1294,11 +1175,7 @@ var arAkahukuPostForm = {
     }
         
     /* リフレッシュを解除する */
-    iframe.contentDocument.defaultView
-    .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-    .getInterface (Components.interfaces.nsIWebNavigation)
-    .QueryInterface (Components.interfaces.nsIRefreshURI)
-    .cancelRefreshURITimers ();
+    iframe.contentDocument.defaultView.stop();
         
     /* 送信の結果をチェック */
         
@@ -1503,33 +1380,7 @@ var arAkahukuPostForm = {
       arAkahukuSound.playReplyFail ();
     }
         
-    window.setTimeout (function (targetDocument) {
-        try {
-          var history
-          = targetDocument.defaultView
-          .QueryInterface (Components.interfaces
-                           .nsIInterfaceRequestor)
-          .getInterface (Components.interfaces
-                         .nsIWebNavigation)
-          .sessionHistory;
-          if (history.count > 1) {
-            history.PurgeHistory (history.count - 1);
-          }
-          else {
-            return;
-          }
-          // no e10s support bellow because of no need for recent firefox
-          var w = arAkahukuWindow
-          .getParentWindowInChrome (targetDocument.defaultView);
-          var backCommand
-          = w.document.getElementById ("Browser:Back");
-          if (backCommand) {
-            backCommand.setAttribute ("disabled", "true");
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-      }, 1000, targetDocument);
+    // TODO: purge last history & disable Back (no necessary?)
         
     iframe.contentDocument.location.href = "about:blank";
   },
@@ -1777,12 +1628,8 @@ var arAkahukuPostForm = {
         
     if (arAkahukuPostForm.enableNormalPurgeHistory
         && info.isNormal) {
-      var browser
-      = arAkahukuWindow.getBrowserForWindow
-      (targetDocument.defaultView);
-      if (browser) {
-        browser.__akahuku_create_thread = "1";
-      }
+      targetDocument.defaultView.sessionStorage
+        .setItem('__akahuku_create_thread', '1');
     }
         
     arAkahukuPostForm.submit (target.id,
@@ -2147,11 +1994,7 @@ var arAkahukuPostForm = {
         n.value = n.value.replace (/\s*=AKA[^=]+=\s*/g, "");
       }
       else {
-        var {arAkahukuP2PService}
-        = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
-        var nodeName = arAkahukuP2PService.servant
-          .encodeNodeName (arAkahukuP2P.address, arAkahukuP2P.port);
-        n.value = nodeName + " " + n.value;
+        Akahuku.debug.error('deprecated');
       }
             
       n.setSelectionRange (n.value.length, n.value.length);
@@ -2658,7 +2501,7 @@ var arAkahukuPostForm = {
    *         対象のイベント
    */
   onCommentKeyPress : function (event) {
-    var ke = Components.interfaces.nsIDOMKeyEvent;
+    var ke = KeyEvent;
     if (arAkahukuPostForm.enableCommentboxSubmitShortcut) {
       if (event.keyCode == ke.DOM_VK_RETURN && event.shiftKey) {
         var targetDocument = event.target.ownerDocument;
@@ -2935,6 +2778,24 @@ var arAkahukuPostForm = {
     var file = null;
     var dt = event.dataTransfer;
     try {
+      // Fx57+: DataTransfer.files is settable
+      if (filebox && dt.files.length > 0) {
+        if (filebox.multiple || dt.files.length == 1) {
+          filebox.files = dt.files;
+          event.preventDefault ();
+          if (arAkahukuPostForm.enablePreview) {
+            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+          }
+          return;
+        }
+        else {
+          Akahuku.debug.warn('Ignore dropped files (multiple=false)');
+        }
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+    try {
       if ("items" in dt) { // DataTransferItemList (Fx50+)
         for (var n=0; n < dt.items.length && !file; n ++) {
           if (dt.items [n].kind == "file") {
@@ -2961,7 +2822,10 @@ var arAkahukuPostForm = {
   },
 
   checkForDropToAttatchFile : function (event) {
-    if (event.dataTransfer.types.contains ("Files")) {
+    // Fx52: types is DOMString[], not StringList [Bug 1298243]
+    var t = event.dataTransfer.types;
+    if (('includes' in t && t.includes('Files'))
+      || ('contains' in t && t.contains('Files'))) {
       event.preventDefault (); // ドロップ受け入れ
     }
   },
@@ -3444,63 +3308,6 @@ var arAkahukuPostForm = {
    */
   onPreviewChange : function (event) {
     arAkahukuPostForm.onPreviewChangeCore (event.target.ownerDocument);
-        
-    if (arAkahukuPostForm.enableSaveAttachment) {
-      try {
-        var target = event.currentTarget;
-        
-        var panel
-          = arAkahukuWindow.getBrowserForWindow
-          (target.ownerDocument.defaultView).parentNode;
-            
-        arAkahukuPostForm.saveTextData (panel, target);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-  },
-    
-  /**
-   * テキストデータをセッションに保存
-   *
-   * @param  XULElement panel
-   *         対象のタブ
-   * @param  HTMLElement element
-   *         対象の要素
-   */
-  saveTextData : function (panel, element) {
-    var wrappedElement = XPCNativeWrapper (element);
-    var id = wrappedElement.name;
-        
-    if (!panel.__SS_text) {
-      panel.__SS_text = [];
-      panel.__SS_text._refs = [];
-    }
-        
-    var ix = panel.__SS_text._refs.indexOf (element);
-    if (ix == -1) {
-      panel.__SS_text._refs.push (element);
-      ix = panel.__SS_text.length;
-    }
-    else if (!panel.__SS_text [ix].cache) {
-      return false;
-    }
-    
-    var content = wrappedElement.ownerDocument.defaultView;
-    while (content != content.top) {
-      var frames = content.parent.frames;
-      for (var i = 0; i < frames.length && frames [i] != content; i++) {
-      }
-      id = i + "|" + id;
-      content = content.parent;
-    }
-    
-    panel.__SS_text [ix] = {
-      id : id,
-      element : wrappedElement
-    };
-    
-    return true;
   },
     
   /**
@@ -4212,46 +4019,15 @@ var arAkahukuPostForm = {
       return;
     }
     var window = targetDocument.defaultView;
+    var storage = window.sessionStorage;
     
     if (info.isReply) {
       if (arAkahukuPostForm.enableNormalPurgeHistory) {
-        var browser
-        = arAkahukuWindow.getBrowserForWindow
-        (targetDocument.defaultView);
-        if (browser
-            && "__akahuku_create_thread" in browser
-            && browser.__akahuku_create_thread == "1") {
-          browser.__akahuku_create_thread = "0";
-          delete browser.__akahuku_create_thread;
-          browser.removeAttribute ("__akahuku_create_thread");
-                    
-          window.setTimeout (function (targetDocument) {
-              try {
-                var history
-                  = targetDocument.defaultView
-                  .QueryInterface (Components.interfaces
-                                   .nsIInterfaceRequestor)
-                  .getInterface (Components.interfaces
-                                 .nsIWebNavigation)
-                  .sessionHistory;
-                if (history.count > 1) {
-                  history.PurgeHistory (history.count - 1);
-                }
-                else {
-                  return;
-                }
-                // no e10s support bellow because of no need for recent firefox
-                var w = arAkahukuWindow
-                .getParentWindowInChrome (targetDocument.defaultView);
-                var backCommand
-                = w.document.getElementById ("Browser:Back");
-                if (backCommand) {
-                  backCommand.setAttribute ("disabled", "true");
-                }
-              }
-              catch (e) { Akahuku.debug.exception (e);
-              }
-            }, 1000, targetDocument);
+        let createThread = storage.getItem('__akahuku_create_thread');
+        if (createThread == '1') {
+          storage.removeItem('__akahuku_create_thread');
+
+          // TODO: purge last history & disable Back button
         }
       }
     }
@@ -4737,17 +4513,10 @@ var arAkahukuPostForm = {
         }
                 
         if (arAkahukuPostForm.enableMailboxMemory) {
-          var browser
-            = arAkahukuWindow.getBrowserForWindow
-            (targetDocument.defaultView);
-          if (browser) {
-            if ("__akahuku_mailbox_memory" in browser
-                && browser.__akahuku_mailbox_memory) {
-              mailbox.value = browser.__akahuku_mailbox_memory;
-                            
-              browser
-                .removeAttribute ("__akahuku_mailbox_memory");
-            }
+          let mailboxMemory = storage.getItem('__akahuku_mailbox_memory')
+          if (mailboxMemory) {
+            mailbox.value = mailboxMemory;
+            storage.removeItem('__akahuku_mailbox_memory');
           }
         }
                 

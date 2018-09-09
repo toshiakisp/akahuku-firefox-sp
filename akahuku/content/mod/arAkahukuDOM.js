@@ -1,5 +1,5 @@
 
-/* global Components, Akahuku, arAkahukuConverter */
+/* global Akahuku, arAkahukuConverter */
 
 /**
  * DOM 拡張
@@ -427,42 +427,9 @@ var arAkahukuDOM = {
       targetElement.removeChild (targetElement.lastChild);
     }
 
-    try {
-      // sanitize by nsIParserUtils (Gecko14+)
-      // (nsIScriptableUnescapeHTML is obsolete)
-      if ("@mozilla.org/parserutils;1" in Components.classes) {
-        var parserUtils
-          = Components.classes ["@mozilla.org/parserutils;1"]
-          .getService (Components.interfaces.nsIParserUtils);
-        if (typeof (parserUtils.parseFragment) === "function") {
-          var flags
-            = parserUtils.SanitizerDropForms
-            | parserUtils.SanitizerDropMedia;
-          var fragment
-            = parserUtils.parseFragment
-            (htmlText, flags, false, null, targetElement);
-          targetElement.appendChild (fragment);
-          return;
-        }
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-
-    try {
-      // require: Gecko 1.8/Firefox 1.5 +
-      var unescaper
-        = Components.classes ["@mozilla.org/feed-unescapehtml;1"]
-        .getService (Components.interfaces.nsIScriptableUnescapeHTML);
-      var fragment
-        = unescaper.parseFragment (htmlText, false, null, targetElement);
-      targetElement.appendChild (fragment);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      // 最悪でもテキストとしてセットしてあげる
-      var text = targetElement.ownerDocument.createTextNode (htmlText);
-      targetElement.appendChild (text);
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    // TODO: sanitize to fragment and targetElement.appendChild(fragment)
+    return;
   },
 
   /**
@@ -711,12 +678,12 @@ arAkahukuDOM.Style = new function () {
  * factory of DOM Mutation Observer for DOM3/4
  */
 arAkahukuDOM.createMutationObserver = function (callback, node) {
-  if (node && node instanceof Components.interfaces.nsIDOMDocument
+  if (node && node instanceof Document
       && "MutationObserver" in node.defaultView) {
     return new node.defaultView
       .MutationObserver (callback);
   }
-  if (node && node instanceof Components.interfaces.nsIDOMElement
+  if (node && node instanceof Element
       && "MutationObserver" in node.ownerDocument.defaultView) {
     return new node.ownerDocumenet.defaultView
       .MutationObserver (callback);

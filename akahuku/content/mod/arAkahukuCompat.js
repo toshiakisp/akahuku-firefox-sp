@@ -1,5 +1,5 @@
 
-/* global Components, arAkahukuFile, arAkahukuUtil */
+/* global arAkahukuFile, arAkahukuUtil */
 
 /**
  * Firefox/Gecko バージョン間の差異を吸収する
@@ -12,76 +12,20 @@ var arAkahukuCompat = new function () {
     return defaultValue;
   }
 
-  const Ci = Components.interfaces;
-  const Cc = Components.classes;
-  const Cr = Components.results;
-  const Cu = Components.utils;
-
   this.compareVersion = function (v1, v2) {
-    try {
-      // Gecko 1.8+
-      var vc = Cc ["@mozilla.org/xpcom/version-comparator;1"]
-        .getService (Ci.nsIVersionComparator);
-      return vc.compare (v1, v2);
-    }
-    catch (e) {
-      return -1; // 1.8より前ではやっつけ
-    }
+    return -1;
   };
   this.comparePlatformVersion = function (v) {
-    try {
-      // Gecko 1.8+
-      var ai = Cc ["@mozilla.org/xre/app-info;1"]
-        .getService (Ci.nsIXULAppInfo);
-      var platformVersion = ai.platformVersion;
-      if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
-        // For compatibility with Pale moon 26+ (includes 25),
-        // > When wanting to provide Goanna compatibility, you should use
-        // > the application version for an equivalent check on "rough
-        // > Firefox range compatibility".
-        // (https://forum.palemoon.org/viewtopic.php?t=9077)
-        platformVersion = ai.version;
-      }
-      return arAkahukuCompat.compareVersion (platformVersion, v);
-    }
-    catch (e) {
-      return -1; // 1.8より前ではやっつけ
-    }
+    return 1;
   };
 
   this.getPlatformType = function () {
-    try {
-      // Gecko 1.8+
-      var ai = Cc ["@mozilla.org/xre/app-info;1"]
-        .getService (Ci.nsIXULAppInfo);
-      if (ai.ID === "{8de7fcbb-c55c-4fbe-bfc5-fc555c87dbc4}") {
-        return "Goanna";
-      }
-    }
-    catch (e) {
-    }
     return "Gecko";
   };
 
   this.WebBrowserPersist = {
-    _versionChecked : false,
-    _version3_6: false,
-    _version18 : false,
-    _version36 : false,
 
     saveURI : function (webBrowserPersist, args) {
-      if (!this._versionChecked) {
-        this._versionChecked = true;
-        this._version36 = arAkahukuCompat.comparePlatformVersion ("35.*") > 0;
-        this._version18 = arAkahukuCompat.comparePlatformVersion ("17.*") > 0;
-        this._version3_6 = arAkahukuCompat.comparePlatformVersion ("1.9.2") >= 0;
-        if (arAkahukuCompat.getPlatformType () === "Goanna"
-            && arAkahukuCompat.comparePlatformVersion ("27.0") >= 0) {
-          // Palemoon 27+ has newer API
-          this._version36 = true;
-        }
-      }
-
       var uri = _getArg (args, 'uri', null);
       var file = _getArg (args, 'file', null);
       var postData = _getArg (args, 'postData', null);
@@ -97,156 +41,38 @@ var arAkahukuCompat = new function () {
         var usePrivacyAware = true;
       }
 
+      throw new Error('NotYetImplemented');
+
       if (typeof file === "string") {
         var filePath = file;
         file = arAkahukuFile.initFile (filePath);
-      }
-
-      if (this._version36) {
-        // Firefox 36
-        if (usePrivacyAware) {
-          webBrowserPersist.savePrivacyAwareURI
-            (uri, cacheKey, referrer, referrerPolicy, postData,
-             extraHeaders, file, isPrivate);
-        }
-        else {
-          webBrowserPersist.saveURI
-            (uri, cacheKey, referrer, referrerPolicy, postData,
-             extraHeaders, file, privacyContext);
-        }
-      }
-      else if (this._version18) {
-        // Firefox 18.0+
-        if (usePrivacyAware) {
-          webBrowserPersist.savePrivacyAwareURI
-            (uri, cacheKey, referrer, postData,
-             extraHeaders, file, isPrivate);
-        }
-        else {
-          webBrowserPersist.saveURI
-            (uri, cacheKey, referrer, postData,
-             extraHeaders, file, privacyContext);
-        }
-      }
-      else if (this._version3_6) {
-        // Firefox 3.6?-17.0
-        webBrowserPersist.saveURI
-          (uri, cacheKey, referrer, postData,
-           extraHeaders, file);
-      }
-      else {
-        // oldest version?
-        webBrowserPersist.saveURI (uri, postData, file);
       }
     },
   };
 
   this.FilePicker = new function () {
-    // Fx17 から nsIFilePicker.show() は obsolete になり
-    // コールバックを取る非同期な open() が新設された [Bug 731307]。
-    // そこで非同期なインタフェースに統一し、
-    // 古い環境では非同期呼び出しを模擬することで動作させる。
     this.open = function (picker, callback) {
-      if (typeof picker.open !== "function") {
-        _asyncShow (picker, callback);
-        return;
-      }
-      if (typeof callback === "function") {
-        // nsIFilePickerShownCallback
-        var callbackFunc = callback;
-        callback = {done : callbackFunc};
-      }
-      picker.open (callback);
-    };
-
-    function _asyncShow (picker, callback) {
-      var tm
-        = Components.classes ["@mozilla.org/thread-manager;1"]
-        .getService (Components.interfaces.nsIThreadManager);
-      tm.currentThread.dispatch ({
-        run : function () {
-          var ret = Components.interfaces.nsIFilePicker.returnCancel;
-          try {
-            ret = picker.show ();
-          }
-          catch (e) {
-          }
-          if (typeof callback === "function") {
-            var args = [ret];
-            callback.apply (null, args);
-          }
-          else {
-            callback.done (ret);
-          }
-        }
-      }, Components.interfaces.nsIThread.DISPATCH_NORMAL);
+      throw new Error('NotYetImplemented');
     };
   };
 
   this.AsyncHistory = new function () {
     this.isURIVisited = function (uri, callback) {
-      this._lazyInit ();
-      return this.isURIVisited (uri, callback);
+      Akahuku.debug.error('NotYetImplemented, deprecated');
+      if (callback && "isVisited" in callback) {
+        callback.isVisited (uri, false);
+      }
+      /*
+      arAkahukuIPC.sendAsyncCommand
+        ("CompatAsyncHistory/isURIVisited", arguments);
+      */
     };
-  };
-  this.AsyncHistory._lazyInit = function () {
-    // 履歴の調査を非同期的なAPIに統一する
-    // mozIAsyncHistory.isURIVisited
-    if ("@mozilla.org/browser/history;1" in Cc) {
-      var asyncHistory
-        = Cc ["@mozilla.org/browser/history;1"]
-        .getService (Ci.mozIAsyncHistory);
-      if ("isURIVisited" in asyncHistory) { // Gecko 11.0+
-        this.isURIVisited = asyncHistory.isURIVisited;
-      }
-      else {
-        asyncHistory = null;
-      }
-    }
-    if (!asyncHistory) {
-      // async compatibles using sync interfaces
-      if ("@mozilla.org/browser/global-history;2" in Cc) {
-        var gh2 = Cc ["@mozilla.org/browser/global-history;2"]
-          .getService (Ci.nsIBrowserHistory);
-        this.isURIVisited = function (uri, callback) {
-          callback.isVisited (uri, gh2.isVisited (uri));
-        };
-      }
-      else if ("@mozilla.org/browser/global-history;1" in Cc) {
-        var gh1
-          = Cc ["@mozilla.org/browser/global-history;1"]
-          .getService (Ci.nsIBrowserHistory);
-        this.isURIVisited = function (uri, callback) {
-          callback.isVisited (uri, gh1.isVisited (uri.spec));
-        };
-      }
-      else {
-        // dummy definition
-        this.isURIVisited = function (uri, callback) {
-          if (callback && "isVisited" in callback) {
-            callback.isVisited (uri, false);
-          }
-        };
-      }
-    }
   };
 
   this.gBrowser = new function () {
     this.getStatusPanel = function (window) {
-      try {
-        // since Firefox 26.0a1 [Bug 821687 (mozilla.org)]
-        if (window && typeof window.gBrowser !== "undefined") {
-          return window.gBrowser.getStatusPanel ();
-        }
-      }
-      catch (e) {
-      }
-      if (window.document instanceof Ci.nsIDOMXULDocument) {
-        return window.document.getElementById ("statusbar-display");
-      }
-      else {
-        return null;
-      }
+      throw new Error('deprecated for content');
+      return null;
     };
   };
 
@@ -282,52 +108,53 @@ var arAkahukuCompat = new function () {
     },
   };
 
+  this.losslessDecodeURL = function (value) {
+    // from browser.js
 
-  this.losslessDecodeURI = function (uri) {
-    try {
-      return Cc ["@mozilla.org/appshell/window-mediator;1"]
-        .getService (Ci.nsIWindowMediator)
-        .getMostRecentWindow ("navigator:browser")
-        .losslessDecodeURI (uri);
-    }
-    catch (e) { Cu.reportError (e);
-    }
-    return uri.spec;
+    // Try to decode as UTF-8 if there's no encoding sequence that we would break.
+    if (!/%25(?:3B|2F|3F|3A|40|26|3D|2B|24|2C|23)/i.test(value))
+      try {
+        value = decodeURI(value)
+                  // 1. decodeURI decodes %25 to %, which creates unintended
+                  //    encoding sequences. Re-encode it, unless it's part of
+                  //    a sequence that survived decodeURI, i.e. one for:
+                  //    ';', '/', '?', ':', '@', '&', '=', '+', '$', ',', '#'
+                  //    (RFC 3987 section 3.2)
+                  // 2. Re-encode whitespace so that it doesn't get eaten away
+                  //    by the location bar (bug 410726).
+                  .replace(/%(?!3B|2F|3F|3A|40|26|3D|2B|24|2C|23)|[\r\n\t]/ig,
+                           encodeURIComponent);
+      } catch (e) {}
+
+    // Encode invisible characters (C0/C1 control characters, U+007F [DEL],
+    // U+00A0 [no-break space], line and paragraph separator,
+    // object replacement character) (bug 452979, bug 909264)
+    value = value.replace(/[\u0000-\u001f\u007f-\u00a0\u2028\u2029\ufffc]/g,
+                          encodeURIComponent);
+
+    // Encode default ignorable characters (bug 546013)
+    // except ZWNJ (U+200C) and ZWJ (U+200D) (bug 582186).
+    // This includes all bidirectional formatting characters.
+    // (RFC 3987 sections 3.2 and 4.1 paragraph 6)
+    value = value.replace(/[\u00ad\u034f\u061c\u115f-\u1160\u17b4-\u17b5\u180b-\u180d\u200b\u200e-\u200f\u202a-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0\ufff0-\ufff8]|\ud834[\udd73-\udd7a]|[\udb40-\udb43][\udc00-\udfff]/g,
+                          encodeURIComponent);
+    return value;
   };
 
   this.AddonManager = new function () {
     this.getAddonByID = function (id, callback) {
-      var hasAddonManager = false;
-      try {
-        var scope = {};
-        Cu.import ("resource://gre/modules/AddonManager.jsm", scope);
-        hasAddonManager = true;
-        this.getAddonByID = scope.AddonManager.getAddonByID;
-        this.getAddonByID (id, callback);
-      }
-      catch (e) {
-        if (e.result != Cr.NS_ERROR_FILE_NOT_FOUND) {
-          Cu.reportError (e);
-        }
-      }
-      if (!hasAddonManager) {
-        this.getAddonByID = function getAddonByIDCompat (id, callback) {
-          // obsolete gecko 2.0
-          var extMan = Cc ["@mozilla.org/extensions/manager;1"]
-            .getService (Ci.nsIExtensionManager);
-          var ext = extMan.getItemForID (id);
-          if (!(ext instanceof Ci.nsIUpdateItem)) {
-            ext = null;
-          }
-          var addon = { // only for Akahuku's neccessity
-            id: ext ? ext.id : "",
-            version: ext ? ext.version : "",
-            name: ext ? ext.name : "",
-            isActive: ext ? true : false,
-          };
-          callback (addon);
-        };
-      }
+      Akahuku.debug.error('NotYetImplemented');
+      var addon = { // only for Akahuku's neccessity
+        id: "",
+        version: "",
+        name: "",
+        isActive: false,
+      };
+      callback(addon);
+      /*
+      arAkahukuIPC.sendAsyncCommand
+        ("CompatAddonManager/getAddonByID", arguments);
+      */
     }
   };
 
@@ -359,9 +186,6 @@ var arAkahukuCompat = new function () {
     OPEN_PRIORITY : 1 << 2,
     OPEN_BYPASS_IF_BUSY : 1 << 31,
   };
-  if ("nsICacheStorage" in Ci) {
-    CacheStorage = Ci.nsICacheStorage;
-  }
   this.CacheStorage = CacheStorage;
   var CacheEntryOpenCallback = {
     // Constants of nsICacheStorage for compatiblility
@@ -370,12 +194,8 @@ var arAkahukuCompat = new function () {
     ENTRY_NEEDS_REVALIDATION : 2,
     ENTRY_NOT_WANTED : 3,
   };
-  if ("nsICacheEntryOpenCallback" in Ci) {
-    CacheEntryOpenCallback = Ci.nsICacheEntryOpenCallback;
-  }
   this.CacheEntryOpenCallback = CacheEntryOpenCallback;
 
-  // nsICacheSession を nsICacheStorage のようにラップする
   var CacheSessionWrapper = function (session, loadContextInfo, lookupAppCache) {
     this._session = session;
     this._lcinfo = loadContextInfo;
@@ -383,127 +203,33 @@ var arAkahukuCompat = new function () {
   };
   CacheSessionWrapper.prototype = {
     asyncOpenURI : function (uri, id, flag, callback) {
-      var accessMode = Ci.nsICache.ACCESS_READ_WRITE;
-      if (flag & CacheStorage.OPEN_READONLY) {
-        accessMode = Ci.nsICache.ACCESS_READ;
-      }
-      else if (flag & CacheStorage.OPEN_TRUNCATE) {
-        accessMode = Ci.nsICache.ACCESS_WRITE;
-      }
+      //FIXME: not yet implemented
       var wrappedcb = {
         // nsICacheListener.onCacheEntryAvailable 
         onCacheEntryAvailable : function (descriptor, accessGranted, result) {
-          // nsICacheEntry と nsICacheDescriptor は等価と思っておく
-          var entry = descriptor;
-          var appCache = null;
-          var check = CacheEntryOpenCallback.ENTRY_WANTED;
-          if (entry) {
-            check = callback.onCacheEntryCheck (entry, appCache);
-          }
-          if (check === CacheEntryOpenCallback.ENTRY_WANTED) {
-            var isNew = (accessGranted == Ci.nsICache.ACCESS_WRITE); //OK?
-            callback.onCacheEntryAvailable (entry, isNew, appCache, result);
-          }
-          else {
-            result = Cr.NS_ERROR_CACHE_KEY_NOT_FOUND;
-            callback.onCacheEntryAvailable (null, false, appCache, result);
-          }
+          result = 61; //NS_ERROR_CACHE_KEY_NOT_FOUND
+          callback.onCacheEntryAvailable (null, false, appCache, result);
         },
       };
-      this._session.doomEntriesIfExpired = false;
-      try {
-        this._session.asyncOpenCacheEntry (uri.spec, accessMode, wrappedcb);
-      }
-      catch (e) {
-        if (e.result !== Cr.NS_ERROR_CACHE_KEY_NOT_FOUND) {
-          throw e;
-        }
-        // fake async call
-        arAkahukuUtil.executeSoon (function () {
-          wrappedcb.onCacheEntryAvailable (null, false, e.result);
-        });
-      }
+      // fake async call
+      arAkahukuUtil.executeSoon (function () {
+        wrappedcb.onCacheEntryAvailable (null, false, 0);
+      });
     },
     // 
   };
 
   this.CacheStorageService = new function () {
-    if ("@mozilla.org/netwerk/cache-storage-service;1" in Cc) {
-      // Initialize for HTTP cache v2
-      this._version = 2;
-      this._cacheService
-        = Cc ["@mozilla.org/netwerk/cache-storage-service;1"]
-        .getService (Ci.nsICacheStorageService);
-      this.CallbackInterface = Ci.nsICacheEntryOpenCallback;
-    }
-    else {
-      this._version = 1;
-      this._cacheService
-        = Cc ["@mozilla.org/network/cache-service;1"]
-        .getService (Ci.nsICacheService);
-      this.CallbackInterface = Ci.nsICacheListener;
-    }
-
-    // v1: nsICacheSession nsICacheService.createSession を
-    // v2: nsICacheStorage nsICacheStorageService.diskCacheStorage
-    // のように見せかける
+    this.CallbackInterface = null;
     this.diskCacheStorage = function (loadContextInfo, lookupAppCache) {
-      if (this._version === 1) {
-        var session
-          = this._cacheService.createSession
-          ("HTTP", Ci.nsICache.STORE_ANYWHERE, Ci.nsICache.STREAM_BASED);
-        return new CacheSessionWrapper (session, loadContextInfo, lookupAppCache);
-      }
-      return this._cacheService.diskCacheStorage (loadContextInfo, lookupAppCache);
+      var session = null;
+      return new CacheSessionWrapper (session, loadContextInfo, lookupAppCache);
     };
   };
 
-  try {
-    var scope = {};
-    Cu.import ("resource://gre/modules/LoadContextInfo.jsm", scope);
-    this.LoadContextInfo = scope.LoadContextInfo;
-  }
-  catch (e) {
-    this.LoadContextInfo = { }; // dummy
-  }
+  this.LoadContextInfo = { }; // dummy
 
   this.UnMHT = new function () {
-    function getRootContentLocation_8 (url) {
-      // UnMHT 8.2.0 (UnMHTPageInfo.jsm)
-      var m = {};
-      Cu.import ("resource://unmht/modules/UnMHTCache.jsm", m);
-      var [eFileInfo, part] = m.UnMHTCache.getPart (url);
-      if (eFileInfo && part &&
-          eFileInfo.startPart &&
-          eFileInfo.startPart.contentLocation) {
-        return (part.contentLocation ||
-            eFileInfo.startPart.contentLocation);
-      }
-      return null;
-    }
-    function getRootContentLocation_6 (url) {
-      // UnMHT 6
-      var m = {};
-      Cu.import ("resource://unmht/modules/UnMHTExtractor.jsm", m);
-      var [eFileInfo, part] = m.UnMHTExtractor.getFileInfoAndPart (url);
-      if (eFileInfo && part && part.startPart) {
-        return part.startPart.contentLocation;
-      }
-      return null;
-    }
-    function getRootContentLocation_old (url) {
-      var w = Cc ["@mozilla.org/appshell/window-mediator;1"]
-        .getService (Ci.nsIWindowMediator)
-        .getMostRecentWindow ("navigator:browser");
-      var param = w.UnMHT.protocolHandler.getUnMHTURIParam (url);
-      if (param && param.original) {
-        var extractor = w.UnMHT.getExtractor (param.original);
-        if (extractor && extractor.rootFile) {
-          return extractor.rootFile.contentLocation;
-        }
-      }
-      return null;
-    }
     function getRootContentLocation_dummy (url) {
       return null;
     }
@@ -516,9 +242,6 @@ var arAkahukuCompat = new function () {
      */
     this.getRootContentLocation = function (url) {
       var candidates = [
-        getRootContentLocation_8,
-        getRootContentLocation_6,
-        getRootContentLocation_old,
         getRootContentLocation_dummy,
       ];
       var rooturl = null;
@@ -534,28 +257,6 @@ var arAkahukuCompat = new function () {
       return null;
     };
 
-    function getMHTFileURI_8 (contentLocation, requestOrigin) {
-      // UnMHT 8.2.0
-      var m = {};
-      Cu.import ("resource://unmht/modules/UnMHTScheme.jsm", m);
-      if (m.UnMHTScheme.isUnMHTURI (contentLocation)) {
-        return contentLocation;
-      }
-      Cu.import ("resource://unmht/modules/UnMHTCache.jsm", m);
-      return m.UnMHTCache.getMHTFileURI (contentLocation, requestOrigin);
-    }
-    function getMHTFileURI_old (contentLocation, requestOrigin) {
-      contentLocation = arAkahukuUtil.newURIViaNode (contentLocation, null);
-      requestOrigin = arAkahukuUtil.newURIViaNode (requestOrigin, null);
-      var w = Cc ["@mozilla.org/appshell/window-mediator;1"]
-        .getService (Ci.nsIWindowMediator)
-        .getMostRecentWindow ("navigator:browser");
-      var uri = w.UnMHT.getMHTFileURI (contentLocation, requestOrigin);
-      if (uri) {
-        return uri.spec;
-      }
-      return null;
-    }
     function getMHTFileURI_dummy (contentLocation, requestOrigin) {
       return null;
     }
@@ -569,8 +270,6 @@ var arAkahukuCompat = new function () {
      */
     this.getMHTFileURI = function (contentLocation, requestOrigin) {
       var candidates = [
-        getMHTFileURI_8,
-        getMHTFileURI_old,
         getMHTFileURI_dummy,
       ];
       for (var i = 0; i < candidates.length; i ++) {
@@ -579,7 +278,7 @@ var arAkahukuCompat = new function () {
           this.getMHTFileURI = candidates [i];
           return uri;
         }
-        catch (e) { Cu.reportError (e);
+        catch (e) {
         }
       }
       return null;
@@ -587,10 +286,6 @@ var arAkahukuCompat = new function () {
   };
 
   this.isDeadWrapper = function (object) {
-    if ("isDeadWrapper" in Cu) {
-      // requires Firefox 17?+
-      return Cu.isDeadWrapper (object);
-    }
     try {
       String (object);
       return false;

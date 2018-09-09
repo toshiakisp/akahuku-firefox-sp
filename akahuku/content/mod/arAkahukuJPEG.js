@@ -1,5 +1,5 @@
 
-/* global Components, Akahuku, arAkahukuConfig, arAkahukuUI */
+/* global Akahuku, arAkahukuConfig */
 
 /**
  * JPEG のサムネ管理
@@ -17,11 +17,6 @@ var arAkahukuJPEG = {
     arAkahukuJPEG.enableThumbnail
     = arAkahukuConfig
     .initPref ("bool", "akahuku.jpeg.thumbnail", false);
-    if (Components.classes ["@mozilla.org/binaryinputstream;1"]
-        == undefined) {
-      /* nsIBinaryInputStream が使えない場合は無効 */
-      arAkahukuJPEG.enableThumbnail = false;
-    }
     if (arAkahukuJPEG.enableThumbnail) {
       arAkahukuJPEG.enableThumbnailError
       = arAkahukuConfig

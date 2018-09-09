@@ -1,23 +1,44 @@
 
-/* global Components */
+/* global TextDecoder, PolyFillTextEncoder */
 
 /**
- * 文字コード変換器
+ * 文字コード変換器 (TextDecoder/TextEncoder版)
  */
 var arAkahukuConverter = {
-  converter : null, /* nsIScriptableUnicodeConverter  文字コード変換器 */
     
   /**
    * 初期化処理
    */
   init : function () {
-    arAkahukuConverter.converter
-    = Components.classes ["@mozilla.org/intl/scriptableunicodeconverter"]
-    .getService (Components.interfaces.nsIScriptableUnicodeConverter);
+    if (typeof TextDecoder === "undefined") {
+      throw Error('No TextDecoder()')
+    }
+    if (typeof PolyFillTextEncoder === "undefined") {
+      throw Error('No PolyFillTextEncoder()')
+    }
   },
 
   term : function () {
-    arAkahukuConverter.converter = null;
+  },
+
+  _convertFromUnicodeTo : function (text, charset) {
+    let encoder = new PolyFillTextEncoder(charset,
+      {NONSTANDARD_allowLegacyEncoding: true });
+    let uint8array = encoder.encode(text);
+    let binstr = Array.prototype.map.call(uint8array,
+      (c) => String.fromCharCode(c)
+    ).join('');
+    return binstr;
+  },
+
+  asyncConvertArrayBufToBinStr: function (buffer) {
+    return new Promise((resolve, reject) => {
+      let reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsBinaryString(new Blob([buffer],
+        {type: 'application/octet-stream'}))
+    });
   },
     
   /**
@@ -43,8 +64,7 @@ var arAkahukuConverter = {
    *         UTF-16 に変換した文字列
    */
   convertFromUTF8 : function (text) {
-    arAkahukuConverter.converter.charset = "UTF-8";
-    return arAkahukuConverter.converter.ConvertToUnicode (text);
+    return this.convert(text, 'utf-8');
   },
     
   /**
@@ -56,8 +76,12 @@ var arAkahukuConverter = {
    *         UTF-8 に変換した文字列
    */
   convertToUTF8 : function (text) {
-    arAkahukuConverter.converter.charset = "UTF-8";
-    return arAkahukuConverter.converter.ConvertFromUnicode (text);
+    let encoder = new TextEncoder('utf-8');
+    let uint8array = encoder.encode(text);
+    let utf8 = Array.prototype.map.call(uint8array,
+      (c) => String.fromCharCode(c)
+    ).join('');
+    return utf8;
   },
     
   /**
@@ -69,8 +93,7 @@ var arAkahukuConverter = {
    *         ISO-2002-JP に変換した文字列
    */
   convertToISO2022JP : function (text) {
-    arAkahukuConverter.converter.charset = "iso-2022-jp";
-    return arAkahukuConverter.converter.ConvertFromUnicode (text);
+    return this._convertFromUnicodeTo(text, "iso-2022-jp");
   },
     
   /**
@@ -82,10 +105,7 @@ var arAkahukuConverter = {
    *         UTF-16 に変換した文字列
    */
   convertFromSJIS : function (text, retcode) {
-    var sjis = text;
-        
-    arAkahukuConverter.converter.charset = "shift_jis";
-    return arAkahukuConverter.converter.ConvertToUnicode (sjis);
+    return this.convert(text, 'shift_jis');
   },
     
   /**
@@ -97,10 +117,7 @@ var arAkahukuConverter = {
    *         UTF-16 に変換した文字列
    */
   convertFromEUC : function (text, retcode) {
-    var euc = text;
-        
-    arAkahukuConverter.converter.charset = "euc-jp";
-    return arAkahukuConverter.converter.ConvertToUnicode (euc);
+    return this.convert(text, 'euc-jp');
   },
     
   /**
@@ -114,8 +131,17 @@ var arAkahukuConverter = {
    *         UTF-16 に変換した文字列
    */
   convert : function (text, charset) {
-    arAkahukuConverter.converter.charset = charset;
-    return arAkahukuConverter.converter.ConvertToUnicode (text);
+    // Convert to Uint8Array with treating text as binary string
+    let bytes = this.convertToUint8Array(text);
+    return (new TextDecoder(charset)).decode(bytes);
+  },
+
+  convertToUint8Array: function (binstr) {
+    let bytes = new Uint8Array(binstr.length);
+    Array.prototype.forEach.call(binstr, (c, i) => {
+      bytes[i] = c.charCodeAt(0);
+    });
+    return bytes;
   },
     
   /**
@@ -132,8 +158,7 @@ var arAkahukuConverter = {
   convertToSJIS : function (text, retcode) {
     var utf16 = text;
         
-    arAkahukuConverter.converter.charset = "shift_jis";
-    var sjis = arAkahukuConverter.converter.ConvertFromUnicode (utf16);
+    var sjis = this._convertFromUnicodeTo(utf16, "shift_jis");
     var sjis2 = "";
         
     var utf16_i = 0;
@@ -225,8 +250,7 @@ var arAkahukuConverter = {
     var utf16 = text;
     retcode --;
         
-    arAkahukuConverter.converter.charset = "shift_jis";
-    var sjis = arAkahukuConverter.converter.ConvertFromUnicode (utf16);
+    var sjis = this._convertFromUnicodeTo(utf16, "shift_jis");
         
     var length = sjis.length;
         
@@ -309,8 +333,7 @@ var arAkahukuConverter = {
   getSubstrForSJISByteLength : function (text, bytelen) {
     var utf16 = text.substr (0, bytelen);
 
-    arAkahukuConverter.converter.charset = "shift_jis";
-    var sjis = arAkahukuConverter.converter.ConvertFromUnicode (utf16);
+    var sjis = this._convertFromUnicodeTo(utf16, "shift_jis");
 
     var utf16_i = 0;
     var sjis_i = 0;

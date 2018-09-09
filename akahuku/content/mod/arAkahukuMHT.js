@@ -1,5 +1,5 @@
 
-/* global btoa, atob, Components,
+/* global btoa, atob, KeyEvent,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
  *   arAkahukuDOM, arAkahukuFile, arAkahukuLink, AkahukuFileUtil,
  *   arAkahukuP2P, arAkahukuSound, arAkahukuThread, arAkahukuCompat,
@@ -7,148 +7,7 @@
  */
 
 /**
- * リダイレクトページのキャッシュ書き込み
- *   Inherits From: nsICacheEntryOpenCallback
- */
-function arAkahukuMHTRedirectCacheWriter () {
-}
-arAkahukuMHTRedirectCacheWriter.prototype = {
-  body : "",      /* String  本体 */
-    
-  /**
-   * キャッシュエントリが使用可能になったイベント
-   *   nsICacheEntryOpenCallback.onCacheEntryAvailable
-   * 差分位置を取得する
-   *
-   * @param  nsICacheEntry descriptor
-   *         キャッシュの情報
-   * @param  boolean isNew
-   * @param  nsIApplicationCache appCache
-   * @param  nsresult status
-   */
-  onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor && Components.isSuccessCode (status)) {
-      /* キャッシュの書き込み */
-            
-      descriptor.setExpirationTime ((new Date ()).getTime () / 1000
-                                    + 10 * 24 * 60 * 60);
-            
-      var ostream = descriptor.openOutputStream (0);
-      ostream.write (this.body, this.body.length);
-      ostream.flush ();
-      ostream.close ();
-            
-      descriptor.markValid ();
-            
-      var responseHead
-      = "HTTP/1.1 200 OK\r\n"
-      + "Date: " + (new Date ()).toString () + "\r\n"
-      + "Server: unknown\r\n"
-      + "Content-Type: text/html; charset=Shift_JIS\r\n";
-      var charset = "Shift_JIS";
-            
-      descriptor.setMetaDataElement ("request-method", "GET");
-      descriptor.setMetaDataElement ("response-head",
-                                     responseHead);
-      descriptor.setMetaDataElement ("charset", charset);
-            
-      descriptor.close ();
-    }
-    else if (Akahuku.debug.enabled) {
-      var errorStatus = arAkahukuUtil.resultCodeToString (status);
-      Akahuku.debug.warn
-        ("arAkahukuMHTRedirectCacheWriter.onCacheEntryAvailable: "
-         + "failed with " + errorStatus);
-    }
-  },
-  onCacheEntryCheck : function (entry, appCache) {
-    try {
-      entry.dataSize;
-    }
-    catch (e) {
-      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
-      }
-      throw e;
-    }
-    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
-  },
-  mainThreadOnly : true,
-};
-/**
- * P2P キャッシュの情報
- *   Inherits From: nsICacheEntryDescriptor
- *
- * @param  nsIFile targetFile
- *         P2P のキャッシュファイル
- */
-function arAkahukuP2PCacheEntryDescriptor (targetFile, ownerDocument) {
-  this.targetFile = targetFile;
-  this.fstream = null;
-  this.dataSize = this.targetFile.fileSize;
-  this.ownerDocument = ownerDocument;
-}
-arAkahukuP2PCacheEntryDescriptor.prototype = {
-  targetFile : null,  /* nsIFile  P2P のキャッシュファイル */
-  fstream : null,     /* nsIFileInputStream  キャッシュファイルの
-                       *   入力ストリーム */
-    
-  dataSize : 0,       /* Number  キャッシュファイルのサイズ */
-    
-  /* 他に渡すわけではないので QueryInterface は要らない */
-    
-  /**
-   * 入力ストリームを開く
-   *   nsICacheEntryDescriptor.openInputStream
-   *
-   * @param  Number offset
-   *         ファイルのオフセット
-   *         無視する
-   * @return nsIFileInputStream
-   *         キャッシュファイルの入力ストリーム
-   */
-  openInputStream : function (offset) {
-    this.fstream
-    = arAkahukuFile.createFileInputStream
-    (this.targetFile, 0x01, 292/*0o444*/, 0,
-     this.ownerDocument.defaultView);
-        
-    return this.fstream;
-  },
-    
-  /**
-   * メタデータを返す
-   * ただしエラー回避のためなので何も返さない
-   *
-   * @param  String name
-   *         メタデータの名前
-   * @return String
-   *         メタデータ
-   */
-  getMetaDataElement : function (name) {
-    return "";
-  },
-    
-  /**
-   * 入力ストリームを閉じる
-   *   nsICacheEntryDescriptor.close
-   */
-  close : function () {
-    try {
-      if (this.fstream)
-        this.fstream.close ();
-    }
-    catch (e) {
-      // 既に close 済みの場合など
-    }
-    this.targetFile = null;
-    this.ownerDocument = null;
-  }
-};
-/**
  * mht ファイルデータ
- *   Inherits From: nsICacheEntryOpenCallback
- *                  nsIStreamListener, nsIRequestObserver
  */
 function arAkahukuMHTFileData () {
   this.status = arAkahukuMHT.FILE_STATUS_NA_CACHE;
@@ -182,7 +41,7 @@ arAkahukuMHTFileData.prototype = {
                           *   ヘッダ+ファイル */
     
   useNetwork : true,    /* Boolean  ネットワークからも取得するか */
-  channel : null,       /* nsIChannel  ネットワーク取得用チャネル */
+  controller: null,     /* AbortController ネットワーク取得時の中断用 */
   delay : 0,            /* Number  ネットワーク取得のディレイ */
   converting : false,   /* Boolean  キャッシュ変換中 */
 
@@ -217,28 +76,6 @@ arAkahukuMHTFileData.prototype = {
   },
     
   /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsICacheOpenCallback
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsISupportsWeakReference)
-        || iid.equals (Components.interfaces.nsIStreamListener)
-        || iid.equals (Components.interfaces.nsIRequestObserver)
-        || iid.equals (arAkahukuCompat.CacheStorageService.CallbackInterface)) {
-      return this;
-    }
-        
-    throw Components.results.NS_NOINTERFACE;
-  },
-    
-  /**
    * ファイルの取得を開始する
    *
    * @param  String location
@@ -248,45 +85,11 @@ arAkahukuMHTFileData.prototype = {
    *         避難所用
    */
   getFile : function (location, targetDocument) {
-    var window = this.ownerDocument.defaultView;
-    var type = Components.interfaces.nsIContentPolicy.TYPE_IMAGE;
-    switch (this.node.nodeName.toLowerCase ()) {
-      case "source":
-        if (this.node.parentNode &&
-            this.node.parentNode.nodeName.toLowerCase () == "picture") {
-          break; // TYPE_IMAGE
-        }
-      case "video":
-      case "audio":
-        type = Components.interfaces.nsIContentPolicy.TYPE_MEDIA;
-        break;
-    }
     if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
-      window.setTimeout
-      ((function (file, location, type) {
-          return function () {
-            file.channel 
-            = arAkahukuUtil.newChannel ({
-              uri: location,
-              loadingNode: file.ownerDocument,
-              contentPolicyType: type,
-            });
-            arAkahukuUtil.setChannelContext (file.channel, file.ownerDocument);
-
-            try {
-              file.channel.asyncOpen (file, null);
-            }
-            catch (e) {
-            
-              /* 状態を取得不可に設定する */
-              file.channel = null;
-              file.status = arAkahukuMHT.FILE_STATUS_NG;
-              file.statusMessage = "Error (net):" + e.message;
-              file.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
-            }
-          };
-        })(this, location, type), this.delay);
-            
+      var window = this.ownerDocument.defaultView;
+      window.setTimeout(() => {
+        this.fetch(location);
+      }, this.delay);
       return;
     }
     
@@ -307,169 +110,99 @@ arAkahukuMHTFileData.prototype = {
             = "attachment; filename=" + this.imageLocation;
           this.anchor_status
             = arAkahukuMHT.FILE_ANCHOR_STATUS_HTML;
-          
-          this.getFile (this.currentLocation, targetDocument);
-                    
-          return;
+          location = this.currentLocation;
         }
-      }
-    }
-    
-    var uinfo = null;
-    var isP2P = false;
-    
-    if (arAkahukuP2P.enable) {
-      var uinfo = arAkahukuImageURL.parse (location, false, true);
-      if (!(uinfo && uinfo.isImage)) {
-        uinfo = null;
-      }
-    }
-        
-    if (uinfo) {
-      /* P2P の場合は P2P のキャッシュから取得する */
-      if (uinfo.leafName.length == 17) {
-        /* 末尾にランダム文字列が付いている場合、取り除く */
-        uinfo.leafName
-        = uinfo.leafName.substr (0, uinfo.leafName.length - 4);
-      }
-            
-      var targetFileName
-      = AkahukuFileUtil.Path
-      .join (arAkahukuP2P.cacheBase,
-             uinfo.server, uinfo.dir, uinfo.type, uinfo.leafNameExt);
-            
-      var targetFile = arAkahukuFile.initFile (targetFileName);
-      if (targetFile.exists ()) {
-        if (uinfo.isRedirect) {
-          location
-            = location.replace (/(red|d)\/[0-9]+\.[a-z]+/,
-                                "src/" + this.redName);
-          this.imageLocation = location;
-          this.currentLocation = location;
-          this.disposition
-            = "attachment; filename=" + this.imageLocation;
-          this.anchor_status
-            = arAkahukuMHT.FILE_ANCHOR_STATUS_HTML;
-        }
-        var descriptor
-          = new arAkahukuP2PCacheEntryDescriptor (targetFile, this.ownerDocument);
-        this.onCacheEntryAvailable (descriptor, false, null, 0);
-        return;
-      }
-
-      if (!uinfo.isRedirect) {
-        if (!this.useNetwork) {
-          /* 状態を取得不可に設定する */
-          this.status = arAkahukuMHT.FILE_STATUS_NG;
-          this.statusMessage = "Not found in P2P cache";
-          this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
-        }
-        else {
-          this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-          this.getFile (location, targetDocument);
-        }
-                
-        return;
       }
     }
     
     try {
       location = arAkahukuUtil.tryConvertIDNHostToAscii (location);
-      
-      Akahuku.Cache.asyncOpenCacheToRead
-        ({url: location, triggeringNode: targetDocument}, this);
+      this.fetch(location);
     }
-    catch (e) { Akahuku.debug.exception (e);
-      /* キャッシュが存在しなかった場合 */
-            
-      if (!this.useNetwork) {
-        this.node.src = "";
-        this.status = arAkahukuMHT.FILE_STATUS_NG;
-        this.statusMessage = "Error (cache):" + e.message;
+    catch (e) {
+      Akahuku.debug.exception (e);
+      this.node.src = "";
+      this.status = arAkahukuMHT.FILE_STATUS_NG;
+      if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
+        this.statusMessage = "Error (net):" + e.message;
       }
       else {
-        this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-        this.getFile (this.location, null);
+        this.statusMessage = "Error (cache):" + e.message;
       }
     }
   },
 
-  asyncGetFileData : function (source, byteSize) {
-    var fileData = this;
-    var url = (this.imageLocation ? this.imageLocation : this.location);
-    arAkahukuUtil.asyncFetchBinary (source, byteSize, function (binstream, result) {
-      if (Components.isSuccessCode (result)) {
-        try {
-          var bindata = binstream.readBytes (byteSize);
-          binstream.close ();
-          fileData.originalContent = bindata;
-          fileData.content = btoa (bindata);
+  fetch: function (location) {
+    let window = this.ownerDocument.defaultView;
+    this.controller = new window.AbortController();
+    let fetchInit = {
+      redirect: 'follow',
+      signal: this.controller.signal,
+    };
+    if (this.status != arAkahukuMHT.FILE_STATUS_NA_NET) {
+      // Search cache(fresh or stale) in same origin, or error
+      fetchInit.cache = 'only-if-cached';
+      fetchInit.mode = 'same-origin';
+      fetchInit.credentials = 'same-origin';
+    }
+    else {
+      // Search cache(fresh or stale) again, or request via network
+      fetchInit.cache = 'force-cache';
+    }
+
+    let retryFetch = new Error('break promise chain to retry');
+
+    return window.fetch(location, fetchInit)
+      .then((resp) => {
+        this.originalContent = "";
+        this.content = "";
+        if (!resp.ok) {
+          throw new Error(resp.statusText || resp.status);
         }
-        catch (e) { Akahuku.debug.exception (e);
-          result = e.result;
+        return resp.arrayBuffer();
+      }, (rejected) => {
+        if (this.status != arAkahukuMHT.FILE_STATUS_NA_NET) {
+          if (this.useNetwork) {
+            this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
+            throw retryFetch;
+          }
+          throw new Error('Not found');
         }
-      }
-      if (!Components.isSuccessCode (result)) {
-        if (Akahuku.debug.enabled) {
-          Akahuku.debug.warn ("arAkahukuMHTFileData.asyncGetFileData resulted in " +
-            arAkahukuUtil.resultCodeToString (result) + " for " + url);
+        throw rejected;
+      })
+      .then((buf) => {
+        return arAkahukuConverter.asyncConvertArrayBufToBinStr(buf);
+      })
+      .then((binstr) => {
+        this.originalContent = binstr;
+        this.content = btoa(binstr);
+        let url = (this.imageLocation ? this.imageLocation : this.location);
+        this.contentType = arAkahukuUtil.getMIMETypeFromURI(url);
+        this.encoding = 'base64';
+        this.onGetFileData ();
+      })
+      .catch((e) => {
+        if (e === retryFetch) {
+          return this.fetch(location);
         }
-        if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
-          && fileData.useNetwork) {
-          fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-          fileData.getFile (fileData.location, null);
-          return;
+        // 状態を取得不可に設定する
+        if (this.node && 'src' in this.node) {
+          this.node.src = '';
         }
-        fileData.originalContent = "";
-        fileData.content = "";
-        if (fileData.status == arAkahukuMHT.FILE_STATUS_NA_NET)
-          fileData.statusMessage = "Error (net):";
-        else
-          fileData.statusMessage = "Error (cache):";
-        fileData.statusMessage += arAkahukuUtil.resultCodeToString (result);
-      }
-      fileData.onGetFileData ();
-    });
+        this.controller = null;
+        this.originalContent = "";
+        this.status = arAkahukuMHT.FILE_STATUS_NG;
+        if (this.status == arAkahukuMHT.FILE_STATUS_NA_NET) {
+          this.statusMessage = "Error (net):" + e.message;
+        }
+        else {
+          this.statusMessage = "Error (cache):" + e.message;
+        }
+        this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
+        this.onGetFileData();
+      });
   },
 
-  syncGetFileData : function (source, byteSize) {
-    var fileData = this;
-    var url = (this.imageLocation ? this.imageLocation : this.location);
-    try {
-      var binstream
-        = Components.classes ["@mozilla.org/binaryinputstream;1"]
-        .createInstance (Components.interfaces.nsIBinaryInputStream);
-      binstream.setInputStream (source);
-      var bindata = binstream.readBytes (byteSize);
-      binstream.close ();
-      try {
-        source.close ();
-      }
-      catch (e) {
-      }
-      fileData.originalContent = bindata;
-      fileData.content = btoa (bindata);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      Akahuku.debug.warn ("arAkahukuMHTFileData.syncGetFileData resulted in " +
-        arAkahukuUtil.resultCodeToString (e.result) + " for " + url);
-      if (fileData.status != arAkahukuMHT.FILE_STATUS_NA_NET
-        && fileData.useNetwork) {
-        fileData.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-        fileData.getFile (fileData.location, null);
-        return;
-      }
-      fileData.originalContent = "";
-      fileData.content = "";
-      if (fileData.status == arAkahukuMHT.FILE_STATUS_NA_NET)
-        fileData.statusMessage = "Error (net):";
-      else
-        fileData.statusMessage = "Error (cache):";
-      fileData.statusMessage += arAkahukuUtil.resultCodeToString (e.result);
-    }
-    fileData.onGetFileData ();
-  },
-    
   /**
    * ファイルを取得したイベント
    */
@@ -570,326 +303,6 @@ arAkahukuMHTFileData.prototype = {
       }
     }
   },
-    
-  /**
-   * ファイル情報を取得する
-   *
-   * @param  nsICacheEntry entry
-   *         キャッシュの情報
-   */
-  asyncGetFileDataFromCacheEntry : function (entry) {
-    var url = (this.imageLocation ? this.imageLocation : this.location);
-    this.contentType = arAkahukuUtil.getMIMETypeFromURI (url);
-    this.encoding = "base64";
-
-    var head = "";
-    try {
-      head = entry.getMetaDataElement ("response-head");
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-
-    if (head.match (/content-encoding[ \r\n\t]*:[ \r\n\t]*(compress|deflate|gzip|x-compress|x-gzip)/i)) {
-      var encoding = (RegExp.$1).toLowerCase ();
-
-      try {
-        var converter
-          = Components.classes
-          ["@mozilla.org/streamconv;1?from="
-           + encoding + "&to=uncompressed"]
-          .createInstance
-          (Components.interfaces.nsIStreamConverter);
-        converter.asyncConvertData (encoding, "uncompressed", this, null);
-
-        var istream = entry.openInputStream (0);
-        if (istream.isNonBlocking ()) { // cache v2
-          var pump
-            = Components.classes
-            ["@mozilla.org/network/input-stream-pump;1"]
-            .createInstance (Components.interfaces.nsIInputStreamPump);
-          pump.init (istream, -1, -1, 0, 0, true);
-          pump.asyncRead (converter, null);
-          this.converting = true;
-          return;
-        }
-        var listener
-          = converter.QueryInterface
-          (Components.interfaces.nsIStreamListener);
-        listener.onStartRequest (null, null);
-        listener.onDataAvailable (null, null, istream, 0, entry.dataSize);
-        istream.close ();
-        this.converting = true;
-        listener.onStopRequest (null, null, 0);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-        this.originalContent = "";
-        this.content = "";
-        this.statusMessage = "Error in deflate (cache):" + e.message;
-        this.onGetFileData ();
-      }
-      return;
-    }
-
-    var source = entry.openInputStream (0);
-    if (entry instanceof arAkahukuP2PCacheEntryDescriptor) {
-      // asyncGetFileData (arAkahukuUtil.asyncFetch) で
-      // ファイルを読み込むには nsIInputStream は問題ありのため
-      source = entry.targetFile;
-    }
-    else if ("nsICacheEntryDescriptor" in Components.interfaces &&
-        entry instanceof Components.interfaces.nsICacheEntryDescriptor) {
-      // cache v1
-      this.syncGetFileData (source, entry.dataSize);
-      return;
-    }
-    this.asyncGetFileData (source, entry.dataSize);
-  },
-
-  /**
-   * キャッシュエントリが使用可能になったイベント
-   *   nsICacheEntryOpenCallback.onCacheEntryAvailable
-   *
-   * @param  nsICacheEntry entry
-   *         キャッシュの情報
-   * @param  boolean isNew
-   * @param  nsIApplicationCache appCache
-   * @param  nsresult status
-   */
-  onCacheEntryAvailable : function (entry, isNew, appCache, status) {
-    var httpStatus = 200;
-    var httpStatusText = "";
-    try {
-      var text = (entry ? entry.getMetaDataElement ("response-head") : null);
-      if (text && text.match (/HTTP\/[0-9]\.[0-9] ([0-9]+) ([^\r\n]+)/)) {
-        httpStatus = parseInt (RegExp.$1);
-        httpStatusText = RegExp.$1 + " " + RegExp.$2;
-      }
-      
-      if (text && text.match (/Location:[ \t]*([^\r\n]+)/)) {
-        /* リダイレクト */
-        var location = RegExp.$1;
-        this.status = arAkahukuMHT.FILE_STATUS_NA_CACHE;
-        this.getFile (location, null);
-        return;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-    
-    try {
-    if (this.type == arAkahukuMHT.FILE_TYPE_IMG) {
-      if (entry && httpStatus >= 200 && httpStatus <= 299) {
-        /* アクセス権が取得できた場合 */
-        
-        this.asyncGetFileDataFromCacheEntry (entry);
-      }
-      else {
-        /* アクセス権が取得できなかった場合 */
-        
-        if (!this.useNetwork) {
-          /* 状態を取得不可に設定する */
-          this.node.src = "";
-          this.status = arAkahukuMHT.FILE_STATUS_NG;
-          if (entry) {
-            this.statusMessage = "Found in cache but " + httpStatusText;
-          }
-          else {
-            this.statusMessage = "Not found in cache";
-            if (!Components.isSuccessCode (status)
-                && status != Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
-              this.statusMessage += ":" + arAkahukuUtil.resultCodeToString (status);
-            }
-          }
-        }
-        else {
-          this.status = arAkahukuMHT.FILE_STATUS_NA_NET;
-          this.getFile (this.location, null);
-        }
-      }
-    }
-    else {
-      if (entry && httpStatus >= 200 && httpStatus <= 299) {
-        /* アクセス権が取得できた場合 */
-        if (this.anchor_status
-            == arAkahukuMHT.FILE_ANCHOR_STATUS_NA) {
-                    
-          /* a 要素のリンク対象の場合 */
-                    
-          this.asyncGetFileDataFromCacheEntry (entry);
-        }
-        else if (this.anchor_status
-                 == arAkahukuMHT.FILE_ANCHOR_STATUS_HTML) {
-          /* リフレッシュ先の場合 */
-                    
-          this.asyncGetFileDataFromCacheEntry (entry);
-        }
-      }
-      else {
-        /* アクセス権が取得できなかった場合
-         * もしくはファイルが消えていた場合 */
-                
-        if (this.status == arAkahukuMHT.FILE_STATUS_NA_CACHE) {
-          /* バックアップキャッシュから取得する */
-          this.status = arAkahukuMHT.FILE_STATUS_NA_CACHE_BACKUP;
-          
-          try {
-            Akahuku.Cache.asyncOpenCacheToRead
-              ({url: this.location + ".backup",
-                triggeringNode: this.ownerDocument},
-               this);
-          }
-          catch (e) { Akahuku.debug.exception (e);
-            this.status = arAkahukuMHT.FILE_STATUS_NG;
-            this.statusMessage = "Error (cache):" + e.message;
-            this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
-          }
-        }
-        else {
-          /* 状態を取得不可に設定する */
-          /* リンクの場合にはキャッシュのみなので即 NG */
-          this.status = arAkahukuMHT.FILE_STATUS_NG;
-          if (entry) {
-            this.statusMessage = "Found in cache but " + httpStatusText;
-          }
-          else {
-            this.statusMessage = "Not found in cache";
-            if (!Components.isSuccessCode (status)
-                && status != Components.results.NS_ERROR_CACHE_KEY_NOT_FOUND) {
-              this.statusMessage += ":" + arAkahukuUtil.resultCodeToString (status);
-            }
-          }
-          this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
-        }
-      }
-    }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      this.status = arAkahukuMHT.FILE_STATUS_NG;
-      this.statusMessage = "Error (cache):" + e.message;
-      if (this.type != arAkahukuMHT.FILE_TYPE_IMG) {
-        this.anchor_status = arAkahukuMHT.FILE_ANCHOR_STATUS_NG;
-      }
-    }
-        
-    if (entry) {
-      entry.close ();
-    }
-  },
-  onCacheEntryCheck : function (entry, appCache) {
-    try {
-      entry.dataSize;
-    }
-    catch (e) {
-      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
-        return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
-      }
-      throw e;
-    }
-    return arAkahukuCompat.CacheEntryOpenCallback.ENTRY_WANTED;
-  },
-  mainThreadOnly : true,
-    
-  /**
-   * リクエスト開始のイベント
-   *   nsIRequestObserver.onStartRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   */
-  onStartRequest : function (request, context) {
-    this.originalContent = "";
-    this.content = "";
-  },
-    
-  /**
-   * リクエスト終了のイベント
-   *   nsIRequestObserver.onStopRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  Number statusCode
-   *         終了コード
-   */
-  onStopRequest : function (request, context, statusCode) {
-    if (!Components.isSuccessCode (statusCode)) {
-      // cancel された場合
-      this.channel = null;
-      this.originalContent = "";
-      if (request instanceof Components.interfaces.nsIHttpChannel)
-        this.statusMessage = "Error (net):";
-      else
-        this.statusMessage = "Error (cache):";
-      this.statusMessage += arAkahukuUtil.resultCodeToString (statusCode);
-      this.onGetFileData (); // エラー処理のため
-      return;
-    }
-    if (this.converting) {
-      this.content = btoa (this.originalContent);
-      this.onGetFileData ();
-    }
-    else {
-      var httpStatus = 0;
-      try {
-        httpStatus
-          = request.QueryInterface
-          (Components.interfaces.nsIHttpChannel)
-          .responseStatus;
-      }
-      catch (e) {
-      }
-      
-      if (httpStatus >= 400) {
-        /* エラーページ */
-        this.originalContent = "";
-        this.statusMessage = "";
-        switch (this.status) {
-          case arAkahukuMHT.FILE_STATUS_NA_NET:
-            this.statusMessage = "Error (net): ";
-            break;
-          case arAkahukuMHT.FILE_STATUS_NA_CACHE:
-          case arAkahukuMHT.FILE_STATUS_NA_CACHE_BACKUP:
-            this.statusMessage = "Found in cache but ";
-            break;
-        }
-        this.statusMessage += httpStatus;
-      }
-            
-      this.channel = null;
-      this.content = btoa (this.originalContent);
-            
-      var url = (this.imageLocation ? this.imageLocation : this.location);
-      this.contentType = arAkahukuUtil.getMIMETypeFromURI (url);
-      this.encoding = "base64";
-      this.onGetFileData ();
-    }
-  },
-    
-  /**
-   * データ到着のイベント
-   *   nsIStreamListener.onDataAvailable
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  nsIInputStream inputStream
-   *         データを取得するストリーム
-   * @param  PRUint32 offset
-   *         データの位置
-   * @param  PRUint32 count 
-   *         データの長さ
-   */
-  onDataAvailable : function (request, context, inputStream, offset, count) {
-    var bstream
-    = Components.classes ["@mozilla.org/binaryinputstream;1"]
-    .createInstance (Components.interfaces.nsIBinaryInputStream);
-    bstream.setInputStream (inputStream);
-    this.originalContent += bstream.readBytes (count);
-  }
 };
 /**
  * mht ファイル作成管理データ
@@ -905,8 +318,9 @@ arAkahukuMHTParam.prototype = {
   checkTimerID : null,   /* Number  ファイルチェックのタイマー ID */
   files : null,          /* Array  mht ファイルデータ
                           *   [arAkahukuMHTFileData, ...] */
-  file : null,           /* nsIFile  保存先のファイル */
-  tmpFile : null,        /* nsIFile  一時保存先のファイル */
+  filename : '',         /* String  保存先 */
+  openDialog: true,      /* Boolean  保存時にダイアログを開くか */
+  overwrite: true,       /* Boolean  上書きするか */
   targetDocument : null, /* HTMLDocument  対象のドキュメント */
   cloneDocument : null,  /* HTMLDocument  処理中のドキュメント */
     
@@ -929,7 +343,7 @@ arAkahukuMHTParam.prototype = {
     }
     this.files = null;
         
-    this.file = null;
+    this.filename = '';
     this.targetDocument = null;
     this.cloneDocument = null;
     this.isBusy = false;
@@ -1129,15 +543,6 @@ var arAkahukuMHT = {
       }
     }
   },
-
-  attachToWindow : function (window) {
-    window.addEventListener
-    ("keydown", arAkahukuMHT.onKeyDown, true);
-  },
-  dettachFromWindow : function (window) {
-    window.removeEventListener
-    ("keydown", arAkahukuMHT.onKeyDown, true);
-  },
     
   /**
    * キーが押されたイベント
@@ -1171,10 +576,6 @@ var arAkahukuMHT = {
     arAkahukuMHT.enable
     = arAkahukuConfig
     .initPref ("bool", "akahuku.savemht", true);
-    if (Components.classes ["@mozilla.org/binaryinputstream;1"]
-        == undefined) {
-      arAkahukuMHT.enable = false;
-    }
     if (arAkahukuMHT.enable) {
       arAkahukuMHT.base
       = arAkahukuConfig
@@ -1288,7 +689,7 @@ var arAkahukuMHT = {
         value
           = unescape (value);
         arAkahukuMHT.shortcutKeycode
-          = Components.interfaces.nsIDOMKeyEvent ["DOM_" + value];
+          = KeyEvent ["DOM_" + value];
                 
         arAkahukuMHT.shortcutModifiersAlt
           = arAkahukuConfig
@@ -1524,7 +925,8 @@ var arAkahukuMHT = {
       "form",   "akahuku_postform",
       "div",    "akahuku_floatpostform_container",
       "div",    "akahuku_thread_operator",
-      "small",  "akahuku_postform_opener_appendix_up"
+      "small",  "akahuku_postform_opener_appendix_up",
+      "link",   "akahuku_thread_favicon",
       ];
     
     for (i = 0; i < remove_element.length; i += 2) {
@@ -2369,7 +1771,10 @@ var arAkahukuMHT = {
       }
     }
     else if (fileData.encoding == "8bit") {
-      fileData.cache += fileData.content;
+      // Required for Blob() not to translate encoding futher
+      let binstr = fileData.cache + fileData.content + '\r\n';
+      fileData.cache = arAkahukuConverter.convertToUint8Array(binstr);
+      return;
     }
         
     fileData.cache
@@ -2435,9 +1840,17 @@ var arAkahukuMHT = {
         (targetDocument, param.cloneDocument);
             
       /* base 要素の値を img 要素、a 要素に適用する */
-      var baseDir
-        = Components.classes ["@mozilla.org/network/standard-url;1"]
-        .createInstance (Components.interfaces.nsIURI);
+      var baseDir = {
+        spec: undefined,
+        resolve: function (url) {
+          try {
+            return (new URL(url, this.spec)).href;
+          }
+          catch (e) {
+            return url;
+          }
+        },
+      };
       baseDir.spec = targetDocument.location.href;
             
       var href;
@@ -3102,9 +2515,7 @@ var arAkahukuMHT = {
         .replace (/ \(.*\)$/, "");
             
       /* ファイルに書き込む */
-      var fstream = arAkahukuFile.createFileOutputStream
-        (param.tmpFile, 0x02 | 0x08 | 0x20, 420/*0o644*/, 0,
-         targetWindow);
+      var blobParts = [];
             
       var data = "";
             
@@ -3118,7 +2529,7 @@ var arAkahukuMHT = {
         + "\tboundary=\"" + boundary + "\";\r\n"
         + "\ttype=\"text/html\"\r\n"
         + "\r\n";
-      fstream.write (data, data.length);
+      blobParts.push(data);
             
       var ignoreFiles = new Array ();
             
@@ -3132,13 +2543,12 @@ var arAkahukuMHT = {
                     
           /* 各ファイルのヘッダ */
           data = "--" + boundary + "\r\n";
-          fstream.write (data, data.length);
+          blobParts.push(data);
                     
           if (param.files [i].cache == "") {
             arAkahukuMHT.createFileCache (param.files [i]);
           }
-          fstream.write (param.files [i].cache,
-                         param.files [i].cache.length);
+          blobParts.push(param.files [i].cache);
         }
         else {
           /* 取得できなかったファイルをリストアップ */
@@ -3150,26 +2560,31 @@ var arAkahukuMHT = {
             
       /* 最後の boundary */
       data = "--" + boundary + "--\r\n";
-      fstream.write (data, data.length);
-      fstream.close ();
-            
-      if (Akahuku.useFrameScript) {
-        // e10s hack: 親プロセスの処理を少し待たないと
-        // 続く moveTo が NS_ERROR_FILE_IS_LOCKED を投げる
-        // (100msが妥当な保証は無し)
-        arAkahukuUtil.wait (100);
+      blobParts.push(data);
+
+      if (param.openDialog) {
+        let tmpBlob = new Blob(blobParts, {type: 'message/rfc822'});
+        let blobURL = targetWindow.URL.createObjectURL(tmpBlob);
+        let anchor = targetDocument.createElement('a');
+        anchor.style.display = 'none';
+        anchor.download = param.filename;
+        anchor.href = blobURL;
+        targetDocument.body.appendChild(anchor);
+        anchor.click();
+        targetDocument.body.removeChild(anchor);
+        targetWindow.setTimeout(() => {
+          targetWindow.URL.revokeObjectURL(blobURL);
+        }, 100);
       }
-      try {
-        arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
+      else {
+        // TODO: Command to background script for not opening dialog
+        // to do like download.download({
+        //   filename: param.filename,
+        //   conflictAction: (param.overwrite ? 'overwrite' : 'uniquify'),
+        // })
+        throw new Error('NotYetImplemented');
       }
-      catch (e) {
-        if (e.result !== Components.results.NS_ERROR_FILE_IS_LOCKED) {
-          throw e;
-        }
-        // ロックが解けるのを少し待ってリトライ
-        arAkahukuUtil.wait (300);
-        arAkahukuFile.moveTo (param.tmpFile, null, param.file.leafName);
-      }
+      param.lastFilename = param.filename;
             
       /* 完了のメッセージを表示する */
       var text = "\u4FDD\u5B58\u306B\u6210\u529F\u3057\u307E\u3057\u305F";
@@ -3269,12 +2684,8 @@ var arAkahukuMHT = {
           if (!dup) {
             var uri = ignoreFiles [i].location;
             if (arAkahukuLink.enableAutoLink) {
-              var anchor = targetDocument.createElement ("a");
-              anchor.className = "akahuku_generated_link";
-              anchor.setAttribute ("dummyhref",
-                                   uri);
-              arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-              arAkahukuLink.updateAutoLinkVisitedCore (anchor);
+              var anchor
+                = arAkahukuLink.createAutolinkAnchor(targetDocument, uri);
               anchor.appendChild (targetDocument.createTextNode
                                   (uri));
               div.appendChild (anchor);
@@ -3437,9 +2848,8 @@ var arAkahukuMHT = {
             param.files [i].content = "";
             param.files [i].originalContent = "";
             // 通信中ならキャンセルする
-            if (param.files [i].channel) {
-              param.files [i].channel.cancel 
-                (Components.results.NS_BINDING_ABORTED);
+            if (param.files [i].controller) {
+              param.files [i].controller.abort();
             }
           }
           catch (e) { Akahuku.debug.exception (e);
@@ -3531,213 +2941,32 @@ var arAkahukuMHT = {
     if (dirname_base) {
       dirname_base
         = AkahukuFileUtil.Path.join (arAkahukuMHT.base, dirname_base);
-            
-      var dir = arAkahukuFile.initFile (dirname_base);
-      if (!dir) {
-        /* ベースのディレクトリが不正 */
-        throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
-      }
-            
-      if (!dir.exists ()) {
-        arAkahukuFile.createDirectory (dir.path);
-      }
     }
     else {
       dirname_base = arAkahukuMHT.base;
     }
     
-    if (!saveas && arAkahukuMHT.enableAuto) {
-      /* ファイル選択を省略しているので、デフォルトのディレクトリ以下に作成する */
-            
-      try {
-        var file = arAkahukuFile
-          .initFile (AkahukuFileUtil.Path.join (dirname_base, filename));
-        if (!file) {
-          /* ベースのディレクトリが不正 */
-          throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
-        }
-        
-        if (!file.exists ()) {
-          if (!arAkahukuMHT.enableAutoUnique
-              && param.lastFilename) {
-            /* 上書きする設定の場合で前のファイル名が違う場合、削除する */
-            var file2
-            = arAkahukuFile.initFile
-            (AkahukuFileUtil.Path.join (dirname_base, param.lastFilename));
-            if (!file2) {
-              /* ベースのディレクトリが不正 */
-              throw "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059";
-            }
-                        
-            if (file2.exists ()) {
-              try {
-                file2.remove (false);
-              }
-              catch (e) { Akahuku.debug.exception (e);
-                /* 何故か存在しない事がある */
-              }
-            }
-          }
-        }
-        else {
-          if (arAkahukuMHT.enableAutoUnique) {
-            file = arAkahukuFile
-              .createUnique (file.path, 0x00, 420/*0o644*/);
-          }
-        }
-        param.lastFilename = filename;
-      }
-      catch (e) {
-        /* エラーメッセージを表示する */
-        var span;
-        span = targetDocument.createElement ("span");
-        span.id ="akahuku_savemht_error";
-        span.appendChild
-        (targetDocument.createTextNode
-         ("\u4FDD\u5B58\u306B\u5931\u6557\u3057\u307E\u3057\u305F"));
-        arAkahukuDOM.setText (progress, null);
-        progress.appendChild (span);
-        if (progress2) {
-          progress2.appendChild (span.cloneNode (true));
-        }
-                
-        var s = "\u30A8\u30E9\u30FC";
-        if (e.lineNumber) {
-          s += " (" + e.fileName + ":" + e.lineNumber + " \u884C\u76EE)";
-        }
-        s += ": " + e;
-        arAkahukuDOM.setText (status, s);
-        if (status2) {
-          arAkahukuDOM.setText (status2, "error!!!");
-        }
-                
-        arAkahukuDOM.setText (button, "MHT \u3067\u4FDD\u5B58");
-        if (button2) {
-          arAkahukuDOM.setText
-            (button2, "\u5225\u540D\u3067 MHT \u3067\u4FDD\u5B58");
-        }
-                
-        param.isBusy = false;
-        if (arAkahukuMHT.enableNolimit) {
-          arAkahukuConfig.restoreTime ();
-        }
-                
-        arAkahukuSound.playSaveMHTError ();
-                
-        return;
-      }
-            
-      var text
+    // "保存中...ドキュメントの整形中..."
+    var text
       = "\u4FDD\u5B58\u4E2D..."
       + "\u30C9\u30AD\u30E5\u30E1\u30F3\u30C8\u306E\u6574\u5F62\u4E2D...";
-      arAkahukuDOM.setText (progress, text);
-      if (progress2) {
-        var text2
-          = "\u4FDD\u5B58\u4E2D...";
-        arAkahukuDOM.setText (progress2, text2);
-      }
-            
-      param.file = file;
-      param.tmpFile = arAkahukuFile.initFile (param.file.parent.path);
-      var tmpFileName
-      = new Date ().getTime ()
-      + "_" + Math.floor (Math.random () * 1000);
-      param.tmpFile.appendRelativePath (tmpFileName);
-            
-      window.setTimeout
-      (arAkahukuMHT.saveMHTCore,
-       100,
-       param);
+    arAkahukuDOM.setText (progress, text);
+    if (progress2) {
+      var text2
+        = "\u4FDD\u5B58\u4E2D...";
+      arAkahukuDOM.setText (progress2, text2);
+    }
+
+    param.filename = AkahukuFileUtil.Path.join(dirname_base, filename);
+    if (!saveas && arAkahukuMHT.enableAuto) {
+      // ファイル選択を省略するよう設定
+      param.openDialog = false;
+      param.overwrite = !arAkahukuMHT.enableAutoUnique;
     }
     else {
-      /* ファイル選択ダイアログを表示する */
-            
-      var browser = arAkahukuWindow.getBrowserForWindow (window);
-      arAkahukuMHT.asyncOpenSaveMHTFilePicker
-        (browser, filename, dirname_base, function (ret, file, dir) {
-
-      if (ret == Components.interfaces.nsIFilePicker.returnOK
-          || ret == Components.interfaces.nsIFilePicker.returnReplace) {
-        var text
-          = "\u4FDD\u5B58\u4E2D..."
-          + "\u30C9\u30AD\u30E5\u30E1\u30F3\u30C8\u306E\u6574\u5F62\u4E2D...";
-        arAkahukuDOM.setText (progress, text);
-        if (progress2) {
-          arAkahukuDOM.setText (progress2, text);
-        }
-                
-        param.file = file;
-        if (!param.file.leafName.match (/\.mht$/)) {
-          var path = param.file.path + ".mht";
-          param.file = arAkahukuFile.initFile (path);
-        }
-        param.tmpFile = arAkahukuFile.initFile (dir.path);
-        var tmpFileName
-          = new Date ().getTime ()
-          + "_" + Math.floor (Math.random () * 1000);
-        param.tmpFile.appendRelativePath (tmpFileName);
-                
-        window.setTimeout
-          (arAkahukuMHT.saveMHTCore,
-           100,
-           param);
-      }
-      else {
-        arAkahukuDOM.setText (button, "MHT \u3067\u4FDD\u5B58");
-        if (button2) {
-          arAkahukuDOM.setText
-            (button2, "\u5225\u540D\u3067 MHT \u3067\u4FDD\u5B58");
-        }
-        arAkahukuDOM.setText (progress,
-                              "\u4E2D\u65AD\u3057\u307E\u3057\u305F");
-        if (progress2) {
-          arAkahukuDOM.setText (progress2,
-                                "\u4E2D\u65AD\u3057\u307E\u3057\u305F");
-        }
-                
-        param.isBusy = false;
-        if (arAkahukuMHT.enableNolimit) {
-          arAkahukuConfig.restoreTime ();
-        }
-                
-        arAkahukuSound.playSaveMHTError ();
-      }
-        });// asyncOpenSaveMHTFilePicker
+      param.openDialog = true;
     }
-  },
-  /**
-   * 保存先のファイルを選ぶ(要Chrome process)
-   */
-  asyncOpenSaveMHTFilePicker : function (browser, filename, dirname_base, callback) {
-    var chromeWindow = browser.ownerDocument.defaultView.top;
-    var filePicker
-    = Components.classes ["@mozilla.org/filepicker;1"]
-    .createInstance (Components.interfaces.nsIFilePicker);
-    filePicker.init
-      (chromeWindow,
-       // "保存先のファイルを選んでください"
-       "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
-       Components.interfaces.nsIFilePicker.modeSave);
-    filePicker.appendFilter ("MHT Files", "*.mht");
-    filePicker.defaultString = filename;
-    filePicker.appendFilters
-      (Components.interfaces.nsIFilePicker.filterAll);
-    var dir = arAkahukuFile.initFile (dirname_base);
-    if (dir) {
-      filePicker.displayDirectory = dir;
-    }
-
-    arAkahukuCompat.FilePicker.open
-      (filePicker, function (ret) {
-        var file = null;
-        var dir = null;
-        if (ret == Components.interfaces.nsIFilePicker.returnOK
-            || ret == Components.interfaces.nsIFilePicker.returnReplace) {
-          file = filePicker.file;
-          dir = file.parent;
-        }
-        callback.apply (null, [ret, file, dir]);
-      });
+    window.setTimeout(arAkahukuMHT.saveMHTCore, 100, param);
   },
 
   saveMHTForBrowser : function (browser) {
@@ -4136,23 +3365,7 @@ var arAkahukuMHT = {
     }
         
     if (info.isRedirect) {
-      /* キャッシュを複製 */
-      var html = targetDocument.documentElement;
-            
-      var utf16 = arAkahukuMHT.convertToPlainText (html);
-      var sjis = arAkahukuConverter.convertToSJIS (utf16, "\r\n");
-            
-      var writer = new arAkahukuMHTRedirectCacheWriter ();
-      writer.body = sjis;
-            
-      try {
-        Akahuku.Cache.asyncOpenCacheToWrite
-          ({url: targetDocument.location.href + ".backup",
-            triggeringNode: targetDocument},
-            writer);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
+      // TODO: キャッシュを複製
     }
         
     var nodes = Akahuku.getMessageBQ (targetDocument);

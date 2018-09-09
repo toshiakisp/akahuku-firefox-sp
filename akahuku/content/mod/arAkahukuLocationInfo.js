@@ -1,9 +1,10 @@
 
-/* global Components, XMLSerializer, XSLTProcessor,
+/* global XMLSerializer, XSLTProcessor, DOMParser,
  *   Akahuku, arAkahukuCompat, arAkahukuConverter,
- *   AkahukuFileUtil, arAkahukuFileName, arAkahukuUtil,
+ *   AkahukuFileUtil, arAkahukuFileName,
  *   arAkahukuTitle, arAkahukuP2P,
  *   arAkahukuBoard, arAkahukuDOM,
+ *   ObserverService,
  *
  * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
  */
@@ -229,18 +230,18 @@ arAkahukuLocationInfo.prototype = {
       /* [掲示板に戻る] のリンクからサーバ名、ディレクトリ名を取得する */
       // (body > a なリンクのみを探査対象に)
       nodes = targetDocument.body.children;
-      var uri = null;
       for (var i = 0; i < nodes.length; i ++) {
         if (nodes [i].nodeName.toLowerCase () !== "a") {
           continue;
         }
-        try { // 相対アドレスの解決
-          uri = arAkahukuUtil.newURIViaNode (nodes [i].href, nodes [i]);
+        let url = null;
+        try {
+          url = new URL(nodes[i].href);
         }
         catch (e) { Akahuku.debug.exception (e);
           continue;
         }
-        if (uri.spec.match (/^(?:https?):\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
+        if (url.href.match (/^(?:https?):\/\/([^\/]+\/)?([^\.\/]+)\.2chan\.net(:[0-9]+)?\/((?:apr|jan|feb|tmp|up|www|img|cgi|zip|dat|may|nov|jun|dec)\/)?([^\/]+)\/(.*)$/)) {
           this.isFutasuke = false;
           this.server = RegExp.$2;
           /* RegExp.$3: ポート番号 */
@@ -751,9 +752,7 @@ arAkahukuLocationInfo.prototype = {
     var nodeName = node.nodeName;
     var nodeName2;
     var regex, regexGroup, flags;
-    var parser
-    = Components.classes ["@mozilla.org/xmlextras/domparser;1"]
-    .createInstance (Components.interfaces.nsIDOMParser);
+    var parser = new DOMParser();
     var styleDocument;
     var regexDocument;
     var processor;
@@ -1012,9 +1011,7 @@ arAkahukuLocationInfo.prototype = {
     + "</xsl:template>"
     + "</xsl:stylesheet>";
     
-    parser
-    = Components.classes ["@mozilla.org/xmlextras/domparser;1"]
-    .createInstance (Components.interfaces.nsIDOMParser);
+    parser = new DOMParser();
         
     try {
       styleDocument = parser.parseFromString (text, "text/xml");
@@ -1145,14 +1142,9 @@ arAkahukuLocationInfo.prototype = {
     if (!text) {
       text = null;
     }
-    var observerService
-      = Components.classes ["@mozilla.org/observer-service;1"]
-      .getService (Components.interfaces.nsIObserverService);  
-    var subject
-      = Components.classes ["@mozilla.org/supports-string;1"]
-      .createInstance (Components.interfaces.nsISupportsString);  
+    var subject = {};
     subject.data = JSON.stringify (this);
-    observerService.notifyObservers
+    ObserverService.notifyObservers
       (subject, "arakahuku-location-info-changed", text);
   },
 };

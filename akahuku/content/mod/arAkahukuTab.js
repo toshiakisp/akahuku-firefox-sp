@@ -32,51 +32,6 @@ var arAkahukuTab = {
   sortOrderOther : 1,             /* Number  タブの並び - その他 */
   sortBoardOrder : "",            /* String  板の順番 */
     
-  attachToWindow : function (window) {
-    var document = window.document;
-
-    var tabbrowser = document.getElementById ("content");
-    var tabMenu
-    = document.getAnonymousElementByAttribute (tabbrowser,
-                                               "anonid", "tabContextMenu");
-    var mode = 0;
-    if (!tabMenu) { //Fx4+
-      tabMenu
-        = document.getElementById ("tabContextMenu");
-      mode = 1;
-    }
-    
-    if (tabMenu) {
-      tabMenu.addEventListener
-        ("popupshowing", arAkahukuTab.setContextMenu , false);
-    }
-  },
-  dettachFromWindow : function (window) {
-    // remove event listener and menu items
-    var document = window.document;
-    var tabbrowser = document.getElementById ("content");
-    var tabMenu
-    = document.getAnonymousElementByAttribute (tabbrowser,
-                                               "anonid", "tabContextMenu");
-    tabMenu = tabMenu || document.getElementById ("tabContextMenu");
-
-    if (tabMenu) {
-      tabMenu.removeEventListener
-        ("popupshowing", arAkahukuTab.setContextMenu , false);
-      var ids = [
-        "akahuku-menuitem-tab-sort-all",
-        "akahuku-menuitem-tab-sort-all",
-        "akahuku-menuitem-tab-sort-thread",
-        "akahuku-menuitem-tab-sort-separator"];
-      for (var i = 0; i < ids.length; i ++) {
-        var elem = document.getElementById (ids [i]);
-        if (elem) {
-          elem.parentNode.removeChild (elem);
-        }
-      }
-    }
-  },
-
   initContextMenus : function (contextMenus) {
     var separatorProp = {
       id: "akahuku-menuitem-tab-sort-separator",

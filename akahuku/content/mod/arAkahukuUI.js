@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global
  *   Akahuku, AkahukuVersion,
  *   arAkahukuBoard, arAkahukuConfig,
  *   arAkahukuJPEG, arAkahukuLink, arAkahukuP2P, arAkahukuQuote,
@@ -19,348 +19,10 @@ var arAkahukuUI = {
                                        *   アイコンの並べ替え */
   statusbarOrderList : "",            /* String
                                        *   アイコンの並べ替え順番 */
-    
   contextMenuShown : false,      /* Boolean
                                   *   コンテキストメニューが
                                   *   表示されているかどうか */
-  contextMenuContentTarget : null,
     
-  prefDialog : null, /* ChromeWindow  設定ダイアログ */
-
-  managedWindows : [],
-  toolbarButtons : [],
-    
-  attachToWindow : function (window) {
-    arAkahukuUI.managedWindows.push (window);
-    var document = window.document;
-
-    // toolbar buttons
-    arAkahukuUI.createXULToolbarButton (document, {
-      id : "akahuku-toolbarbutton-preferences",
-      title : "\u8D64\u798F", // 赤福
-      _xul_context : "akahuku-statusbar-popup",
-      onclick : arAkahukuUI.showPreferences,
-    });
-    arAkahukuUI.createXULToolbarButton (document, {
-      id : "akahuku-toolbarbutton-sidebar",
-      // 赤福サイドバー
-      title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
-      _xul_observes : "viewAkahukuSidebar",
-      onclick: function (event) {
-        var window = event.currentTarget.ownerDocument.defaultView.top;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar", false, window);
-      },
-    });
-    arAkahukuUI.createXULToolbarButton (document, {
-      id : "akahuku-toolbarbutton-p2psidebar",
-      // 赤福 P2P サイドバー
-      title : "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC",
-      _xul_observes : "viewAkahukuP2PSidebar",
-      onclick: function (event) {
-        var window = event.currentTarget.ownerDocument.defaultView.top;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar", false, window);
-      },
-    });
-    arAkahukuUI.createXULToolbarButton (document, {
-      id : "akahuku-toolbarbutton-p2pstatus",
-      // 赤福 P2P ステータス
-      title : "\u8D64\u798F P2P \u30B9\u30C6\u30FC\u30BF\u30B9",
-      type : "_labels",
-      _xul_children : [
-        {id:"akahuku-toolbarpanel-p2p-node", value:"\u63A5:0/0"},
-        {id:"akahuku-toolbarpanel-p2p-sep0", value:"/"},
-        {id:"akahuku-toolbarpanel-p2p-send", value:"\u653B:0"},
-        {id:"akahuku-toolbarpanel-p2p-sep1", value:"/"},
-        {id:"akahuku-toolbarpanel-p2p-recv", value:"\u53D7:0"},
-        {id:"akahuku-toolbarpanel-p2p-sep2", value:"/"},
-        {id:"akahuku-toolbarpanel-p2p-relay", value:"\u7D99:0"},
-        {id:"akahuku-toolbarpanel-p2p-sep3", value:"/"},
-        {id:"akahuku-toolbarpanel-p2p-futaba", value:"\u53CC:0"},
-      ],
-    });
-
-    arAkahukuUI.showPanelForWindow (window);
-    arAkahukuUI.setPanelStatusForWindow (window);
-        
-    /* コンテキストメニューのイベントを監視 */
-    var menu = document.getElementById ("contentAreaContextMenu");
-    if (menu) {
-      menu.addEventListener
-        ("popupshowing", arAkahukuUI.setContextMenu, false);
-      menu.addEventListener
-        ("popupshown", arAkahukuUI.onContextMenuShown, false);
-      menu.addEventListener
-        ("popuphidden", arAkahukuUI.onContextMenuHidden, false);
-    }
-        
-    if (arAkahukuUI.enableStatusbarOrder) {
-      var panels = [];
-      var ids = [];
-      var idMap = {
-        "unmht" : "unmht-statusbarpanel-preferences",
-        "aka" : "akahuku-statusbarpanel-preferences",
-        "aka_p2p" : "akahuku-statusbarpanel-p2p",
-        "aima" : "aima_aimani-statusbarpanel-preferences",
-        "aima_ng" : "aima_aimani-statusbarpanel-ng_word"
-      };
-        
-      /* 値を解析するだけなので代入はしない */
-      arAkahukuUI.statusbarOrderList.replace
-      (/([^,]+),?/g,
-       function (matched, part1) {
-        ids.push (unescape (part1));
-        return "";
-      });
-            
-      var parentNode = null;
-      var nextSibling = null;
-      for (var i = 0; i < ids.length; i ++) {
-        var node = document.getElementById (idMap [ids [i]]);
-        if (node) {
-          panels.push (node);
-          parentNode = node.parentNode;
-          if (i + 1 == ids.length) {
-            nextSibling = node.nextSibling;
-          }
-          parentNode.removeChild (node);
-        }
-      }
-      for (var i = 0; i < panels.length; i ++) {
-        if (nextSibling) {
-          parentNode.insertBefore (panels [i], nextSibling);
-        }
-        else {
-          parentNode.appendChild (panels [i]);
-        }
-      }
-    }
-        
-    window.arAkahukuUI_modifyLocationbarTimerID
-      = window.setTimeout (function (win) {
-        arAkahukuUI.modifyLocationbar (win)
-      }, 1000, window);
-  },
-  dettachFromWindow : function (window) {
-    var menu = window.document.getElementById ("contentAreaContextMenu");
-    if (menu) {
-      menu.removeEventListener
-        ("popupshowing", arAkahukuUI.setContextMenu, false);
-      menu.removeEventListener
-        ("popupshown", arAkahukuUI.onContextMenuShown, false);
-      menu.removeEventListener
-        ("popuphidden", arAkahukuUI.onContextMenuHidden, false);
-    }
-
-    //TODO: remove XUL elements created for bootstrap.js
-
-    window.clearTimeout (window.arAkahukuUI_modifyLocationbarTimerID);
-    delete window.arAkahukuUI_modifyLocationbarTimerID;
-    arAkahukuUI.modifyLocationbar (window, true);//to remove
-    arAkahukuUI.managedWindows.splice
-      (arAkahukuUI.managedWindows.indexOf (window), 1);
-  },
-    
-  createXULToolbarButton : function (document, prop) {
-    var navtoolbox = document.getElementById ("navigator-toolbox");
-    if (!navtoolbox ) {
-      Akahuku.debug.warn ("no navigator-toolbox!");
-      return;
-    }
-    var button = document.getElementById (prop.id);
-    if (button) {
-      Akahuku.debug.warn ("button #" + prop.id, "already exists, skip it.");
-      return;
-    }
-
-    arAkahukuUI.toolbarButtons.push (prop);
-
-    var ns = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    button = document.createElementNS (ns, "toolbarbutton");
-    if (!prop.type || prop.type == "button") {
-      button.setAttribute ("class", "toolbarbutton-1 chromeclass-toolbar-additional");
-    }
-    else if (prop.type == "_labels" && prop._xul_children) {
-      button.setAttribute ("class", "");
-      for (var i = 0; i < prop._xul_children.length; i ++) {
-        var label = document.createElementNS (ns, "label");
-        label.id = prop._xul_children [i].id;
-        label.setAttribute ("value", prop._xul_children [i].value);
-        label.setAttribute ("tooltiptext", prop.title);
-        label.setAttribute ("style", "margin: 0; paddin: 0;");
-        button.appendChild (label);
-      }
-    }
-    button.setAttribute ("status", "enabled");
-    button.id = prop.id;
-    button.setAttribute ("label", prop.title);
-    button.setAttribute ("tooltiptext", prop.title);
-    if (prop._xul_context) {
-      button.setAttribute ("context", prop._xul_context);
-    }
-    if (prop._xul_observes) {
-      button.setAttribute ("observes", prop._xul_observes);
-    }
-    button.setAttribute ("oncommand", "arAkahukuUI.onCommandToolbarButton (event);");
-    if (prop.style) {
-      button.setAttribute ("style", prop.style);
-    }
-
-    if (document.readyState !== "complete") {
-      var palette = document.getElementById ("BrowserToolbarPalette");
-      if (!palette) {
-        Akahuku.debug.warn ("no BrowserToolbarPalette!");
-      }
-      palette.appendChild (button);
-      return;
-    }
-    navtoolbox.palette.appendChild (button);
-
-    // readyState=complete 後では BrowserToolbarPalette がもう無いので
-    // 起動後に復元するにはツールバー(addon-bar, nav-bar, ...)へ
-    // 手動で追加する必要あり
-    var toolbars = document.querySelectorAll ('toolbar[customizable="true"]');
-    for (var j = 0; j < toolbars.length; j ++) {
-      var toolbar = toolbars [j];
-      var currentset = toolbar.getAttribute ("currentset").split (",");
-      var index = currentset.indexOf (prop.id);
-      if (index >= 0) {
-        var nextElem = null;
-        for (var i = index + 1; i < currentset.length; i ++) {
-          nextElem = document.getElementById (currentset [i]);
-          if (nextElem) {
-            break;
-          }
-        }
-        toolbar.insertItem (prop.id, nextElem);
-        Akahuku.debug.log ("toolbarbutton#" + prop.id
-            + " is inserted to #" + toolbar.id);
-        break;
-      }
-    }
-  },
-
-  onCommandToolbarButton : function (event) {
-    for (var i = 0; i < arAkahukuUI.toolbarButtons.length; i ++) {
-      var props = arAkahukuUI.toolbarButtons [i];
-      if (props.id == event.target.id) {
-        if (props.onclick) {
-          props.onclick.apply (null, [event]);
-        }
-        return;
-      }
-    }
-  },
-
-  initContextMenus : function (contextMenus) {
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup",
-      contexts: ["_xul_mainpopupset"],
-      title: "akahuku-statusbar-popup",
-      _onshowing: arAkahukuUI.setStatusbarPopup,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-all",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u5168\u6A5F\u80FD\u3092 ON", // 全機能を ON
-      onclick: arAkahukuUI.switchDisabled,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-p2p",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "P2P \u3092 ON", // P2P を ON
-      onclick: arAkahukuUI.switchP2PDisabled,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-p2p-statusbar",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // P2P ステータスバーを ON
-      title: "P2P \u30B9\u30C6\u30FC\u30BF\u30B9\u30D0\u30FC\u3092 ON",
-      onclick: arAkahukuUI.switchP2PStatusbarDisabled,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-preferences",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u8A2D\u5B9A", // 設定
-      onclick: arAkahukuUI.showPreferences,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-separator1",
-      type: "separator",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-apply",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // レス送信モードで動かす
-      title: "\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u52D5\u304B\u3059",
-      onclick: arAkahukuUI.applyFocusedDocument,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-external",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u5916\u90E8\u677F\u306B\u767B\u9332", // 外部板に登録
-      onclick: arAkahukuUI.addFocusedToExternalBoards,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-separator2",
-      type: "separator",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-sidebar",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // 赤福サイドバー
-      title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
-      _xul_observes: "viewAkahukuSidebar",
-      onclick: function (event) {
-        var window = event.currentTarget.ownerDocument.defaultView.top;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar", false, window);
-      },
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-p2psidebar",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      // 赤福 P2P サイドバー
-      title : "\u8D64\u798F P2P \u30B5\u30A4\u30C9\u30D0\u30FC",
-      _xul_observes: "viewAkahukuP2PSidebar",
-      onclick: function (event) {
-        var window = event.currentTarget.ownerDocument.defaultView.top;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuP2PSidebar", false, window);
-      },
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-respanel",
-      type: "checkbox",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u30EC\u30B9\u30D1\u30CD\u30EB\u3092\u8868\u793A", // レスパネルを表示
-      onclick: arAkahukuUI.switchResPanelShowing,
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-separator3",
-      type: "separator",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-    });
-    contextMenus.create ({
-      id: "akahuku-statusbar-popup-openwebsite",
-      contexts: ["_xul_mainpopupset"],
-      parentId: "akahuku-statusbar-popup",
-      title: "\u30B5\u30A4\u30C8\u3092\u958B\u304F", // サイトを開く
-      onclick: arAkahukuUI.openWebsite,
-    });
-  },
-
   /**
    * ロケーションバーのメニューに P2P の [元のアドレスをコピー] を追加する
    */
@@ -482,63 +144,6 @@ var arAkahukuUI = {
   },
     
   /**
-   * メニューが開かれたイベント
-   */
-  onContextMenuShown : function (event) {
-    arAkahukuUI.contextMenuShown = true;
-    if (!arAkahukuUI.contextMenuContentTarget) {
-      // For e10s content processes
-      arAkahukuUI.setContextMenuContentTargetFor (event);
-    }
-  },
-    
-  /**
-   * メニューが閉じられたイベント
-   */
-  onContextMenuHidden : function () {
-    arAkahukuUI.contextMenuShown = false;
-    arAkahukuUI.contextMenuContentTarget = null;
-  },
-
-  setContextMenuContentTargetFor : function (event) {
-    if (event.target && event.target.nodeName
-        && event.target.nodeName != "menupopup") {
-      // For e10s content processes
-      arAkahukuUI.contextMenuContentTarget = event.target;
-    }
-    else {
-      var gContextMenu = event.currentTarget.ownerDocument.defaultView.gContextMenu;
-      arAkahukuUI.contextMenuContentTarget = gContextMenu.target;
-    }
-  },
-    
-  /**
-   * メニューが開かれるイベント
-   * メニューの項目の表示／非表示を設定する
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  setContextMenu : function (event) {
-    var gContextMenu = event.currentTarget.ownerDocument.defaultView.gContextMenu;
-    if (gContextMenu && event.target.id == "contentAreaContextMenu") {
-      arAkahukuUI.setContextMenuContentTargetFor (event);
-      arAkahukuLink.setContextMenu (event);
-      arAkahukuImage.setContextMenu (event);
-      arAkahukuQuote.setContextMenu (event);
-      arAkahukuJPEG.setContextMenu (event);
-      arAkahukuP2P.setContextMenu (event);
-    }
-  },
-
-  setContextMenuContentData : function (data) {
-    arAkahukuLink.setContextMenuContentData (data.link);
-    arAkahukuImage.setContextMenuContentData (data.image);
-    arAkahukuJPEG.setContextMenuContentData (data.jpeg);
-    arAkahukuP2P.setContextMenuContentData (data.p2p);
-  },
-    
-  /**
    * 設定を読み込む
    */
   getConfig : function () {
@@ -556,36 +161,6 @@ var arAkahukuUI = {
         .initPref ("char", "akahuku.statusbar.order.list",
                    "unmht,aka,aka_p2p,aima,aima_ng");
     }
-  },
-    
-  /**
-   * 設定ダイアログを開く
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  showPreferences : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    if (("button" in event && event.button != 0)
-        || event.ctrlKey || event.shiftKey
-        || event.altKey || event.metaKey) {
-      return;
-    }
-        
-    try {
-      if (arAkahukuUI.prefDialog != null) {
-        if (!arAkahukuUI.prefDialog.closed) {
-          arAkahukuUI.prefDialog.focus ();
-          return;
-        }
-      }
-    }
-    catch (e) {
-      arAkahukuUI.prefDialog = null;
-    }
-    var optionsURL = "chrome://akahuku/content/options.xul";
-    var features = "chrome,titlebar,toolbar,centerscreen,resizable";
-    arAkahukuUI.prefDialog = window.openDialog (optionsURL, "", features);
   },
     
   /**
@@ -681,170 +256,21 @@ var arAkahukuUI = {
     }
     return info;
   },
-
-    
-  /**
-   * 全機能の ON／OFF を切り替える
-   */
-  switchDisabled : function (event) {
-    Akahuku.enableAll
-    = !arAkahukuConfig
-    .initPref ("bool", "akahuku.all", true);
-    arAkahukuConfig
-    .setBoolPref ("akahuku.all", Akahuku.enableAll);
-    arAkahukuConfig
-    .setCharPref ("akahuku.savepref",
-                  String (new Date ().getTime ()));
-        
-    arAkahukuConfig.loadPrefBranch ();
-    arAkahukuP2P.getConfig ();
-    arAkahukuP2P.update ();
-        
-    arAkahukuStyle.modifyStyleFile (Akahuku.enableAll);
-        
-    var window = event.currentTarget.ownerDocument.defaultView;
-    arAkahukuUI.setPanelStatusForWindow (window);
-  },
-    
-  /**
-   * P2P の ON／OFF を切り替える
-   */
-  switchP2PDisabled : function (event) {
-    arAkahukuP2P.enable
-    = !arAkahukuConfig
-    .initPref ("bool", "akahuku.p2p", false);
-    arAkahukuConfig
-    .setBoolPref ("akahuku.p2p", arAkahukuP2P.enable);
-    arAkahukuConfig
-    .setCharPref ("akahuku.savepref",
-                  String (new Date ().getTime ()));
-        
-    arAkahukuConfig.loadPrefBranch ();
-    arAkahukuP2P.getConfig ();
-    arAkahukuP2P.update ();
-  },
-    
-  /**
-   * P2P ステータスバーの ON／OFF を切り替える
-   */
-  switchP2PStatusbarDisabled : function (event) {
-    arAkahukuP2P.enableStatusbar
-    = !arAkahukuConfig
-    .initPref ("bool", "akahuku.p2p.statusbar", true);
-        
-    arAkahukuConfig
-    .setBoolPref ("akahuku.p2p.statusbar", arAkahukuP2P.enableStatusbar);
-    arAkahukuConfig
-    .setCharPref ("akahuku.savepref",
-                  String (new Date ().getTime ()));
-        
-    arAkahukuP2P.update ();
-  },
-    
-  /**
-   * レスパネルの表示を切り替える
-   */
-  switchResPanelShowing : function (event) {
-    var window = event.currentTarget.ownerDocument.defaultView;
-    var document = window.document;
-    var targetBrowser = window.gBrowser.selectedBrowser;
-    var menuitem
-    = document.getElementById ("akahuku-statusbar-popup-respanel");
-    if (!menuitem) {
-      return;
-    }
-    if (menuitem.getAttribute ("checked") == "true") {
-      arAkahukuThread.closeResPanelForBrowser (targetBrowser);
-      menuitem.removeAttribute ("checked");
-    }
-    else {
-      try {
-        arAkahukuThread.showResPanelForBrowser (targetBrowser);
-        menuitem.setAttribute ("checked", "true");
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-  },
-    
-  /**
-   * サイトを開く
-   */
-  openWebsite : function (event) {
-    var document = event.currentTarget.ownerDocument;
-    var tabbrowser = document.getElementById ("content");
-    var newTab
-    = tabbrowser.addTab ("https://toshiakisp.github.io/akahuku-firefox-sp/");
-    tabbrowser.selectedTab = newTab;
-  },
     
   /**
    * ステータスバー、ツールバーのパネルを表示する
    */
   showPanel : function () {
-    for (var i = 0; i < arAkahukuUI.managedWindows.length; i ++) {
-      var win = arAkahukuUI.managedWindows [i];
-      arAkahukuUI.showPanelForWindow (win);
-    }
-  },
-  showPanelForWindow : function (window) {
-    var document = window.document;
-    var panel;
-    panel = document.getElementById ("akahuku-statusbarpanel-preferences");
-    if (panel) {
-      panel.hidden = !arAkahukuUI.enableStatusbarPreferences;
-    }
+    // no action need in content
+    Akahuku.debug.error('deprecated');
   },
     
   /**
    * パネルのアイコンを、全機能の ON／OFF に合わせて切り替える
    */
   setPanelStatus : function () {
-    arAkahukuConfig.loadPrefBranch ();
-    Akahuku.getConfig ();
-
-    for (var i = 0; i < arAkahukuUI.managedWindows.length; i ++) {
-      var win = arAkahukuUI.managedWindows [i];
-      arAkahukuUI.setPanelStatusForWindow (win);
-    }
-  },
-  setPanelStatusForWindow : function (window) {
-    var document = window.document;
-    if (Akahuku.enableAll) {
-      var panel
-        = document
-        .getElementById ("akahuku-statusbarpanel-preferences");
-      if (panel) {
-        panel.setAttribute ("status", "enabled");
-        var text = panel.getAttribute ("tooltiptext");
-        if (text.indexOf (AkahukuVersion) == -1) {
-          panel.setAttribute ("tooltiptext",
-                              text + " " + AkahukuVersion);
-        }
-      }
-      this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences", "status", "enabled", document);
-      var text = "\u8D64\u798F " + AkahukuVersion; // "赤福 "
-      if (Akahuku.useFrameScript) {
-        text += " - e10s";
-      }
-      this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences", "tooltiptext", text, document);
-      this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences-image", "status", "enabled", document);
-    }
-    else {
-      var panel
-      = document
-      .getElementById ("akahuku-statusbarpanel-preferences");
-      if (panel) {
-        panel.setAttribute ("status", "disabled");
-      }
-      this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences", "status", "disabled", document);
-      this.setAttributeOfToolbarButton
-        ("akahuku-toolbarbutton-preferences-image", "status", "disabled", document);
-    }
+    // no action need in content
+    Akahuku.debug.error('deprecated');
   },
 
   setAttributeOfToolbarButton : function (id, attr, value, document) {
@@ -910,44 +336,29 @@ var arAkahukuUI = {
    * マウスホバーで表示されるステータスを設定する
    */
   setStatusPanelText : function (text, type, browser) {
-    if (type !== "overLink" && type !== "status") {
-      throw Components.Exception
-        ("type of statuspanel must be 'overLink' or 'status'",
-         Components.results.NS_ERROR_FAILURE,
-         Components.stack.caller);
-    }
-    var window = browser.ownerDocument.defaultView;
-    var status = arAkahukuCompat.gBrowser.getStatusPanel (window);
-    if (!status) {
-      Akahuku.debug.warn ("no statuspanel found");
-      return;
-    }
-    if (status.tagName == "statuspanel") {
-      status.setAttribute ("previoustype", status.getAttribute ("type"));
-      status.setAttribute ("type", type);
-    }
-    status.label = text;
-    if (status.tagName == "statuspanel") {
-      status.setAttribute ("crop", type == "overLink" ? "center" : "end");
-    }
+    Akahuku.debug.error('NotYetImplemented, deprecated');
+    /*
+    arAkahukuIPC.sendSyncCommand
+      ("UI/setStatusPanelText", [text, type],
+       browser.ownerGlobal);
+    */
   },
   clearStatusPanelText : function (optText, browser)
   {
-    var window = browser.ownerDocument.defaultView;
-    var status = arAkahukuCompat.gBrowser.getStatusPanel (window);
-    if (!status) {
-      Akahuku.debug.warn ("no statuspanel found");
-      return;
-    }
-    if (typeof optText == "undefined"
-        || optText === null
-        || status.label == optText) {
-      status.label = "";
-    }
+    Akahuku.debug.error('NotYetImplemented, deprecated');
+    /*
+    arAkahukuIPC.sendSyncCommand
+      ("UI/clearStatusPanelText", [optText],
+       browser.ownerGlobal);
+    */
   },
   getStatusPanelText : function (browser) {
-    var window = browser.ownerDocument.defaultView;
-    var status = arAkahukuCompat.gBrowser.getStatusPanel (window);
-    return status ? status.label : "";
+    Akahuku.debug.error('NotYetImplemented, deprecated');
+    return "";
+    /*
+    return arAkahukuIPC.sendSyncCommand
+      ("UI/getStatusPanelText", [],
+       browser.ownerGlobal);
+    */
   }
 };

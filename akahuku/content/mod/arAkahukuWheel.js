@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global
  *   Akahuku, arAkahukuCatalog, arAkahukuConfig, arAkahukuReload,
  *   arAkahukuWindow, arAkahukuCompat, arAkahukuUI,
  */
@@ -91,8 +91,6 @@ var arAkahukuWheel = {
       var targetDocument = event.target.ownerDocument || event.target;
       var targetWindow = targetDocument.defaultView;
             
-      var selectedBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
-            
       var documentParam
       = Akahuku.getDocumentParam (targetDocument);
       var info = null;
@@ -135,32 +133,29 @@ var arAkahukuWheel = {
       }
             
       if (!ok) {
-        selectedBrowser.setAttribute ("__akahuku_wheel_count", 0);
+        window.sessionStorage.setItem('__akahuku_wheel_count', 0);
                 
         return;
       }
             
       var now = (new Date ()).getTime ();
             
-      var lastReloadTime = 0;
-      if (selectedBrowser.hasAttribute ("__akahuku_last_reload")) {
-        lastReloadTime
-          = parseInt (selectedBrowser.getAttribute
-                      ("__akahuku_last_reload"));
-      }
+      var lastReloadTime = parseInt(
+        window.sessionStorage.getItem('__akahuku_last_reload')
+      ) || 0;
       if (now < lastReloadTime + 5000) {
         /* 最後のリロードから時間が経っていない場合待つ */
                 
         var text = "\u3061\u3087\u3063\u3068\u5F85\u3063\u3066\u306D";
                 
-        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE, selectedBrowser);
+        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE, null);
                 
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
           targetWindow.setTimeout (function (text) {
               try {
-                arAkahukuUI.clearStatusPanelText (text, selectedBrowser);
+                arAkahukuUI.clearStatusPanelText (text, null);
               }
               catch (e) { Akahuku.debug.exception (e);
               }
@@ -170,22 +165,14 @@ var arAkahukuWheel = {
                 
         return;
       }
-            
-      var lastWheelTime = 0;
-      if (selectedBrowser.hasAttribute ("__akahuku_last_wheel")) {
-        lastWheelTime
-          = parseInt (selectedBrowser.getAttribute
-                      ("__akahuku_last_wheel"));
-      }
-      selectedBrowser.setAttribute ("__akahuku_last_wheel", now);
-            
-      var wheelCount = 0;
-      if (selectedBrowser.hasAttribute ("__akahuku_wheel_count")) {
-        wheelCount
-          = parseInt (selectedBrowser.getAttribute
-                      ("__akahuku_wheel_count"));
-      }
-            
+
+      var lastWheelTime = parseInt(
+        window.sessionStorage.getItem('__akahuku_last_wheel')) || 0;
+      window.sessionStorage.setItem('__akahuku_last_wheel', now);
+
+      var wheelCount = parseInt(
+        window.sessionStorage.getItem('__akahuku_wheel_count')) || 0;
+
       if (now >= lastWheelTime + 500) {
         /* 最後の操作から時間が経っている場合回数をリセットする */
                 
@@ -194,19 +181,13 @@ var arAkahukuWheel = {
       wheelCount ++;
             
       if (wheelCount >= Akahuku.reloadThreshold) {
-        selectedBrowser.setAttribute ("__akahuku_last_reload", now);
-        selectedBrowser.setAttribute ("__akahuku_wheel_count", 0);
+        window.sessionStorage.setItem('__akahuku_last_reload', now);
+        window.sessionStorage.setItem('__akahuku_wheel_count', 0);
                 
         event.preventDefault ();
                 
         if (!info) {
-          targetWindow
-            .QueryInterface (Components.interfaces
-                             .nsIInterfaceRequestor)
-            .getInterface (Components.interfaces
-                           .nsIWebNavigation)
-            .reload (Components.interfaces.nsIWebNavigation
-                     .LOAD_FLAGS_NONE);
+          targetWindow.location.reload();
         }
         else if (info.isNormal) {
           if (arAkahukuWheel.enableReloadLoop) {
@@ -223,10 +204,7 @@ var arAkahukuWheel = {
             if (up) {
               nextPage = "";
               targetPage = info.normalPageNumber - 1;
-              var browser
-                = arAkahukuWindow.getBrowserForWindow
-                (targetWindow);
-              browser.__akahuku_gobottom = true;
+              window.sessionStorage.setItem('__akahuku_gobottom', 'true');
             }
                         
             var lastPage = defIndex + ".htm";
@@ -253,49 +231,41 @@ var arAkahukuWheel = {
               (/\/[^\/]*$/,
                "/" + nextPage);
                         
-            targetWindow
-              .QueryInterface (Components.interfaces
-                               .nsIInterfaceRequestor)
-              .getInterface (Components.interfaces
-                             .nsIWebNavigation)
-              .loadURI (href,
-                        0, null, null, null);
+            // load with no referrer (ad hoc)
+            try {
+              let meta = targetDocument.createElement('meta');
+              meta.name = 'referrer';
+              meta.content = 'no-referrer';
+              targetDocument.head.appendChild(meta);
+            }
+            catch (e) {
+              Akahuku.debug.exception(e);
+            }
+            targetWindow.location.assign(href);
           }
           else {
             Akahuku.getDocumentParam (targetDocument)
               .gotop_scroll = 1;
                         
-            targetWindow
-              .QueryInterface (Components.interfaces
-                               .nsIInterfaceRequestor)
-              .getInterface (Components.interfaces
-                             .nsIWebNavigation)
-              .reload (Components.interfaces.nsIWebNavigation
-                       .LOAD_FLAGS_NONE);
+            targetWindow.location.reload();
           }
         }
         else if (info.isReply) {
           if (arAkahukuReload.enable
               && documentParam.reload_param) {
-            arAkahukuUI.clearStatusPanelText (null, selectedBrowser);
+            arAkahukuUI.clearStatusPanelText (null, null);
             arAkahukuReload.diffReloadCore
               (targetDocument,
                arAkahukuWheel.enableReloadReplySync, false);
           }
           else {
-            targetWindow
-              .QueryInterface (Components.interfaces
-                               .nsIInterfaceRequestor)
-              .getInterface (Components.interfaces
-                             .nsIWebNavigation)
-              .reload (Components.interfaces.nsIWebNavigation
-                       .LOAD_FLAGS_NONE);
+            targetWindow.location.reload();
           }
         }
         else if (info.isCatalog) {
           if (arAkahukuCatalog.enableReload
               && documentParam.catalog_param) {
-            arAkahukuUI.clearStatusPanelText (null, selectedBrowser);
+            arAkahukuUI.clearStatusPanelText (null, null);
             var anchor
               = targetDocument
               .getElementById ("akahuku_catalog_reload_button");
@@ -303,19 +273,12 @@ var arAkahukuWheel = {
                                          anchor);
           }
           else {
-            targetWindow
-              .QueryInterface (Components.interfaces
-                               .nsIInterfaceRequestor)
-              .getInterface (Components.interfaces
-                             .nsIWebNavigation)
-              .reload (Components.interfaces.nsIWebNavigation
-                       .LOAD_FLAGS_NONE);
+            targetWindow.location.reload();
           }
         }
       }
       else {
-        selectedBrowser.setAttribute ("__akahuku_wheel_count",
-                                      wheelCount);
+        window.sessionStorage.setItem('__akahuku_wheel_count', wheelCount);
 
         var text
           // "リロードぢから: "
@@ -323,13 +286,13 @@ var arAkahukuWheel = {
           + parseInt (wheelCount * 100
                       / Akahuku.reloadThreshold)
           + "%";
-        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE, selectedBrowser);
+        arAkahukuUI.setStatusPanelText (text, STATUSPANEL_TYPE, null);
         /* timeout が設定済みならリセットして再設定 */
         targetWindow.clearTimeout (arAkahukuWheel.timeoutID);
         arAkahukuWheel.timeoutID =
           targetWindow.setTimeout (function (text) {
               try {
-                arAkahukuUI.clearStatusPanelText (text, selectedBrowser);
+                arAkahukuUI.clearStatusPanelText (text, null);
               }
               catch (e) { Akahuku.debug.exception (e);
               }
@@ -454,9 +417,7 @@ var arAkahukuWheel = {
 
         // iframe内のホイールイベントも捕まえる
         if (info) { // 赤福管理ページでのみ
-          var browser
-            = arAkahukuWindow.getBrowserForWindow
-            (targetDocument.defaultView);
+          /* FIXME: capture events with no browser
           var handler
             = arAkahukuWheel._createWheelHandlerForFrames (targetDocument);
           browser.addEventListener (wheelEventName, handler, false);
@@ -464,6 +425,7 @@ var arAkahukuWheel = {
           ("unload", function () {
             browser.removeEventListener (wheelEventName, handler, false);
           }, false);
+          */
         }
       }
     }

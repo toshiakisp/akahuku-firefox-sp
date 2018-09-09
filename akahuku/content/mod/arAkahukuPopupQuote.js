@@ -1169,9 +1169,6 @@ var arAkahukuPopupQuote = {
               = (param.pageY - 8 - div.offsetHeight) + "px";
           }
           
-          arAkahukuLink.addAutoLinkEventHandler
-            (targetDocument, div);
-                    
           param.popups.push (div);
           targetDocument.body.appendChild (div);
                     

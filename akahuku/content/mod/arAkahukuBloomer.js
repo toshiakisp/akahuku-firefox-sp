@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global KeyEvent,
  *   Akahuku, arAkahukuConfig, AkahukuFileUtil
  */
 
@@ -16,15 +16,6 @@ var arAkahukuBloomer = {
   modifiersShift : false, /* Boolean  ショートカットキーの Shift */
   file : "",              /* String  ブルマ女将の場所 */
     
-  attachToWindow : function (window) {
-    window.addEventListener
-    ("keydown", arAkahukuBloomer.onKeyDown, true);
-  },
-  dettachFromWindow : function (window) {
-    window.removeEventListener
-    ("keydown", arAkahukuBloomer.onKeyDown, true);
-  },
-    
   /**
    * 設定を読み込む
    */
@@ -40,7 +31,7 @@ var arAkahukuBloomer = {
       value
         = unescape (value);
       arAkahukuBloomer.keycode
-        = Components.interfaces.nsIDOMKeyEvent ["DOM_" + value];
+        = KeyEvent ["DOM_" + value];
             
       arAkahukuBloomer.modifiersAlt
         = arAkahukuConfig

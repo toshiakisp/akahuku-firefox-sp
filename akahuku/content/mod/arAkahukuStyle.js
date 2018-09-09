@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global
  *   Akahuku, arAkahukuCompat, arAkahukuFile, arAkahukuUtil,
  *   arAkahukuCatalog, arAkahukuDelBanner,
  *   arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
@@ -144,87 +144,7 @@ var arAkahukuStyle = {
    *         false: 解除する
    */
   modifyStyleFile : function (register) {
-    if (!Akahuku.useFrameScript &&
-        arAkahukuCompat.comparePlatformVersion ("48.0") < 0) {
-      arAkahukuStyle._modifyStyleFileLegacy (register);
-      return;
-    }
-    try {
-      var {AkahukuCSSInjector}
-      = Components.utils.import ("resource://akahuku/css-injector.jsm", {});
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      arAkahukuStyle._modifyStyleFileLegacy (register);
-      return;
-    }
-
-    var uid = "Akahuku_userContent_css";
-    if (register) {
-      var style = new arAkahukuStyleData ();
-
-      arAkahukuDelBanner.setStyleFile (style);
-      arAkahukuPostForm.setStyleFile (style);
-      arAkahukuThread.setStyleFile (style);
-      arAkahukuReload.setStyleFile (style);
-      arAkahukuScroll.setStyleFile (style);
-      arAkahukuCatalog.setStyleFile (style);
-
-      AkahukuCSSInjector
-        .register (uid, "domain(2chan.net)", style.toString ("\n"));
-    }
-    else {
-      AkahukuCSSInjector.unregister (uid);
-    }
-  },
-  _modifyStyleFileLegacy : function (register) {
-    var filename
-    = AkahukuFileUtil
-    .Path.join (arAkahukuFile.systemDirectory, "userContent.css");
-        
-    var styleSheetService
-    = Components.classes ["@mozilla.org/content/style-sheet-service;1"]
-    .getService (Components.interfaces.nsIStyleSheetService);
-    var type = Components.interfaces.nsIStyleSheetService.USER_SHEET;
-        
-    var ios
-    = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService);
-    var uri
-    = ios.newURI (AkahukuFileUtil.getURLSpecFromNativePath (filename),
-                  null, null);
-        
-    if (register) {
-      var style = new arAkahukuStyleData ();
-            
-      arAkahukuDelBanner.setStyleFile (style);
-      arAkahukuPostForm.setStyleFile (style);
-      arAkahukuThread.setStyleFile (style);
-      arAkahukuReload.setStyleFile (style);
-      arAkahukuScroll.setStyleFile (style);
-      arAkahukuCatalog.setStyleFile (style);
-            
-      var text
-      = "@-moz-document domain(2chan.net) {\n"
-      + style.toString ("\n")
-      + "}\n";
-            
-      style = null;
-            
-      AkahukuFSUtil.saveStringToNativeFile (filename, text, "plain/text")
-      .then (function () {
-        if (styleSheetService.sheetRegistered (uri, type)) {
-          styleSheetService.unregisterSheet (uri, type);
-        }
-        styleSheetService.loadAndRegisterSheet (uri, type);
-      }, function (err) {
-        Akahuku.debug.error ("Error in creating userContent.css:", err);
-      });
-    }
-    else {
-      if (styleSheetService.sheetRegistered (uri, type)) {
-        styleSheetService.unregisterSheet (uri, type);
-      }
-    }
+    // update css only in the Chrome process
   },
     
   /**

@@ -1,5 +1,5 @@
 
-/* global Components, Akahuku, arAkahukuConfig, arAkahukuServerData */
+/* global ObserverService, Akahuku, arAkahukuConfig, arAkahukuServerData */
 
 function arAkahukuBoardInfo (id) {
   this.id = id;
@@ -105,10 +105,8 @@ var arAkahukuBoard = {
    */
   init : function () {
     if (!this.observed) {
-      var os
-      = Components.classes ["@mozilla.org/observer-service;1"]
-      .getService (Components.interfaces.nsIObserverService);
-      os.addObserver (this, "arakahuku-board-newest-num-updated", false);
+      ObserverService.addObserver(this,
+        "arakahuku-board-newest-num-updated");
       this.observed = true;
     }
   },
@@ -118,10 +116,8 @@ var arAkahukuBoard = {
    */
   term : function () {
     if (this.observed) {
-      var os
-      = Components.classes ["@mozilla.org/observer-service;1"]
-      .getService (Components.interfaces.nsIObserverService);
-      os.removeObserver (this, "arakahuku-board-newest-num-updated", false);
+      ObserverService.removeObserver(this,
+        "arakahuku-board-newest-num-updated");
       this.observed = false;
     }
   },
@@ -211,7 +207,6 @@ var arAkahukuBoard = {
     }
     try {
       if (topic == "arakahuku-board-newest-num-updated") {
-        subject.QueryInterface (Components.interfaces.nsISupportsString);
         var decodedData = JSON.parse (subject.data);
         this.onNotifiedThreadNewestNumber (decodedData, data);
       }
@@ -246,7 +241,7 @@ var arAkahukuBoard = {
           
       return true;
     }
-    catch (e) { Components.utils.reportError (e);
+    catch (e) { Akahuku.debug.exception (e);
       return false;
     }
   },
@@ -338,18 +333,13 @@ var arAkahukuBoard = {
       num = oldNum;
     }
     if (updated && !dontNotify) {
-      var observerService
-        = Components.classes ["@mozilla.org/observer-service;1"]
-        .getService (Components.interfaces.nsIObserverService);
-      var subject
-        = Components.classes ["@mozilla.org/supports-string;1"]
-        .createInstance (Components.interfaces.nsISupportsString);
+      var subject = {};
       subject.data = JSON.stringify ({
         name: id,
         value: num,
       });
       this.observePaused = true;
-      observerService.notifyObservers
+      ObserverService.notifyObservers
         (subject, "arakahuku-board-newest-num-updated", null);
       this.observePaused = false;
     }
@@ -398,21 +388,7 @@ var arAkahukuBoard = {
 
 (function () {
   var scope = {};
-  try {
-    scope.arAkahukuServerData = arAkahukuServerData;
-  }
-  catch (e) {
-    try {
-      var loader
-        = Components.classes ["@mozilla.org/moz/jssubscript-loader;1"]
-        .getService (Components.interfaces.mozIJSSubScriptLoader);
-      loader.loadSubScript
-        ("chrome://akahuku/content/mod/arAkahukuServerName.js", scope);
-    }
-    catch (e) {
-      Components.utils.reportError (e);
-    }
-  }
+  scope.arAkahukuServerData = arAkahukuServerData;
 
   for (var id in scope.arAkahukuServerData) {
     var board = new arAkahukuBoardInfo (id);

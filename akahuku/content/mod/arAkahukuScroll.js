@@ -1,6 +1,6 @@
 
 /* global Akahuku, arAkahukuConfig,
- *   arAkahukuDOM, arAkahukuThread, arAkahukuWheel, arAkahukuWindow
+ *   arAkahukuDOM, arAkahukuThread, arAkahukuWheel
  */
 
 /**
@@ -122,13 +122,9 @@ var arAkahukuScroll = {
         && info.isReply) {
       var lastReply = arAkahukuThread.getLastReply (targetDocument);
       if (lastReply) {
-        var browser
-          = arAkahukuWindow.getBrowserForWindow
-          (targetDocument.defaultView);
-        if (browser) {
-          browser.__akahuku_lastreply = lastReply.num;
-          browser.__akahuku_lastthread = info.threadNumber;
-        }
+        let storage = targetDocument.defaultView.sessionStorage;
+        storage.setItem('__akahuku_lastreply', lastReply.num);
+        storage.setItem('__akahuku_lastthread', info.threadNumber);
       }
     }
   },
@@ -149,14 +145,11 @@ var arAkahukuScroll = {
         
     if (!lastReply && arAkahukuScroll.enableGoCurrentReload) {
       /* リロード後かどうかチェック */
-      var browser
-        = arAkahukuWindow.getBrowserForWindow (targetWindow);
-      if (browser) {
-        if (info.threadNumber == browser.__akahuku_lastthread) {
-          /* リロード後だった */
-          lastReply = browser.__akahuku_lastreply;
-          findNext = true;
-        }
+      let storage = targetWindow.sessionStorage;
+      if (info.threadNumber == storage.getItem('__akahuku_lastthread')) {
+        // リロード後だった
+        lastReply = storage.getItem('__akahuku_lastreply');
+        findNext = true;
       }
     }
         
@@ -274,7 +267,7 @@ var arAkahukuScroll = {
    * @param  Event event
    *         対象のイベント
    */
-  onScroll : function (event, browser) {
+  onScroll : function (event) {
     var targetWindow = null;
     if ("defaultView" in event.target) {
       targetWindow = event.target.defaultView;
@@ -286,7 +279,8 @@ var arAkahukuScroll = {
       return;
     }
         
-    browser.__lastScrollY = targetWindow.scrollY;
+    targetWindow.sessionStorage
+      .setItem('__lastScrollY', targetWindow.scrollY);
   },
     
   /**
@@ -304,11 +298,7 @@ var arAkahukuScroll = {
       = false;
             
       var targetWindow = targetDocument.defaultView;
-      var browser
-      = arAkahukuWindow.getBrowserForWindow (targetWindow);
-      if (browser) {
-        browser.__akahuku_gotop_scrolled = true;
-      }
+      targetWindow.sessionStorage.setItem('__akahuku_gotop_scrolled', true);
       targetWindow.scrollTo (0, 0);
     }
   },
@@ -326,6 +316,7 @@ var arAkahukuScroll = {
       return;
     }
     var targetWindow = targetDocument.defaultView;
+    var storage = targetWindow.sessionStorage;
         
     var scrolled = false;
         
@@ -340,16 +331,11 @@ var arAkahukuScroll = {
       scrolled = true;
     }
         
-    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
-        
     if (!scrolled
         && info.isNormal && arAkahukuWheel.enableReloadLoop) {
-      if (browser
-          && "__akahuku_gobottom" in browser
-          && browser.__akahuku_gobottom) {
+      if (storage.getItem('__akahuku_gobottom')) {
         /* ループで末尾にスクロール */
-        browser.__akahuku_gobottom = false;
-        browser.removeAttribute ("__akahuku_gobottom");
+        storage.removeItem('__akahuku_gobottom')
         targetWindow.scrollTo
           (0,
            targetDocument.documentElement.scrollHeight);
@@ -364,12 +350,9 @@ var arAkahukuScroll = {
         
     if (!scrolled
         && arAkahukuScroll.enableGoTop && info.isNormal) {
-      if (browser
-          && "__akahuku_gotop_scrolled" in browser
-          && browser.__akahuku_gotop_scrolled) {
+      if (storage.getItem('__akahuku_gotop_scrolled')) {
         /* リロード前にページトップにスクロールしていた場合はスクロールしない */
-        browser.__akahuku_gotop_scrolled = false;
-        browser.removeAttribute ("__akahuku_gotop_scrolled");
+        storage.removeItem('__akahuku_gotop_scrolled');
         scrolled = true;
       }
       else {
@@ -382,20 +365,17 @@ var arAkahukuScroll = {
         && (!arAkahukuScroll.enableLockReply || info.isReply)) {
       /* 他のスクロールが行われない場合に
        * リロード前の位置にスクロールする */
-      if (browser) {
-        if (targetWindow.scrollY > 0) {
-          if (browser.__lastScrollY) {
-            targetWindow.scrollTo (targetWindow.scrollX,
-                                   browser.__lastScrollY);
-          }
+      if (targetWindow.scrollY > 0) {
+        let lastScrollY = storage.getItem('__lastScrollY');
+        if (lastScrollY != null) {
+          targetWindow.scrollTo(targetWindow.scrollX, lastScrollY);
         }
-                
-        targetWindow.addEventListener
-        ("scroll",
-         function () {
-          arAkahukuScroll.onScroll (arguments [0], browser);
-        }, false);
       }
+      targetWindow.addEventListener
+      ("scroll",
+       function () {
+        arAkahukuScroll.onScroll (arguments [0]);
+      }, false);
     }
   }
 };

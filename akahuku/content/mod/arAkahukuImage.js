@@ -1,14 +1,13 @@
 
-/* global Components, Promise,
+/* global Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
  *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
- *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil, arAkahukuUI,
+ *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil,
  *   AkahukuFileUtil, AkahukuFS,
  */
 
 /**
  * 画像の保存のリスナ
- *   Inherits From: nsIWebProgressListener
  */
 function arAkahukuImageListener () {
 }
@@ -19,25 +18,6 @@ arAkahukuImageListener.prototype = {
   finished : false,
   callback : null,
   expectedContentTypePattern : /^image\//,
-    
-  /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsIWebProgressListener
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsIWebProgressListener)) {
-      return this;
-    }
-        
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  },
 
   setFilePath : function (filePath, tmpfilePath) {
     this.saveLeafName = AkahukuFS.Path.basename (filePath);
@@ -46,32 +26,6 @@ arAkahukuImageListener.prototype = {
     var that = this;
     this.storage = AkahukuFS.getFileStorage ({name: dirname})
     .then (function (value) { that.storage = value; });
-  },
-    
-  /**
-   * 監視ウィンドウのロケーションが変わった時のイベント
-   *   nsIWebProgressListener.onLocationChange
-   * 未使用
-   */
-  onLocationChange : function (webProgress, request, location) {
-  },
-    
-  /**
-   * 進行状況が変わった時のイベント
-   *   nsIWebProgressListener.onProgressChange
-   * 未使用
-   */
-  onProgressChange: function (webProgress , request,
-                              curSelfProgress, maxSelfProgress,
-                              curTotalProgress, maxTotalProgress) {
-  },
-    
-  /**
-   * プロトコルのセキュリティ設定が変わった時のイベント
-   *   nsIWebProgressListener.onSecurityChange
-   * 未使用
-   */
-  onSecurityChange : function (webProgress, request, state) {
   },
     
   /**
@@ -96,17 +50,17 @@ arAkahukuImageListener.prototype = {
       return;
     }
     try {
-      httpStatus
-        = request.QueryInterface (Components.interfaces.nsIHttpChannel)
-        .responseStatus;
+      httpStatus = request.responseStatus;
       httpSucceeded = request.requestSucceeded;
     }
     catch (e) {
     }
         
+    const STATE_STOP = 0x00000010;// dummy
+    const STATE_START = 0x00000001;// dummy
+
     try {
-    if (stateFlags
-        & Components.interfaces.nsIWebProgressListener.STATE_STOP) {
+    if (stateFlags & STATE_STOP) {
       this.finished = true;
       var that = this;
       if (httpStatus == 0) {
@@ -200,8 +154,7 @@ arAkahukuImageListener.prototype = {
         this.callback (false, null, null, "");
       }
     }
-    else if (stateFlags
-        & Components.interfaces.nsIWebProgressListener.STATE_START) {
+    else if (stateFlags & STATE_START) {
       // 通信開始
       if (httpStatus > 0) {
         this.httpStatusAtStart = httpStatus
@@ -246,11 +199,6 @@ var arAkahukuImage = {
   currentTarget : null,    /* HTMLAnchorElement  保存先選択中のボタン */
   currentNormal : false,   /* Boolean  保存先選択中のボタンが通常のボタンか */
   lastTargetDirIndex : -1, /* Number  最後に保存したディレクトリのインデックス */
-
-  attachToWindow : function (window) {
-  },
-  dettachFromWindow : function (window) {
-  },
 
   /**
    * ドキュメントのスタイルを設定する
@@ -317,10 +265,6 @@ var arAkahukuImage = {
     arAkahukuImage.enable
     = arAkahukuConfig
     .initPref ("bool", "akahuku.saveimage", false);
-    if (Components.classes ["@mozilla.org/binaryinputstream;1"]
-        == undefined) {
-      arAkahukuImage.enable = false;
-    }
     if (arAkahukuImage.enable) {
       var list = new Array ();
       
@@ -633,17 +577,12 @@ var arAkahukuImage = {
         var view = target.ownerDocument.defaultView;
         rect.x = rect.x + view.mozInnerScreenX;
         rect.y = rect.y + view.mozInnerScreenY;
-        try {
-          var dwu = view
-            .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-            .getInterface (Components.interfaces.nsIDOMWindowUtils);
-          var scale = dwu.screenPixelsPerCSSPixel;
+        if (view.devicePixelRatio > 1 || view.devicePixelRatio < 1) {
+          let scale = view.devicePixelRatio;
           rect.x = Math.round (rect.x * scale);
           rect.y = Math.round (rect.y * scale);
           rect.width = Math.round (rect.width * scale);
           rect.height = Math.round (rect.height * scale);
-        }
-        catch (e) { Akahuku.debug.exception (e);
         }
         arAkahukuImage.openXULSaveImagePopup
           (target, rect, event.screenX, event.screenY);
@@ -701,40 +640,16 @@ var arAkahukuImage = {
   },
 
   openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY, window) {
-    if (!window && targetContentNode) { // non-e10s
-      window
-        = arAkahukuWindow.getParentWindowInChrome
-        (targetContentNode.ownerDocument.defaultView);
-    }
-    var document = window.document;
-    var popup = document.getElementById ("akahuku-saveimage-popup");
-
-    if (targetContentNode && "openPopup" in popup) {
-      popup.openPopup
-        (targetContentNode,
-         "before_end",
-         -1, -1,
-         true, true);
-    }
-    else if (rect && "openPopupAtScreenRect" in popup) {
-      popup.setAttribute ("position","after_start")
-      popup.openPopupAtScreenRect
-        ("after_start",
-         rect.x, rect.y,
-         rect.width, rect.height,
-         true, false);
-    }
-    else {
-      var parent = document.getElementById ("main-window");
-      var x, y;
-      x = screenX - parent.boxObject.screenX;
-      y = screenY - parent.boxObject.screenY;
-      document.popupNode = parent;
-      popup.showPopup
-      (parent,
-       x + 2,
-       y + 2, "popup", null, null);
-    }
+    var recto = {x: rect.x, y: rect.y,
+      width: rect.width, height: rect.height,
+      top: rect.top, left: rect.left,
+    };
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendAsyncCommand
+      ("Image/openXULSaveImagePopup", [null, recto, x, y],
+       node.ownerDocument.defaultView);
+    */
   },
 
   selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu, browser) {
@@ -801,8 +716,6 @@ var arAkahukuImage = {
       targetDirIndex = 0;
     }
 
-    var uri = arAkahukuUtil.newURIViaNode (href, null);
-        
     var targetDocument = target.ownerDocument;
     var info
     = Akahuku.getDocumentParam (targetDocument).location_info;
@@ -827,8 +740,8 @@ var arAkahukuImage = {
       arAkahukuImage.asyncOpenSaveImageFilePicker
         (browser, leafName, dirPath, function (ret, filePath, dirPath) {
 
-        if (ret != Components.interfaces.nsIFilePicker.returnOK
-            && ret != Components.interfaces.nsIFilePicker.returnReplace) {
+        if (ret != 'returnOK'
+            && ret != 'returnReplace') {
           /* 中断 */
           arAkahukuImage.onSave
           (target, false,
@@ -850,7 +763,7 @@ var arAkahukuImage = {
             != leafName.length - ext.length) {
           path = filePath + ext;
         }
-        arAkahukuImage.saveImageCore (target, path, uri, leafName, normal);
+        arAkahukuImage.saveImageCore (target, path, href, leafName, normal);
       });
     }
     else {
@@ -876,52 +789,27 @@ var arAkahukuImage = {
             
       var fileUrl = dirUrl + leafName;
       var filePath = AkahukuFileUtil.getNativePathFromURLSpec (fileUrl);
-      arAkahukuImage.saveImageCore (target, filePath, uri, leafName, normal);
+      arAkahukuImage.saveImageCore (target, filePath, href, leafName, normal);
     }
   },
   /**
-   * 保存先のファイルを選ぶ(要Chrome process)
+   * 保存先のファイルを選ぶ
    */
   asyncOpenSaveImageFilePicker : function (browser, leafName, dirname, callback) {
-    var chromeWindow = browser.ownerDocument.defaultView.top;
-    var filePicker
-      = Components.classes ["@mozilla.org/filepicker;1"]
-      .createInstance (Components.interfaces.nsIFilePicker);
-    filePicker.init (chromeWindow,
-        // "保存先のファイルを選んでください"
-        "\u4FDD\u5B58\u5148\u306E\u30D5\u30A1\u30A4\u30EB\u3092\u9078\u3093\u3067\u304F\u3060\u3055\u3044",
-        Components.interfaces.nsIFilePicker.modeSave);
-    filePicker.defaultString = leafName;
-    filePicker.appendFilters (Components.interfaces.nsIFilePicker.filterAll);
-
-    try {
-      var dir = arAkahukuFile.initFile (dirname);
-      if (!dir.exists ()) {
-        arAkahukuFile.createDirectory (dir.path);
-      }
-
-      filePicker.displayDirectory = dir;
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      /* ベースのディレクトリが不正 */
-    }
-
-    arAkahukuCompat.FilePicker.open
-      (filePicker, function (ret) {
-        var file = null;
-        var dir = null;
-        if (ret == Components.interfaces.nsIFilePicker.returnOK
-            || ret == Components.interfaces.nsIFilePicker.returnReplace) {
-          file = filePicker.file.path;
-          dir = filePicker.file.parent.path;
-        }
-        callback.apply (null, [ret, file, dir]);
-      });
+    Akahuku.debug.error('NotYetImplemented');
+    window.setTimeout(()=>{
+      callback.apply (null, [-1, null, null]);
+    },10);
+    /*
+    var contentWindow = browser.ownerGlobal;
+    arAkahukuIPC.sendAsyncCommand
+      ("Image/asyncOpenSaveImageFilePicker",
+       [null, filename, dirname, callback],
+       contentWindow);
+    */
   },
 
   saveRedirectImage : function (target, targetDirIndex, href, leafName, normal) {
-    var uri = arAkahukuUtil.newURIViaNode (href, null);
-
     var filename
       = "." + new Date ().getTime ()
       + "_" + Math.floor (Math.random () * 1000);
@@ -929,18 +817,7 @@ var arAkahukuImage = {
       .join (arAkahukuFile.systemDirectory, filename);
 
     var targetDocument = target.ownerDocument;
-    var isPrivate = false;
-    try {
-      // required for Firefox 18.0+
-      var privacyContext
-        = targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation)
-        .QueryInterface (Components.interfaces.nsILoadContext);
-      isPrivate = privacyContext.usePrivateBrowsing;
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    var isPrivate = false; //TODO
 
     var onFileSaved = function (success, savedFile, storage, msg) {
       var newHref = null;
@@ -972,8 +849,7 @@ var arAkahukuImage = {
         }
         if (arAkahukuP2P.enable) {
           // P2P の場合、キャッシュからの取得を試みる
-          var baseDir = arAkahukuUtil.newURIViaNode (href, null);
-          var newHref = baseDir.resolve ("../src/" + leafName);
+          let newHref = (new URL('../src/' + leafName, href)).href;
           return [newHref, 0];
         }
         else {
@@ -992,7 +868,7 @@ var arAkahukuImage = {
       });
     };
     arAkahukuImage.asyncSaveImageToFile
-      (filename, uri, isPrivate, onFileSaved);
+      (filename, href, isPrivate, onFileSaved);
   },
 
   /**
@@ -1000,24 +876,13 @@ var arAkahukuImage = {
    *
    * @param  HTMLElement target ボタン
    * @param  String filePath 保存先のファイルパス
-   * @param  nsIURI uri 保存するアドレス
+   * @param  String uri 保存するアドレス
    * @param  String leafName ファイル名
    * @param  Boolean normal 通常のボタンか
    */
   saveImageCore : function (target, filePath, uri, leafName, normal) {
     var targetDocument = target.ownerDocument;
-    var isPrivate = false;
-    try {
-      // required for Firefox 18.0+
-      var privacyContext
-        = targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation)
-        .QueryInterface (Components.interfaces.nsILoadContext);
-      isPrivate = privacyContext.usePrivateBrowsing;
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    var isPrivate = false; //TODO
     arAkahukuImage.asyncSaveImageToFile (filePath, uri, isPrivate,
         function (success, savedFile, storage, msg) {
           if (!success && savedFile) {
@@ -1044,51 +909,17 @@ var arAkahukuImage = {
    * 画像を保存先に保存する
    *
    * @param  String filePath 保存先のファイルパス
-   * @param  nsIURI uri 保存するアドレス
+   * @param  String uri 保存するアドレス
    * @param  Boolean isPrivate プライベートブラウジングか
    * @param  Function callback 保存終了時のコールバック関数
    */
   asyncSaveImageToFile : function (filePath, uri, isPrivate, callback) {
-    var tmpFilePath
-      = filePath
-      + "." + new Date ().getTime ()
-      + "_" + Math.floor (Math.random () * 1000);
-    var listener = new arAkahukuImageListener ();
-    listener.setFilePath (filePath, tmpFilePath);
-    listener.callback = callback;
-
-    try {
-      var url = uri.QueryInterface (Components.interfaces.nsIURL);
-      switch (url.fileExtension.toLowerCase ()) {
-        case "jpg":
-        case "jpeg":
-        case "gif":
-        case "png":
-          listener.expectedContentTypePattern = /^image\//;
-          break;
-        case "webm":
-        case "mp4":
-          listener.expectedContentTypePattern = /^video\//;
-          break;
-        default:
-          listener.expectedContentTypePattern = null;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-        
-    var webBrowserPersist
-    = Components.classes
-    ["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"]
-    .createInstance (Components.interfaces.nsIWebBrowserPersist);
-    var flags
-    = Components.interfaces.nsIWebBrowserPersist.PERSIST_FLAGS_NONE;
-    webBrowserPersist.persistFlags = flags;
-    webBrowserPersist.progressListener = listener;
-
-    var args = {uri: uri, file: tmpFilePath, isPrivate: isPrivate};
-    arAkahukuCompat.WebBrowserPersist.saveURI
-      (webBrowserPersist, args);
+    Akahuku.debug.error('NotYetImplemented');
+    callback (false, null, null, "NotYetImplemented");
+    /*
+    arAkahukuIPC.sendAsyncCommand
+      ("Image/asyncSaveImageToFile", arguments);
+    */
   },
     
   saveBaseList : function () {
@@ -1120,14 +951,10 @@ var arAkahukuImage = {
           dir += "_";
         }
         href = arAkahukuP2P.deP2P (href);
-        var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
-        arAkahukuCompat.nsIURI.setPathQueryRef (uri,
-            arAkahukuCompat.nsIURI.getPathQueryRef (uri)
-            .replace (/\/(red|d)\//, "/src/"));
-            
-        var dirs = new Array ();
-        dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
-        var pathParts = [info.escapeForFilename (uri.host)];
+        let url = new URL('./', href);
+        url.pathname = url.pathname.replace(/\/(red|d)\//, '/src/');
+        let dirs = url.pathname.split(/\//);
+        let pathParts = [info.escapeForFilename(url.host)];
         for (var i = 0; i < dirs.length; i ++) {
           if (dirs [i]) {
             pathParts.push (info.escapeForFilename (dirs [i]));
@@ -1181,14 +1008,10 @@ var arAkahukuImage = {
     }
     else {
       href = arAkahukuP2P.deP2P (href);
-      var uri = arAkahukuUtil.newURIViaNode ("./", {baseURI: href});
-      arAkahukuCompat.nsIURI.setPathQueryRef (uri,
-          arAkahukuCompat.nsIURI.getPathQueryRef (uri)
-          .replace (/\/(red|d)\//, "/src/"));
-      
-      var dirs = new Array ();
-      dirs = arAkahukuCompat.nsIURI.getPathQueryRef (uri).split (/\//);
-      href = info.escapeForFilename (uri.host);
+      let url = new URL('./', href);
+      url.pathname = url.pathname.replace(/\/(red|d)\//, '/src/');
+      let dirs = url.pathname.split(/\//);
+      href = info.escapeForFilename(url.host);
       for (var i = 0; i < dirs.length; i ++) {
         if (dirs [i]) {
           href
@@ -1215,15 +1038,8 @@ var arAkahukuImage = {
   setPopup : function (event) {
     var popup = event.target;
     var document = event.currentTarget.ownerDocument;
-    var browser;
-    var w = document.commandDispatcher.focusedWindow;
-    if (w && !(w instanceof Components.interfaces.nsIDOMChromeWindow)) {
-      browser = arAkahukuWindow.getBrowserForWindow (w);
-    }
-    else { // for e10s
-      browser = document.commandDispatcher.focusedElement;
-      w = null;
-    }
+    var browser = document.commandDispatcher.focusedElement;
+    var w = null;
         
     var label, menuitem;
         
@@ -1674,12 +1490,6 @@ var arAkahukuImage = {
           // requires Gecko 19.0+
           unitW = "vw";
           unitH = "vh";
-          if (arAkahukuCompat.comparePlatformVersion ("18.*") <= 0) {
-            // vw,vh 非対応環境では静的な計算値で模擬
-            unitW = unitH = "px";
-            limitWidth *= targetDocument.documentElement.clientWidth / 100;
-            limitHeight *= targetDocument.documentElement.clientHeight / 100;
-          }
         }
         srcImage.style.maxWidth = limitWidth + unitW;
         srcImage.style.maxHeight = limitHeight + unitH;
@@ -1723,13 +1533,7 @@ var arAkahukuImage = {
       srcImage.addEventListener
       ("load",
        function () {
-        /* ロードが完了したらアニメーションを最初から開始する */
-        try {
-          srcImage.QueryInterface (Components.interfaces.nsIImageLoadingContent).getRequest (0).image.resetAnimation ();
-          srcImage.QueryInterface (Components.interfaces.nsIImageLoadingContent).getRequest (0).image.startAnimation ();
-        }
-        catch (e) {
-        }
+        //TODO: ロードが完了したらアニメーションを最初から開始する
       }, true);
       if (url) {
         srcImage.src = url;

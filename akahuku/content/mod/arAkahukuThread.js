@@ -1,9 +1,10 @@
 
-/* global Components, CSSPrimitiveValue,
+/* global CSSPrimitiveValue,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter,
  *   arAkahukuDOM, arAkahukuP2P, arAkahukuCompat, arAkahukuImageURL,
  *   arAkahukuWindow, arAkahukuBoard,
  *   arAkahukuUtil, arAkahukuTitle,
+ *   ObserverService
  */
 
 /**
@@ -114,19 +115,15 @@ arAkahukuThreadParam.prototype = {
    * タブ間連携用オブザーバー登録
    */
   registerObserver : function () {
-    var os
-    = Components.classes ["@mozilla.org/observer-service;1"]
-    .getService (Components.interfaces.nsIObserverService);
-    os.addObserver (this, "arakahuku-thread-replynum-changed", false);
+    ObserverService.addObserver(this,
+      "arakahuku-thread-replynum-changed");
     this._observing = true;
   },
   unregisterObserver : function () {
     if (!this._observing) return;
     try {
-      var os
-      = Components.classes ["@mozilla.org/observer-service;1"]
-      .getService (Components.interfaces.nsIObserverService);
-      os.removeObserver (this, "arakahuku-thread-replynum-changed", false);
+      ObserverService.removeObserver(this,
+        "arakahuku-thread-replynum-changed");
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -138,7 +135,6 @@ arAkahukuThreadParam.prototype = {
     try {
       switch (topic) {
         case "arakahuku-thread-replynum-changed":
-          subject.QueryInterface (Components.interfaces.nsISupportsString);
           var decoded = JSON.parse (subject.data);
           this.onNotifiedThreadReplyNumChanged (decoded);
           break;
@@ -246,16 +242,6 @@ var arAkahukuThread = {
     
   enableMoveButton : false, /* Boolean  前後に移動ボタン */
     
-  attachToWindow : function (window) {
-    /* タブの移動のイベントを監視 */
-    window.addEventListener
-    ("TabMove", arAkahukuThread.onTabMove, true);
-  },
-  dettachFromWindow : function (window) {
-    window.removeEventListener
-    ("TabMove", arAkahukuThread.onTabMove, true);
-  },
-
   /**
    * ドキュメントのスタイルを設定する
    *
@@ -1603,13 +1589,11 @@ var arAkahukuThread = {
       dir: info.dir,
       threadNumber: parseInt (threadNum),
       replyCount: parseInt (replyNum)};
-    var subject = Components.classes ["@mozilla.org/supports-string;1"]
-    .createInstance (Components.interfaces.nsISupportsString);
+    var subject = {};
     subject.data = JSON.stringify (data);
     arAkahukuUtil.executeSoon (function (subject) {
-      var os = Components.classes ["@mozilla.org/observer-service;1"]
-      .getService (Components.interfaces.nsIObserverService);
-      os.notifyObservers (subject, "arakahuku-thread-replynum-changed", null);
+      ObserverService.notifyObservers(subject,
+        "arakahuku-thread-replynum-changed", null);
     }, [subject]);
   },
     
@@ -1653,12 +1637,7 @@ var arAkahukuThread = {
     try {
       var info = documentParam.location_info;
       if (info.isReply) {
-        var os
-          = Components.classes ["@mozilla.org/observer-service;1"]
-          .getService (Components.interfaces.nsIObserverService);
-        var subject
-          = Components.classes ["@mozilla.org/supports-string;1"]
-          .createInstance (Components.interfaces.nsISupportsString);
+        var subject = {};
         subject.data
           = JSON.stringify ({
             URL: targetDocument.location.href,
@@ -1666,7 +1645,8 @@ var arAkahukuThread = {
             dir: info.dir,
             threadNumber: info.threadNumber,
           });
-        os.notifyObservers (subject, "arakahuku-thread-unload", null);
+        ObserverService.notifyObservers(subject,
+          "arakahuku-thread-unload", null);
       }
     }
     catch (e) { Akahuku.debug.exception (e);
@@ -1718,132 +1698,16 @@ var arAkahukuThread = {
     }
   },
   setTabIconForWindow : function (targetWindow, prop) {
-    // shim for e10s
-    var targetBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
-    arAkahukuThread.setTabIconForBrowser (targetBrowser, prop);
-  },
-  setTabIconForBrowser : function (targetBrowser, prop) {
-    // run only in XUL overlay
-    var src = prop.src;
-    if (arAkahukuThread.enableTabIcon) {
-      var tab
-      = arAkahukuWindow.getTabForBrowser (targetBrowser);
-      if (tab) {
-        var tabbrowser
-          = targetBrowser.ownerDocument.getElementById ("content");
-        tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
-        
-        if ("setIcon" in tabbrowser
-            && arAkahukuThread.enableTabIconAsFavicon) {
-          tabbrowser.setIcon (tab, src);
-        }
-        else // いつのバージョン用のコード?
-        if ("updateIcon" in tabbrowser) {
-          tab.linkedBrowser.mIconURL = src;
-          tabbrowser.updateIcon (tab);
-        }
-        else {
-          tab.setAttribute ("image", src);
-
-          // favicon.ico 等に上書きされてしまったら元に戻す
-          var tabIconUpdater = (function (tab, src, taburi) {
-            return function () {
-              if (tab.getAttribute ("image") == src) {
-                return;
-              }
-              tab.removeEventListener ("load", tabIconUpdater);
-              if (taburi !== tab.linkedBrowser.currentURI) {
-                return; // 別ページへ遷移した後
-              }
-              tab.setAttribute ("image", src);
-            };
-          })(tab, src, tab.linkedBrowser.currentURI);
-          tab.addEventListener ("load", tabIconUpdater, false);
-        }
-                    
-        if (arAkahukuThread.enableTabIconSize) {
-          var max = arAkahukuThread.tabIconSizeMax;
-          var width
-            = parseInt (prop.thumbnailWidth);
-          var height
-            = parseInt (prop.thumbnailHeight);
-                        
-          if (width > height) {
-            height = max * height / width;
-            width = max;
-          }
-          else if (width < height) {
-            width = max * width / height;
-            height = max;
-          }
-          else {
-            width = max;
-            height = max;
-          }
-                    
-          var node
-            = targetBrowser.ownerDocument.getAnonymousElementByAttribute
-            (tab, "class", "tab-icon");
-          var tabIcon = node;
-          if (node) {
-            try {
-              node.style.width = width + "px";
-              node.style.height = height + "px";
-              var diff    
-                = node.parentNode.boxObject.height - height;
-              if (diff < 0) {
-                node.style.marginTop = (diff / 2) +  "px";
-                node.style.marginBottom = (diff / 2) + "px";
-              }
-            }
-            catch (e) {
-              /* Wazilla では style がサポートされていない */
-            }
-          }
-          node
-            = targetBrowser.ownerDocument.getAnonymousElementByAttribute
-            (tab, "class", "tab-icon-image");
-          if (node) {
-            if (tabIcon && node.parentNode == tabIcon) {
-              /* tab-icon-image が tab-icon 内にある
-               * 1. Mac のスタイル
-               * 2. TabMixPlus の改造
-               * 
-               * 2 の場合マージンの位置がおかしいので
-               * 修正しなければならない
-               */
-              try {
-                var s, e, style;
-                style = targetBrowser.ownerDocument.defaultView
-                  .getComputedStyle (node, "");
-                s = style.getPropertyCSSValue ("margin-left").getFloatValue (CSSPrimitiveValue.CSS_PX) + "px";
-                e = style.getPropertyCSSValue ("margin-right").getFloatValue (CSSPrimitiveValue.CSS_PX) + "px";
-                node.style.MozMarginStart = "0px";
-                node.style.MozMarginEnd = "0px";
-                tabIcon.style.MozMarginStart = s;
-                tabIcon.style.MozMarginEnd = e;
-              }
-              catch (e) { Akahuku.debug.exception (e);
-              }
-            }
-            try {
-              node.style.width = width + "px";
-              node.style.height = height + "px";
-                            
-              var diff    
-                = node.parentNode.boxObject.height - height;
-              if (diff < 0) {
-                node.style.marginTop = (diff / 2) +  "px";
-                node.style.marginBottom = (diff / 2) + "px";
-              }
-            }
-            catch (e) {
-              /* Wazilla では style がサポートされていない */
-            }
-          }
-        }
-      }
+    let targetDocument = targetWindow.document;
+    let link = targetDocument.getElementById('akahuku_thread_favicon');
+    if (!link) {
+      link = targetDocument.createElement('link');
     }
+    link.rel = 'icon';
+    link.href = prop.src;
+    link.id = 'akahuku_thread_favicon';
+    if (!link.parentNode)
+      targetDocument.head.appendChild(link);
   },
     
   /**
@@ -1871,114 +1735,12 @@ var arAkahukuThread = {
     }
   },
   resetTabIconForWindow : function (targetWindow) {
-    // shim for e10s
-    var targetBrowser = arAkahukuWindow.getBrowserForWindow (targetWindow);
-    arAkahukuThread.resetTabIconForBrowser (targetBrowser);
-  },
-  resetTabIconForBrowser : function (targetBrowser) {
-    if (arAkahukuThread.enableTabIcon) {
-      var tab
-      = arAkahukuWindow.getTabForBrowser (targetBrowser);
-      if (tab) {
-        var tabbrowser = targetBrowser.ownerDocument
-          .getElementById ("content");
-        tabbrowser = arAkahukuWindow.unwrapXPCNative (tabbrowser);
-        
-        if ("setIcon" in tabbrowser) {
-          tabbrowser.setIcon (tab, "");
-        }
-        else
-        if ("_updateAppTabIcons" in tabbrowser) {
-          tab.setAttribute ("image", "");
-          tabbrowser._updateAppTabIcons(tab);
-        }
-        else if ("updateIcon" in tabbrowser) {
-          tab.linkedBrowser.mIconURL = "";
-          tabbrowser.updateIcon (tab);
-        }
-        else {
-          tab.setAttribute ("image", "");
-        }
-                
-        if (arAkahukuThread.enableTabIconSize) {
-          var node
-            = targetBrowser.ownerDocument
-            .getAnonymousElementByAttribute
-            (tab, "class", "tab-icon");
-          if (node) {
-            try {
-              node.style.width = "";
-              node.style.height = "";
-              node.style.marginTop = "";
-              node.style.marginBottom = "";
-            }
-            catch (e) {
-              /* Wazilla では style がサポートされていない */
-            }
-          }
-          node
-            = targetBrowser.ownerDocument
-            .getAnonymousElementByAttribute
-            (tab, "class", "tab-icon-image");
-          if (node) {
-            try {
-              node.style.width = "";
-              node.style.height = "";
-            }
-            catch (e) {
-              /* Wazilla では style がサポートされていない */
-            }
-          }
-        }
-      }
+    let targetDocument = targetWindow.document;
+    let link = targetDocument.getElementById('akahuku_thread_favicon');
+    if (link && link.parentNode) {
+      link.parentNode.removeChild(link);
     }
-  },
-    
-  /**
-   * タブを移動したイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onTabMove : function (event) {
-    var document = event.currentTarget.document;
-    if (arAkahukuThread.enableTabIcon
-        && arAkahukuThread.enableTabIconSize) {
-      /* タブのアイコンをサムネにする */
-            
-      var tabbrowser = document.getElementById ("content");
-                
-      var setTabIconForDocument = function (targetDocument) {
-        var thumbnail
-          = targetDocument.getElementById ("akahuku_thumbnail");
-        if (thumbnail) {
-          var info
-            = Akahuku.getDocumentParam (targetDocument)
-            .location_info;
-          arAkahukuThread.setTabIcon
-            (targetDocument, info, thumbnail);
-        }
-      };
-
-      if ("visibleTabs" in tabbrowser) {
-        /* Firefox4/Gecko2.0 */
-        var numTabs = tabbrowser.visibleTabs.length;
-        for (var i = 0; i < numTabs; i ++) {
-          var tab = tabbrowser.visibleTabs [i];
-          var targetDocument
-            = tabbrowser.getBrowserForTab (tab).contentDocument;
-          setTabIconForDocument (targetDocument);
-        }
-      }
-      else if ("mTabContainer" in tabbrowser) {
-        var tab = tabbrowser.mTabContainer.firstChild;
-        while (tab) {
-          var targetDocument = tab.linkedBrowser.contentDocument;
-          setTabIconForDocument (targetDocument);
-          tab = tab.nextSibling;
-        }
-      }
-    }
+    //FIXME: this may not reset icon... need to restore original value?
   },
     
   /**
@@ -2730,10 +2492,6 @@ var arAkahukuThread = {
             
     targetDocument.body.appendChild (frame);
   },
-  showResPanelForBrowser : function (targetBrowser) {
-    var targetDocument = targetBrowser.contentDocument;
-    arAkahukuThread.showResPanel (targetDocument);
-  },
     
   /**
    * レスパネルを閉じる
@@ -2755,11 +2513,20 @@ var arAkahukuThread = {
       document_param.respanel_param = null;
     }
   },
-  closeResPanelForBrowser : function (targetBrowser) {
-    var targetDocument = targetBrowser.contentDocument;
-    arAkahukuThread.closeResPanel (targetDocument);
-  },
     
+  toggleResPanel: function (targetDocument) {
+    var document_param = Akahuku.getDocumentParam (targetDocument);
+    if (!document_param) {
+      return;
+    }
+    if (!document_param.respanel_param) {
+      arAkahukuThread.showResPanel (targetDocument);
+    }
+    else {
+      arAkahukuThread.closeResPanel (targetDocument);
+    }
+  },
+
   /**
    * 画像読み込みの失敗イベントで一度だけ再読込
    *
@@ -2814,15 +2581,9 @@ var arAkahukuThread = {
          //+ "\n" + JSON.stringify (imageStatus)
          + "\n" + event.target.ownerDocument.location.href);
     }
-    try {
-      event.target
-        .QueryInterface (Components.interfaces.nsIImageLoadingContent)
-        .forceReload ();
-      event.stopPropagation ();
-      event.preventDefault ();
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    event.target.src = event.target.src;
+    event.stopPropagation ();
+    event.preventDefault ();
   },
 
   /**

@@ -1,7 +1,8 @@
 
-/* global Components, Akahuku, AkahukuVersion, arAkahukuConfig,
+/* global Akahuku, AkahukuVersion, arAkahukuConfig,
  * arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil,
- * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL, arAkahukuUI,
+ * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL,
+ * KeyEvent
  */
 
 /**
@@ -46,28 +47,9 @@ var arAkahukuP2P = {
    * 初期化処理
    */
   init : function () {
-    var {arAkahukuP2PService}
-    = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
-    arAkahukuP2P.service = arAkahukuP2PService;
-  },
-
-  attachToWindow : function (window) {
-    arAkahukuP2P.update ();
-    window.addEventListener ("keydown", arAkahukuP2P.onKeyDown, true);
-  },
-  dettachFromWindow : function (window) {
-    window.removeEventListener ("keydown", arAkahukuP2P.onKeyDown, true);
   },
 
   term : function () {
-    var servant = arAkahukuP2P.service.servant;
-    if (servant) {
-      try {
-        arAkahukuP2P.saveNodeList ();
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
   },
 
   /**
@@ -99,12 +81,6 @@ var arAkahukuP2P = {
     arAkahukuP2P.enable
     = arAkahukuConfig
     .initPref ("bool", "akahuku.p2p", false);
-    if (Components.classes ["@mozilla.org/binaryinputstream;1"]
-        == undefined
-        || Components.classes ["@mozilla.org/security/hash;1"]
-        == undefined) {
-      arAkahukuP2P.enable = false;
-    }
     if (arAkahukuP2P.enable) {
       arAkahukuP2P.address
       = arAkahukuConfig
@@ -206,7 +182,7 @@ var arAkahukuP2P = {
         value
           = unescape (value);
         arAkahukuP2P.shortcutKeycode
-          = Components.interfaces.nsIDOMKeyEvent ["DOM_" + value];
+          = KeyEvent ["DOM_" + value];
                 
         arAkahukuP2P.shortcutModifiersAlt
           = arAkahukuConfig
@@ -445,130 +421,11 @@ var arAkahukuP2P = {
    * P2P の状態を更新する
    */
   update : function () {
-    var servant = arAkahukuP2P.service.servant;
-    if (!servant) {
-      Akahuku.debug.error ("no arAkahukuP2P.service.servant !");
-      return;
-    }
-    
-
-    arAkahukuWindow.forEachWindow (arAkahukuP2P.updatePanelForWindow);
-        
-    if (Akahuku.enableAll && arAkahukuP2P.enable) {
-      var noaccept, started, port;
-            
-      var status = servant.getStatus (true);
-      if (status.match (/^([^,]*),([^,]*),([^,]*),/)) {
-        noaccept = (RegExp.$1 == "noaccept");
-        started
-          = (RegExp.$1 != "stop")
-          && (RegExp.$1 != "offline");
-        port = parseInt (RegExp.$3);
-      }
-            
-      servant.setDynamic (arAkahukuP2P.enableDynamic);
-      servant.setAddress (arAkahukuP2P.address);
-      servant.setCacheCheckInterval (arAkahukuP2P.cacheCheckInterval
-                                     * 60 * 1000);
-      servant.setCacheSrcLimit (arAkahukuP2P.cacheSrcLimit);
-      servant.setCacheThumbLimit (arAkahukuP2P.cacheThumbLimit);
-      servant.setCacheCatLimit (arAkahukuP2P.cacheCatLimit);
-      servant.setNoCat (arAkahukuP2P.enableNoCat);
-      servant.setAkahukuVersion (AkahukuVersion.split (".").splice (0,3).join ("."));
-      servant.setTransferLimit (arAkahukuP2P.transferLimit);
-      servant.setAcceptSlot (arAkahukuP2P.acceptSlot);
-            
-      servant.setTreatAsSame (arAkahukuP2P.enableTreatAsSame);
-            
-      if (!started
-          || port != arAkahukuP2P.port
-          || noaccept != arAkahukuP2P.enableNoAccept
-          || servant.getCacheBase () != arAkahukuP2P.cacheBase) {
-        if (started) {
-          arAkahukuP2P.saveNodeList ();
-                    
-          servant.stop ();
-        }
-                
-        if (!arAkahukuP2P.enableNoAccept) {
-          servant.setPort (arAkahukuP2P.port);
-        }
-        var separator
-          = AkahukuFileUtil.Path.join ("a", "a").slice (1, -1);
-        servant.setCacheBase (arAkahukuP2P.cacheBase, separator);
-                
-        servant.start (arAkahukuP2P.enableNoAccept);
-      }
-            
-      /* 開始直後はノードが空になっている */
-      var nodeList
-      = arAkahukuConfig
-      .initPref ("char", "akahuku.p2p.nodelist", "");
-      var nodeList2
-      = arAkahukuConfig
-      .initPref ("char", "akahuku.p2p.nodelist2", "");
-      if  (nodeList2) {
-        /* AKA/0.6 の情報 */
-        nodeList = nodeList2;
-                
-        arAkahukuConfig.clearUserPref
-          ("akahuku.p2p.nodelist2");
-      }
-      var added = false;
-            
-      if (nodeList) {
-        var now = (new Date ()).getTime ();
-                
-        /* 値を解析するだけなので代入はしない */
-        nodeList.replace
-          (/([^,]+),?/g,
-           function (matched,
-                     tmp) {
-            tmp = tmp.split (/\|/);
-            var nodeName, status, addTime, boardList;
-            nodeName = tmp [0];
-            if (tmp.length >= 2) {
-              status = tmp [1];
-            }
-            else {
-              status = 200;
-            }
-            if (tmp.length >= 3) {
-              addTime = parseInt (tmp [2]);
-            }
-            else {
-              addTime = parseInt (now / 1000);
-            }
-            if (tmp.length >= 4) {
-              boardList = tmp [3];
-            }
-            else {
-              boardList = "";
-            }
-                        
-            var prev = false;
-            if (status == 0) {
-              prev = true;
-            }
-                        
-            added = true;
-            servant.addNode (nodeName,
-                             prev, addTime, boardList);
-                        
-            return "";
-          });
-      }
-      /* 公式初期ノード
-      if (!added) {
-        servant.addNode ("=AKA/0.9:tYg3NOGKlmSPQaUxOKV4=",
-                         false, 0, "");
-      }
-      */
-    }
-    else {
-      arAkahukuP2P.saveNodeList ();
-      servant.stop ();
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendAsyncCommand
+      ("P2P/update", arguments);
+    */
   },
 
   updatePanelForWindow : function (window) {
@@ -721,212 +578,11 @@ var arAkahukuP2P = {
    * P2P ステータスバーを更新する
    */
   updateStatusbar : function (param) {
-    var servant = arAkahukuP2P.service.servant;
-    if (!servant) {
-      Akahuku.debug.warn ("P2P.updateStatusbar: no p2p servant available!")
-      return;
-    }
-    
-    var document = param.panel.ownerDocument;
-    var window = document.defaultView;
-    var panel = document.getElementById ("akahuku-toolbarbutton-p2pstatus");
-    if (panel && param.statusPlace == "statusbarpanel") {
-      Akahuku.debug.warn ("P2P.updateStatusbar: type mismatch for", panel);
-      arAkahukuP2P.updatePanelForWindow (window);
-      return;
-    }
-        
-    if (!param.nodeLabel) {
-      Akahuku.debug.warn ("P2P.updateStatusbar: no nodeLabel");
-      arAkahukuP2P.updatePanelForWindow (window);
-      return;
-    }
-        
-    var servantStatus = servant.getStatus (true);
-            
-    var tmp = servantStatus.split (/,/);
-    var i = 0;
-        
-    var nodeName = tmp [i]; i ++;
-    var address = tmp [i]; i ++;
-    var port = tmp [i]; i ++;
-        
-    var namedNode = tmp [i]; i ++;
-    var aliveNode = tmp [i]; i ++;
-        
-    var sendSuccess = tmp [i]; i ++;
-    var recvSuccess = tmp [i]; i ++;
-    var relaySuccess = tmp [i]; i ++;
-    var recvFail = tmp [i]; i ++;
-        
-    var portCheckStatus = tmp [i]; i ++;
-        
-    var boardList = tmp [i] || ""; i ++;
-            
-    var now = (new Date ()).getTime ();
-        
-    if (param.sendLast != sendSuccess) {
-      if (param.sendLast != -1) {
-        param.sendLastTime = now;
-      }
-      param.sendLast = sendSuccess;
-    }
-    if (param.recvLast != recvSuccess) {
-      if (param.recvLast != -1) {
-        param.recvLastTime = now;
-      }
-      param.recvLast = recvSuccess;
-    }
-    if (param.relayLast != relaySuccess) {
-      if (param.relayLast != -1) {
-        param.relayLastTime = now;
-      }
-      param.relayLast = relaySuccess;
-    }
-    if (param.futabaLast != recvFail) {
-      if (param.futabaLast != -1) {
-        param.futabaLastTime = now;
-      }
-      param.futabaLast = recvFail;
-    }
-        
-    var label;
-    var diff, r, g, b;
-    
-    var redLabelValue = "";
-    if (nodeName == "offline") {
-      redLabelValue = "\u30AA\u30D5\u30E9\u30A4\u30F3\u30E2\u30FC\u30C9\u3067\u3059";
-    }
-    else if (portCheckStatus == "fail") {
-      redLabelValue = "\u30DD\u30FC\u30C8\u304C\u958B\u3044\u3066\u3044\u307E\u305B\u3093";
-    }
-    else if (arAkahukuP2P.illegalAddress) {
-      redLabelValue = "\u81EA\u5206\u306E\u30A2\u30C9\u30EC\u30B9\u304C\u7121\u52B9\u3067\u3059";
-    }
-    if (redLabelValue) {
-      param.nodeLabel.value = redLabelValue;
-      param.nodeLabel.style.color = "#ff0000";
-      param.redLabel = true;
-      param.sep0Label.value = "";
-      param.sendLabel.value = "";
-      param.sep1Label.value = "";
-      param.recvLabel.value = "";
-      param.sep2Label.value = "";
-      param.relayLabel.value = "";
-      param.sep3Label.value = "";
-      param.futabaLabel.value = "";
-      return;
-    }
-    
-    label = param.nodeLabel;
-    if (param.redLabel) {
-      param.redLabel = false;
-      label.style.color = "";
-    };
-    label.value = "\u63A5: " + aliveNode + "/" + namedNode;
-        
-    label = param.sep0Label;
-    label.value = " / ";
-    label.style.color = "#000000";
-        
-    label = param.sendLabel;
-    if (param.labelR == -1) {
-      var color = window.getComputedStyle (label, "color").color;
-      if (color.match (/\( *([0-9]+) *, *([0-9]+) *, *([0-9]+) *\)/)) {
-        param.labelR = parseInt (RegExp.$1);
-        param.labelG = parseInt (RegExp.$2);
-        param.labelB = parseInt (RegExp.$3);
-      }
-      else {
-        param.labelR = 0;
-        param.labelG = 0;
-        param.labelB = 0;
-      }
-    }
-        
-    label.value = "\u653B: " + sendSuccess;
-    if (now < param.sendLastTime + 5000) {
-      diff = (param.sendLastTime + 5000 - now) / 5000;
-      r = param.labelR * (1 - diff);
-      g = 64 * diff + param.labelG * (1 - diff);
-      b = 238 * diff + param.labelB * (1 - diff);
-    }
-    else {
-      r = param.labelR;
-      g = param.labelG;
-      b =  param.labelB;
-    }
-    label.style.color
-    = "rgb("
-    + parseInt (r) + ","
-    + parseInt (g) + ","
-    + parseInt (b) + ")";
-
-    label = param.sep1Label;
-    label.value = "/";
-        
-    label = param.recvLabel;
-    label.value = "\u53D7: " + recvSuccess;
-    if (now < param.recvLastTime + 5000) {
-      diff = (param.recvLastTime + 5000 - now) / 5000;
-      r = param.labelR * (1 - diff);
-      g = 64 * diff + param.labelG * (1 - diff);
-      b = 238 * diff + param.labelB * (1 - diff);
-    }
-    else {
-      r = param.labelR;
-      g = param.labelG;
-      b =  param.labelB;
-    }
-    label.style.color
-    = "rgb("
-    + parseInt (r) + ","
-    + parseInt (g) + ","
-    + parseInt (b) + ")";
-
-    label = param.sep2Label;
-    label.value = "/";
-        
-    label = param.relayLabel;
-    label.value = "\u7D99: " + relaySuccess;
-    if (now < param.relayLastTime + 5000) {
-      diff = (param.relayLastTime + 5000 - now) / 5000;
-      r = param.labelR * (1 - diff);
-      g = 64 * diff + param.labelG * (1 - diff);
-      b = 238 * diff + param.labelB * (1 - diff);
-    }
-    else {
-      r = param.labelR;
-      g = param.labelG;
-      b =  param.labelB;
-    }
-    label.style.color
-    = "rgb("
-    + parseInt (r) + ","
-    + parseInt (g) + ","
-    + parseInt (b) + ")";
-
-    label = param.sep3Label;
-    label.value = "/";
-        
-    label = param.futabaLabel;
-    label.value = "\u53CC: " + recvFail;
-    if (now < param.futabaLastTime + 5000) {
-      diff = (param.futabaLastTime + 5000 - now) / 5000;
-      r = param.labelR * (1 - diff);
-      g = 64 * diff + param.labelG * (1 - diff);
-      b = 238 * diff + param.labelB * (1 - diff);
-    }
-    else {
-      r = param.labelR;
-      g = param.labelG;
-      b =  param.labelB;
-    }
-    label.style.color
-    = "rgb("
-    + parseInt (r) + ","
-    + parseInt (g) + ","
-    + parseInt (b) + ")";
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendAsyncCommand
+      ("P2P/updateStatusbar", arguments);
+    */
   },
    
   /**
@@ -1321,19 +977,7 @@ var arAkahukuP2P = {
         var nodes = targetDocument.getElementsByTagName ("img");
         if (nodes.length > 0) {
           var image = nodes [0];
-                
-          var load
-            = image.QueryInterface
-            (Components.interfaces.nsIImageLoadingContent);
-          var request
-            = load.getRequest
-            (Components.interfaces.nsIImageLoadingContent
-             .CURRENT_REQUEST);
-                
-          var errorStatus
-            = Components.interfaces.imgIRequest.STATUS_ERROR;
-                    
-          if (request.imageStatus & errorStatus) {
+          if (image.complete && image.naturalWidth == 0) {
             /* ロード失敗 */
             arAkahukuP2P.onImageLoad (image, true);
           }

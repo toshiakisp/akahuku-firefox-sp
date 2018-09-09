@@ -1,5 +1,5 @@
 
-/* global Components, arAkahukuConfig, AkahukuFileUtil, arAkahukuWindow */
+/* global arAkahukuConfig, AkahukuFileUtil, arAkahukuWindow */
 
 /**
  * 音管理
@@ -7,54 +7,57 @@
  */
 var arAkahukuSound = {
   enableReloadNormal : false,   /* Boolean  リロード (通常モード) */
-  reloadNormalFile : null,      /* nsIURL  リロード (通常モード) のファイル */
+  reloadNormalFile : null,      /* String  リロード (通常モード) のファイル */
     
   enableReloadReply : false,    /* Boolean  リロード (レス送信モード) */
-  reloadReplyFile : null,       /* nsIURL  リロード (レス送信モード) のファイル */
+  reloadReplyFile : null,       /* String  リロード (レス送信モード) のファイル */
 
   enableNewReply : false,       /* Boolean  新着あり (レス送信モード) */
-  newReplyFile : null,          /* nsIURL  新着あり (レス送信モード) のファイル */
+  newReplyFile : null,          /* String  新着あり (レス送信モード) のファイル */
     
   enableReloadCatalog : false,  /* Boolean  リロード (カタログモード) */
-  reloadCatalogFile : null,     /* nsIURL  リロード (カタログモード) のファイル */
+  reloadCatalogFile : null,     /* String  リロード (カタログモード) のファイル */
     
   enableExpire : false,         /* Boolean  消滅警告 (続きを読む 時) */
-  expireFile : null,            /* nsIURL  消滅警告 (続きを読む 時) のファイル */
+  expireFile : null,            /* String  消滅警告 (続きを読む 時) のファイル */
     
   enableMakeThread : false,     /* Boolean  レス送信 */
-  makeThreadFile : null,        /* nsIURL  レス送信のファイル */
+  makeThreadFile : null,        /* String  レス送信のファイル */
     
   enableReply : false,          /* Boolean  レス送信 */
-  replyFile : null,             /* nsIURL  レス送信のファイル */
+  replyFile : null,             /* String  レス送信のファイル */
     
   enableReplyFail : false,      /* Boolean  レス送信失敗 */
-  replyFailFile : null,         /* nsIURL  レス送信のファイル */
+  replyFailFile : null,         /* String  レス送信のファイル */
     
   enableSaveMHT : false,        /* Boolean  mht で保存 */
-  saveMHTFile : null,           /* nsIURL  mht で保存のファイル */
+  saveMHTFile : null,           /* String  mht で保存のファイル */
     
   enableSaveMHTError : false,   /* Boolean  mht で保存失敗 */
-  saveMHTErrorFile : null,      /* nsIURL  mht で保存失敗のファイル */
+  saveMHTErrorFile : null,      /* String  mht で保存失敗のファイル */
     
   enableSaveImage : false,      /* Boolean  画像を保存 */
-  saveImageFile : null,         /* nsIURL  画像を保存のファイル */
+  saveImageFile : null,         /* String  画像を保存のファイル */
     
   enableSaveImageError : false, /* Boolean  画像を保存失敗 */
-  saveImageErrorFile : null,    /* nsIURL  画像を保存失敗のファイル */
+  saveImageErrorFile : null,    /* String  画像を保存失敗のファイル */
     
-  sound : null,                 /* nsISound  サウンドオブジェクト */
+  sound : {
+    play: function () {
+      Akahuku.debug.error('NotYetImplemented');
+      /*
+      arAkahukuIPC.sendAsyncCommand ("Sound/play", arguments);
+      */
+    },
+  },
     
   /**
    * 初期化
    */
   init : function () {
-    arAkahukuSound.sound
-    = Components.classes ["@mozilla.org/sound;1"]
-    .createInstance (Components.interfaces.nsISound);
   },
 
   term : function () {
-    arAkahukuSound.sound = null;
   },
     
   /**
@@ -63,9 +66,6 @@ var arAkahukuSound = {
   getConfig : function () {
     var filename;
     var url;
-        
-    var ios = Components.classes ["@mozilla.org/network/io-service;1"]
-    .getService (Components.interfaces.nsIIOService);
         
     if (arAkahukuConfig.prefHasUserValue
         ("akahuku.sound.reload")) {
@@ -109,7 +109,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.reloadNormalFile = ios.newURI (url, null, null);
+        arAkahukuSound.reloadNormalFile = url;
       }
       else {
         arAkahukuSound.reloadNormalFile = null;
@@ -130,7 +130,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.reloadReplyFile = ios.newURI (url, null, null);
+        arAkahukuSound.reloadReplyFile = url;
       }
       else {
         arAkahukuSound.reloadReplyFile = null;
@@ -153,7 +153,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.newReplyFile = ios.newURI (url, null, null);
+        arAkahukuSound.newReplyFile = url;
       }
       else {
         arAkahukuSound.newReplyFile = null;
@@ -172,7 +172,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.reloadCatalogFile = ios.newURI (url, null, null);
+        arAkahukuSound.reloadCatalogFile = url;
       }
       else {
         arAkahukuSound.reloadCatalogFile = null;
@@ -191,7 +191,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.expireFile = ios.newURI (url, null, null);
+        arAkahukuSound.expireFile = url;
       }
       else {
         arAkahukuSound.expireFile = null;
@@ -210,7 +210,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.makeThreadFile = ios.newURI (url, null, null);
+        arAkahukuSound.makeThreadFile = url;
       }
       else {
         arAkahukuSound.makeThreadFile = null;
@@ -229,7 +229,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.replyFile = ios.newURI (url, null, null);
+        arAkahukuSound.replyFile = url;
       }
       else {
         arAkahukuSound.replyFile = null;
@@ -248,7 +248,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.replyFailFile = ios.newURI (url, null, null);
+        arAkahukuSound.replyFailFile = url;
       }
       else {
         arAkahukuSound.replyFailFile = null;
@@ -267,7 +267,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.saveMHTFile = ios.newURI (url, null, null);
+        arAkahukuSound.saveMHTFile = url;
       }
       else {
         arAkahukuSound.saveMHTFile = null;
@@ -286,7 +286,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.saveMHTErrorFile = ios.newURI (url, null, null);
+        arAkahukuSound.saveMHTErrorFile = url;
       }
       else {
         arAkahukuSound.saveMHTErrorFile = null;
@@ -305,7 +305,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.saveImageFile = ios.newURI (url, null, null);
+        arAkahukuSound.saveImageFile = url;
       }
       else {
         arAkahukuSound.saveImageFile = null;
@@ -324,8 +324,7 @@ var arAkahukuSound = {
       url = AkahukuFileUtil.getURLSpecFromNativePath (filename);
             
       if (url) {
-        arAkahukuSound.saveImageErrorFile
-          = ios.newURI (url, null, null);
+        arAkahukuSound.saveImageErrorFile = url;
       }
       else {
         arAkahukuSound.saveImageErrorFile = null;
@@ -472,12 +471,8 @@ var arAkahukuSound = {
    *         対象のドキュメント
    */
   setReplying : function (targetDocument) {
-    var browser
-    = arAkahukuWindow.getBrowserForWindow
-    (targetDocument.defaultView);
-    if (browser) {
-      browser.__akahuku_replying = "1";
-    }
+    targetDocument.defaultView
+      .sessionStorage.setItem('__akahuku_replying', '1');
   },
     
   /**
@@ -492,11 +487,9 @@ var arAkahukuSound = {
     if (info.isNotFound) {
       return;
     }
+    var storage = targetDocument.defaultView.sessionStorage;
         
-    var browser
-    = arAkahukuWindow.getBrowserForWindow
-    (targetDocument.defaultView);
-    if (browser) {
+    if (storage) {
       if (targetDocument.location.href.match (/futaba\.php$/)
           && !info.isNotFound) {
         /* スレ立て後、レス送信後、リダイレクトの場合 */
@@ -506,42 +499,34 @@ var arAkahukuSound = {
         for (var i = 0; i < nodes.length; i ++) {
           if (nodes [i].httpEquiv == "refresh") {
             if (nodes [i].content.indexOf ("res") != -1) {
-              if ("__akahuku_replying" in browser
-                  && browser.__akahuku_replying == "1") {
+              if (storage.getItem('__akahuku_replying') == '1') {
                 /* レス送信 */
-                browser.__akahuku_replying = "2";
+                storage.setItem('__akahuku_replying', '2');
               }
               else {
                 /* スレ立て */
-                browser.__akahuku_makethread = "1";
+                storage.setItem('__akahuku_makethread', '1');
               }
             }
           }
         }
       }
             
-      var lasturi = "";
-      if ("__akahuku_lasturi" in browser) {
-        lasturi = browser.__akahuku_lasturi;
-      }
+      var lasturi = storage.getItem('__akahuku_lasturi') || '';
             
       if (info.isReply
-          && "__akahuku_makethread" in browser
-          && browser.__akahuku_makethread == "1") {
+        && storage.getItem('__akahuku_makethread') == '1') {
         /* スレ立て後のレス送信モード */
         arAkahukuSound.playMakeThread ();
                 
-        browser.__akahuku_makethread = "0";
-        browser.removeAttribute ("__akahuku_makethread");
+        storage.removeItem('__akahuku_makethread');
       }
       if (info.isReply
-          && "__akahuku_replying" in browser
-          && browser.__akahuku_replying == "2") {
+        && storage.getItem('__akahuku_replying') == '2') {
         /* レス送信後のレス送信モード */
         arAkahukuSound.playReply ();
                 
-        browser.__akahuku_replying = "0";
-        browser.removeAttribute ("__akahuku_replying");
+        storage.removeItem('__akahuku_replying');
       }
       else if (lasturi == targetDocument.location.href) {
         /* リロード */
@@ -557,7 +542,7 @@ var arAkahukuSound = {
         }
       }
             
-      browser.__akahuku_lasturi = targetDocument.location.href;
+      storage.setItem('__akahuku_lasturi', targetDocument.location.href);
     }
   }
 };

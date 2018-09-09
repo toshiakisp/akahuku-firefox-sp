@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global KeyEvent,
  *   Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
  *   arAkahukuBoard, arAkahukuWindow, arAkahukuP2P, arAkahukuFile, AkahukuFSUtil,
  *   arAkahukuReload, arAkahukuMergeItemCallbackList,
@@ -40,7 +40,7 @@ arAkahukuSidebarThread.prototype = {
   isExpired : false, /* Boolean  消滅フラグ */
   node : null        /* HTMLDivElement  サイドバー上の div 要素 */
   ,
-  threadLinkURIObject : null,   /* nsIURI スレの URI */
+  threadLinkURLObject : null,   /* URL スレの URL */
 
   isValid : function ()
   {
@@ -68,67 +68,53 @@ arAkahukuSidebarThread.prototype = {
     }
 
     // URLチェック
-    if (!this.threadLinkURIObject
-        || this.threadLinkURIObject.spec != this.threadLink) {
-      this.threadLinkURIObject = null;
-      var uri = this.makeURI (this.threadLink);
-      if (uri && this.isSafeURL (uri)) {
-        this.threadLinkURIObject = uri;
-        this.threadLink = uri.spec;
+    if (!this.threadLinkURLObject
+        || this.threadLinkURLObject.href != this.threadLink) {
+      this.threadLinkURLObject = null;
+      try {
+        let url = new URL(this.threadLink);
+        if (this.isSafeURL(url)) {
+          this.threadLinkURLObject = url;
+          this.threadLink = url.href;
+        }
+      }
+      catch (e) {
+        Akahuku.debug.exception (e);
       }
     }
     valid
-      = this.threadLinkURIObject
-      && this.isSafeURL (this.threadLinkURIObject)
+      = this.threadLinkURLObject
+      && this.isSafeURL(this.threadLinkURLObject)
       // imageSrc, imageLink は未指定の場合もある
       && (!this.imageSrc || this.isSafeURL (this.imageSrc))
       && (!this.imageLink || this.isSafeURL (this.imageLink));
     if (!valid) {
-      delete this.threadLinkURIObject;
+      delete this.threadLinkURLObject;
       return false;
     }
 
     return true;
   },
 
-  makeURI : function (uriStr) {
-    var ios
-      = Components.classes ["@mozilla.org/network/io-service;1"]
-      .getService (Components.interfaces.nsIIOService);
+  isSafeURL : function (url) {
     try {
-      var uri = ios.newURI (uriStr, null, null);
+      var destURL = (url instanceof URL
+        ? url: new URL(url));
     }
     catch (e) {
-      if (e.result == Components.results.NS_ERROR_MALFORMED_URI) {
-        return null;
-      }
-      throw e;
     }
-    return uri;
-  },
-  isSafeURL : function (url) {
-    var destURI
-      = (url instanceof  Components.interfaces.nsIURI
-         ? url : this.makeURI (url));
-    if (!destURI) {
+    if (!destURL) {
       return false;
     }
     try {
-      var secMan
-        = Components.classes ["@mozilla.org/scriptsecuritymanager;1"]
-        .getService (Components.interfaces.nsIScriptSecurityManager);
-      var flags
-        = Components.interfaces.nsIScriptSecurityManager.DISALLOW_SCRIPT;
-      var principal
-        = Components.classes ["@mozilla.org/nullprincipal;1"]
-        .createInstance (Components.interfaces.nsIPrincipal);
-      if (this.threadLinkURIObject) {
-        secMan.checkLoadURIWithPrincipal
-          (principal, this.threadLinkURIObject, destURI, flags);
+      // flag = DISALLOW_SCRIPT
+      if (this.threadLinkURLObject) {
+        // TODO: check this.threadLinkURLObject -> destURL
+        return false;
       }
       else {
-        secMan.checkLoadURIStrWithPrincipal
-          (principal, "http://www.2chan.net/", destURI.spec, flags);
+        // TODO: check http://www.2chan.net/ -> destURL
+        return false;
       }
     }
     catch (e) { Akahuku.debug.exception (e);
@@ -225,18 +211,7 @@ function arAkahukuSidebarParam (win) {
 arAkahukuSidebarParam.prototype = {
   getWindowID : function (win) {
     var id = -1;
-    try {
-      var id = win
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIDOMWindowUtils)
-        .outerWindowID;
-      if (typeof id == "undefined") {// before Fx4
-        id = -1;
-      }
-    }
-    catch (e) {
-      Akahuku.debug.exception (e);
-    }
+    // TODO: window id
     return id;
   },
   isTarget : function (win) {
@@ -651,7 +626,7 @@ var arAkahukuSidebar = {
         value
           = unescape (value);
         arAkahukuSidebar.shortcutKeycode
-          = Components.interfaces.nsIDOMKeyEvent ["DOM_" + value];
+          = KeyEvent ["DOM_" + value];
                 
         arAkahukuSidebar.shortcutModifiersAlt
           = arAkahukuConfig
@@ -687,27 +662,7 @@ var arAkahukuSidebar = {
    *         サイドバー
    */
   getSidebar : function (optChromeWindow) {
-    var sidebar = null;
-        
-    var mediator
-    = Components.classes ["@mozilla.org/appshell/window-mediator;1"]
-    .getService (Components.interfaces.nsIWindowMediator);
-    var sidebarWindow = mediator.getMostRecentWindow ("mozilla:sidebar");
-        
-    if (sidebarWindow) {
-      /* 拡張でサイドバーが切り離されている場合 */
-      sidebar = sidebarWindow.document.getElementById ("sidebar");
-    }
-        
-    if (!sidebar) {
-      if (!optChromeWindow) {
-        optChromeWindow
-          = mediator.getMostRecentWindow ("navigator:browser");
-      }
-      sidebar = optChromeWindow.document.getElementById ("sidebar");
-    }
-        
-    return sidebar;
+    return null;
   },
 
   /**
@@ -761,63 +716,25 @@ var arAkahukuSidebar = {
     var documents = {content: null, sidebar: null};
 
     var target = event.target;
-    if (target instanceof Components.interfaces.nsIDOMXULElement) {
-      documents.sidebar = target.ownerDocument;
-      if (target.nodeName == "iframe") {
-        // iframe 自身に event が dispatch された場合 (chrome://)
-        documents.content = target.contentDocument;
-      }
-    }
-    else { // HTMLElement
+    if (target instanceof HTMLElement) {
       documents.content = target.ownerDocument || target;
-      var parentWindow
-        = arAkahukuWindow.getParentWindowInChrome
-        (documents.content.defaultView);
-      if (parentWindow) {
-        documents.sidebar = parentWindow.document;
-      }
-      else {
-        // トップダウン的にサイドバーを取得する
-        // (サイドバー以外にロードされていると辿り着けない)
-        var sidebar = arAkahukuSidebar.getSidebar ();
-        if (!sidebar.docShell) {
-          Akahuku.debug.warn ("arAkahukuSidebar._getDocumentsOnEvent: return no sidebar;"
-              + " founded sidebar dose not have docShell.");
-          documents.sidebar = null;
-        }
-        else {
-          documents.sidebar = sidebar.contentDocument;
-        }
-      }
     }
 
-    // 正しいサイドバーに辿り着けたか
-    try {
-      if (documents.sidebar.documentURI.indexOf
-          ("chrome://akahuku/content/sidebar.xul") != 0) {
-        Akahuku.debug.warn ("arAkahukuSidebar._getDocumentsOnEvent: return no sidebar;"
-            + " founded sidebar is not chrome://akahuku/content/sidebar.xul"
-            + ", but " + documents.sidebar.location.href);
-        documents.sidebar = null;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      documents.sidebar = null;
-    }
+    // TODO: get sidebar
 
     return documents;
   },
 
   /**
-   * スレッドを更新or追加する [XUL]
+   * スレッドを更新or追加する
    * @param Object item
    */
   updateThreadItem : function (item) {
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendAsyncCommand ("Sidebar/updateThreadItem", arguments);
+    */
     // for all attached windows
-    for (var i = 0; i < arAkahukuSidebar.params.length; i ++) {
-      var param = arAkahukuSidebar.params [i];
-      arAkahukuSidebar.updateThreadItemFor (item, param);
-    }
   },
   updateThreadItemFor : function (item, param) {
     var board = null;
@@ -1390,24 +1307,16 @@ var arAkahukuSidebar = {
   },
     
   /**
-   * 既読フラグを更新する [XUL]
+   * 既読フラグを更新する
    *
    * @param  String name
    *         対象の板
    */
   asyncUpdateVisited : function (name) {
-    // for all windows
-    for (var i = 0; i < arAkahukuSidebar.params.length; i ++) {
-      var param = arAkahukuSidebar.params [i];
-      arAkahukuSidebar.asyncUpdateVisitedFor (name, param, function (param) {
-        arAkahukuSidebar.sort (name, param);
-        arAkahukuSidebar.update (name, null, param);
-        if (arAkahukuSidebar.enableMarked) {
-          arAkahukuSidebar.sort ("*_*", param);
-          arAkahukuSidebar.update ("*_*", null, param);
-        }
-      });
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendAsyncCommand ("Sidebar/asyncUpdateVisited", [name]);
+    */
   },
   asyncUpdateVisitedFor : function (name, param, callback) {
     var board, thread, vc;
@@ -1428,8 +1337,15 @@ var arAkahukuSidebar = {
       thread = board.threads [i];
       vc = cblist.createVisitedCallback (thread);
       vc.isVisitedHandler = threadcb;
-      arAkahukuCompat.AsyncHistory
-        .isURIVisited (thread.threadLinkURIObject, vc);
+      if (thread.threadLinkURLObject) {
+        let url = thread.threadLinkURLObject.href;
+        HistoryService.isVisited(url)
+          .then((visited) => vc.isVisited(url, visited))
+          .catch((err) => {
+            Akahuku.debug.exception(err);
+            vc.isVisited(url, false);
+          });
+      }
     }
 
     cblist.asyncWaitRequests (function () {
@@ -1571,18 +1487,12 @@ var arAkahukuSidebar = {
    * 全スレのカタログ順の情報をリセットする
    */
   resetCatalogOrder : function (name, originBrowser) {
-    var chromeWindow
-      = arAkahukuWindow.getChromeWindowForBrowser (originBrowser);
-    var param = arAkahukuSidebar.getSidebarParam (chromeWindow);
-    if (!(name in param.boards)) {
-      return;
-    }
-    var board = param.boards [name];
-    if (board && board.threads) {
-      for (var i = 0; i < board.threads.length; i ++) {
-        board.threads [i].catalogOrder = 0;
-      }
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendSyncCommand
+      ("Sidebar/resetCatalogOrder", [name, null],
+       originBrowser.ownerGlobal);
+    */
   },
     
   /**
@@ -2291,9 +2201,6 @@ var arAkahukuSidebar = {
     }
         
     var sidebarDocument = event.currentTarget.ownerDocument;
-    var chromeWindow
-      = arAkahukuWindow.getParentWindowInChrome
-        (sidebarDocument.defaultView);
     var node = event.target;
     var nodes, div;
     var link = "";
@@ -2304,48 +2211,19 @@ var arAkahukuSidebar = {
         link = node.getAttribute ("__link");
                 
         if (link) {
-          var targetBrowser = null;
-          var tab = null;
-          var tabbrowser = chromeWindow.document.getElementById ("content");
-          if ("tabs" in tabbrowser) {
-            /* Firefox4/Gecko2.0 */
-            for (i =0; i < tabbrowser.tabs.length; i++) {
-              tab = tabbrowser.tabs [i];
-              var browser = tabbrowser.getBrowserForTab (tab);
-              if (browser.currentURI.spec == link) {
-                targetBrowser = browser;
-                break;
-              }
-              tab = null;
-            }
+          // TODO: find tab with url == link,
+          // click イベント終了後にタブ切替して
+          /*
+          switch (arAkahukuSidebar.afterThreadClick) {
+            case 'reload':
+              // force reload a content
+            case 'diff':
+              // call arAkahukuReload.diffReloadCore()
+            case 'sync':
+              // call arAkahukuReload.diffReloadCore() for sync
+            case 'none':
           }
-          else if (tabbrowser.mTabContainer) {
-            for (i = 0;
-                 i < tabbrowser.mTabContainer.childNodes.length;
-                 i ++) {
-              tab = tabbrowser.mTabContainer.childNodes [i];
-              var targetDocument
-                = tab.linkedBrowser.contentDocument;
-              if (targetDocument.location.href == link) {
-                targetBrowser = tab.linkedBrowser;
-                break;
-              }
-              tab = null;
-            }
-          }
-          if (tab == null) {
-            tab = tabbrowser.addTab (link);
-            tabbrowser.selectedTab = tab;
-          }
-          else if (targetBrowser) {
-            chromeWindow.setTimeout (function () {
-              // click イベント終了後にタブ切替をしないと
-              // visibilitychange が生じない
-              tabbrowser.selectedTab = tab;
-              arAkahukuSidebar.updateThreadForBrowser
-                (targetBrowser, arAkahukuSidebar.afterThreadClick);
-            }, 0);
-          }
+          */
           break;
         }
       }
@@ -2445,39 +2323,6 @@ var arAkahukuSidebar = {
     }
   },
 
-  /**
-   * スレを更新する
-   */
-  updateThreadForBrowser : function (browser, type) {
-    switch (type) {
-      case "reload":
-        try {
-          var flag
-            = Components.interfaces
-            .nsIWebNavigation.LOAD_FLAGS_NONE;
-          browser.webNavigation.reload (flag)
-        }
-        catch (e) {
-          if (e.result == 0x805e000a) {
-            // NS_ERROR_CONTENT_BLOCKED
-            // (maybe by arAkahukuReload.enableHook)
-          }
-          else {
-            Akahuku.debug.exception (e);
-          }
-        }
-        break;
-      case "diff":
-        arAkahukuReload.diffReloadForBrowser (browser, false);
-        break;
-      case "sync":
-        arAkahukuReload.diffReloadForBrowser (browser, true);
-        break;
-      case "none":
-      default:
-    }
-  },
-    
   /**
    * 0 ページで更新をクリックしたイベント
    *
@@ -2652,10 +2497,6 @@ var arAkahukuSidebar = {
   },
 
   onIframeHtmlWheel : function (event) {
-    if (event.target instanceof Components.interfaces.nsIDOMXULElement) {
-      // Iframe 内要素を期待
-      return;
-    }
     if (event.ctrlKey &&
         !event.altKey && !event.metaKey && !event.shiftKey) {
       // Ctrl-wheel でサムネサイズを変更する
@@ -3502,42 +3343,40 @@ var arAkahukuSidebar = {
   },
 
   /**
-   * サイドバーに板のタブがあるか [XUL]
+   * サイドバーに板のタブがあるか
    *
    * @param String name
    * @param XULElement browser
    */
   hasTabForBoard : function (name, browser) {
-    var win = arAkahukuWindow.getChromeWindowForBrowser (browser);
-    var sidebarDocument = arAkahukuSidebar.getSidebarDocument (null, win);
-    if (!sidebarDocument) {
-      return false;
-    }
-    var iframe
-      = sidebarDocument
-      .getElementById ("akahuku_sidebar_iframe_" + name);
-    if (iframe == null) {
-      return false;
-    }
-    return true;
+    Akahuku.debug.error('NotYetImplemented, deprecated');
+    return false;
+    /*
+    return arAkahukuIPC.sendSyncCommand
+      ("Sidebar/hasTabForBoard", [name, null],
+       browser.ownerGlobal);
+    */
   },
     
   /**
-   * サイドバーに板の情報があるか [XUL]
+   * サイドバーに板の情報があるか
    *
    * @param String name
    * @param XULElement browser
    * @return Boolean
    */
   hasBoard : function (name, browser) {
-    var chromeWindow
-      = arAkahukuWindow.getChromeWindowForBrowser (browser);
-    var param = arAkahukuSidebar.getSidebarParam (chromeWindow);
-    return (name in param.boards);
+    Akahuku.debug.error('NotYetImplemented, deprecated');
+    return false;
+    /*
+    return arAkahukuIPC.sendSyncCommand
+      ("Sidebar/hasBoard", [boardName, null],
+       browser.ownerGlobal);
+    */
   },
 
   /**
-   * スレの情報を得る [XUL]
+   * スレの情報を得る
    *
    * @param String boardName
    * @param Number threadNumber
@@ -3545,16 +3384,13 @@ var arAkahukuSidebar = {
    * @return Object or null
    */
   getThread : function (boardName, threadNumber, browser) {
-    if (arAkahukuSidebar.hasBoard (boardName, browser)) {
-      var chromeWindow
-        = arAkahukuWindow.getChromeWindowForBrowser (browser);
-      var param = arAkahukuSidebar.getSidebarParam (chromeWindow);
-      var thread = param.boards [boardName].getThread (threadNumber);
-      if (thread) {
-        return JSON.parse (JSON.stringify (thread));
-      }
-    }
+    Akahuku.debug.error('NotYetImplemented, deprecated');
     return null;
+    /*
+    return arAkahukuIPC.sendSyncCommand
+      ("Sidebar/getThread", [boardName, threadNumber, null],
+       browser.ownerGlobal);
+    */
   },
 
   /**

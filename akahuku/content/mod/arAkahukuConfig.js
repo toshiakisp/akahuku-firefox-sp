@@ -1,6 +1,6 @@
 
-/* global Components,
- * Akahuku, AkahukuVersion, arAkahukuBloomer, arAkahukuBoard, arAkahukuCatalog,
+/* global Prefs,
+ * Akahuku, arAkahukuBloomer, arAkahukuBoard, arAkahukuCatalog,
  * arAkahukuDelBanner, arAkahukuImage, arAkahukuJPEG,
  * arAkahukuLink, arAkahukuMHT, arAkahukuP2P, arAkahukuPopupQuote,
  * arAkahukuPostForm, arAkahukuQuote, arAkahukuReload,
@@ -15,7 +15,6 @@
  *   Inherits From: nsIObserver
  */
 var arAkahukuConfig = {
-  prefBranch : null,    /* nsIPrefBranch/nsIPrefBranch2  pref サービス */
   isObserving : false,   /* boolean 監視しているかどうか */
     
   /**
@@ -23,36 +22,6 @@ var arAkahukuConfig = {
    */
   init : function () {
     arAkahukuConfig.loadPrefBranch ();
-    try {
-      var oldVersion = arAkahukuConfig.getCharPref ("akahuku.version");
-      var cr = arAkahukuCompat.compareVersion (String (AkahukuVersion), oldVersion);
-      if (cr > 0) {
-        // バージョンアップ時
-        Akahuku.debug.log ("Version up detected from " + oldVersion + " to " + AkahukuVersion);
-
-        // 対象バージョン以上への更新の判定
-        var updatedOver = function (v) {
-          var c = arAkahukuCompat.compareVersion;
-          return (c (oldVersion, v) < 0 && c (String (AkahukuVersion), v) >= 0);
-        };
-
-        if (updatedOver ("5.2.90.sp_rev.39")) {
-          Akahuku.debug.log ("Reset akahuku.ext.maximageretries to 0");
-          arAkahukuConfig.setIntPref ("akahuku.ext.maximageretries", 0);
-        }
-      }
-      else if (cr < 0) {
-        // バージョンダウン
-        Akahuku.debug.log ("Version down detected from "
-            + oldVersion + " to " + AkahukuVersion);
-      }
-      else {
-        // バージョン据え置き
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-    arAkahukuConfig.setCharPref ("akahuku.version", AkahukuVersion);
         
       /* 設定を取得する */
       Akahuku.getConfig ();
@@ -80,27 +49,18 @@ var arAkahukuConfig = {
       arAkahukuCatalog.getConfig ();
       arAkahukuUI.getConfig ();
             
-      /* ダイアログからの設定の変更を監視する */
-      arAkahukuConfig.prefBranch.addObserver ("akahuku.savepref",
-                                              arAkahukuConfig,
-                                              false);
-      arAkahukuConfig.isObserving = true;
+    this._listener = (bag) => {
+      arAkahukuConfig.observe(null, "nsPref:changed", null);
+    };
+    Prefs.onChanged.addListener(this._listener);
+    arAkahukuConfig.isObserving = true;
   },
     
   /**
    * prefBranch を設定し直す
    */
   loadPrefBranch : function () {
-    if (Components.interfaces.nsIPrefBranch2) {
-      arAkahukuConfig.prefBranch
-      = Components.classes ["@mozilla.org/preferences-service;1"]
-      .getService (Components.interfaces.nsIPrefBranch2);
-    }
-    else {
-      arAkahukuConfig.prefBranch
-      = Components.classes ["@mozilla.org/preferences-service;1"]
-      .getService (Components.interfaces.nsIPrefBranch);
-    }
+    // no need for Pref
   },
     
   /**
@@ -108,10 +68,8 @@ var arAkahukuConfig = {
    */
   term : function () {
     if (arAkahukuConfig.isObserving) {
-      /* 設定の変更の監視を解除する */
-      arAkahukuConfig.prefBranch
-      .removeObserver ("akahuku.savepref",
-                       arAkahukuConfig);
+      Prefs.onChanged.removeListener(this._listener);
+      this._listener = null;
       arAkahukuConfig.isObserving = false;
     }
   },
@@ -134,61 +92,51 @@ var arAkahukuConfig = {
    *         設定が無ければ既定値
    */
   initPref : function (type, name, value) {
-    if (arAkahukuConfig.prefBranch.prefHasUserValue (name)) {
-      ; /* switch のインデント用 */
-      switch (type) {
-        case "bool":
-          value = arAkahukuConfig.prefBranch.getBoolPref (name);
-          break;
-        case "char":
-          value = arAkahukuConfig.prefBranch.getCharPref (name);
-          break;
-        case "int":
-          value = arAkahukuConfig.prefBranch.getIntPref (name);
-          break;
-      }
+    name = this._convToPrefsName(name);
+
+    if (Prefs.hasItem (name)) {
+      value = Prefs.getItem (name);
     }
     else {
-      ; /* switch のインデント用 */
-      switch (type) {
-        case "bool":
-          arAkahukuConfig.prefBranch.setBoolPref (name, value);
-          break;
-        case "char":
-          arAkahukuConfig.prefBranch.setCharPref (name, value);
-          break;
-        case "int":
-          arAkahukuConfig.prefBranch.setIntPref (name, value);
-          break;
-      }
+      Akahuku.debug.warn('pref("' + name + '", '
+        + JSON.stringify(value) + '); // UNKNOWN!!')
     }
-        
     return value;
   },
 
+  _convToPrefsName: function (prefName) {
+    if (prefName.startsWith('akahuku.')) {
+      return prefName.substring('akahuku.'.length);
+    }
+    else {
+      console.warn('Accesssing invalid prefName =', prefName);
+      return prefName;
+    }
+  },
+
   setBoolPref : function (prefName, value) {
-    this.prefBranch.setBoolPref (prefName, value);
+    Prefs.setItem(this._convToPrefsName(prefName), value);
   },
   setCharPref : function (prefName, value) {
-    this.prefBranch.setCharPref (prefName, value);
+    Prefs.setItem(this._convToPrefsName(prefName), value);
   },
   setIntPref : function (prefName, value) {
-    this.prefBranch.setIntPref (prefName, value);
+    Prefs.setItem(this._convToPrefsName(prefName), value);
   },
   getBoolPref : function (prefName) {
-    return this.prefBranch.getBoolPref (prefName);
+    return Prefs.getItem(this._convToPrefsName(prefName));
   },
   getCharPref : function (prefName) {
-    return this.prefBranch.getCharPref (prefName);
+    return Prefs.getItem(this._convToPrefsName(prefName));
   },
   getIntPref : function (prefName) {
-    return this.prefBranch.getIntPref (prefName);
+    return Prefs.getItem(this._convToPrefsName(prefName));
   },
   prefHasUserValue : function (prefName) {
-    return this.prefBranch.prefHasUserValue (prefName);
+    return Prefs.hasItem(this._convToPrefsName(prefName));
   },
   clearUserPref : function (prefName) {
-    this.prefBranch.clearUserPref (prefName);
+    Prefs.clearUserValue(this._convToPrefsName(prefName));
   },
     
   /**
@@ -240,8 +188,6 @@ var arAkahukuConfig = {
     }
   },
   
-  defaultTime : -2,
-  
   /**
    * スクリプトの実行時間を設定する
    *
@@ -249,39 +195,14 @@ var arAkahukuConfig = {
    *        時間
    */
   setTime : function (t) {
-    if (arAkahukuConfig.defaultTime == -2) {
-      if (arAkahukuConfig.prefBranch
-          .prefHasUserValue ("dom.max_chrome_script_run_time")) {
-        arAkahukuConfig.defaultTime
-        = arAkahukuConfig.prefBranch
-        .getIntPref ("dom.max_chrome_script_run_time");
-      }
-      else {
-        arAkahukuConfig.defaultTime = -1;
-      }
-    }
-    arAkahukuConfig.prefBranch
-    .setIntPref ("dom.max_chrome_script_run_time", t);
+    Akahuku.debug.warn('Deprecated: arAkahukuConfig.setTime()');
   },
   
   /**
    * スクリプトの実行時間を元に戻す
    */
   restoreTime : function () {
-    if (arAkahukuConfig.defaultTime == -2) {
-    }
-    else if (arAkahukuConfig.defaultTime == -1) {
-      if (arAkahukuConfig.prefBranch
-          .prefHasUserValue ("dom.max_chrome_script_run_time")) {
-        arAkahukuConfig.prefBranch
-        .clearUserPref ("dom.max_chrome_script_run_time");
-      }
-    }
-    else {
-      arAkahukuConfig.prefBranch
-      .setIntPref ("dom.max_chrome_script_run_time",
-                   arAkahukuConfig.defaultTime);
-    }
+    Akahuku.debug.warn('Deprecated: arAkahukuConfig.restoreTime()');
   }
 };
 

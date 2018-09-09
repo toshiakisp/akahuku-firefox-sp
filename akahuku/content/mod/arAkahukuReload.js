@@ -1,5 +1,5 @@
 
-/* global Components,
+/* global
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
  *   arAkahukuDOM, arAkahukuImage, arAkahukuLink,
  *   arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
@@ -317,7 +317,7 @@ arAkahukuReloadCacheWriter.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor && Components.isSuccessCode (status)) {
+    if (descriptor && Akahuku.Cache.isSuccessCode(status)) {
       /* キャッシュの書き込み */
             
       descriptor.setExpirationTime (0);
@@ -365,25 +365,24 @@ arAkahukuReloadCacheWriter.prototype = {
 };
 /**
  * [続きを読む] 管理データ
- *   Inherits From: nsICacheEntryOpenCallback, nsISHistoryListener,
- *                  nsIRequestObserver, nsIStreamListener
+ *   Inherits From: nsICacheEntryOpenCallback,
  */
 function arAkahukuReloadParam () {
 }
 arAkahukuReloadParam.prototype = {
   nextPosition : 0,            /* Number  差分の開始位置 */
-  reloadChannel : null,        /* nsIHttpChannel  レスの差分取得のチャネル */
   replying : false,            /* Boolean  返信中フラグ */
   replied : false,             /* Boolean  返信後フラグ */
   targetDocument : null,       /* HTMLDocument  対象のドキュメント */
-  lastModified : NaN,          /* Number  ドキュメントの更新日時 (LOAD_ONLY_IF_MODIFIEDフラグ用) */
+  lastModified : NaN,          /* Number  ドキュメントの更新日時 */
+  lastEtag : '',
+  reloadRequestInit : null,
+  reloadRequestController : null,
     
   requestMode : 0,             /* Number  リクエスト方法 0:HEAD-GET, 1:GET(Etag), -1:GET(no-more-HEAD) */
   useRange : false,            /* Boolean  この板で差分取得を行うか */
   sync : false,                /* Boolean  同期したか */
     
-  sstream : null,              /* nsIScriptableInputStream  データ到着時に
-                                *   読み込むストリーム */
   responseHead : "",           /* String  応答のヘッダ */
   responseText : "",           /* String  応答のデータ */
   responseCharset : "",        /* String  応答の文字コード */
@@ -405,51 +404,21 @@ arAkahukuReloadParam.prototype = {
    * データを開放する
    */
   destruct : function () {
-    if (this.reloadChannel) {
+    if (this.reloadRequestController) {
       try {
-        this.reloadChannel.cancel
-          (Components.results.NS_BINDING_ABORTED || 0x80020006);
+        this.reloadRequestController.abort();
       }
       catch (e) { Akahuku.debug.exception (e);
       }
-      this.reloadChannel = null;
+      this.reloadRequestController = null;
+      this.reloadRequestInit = null;
       if (arAkahukuReload.enableNolimit) {
         arAkahukuConfig.restoreTime ();
       }
     }
-    try {
-      this.targetDocument.defaultView
-      .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-      .getInterface (Components.interfaces.nsIWebNavigation)
-      .sessionHistory.removeSHistoryListener (this);
-    }
-    catch (e) {
-    }
     this.targetDocument.defaultView.clearTimeout (this.statusTimerID);
     this.statusTimerID = null;
     this.targetDocument = null;
-  },
-    
-  /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsISHistoryListener/nsIStreamListener
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsISupportsWeakReference)
-        || iid.equals (Components.interfaces.nsISHistoryListener)
-        || iid.equals (Components.interfaces.nsIRequestObserver)
-        || iid.equals (Components.interfaces.nsIStreamListener)) {
-      return this;
-    }
-        
-    throw Components.results.NS_NOINTERFACE;
   },
     
   /**
@@ -464,17 +433,12 @@ arAkahukuReloadParam.prototype = {
    * @param  nsresult status
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
-    if (descriptor && Components.isSuccessCode (status)) {
+    if (descriptor && Akahuku.Cache.isSuccessCode(status)) {
       try {
         var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
       }
       catch (e) {
-        if (e.result == Components.results.NS_ERROR_NOT_AVAILABLE) {
-          charset = "Shift_JIS";
-        }
-        else {
-          throw e;
-        }
+        throw e;
       }
       var responseHead = "";
       try {
@@ -494,7 +458,7 @@ arAkahukuReloadParam.prototype = {
       var istream = descriptor.openInputStream (0);
       var self = this;
       arAkahukuUtil.asyncFetchBinary (istream, descriptor.dataSize, function (binstream, result) {
-        if (!Components.isSuccessCode (result)) {
+        if (!arAkahukuUtil.isSuccessCode (result)) {
           if (Akahuku.debug.enabled) {
             Akahuku.debug.warn ("arAkahukuReloadParam.onCacheEntryAvailable" +
               arAkahukuUtil.resultCodeToString (result) + " for " + descriptor.key);
@@ -562,7 +526,7 @@ arAkahukuReloadParam.prototype = {
       entry.dataSize;
     }
     catch (e) {
-      if (e.result == Components.results.NS_ERROR_IN_PROGRESS) {
+      if (e.result == 0x804b000f) { // NS_ERROR_IN_PROGRESS
         return arAkahukuCompat.CacheEntryOpenCallback.RECHECK_AFTER_WRITE_FINISHED;
       }
       throw e;
@@ -571,303 +535,14 @@ arAkahukuReloadParam.prototype = {
   },
   mainThreadOnly : true,
     
-  /**
-   * 戻るイベント
-   *
-   * @param  nsIURI backURI
-   *         戻る先の URI
-   * @return Boolean
-   *         続けるかどうか
-   */
-  OnHistoryGoBack : function (backURI) {
-    return true;
-  },
-    
-  /**
-   * 進むイベント
-   *
-   * @param  nsIURI forwardURI
-   *         進む先の URI
-   * @return Boolean
-   *         続けるかどうか
-   */
-  OnHistoryGoForward : function (forwardURI) {
-    return true;
-  },
-    
-  /**
-   * 移動イベント
-   *
-   * @param  Number index
-   *         移動先のインデックス
-   * @param  nsIURI gotoURI
-   *         移動先の URI
-   * @return Boolean
-   *         続けるかどうか
-   */
-  OnHistoryGotoIndex : function (index, gotoURI) {
-    return true;
-  },
-    
-  /**
-   * 項目追加イベント
-   *
-   * @param  nsIURI newURI
-   *         追加する URI
-   */
-  OnHistoryNewEntry : function (newURI) {
-    return true;
-  },
-    
-  /**
-   * 項目削除イベント
-   *
-   * @param  Number index
-   *         削除する数
-   * @return Boolean
-   *         続けるかどうか
-   */
-  OnHistoryPurge : function (numEntries) {
-    return true;
-  },
-    
-  /**
-   * リロードイベント
-   *
-   * @param  nsIURI reloadURI
-   *         リロードする URI
-   * @param  Number reloadFlags
-   *         リロード方法
-   * @return Boolean
-   *         続けるかどうか
-   */
-  OnHistoryReload : function (reloadURI, reloadFlags) {
-    if (arAkahukuReload.enableHook) {
-      if (reloadFlags
-          & Components.interfaces.nsIWebNavigation
-          .LOAD_FLAGS_BYPASS_CACHE
-          || reloadFlags
-          & Components.interfaces.nsIWebNavigation
-          .LOAD_FLAGS_BYPASS_PROXY) {
-        try {
-          var anchor
-          = this.targetDocument
-          .getElementById ("akahuku_reload_button");
-          if (anchor) {
-            anchor.parentNode.removeChild (anchor);
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-                
-        try {
-          this.targetDocument.defaultView
-          .QueryInterface (Components.interfaces
-                           .nsIInterfaceRequestor)
-          .getInterface (Components.interfaces.nsIWebNavigation)
-          .sessionHistory.removeSHistoryListener (this);
-        }
-        catch (e) {
-        }
-                
-        this.targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation)
-        .reload (Components.interfaces.nsIWebNavigation
-                 .LOAD_FLAGS_NONE);
-                
-        return false;
-      }
-    }
-        
-    return true;
-  },
-    
-  /**
-   * リクエスト開始のイベント
-   *   nsIRequestObserver.onStartRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   */
-  onStartRequest : function (request, context) {
-    this.sstream
-    = Components.classes ["@mozilla.org/scriptableinputstream;1"]
-    .createInstance (Components.interfaces.nsIScriptableInputStream);
-    this.responseText = "";
-    this.responseCharset = "";
-        
-    if (this.reloadChannel != null) {
-      arAkahukuReload.setStatus
-        ("\u30ED\u30FC\u30C9\u4E2D (\u30DC\u30C7\u30A3)", //"ロード中 (ボディ)"
-         true, this.targetDocument);
-    }
-  },
-    
-  /**
-   * リクエスト終了のイベント
-   *   nsIRequestObserver.onStopRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  Number statusCode
-   *         終了コード
-   */
-  onStopRequest : function (request, context, statusCode) {
-    // 取得できなかった場合に備えて load error となる値を指定しておく
-    var httpStatus = 0;
-    var responseHead = "";
-    var errorStatus = "";
-
-    if (!Components.isSuccessCode (statusCode)) {
-      errorStatus = arAkahukuUtil.resultCodeToString (statusCode);
-    }
-        
-    try {
-      var httpChannel
-        = request.QueryInterface (Components.interfaces.nsIHttpChannel);
-      httpStatus
-        = httpChannel.responseStatus;
-            
-      // キャッシュ書込用レスポンスヘッダーの作成
-      var protocolVersion = "1.1";
-      if ("protocolVersion" in request) {
-        // requires Firefox 45
-        switch (request.protocolVersion) {
-          case "h2":
-            protocolVersion = "2.0";
-            break;
-          case "http/1.1":
-            protocolVersion = "1.1";
-            break;
-          case "http/1.0":
-            protocolVersion = "1.0";
-            break;
-          default:
-            Akahuku.debug.warn ("unknwon protocolVersion "
-                + request.protocolVersion);
-            protocolVersion = "1.1";
-        }
-      }
-      responseHead = "HTTP/" + protocolVersion + " "
-        + httpChannel.responseStatus + " "
-        + httpChannel.responseStatusText + "\r\n";
-      var visitor = {
-        // nsIHttpHeaderVisitor 
-        visitHeader : function (name, value) {
-          this.header [name] = new String (value);
-        },
-        header : new Object (),
-      };
-      httpChannel.visitResponseHeaders (visitor);
-
-      if ("Content-Encoding" in visitor.header) {
-        // デコード後のデータ長を Content-Length に設定する
-        delete visitor.header ["Content-Encoding"];
-        visitor.header ["Content-Length"] = this.responseText.length;
-      }
-      for (var name in visitor.header) {
-        if (visitor.header [name])
-          responseHead += name + ": " + visitor.header [name] + "\r\n";
-      }
-
-      if (httpChannel.requestMethod == "HEAD") {
-        var resLastMod;
-        if ("Last-Modified" in visitor.header) {
-          resLastMod = Date.parse (visitor.header ["Last-Modified"]);
-        }
-        if (!resLastMod && !visitor.header.hasOwnProperty ("Etag")) {
-          // このページではもう HEAD リクエストをしない
-          this.requestMode = -1; //GET(no-more-HEAD)
-          Akahuku.debug.log
-            ("arAkahukuReloadParam: no more HEAD requests for " + this.location);
-        }
-        if (errorStatus) {
-          httpStatus = - Math.abs (httpStatus);
-        }
-        else if (!resLastMod && httpStatus == 304) {
-          // Not Modified (条件付きリクエストは成功)
-        }
-        else if (this.lastModified && this.lastModified == resLastMod) {
-          httpStatus = 304; // Not Modified
-        }
-        else {
-          // GET request
-          var ret = this._asyncOpenGetFromHead (httpChannel);
-          if (ret != Components.results.NS_OK) {
-            // "接続できませんでした "
-            arAkahukuReload.setStatus
-            ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F "
-             + arAkahukuUtil.resultCodeToString (ret),
-             true, this.targetDocument);
-          }
-          return;
-        }
-
-        // 以降HEADリクエストを省略できるか判定
-        if (this.requestMode == 0){ //HEAD-GET
-          if (visitor.header.hasOwnProperty ("Etag")) {
-            this.requestMode = 1; //GET(Etag)
-          }
-        }
-      }
-      else {// GET
-        if (this.responseText.length == 0) {
-          if (!errorStatus &&
-              Components.interfaces.nsICachingChannel
-              .LOAD_ONLY_IF_MODIFIED & request.loadFlags) {
-            // 条件付きリクエストの結果だろうから以降 304 Not Modified とみなす
-            httpStatus = 304;
-          }
-          else if (httpStatus == 304) {
-            // 別タブで更新した場合など意図せず304となった場合
-            // キャッシュされてるデータを読み直す
-            httpChannel.loadFlags =
-              Components.interfaces.nsIRequest.LOAD_FROM_CACHE;
-            httpChannel.notificationCallbacks = null; // 監視は不要
-            var ret = this._asyncOpenGetFromHead (httpChannel);
-            if (ret == Components.results.NS_OK) {
-              return;
-            }
-            httpStatus = - Math.abs (httpStatus);
-            errorStatus = "\u8AAD\u8FBC\u5931\u6557 "; // "読込失敗 "
-            errorStatus += arAkahukuUtil.resultCodeToString (statusCode);
-          }
-          else {
-            // 後の処理をエラーに流す
-            httpStatus = - Math.abs (httpStatus);
-          }
-        }
-
-        // レスポンスヘッダー次第で以降HEADリクエストを省略するか決める
-        if (this.requestMode == 0//HEAD-GET
-            && visitor.header.hasOwnProperty ("Etag")) {
-          this.requestMode = 1;//GET(Etag)
-        }
-      }
-    }
-    catch (e) {
-      if (e.result === Components.results.NS_ERROR_NOT_AVAILABLE) {
-        // responseStatus が無い (接続失敗時など)
-        errorStatus = "\u63A5\u7D9A\u5931\u6557?"; // "接続失敗?"
-      }
-      else {
-        Akahuku.debug.exception (e);
-      }
-    }
-        
-    /* 避難所 patch */
+  onHttpResponse : function (httpStatus, statusText='') {
     var param = Akahuku.getDocumentParam (this.targetDocument);
     if (param == null) {
       return;
     }
     var info = param.location_info;
         
-    if (this.reloadChannel == null) {
+    if (!this.reloadRequestInit) {
       return;
     }
         
@@ -875,24 +550,6 @@ arAkahukuReloadParam.prototype = {
     switch (httpStatus) {
       case 200:
       case 206:
-        this.responseHead = responseHead;
-        if ("Content-Type" in visitor.header) {
-          var re
-            = visitor.header ["Content-Type"]
-            .match (/^[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
-          if (re) {
-            this.responseCharset = re [1];
-          }
-        }
-        if ("Last-Modified" in visitor.header) {
-          this.lastModified
-            = Date.parse (visitor.header ["Last-Modified"]);
-        }
-        else {
-          // ヘッダに Last-Modified が無いなら諦める
-          this.lastModified = NaN;
-        }
-                
         arAkahukuReload.setStatus
           ("\u66F4\u65B0\u4E2D", //"更新中"
            false, this.targetDocument);
@@ -1059,18 +716,18 @@ arAkahukuReloadParam.prototype = {
         break;
       default:
         arAkahukuReload.setStatus
-          ("load error: " + errorStatus +" (" + httpStatus + ")",
+          ('load error: ' + statusText + ' (' + httpStatus + ')',
            false,
            this.targetDocument);
     }
     if (arAkahukuReload.enableNolimit) {
       arAkahukuConfig.restoreTime ();
     }
-    this.reloadChannel = null;
+    this.reloadRequestInit = null;
+    this.reloadRequestController = null;
         
     this.responseText = "";
     this.responseCharset = "";
-    this.sstream = null;
     
     /* HTML が正しく取得できなかった場合の音 */
     if (!this.replied) {
@@ -1081,133 +738,159 @@ arAkahukuReloadParam.prototype = {
     }
   },
 
-  _asyncOpenGetFromHead : function (channel) {
-    try {
-      var channel4GET
-        = arAkahukuUtil.newChannel ({
-          uri: channel.originalURI,
-          loadingNode: this.targetDocument,
-          contentPolicyType:
-            Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST})
-        .QueryInterface (Components.interfaces.nsIHttpChannel);
-      channel4GET.requestMethod = "GET";
-      channel4GET.loadFlags = channel.loadFlags;
-      channel4GET.notificationCallbacks = channel.notificationCallbacks;
-      this.reloadChannel = channel4GET;
-
-      this.reloadChannel.asyncOpen (this, null);
-      return Components.results.NS_OK;
-    }
-    catch (e) {
-      this.reloadChannel = null;
-      return e.result;
-    }
-  },
-    
   /**
-   * データ到着のイベント
-   *   nsIStreamListener.onDataAvailable
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  nsIInputStream inputStream
-   *         データを取得するストリーム
-   * @param  PRUint32 offset
-   *         データの位置
-   * @param  PRUint32 count 
-   *         データの長さ
+   * リロードのリクエストを送る
    */
-  onDataAvailable : function (request, context, inputStream, offset, count) {
-    this.sstream.init (inputStream);
-        
-    var chunk = this.sstream.read (count);
-    this.responseText += chunk;
-  },
+  asyncReload: function (method) {
+    this.reloadRequestController = new AbortController();
+    this.reloadRequestInit = {
+      method: method,
+      mode: 'same-origin',
+      credentials: 'include',
+      cache: 'no-cache', // 常に更新問い合わせさせる (If-Modified-Sence 等を使って)
+      signal: this.reloadRequestController.signal,
+    };
 
-  /**
-   * リロードのチャネルを適切なロードフラグで開く
-   */
-  asyncOpenReloadChannel : function ()
-  {
-    // ロードフラグ:
-    // チャネルにはキャッシュに書き込ませない (赤福自身が制御)
-    this.reloadChannel.loadFlags
-      = Components.interfaces.nsIRequest.INHIBIT_CACHING;
-
-    if (this.sync || this.useRange ) {
+    if (this.sync || this.useRange) {
       // [同期]では If-Modified-Since などを効かせずに取得しなおす
-      this.reloadChannel.loadFlags
-        |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
-      this._asyncOpenReloadChannel2 ();
+      this.reloadRequestInit.cache = 'reload';
     }
-    else {
-      // 常に更新問い合わせさせる (If-Modified-Sence 等を使って)
-      this.reloadChannel.loadFlags
-        |= Components.interfaces.nsIRequest.VALIDATE_ALWAYS;
 
-      // キャッシュを調べてフラグ決定する
-      arAkahukuReload.setStatus
-      ("\u30ED\u30FC\u30C9\u4E2D (\u30AD\u30E3\u30C3\u30B7\u30E5)", // "ロード中 (キャッシュ)"
-       true, this.targetDocument);
-      var param = this;
-      Akahuku.Cache.asyncGetHttpCacheStatus
-        ({url: this.location, triggeringNode: this.targetDocument},
-         true,
-         function (cacheStatus) {
-          var lmcache = NaN;
-          if (!("header" in cacheStatus)) {
-            Akahuku.debug.warn ("no header in cache entry: "
-              + param.location);
-            // キャッシュが不正でもとにかくリロードさせる
-            cacheStatus.header = {};
-          }
-          if ("Last-Modified" in cacheStatus.header) {
-            lmcache = Date.parse (cacheStatus.header ["Last-Modified"]);
-          }
-          if (lmcache && param.lastModified
-              && lmcache == param.lastModified) {
-            // 更新無し(304 Not Modified)でもキャッシュからデータを読まなくていい
-            param.reloadChannel.loadFlags
-              |= Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
-          }
-
-          // nsIHttpChannel に頼らない条件付きリクエストの生成 (Fx27.0a1のバグ?対策)
-          param.reloadChannel.loadFlags
-            |= Components.interfaces.nsIRequest.LOAD_BYPASS_CACHE;
-          if ("Last-Modified" in cacheStatus.header) {
-            param.reloadChannel.setRequestHeader
-              ("If-Modified-Since", cacheStatus.header ["Last-Modified"], false);
-          }
-          if ("Etag" in cacheStatus.header) {
-            param.reloadChannel.setRequestHeader
-              ("If-None-Match", cacheStatus.header ["Etag"], false);
-          }
-          param._asyncOpenReloadChannel2 ();
-         });
+    class ConnectionError extends Error {
+      constructor (message) {
+        super(message)
+        this.name = 'ConnectionError';
+      }
     }
-  },
-  _asyncOpenReloadChannel2 : function ()
-  {
-    var LOAD_ONLY_IF_MODIFIED
-      = Components.interfaces.nsICachingChannel.LOAD_ONLY_IF_MODIFIED;
-
-    arAkahukuUtil.setChannelContext (this.reloadChannel, this.targetDocument);
-
-    try {
-      this.reloadChannel.asyncOpen (this, null);
-
-      arAkahukuReload.setStatus
-      ("\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)", //"ロード中 (ヘッダ)"
-       true, this.targetDocument);
+    class NotModified extends Error {
+      constructor (message) {
+        super(message)
+        this.name = 'NotModified';
+      }
     }
-    catch (e) {
-      arAkahukuReload.setStatus
-      ("\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F", //"接続できませんでした"
-       true, this.targetDocument);
-      this.reloadChannel = null;
+    class HttpStatusError extends Error {
+      constructor (response) {
+        super(response.statusText);
+        this.name = 'HttpStatusError';
+        this.status = response.status;
+      }
     }
+
+    //'ロード中 (ヘッダ)'
+    arAkahukuReload.setStatus('\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)',
+      true, this.targetDocument);
+
+    let promise = fetch(this.location, this.reloadRequestInit)
+      .then((resp) => {
+        if (this.reloadRequestInit.method == 'GET') {
+          return resp;
+        }
+        // HEAD response
+        if (!resp.ok) {
+          throw new HttpStatusError(resp);
+        }
+        let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
+        let etag = resp.headers.get('Etag');
+        if (!resLastMod && !etag) {
+          // このページではもう HEAD リクエストをしない
+          this.requestMode = -1; //GET(no-more-HEAD)
+          Akahuku.debug.log
+            ("arAkahukuReloadParam: no more HEAD requests for " + this.location);
+        }
+        // 以降HEADリクエストを省略できるか判定
+        if (this.requestMode == 0 && etag){ //HEAD-GET
+          this.requestMode = 1; //GET(Etag)
+        }
+        if (this.lastEtag == etag
+          || this.lastModified == resLastMod) {
+          // Maybe 304
+          throw new NotModified();
+        }
+        else {
+          this.reloadRequestInit.method = 'GET';
+          return fetch(this.location, this.reloadRequestInit)
+            .then((resp) => resp)
+            .catch((e) => {
+              throw new ConnectionError(e.message);
+            });
+        }
+      })
+      .then((resp) => {
+        // GET response
+        if (!resp.ok) {
+          throw new HttpStatusError(resp);
+        }
+
+        const CRLF = '\r\n';
+        let headText = 'HTTP/';
+        if (resp.statusText)
+          headText += '1.1 ' + resp.status + ' ' + resp.statusText + CRLF;
+        else
+          headText += '2.0 ' + resp.status + CRLF;
+        for (let h of resp.headers) {
+          let hn = h[0].trim()
+            .replace(/(^|(?:-))[a-z]/g, (match) => match.toUpperCase())
+          headText += hn + ': ' + h[1] + CRLF;
+        }
+        this.responseHead = headText;
+
+        let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
+        let etag = resp.headers.get('Etag');
+        if (this.lastEtag == etag
+          || (resLastMod && this.lastModified == resLastMod)) {
+          // Raw response may be 304 Not Modified
+          throw new NotModified();
+        }
+        this.lastModified = resLastMod;
+        this.lastEtag = etag;
+        let re
+          = (resp.headers.get('Content-Type') || '')
+          .match(/^[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
+        this.responseCharset = re ? re [1] : '';
+
+        // レスポンスヘッダー次第で以降HEADリクエストを省略するか決める
+        if (this.requestMode == 0//HEAD-GET
+            && this.lastEtag) {
+          this.requestMode = 1;//GET(Etag)
+        }
+
+        //"ロード中 (ボディ)"
+        arAkahukuReload.setStatus('\u30ED\u30FC\u30C9\u4E2D (\u30DC\u30C7\u30A3)',
+          true, this.targetDocument);
+
+        return resp.arrayBuffer();
+      })
+      .then((buffer) =>
+        arAkahukuConverter.asyncConvertArrayBufToBinStr(buffer))
+      .then((binstr) => {
+        this.responseText = binstr;
+        this.onHttpResponse(200);
+      })
+      .catch((err) => {
+        if (err instanceof NotModified) {
+          this.onHttpResponse(304);
+        }
+        else if (err instanceof HttpStatusError) {
+          this.onHttpResponse(err.status, err.message);
+        }
+        else if (err instanceof ConnectionError) {
+          //"接続できませんでした"
+          arAkahukuReload.setStatus('\u63A5\u7D9A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F',
+            true, this.targetDocument);
+        }
+        else if (err instanceof DOMException && err.name == 'AbortError') {
+          // Aborted
+        }
+        else {
+          arAkahukuReload.setStatus('load error: ' + err,
+            false, this.targetDocument);
+          throw err;
+        }
+      })
+      .finally(() => {
+        this.reloadRequestInit = null;
+        this.reloadRequestController = null;
+      });
   },
 };
 /**
@@ -2163,7 +1846,7 @@ var arAkahukuReload = {
 
     var _asyncLoadCacheAndUpdate = function (istream, dataSize, url, callback) {
       arAkahukuUtil.asyncFetchBinary (istream, dataSize, function (binstream, result) {
-        if (Components.isSuccessCode (result)) {
+        if (arAkahukuUtil.isSuccessCode (result)) {
           param.responseText = binstream.readBytes (binstream.available ());
           binstream.close ();
           _updateCache ();
@@ -2184,7 +1867,8 @@ var arAkahukuReload = {
         arAkahukuConfig.setTime (arAkahukuReload.limitTime);
       }
 
-      param.reloadChannel = null;
+      param.reloadRequestInit = null;
+      param.reloadRequestController = null;
       param.sync = true;
       param.replied = false;
       param.useRange = false;
@@ -2599,40 +2283,6 @@ var arAkahukuReload = {
     var delNewTabHandler
     = arAkahukuThread.enableDelNewTab ?
     arAkahukuThread.applyDelNewTab : function () {};
-        
-    /* 合間合間に との連携の初期化 */
-    var aimaHandler = function () {};
-    var aimaHandler2 = function () {};
-        
-    try {
-      var scope = {};
-      if (documentParam.flags.existsAimaAimani) {
-        try {
-          Components.utils.import
-            ("chrome://aima_aimani/content/aima_aimani.jsm", scope);
-          if (scope.Aima_Aimani.useAkahukuCustomEvents) {
-            // sp version uses custom events instead of handlers
-            scope = null;
-          }
-        }
-        catch (e2) {
-          scope = arAkahukuWindow
-            .getParentWindowInChrome (targetDocument.defaultView);
-        }
-      }
-      if (scope) {
-        if ("hideNGNumberHandler" in scope.Aima_Aimani) {
-          aimaHandler = scope.Aima_Aimani.hideNGNumberHandler;
-        }
-        if ("hideNGNumberHandler2" in scope.Aima_Aimani) {
-          aimaHandler2 = scope.Aima_Aimani.hideNGNumberHandler2;
-        }
-      }
-    }
-    catch (e) {
-      aimaHandler = function () {};
-      aimaHandler2 = function () {};
-    }
         
     if (!sync) {
       lastReplyNumber = arAkahukuThread.numberingMax + 1;
@@ -3063,8 +2713,6 @@ var arAkahukuReload = {
           }
           
           arAkahukuThread.fixBug (currentContainer.main, info);
-          aimaHandler (currentContainer.main, targetDocument);
-          aimaHandler2 (currentContainer.main, targetDocument);
 
           // 連携したい他の拡張機能の支援(カスタムイベント)
           var appendEvent = targetDocument.createEvent ("Events");
@@ -3560,11 +3208,9 @@ var arAkahukuReload = {
     if (arAkahukuReload.enableNolimit) {
       arAkahukuConfig.restoreTime ();
     }
-    param.reloadChannel = null;
-        
-    param.readBytes = "";
-    param.stream = null;
-    
+    param.reloadRequestInit = null;
+    param.reloadRequestController = null;
+
     if (!param.replied) {
       if (newReplies) {
         arAkahukuSound.playReplyNew ();
@@ -3634,15 +3280,15 @@ var arAkahukuReload = {
       }
     }
         
-    if (param.reloadChannel) {
+    if (param.reloadRequestInit) {
       /* リロード中ならば中断する */
       try {
-        param.reloadChannel.cancel
-          (Components.results.NS_BINDING_ABORTED || 0x80020006);
+        param.reloadRequestController.abort();
       }
       catch (e) { Akahuku.debug.exception (e);
       }
-      param.reloadChannel = null;
+      param.reloadRequestController = null;
+      param.reloadRequestInit = null;
       arAkahukuReload.setStatus
       ("\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F",
        false, targetDocument);
@@ -3704,35 +3350,25 @@ var arAkahukuReload = {
       param.useRange = true;
     }
         
-    param.reloadChannel
-    = arAkahukuUtil.newChannel ({
-      uri: location,
-      loadingNode: targetDocument,
-      contentPolicyType:
-        Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST})
-    .QueryInterface (Components.interfaces.nsIHttpChannel);
-
+    let method = 'GET';
     if (param.requestMode == 0 //HEAD-GET
         && !param.sync && !info.isMonaca
         && !/\.php\?/.test (location)) {
-      param.reloadChannel.requestMethod = "HEAD";
-    }
-    else {
-      param.reloadChannel.requestMethod = "GET";
+      method = 'HEAD';
     }
         
     param.location = location;
         
-    param.asyncOpenReloadChannel ();
+    param.asyncReload(method);
         
     if (info.isFutaba
         && !info.isFutasuke) {
       /* 続きを読んでも画像が来ない場合は見てない事になってしまうので
        * 手動で板のリストを更新する */
-      var {arAkahukuP2PService}
-      = Components.utils.import ("resource://akahuku/p2p-service.jsm", {});
+      /*
       arAkahukuP2PService
         .servant.visitBoard (info.server + "/" + info.dir);
+      */
     }
   },
 
@@ -3782,16 +3418,13 @@ var arAkahukuReload = {
     if (!param) {
       // 非管理ページはロード終了していたら普通にリロード
       if (!doc.readyState || doc.readyState == "complete") {
-        doc.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation)
-        .reload (Components.interfaces.nsIWebNavigation.LOAD_FLAGS_NONE);
+        doc.defaultView.location.reload();
       }
       return;
     }
 
     if (param.reload_param &&
-        param.reload_param.reloadChannel) {
+        param.reload_param.reloadRequestInit) {
       // [続きを読む]が処理中ならなにもしない
       return;
     }
@@ -4035,16 +3668,7 @@ var arAkahukuReload = {
       param.targetDocument = targetDocument;
       param.lastModified = Date.parse (targetDocument.lastModified);
             
-      try {
-        targetDocument.defaultView
-          .QueryInterface (Components.interfaces
-                           .nsIInterfaceRequestor)
-          .getInterface (Components.interfaces.nsIWebNavigation)
-          .sessionHistory.addSHistoryListener (param);
-      }
-      catch (e) {
-        /* フレーム内の可能性あり */
-      }
+      // TODO: hook reload
             
       var threadBottomContainer
       = targetDocument.getElementById ("akahuku_bottom_container");
@@ -4254,9 +3878,9 @@ var arAkahukuReload = {
 
     var ret = {red: false, redType: "", deleted: false};
 
-    if ((sourceBQ instanceof Components.interfaces.nsIDOMNode
+    if ((sourceBQ instanceof Node
           && !Akahuku.isMessageBQ (sourceBQ))
-        || (targetBQ instanceof Components.interfaces.nsIDOMNode
+        || (targetBQ instanceof Node
           && !Akahuku.isMessageBQ (targetBQ))) {
       return ret;
     }

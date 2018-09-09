@@ -14,10 +14,7 @@ function arAkahukuDocumentParam () {
   };
 }
 arAkahukuDocumentParam.prototype = {
-  ID : null,
   targetDocument : null,
-  targetInnerWindowID : -1,
-  targetOuterWindowID : -1,
 
   location_info : null,
     

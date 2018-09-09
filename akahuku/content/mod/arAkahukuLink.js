@@ -1,5 +1,5 @@
 
-/* global btoa, Components,
+/* global btoa, Promise,
  *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
  *   arAkahukuImage, arAkahukuP2P, arAkahukuCompat, arAkahukuUtil,
  *   arAkahukuWindow, arAkahukuUI, arAkahukuMHT, arAkahukuThread,
@@ -138,12 +138,8 @@ arAkahukuUserMatchPattern.prototype = {
       matched = this.pattern;
     }
         
-    var anchor = targetDocument.createElement ("a");
     url = arAkahukuP2P.tryEnP2P (url);
-    anchor.setAttribute ("dummyhref", url);
-    anchor.className = "akahuku_generated_link";
-    arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-    arAkahukuLink.updateAutoLinkVisitedCore (anchor);
+    var anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
     anchor.appendChild (targetNode);
     nextNode.parentNode.insertBefore (anchor, nextNode);
     var button = arAkahukuLink.createPreviewButton (targetDocument,
@@ -225,127 +221,67 @@ arAkahukuLinkExtListener.prototype = {
   targetDocument : null, /* HTMLDocument  対象のドキュメント */
   targetNode : null,     /* HTMLElement  対象のノード */
   extNode : null,        /* HTMLElement  拡張子のノード */
-  content : "" ,         /* String  ファイルのデータ */
 
   // 初期化用関数
   init : function (targetDocument, targetNode, extNode) {
     if (!targetDocument || !targetNode) {
-      throw Components.results.NS_ERROR_ILLEGAL_VALUE;
+      throw new Error('No targetDocument nor targetNode specified');
     }
     this.targetDocument = targetDocument;
     this.targetNode = targetNode;
     this.extNode = extNode; // may be null
   },
-    
-  /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsIStreamListener
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsISupportsWeakReference)
-        || iid.equals (Components.interfaces.nsIInterfaceRequestor)
-        || iid.equals (Components.interfaces.nsIChannelEventSink)
-        || iid.equals (Components.interfaces.nsIStreamListener)
-        || iid.equals (Components.interfaces.nsIRequestObserver)) {
-      return this;
-    }
-        
-    throw Components.results.NS_NOINTERFACE;
-  },
-    
-  /**
-   * インターフェースの取得
-   *   nsIInterfaceRequestor.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsIStreamListener
-   *         this
-   */
-  getInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsILoadContext)) {
-      try {
-        return this.targetDocument.defaultView
-          .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-          .getInterface (Components.interfaces.nsIWebNavigation)
-          .QueryInterface (Components.interfaces.nsILoadContext);
-      }
-      catch (e) { Akahuku.debug.exception (e)
-        throw Components.results.NS_NOINTERFACE;
-      }
-    }
-    return this.QueryInterface (iid);
-  },
-    
-  /**
-   * リダイレクトのイベント
-   *   nsIChannelEventSink.asyncOnChannelRedirect
-   */
-  asyncOnChannelRedirect : function (oldChannel, newChannel, flags, callback) {
-    try {
-      if (newChannel.URI.spec.match (/s[usapq][0-9]+\.([_a-zA-Z0-9]+)/)) {
-        var ext = RegExp.$1;
-        arAkahukuLink.setExt2
-          (ext, this.targetDocument, this.targetNode, this.extNode);
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-    if (callback) {
-      callback.onRedirectVerifyCallback (Components.results.NS_BINDING_ABORTED);
-    }
+
+  asyncResolveExt: function (url) {
+    return new Promise((resolve, reject) => {
+      window.fetch(url, {
+        credentials: 'omit',
+        redirect: 'follow',
+        referrerPolicy: 'no-referrer',
+      })
+        .then((resp) => {
+          if (resp.redirected) {
+            this._setExtFromRedirectURL(resp.url);
+            return;
+          }
+          return resp.blob()
+            .then((blob) => {
+              return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsBinaryString(blob,
+                  {type: 'application/octet-stream'});
+              });
+            })
+            .then((str) => {
+              this._setExtFromContent(str);
+            });
+        })
+        .catch((err) => {
+          Akahuku.debug.exception(err);
+        });
+    });
   },
 
-  /**
-   * nsIChannelEventSink.onChannelRedirect (Obsolete since Gecko 2.0)
-   */
-  onChannelRedirect : function (oldChannel, newChannel, flags) {
-    this.asyncOnChannelRedirect (oldChannel, newChannel, flags, null);
-    newChannel.cancel (Components.results.NS_BINDING_ABORTED);
-  },
-
-  /**
-   * リクエスト開始のイベント
-   *   nsIRequestObserver.onStartRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   */
-  onStartRequest : function (request, context) {
-    this.content = "";
+  _setExtFromRedirectURL: function (url) {
+    if (url.match (/s[usapq][0-9]+\.([_a-zA-Z0-9]+)/)) {
+      var ext = RegExp.$1;
+      arAkahukuLink.setExt2
+        (ext, this.targetDocument, this.targetNode, this.extNode);
+    }
   },
     
-  /**
-   * リクエスト終了のイベント
-   *   nsIRequestObserver.onStopRequest
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  Number statusCode
-   *         終了コード
-   */
-  onStopRequest : function (request, context, statusCode) {
+  _setExtFromContent: function (content) {
     var ext = "";
-    if (this.content.match (/^\x89PNG/)) {
+    if (content.match (/^\x89PNG/)) {
       ext = "png";
     }
-    if (this.content.match
+    if (content.match
         (/<a href=\".*s[usapq][0-9]+\.([_a-zA-Z0-9]+)\"/)) {
       ext = RegExp.$1;
     }
-    else if (this.content.match
+    else if (content.match
              (/value=\"s[usapq][0-9]+\.([_a-zA-Z0-9]+)\"/)) {
       ext = RegExp.$1;
     }
@@ -360,36 +296,10 @@ arAkahukuLinkExtListener.prototype = {
       }
     }
         
-    this.content = "";
-    this.channel = null;
     this.targetDocument = null;
     this.targetNode = null;
     this.extNode = null;
   },
-    
-  /**
-   * データ到着のイベント
-   *   nsIStreamListener.onDataAvailable
-   *
-   * @param  nsIRequest request
-   *         対象のリクエスト
-   * @param  nsISupports context
-   *         ユーザ定義
-   * @param  nsIInputStream inputStream
-   *         データを取得するストリーム
-   * @param  PRUint32 offset
-   *         データの位置
-   * @param  PRUint32 count 
-   *         データの長さ
-   */
-  onDataAvailable : function (request, context, inputStream, offset, count) {
-    var bstream
-    = Components.classes ["@mozilla.org/binaryinputstream;1"]
-    .createInstance (Components.interfaces.nsIBinaryInputStream);
-    bstream.setInputStream (inputStream);
-        
-    this.content += bstream.readBytes (count);
-  }
 };
 /**
  * リンクのデータ
@@ -411,13 +321,8 @@ arAkahukuLinkParam.prototype = {
 /**
  * リンク管理
  *   [オートリンク]、[芝刈り]、[P2P]
- *   Inherits From: nsINavHistoryObserver
  */
 var arAkahukuLink = {
-  targetLinks : null,              /* Object  チェックするリンク */
-  lastCleanuped : 0,               /* Number  targetLinks の
-                                    *   最終クリーンアップ時刻 [ms] */
-  
   enableHideTrolls : false,        /* Boolean  芝刈り */
   hideTrollsMode : "",             /* String  方法
                                     *   "normal": ......
@@ -467,31 +372,11 @@ var arAkahukuLink = {
   futalogPattern : null,   /* arAkahukuMatchPattern  ふたログのリンク変換器 */
   trollsPattern : null,    /* arAkahukuMatchPattern  芝刈り機のリンク変換器 */
   P2PPattern : null,       /* arAkahukuMatchPattern  P2Pノード名のリンク変換器 */
-    
-  historyService : null,   /* nsINavHistoryService */
 
   /**
    * 初期化処理
    */
   init : function () {
-    this.targetLinks = new Object ();
-    
-    try {
-      var historyService
-        = Components.classes ["@mozilla.org/browser/nav-history-service;1"]
-        .getService (Components.interfaces.nsINavHistoryService);
-      historyService.addObserver (arAkahukuLink, false);
-      this.historyService = historyService;
-    }
-    catch (e) {
-      if (e.result == Components.results.NS_ERROR_XPC_GS_RETURNED_FAILURE) {
-        // no error message; this can happens in content process (e10s)
-      }
-      else {
-        Akahuku.debug.exception (e);
-      }
-    }
-    
     arAkahukuLink.initPatterns ();
   },
     
@@ -499,10 +384,6 @@ var arAkahukuLink = {
    * 終了処理
    */
   term : function () {
-    if (this.historyService) {
-      this.historyService.removeObserver (arAkahukuLink);
-      this.historyService = null;
-    }
   },
 
   /**
@@ -550,11 +431,7 @@ var arAkahukuLink = {
       }
       url += query;
             
-      var anchor = targetDocument.createElement ("a");
-      anchor.setAttribute ("dummyhref", url);
-      anchor.className = "akahuku_generated_link";
-      arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-      arAkahukuLink.updateAutoLinkVisitedCore (anchor);
+      var anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
       anchor.appendChild (targetDocument.createTextNode
                           (parens [1]));
              
@@ -653,19 +530,16 @@ var arAkahukuLink = {
       .replace (/\u2329/g, "&lang");
       
       try {
-        arAkahukuUtil.newURIViaNode (url, null);
+        // Validate
+        let url_obj = new URL(url);
       }
       catch (e) { Akahuku.debug.exception (e);
         return false;
       }
       
-      var anchor = targetDocument.createElement ("a");
       url = arAkahukuP2P.tryEnP2P (url);
       url = arAkahukuUtil.tryConvertIDNHostToAscii (url);
-      anchor.setAttribute ("dummyhref", url);
-      anchor.className = "akahuku_generated_link";
-      arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-      arAkahukuLink.updateAutoLinkVisitedCore (anchor);
+      var anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
       anchor.appendChild (targetDocument.createTextNode
                           (parens [1]));
       nextNode.parentNode.insertBefore (anchor, nextNode);
@@ -779,18 +653,14 @@ var arAkahukuLink = {
         }
       }
       
-      var anchor = targetDocument.createElement ("a");
+      url = arAkahukuP2P.tryEnP2P (url);
+      var anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
       if (!(parens [3])) {
         anchor.setAttribute ("__akahuku_autolink_no_ext", "1");
         anchor.setAttribute ("__akahuku_autolink_prefix",
                              prefix + "src/" + parens [2]);
       }
              
-      url = arAkahukuP2P.tryEnP2P (url);
-      anchor.setAttribute ("dummyhref", url);
-      anchor.className = "akahuku_generated_link";
-      arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-      arAkahukuLink.updateAutoLinkVisitedCore (anchor);
       anchor.appendChild (targetDocument.createTextNode
                           (parens [2]));
       nextNode.parentNode.insertBefore (anchor, nextNode);
@@ -834,18 +704,14 @@ var arAkahukuLink = {
         }
       }
       
-      var anchor = targetDocument.createElement ("a");
+      url = arAkahukuP2P.tryEnP2P (url);
+      var anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
       if (!(parens [3])) {
         anchor.setAttribute ("__akahuku_autolink_no_ext", "1");
         anchor.setAttribute ("__akahuku_autolink_prefix",
                              prefix + "src/" + parens [2]);
       }
              
-      url = arAkahukuP2P.tryEnP2P (url);
-      anchor.setAttribute ("dummyhref", url);
-      anchor.className = "akahuku_generated_link";
-      arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-      arAkahukuLink.updateAutoLinkVisitedCore (anchor);
       anchor.appendChild (targetDocument.createTextNode
                           (parens [2]));
       nextNode.parentNode.insertBefore (anchor, nextNode);
@@ -919,15 +785,17 @@ var arAkahukuLink = {
         }
       }
             
-      var anchor = targetDocument.createElement ("a");
+      var anchor = null;
       if (linkToRedirect && parens [3]) {
         // 中瓶のDLKey付きでも自動でKey入力画面に飛ぶように
         // 拡張子無しのURLでアクセスする
-        anchor.setAttribute ("dummyhref", url.replace (/(\d+)\.[^\.]+$/,"$1"));
+        anchor
+          = arAkahukuLink.createAutolinkAnchor(targetDocument,
+            url.replace(/(\d+)\.[^\.]+$/,"$1"));
       }
-      else
-      anchor.setAttribute ("dummyhref", url);
-      anchor.className = "akahuku_generated_link";
+      else {
+        anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
+      }
       if (!(parens [3])) {
         anchor.setAttribute ("__akahuku_autolink_no_ext", "1");
         anchor.setAttribute ("__akahuku_autolink_no_ext_auto", "1");
@@ -936,8 +804,6 @@ var arAkahukuLink = {
         anchor.setAttribute ("__akahuku_autolink_autourl",
                              url);
       }
-      arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-      arAkahukuLink.updateAutoLinkVisitedCore (anchor);
       anchor.appendChild (targetDocument.createTextNode
                           (parens [2]));
       nextNode.parentNode.insertBefore (anchor, nextNode);
@@ -996,11 +862,7 @@ var arAkahukuLink = {
       += "src/" + parens [3] + parens [4]
       + (parens [5] ? parens [5] : ".mht");
              
-      var anchor = targetDocument.createElement ("a");
-      anchor.setAttribute ("dummyhref", url);
-      anchor.className = "akahuku_generated_link";
-      arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
-      arAkahukuLink.updateAutoLinkVisitedCore (anchor);
+      var anchor = arAkahukuLink.createAutolinkAnchor(targetDocument, url);
       anchor.appendChild (targetDocument.createTextNode
                           (parens [2]));
       nextNode.parentNode.insertBefore (anchor, nextNode);
@@ -1221,37 +1083,27 @@ var arAkahukuLink = {
         
         /* 既読 */
         /* 通常 */
-        .addRule ("blockquote > a.akahuku_generated_link[visited]",
-                  "color: #8040ee; "
-                  + "text-decoration: underline;")
-        .addRule ("div.t > a.akahuku_generated_link[visited]",
-                  "color: #8040ee; "
-                  + "text-decoration: underline;")
+        .addRule ("blockquote > a.akahuku_generated_link:visited",
+                  "color: #8040ee; ")
+        .addRule ("div.t > a.akahuku_generated_link:visited",
+                  "color: #8040ee; ")
         // タテログのログ patch
-        .addRule (".thread div > a.akahuku_generated_link[visited]",
-                  "color: #0040ee;"
-                  + "text-decoration: underline;")
+        .addRule (".thread div > a.akahuku_generated_link:visited",
+                  "color: #0040ee;")
         /* ポップアップ */
-        .addRule ("div.akahuku_popup_content_blockquote[visited] > "
-                  + "a.akahuku_generated_link",
-                  "color: #8040ee; "
-                  + "text-decoration: underline;")
+        .addRule ("div.akahuku_popup_content_blockquote > "
+                  + "a.akahuku_generated_link:visited",
+                  "color: #8040ee; ")
         /* 引用内 */
-        .addRule ("font > a.akahuku_generated_link[visited]",
-                  "color: #806099; "
-                  + "text-decoration: underline;")
-        .addRule ("span > a.akahuku_generated_link[visited]",
-                  "color: #806099; "
-                  + "text-decoration: underline;")
+        .addRule ("font > a.akahuku_generated_link:visited",
+                  "color: #806099; ")
+        .addRule ("span > a.akahuku_generated_link:visited",
+                  "color: #806099; ")
                 
         /* ホバー */
         .addRule ("a.akahuku_generated_link:hover",
                   "cursor: pointer; "
-                  + "color: #ff4000; "
-                  + "text-decoration: underline;")
-        .addRule ("a.akahuku_generated_link[visited]:hover",
-                  "cursor: pointer; "
-                  + "color: #ff4000; "
+                  + "color: #ff4000 !important; "
                   + "text-decoration: underline;");
                 
         /* 自動識別した拡張子 */
@@ -1320,16 +1172,11 @@ var arAkahukuLink = {
         .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link",
                   "color: #0040ee; "
                   + "text-decoration: underline;")
-        .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link[visited]",
-                  "color: #806099; "
-                  + "text-decoration: underline;")
+        .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link:visited",
+                  "color: #806099; ")
         .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link:hover",
                   "cursor: pointer; "
-                  + "color: #ff4000; "
-                  + "text-decoration: underline;")
-        .addRule ("div#akahuku_savemht_nocachelist > a.akahuku_generated_link[visited]:hover",
-                  "cursor: pointer; "
-                  + "color: #ff4000; "
+                  + "color: #ff4000 !important; "
                   + "text-decoration: underline;");
       }
     }
@@ -1452,25 +1299,6 @@ var arAkahukuLink = {
               list [i].url));
           }
         }
-        else {
-          value
-            = arAkahukuConfig
-            .initPref ("char", "akahuku.autolink.user.patterns", "");
-          if (value != "") {
-            /* 値を解析するだけなので代入はしない */
-            value.replace
-              (/([^&,]*)&([^&,]*)&([^&,]*),?/g,
-               function (matched, pattern, r, url) {
-                arAkahukuLink.userPatterns.push
-                    (new arAkahukuUserMatchPattern
-                     (unescape (pattern),
-                      unescape (r) == "o",
-                      unescape (url)));
-                
-                return "";
-              });
-          }
-        }
       }
     }
   },
@@ -1589,46 +1417,11 @@ var arAkahukuLink = {
       listener.init (targetDocument, targetNode, extNode);
             
       var url = targetNode.getAttribute ("__akahuku_autolink_autourl");
-      // 自動認識にも preview 用匿名チャネルを使う
-      url = Akahuku.protocolHandler.enAkahukuURI ("preview", url);
-            
-      listener.channel 
-      = arAkahukuUtil.newChannel ({
-        uri: url,
-        loadingNode: targetDocument,
-        contentPolicyType:
-          Components.interfaces.nsIContentPolicy.TYPE_XMLHTTPREQUEST,
-      });
-      listener.channel.notificationCallbacks = listener;
-            
-      try {
-        listener.channel.asyncOpen (listener, null);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
+      listener.asyncResolveExt(url);
       return;
     }
         
     arAkahukuLink.setExt2 (ext, targetDocument, targetNode, extNode);
-  },
-  onClickSetExt : function (event, type, ext) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuLink.setExt (type, ext, target);
-  },
-  onClickSetExtAuto : function (event) {
-    arAkahukuLink.onClickSetExt (event, 2, "");
-  },
-  onClickSetExtJPEG : function (event) {
-    arAkahukuLink.onClickSetExt (event, 0, "jpg");
-  },
-  onClickSetExtPNG : function (event) {
-    arAkahukuLink.onClickSetExt (event, 0, "png");
-  },
-  onClickSetExtGIF : function (event) {
-    arAkahukuLink.onClickSetExt (event, 0, "gif");
-  },
-  onClickSetExtManual : function (event) {
-    arAkahukuLink.onClickSetExt (event, 1, "");
   },
         
   /**
@@ -2055,50 +1848,6 @@ var arAkahukuLink = {
       var target = event.explicitOriginalTarget;
             
       if (target) {
-        if (target.nodeName.toLowerCase () != "a") {
-          target = arAkahukuDOM.findParentNode (target, "a");
-        }
-                
-        if (target
-            && "className" in target
-            && target.className == "akahuku_generated_link") {
-          var to = -1;
-          var focus = arAkahukuLink.enableAutoLinkFocus;
-                    
-          if (event.button == 0) {
-            if (event.ctrlKey || event.metaKey) {
-              /* 新規タブ */
-              to = 1;
-              if (event.shiftKey) {
-                focus = !focus;
-              }
-            }
-            else if (event.altKey && !event.shiftKey) {
-              /* 保存 */
-              to = 3;
-            }
-            else if (!event.altKey && event.shiftKey) {
-              /* 新規ウィンドウ */
-              to = 2;
-            }
-            else {
-              /* 新規タブ (本来は現在のタブ) */
-              to = 1;
-            }
-          }
-                    
-          if (to != -1) {
-            arAkahukuLink.openAutoLink (target, to, focus);
-                        
-            event.preventDefault ();
-            event.stopPropagation ();
-          }
-        }
-      }
-            
-      var target = event.explicitOriginalTarget;
-            
-      if (target) {
         if (target.nodeName.toLowerCase () != "span") {
           target = arAkahukuDOM.findParentNode (target, "span");
                     
@@ -2106,46 +1855,6 @@ var arAkahukuLink = {
               && "className" in target
               && target.className == "akahuku_preview_button") {
             arAkahukuLink.onPreviewLinkClick (target);
-          }
-        }
-      }
-    }
-  },
-    
-  /**
-   * オートリンク上でボタンを押したイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onAutolinkMouseDown : function (event) {
-    if (arAkahukuLink.enableAutoLink) {
-      var target = event.explicitOriginalTarget;
-            
-      if (target) {
-        if (target.nodeName.toLowerCase () != "a") {
-          target = arAkahukuDOM.findParentNode (target, "a");
-        }
-                
-        if (target
-            && target.className == "akahuku_generated_link") {
-          var to = -1;
-          // 中ボタンクリックは通常とフォーカスが逆
-          var focus = !arAkahukuLink.enableAutoLinkFocus;
-                    
-          if (event.button == 1) {
-            /* 新規タブ */
-            to = 1;
-            if (event.shiftKey) {
-              focus = !focus;
-            }
-          }
-                    
-          if (to != -1) {
-            arAkahukuLink.openAutoLink (target, to, focus);
-                        
-            event.preventDefault ();
-            event.stopPropagation ();
           }
         }
       }
@@ -2228,13 +1937,18 @@ var arAkahukuLink = {
       href = arAkahukuP2P.deP2P (href);
     }
     
-    arAkahukuLink.targetLinks [href] = new Date ().getTime ();
-
     if (to == 0) {
-      targetDocument.defaultView
-        .QueryInterface (Components.interfaces.nsIInterfaceRequestor)
-        .getInterface (Components.interfaces.nsIWebNavigation)
-        .loadURI (href, 0, null, null, null);
+      // load with no referrer (ad hoc)
+      try {
+        let meta = targetDocument.createElement('meta');
+        meta.name = 'referrer';
+        meta.content = 'no-referrer';
+        targetDocument.head.appendChild(meta);
+      }
+      catch (e) {
+        Akahuku.debug.exception(e);
+      }
+      targetDocument.defaultView.location.assign(href);
     }
     else {
       var isPrivate = arAkahukuWindow.isContentWindowPrivate
@@ -2244,152 +1958,12 @@ var arAkahukuLink = {
   },
     
   openLinkInXUL : function (href, to, focus, target, isPrivate) {
-    var targetDocument, document, window;
-    if (target instanceof Components.interfaces.nsIDOMXULElement) {
-      // target is a browser
-      document = target.ownerDocument;
-      window = document.defaultView;
-      targetDocument = null; //no need for saveURL (isPrivate is provided)
-    }
-    else if (target instanceof Components.interfaces.nsIDOMDocument) {
-      targetDocument = target;
-      window = arAkahukuWindow
-        .getParentWindowInChrome (targetDocument.defaultView);
-      document = window.document;
-    }
-    ; /* switch のインデント用 */
-    switch (to) {
-      case 0:
-        throw Components.Exception
-          ("arAkahukuLink.openLinkInXUL: not supported 'to'== 0");
-        break;
-      case 1:
-        var tabbrowser = document.getElementById ("content");
-        try {
-          // ツリー型タブ アドオン対応 (0.12.2011060201+)
-          // オートリンク先も通常リンク先同様に子タブにさせる
-          if ("TreeStyleTabService" in window) {
-            window.TreeStyleTabService.readyToOpenChildTabNow
-              (tabbrowser.selectedTab);
-          }
-        }
-        catch (e) { Akahuku.debug.exception (e);
-        }
-        var newTab
-          = tabbrowser.addTab (href, {
-            relatedToCurrent : true,
-            // gBrowser.loadOneTab と同じロジックでタブを関連付ける
-            ownerTab : (focus ? tabbrowser.selectedTab : null),
-          });
-        if (focus) {
-          tabbrowser.selectedTab = newTab;
-        }
-        break;
-      case 2:
-        window.open (href, "_blank");
-        break;
-      case 3:
-        window.saveURL (href, null, null, true, false, null,
-            targetDocument, isPrivate);
-        break;
-    }
-  },
-    
-  /**
-   * オートリンク上にマウスが乗ったイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onAutoLinkOver : function (event) {
-    var targetDocument = event.target.ownerDocument;
-    var param = Akahuku.getDocumentParam (targetDocument).link_param;
-    targetDocument.defaultView
-      .clearTimeout (param.mouseOutTimeoutId);
-    param.mouseOutTimeoutId = null;
-    var target = event.target;
-    if (target.nodeName.toLowerCase () != "a") {
-      target = arAkahukuDOM.findParentNode (target, "a");
-    }
-    if (target) {
-      var href = target.getAttribute ("dummyhref");
-      // IDN や相対アドレスの解決
-      var uri = arAkahukuUtil.newURIViaNode (href, target.ownerDocument);
-      // 可能ならロケーションバーと同様に可読化
-      href = arAkahukuCompat.losslessDecodeURI (uri);
-      var text
-        = "\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF: "
-        // "赤福オートリンク:"
-        + href;
-      var browser = arAkahukuWindow
-        .getBrowserForWindow (targetDocument.defaultView);
-      arAkahukuUI.setStatusPanelText (text, "overLink", browser);
-    }
-  },
-    
-  /**
-   * オートリンク上からマウスが出たイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onAutoLinkOut : function (event) {
-    /* Firefox4+ におけるステータスのポップアップにより
-     * out/over の無限ループに陥ることを防ぐために少し待つ
-     */
-    var targetDocument = event.target.ownerDocument;
-    var browser = arAkahukuWindow
-      .getBrowserForWindow (targetDocument.defaultView);
-    var param = Akahuku.getDocumentParam (targetDocument).link_param;
-    var statusLabel = arAkahukuUI.getStatusPanelText (browser);
-    targetDocument.defaultView
-      .clearTimeout (param.mouseOutTimeoutId);
-    param.mouseOutTimeoutId
-      = event.target.ownerDocument.defaultView
-      .setTimeout
-      ((function (oldLabel, param) {
-          return function () {
-            arAkahukuUI.clearStatusPanelText (oldLabel, browser);
-            param.mouseOutTimeoutId = null;
-          };
-        })(statusLabel, param), 100);
-  },
-    
-  /**
-   * オートリンクをドラッグしたイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onAutoLinkDragStart: function (event) {
-    if (!("dataTransfer" in event) || !event.dataTransfer) {
-      return;
-    }
-
-    var target = event.target;
-    var caption = "";
-    switch (target.nodeName.toLowerCase ()) {
-      case "img":
-        /* 画像データ自体はデフォルトでセットされる？ */
-        if (!arAkahukuDOM.hasClassName
-             (event.target, "akahuku_preview")) {
-          break;
-        }
-        caption = caption || target.title;
-        /* IMG の dummyhref は A と同様に処理 */
-      case "a":
-        caption = caption || target.textContent;
-        var href = target.getAttribute ("dummyhref");
-        href = arAkahukuP2P.deP2P (href);
-        if (href) {
-          event.dataTransfer.setData
-            ("text/x-moz-url", href + "\n" + caption);
-          event.dataTransfer.setData
-            ("application/x-moz-file-promise-url", href);
-          event.dataTransfer.setData ("text/uri-list", href);
-          event.dataTransfer.setData ("text/plain", href);
-        }
-    }
+    Akahuku.debug.error('NotYetImplemented');
+    /*
+    arAkahukuIPC.sendAsyncCommand
+      ("Link/openLinkInXUL", [href, to, focus, null, isPrivate],
+       target.defaultView);
+    */
   },
     
   /**
@@ -2612,97 +2186,27 @@ var arAkahukuLink = {
   },
     
   /**
-   * 対象のノードのオートリンクの既読をチェックする
-   *
-   * @param  HTMLElement targetNode
-   *         対象のノード
-   */
-  updateAutoLinkVisitedCore : function (targetNode) {
-    var href = targetNode.getAttribute ("dummyhref")
-    try {
-      var uri = arAkahukuUtil.newURIViaNode (href, null);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      return;
-    }
-
-    arAkahukuCompat.AsyncHistory.isURIVisited (uri, {
-      node : targetNode,
-      isVisited : function (uri, visited) {
-        if (visited) {
-          this.node.setAttribute ("visited", "true");
-        }
-        else {
-          this.node.removeAttribute ("visited");
-        }
-      }
-    });
-  },
-    
-  /**
-   * 対象のノード以下のオートリンクの既読をチェックする
+   * オートリンクの要素を作る
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
-   * @param  HTMLElement targetNode
-   *         対象のノード
+   * @param  String url
+   *         プレビュー対象のアドレス
+   * @return HTMLAnchorElement linkNode
+   *         リンク要素
    */
-  updateAutoLinkVisited : function (targetDocument, targetNode) {
-    var nodes = targetNode.getElementsByTagName ("a");
-        
-    for (var i = nodes.length - 1; i >= 0; i --) {
-      if (nodes [i].className == "akahuku_generated_link") {
-        arAkahukuLink.updateAutoLinkVisitedCore (nodes [i]);
-      }
-    }
-  },
-    
-  /**
-   * 対象のノードのオートリンクのイベントをフックする
-   *
-   * @param  HTMLElement targetNode
-   *         対象のノード
-   */
-  addAutoLinkEventHandlerCore : function (targetNode) {
-    targetNode.addEventListener
-    ("mouseover",
-     function () {
-      arAkahukuLink.onAutoLinkOver (arguments [0]);
-    }, false);
-        
-    targetNode.addEventListener
-    ("mouseout",
-     function () {
-      arAkahukuLink.onAutoLinkOut (arguments [0]);
-    }, false);
-        
-    if ("draggable" in targetNode) {
-      /* ドラッグ可能にする (Gecko 1.9.1+) */
-      targetNode.draggable = true;
-      targetNode.addEventListener
-      ("dragstart",
-       function () {
-        arAkahukuLink.onAutoLinkDragStart (arguments [0]);
-      }, false);
-    }
-  },
-    
-  /**
-   * 対象のノード以下のオートリンクのイベントをフックする
-   *
-   * @param  HTMLDocument targetDocument
-   *         対象のドキュメント
-   * @param  HTMLElement targetNode
-   *         対象のノード
-   */
-  addAutoLinkEventHandler : function (targetDocument, targetNode) {
-    var nodes = targetNode.getElementsByTagName ("a");
-        
-    for (var i = nodes.length - 1; i >= 0; i --) {
-      if (nodes [i].className == "akahuku_generated_link") {
-        arAkahukuLink.addAutoLinkEventHandlerCore (nodes [i]);
-      }
-    }
+  createAutolinkAnchor : function (targetDocument, url, opt={}) {
+    var anchor = targetDocument.createElement ("a");
+    anchor.setAttribute ("dummyhref", url);
+    anchor.className = "akahuku_generated_link";
+    anchor.href = url;
+    // "赤福オートリンク:"
+    anchor.title = '\u8D64\u798F\u30AA\u30FC\u30C8\u30EA\u30F3\u30AF: '
+      + arAkahukuCompat.losslessDecodeURL(url);
+    anchor.referrerPolicy = 'no-referrer';
+    anchor.rel = 'noopener noreferrer';
+    anchor.target = '_blank';
+    return anchor;
   },
     
   /**
@@ -2945,9 +2449,8 @@ var arAkahukuLink = {
     var targetDocument = event.currentTarget.ownerDocument;
         
     var status = 0;
-    var statusText = "Not connected?";
+    var statusText = "Unkonw";
         
-    // LoadErrorObserver が記録したエラー情報を取得
     var attr = "__akahuku_preview_error_status";
     if (image.hasAttribute (attr)) {
      status = parseInt (image.getAttribute (attr));
@@ -3026,6 +2529,7 @@ var arAkahukuLink = {
    */
   createImage : function (uri, targetDocument) {
     var image;
+    var srcByFetch = null;
     var scheme = targetDocument.location.protocol.replace (/:$/, "");
         
     if (uri.match (/\.(jpe?g|gif|png|bmp)$/i)) {
@@ -3034,44 +2538,16 @@ var arAkahukuLink = {
       image.style.maxHeight = "250px";
       image.style.borderWidth = "0px";
       image.title = uri;
-      // HTTPレスポンスを直に監視してエラー情報を得る
-      var {AkahukuObserver}
-       = Components.utils.import ("resource://akahuku/observer.jsm", {});
-      var listener = function (details) {
-        if (!(200 <= details.statsuCode && details.statsuCode < 300)) {
-          // エラーの情報をノードに記録
-          image.setAttribute
-            ("__akahuku_preview_error_status", details.statusCode);
-          image.setAttribute
-            ("__akahuku_preview_error_status_text", details.statusLine);
-        }
-        else {
-          // リダイレクトの結果成功したら
-          image.removeAttribute ("__akahuku_preview_error_status");
-          image.removeAttribute ("__akahuku_preview_error_status_text");
-        }
-      };
-      var targetEvent = AkahukuObserver.webRequest.onHeadersReceived;
-      targetEvent.addListener (listener, {
-        urls: [uri],
-        _window: image.ownerDocument.defaultView},
-        ["responseHeaders"]);
+      image.referrerPolicy = 'no-referrer';
       image.addEventListener
         ("load",
          function () {
-          targetEvent.removeListener (listener);
           arAkahukuLink.onImageLoad (arguments [0]);
         }, false);
       image.addEventListener
         ("error",
          function () {
-          targetEvent.removeListener (listener);
           arAkahukuLink.onImageError (arguments [0]);
-        }, false);
-      targetDocument.defaultView.addEventListener
-        ("pagehide",
-         function () {
-          targetEvent.removeListener (listener);
         }, false);
     }
     else if (/\.(webm|mp4)(\?.*)?$/i.test (uri)) {
@@ -3084,14 +2560,16 @@ var arAkahukuLink = {
       image.controls = true;
       // サムネを確認してから再生するべきなので
       image.autoplay = true;//false;
+      srcByFetch = uri; // Use fetch because of no video.referrerPolicy
     }
     else if (uri.match (/\.(swf)(\?.*)?$/i)) {
       image = targetDocument.createElement ("embed");
       image.width = arAkahukuLink.autoLinkPreviewSWFWidth;
       image.height = arAkahukuLink.autoLinkPreviewSWFHeight;
+      srcByFetch = uri; // Use fetch because of no embed.referrerPolicy
       if (RegExp.$2) {
         var flashvars = RegExp.$2;
-        image.src
+        srcByFetch
           = Akahuku.protocolHandler.enAkahukuURI
             ("preview", uri.substring (0, uri.length - flashvars.length));
         image.setAttribute ("flashvars", flashvars);
@@ -3121,16 +2599,8 @@ var arAkahukuLink = {
       image = targetDocument.createElement ("iframe");
       image.width = Math.max (480, arAkahukuLink.autoLinkPreviewSWFWidth);
       image.height = Math.max (385, arAkahukuLink.autoLinkPreviewSWFHeight);
-      if (arAkahukuCompat.comparePlatformVersion ("49.*") > 0) {
-        image.src = youtubeUrl;
-        image.referrerPolicy = "no-referrer"; // Fx50+
-      }
-      else {
-        // refferrerPolicy 非対応バージョンでリファラを外す
-        // akahuku preview プロトコル経由
-        image.src
-          = Akahuku.protocolHandler.enAkahukuURI ("preview", youtubeUrl);
-      }
+      image.src = youtubeUrl;
+      image.referrerPolicy = "no-referrer";
       image.setAttribute ("frameborder", "0");
       /* (Gecko 10.0+) moz HTML5 Fullscreen */
       image.setAttribute ("mozallowfullscreen", "true");
@@ -3141,6 +2611,7 @@ var arAkahukuLink = {
       Akahuku.debug.warn ("Unknown preview uri pattern: "+uri);
       image = targetDocument.createElement ("img");
       image.className = "akahuku_preview";
+      image.referrerPolicy = "no-referrer";
       return image;
     }
         
@@ -3199,7 +2670,44 @@ var arAkahukuLink = {
         (src, targetDocument.location.href, browser);
     }
         
-    if (!image.src) {
+    if (srcByFetch) {
+      // Fetch (for no-referrer access)
+      let fetchInit = {
+        referrerPolicy: 'no-referrer',
+        credentials: 'same-origin',
+        redirect: 'follow',
+        cors: 'no-cors',
+      };
+      fetch(srcByFetch, fetchInit)
+        .then((res) => {
+          if (res.ok)
+            return res.blob();
+          let err = new Error('HTTPError')
+          err.name = 'HTTPError';
+          err.status = res.status;
+          err.statusText = res.statusText;
+          throw err;
+        })
+        .then((blob) => {
+          image.src = URL.createObjectURL(blob);
+          arAkahukuLink.onImageLoad({currentTarget: image});
+        })
+        .catch((e) => {
+          Akahuku.debug.exception(e);
+          let status = -1;
+          let statusText = e.message;
+          if (e.name == 'HTTPError') {
+            status = e.status;
+            statusText = e.statusText;
+          }
+          image.setAttribute
+            ("__akahuku_preview_error_status", status);
+          image.setAttribute
+            ("__akahuku_preview_error_status_text", statusText);
+          arAkahukuLink.onImageError({currentTarget: image});
+        });
+    }
+    else if (!image.src) {
       image.src = src;
     }
         
@@ -3210,36 +2718,7 @@ var arAkahukuLink = {
    * 要素に新たに設定するURLをNoscriptでブロックさせないようにする
    */
   makeURLSafeInNoscript : function (targetUrl, docUrl, browser) {
-    var w = browser.ownerDocument.defaultView;
-    // リロード不要フラグ(Noscript 3以降?)を指定
-    var reloadPolicy = -1;
-    try {
-      if (typeof w.noscriptOverlay.ns.RELOAD_NO !== "undefined") {
-        reloadPolicy = w.noscriptOverlay.ns.RELOAD_NO;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
-    // サイトのJSが無効なら一時的に有効にする
-    if (docUrl) {
-      var siteUrl = docUrl.replace (/^([^\/]+:\/\/\/?[^\/]+)\/.+$/, "$1");
-      try {
-        if (!w.noscriptOverlay.ns.isJSEnabled (siteUrl)) {
-          w.noscriptOverlay.safeAllow (siteUrl, true, true, reloadPolicy);
-          w.setTimeout (function (url) {
-            w.noscriptOverlay.safeAllow (url, false, false, reloadPolicy);
-          }, 3000, siteUrl);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
-    }
-    // 対象URLを許可(設定保存はさせない)
-    try {
-      w.noscriptOverlay.safeAllow (targetUrl, true, true, reloadPolicy);
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
+    Akahuku.debug.error('NotYetImplemented');
   },
     
   /**
@@ -3366,25 +2845,6 @@ var arAkahukuLink = {
     function forceCancelImageLoad (node) {
       var image = node.getElementsByTagName ("img") [0];
       if (!image) return;
-      try {
-        var content
-          = image.QueryInterface
-            (Components.interfaces.nsIImageLoadingContent);
-        var request
-          = content.getRequest
-          (Components.interfaces.nsIImageLoadingContent.PENDING_REQUEST);
-        if (request) {
-          request.cancel (Components.results.NS_BINDING_ABORTED);
-        }
-        request
-          = content.getRequest
-          (Components.interfaces.nsIImageLoadingContent.CURRENT_REQUEST);
-        if (request) {
-          request.cancel (Components.results.NS_BINDING_ABORTED);
-        }
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
       image.src = "about:blank"; //trigger load error
     }
         
@@ -3424,18 +2884,15 @@ var arAkahukuLink = {
       var uri = target.getAttribute ("dummyhref");
             
       if (uri.match (/\.(jpe?g|gif|png|bmp)$/i)) {
-        var anchor = targetDocument.createElement ("a");
-        arAkahukuLink.addAutoLinkEventHandlerCore (anchor);
+        var anchor
+           = arAkahukuLink.createAutolinkAnchor(
+             targetDocument, uri);
         if (Akahuku.protocolHandler.isAkahukuURI (uri)) {
           var p = Akahuku.protocolHandler.getAkahukuURIParam (uri);
           if (p.type == "p2p") {
             anchor.setAttribute ("__akahuku_p2p", "1");
           }
         }
-        anchor.className = "akahuku_generated_link";
-        anchor.setAttribute ("dummyhref",
-                             uri);
-        arAkahukuLink.updateAutoLinkVisitedCore (anchor);
         anchor.appendChild (image);
         node.appendChild (anchor);
       }
@@ -3562,15 +3019,6 @@ var arAkahukuLink = {
     var param = new arAkahukuLinkParam (targetDocument);
     Akahuku.getDocumentParam (targetDocument).link_param = param;
     
-    var now = new Date ().getTime ();
-    if (now > arAkahukuLink.lastCleanuped + 60 * 1000) {
-      for (var key in arAkahukuLink.targetLinks) {
-        if (now > arAkahukuLink.targetLinks [key] + 60 * 1000) {
-          delete arAkahukuLink.targetLinks [key];
-        }
-      }
-    }
-    
     if (info.isCatalog) {
       if (arAkahukuLink.enableHideTrolls
           && !arAkahukuLink.enableHideTrollsNoCat) {
@@ -3593,177 +3041,11 @@ var arAkahukuLink = {
     }
 
     if (arAkahukuLink.enableAutoLink) {
-      /* オートリンク用に中ボタンクリックのイベントを監視 */
       targetDocument.defaultView.addEventListener
         ("click", function () {
           arAkahukuLink.onAutolinkClick (arguments [0]);
         }, true);
-      targetDocument.defaultView.addEventListener
-        ("mousedown", function () {
-          arAkahukuLink.onAutolinkMouseDown (arguments [0]);
-        }, true);
     }
   },
-  
-  /**
-   * インターフェースの要求
-   *   nsISupports.QueryInterface
-   *
-   * @param  nsIIDRef iid
-   *         インターフェース ID
-   * @throws Components.results.NS_NOINTERFACE
-   * @return nsINavHistoryObserver
-   *         this
-   */
-  QueryInterface : function (iid) {
-    if (iid.equals (Components.interfaces.nsISupports)
-        || iid.equals (Components.interfaces.nsISupportsWeakReference)
-        || iid.equals (Components.interfaces.nsINavHistoryObserver)) {
-      return this;
-    }
-        
-    throw Components.results.NS_NOINTERFACE;
-  },
 
-  /**
-   * URI 削除前イベント
-   *   nsINavHistoryObserver.onBeforeDeleteURI
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  String aGUID
-   *         ページの GUID
-   */
-  onBeforeDeleteURI : function  (aURI, aGUID) {
-  },
-  
-  /**
-   * バッチ開始イベント
-   *   nsINavHistoryObserver.onBeginUpdateBatch
-   */
-  onBeginUpdateBatch : function () {
-  },
-  
-  /**
-   * 履歴クリアイベント
-   *   nsINavHistoryObserver.onBeforeDeleteURI
-   */
-  onClearHistory : function () {
-  },
-
-  /**
-   * URI 削除イベント
-   *   nsINavHistoryObserver.onDeleteURI
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  String aGUID
-   *         ページの GUID
-   */
-  onDeleteURI : function (aURI, aGUID) {
-  },
-
-  /**
-   * 履歴削除イベント
-   *   nsINavHistoryObserver.onBeforeDeleteURI
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  Number aVisitTime
-   *         最終訪問時間 [ms]
-   * @param  String aGUID
-   *         ページの GUID
-   */
-  onDeleteVisits : function (aURI, aVisitTime, aGUID) {
-  },
-
-  /**
-   * バッチ終了イベント
-   *   nsINavHistoryObserver.onEndUpdateBatch
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   */
-  onEndUpdateBatch : function () {
-  },
-
-  /**
-   * ページ情報変更イベント
-   *   nsINavHistoryObserver.onBeforeDeleteURI
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  Number aWhat
-   *         対象のキー
-   * @param  String aValue
-   *         対象の値
-   */
-  onPageChanged : function (aURI, aWhat, aValue) {
-  },
-
-  /**
-   * 履歴期限切れイベント
-   *   nsINavHistoryObserver.onPageExpired
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  Number aVisitTime
-   *         最終訪問時間 [ms]
-   * @param  Boolean aWholeEntry
-   *         全項目が削除中か
-   */
-  onPageExpired : function (aURI, aVisitTime, aWholeEntry) {
-  },
-
-  /**
-   * タイトル変更イベント
-   *   nsINavHistoryObserver.onBeforeDeleteURI
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  String aPageTitle
-   *         ページタイトル
-   */
-  onTitleChanged : function (aURI, aPageTitle) {
-  },
-
-  /**
-   * 履歴追加イベント
-   *   nsINavHistoryObserver.onVisit
-   *
-   * @param  nsIURI aURI
-   *         対象の URI
-   * @param  Number aVisitID
-   *         履歴の項目の ID
-   * @param  Number aTime
-   *         訪問時間 [ms]
-   * @param  Number aSessionID,
-   *         セッション ID
-   * @param  Number aReferringID,
-   *         遷移元の履歴の項目の ID
-   *         なければ 0
-   * @param  Number aTransitionType
-   *         遷移方法 ?
-   * @param  String aGUID
-   *         ページの GUID
-   */
-  onVisit : function (aURI, aVisitID, aTime, aSessionID, aReferringID,
-                      aTransitionType, aGUID) {
-    var spec = aURI.spec;
-    
-    if (!(spec in arAkahukuLink.targetLinks)) {
-      return;
-    }
-    
-    var now = new Date ().getTime ();
-    
-    if (now > arAkahukuLink.targetLinks [spec] + 30 * 1000) {
-      return;
-    }
-    
-    for (var i = 0; i < Akahuku.documentParams.length; i ++) {
-      var targetDocument = Akahuku.documentParams [i].targetDocument;
-      arAkahukuLink.updateAutoLinkVisited (targetDocument, targetDocument);
-    }
-  }
 };
