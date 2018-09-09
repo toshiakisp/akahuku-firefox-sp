@@ -1,0 +1,21 @@
+{
+  "extensionName": {
+    "message": "Akahuku extended",
+    "description": "Name of the extension."
+  },
+
+  "extensionDescription": {
+    "message": "Improve Futaba (2chan.net) browsing.",
+    "description": "Description of the extension."
+  },
+
+  "extensionShortName": {
+    "message": "Akahuku",
+    "description": "Short name of the extension."
+  },
+
+  "browserActionTitle": {
+    "message": "Preference of Akahuku",
+    "description": "tooltip for browser_action"
+  }
+}
