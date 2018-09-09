@@ -1,0 +1,17 @@
+{
+  "addons": {
+    "akahuku.fx.sp@toshiakisp.github.io": {
+      "updates": [
+        { "version": "__EXTENSION_VERSION__",
+          "update_link": "https://toshiakisp.github.io/akahuku-firefox-sp/akahuku-ext-__EXTENSION_VERSION__.xpi",
+          "update_info_url": "https://toshiakisp.github.io/akahuku-firefox-sp/updateinfo-ext.html",
+          "applications": {
+            "gecko": {
+              "strict_min_version": "60.0a1"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

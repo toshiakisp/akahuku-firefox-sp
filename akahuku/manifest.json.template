@@ -1,0 +1,81 @@
+{
+  "manifest_version": 2,
+  "version": "__EXTENSION_VERSION__",
+  "default_locale": "ja",
+  "name": "__MSG_extensionName__",
+  "short_name": "__MSG_extensionShortName__",
+  "description": "__MSG_extensionDescription__",
+  "author": "toshiaki.sp",
+  "homepage_url": "https://toshiakisp.github.io/akahuku-firefox-sp/",
+
+  "applications": {
+    "gecko": {
+      "id": "akahuku.fx.sp@toshiakisp.github.io",
+      "strict_min_version": "__FX_MIN_VERSION__",
+      "update_url": "https://toshiakisp.github.io/akahuku-firefox-sp/update.json"
+    }
+  },
+
+  "icons": {
+    "32": "content/images/icon.png",
+    "48": "content/images/icon_48.png",
+    "96": "content/images/icon_96.png"
+  },
+
+  "permissions": [
+    "storage",
+    "webRequest",
+    "history",
+    "clipboardRead",
+    "clipboardWrite",
+    "menus",
+    "tabs",
+    "activeTab",
+    "*://*.2chan.net/*",
+    "<all_urls>"
+  ],
+
+  "optional_permissions": [
+  ],
+
+  "background": {
+    "scripts": [
+      "background/clipboard-polyfill.js",
+      "background/akahuku-central.js",
+      "background/observer-service.js",
+      "background/history-service.js",
+      "background/pref.js",
+      "background/pref_default.js",
+      "background/menus/arAkahukuQuote.js",
+      "background/menus/arAkahukuJPEG.js",
+      "background/menus/arAkahukuLink.js",
+      "background/menus/arAkahukuImage.js",
+      "background/menus/arAkahukuP2P.js",
+      "background/menus/arAkahukuBrowserAction.js",
+      "background/context-menu.js",
+      "background/akahuku-content-loader.js",
+      "background/tabs.js",
+      "background/browser-action.js"
+    ]
+  },
+
+  "web_accessible_resources": [
+    "content/images/*"
+  ],
+
+  "options_ui": {
+    "open_in_tab": true,
+    "page": "options/options.html"
+  },
+
+  "browser_action": {
+    "browser_style": true,
+    "default_icon": {
+      "32": "content/images/icon.png",
+      "48": "content/images/icon_48.png",
+      "96": "content/images/icon_96.png"
+    },
+    "default_title": "__MSG_browserActionTitle__"
+  }
+}
+
