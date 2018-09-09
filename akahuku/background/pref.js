@@ -30,7 +30,10 @@ var Prefs = {
       if (keys === null) {
         keys = this._defaultData.keys();
       }
-      for (var key of keys) {
+      else {
+        keys = Object.getOwnPropertyNames(keys);
+      }
+      for (let key of keys) {
         ret[key] = this.getItem(key);
       }
     }
@@ -42,12 +45,75 @@ var Prefs = {
 
   set: function (keys) {
     var ret = {};
-    for (var prop in keys) {
+    var updated = false;
+    var updates = {};
+    for (let prop in keys) {
       ret[prop] = {
         oldValue: this.getItem(prop),
         newValue: keys[prop],
       };
       this.setItem(prop, keys[prop]);
+      if (!updated && ret[prop].oldValue != ret[prop].newValue) {
+        updated = true;
+        updates[prop] = keys[prop];
+      }
+    }
+    if (updated) {
+      Prefs.onChanged.emit(updates);
+      for (let port of this._observingPorts) {
+        try {
+          port.postMessage(updates)
+        }
+        catch (e) {
+        }
+      }
+    }
+    return ret;
+  },
+
+  getDefault: function (keys) {
+    var ret = {};
+    if (typeof keys === "string") {
+      if (keys) {
+        ret [keys] = this._defaultData.get(keys);
+      }
+    }
+    else if (typeof keys == "object") {
+      if (keys === null) {
+        keys = this._defaultData.keys();
+      }
+      else {
+        keys = Object.getOwnPropertyNames(keys);
+      }
+      for (let key of keys) {
+        ret[key] = this._defaultData.get(key);
+      }
+    }
+    else {
+      throw TypeError("keys must be a null, string, array of strings, or objects")
+    }
+    return ret;
+  },
+
+  getUser: function (keys) {
+    var ret = {};
+    if (typeof keys === "string") {
+      if (keys && this._userData.has(keys)) {
+        ret [keys] = this._userData.get(keys);
+      }
+    }
+    else if (typeof keys == "object") {
+      if (keys === null) {
+        keys = this._userData.keys();
+      }
+      for (var key of keys) {
+        if (this._userData.has(key)) {
+          ret[key] = this._userData.get(key);
+        }
+      }
+    }
+    else {
+      throw TypeError("keys must be a null, string, array of strings, or objects")
     }
     return ret;
   },
@@ -91,26 +157,76 @@ var Prefs = {
   hasItem: function (name) {
     return this._defaultData.has(name) || this._userData.has(name);
   },
+
+  onChanged: {
+    _listeners: [],
+    addListener: function (listener) {
+      if (Prefs.onChanged._listeners.indexOf(listener) < 0) {
+        Prefs.onChanged._listeners.push(listener);
+      }
+    },
+    removeListener: function (listener) {
+      let i = Prefs.onChanged._listeners.indexOf(listener);
+      if (i >= 0) {
+        Prefs.onChanged._listeners.splice(i, 1);
+      }
+    },
+    emit: function (obj) {
+      for (let func of this._listeners) {
+        try {
+          func.call(null, obj);
+        }
+        catch (e) {
+          console.error(String(e));
+        }
+      }
+    },
+  },
+
+  // Observing connection
+  _observingPorts: [],
+
+  onConnect: function (port) {
+    if (port.name == 'pref.js/observe') {
+      this._observingPorts.push(port);
+      port.onDisconnect.addListener((p) => {
+        let i = this._observingPorts.indexOf(port);
+        this._observingPorts.splice(i, 1);
+      });
+      // For initial handshake
+      port.onMessage.addListener((m) => {
+        port.postMessage({});
+      });
+    }
+  },
 };
 
 
 /**
  * Message handler from content scripts to this background script
  */
-function handleMessage(message, sender, sendResponse) {
-  if ("target" in message && message.target === "pref.js") {
-    var args = message.args;
-    switch (message.command) {
+browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if ("target" in msg && msg.target === "pref.js") {
+    switch (msg.command) {
       case "get":
-        sendResponse (Prefs.get (args [0]));
+        sendResponse(Prefs.get (msg.args [0]));
         break;
       case "set":
-        sendResponse (Prefs.set (args [0]));
+        sendResponse(Prefs.set (msg.args [0]));
+        break;
+      case "getDefault":
+        sendResponse(Prefs.getDefault (msg.args [0]));
+        break;
+      case "getUser":
+        sendResponse(Prefs.getUser (msg.args [0]));
         break;
     }
   }
-}
-browser.runtime.onMessage.addListener(handleMessage);
+});
+
+browser.runtime.onConnect.addListener((port) => {
+  Prefs.onConnect(port);
+});
 
 /**
  * declare pref entry with a default value
