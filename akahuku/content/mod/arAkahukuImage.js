@@ -252,19 +252,6 @@ var arAkahukuImage = {
   dettachFromWindow : function (window) {
   },
 
-  initContextMenus : function (contextMenus) {
-    contextMenus.create ({
-      id: "akahuku-saveimage-popup",
-      contexts: ["_xul_mainpopupset"],
-      title: "akahuku-saveimage-popup",
-      _onshowing: arAkahukuImage.setPopup,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator9",
-      type: "separator",
-    });
-  },
-    
   /**
    * ドキュメントのスタイルを設定する
    *
@@ -445,97 +432,7 @@ var arAkahukuImage = {
     }
   },
     
-  /**
-   * メニューが開かれるイベント
-   * メニューの項目の表示／非表示を設定する
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  setContextMenu : function (event) {
-    var popup = event.target;
-    var document = event.currentTarget.ownerDocument;
-    var target = arAkahukuUI.contextMenuContentTarget;
-    var gContextMenu = document.defaultView.gContextMenu;
-    var browser = gContextMenu.browser;
-    if (!browser) {
-      var contentWindow = target.ownerDocument.defaultView;
-      browser = arAkahukuWindow.getBrowserForWindow (contentWindow);
-    }
-        
-    var label, menuitem;
-        
-    menuitem = popup.firstChild;
-    while (menuitem) {
-      if ("className" in menuitem
-          && menuitem.className == "__akahuku_saveimage") {
-        var tmp = menuitem;
-        menuitem = menuitem.nextSibling;
-        popup.removeChild (tmp);
-      }
-      else {
-        menuitem = menuitem.nextSibling;
-      }
-    }
-        
-    var sep;
-    sep
-    = document
-    .getElementById ("akahuku-menuitem-content-separator9");
-    if (!sep) {
-      return;
-    }
-    sep.hidden = true;
-        
-    if (!arAkahukuImage.enableLinkMenu) {
-      return;
-    }
-
-    var c = arAkahukuImage.getContextMenuContentData (target);
-    if (!c.isSaveImageLink) {
-      return;
-    }
-        
-    sep.hidden = false;
-        
-    for (var i = arAkahukuImage.baseList.length - 1; i >= 0; i --) {
-      if (arAkahukuImage.baseList [i].name) {
-        label = arAkahukuImage.baseList [i].name;
-      }
-      else {
-        label = arAkahukuImage.baseList [i].dir;
-      }
-      menuitem = document.createElement ("menuitem");
-      if (arAkahukuImage.baseList [i].key) {
-        menuitem.setAttribute ("accesskey",
-                               arAkahukuImage.baseList [i].key);
-        if (!Akahuku.isRunningOnWindows) {
-          label += " (" + arAkahukuImage.baseList [i].key + ")";
-        }
-      }
-      menuitem.setAttribute ("label", label);
-      menuitem.className = "__akahuku_saveimage";
-      menuitem.addEventListener ("command", (function (i) {
-        return function () {
-          arAkahukuImage.selectSaveImageDirFromXUL (i, false, browser);
-        }
-      })(i), false);
-      popup.insertBefore (menuitem, sep.nextSibling);
-    }
-  },
-
-  lastContextMenuContentData : null,
-
-  setContextMenuContentData : function (data) {
-    arAkahukuImage.lastContextMenuContentData = data;
-  },
-
   getContextMenuContentData : function (targetNode) {
-    if (arAkahukuImage.lastContextMenuContentData) {
-      // 事前にセットされていたらそれを使う (e10s)
-      return arAkahukuImage.lastContextMenuContentData;
-    }
-
     var data = {
       isSaveImageLink : false,
     };

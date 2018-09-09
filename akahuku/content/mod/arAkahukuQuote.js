@@ -109,297 +109,21 @@ var arAkahukuQuote = {
     }
   },
 
-  initContextMenus : function (contextMenus) {
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator1",
-      type: "separator",
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-quote",
-      type: "normal",
-      // 引用
-      title: "\u5F15\u7528",
-      onclick: arAkahukuQuote.onClickQuoteWithMark,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-mail",
-      type: "normal",
-      // メール欄へ
-      title: "\u30E1\u30FC\u30EB\u6B04\u3078",
-      onclick: arAkahukuQuote.onClickQuoteToMailBox,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-name",
-      type: "normal",
-      // 名前欄へ
-      title: "\u540D\u524D\u6B04\u3078",
-      onclick: arAkahukuQuote.onClickQuoteToNameBox,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-comment",
-      type: "normal",
-      // コメントへ
-      title: "\u30B3\u30E1\u30F3\u30C8\u3078",
-      onclick: arAkahukuQuote.onClickQuoteAsComment,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator2",
-      type: "separator",
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-quote-copy",
-      type: "normal",
-      // 引用付きコピー
-      title: "\u5F15\u7528\u4ED8\u304D\u30B3\u30D4\u30FC",
-      onclick: arAkahukuQuote.onClickCopyToClipboard,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator3",
-      type: "separator",
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-quote-cont",
-      type: "normal",
-      // 引用 - 連続
-      title: "\u5F15\u7528 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteWithMarkCont,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-mail-cont",
-      type: "normal",
-      // メール欄へ - 連続
-      title: "\u30E1\u30FC\u30EB\u6B04\u3078 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteToMailBoxCont,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-name-cont",
-      type: "normal",
-      // 名前欄へ - 連続
-      title: "\u540D\u524D\u6B04\u3078 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteToNameBoxCont,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-comment-cont",
-      type: "normal",
-      // コメントへ - 連続
-      title: "\u30B3\u30E1\u30F3\u30C8\u3078 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteAsCommentCont,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator4",
-      type: "separator",
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-google-image",
-      type: "normal",
-      // イメぐぐる
-      title: "\u30A4\u30E1\u3050\u3050\u308B",
-      onclick: arAkahukuQuote.onClickGoogleImage,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-wikipedia",
-      type: "normal",
-      // ウィキペドる
-      title: "\u30A6\u30A3\u30AD\u30DA\u30C9\u308B",
-      onclick: arAkahukuQuote.onClickWikipedia,
-    });
+  getContextMenuContentData : function (targetNode) {
+    var data = {
+      isAkahukuApplied : false,
+    };
+    if (!targetNode) {
+      return data;
+    }
+    var targetDocument = targetNode.ownerDocument;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (param) {
+      data.isAkahukuApplied = true;
+    }
+    return data;
   },
-    
-  /**
-   * メニューが開かれるイベント
-   * メニューの項目の表示／非表示を設定する
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  setContextMenu : function (event) {
-    var menuitem;
-    var document = event.currentTarget.ownerDocument;
-    var gContextMenu = document.defaultView.gContextMenu;
-        
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-separator1");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableSeparator
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-quote");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableQuote
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-mail");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableMail
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-name");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableName
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-comment");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableComment
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-        
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-separator2");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableCopy
-        || !arAkahukuQuote.enableSeparator
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-quote-copy");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableCopy
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-        
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-separator3");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || arAkahukuPostForm.enableFloat
-        || !arAkahukuQuote.enableSeparator
-        || !arAkahukuQuote.enableCont
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-quote-cont");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || arAkahukuPostForm.enableFloat
-        || !arAkahukuQuote.enableQuote
-        || !arAkahukuQuote.enableCont
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-mail-cont");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || arAkahukuPostForm.enableFloat
-        || !arAkahukuQuote.enableMail
-        || !arAkahukuQuote.enableCont
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-name-cont");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || arAkahukuPostForm.enableFloat
-        || !arAkahukuQuote.enableName
-        || !arAkahukuQuote.enableCont
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-comment-cont");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || arAkahukuPostForm.enableFloat
-        || !arAkahukuQuote.enableComment
-        || !arAkahukuQuote.enableCont
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-        
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-separator4");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || (!arAkahukuQuote.enableGoogleImage
-            && !arAkahukuQuote.enableWikipedia)
-        || !arAkahukuQuote.enableSeparator
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-google-image");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableGoogleImage
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-wikipedia");
-    if (menuitem) {
-      menuitem.hidden
-        = !gContextMenu.isTextSelected
-        || !arAkahukuQuote.enableWikipedia
-        || !arAkahukuQuote.enableMenu
-        || !arAkahukuQuote.enable
-        || !Akahuku.enableAll;
-    }
-  },
-    
+
   /**
    * 引用のプレフィックスを付ける
    *
@@ -749,22 +473,6 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
     }
   },
-  onClickQuote : function (event, addQuotePrefix, focusTextArea) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuQuote.quote (addQuotePrefix, focusTextArea, target);
-  },
-  onClickQuoteWithMark : function (event) {
-    arAkahukuQuote.onClickQuote (event, true, true);
-  },
-  onClickQuoteAsComment : function (event) {
-    arAkahukuQuote.onClickQuote (event, false, true);
-  },
-  onClickQuoteWithMarkCont : function (event) {
-    arAkahukuQuote.onClickQuote (event, true, false);
-  },
-  onClickQuoteAsCommentCont : function (event) {
-    arAkahukuQuote.onClickQuote (event, false, false);
-  },
     
   /**
    * 選択文字列にプレフィックスを追加してコピーする
@@ -781,10 +489,6 @@ var arAkahukuQuote = {
     }
     catch (e) { Akahuku.debug.exception (e);
     }
-  },
-  onClickCopyToClipboard : function (event) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuQuote.copyToClipboard (target);
   },
     
   /**
@@ -815,16 +519,6 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
     }
   },
-  onClickQuoteToMailBoxCore : function (event, focusMailBox) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuQuote.quoteToMailBox (focusMailBox, target);
-  },
-  onClickQuoteToMailBox : function (event) {
-    arAkahukuQuote.onClickQuoteToMailBoxCore (event, true);
-  },
-  onClickQuoteToMailBoxCont : function (event) {
-    arAkahukuQuote.onClickQuoteToMailBoxCore (event, false);
-  },
     
   /**
    * 選択文字列を名前欄に引用する
@@ -854,16 +548,6 @@ var arAkahukuQuote = {
       arAkahukuPostForm.focus (targetDocument, target);
     }
   },
-  onClickQuoteToNameBoxCore : function (event, focusNameBox) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuQuote.quoteToNameBox (focusNameBox, target);
-  },
-  onClickQuoteToNameBox : function (event) {
-    arAkahukuQuote.onClickQuoteToNameBoxCore (event, true);
-  },
-  onClickQuoteToNameBoxCont : function (event) {
-    arAkahukuQuote.onClickQuoteToNameBoxCore (event, false);
-  },
     
   /**
    * 選択文字列を Google Image で検索する
@@ -879,12 +563,7 @@ var arAkahukuQuote = {
     = "http://www.google.com/images?hl=ja&q="
     + encodeURIComponent (s);
 
-    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
-    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
-  },
-  onClickGoogleImage : function (event) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuQuote.googleImage (target);
+    Tabs.openNewTab(href, arAkahukuQuote.enableFocus);
   },
     
   /**
@@ -901,22 +580,9 @@ var arAkahukuQuote = {
     = "http://ja.wikipedia.org/wiki/%E7%89%B9%E5%88%A5:Search?search="
     + encodeURIComponent (s) + "&go=%E8%A1%A8%E7%A4%BA";
         
-    var browser = arAkahukuWindow.getBrowserForWindow (targetWindow);
-    arAkahukuQuote.searchInNewTabXUL (href, arAkahukuQuote.enableFocus, browser);
-  },
-  onClickWikipedia : function (event) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuQuote.wikipedia (target);
+    Tabs.openNewTab(href, arAkahukuQuote.enableFocus);
   },
 
-  searchInNewTabXUL : function (href, focus, browser) {
-    var tabbrowser = browser.ownerDocument.getElementById ("content");
-    var newTab = tabbrowser.addTab (href, {relatedToCurrent : true});
-    if (focus) {
-      tabbrowser.selectedTab = newTab;
-    }
-  },
-    
   /**
    * マウスをクリックしたイベント
    * メッセージの番号をクリックしたら引用する

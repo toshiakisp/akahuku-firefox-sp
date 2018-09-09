@@ -10,27 +10,6 @@ var arAkahukuJPEG = {
   enableThumbnailError : false,  /* Boolean  見つからなかった場合に
                                   *   エラーを表示する */
 
-  initContextMenus : function (contextMenus) {
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator5",
-      type: "separator",
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-jpeg-thumbnail",
-      type: "normal",
-      // サムネを見る
-      title: "\u30B5\u30E0\u30CD\u3092\u898B\u308B",
-      onclick: arAkahukuJPEG.onClickOpenThumbnail,
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-jpeg-thumbnail-close",
-      type: "normal",
-      // サムネを閉じる
-      title: "\u30B5\u30E0\u30CD\u3092\u9589\u3058\u308B",
-      onclick: arAkahukuJPEG.onClickCloseThumbnail,
-    });
-  },
-    
   /**
    * 設定を読み込む
    */
@@ -50,53 +29,7 @@ var arAkahukuJPEG = {
     }
   },
     
-  /**
-   * メニューが開かれるイベント
-   * メニューの項目の表示／非表示を設定する
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  setContextMenu : function (event) {
-    var menuitem;
-    var document = event.currentTarget.ownerDocument;
-            
-    var target = arAkahukuUI.contextMenuContentTarget;
-    var c = arAkahukuJPEG.getContextMenuContentData (target);
-
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-separator5");
-    if (menuitem) {
-      menuitem.hidden = !c.isJPEG && !c.isThumbnailOpened;
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-jpeg-thumbnail");
-    if (menuitem) {
-      menuitem.hidden = !c.isJPEG || c.isThumbnailOpened;
-    }
-    menuitem
-    = document
-    .getElementById
-    ("akahuku-menuitem-content-jpeg-thumbnail-close");
-    if (menuitem) {
-      menuitem.hidden = !c.isThumbnailOpened;
-    }
-  },
-
-  lastContextMenuContentData : null,
-
-  setContextMenuContentData : function (data) {
-    arAkahukuJPEG.lastContextMenuContentData = data;
-  },
-
   getContextMenuContentData : function (targetNode) {
-    if (arAkahukuJPEG.lastContextMenuContentData) {
-      // 事前にセットされていたらそれを使う (e10s)
-      return arAkahukuJPEG.lastContextMenuContentData;
-    }
-
     var data = {
       isJPEG : false,
       isThumbnailOpened : false,
@@ -157,10 +90,6 @@ var arAkahukuJPEG = {
       target.parentNode.appendChild (node);
     }
   },
-  onClickOpenThumbnail : function (event) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuJPEG.openThumbnail (target);
-  },
     
   /**
    * JPEG のサムネを閉じる
@@ -181,10 +110,6 @@ var arAkahukuJPEG = {
       target.nextSibling.parentNode.removeChild (target.nextSibling);
     }
     target.removeAttribute ("__akahuku_jpeg_thumbnail_opened");
-  },
-  onClickCloseThumbnail : function (event) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuJPEG.closeThumbnail (target);
   },
     
   /**

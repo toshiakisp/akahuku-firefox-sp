@@ -70,20 +70,6 @@ var arAkahukuP2P = {
     }
   },
 
-  initContextMenus : function (contextMenus) {
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-separator8",
-      type: "separator",
-    });
-    contextMenus.create ({
-      id: "akahuku-menuitem-content-p2p-delete",
-      type: "normal",
-      // この画像の P2P キャッシュを削除
-      title: "\u3053\u306E\u753B\u50CF\u306E P2P \u30AD\u30E3\u30C3\u30B7\u30E5\u3092\u524A\u9664",
-      onclick: arAkahukuP2P.onClickDeleteCache,
-    });
-  },
-    
   /**
    * キーが押されたイベント
    *
@@ -402,63 +388,7 @@ var arAkahukuP2P = {
     }, 100, context, src);
   },
     
-  /**
-   * メニューが開かれるイベント
-   * メニューの項目の表示／非表示を設定する
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  setContextMenu : function (event) {
-    var menuitem;
-    var document = event.currentTarget.ownerDocument;
-            
-    var target = arAkahukuUI.contextMenuContentTarget;
-    var c = arAkahukuP2P.getContextMenuContentData (target);
-        
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-separator8");
-    if (menuitem) {
-      menuitem.hidden = !(c.isP2PImage && arAkahukuP2P.enable);
-    }
-    menuitem
-    = document
-    .getElementById ("akahuku-menuitem-content-p2p-delete");
-    if (menuitem) {
-      menuitem.hidden = !(c.isP2PImage && arAkahukuP2P.enable);
-    }
-  },
 
-  lastContextMenuContentData : null,
-
-  setContextMenuContentData : function (data) {
-    arAkahukuP2P.lastContextMenuContentData = data;
-  },
-
-  getContextMenuContentData : function (targetNode) {
-    if (arAkahukuP2P.lastContextMenuContentData) {
-      // 事前にセットされていたらそれを使う (e10s)
-      return arAkahukuP2P.lastContextMenuContentData;
-    }
-
-    var data = {
-      isP2P : false,
-    };
-
-    if (!targetNode) {
-      return data;
-    }
-
-    if (targetNode.nodeName.toLowerCase () == "img") {
-      if (/^akahuku(-safe)?:\/\/[^\/]+\/p2p\//.test (targetNode.src)){
-        data.isP2P = true;
-      }
-    }
-
-    return data;
-  },
-  
   /**
    * キャッシュファイルを取得する
    *
@@ -496,10 +426,6 @@ var arAkahukuP2P = {
     }
 
     arAkahukuP2P.service.utils.deleteCache (src);
-  },
-  onClickDeleteCache : function (event) {
-    var target = arAkahukuUI.contextMenuContentTarget;
-    arAkahukuP2P.deleteCache (target);
   },
     
   /**
