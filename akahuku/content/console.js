@@ -1,118 +1,88 @@
-
-/* global Components, Symbol */
-
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
-
-var EXPORTED_SYMBOLS = [
-  "AkahukuConsole",
-];
-
 /**
- * デバッグ用
+ * For debug
  */
-function AkahukuConsole (optPrefix) {
+'strict mode';
+
+function AkahukuConsole(optPrefix) {
   this.enabled = true;
   this.prefix = optPrefix || "Akahuku";
   this._prefixSep = ": ";
-  this._cs
-    = Cc ["@mozilla.org/consoleservice;1"]
-    .getService (Ci.nsIConsoleService);
 };
 AkahukuConsole.prototype = {
 
-  log : function () {
+  log: function() {
     if (!this.enabled) return;
-    this._cs.logStringMessage (this._format (arguments));
+    console.log(this._format(arguments));
   },
 
-  info : function () {
+  info: function() {
     if (!this.enabled) return;
-    var stack = Components.stack.caller;
-    this._logMessage (arguments, stack, Ci.nsIScriptError.infoFlag);
+    console.info(this._format(arguments));
   },
 
-  warn : function () {
+  warn: function() {
     if (!this.enabled) return;
-    var stack = Components.stack.caller;
-    this._logMessage (arguments, stack, Ci.nsIScriptError.warningFlag);
+    console.warn(this._format(arguments));
   },
 
-  error : function () {
+  error: function() {
     if (!this.enabled) return;
-    var stack = Components.stack.caller;
-    this._logMessage (arguments, stack, Ci.nsIScriptError.errorFlag);
+    console.error(this._format(arguments));
   },
 
-  exception : function (error) {
+  exception: function(error) {
     if (!this.enabled) return;
-    if (typeof error !== "object") {
-      error = new Error (String (error),
-        Components.stack.caller.filename,
-        Components.stack.caller.lineNumber);
-    }
-    var message = "exception: " + error.message;
-    for (var frame = Components.stack.caller;
-        frame && frame.filename; frame = frame.caller) {
-      message += "\n    " + frame.toString ();
-    }
-    // この関数で補足される場合は例外を処理しているので警告にとどめる
-    this._logMessage ([message], error, Ci.nsIScriptError.warningFlag);
-  },
-
-  _logMessage : function (message, stack, flag)
-  {
-    var filename = null;
-    if (stack) {
-      if ("filename" in stack) {
-        filename = stack.filename;
+    var err_str = String(error);
+    var str = this.prefix + this._prefixSep;
+    str += 'Exception: ' + err_str;
+    if ('stack' in error && typeof(error.stack) === 'string') {
+      let traces = error.stack.split(/\r\n|\r|\n/);
+      if (traces.length > 0) {
+        let ext_match = traces[0].match(/@moz-extension:\/\/[^\/]+/);
+        let n = 0;
+        const maxTraceLines = 5;
+        traces.forEach((t, i) => {
+          if (!t) return;
+          n += 1;
+          if (n == maxTraceLines
+            && i < traces.length-1) {
+            str += '\n\t...';
+          }
+          else if (n <= maxTraceLines) {
+            str += '\n\t';
+            if (ext_match) {
+              str += t.replace(ext_match[0],'\t');
+            }
+            else {
+              str += t.replace(/@/,'\t');
+            }
+          }
+        });
       }
-      else if ("fileName" in stack) { // Error
-        filename = stack.fileName;
-      }
     }
-    var lineNumber = null;
-    if (stack && "lineNumber" in stack) {
-       lineNumber = stack.lineNumber;
-    }
-    var columnNumber = null;
-    if ("columnNumber" in stack) { // Error
-       columnNumber = stack.columnNumber;
-    }
-    var scriptError
-      = Cc ["@mozilla.org/scripterror;1"]
-      .createInstance (Ci.nsIScriptError);
-    scriptError.init
-      (this._format (message),
-       filename, null, lineNumber, columnNumber, flag, null);
-    this._cs.logMessage (scriptError);
+    console.warn(str);
   },
 
-  _format : function (messages)
+  _format: function(messages)
   {
     var str = this.prefix + this._prefixSep;
-    for (var i = 0; i < messages.length; i++) {
-      str += this._toString (messages [i]);
+    for (let i = 0; i < messages.length; i++) {
+      str += this._toString(messages [i]);
       if (i < messages.length-1) {
         str += " ";
       }
     }
     return str;
   },
-  _toString : function (message)
+  _toString: function(message)
   {
     var str = "";
     if (message !== null && typeof message === "object") {
       if ("nodeName" in message) { // Node
-        str += this._NodeToString (message);
+        str += this._NodeToString(message);
       }
       else if ("cancelable" in message) { // Event
-        str += this._DOMEventToString (message);
-      }
-      else if (message instanceof Ci.nsISupports) {
-        str += String (message);
+        str += this._DOMEventToString(message);
       }
       else if (typeof JSON === "object") {
         str += "[" + typeof message;
@@ -124,18 +94,18 @@ AkahukuConsole.prototype = {
         }
         str += "]";
         try {
-          str += JSON.stringify (message);
+          str += JSON.stringify(message);
         }
         catch (e) {
         }
       }
       else {
-        str += String (message);
+        str += String(message);
       }
     }
     else {
       try {
-        str += String (message);
+        str += String(message);
       }
       catch (e) {
         str += "[" + typeof message + "]";
@@ -144,28 +114,28 @@ AkahukuConsole.prototype = {
     return str;
   },
 
-  tic : function () {
-    var start = new Date ();
-    start.toc = function () {
-      var now = new Date ();
-      var ms = now.getTime () - this.getTime ();
-      this.setTime (now.getTime ());
+  tic: function() {
+    var start = new Date();
+    start.toc = function(){
+      let now = new Date();
+      let ms = now.getTime() - this.getTime();
+      this.setTime(now.getTime());
       return ms;
     };
     return start;
   },
 
-  _DOMEventToString : function (event)
+  _DOMEventToString: function(event)
   {
     var str = "Event(" + event.type;
-    str += " target=" + this._toString (event.target);
+    str += " target=" + this._toString(event.target);
     if (event.originalTarget
         && event.target !== event.originalTarget) {
-      str += " originalTarget=" + this._toString (event.originalTarget);
+      str += " originalTarget=" + this._toString(event.originalTarget);
     }
     if (event.explicitOriginalTarget
         && event.target !== event.explicitOriginalTarget) {
-      str += " explicitoriginalTarget=" + this._toString (event.explicitOriginalTarget);
+      str += " explicitoriginalTarget=" + this._toString(event.explicitOriginalTarget);
     }
     str += " bubbles=" + event.bubbles;
     str += " cancelable=" + event.cancelable;
@@ -173,30 +143,22 @@ AkahukuConsole.prototype = {
     return str;
   },
 
-  _NodeToString : function (node)
+  _NodeToString: function(node)
   {
-    var str = String (node.nodeName);
+    var str = String(node.nodeName);
     var cur = node;
     while (cur.parentNode) {
       str = cur.parentNode.nodeName + ">" + str;
       cur = cur.parentNode;
     }
     if (node.nodeType == node.DOCUMENT_NODE) {
-      str += "(" + String (node.location) + ")";
+      str += "(" + String(node.location) + ")";
     }
     return str;
   },
 
-  nsresultToString : function (code) {
-    var codeInHex = "(0x" + code.toString (16) + ")";
-    var codeName = "";
-    for (var name in Cr) {
-      if (code === Cr [name]) {
-        codeName = name + " ";
-        break;
-      }
-    }
-    return codeName + codeInHex;
+  nsresultToString: function(code) {
+    return "(0x" + code.toString(16) + ")";
   },
 };
 
