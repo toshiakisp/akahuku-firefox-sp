@@ -70,7 +70,25 @@ AkahukuFileUtil.getLastModified  = function (file) {
  * @return Promise for File that exists (readable)
  */
 AkahukuFileUtil.exists = async function (file) {
-  return new Promise.reject(new Error('NotImplemented'));
+  return new Promise((resolve, reject) => {
+    let reader =new FileReader();
+    let determined = false;
+    reader.onprogress = (event) => {
+      if (event.loaded > 0) { // exists (readable)
+        determined = true;
+        resolve(file);
+        reader.abort();
+      }
+    };
+    reader.onabort = (event) => {
+      if (!determined)
+        reject(new Error('Aborted reading a file'));
+    };
+    reader.onerror = (event) => {
+      reject(new Error('Error occurs in reading a file'));
+    };
+    reader.readAsArrayBuffer(file);
+  });
 };
 
 
