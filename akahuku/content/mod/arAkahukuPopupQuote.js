@@ -1,8 +1,4 @@
 
-/* global Akahuku, arAkahukuConfig, arAkahukuConverter,
- *   arAkahukuDOM, arAkahukuLink, arAkahukuThread
- */
-
 /**
  * 引用元のデータ
  *

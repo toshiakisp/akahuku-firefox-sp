@@ -1,17 +1,4 @@
 
-/* global
- *   arAkahukuLocationInfo, arAkahukuDocumentParam,
- *   arAkahukuUtil, arAkahukuDOM,
- *   arAkahukuFile, arAkahukuWheel, arAkahukuDelBanner,
- *   arAkahukuSound, arAkahukuLink, arAkahukuCatalog, arAkahukuTitle,
- *   arAkahukuBoard, arAkahukuConverter, arAkahukuP2P, arAkahukuConfig,
- *   arAkahukuStyle, arAkahukuSidebar,
- *   arAkahukuQuote, arAkahukuJPEG, arAkahukuImage, arAkahukuTab,
- *   arAkahukuUI, arAkahukuBloomer, arAkahukuThread, arAkahukuMHT,
- *   arAkahukuPostForm, arAkahukuPopupQuote,
- *   arAkahukuReload, arAkahukuScroll, arAkahukuThreadOperator,
- */
-
 /**
  * 本体 (Content)
  */

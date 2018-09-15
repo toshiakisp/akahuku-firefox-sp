@@ -1,9 +1,3 @@
-
-/* global
- *   Akahuku, arAkahukuCompat, arAkahukuUtil, arAkahukuWindow,
- *   arAkahukuReload, AkahukuFileUtil,
- */
-
 /**
  * キャッシュ制御モジュール
  */

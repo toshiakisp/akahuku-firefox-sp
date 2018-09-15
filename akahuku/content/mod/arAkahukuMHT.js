@@ -1,11 +1,4 @@
 
-/* global btoa, atob, KeyEvent,
- *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDelBanner,
- *   arAkahukuDOM, arAkahukuFile, arAkahukuLink, AkahukuFileUtil,
- *   arAkahukuP2P, arAkahukuSound, arAkahukuThread, arAkahukuCompat,
- *   arAkahukuUtil, arAkahukuWindow, arAkahukuImageURL,
- */
-
 /**
  * mht ファイルデータ
  */

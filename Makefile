@@ -3,7 +3,7 @@
 include VERSIONS.in
 
 XPI_INCLUDES = background common options content _locales manifest.json license.txt
-XPI_EXCLUDES = "*/Makefile" "*/Makefile.in" "*.template"
+XPI_EXCLUDES = "*/Makefile" "*/Makefile.in" "*.template" "*/.eslintrc.json"
 
 all: version
 

@@ -1,6 +1,4 @@
 
-/* global TextDecoder, PolyFillTextEncoder */
-
 /**
  * 文字コード変換器 (TextDecoder/TextEncoder版)
  */

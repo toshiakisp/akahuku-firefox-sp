@@ -1,6 +1,4 @@
 
-/* global arAkahukuConfig, AkahukuOptions */
-
 var arAkahukuFileName = {
   defaultConvertList : [
     ["\\", "\uFFE5"],

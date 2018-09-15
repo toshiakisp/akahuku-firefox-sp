@@ -1,6 +1,4 @@
 
-/* global Components, arAkahukuConfig */
-
 var EXPORTED_SYMBOLS = [
   "arAkahukuContentPolicy",
 ];

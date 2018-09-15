@@ -1,9 +1,4 @@
 
-/* global Akahuku, arAkahukuConfig, arAkahukuStyle,
- *   arAkahukuMHT, arAkahukuPopup, arAkahukuPopupParam,
- *   arAkahukuPostForm, arAkahukuReload, arAkahukuThread,
- */
-
 /**
  * サムネのポップアップデータ
  *   Inherits From: arAkahukuPopupData

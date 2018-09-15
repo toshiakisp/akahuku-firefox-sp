@@ -1,11 +1,4 @@
 
-/* global KeyEvent,
- *   Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuCompat,
- *   arAkahukuBoard, arAkahukuWindow, arAkahukuP2P, arAkahukuFile, AkahukuFSUtil,
- *   arAkahukuReload, arAkahukuMergeItemCallbackList,
- *   AkahukuFileUtil,
- */
-
 /**
  * サイドバーのスレ情報
  */

@@ -1,10 +1,4 @@
 
-/* global Akahuku, AkahukuVersion, arAkahukuConfig,
- * arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil,
- * arAkahukuCompat, arAkahukuDOM, arAkahukuImageURL,
- * KeyEvent
- */
-
 /**
  * P2P
  */

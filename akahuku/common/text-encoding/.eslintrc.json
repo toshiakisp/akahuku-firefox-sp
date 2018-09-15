@@ -1,0 +1,12 @@
+{
+    "env": {
+    },
+    "globals": {
+	"module": true,
+	"require": true
+    },
+    "rules": {
+	"no-extra-boolean-cast": "off"
+    }
+}
+

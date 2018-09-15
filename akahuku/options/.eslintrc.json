@@ -1,0 +1,19 @@
+{
+
+    "globals": {
+	"arAkahukuBrowserAction": true,
+	"arAkahukuImage": true,
+	"arAkahukuJPEG": true,
+	"arAkahukuLink": true,
+	"arAkahukuP2P": true,
+	"arAkahukuQuote": true,
+	"AkahukuCentral": true,
+	"ObserverService": true,
+	"HistoryService": true,
+	"Prefs": true,
+	"pref": true,
+	"prefEndDeclare": true,
+	"Tabs": true
+    }
+}
+

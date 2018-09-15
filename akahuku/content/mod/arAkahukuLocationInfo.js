@@ -1,14 +1,4 @@
 
-/* global XMLSerializer, XSLTProcessor, DOMParser,
- *   Akahuku, arAkahukuCompat, arAkahukuConverter,
- *   AkahukuFileUtil, arAkahukuFileName,
- *   arAkahukuTitle, arAkahukuP2P,
- *   arAkahukuBoard, arAkahukuDOM,
- *   ObserverService,
- *
- * init を使用しない場合は arAkahukuBoard, arAkahukuDOM は不要
- */
-
 /**
  * アドレス、スレの情報
  * 

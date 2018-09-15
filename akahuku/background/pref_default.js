@@ -1,3 +1,4 @@
+/* global pref, prefEndDeclare */
 pref("version", browser.runtime.getManifest().version);
 pref("savepref", "0");
 

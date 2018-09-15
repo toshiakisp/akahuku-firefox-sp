@@ -1,9 +1,4 @@
 
-/* global
- *   Akahuku, arAkahukuCatalog, arAkahukuConfig, arAkahukuReload,
- *   arAkahukuWindow, arAkahukuCompat, arAkahukuUI,
- */
-
 /**
  * ホイール管理
  *   [ページの末尾のホイール n 回操作でリロード]

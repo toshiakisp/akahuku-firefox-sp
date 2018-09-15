@@ -1,6 +1,4 @@
 
-/* global arAkahukuConfig, AkahukuFileUtil, arAkahukuWindow */
-
 /**
  * 音管理
  *  [音]

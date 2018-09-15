@@ -1,12 +1,4 @@
 
-/* global CSSPrimitiveValue,
- *   Akahuku, arAkahukuConfig, arAkahukuConverter,
- *   arAkahukuDOM, arAkahukuP2P, arAkahukuCompat, arAkahukuImageURL,
- *   arAkahukuWindow, arAkahukuBoard,
- *   arAkahukuUtil, arAkahukuTitle,
- *   ObserverService
- */
-
 /**
  * レスパネル管理データ
  */

@@ -1,9 +1,4 @@
 
-/* global atob,
- *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuWindow,
- *   arAkahukuDOM, arAkahukuPostForm, arAkahukuClipboard, arAkahukuUI,
- */
-
 /**
  * 引用管理
  *   [引用]

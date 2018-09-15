@@ -1,6 +1,3 @@
-
-/* global Akahuku, arAkahukuConfig, arAkahukuDOM, arAkahukuImageURL */
-
 /**
  * 広告削除管理
  *   [広告を隠す]

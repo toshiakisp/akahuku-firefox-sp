@@ -1,8 +1,3 @@
-
-/* global KeyEvent,
- *   Akahuku, arAkahukuConfig, AkahukuFileUtil
- */
-
 /**
  * ブルマ女将管理
  *   [ブルマ女将]

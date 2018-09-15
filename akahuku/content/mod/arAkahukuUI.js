@@ -1,12 +1,4 @@
 
-/* global
- *   Akahuku, AkahukuVersion,
- *   arAkahukuBoard, arAkahukuConfig,
- *   arAkahukuJPEG, arAkahukuLink, arAkahukuP2P, arAkahukuQuote,
- *   arAkahukuStyle, arAkahukuClipboard,
- *   arAkahukuCompat, arAkahukuImage, arAkahukuThread,
- */
-
 /**
  * UI 管理
  *   [ステータスバー]、[ツールバー]

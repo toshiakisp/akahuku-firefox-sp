@@ -1,13 +1,4 @@
 
-/* global
- *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuUtil,
- *   arAkahukuDOM, arAkahukuImage, arAkahukuLink,
- *   arAkahukuP2P, arAkahukuQuote, arAkahukuSidebar, arAkahukuSound,
- *   arAkahukuThread, arAkahukuTitle, arAkahukuCompat, arAkahukuFile,
- *   arAkahukuWindow, arAkahukuUI, arAkahukuBoard, AkahukuFileUtil,
- *   AkahukuFSUtil,
- */
-
 /**
  * [続きを読む] のキャッシュ書き込み
  *   Inherits From: nsICacheEntryOpenCallback

@@ -1,6 +1,4 @@
 
-/* global Akahuku, arAkahukuConverter */
-
 /**
  * DOM 拡張
  */

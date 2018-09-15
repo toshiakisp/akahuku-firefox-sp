@@ -1,6 +1,4 @@
 
-/* global arAkahukuUI */
-
 /**
  * JPEG のサムネ管理
  *  [JPEG のサムネを見る]

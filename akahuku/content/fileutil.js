@@ -1,7 +1,6 @@
 /**
  * Utilities for DOM File operations
  */
-/* global Promise */
 
 var AkahukuFileUtil = {
 };

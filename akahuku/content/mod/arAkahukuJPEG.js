@@ -1,6 +1,4 @@
 
-/* global Akahuku, arAkahukuConfig */
-
 /**
  * JPEG のサムネ管理
  *  [JPEG のサムネを見る]

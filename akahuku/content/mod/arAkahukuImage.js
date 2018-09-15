@@ -1,11 +1,4 @@
 
-/* global Promise,
- *   Akahuku, arAkahukuConfig, arAkahukuCompat, arAkahukuImageURL,
- *   arAkahukuDOM, arAkahukuFile, arAkahukuWindow, arAkahukuConverter,
- *   arAkahukuP2P, arAkahukuSound, arAkahukuUtil,
- *   AkahukuFileUtil, AkahukuFS,
- */
-
 /**
  * 画像の保存のリスナ
  */

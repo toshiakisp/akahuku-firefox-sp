@@ -1,6 +1,3 @@
-
-/* global Promise, Akahuku, navigator */
-
 /**
  * クリップボード処理
  */

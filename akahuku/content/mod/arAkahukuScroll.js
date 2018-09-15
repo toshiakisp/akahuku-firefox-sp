@@ -1,8 +1,4 @@
 
-/* global Akahuku, arAkahukuConfig,
- *   arAkahukuDOM, arAkahukuThread, arAkahukuWheel
- */
-
 /**
  * スクロール管理
  *  [スクロール]

@@ -1,6 +1,4 @@
 
-/* global ObserverService, Akahuku, arAkahukuConfig, arAkahukuServerData */
-
 function arAkahukuBoardInfo (id) {
   this.id = id;
   this.name = "";

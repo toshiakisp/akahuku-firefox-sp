@@ -1,11 +1,4 @@
 
-/* global btoa, Promise,
- *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM,
- *   arAkahukuImage, arAkahukuP2P, arAkahukuCompat, arAkahukuUtil,
- *   arAkahukuWindow, arAkahukuUI, arAkahukuMHT, arAkahukuThread,
- *   arAkahukuClipboard
- */
-
 /**
  * リンク変換器
  *

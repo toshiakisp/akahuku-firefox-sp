@@ -1,14 +1,4 @@
 
-/* global Promise, KeyEvent,
- *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
- *   arAkahukuDOM, arAkahukuStyle,
- *   arAkahukuFile, arAkahukuUtil, AkahukuFileUtil, AkahukuFSUtil,
- *   arAkahukuSound, arAkahukuClipboard, arAkahukuWindow, arAkahukuUI,
- *   arAkahukuP2P, arAkahukuReload, arAkahukuLink, arAkahukuScroll,
- *   arAkahukuThread, arAkahukuBoard,
- *   arAkahukuImageURL,
- */
-
 /**
  * 送信フォーム管理のデータ
  */

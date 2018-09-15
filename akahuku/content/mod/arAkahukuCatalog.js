@@ -1,13 +1,3 @@
-
-/* global
- *   Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuCompat,
- *   arAkahukuDOM, arAkahukuThread, arAkahukuSidebar,
- *   arAkahukuFile, arAkahukuWindow, arAkahukuUtil, AkahukuFileUtil, AkahukuFSUtil,
- *   arAkahukuLink, arAkahukuP2P, arAkahukuPopup, arAkahukuPopupParam,
- *   arAkahukuSound, arAkahukuBoard, arAkahukuReload,
- *   ObserverService, HistoryService,
- */
-
 /**
  * カタログのポップアップデータ
  *   Inherits From: arAkahukuPopupData

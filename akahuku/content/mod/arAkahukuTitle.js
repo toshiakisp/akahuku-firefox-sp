@@ -1,6 +1,4 @@
 
-/* global Akahuku, arAkahukuConfig, arAkahukuConverter, arAkahukuDOM */
-
 /**
  * タイトル管理
  *   [タイトルを修正]

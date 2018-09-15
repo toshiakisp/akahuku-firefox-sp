@@ -1,6 +1,4 @@
 
-/* global Components, window document */
-
 /**
  * サイドバー
  */

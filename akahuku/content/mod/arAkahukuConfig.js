@@ -1,15 +1,3 @@
-
-/* global Prefs,
- * Akahuku, arAkahukuBloomer, arAkahukuBoard, arAkahukuCatalog,
- * arAkahukuDelBanner, arAkahukuImage, arAkahukuJPEG,
- * arAkahukuLink, arAkahukuMHT, arAkahukuP2P, arAkahukuPopupQuote,
- * arAkahukuPostForm, arAkahukuQuote, arAkahukuReload,
- * arAkahukuScroll, arAkahukuSidebar, arAkahukuSound, arAkahukuStyle,
- * arAkahukuTab, arAkahukuThread, arAkahukuThreadOperator,
- * arAkahukuTitle, arAkahukuUI, arAkahukuWheel,
- * arAkahukuCompat, arAkahukuFileName,
- */
-
 /**
  * 設定管理
  *   Inherits From: nsIObserver

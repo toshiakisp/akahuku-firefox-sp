@@ -1,13 +1,4 @@
 
-/* global
- *   Akahuku, arAkahukuCompat, arAkahukuFile, arAkahukuUtil,
- *   arAkahukuCatalog, arAkahukuDelBanner,
- *   arAkahukuImage, arAkahukuLink, arAkahukuMHT, arAkahukuPostForm,
- *   arAkahukuThread, arAkahukuReload, arAkahukuScroll,
- *   arAkahukuTitle, arAkahukuPopupQuote, arAkahukuThreadOperator,
- *   AkahukuFileUtil, AkahukuFSUtil,
- */
-
 /**
  * スタイルデータ
  */
