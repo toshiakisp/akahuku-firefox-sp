@@ -39,11 +39,6 @@ var arAkahukuCompat = new function () {
       }
 
       throw new Error('NotYetImplemented');
-
-      if (typeof file === "string") {
-        var filePath = file;
-        file = arAkahukuFile.initFile (filePath);
-      }
     },
   };
 
@@ -68,7 +63,7 @@ var arAkahukuCompat = new function () {
 
   this.gBrowser = new function () {
     this.getStatusPanel = function (window) {
-      throw new Error('deprecated for content');
+      Akahuku.debug.error('deprecated for content');
       return null;
     };
   };
@@ -205,7 +200,7 @@ var arAkahukuCompat = new function () {
         // nsICacheListener.onCacheEntryAvailable 
         onCacheEntryAvailable : function (descriptor, accessGranted, result) {
           result = 61; //NS_ERROR_CACHE_KEY_NOT_FOUND
-          callback.onCacheEntryAvailable (null, false, appCache, result);
+          callback.onCacheEntryAvailable (null, false, null, result);
         },
       };
       // fake async call
@@ -248,7 +243,7 @@ var arAkahukuCompat = new function () {
           this.getRootContentLocation = candidates [i];
           return rooturl;
         }
-        catch (e) { Cu.reportError (e);
+        catch (e) { Akahuku.debug.exception(e);
         }
       }
       return null;

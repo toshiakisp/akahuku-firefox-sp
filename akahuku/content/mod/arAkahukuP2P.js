@@ -176,7 +176,7 @@ var arAkahukuP2P = {
         value
           = unescape (value);
         arAkahukuP2P.shortcutKeycode
-          = KeyEvent ["DOM_" + value];
+          = KeyboardEvent["DOM_" + value];
                 
         arAkahukuP2P.shortcutModifiersAlt
           = arAkahukuConfig

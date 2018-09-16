@@ -26,7 +26,7 @@ var arAkahukuBloomer = {
       value
         = unescape (value);
       arAkahukuBloomer.keycode
-        = KeyEvent ["DOM_" + value];
+        = KeyboardEvent["DOM_" + value];
             
       arAkahukuBloomer.modifiersAlt
         = arAkahukuConfig

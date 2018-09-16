@@ -140,7 +140,7 @@
         break;
       case 'contextmenu-content.js': // special action for browser_action
         switch (msg.method) {
-          case 'getContentDataForBrowserAction':
+          case 'getContentDataForBrowserAction': {
             let data = {
               browser_action: {
                 isAkahukuApplied: false,
@@ -166,6 +166,7 @@
               'args': [data],
             });
             break;
+          }
           default:
             Akahuku.debug.warn('Unknown method;', msg);
         }

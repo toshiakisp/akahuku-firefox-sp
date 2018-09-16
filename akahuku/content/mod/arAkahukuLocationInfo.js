@@ -657,7 +657,6 @@ arAkahukuLocationInfo.prototype = {
           }
         }
         return;
-        break;
       case "normal":
       case "reply":
       case "catalog":
@@ -903,7 +902,6 @@ arAkahukuLocationInfo.prototype = {
         node.parentNode.removeChild (node);
             
         return nextSibling;
-        break;
     }
         
     node2 = node.firstChild;

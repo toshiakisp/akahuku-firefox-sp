@@ -682,7 +682,7 @@ var arAkahukuMHT = {
         value
           = unescape (value);
         arAkahukuMHT.shortcutKeycode
-          = KeyEvent ["DOM_" + value];
+          = KeyboardEvent["DOM_" + value];
                 
         arAkahukuMHT.shortcutModifiersAlt
           = arAkahukuConfig
@@ -1031,9 +1031,6 @@ var arAkahukuMHT = {
             var body
               = arAkahukuDOM.findParentNode (nodes [i], "body");
             body.appendChild (linkNode);
-          }
-          else {
-            
           }
         }
       }

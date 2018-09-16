@@ -20,18 +20,9 @@ var arAkahukuFileName = {
     ],
   
   getConfig : function () {
-    var value;
-    
-    try {
-      value
-        = arAkahukuConfig
-        .initPref ("char", "akahuku.filename_convert.list", "null");
-    }
-    catch (e) {
-      value
-      = AkahukuOptions
-      .initPref (null, "char", "akahuku.filename_convert.list", "null");
-    }
+    var value
+      = arAkahukuConfig
+      .initPref ("char", "akahuku.filename_convert.list", "null");
     if (value != "null") {
       arAkahukuFileName.convertList = JSON.parse (unescape (value));
       while (arAkahukuFileName.convertList.length

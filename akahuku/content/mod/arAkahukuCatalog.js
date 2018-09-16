@@ -2257,7 +2257,17 @@ var arAkahukuCatalog = {
             = AkahukuFileUtil.Path
             .join (arAkahukuFile.systemDirectory, "lastcells.txt");
             
-          AkahukuFSUtil.loadNativeFileAsString (filename)
+          Akahuku.debug.error('NotYetImplemented (load from lastcells.txt)');
+          /* TODO: implement IDB File Storage
+          IDBFiles.getFileStorage({name: 'systemFiles'})
+          .then(async (storage) => {
+            let file = await storage.get('/lastcells.txt');
+            return file.open('readonly').then(async (fh) => {
+              let meta = await fh.getMetadata();
+              return fh.readAsText(meta.size)
+                .finally(() => fh.close());
+            })
+          })
           .then (function (text) {
             arAkahukuCatalog.lastCellsText = text;
             var currentBoard = "";
@@ -2290,6 +2300,7 @@ var arAkahukuCatalog = {
           }, function (e) {
             Akahuku.debug.warn ("loading lastcells.txt faild; " + e.name);
           });
+          */
         }
       }
       else {
@@ -2745,9 +2756,6 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableReloadLeftBeforeSave
         && info.isFutaba) {
       /* 状態を保存 */
-      var filename
-      = AkahukuFileUtil.Path
-      .join (arAkahukuFile.systemDirectory, "lastcells.txt");
       var text = "";
             
       var lastCells = newTable.getElementsByTagName ("td");
@@ -2860,11 +2868,14 @@ var arAkahukuCatalog = {
       newText += name + "\n" + text;
             
       arAkahukuCatalog.lastCellsText = newText;
-      AkahukuFSUtil.saveStringToNativeFile (filename, newText, "plain/text")
+      Akahuku.debug.error('NotYetImplemented (save to lastcells.txt)');
+      /* TODO: implement IDB File Storage
+      IDBFiles.getFileStorage({name: 'systemFiles'})
+      .then((sto) => sto.put('/lastcells.txt', new Blob([newText])))
       .catch (function (e) {
         Akahuku.debug.exception (e);
       });
-            
+      */
     }
   },
 
@@ -5372,6 +5383,7 @@ var arAkahukuCatalog = {
           if (base
               && "className" in base
               && base.className == "akahuku_popup") {
+            // none
           }
           else {
             param.lastPopupKey = "";

@@ -113,7 +113,6 @@ arAkahukuSidebarThread.prototype = {
     catch (e) { Akahuku.debug.exception (e);
       return false;
     }
-    return true;
   },
 };
 /**
@@ -312,11 +311,17 @@ var arAkahukuSidebar = {
         
     arAkahukuSidebar.getConfig ();
     if (arAkahukuSidebar.enableSave) {
-      var filename
-        = AkahukuFileUtil
-        .Path.join (arAkahukuFile.systemDirectory, "sidebar.txt");
-            
-      AkahukuFSUtil.loadNativeFileAsString (filename)
+      Akahuku.debug.error('NotYetImplemented (load from sidebar.txt)');
+      /* TODO
+      IDBFiles.getFileStorage({name: 'systemFiles'})
+      .then(async (storage) => {
+        let file = await storage.get('/sidebar.txt');
+        return file.open('readonly').then(async (fh) => {
+          let meta = await fh.getMetadata();
+          return fh.readAsText(meta.size)
+            .finally(() => fh.close());
+        });
+      })
       .then (function (text) {
         var currentBoard = "";
         var parser = function (matched, line) {
@@ -380,6 +385,7 @@ var arAkahukuSidebar = {
           arAkahukuSidebar.updateMarked (param);
         }
       });
+      */
     }
   },
 
@@ -486,9 +492,6 @@ var arAkahukuSidebar = {
 
   termSidebarParam : function (param) {
     if (arAkahukuSidebar.enableSave) {
-      var filename
-      = AkahukuFileUtil
-      .Path.join (arAkahukuFile.systemDirectory, "sidebar.txt");
       var text = "";
       var name, board, thread;
             
@@ -523,10 +526,14 @@ var arAkahukuSidebar = {
         }
       }
             
-      AkahukuFSUtil.saveStringToNativeFile (filename, text, "plain/text")
+      Akahuku.debug.error('NotYetImplemented (save to lastcells.txt)');
+      /* TODO
+      IDBFiles.getFileStorage({name: 'systemFiles'})
+      .then((sto) => sto.put('/sidebar.txt', new Blob([text])))
       .catch (function (e) {
         Akahuku.debug.exception (e);
       });
+      */
     }
   },
     
@@ -619,7 +626,7 @@ var arAkahukuSidebar = {
         value
           = unescape (value);
         arAkahukuSidebar.shortcutKeycode
-          = KeyEvent ["DOM_" + value];
+          = KeyboardEvent["DOM_" + value];
                 
         arAkahukuSidebar.shortcutModifiersAlt
           = arAkahukuConfig
@@ -2246,17 +2253,7 @@ var arAkahukuSidebar = {
               return;
             }
                         
-            try {
-              if (typeof chromeWindow.Aima_Aimani != "undefined") {
-                if (chromeWindow.Aima_Aimani.changeNGNumberSidebarHandler) {
-                  chromeWindow.Aima_Aimani.changeNGNumberSidebarHandler
-                    (server, dir,
-                     num, imageNum, method == "hide");
-                }
-              }
-            }
-            catch (e) { Akahuku.debug.exception (e);
-            }
+            // TODO: Aima_aimani.changeNGNumberSidebarHandler(server, dir, num, imageNum, method == "hide")
                         
             if (method == "hide") {
               node.setAttribute ("name",

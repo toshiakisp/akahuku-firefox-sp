@@ -13,12 +13,15 @@ arAkahukuImageListener.prototype = {
   expectedContentTypePattern : /^image\//,
 
   setFilePath : function (filePath, tmpfilePath) {
-    this.saveLeafName = AkahukuFS.Path.basename (filePath);
-    this.tmpLeafName = AkahukuFS.Path.basename (tmpfilePath);
-    var dirname = AkahukuFS.Path.dirname (tmpfilePath);
+    this.saveLeafName = AkahukuFileUtil.Path.basename (filePath);
+    this.tmpLeafName = AkahukuFileUtil.Path.basename (tmpfilePath);
+    var dirname = AkahukuFileUtil.Path.dirname (tmpfilePath);
     var that = this;
+    this.storage = Promise.reject(new Error('Deprecated (filesystem)'));
+    /*
     this.storage = AkahukuFS.getFileStorage ({name: dirname})
     .then (function (value) { that.storage = value; });
+    */
   },
     
   /**
@@ -1117,11 +1120,14 @@ var arAkahukuImage = {
         
     arAkahukuImage.asyncCheckImageFileExist (target, leafName)
       .then (function (result) {
-        var dir = AkahukuFS.Path.dirname (result.path);
+        var dir = AkahukuFileUtil.Path.dirname (result.path);
+        throw new Error('Deprecated (filesystem)');
+        /*
         return AkahukuFS.getFileStorage ({name: dir})
         .then (function (storage) {
           return [storage, result.file];
         });
+        */
       }, function () {
         throw new Error ("No file for " +  leafName);
       }).then (function (args) {

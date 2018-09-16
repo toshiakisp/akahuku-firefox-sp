@@ -58,7 +58,7 @@ const ObserverService = (function () {
     notifyObservers: function (subject, topic, data) {
       let obs = localObservers.get(topic);
       if (obs) {
-        for (let o of observers) {
+        for (let o of obs) {
           try {
             o.observe(subject, topic, data);
           }

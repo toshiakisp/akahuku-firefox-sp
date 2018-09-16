@@ -14,7 +14,6 @@ browser.runtime.onMessage.addListener((msg, sender) => {
           document.body.removeChild(node);
           resolve();
         });
-        break;
     }
   }
 });

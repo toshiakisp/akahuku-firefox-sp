@@ -11,7 +11,7 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 
     // Inject multiple scripts in specified order
-    async function executeScripts(tabId, files) {
+    let executeScripts = async (tabId, files) => {
       for (let f of files) {
         try {
           if (!f.startsWith('/')) {
@@ -26,7 +26,7 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             + f + ' (' + String(e) + ')')
         }
       }
-    }
+    };
 
     executeScripts(tabId, [
       'loading_begin.js',

@@ -21,8 +21,6 @@ AkahukuFileUtil.createFromFileName = async function (filename) {
  */
 AkahukuFileUtil.getNativePathFromURLSpec = function (url) {
   throw new Error('NotYetImplemented');
-  // (OS.Path.fromFileURI requires Firefox 29+; Bug 803188)
-  return OS.Path.fromFileURI (url);
 };
 
 /**
@@ -32,8 +30,6 @@ AkahukuFileUtil.getNativePathFromURLSpec = function (url) {
  */
 AkahukuFileUtil.getURLSpecFromNativePath = function (path) {
   throw new Error('NotYetImplemented');
-  // (OS.Path.toFileURI requires Firefox 29+; Bug 803188)
-  return OS.Path.toFileURI (path);
 };
 
 /**
@@ -43,12 +39,6 @@ AkahukuFileUtil.getURLSpecFromNativePath = function (path) {
  */
 AkahukuFileUtil.getURLSpecFromNativeDirPath = function (path) {
   throw new Error('NotYetImplemented');
-  // (OS.Path.toFileURI requires Firefox 29+; Bug 803188)
-  var dir = OS.Path.toFileURI (path);
-  if (!(/\/$/.test (dir))) {
-    dir += "/";
-  }
-  return dir;
 };
 
 /**

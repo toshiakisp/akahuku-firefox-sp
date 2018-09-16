@@ -48,7 +48,7 @@ const Loader = {
   },
 
   updateState: function (stateStr) {
-    newState = this.getStateValue(stateStr);
+    let newState = this.getStateValue(stateStr);
     if (this.state == this.STATES.INIT) {
       this.state = newState;
 

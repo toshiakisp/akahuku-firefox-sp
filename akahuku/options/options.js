@@ -42,7 +42,7 @@ function setFormInputs(prefs, temporal=false) {
           if (!temporal)
             node.dataset.prefChecked = node.checked;
           break;
-        case 'select-one':
+        case 'select-one': {
           let selected = false;
           for (let opt of node.options) {
             if (opt.value == prefs[key]) {
@@ -59,6 +59,7 @@ function setFormInputs(prefs, temporal=false) {
             continue;
           }
           break;
+        }
         case 'number':
           node.valueAsNumber = prefs[key];
           if (!temporal)
@@ -70,13 +71,14 @@ function setFormInputs(prefs, temporal=false) {
           if (!temporal)
             node.dataset.prefValue = node.value;
           break;
-        case 'hidden':
+        case 'hidden': {
           node.value = prefs[key];
           let nx = node.nextElementSibling;
           if (nx && nx.classList.contains('hiddeninput-label')) {
             nx.innerText = prefs[key];
           }
           break;
+        }
         default:
           warn('Unsupported node type', node.type, 'has a name:', key);
       }
@@ -115,7 +117,7 @@ function getFormInputs(prefs) {
         case 'number':
           newPrefs[key] = node.valueAsNumber;
           break;
-        case "select-one":
+        case "select-one": {
           let v = node.options[node.selectedIndex].value;
           if (node.dataset.prefType == 'int')
             v = parseInt(v);
@@ -125,6 +127,7 @@ function getFormInputs(prefs) {
             warn('Unkown pref-type specified:', node.dataset.prefType);
           newPrefs[key] = v;
           break;
+        }
       }
     }
   }
@@ -1195,7 +1198,7 @@ function initKeycodeMenu() {
   let keyDefs = [];
   let keyCodeIndex = new Map();
   let i = 0;
-  for (let attr in KeyEvent) {
+  for (let attr in KeyboardEvent) {
     if (attr.match (/^DOM_(VK_(.+))$/)) {
       let code = RegExp.$1;
       let name = RegExp.$2;
@@ -1203,7 +1206,7 @@ function initKeycodeMenu() {
         name = keyNames[code];
       }
       keyDefs.push({value: code, name: name});
-      keyCodeIndex.set(KeyEvent[attr], i);
+      keyCodeIndex.set(KeyboardEvent[attr], i);
       i += 1;
     }
   }

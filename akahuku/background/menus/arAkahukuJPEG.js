@@ -67,12 +67,12 @@ var arAkahukuJPEG = {
     return updated;
   },
 
-  onClickOpenThumbnail : function (event) {
+  onClickOpenThumbnail : function (info, tab) {
     let msg = {name: 'arAkahukuJPEG', method: 'openThumbnail', args: []};
     browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
   },
 
-  onClickCloseThumbnail : function (event) {
+  onClickCloseThumbnail : function (info, tab) {
     let msg = {name: 'arAkahukuJPEG', method: 'closeThumbnail', args: []};
     browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
   },

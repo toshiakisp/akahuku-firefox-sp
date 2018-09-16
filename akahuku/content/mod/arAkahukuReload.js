@@ -135,8 +135,6 @@ arAkahukuReloadCacheWriter.prototype = {
       this.foot = "";
       return true; // 一応全データを割り振りしたことになるので
     }
-        
-    return false;
   },
 
   setTextMonaca : function (text, charset) {
@@ -283,14 +281,10 @@ arAkahukuReloadCacheWriter.prototype = {
         + this.body
         + this.foot;
 
-      var writer = this;
-      writer.pending = true;
-      AkahukuFSUtil.saveStringToNativeFile (path, text, "plain/text")
-      .catch (function (e) {
-        Akahuku.debug.exception (e);
-      }).then (function () {
-        writer.pending = false;
-      });
+      this.pending = true;
+      // TODO: save text in cache (to path?)
+      Akahuku.debug.error('NotYetImplemented (save to cachefile)');
+      this.pending = false;
     }
     catch (e) { Akahuku.debug.exception (e);
     }
@@ -629,7 +623,6 @@ arAkahukuReloadParam.prototype = {
             arAkahukuReload.update (targetDocument, replied);
           }, 10, this.targetDocument, this.replied);
         return;
-        break;
       case 304:
         /* ファイルが更新されていない場合 */
         /* 区切りの削除 */

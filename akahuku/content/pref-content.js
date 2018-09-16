@@ -79,8 +79,7 @@ const Prefs = {
 
   clearUserValue: function (name) {
     if (!this._defaultData.has(name)) {
-      console.error("ignore invalid pref: '" + name
-          + '" ("' + value + '")');
+      console.error("ignore invalid pref: '" + name);
       return;
     }
     this._userData.delete(name);

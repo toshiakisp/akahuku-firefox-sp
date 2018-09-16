@@ -665,7 +665,7 @@ var arAkahukuPostForm = {
         value
           = unescape (value);
         arAkahukuPostForm.mailboxSageButtonKeyKeycode
-          = KeyEvent ["DOM_" + value];
+          = KeyboardEvent["DOM_" + value];
                 
         var defAlt, defCtrl, defMeta, defShift;
         defAlt = false;
@@ -771,7 +771,7 @@ var arAkahukuPostForm = {
       value
         = unescape (value);
       arAkahukuPostForm.commentboxShortcutKeycode
-        = KeyEvent ["DOM_" + value];
+        = KeyboardEvent["DOM_" + value];
                 
       arAkahukuPostForm.commentboxShortcutModifiersAlt
         = arAkahukuConfig
@@ -2160,9 +2160,6 @@ var arAkahukuPostForm = {
           if (!ok) {
             node.parentNode.removeChild (node);
           }
-          else {
-                        
-          }
           node = nextSibling;
         }
                 
@@ -2491,7 +2488,7 @@ var arAkahukuPostForm = {
    *         対象のイベント
    */
   onCommentKeyPress : function (event) {
-    var ke = KeyEvent;
+    var ke = KeyboardEvent;
     if (arAkahukuPostForm.enableCommentboxSubmitShortcut) {
       if (event.keyCode == ke.DOM_VK_RETURN && event.shiftKey) {
         var targetDocument = event.target.ownerDocument;
@@ -2731,32 +2728,8 @@ var arAkahukuPostForm = {
       arAkahukuPostForm.onPreviewChangeCore (targetDocument);
     }
 
-    // 一時フォルダにユニークなファイル名で画像保存して添付する
-    var filename
-      = AkahukuFileUtil
-      .Path.join (arAkahukuFile.getDirectory ("TmpD"), "akahuku-clip.jpg");
-    var file
-      = arAkahukuFile.createUnique
-      (filename, arAkahukuFile.NORMAL_FILE_TYPE, 420/*0o644*/);
-    filename = file.path;
-    file = null;
-    AkahukuFSUtil.saveStringToNativeFile (filename, imageBin, "image/jpeg")
-    .then (function () {
-      AkahukuFileUtil.createFromFileName (filename)
-      .then (function (file) { // DOM File
-        var filebox = targetDocument.getElementsByName ("upfile")[0];
-        if (filebox) {
-          arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-          if (arAkahukuPostForm.enablePreview) {
-            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-          }
-        }
-      }, function (reason) {
-        Akahuku.debug.error ("tryPasteImageFromClipboard: failed " + reason.name);
-      });
-    }, function (err) {
-      Akahuku.debug.error ("Error occured in saving", filename, err);
-    });
+    Akahuku.debug.error('NotYetImplemented (set image to form)');
+    //TODO
   },
 
   /*
