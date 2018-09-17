@@ -70,8 +70,6 @@ var arAkahukuCompat = new function () {
 
   this.HTMLInputElement = {
     /**
-     * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]
-     * required for e10s content process
      *
      * @param filebox HTMLInputElement
      * @param file  File
@@ -81,21 +79,11 @@ var arAkahukuCompat = new function () {
         filebox.value = "";
       }
       else {
-        if ("mozSetFileArray" in filebox) { // since Firefox 38 [Bug 1068838]
-          filebox.mozSetFileArray ([file]);
-        }
-        else {
-          var filepath = "";
-          if (file && "mozFullPath" in file) { // DOM File
-            filepath = file.mozFullPath;
-          }
-          if (filepath) {
-            filebox.mozSetFileNameArray ([filepath], 1);
-          }
-          else {
-            throw new Error ("no path from a file: " + file);
-          }
-        }
+        // Create a FileList instance via DataTransfer
+        // let dt = new DataTransfer(); // Fx62+
+        let dt = new ClipboardEvent('').clipboardData;
+        dt.items.add(file);
+        filebox.files = dt.files;
       }
     },
   };

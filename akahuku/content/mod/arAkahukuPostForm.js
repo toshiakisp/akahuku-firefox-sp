@@ -31,7 +31,6 @@ arAkahukuPostFormParam.prototype = {
   targetURL : "",                 /* String  フォームの送信先の URL */
   added : false,                  /* Boolean  リスナに登録したか */
     
-  upfilePath : "",                /* String  添付ファイルパス */
   upfileFile : null,              /* File  添付ファイル */
   upfileObjectURL : null,         /* String  添付ファイル URL */
     
@@ -40,6 +39,7 @@ arAkahukuPostFormParam.prototype = {
   attachableExt :
     ["jpg","jpeg","png","gif"],   /* Array  添付可能拡張子のリスト */
   attachableExtRegExp : null,     /* Regexp 添付可能拡張子かどうかの正規表現  */
+  attachableByteMax: Number.MAX_SAFE_INTEGER,
 
   /**
    * データを開放する
@@ -2660,37 +2660,21 @@ var arAkahukuPostForm = {
       return;
     }
     param = param.postform_param;
+
     if ("clipboardData" in event
         && event.clipboardData.types.length != 0) {
-      var typesText = "";
       for (var i=0; i < event.clipboardData.types.length; i ++) {
-        if (Akahuku.debug.enabled) {
-          typesText += event.clipboardData.types [i] + ",";
-        }
         if (event.clipboardData.types [i] === "text/plain") {
           return; // テキスト貼付け可能時は何もしない
         }
         else if (event.clipboardData.types [i] === "Files") {
-          // 画像ファイルの貼り付け時はそのまま添付ファイルへ設定
-          var file = event.clipboardData.files [0];
-          if (param.testAttachableExt (file.name)) {
-            arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
-            if (arAkahukuPostForm.enablePreview) {
-              arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-            }
-            return; // 貼り付け成功時はそこで終了
-          }
+          // 画像の貼り付け時に image.png が設定されるが
+          // それをそのまま使うと直後に files が消える問題があるので
+          // 別途取得する
+          arAkahukuPostForm.tryPasteImageFromClipboard(targetDocument);
+          return;
         }
       }
-      if (Akahuku.debug.enabled) {
-        Akahuku.debug.log
-          ("event.clipboardData.types.length = "
-           + event.clipboardData.types.length+": "+typesText);
-      }
-    }
-    else if (!event.clipboardData) {
-      // Firefox -21.*, or js-created "paste" event from pastebutton
-      Akahuku.debug.log ("onPasteFromClipboard: no clipboardData");
     }
 
     // クリップボードから直接取得
@@ -2712,24 +2696,26 @@ var arAkahukuPostForm = {
   },
 
   tryPasteImageFromClipboard : function (targetDocument) {
-    var flavor = "image/jpg";
-    var imageBin = arAkahukuClipboard.getImage (flavor);
-    if (imageBin === null) {
-      Akahuku.debug.warn ("no " + flavor + " data in clipboard");
+    let param = Akahuku.getDocumentParam(targetDocument);
+    if (!param)
       return;
-    }
-
-    var filebox = targetDocument.getElementsByName ("upfile") [0];
-    if (!filebox) {
+    param = param.postform_param;
+    const filebox = targetDocument.getElementsByName('upfile')[0];
+    if (!filebox)
       return;
-    }
-    filebox.value = "";
-    if (arAkahukuPostForm.enablePreview) {
-      arAkahukuPostForm.onPreviewChangeCore (targetDocument);
-    }
 
-    Akahuku.debug.error('NotYetImplemented (set image to form)');
-    //TODO
+    const options = {
+      byteLimit: param.attachableByteMax,
+    };
+    arAkahukuClipboard.getImage('image/jpeg', options)
+    .then ((file) => {
+      arAkahukuCompat.HTMLInputElement.mozSetFile(filebox, file);
+      if (arAkahukuPostForm.enablePreview) {
+        arAkahukuPostForm.onPreviewChangeCore(targetDocument);
+      }
+    }, (rejected) => {
+      Akahuku.debug.warn ('No image/jpeg data from clipboard;', rejected.message);
+    });
   },
 
   /*
@@ -3288,23 +3274,17 @@ var arAkahukuPostForm = {
     if (filebox && filebox [0]) {
       filebox = filebox [0];
       var filename = filebox.value;
-      var fullpath = filename;
       var file = null;
 
       if (filebox.files && filebox.files.length > 0) {
         file = filebox.files [0];// DOM File
-      }
-      if (!filename && file) {
-        // e10s content: DataTransfer から取得した File をセットした場合
-        // value からパス名は取得できない
         filename = file.name;
-        fullpath = null;
       }
             
       var documentParam = Akahuku.getDocumentParam (targetDocument);
       if (documentParam) {
         var param = documentParam.postform_param;
-        if (fullpath ? param.upfilePath === fullpath : param.upfileFile === file) {
+        if (file && param.upfileFile === file) {
           /* ファイルが変わってない場合は何もしない */
           return;
         }
@@ -3367,7 +3347,6 @@ var arAkahukuPostForm = {
       if (container && preview && bytes) {
         if (documentParam && param) {
           // 以下で処理することになる添付ファイル名を記憶する
-          param.upfilePath = fullpath;
           param.upfileFile = file;
         }
         if (file) {
@@ -3423,12 +3402,6 @@ var arAkahukuPostForm = {
                   Akahuku.debug.exception (e);
                   previewT.src = "";
                 }
-              }
-              else if (fullpath) { // Fx 3.*
-                previewT.src
-                  = Akahuku.protocolHandler.enAkahukuURI
-                  ("local",
-                   AkahukuFileUtil.getURLSpecFromNativePath (fullpath));
               }
               else {
                 Akahuku.debug.warn ("THIS MUST NOT BE POSSIBLE");
@@ -4280,8 +4253,10 @@ var arAkahukuPostForm = {
         if (attachable.length > 0) {
           var attachable_ext = attachable.match(/[a-zA-Z0-9]+/g);
           for (i = 0; i < attachable_ext.length; i ++) {
-            if (/^[0-9]+KB$/.test (attachable_ext [i]))
+            if (/^([0-9]+)KB$/.test (attachable_ext [i])) {
+              param.attachableByteMax = parseInt(RegExp.$1) * 1024;
               break; // 2000KB 等より後ろはもう形式ではない
+            }
             switch (attachable_ext [i]) {
               case "JPG":
               case "GIF":
