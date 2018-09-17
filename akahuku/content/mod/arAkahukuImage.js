@@ -275,67 +275,6 @@ var arAkahukuImage = {
           list.shift ();
         }
       }
-      else {
-        value
-        = arAkahukuConfig
-        .initPref ("char", "akahuku.saveimage.base.list", "");
-        if (value != "") {
-          var old_instantsrc
-          = arAkahukuConfig
-          .initPref ("bool", "akahuku.saveimage.instantsrc", true);
-          var old_instantsrc_always
-          = arAkahukuConfig
-          .initPref ("bool", "akahuku.saveimage.instantsrc.always", false);
-          
-          /* 値を解析するだけなので代入はしない */
-          value.replace
-            (/([^&,]*)&([^&,]*)&?([^&,]*)&?([^&,]*)?&?([^&,]*)?,?/g,
-             function (matched, name, dir, dialog, subdir, key) {
-              var value = {};
-              
-              if (!dialog) {
-                dialog = "xx";
-              }
-              if (!subdir) {
-                subdir = "0";
-              }
-              if (subdir == "1") {
-                subdir = "12";
-              }
-              var dialog_keep = "x";
-              if (dialog.match (/(.)(.)/)) {
-                dialog = RegExp.$1;
-                dialog_keep = RegExp.$2;
-                
-                if (unescape (dialog) == "x") {
-                  dialog_keep = "x";
-                }
-              }
-              if (dialog_keep == "o") {
-                subdir = "0";
-              }
-              
-              value.name = unescape (name);
-              value.dir = unescape (dir);
-              value.dialog = (unescape (dialog) == "o");
-              value.dialog_keep = (unescape (dialog_keep) == "o");
-              value.subdir_type = "simple";
-              value.key = unescape (key);
-              value.instantsrc = old_instantsrc;
-              value.instantsrc_always = old_instantsrc_always;
-              
-              subdir = parseInt (unescape (subdir));
-              value.subdir_url = (subdir & 32) ? true : false;
-              value.subdir_board = (subdir & 2) ? true : false;
-              value.subdir_server = (subdir & 4) ? true : false;
-              value.subdir_dir = (subdir & 8) ? true : false;
-              value.subdir_thread = (subdir & 16) ? true : false;
-              value.subdir_msg8b = (subdir & 64) ? true : false;
-              
-              list.push (value);
-            });
-        }
-      }
       arAkahukuImage.baseList = list;
       
       arAkahukuImage.enableLimit

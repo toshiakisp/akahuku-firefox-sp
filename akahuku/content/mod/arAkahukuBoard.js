@@ -167,32 +167,6 @@ var arAkahukuBoard = {
           }
         }
       }
-      else {
-        value
-          = arAkahukuConfig
-          .initPref ("char", "akahuku.board_external.patterns", "");
-        if (value != "") {
-          /* 値を解析するだけなので代入はしない */
-          value.replace
-            (/([^&,]*)&([^&,]*),?/g,
-             function (matched, pattern, flag) {
-              var value = {};
-              
-              value.pattern = unescape (pattern);
-              flag = parseInt (flag);
-              value.monaca = (flag & 1) ? true : false;
-              value.prefix = (flag & 2) ? true : false;
-              
-              if (!value.prefix) {
-                value.pattern = new RegExp (value.pattern);
-              }
-              
-              arAkahukuBoard.externalList.push (value);
-              
-              return "";
-            });
-        }
-      }
     }
   },
 
@@ -280,20 +254,6 @@ var arAkahukuBoard = {
       tmp2 = JSON.stringify (list);
       arAkahukuConfig.setCharPref
       ("akahuku.board_external.patterns2", tmp2);
-    }
-    else {
-      var tmp
-      = arAkahukuConfig
-      .initPref ("char", "akahuku.board_external.patterns", "");
-          
-      if (tmp) {
-        tmp += ",";
-      }
-      tmp += escape (base)
-      + "&" + escape (flag);
-          
-      arAkahukuConfig.setCharPref
-      ("akahuku.board_external.patterns", tmp);
     }
         
     arAkahukuBoard.getConfig ();
