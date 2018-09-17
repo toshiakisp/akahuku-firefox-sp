@@ -2,14 +2,8 @@
 
 // require: tabs permission
 
-
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // ignore a prior event with 'loading' with no url 
-  if (changeInfo.status == 'loading' && changeInfo.url) {
-    if (!(/^https?:\/\/[a-z]+\.2chan\.net(:[0-9]+)?\/[^\/]+/.test(tab.url))) {
-      return;
-    }
-
+const AkahukuContentLoader = {
+  injectToTab: async function (tabId) {
     // Inject multiple scripts in specified order
     let executeScripts = async (tabId, files) => {
       for (let f of files) {
@@ -28,7 +22,7 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       }
     };
 
-    executeScripts(tabId, [
+    return executeScripts(tabId, [
       'loading_begin.js',
       'port-observer-handler.js',
       'observer-service-content.js',
@@ -38,6 +32,7 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       'tabs-content.js',
       '/common/text-encoding/encoding-indexes.js',
       '/common/text-encoding/encoding.js',
+      '/common/arAkahukuURLUtil.js',
       'fileutil.js',
       // 
       'version.js',
@@ -88,7 +83,19 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       })
       .catch((err) => {
         console.warn('Loading error: ' + err.message)
+        throw err;
       });
+  },
+};
+
+
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  // ignore a prior event with 'loading' with no url
+  if (changeInfo.status == 'loading' && changeInfo.url) {
+    if (!arAkahukuURLUtil.getNeedApply(tab.url)) {
+      return;
+    }
+    AkahukuContentLoader.injectToTab(tabId);
   }
   else {
     //console.log(tabId, changeInfo)

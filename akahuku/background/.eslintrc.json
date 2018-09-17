@@ -6,6 +6,7 @@
 	"HistoryService": true,
 	"Prefs": true,
 	"Tabs": true,
+	"arAkahukuURLUtil": true,
 
 	"arAkahukuBrowserAction": true,
 	"arAkahukuImage": true,

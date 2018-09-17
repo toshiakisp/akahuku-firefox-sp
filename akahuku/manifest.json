@@ -46,6 +46,7 @@
       "background/history-service.js",
       "background/pref.js",
       "background/pref_default.js",
+      "common/arAkahukuURLUtil.js",
       "background/menus/arAkahukuQuote.js",
       "background/menus/arAkahukuJPEG.js",
       "background/menus/arAkahukuLink.js",

@@ -43,6 +43,7 @@
         "arAkahukuUtil": true,
         "arAkahukuWheel": true,
         "arAkahukuWindow": true,
+        "arAkahukuURLUtil": true,
 
         "PolyFillTextEncoder": true,
 

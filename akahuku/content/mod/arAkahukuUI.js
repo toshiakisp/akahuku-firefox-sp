@@ -235,7 +235,7 @@ var arAkahukuUI = {
     var info = {
       isAkahukuApplied: param != null,
       isAbleToAddExternal: param == null && focusedDocument
-        && arAkahukuBoard.isAbleToAddExternal (focusedDocument.location.href),
+        && arAkahukuURLUtil.isAbleToAddExternal(focusedDocument.location.href),
       isRespanelOpenable: param && param.location_info.isReply,
       isRespanelOpened: param && param.respanel_param,
       isRespanelOrphaned: false,
@@ -317,7 +317,7 @@ var arAkahukuUI = {
       return;
     }
 
-    if (arAkahukuBoard.isAbleToAddExternal (targetDocument.location.href)) {
+    if (arAkahukuURLUtil.isAbleToAddExternal(targetDocument.location.href)) {
       arAkahukuBoard.addExternal (targetDocument);
       Akahuku.apply (targetDocument, false);
     }

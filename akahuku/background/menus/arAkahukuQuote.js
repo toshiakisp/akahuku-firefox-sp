@@ -133,7 +133,6 @@ var arAkahukuQuote = {
     if (!info.contexts.includes('selection')) {
       return false;
     }
-    console.log('isAkahukuApplied',c.isAkahukuApplied);
 
     let rules = [
       {id: 'akahuku-menuitem-content-quote',

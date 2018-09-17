@@ -170,7 +170,12 @@ var arAkahukuBrowserAction = {
   /**
    * フォーカスのあるドキュメントに適用する
    */
-  applyFocusedDocument: function (info, tab) {
+  applyFocusedDocument: async function (info, tab) {
+    let params = await AkahukuCentral.getParamsByURL(tab.url);
+    if (params.length > 0) { // Akahuku is already applied
+      return;
+    }
+    await AkahukuContentLoader.injectToTab(tab.id);
     let msg = {name: 'arAkahukuUI', method: 'applyDocument', args: []};
     browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
   },
@@ -178,11 +183,20 @@ var arAkahukuBrowserAction = {
   /**
    * フォーカスのあるドキュメントを外部板に追加する
    */
-  addFocusedToExternalBoards: function (info, tab) {
-    let msg = {
-      name: 'arAkahukuUI',
-      method: 'addDocumentToExternalBoards', args: []};
-    browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
+  addFocusedToExternalBoards: async function (info, tab) {
+    let params = await AkahukuCentral.getParamsByURL(tab.url);
+    if (params.length > 0) { // Akahuku is already applied
+      return;
+    }
+    if (arAkahukuURLUtil.isAbleToAddExternal(tab.url)) {
+      await AkahukuContentLoader.injectToTab(tab.id);
+      let msg = {
+        name: 'arAkahukuUI',
+        method: 'addDocumentToExternalBoards', args: []};
+      await browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
+      msg.method = 'applyDocument';
+      await browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
+    }
   },
 
 };

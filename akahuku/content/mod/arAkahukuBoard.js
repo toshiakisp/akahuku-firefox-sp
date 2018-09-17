@@ -196,29 +196,6 @@ var arAkahukuBoard = {
   },
     
   /**
-   * 外部板に追加できるか
-   */
-  isAbleToAddExternal : function (href) {
-    try {
-      var base = String (href);
-          
-      base = base
-      .replace (/\/res\/([0-9]+)\.html?$/, "/")
-      .replace (/\/(([^\.\/]+)\.php)?([#\?].*)?$/, "/")
-      .replace (/\/(([^\.\/]+)\.html?)?([#\?].*)?$/, "/");
-          
-      if (!/\/$/.test (base)) {
-        return false;
-      }
-          
-      return true;
-    }
-    catch (e) { Akahuku.debug.exception (e);
-      return false;
-    }
-  },
-    
-  /**
    * 外部板に追加する
    */
   addExternal : function (targetDocument) {
