@@ -423,7 +423,7 @@
           <label><input type=checkbox name="quickquote.menu.wikipedia"
             >ウィキペドる</label>
         </div>
-	<span class="warning">WebExtensionでは複数項目はサブメニュー化されます</span>
+        <span class="warning">WebExtensionでは複数項目はサブメニュー化されます</span>
       </div>
       <div class="box-orient-vertical flex">
         <div class="group box-orient-vertical">
@@ -613,7 +613,7 @@
   </div>
 
   <div id="tab_saveimage2" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-vertical flex ext_doesnotwork">
+    <div class="groupbox box-orient-vertical flex">
       <div class=caption>
         <label>保存先のディレクトリ</label>
       </div>
@@ -687,7 +687,13 @@
         </div>
       </div>
       <table name="saveimage.base.list2" id="saveimage_base_list" class="listbox flex" style="height:14em"
-        data-listbox-seltype="multiple">
+        data-listbox-seltype="multiple"
+        data-listbox-control-add="saveimage_base_add"
+        data-listbox-control-modify="saveimage_base_modify"
+        data-listbox-control-move-up="saveimage_base_moveup"
+        data-listbox-control-move-down="saveimage_base_movedown"
+        data-listbox-control-delete="saveimage_base_delete"
+        data-listbox-warning="saveimage_base_illegal">
         <thead>
           <tr>
             <td data-listitem-name="name" style="width: 30%; min-width: 6em;">表示名</td>
@@ -1377,7 +1383,7 @@
         </div>
       </div>
     </div>
-    <div class="groupbox box-orient-horizontal flex ext_doesnotwork">
+    <div class="groupbox box-orient-horizontal flex">
       <div class=caption>
         <label>ユーザ指定文字列</label>
       </div>
@@ -1394,7 +1400,13 @@
         </div>
         <label id="autolink_user_illegal" class="warning">&nbsp;</label>
         <table name="autolink.user.patterns2" id="autolink_user_list" class="listbox flex" style="height:14em"
-          data-listbox-seltype="multiple">
+          data-listbox-seltype="multiple"
+          data-listbox-control-add="autolink_user_add"
+          data-listbox-control-modify="autolink_user_modify"
+          data-listbox-control-move-up="autolink_user_moveup"
+          data-listbox-control-move-down="autolink_user_movedown"
+          data-listbox-control-delete="autolink_user_delete"
+          data-listbox-warning="autolink_user_illegal">
           <thead>
             <tr>
               <td data-listitem-name="pattern" style="min-width: 8em; width: 60%;">パターン</td>
@@ -2014,7 +2026,13 @@
         例: ^http://([^\.]+)\.2chan\.net/([^/]+)/(.*)$</p>
         <label id="board_external_illegal" class="warning">&nbsp;</label>
         <table name="board_external.patterns2" id="board_external_list" class="listbox flex" style="height:14em"
-          data-listbox-seltype="multiple">
+          data-listbox-seltype="multiple"
+          data-listbox-control-add="board_external_add"
+          data-listbox-control-modify="board_external_modify"
+          data-listbox-control-move-up="board_external_moveup"
+          data-listbox-control-move-down="board_external_movedown"
+          data-listbox-control-delete="board_external_delete"
+          data-listbox-warning="board_external_illegal">
           <thead>
             <tr>
               <td data-listitem-name="pattern" style="min-width: 8em; width: 100%;">パターン/プレフィックス</td>
@@ -2029,7 +2047,7 @@
           <tfoot><tr><td colspan="8"></td></tr></tfoot>
         </table>
       </div>
-      <div class="box-orient-vertical ext_doesnotwork">
+      <div class="box-orient-vertical">
         <input type=button id="board_external_add" value="追加">
         <input type=button id="board_external_modify" value="修正">
         <input type=button id="board_external_moveup" value="上に">
@@ -2205,7 +2223,7 @@
         <label>デバッグ</label>
       </div>
       <label class="sp"><input type=checkbox name="ext.debug"
-	>デバッグログを有効にする</label>
+        >デバッグログを有効にする</label>
     </div>
     <div class="groupbox box-orient-vertical ext_obsolete">
       <div class=caption>
@@ -2222,7 +2240,9 @@
       <div class="box-orient-horizontal">
         <div class="box-orient-vertical flex">
           <table name="statusbar.order.list" id="statusbar_order_list" class="listbox flex" style="height:14em"
-            data-listbox-seltype="multiple">
+            data-listbox-seltype="multiple"
+            data-listbox-control-move-up="statusbar_order_moveup"
+            data-listbox-control-move-down="statusbar_order_movedown">
             <tbody>
               <tr>
               </tr>
@@ -2241,7 +2261,7 @@
         <label>設定のインポート／エクスポート／初期化</label>
       </div>
       <div class="box-orient-horizontal flex">
-	<input type=file id="importfile">
+        <input type=file id="importfile">
         <input type=button id="import" value="インポート" disabled>
       </div>
       <div class="box-orient-horizontal flex">
@@ -2269,7 +2289,13 @@
         </div>
         <label id="filename_convert_illegal" class="warning">&nbsp;</label>
         <table name="filename_convert.list" id="filename_convert_list" class="listbox flex" style="height:14em"
-          data-listbox-seltype="multiple">
+          data-listbox-seltype="multiple"
+          data-listbox-control-add="filename_convert_add"
+          data-listbox-control-modify="filename_convert_modify"
+          data-listbox-control-move-up="filename_convert_moveup"
+          data-listbox-control-move-down="filename_convert_movedown"
+          data-listbox-control-delete="filename_convert_delete"
+          data-listbox-control-init="filename_convert_init">
           <thead>
             <tr>
               <td data-listitem-name="from" style="min-width: 8em; width: 50%;">変換元</td>

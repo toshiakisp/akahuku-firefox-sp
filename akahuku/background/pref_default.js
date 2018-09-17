@@ -115,7 +115,7 @@ pref("ext.cache_bq", true);
 pref("ext.debug", true);
 pref("ext.download_lastdir_hack", false);
 pref("ext.maximageretries", 0);
-pref("filename_convert.list", "null");
+pref("filename_convert.list", "%5B%7B%22from%22%3A%22%5C%5C%22%2C%22to%22%3A%22%uFFE5%22%7D%2C%7B%22from%22%3A%22/%22%2C%22to%22%3A%22%uFF0F%22%7D%2C%7B%22from%22%3A%22%3A%22%2C%22to%22%3A%22%uFF1A%22%7D%2C%7B%22from%22%3A%22%2C%22%2C%22to%22%3A%22%uFF0C%22%7D%2C%7B%22from%22%3A%22%3B%22%2C%22to%22%3A%22%uFF1B%22%7D%2C%7B%22from%22%3A%22*%22%2C%22to%22%3A%22%uFF0A%22%7D%2C%7B%22from%22%3A%22%3F%22%2C%22to%22%3A%22%uFF1F%22%7D%2C%7B%22from%22%3A%22%5C%22%22%2C%22to%22%3A%22%u201D%22%7D%2C%7B%22from%22%3A%22%27%22%2C%22to%22%3A%22%u2019%22%7D%2C%7B%22from%22%3A%22%3C%22%2C%22to%22%3A%22%uFF1C%22%7D%2C%7B%22from%22%3A%22%3E%22%2C%22to%22%3A%22%uFF1E%22%7D%2C%7B%22from%22%3A%22%7C%22%2C%22to%22%3A%22%uFF5C%22%7D%2C%7B%22from%22%3A%22%5Ct%22%2C%22to%22%3A%22%22%7D%2C%7B%22from%22%3A%22%5Cr%22%2C%22to%22%3A%22%22%7D%2C%7B%22from%22%3A%22%5Cn%22%2C%22to%22%3A%22%22%7D%2C%7B%22from%22%3A%22%20%22%2C%22to%22%3A%22_%22%7D%5D");
 pref("floatpostform", false);
 pref("floatpostform.alpha", false);
 pref("floatpostform.clickclose", true);

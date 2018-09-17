@@ -94,7 +94,7 @@ function getFormInputs(prefs) {
     for (let node of nodes) {
       if (node.tagName == 'TABLE' && node.classList.contains('listbox')) {
         // listbox
-        prefs[key] = escape(gListboxManager.toString(node.id));
+        newPrefs[key] = escape(gListboxManager.toString(node.id));
         continue;
       }
       if (!node.form) { // HTMLInputElement
@@ -180,7 +180,7 @@ let gListboxManager = {
   fromString: function (id, s) {
     var values = this.parseString(s);
     let list = this._lists.get(id)
-    if (values.length == 0 || !list) {
+    if (!list) {
       return;
     }
     list.clear();
@@ -189,246 +189,6 @@ let gListboxManager = {
     }
   },
   
-  onSelect : function (id) {
-    var listInfo = AkahukuOptions.listList [id];
-    
-    var listbox = document.getElementById (id + "_list");
-      
-    if (listbox.selectedIndex != -1) {
-      var value = this.getItem (listbox.selectedItem);
-      
-      listInfo.onSelect (value);
-      
-      document.getElementById (id + "_modify").disabled
-        = !listInfo.isEnabled ()
-        || (listbox.selectedCount > 1);
-    }
-  },
-  
-  onKeyDown : function (id, event) {
-    if (event.keyCode == 8 || event.keyCode == 46) {
-      this.onDelete (id);
-    }
-  },
-  
-  onAdd : function (id, modify) {
-    var listInfo = AkahukuOptions.listList [id];
-    
-    document.getElementById (id + "_illegal").value = "";
-    
-    var value = listInfo.getValue ();
-    
-    var message = listInfo.checkError (value);
-    if (message) {
-      document.getElementById (id + "_illegal").value = message;
-      return;
-    }
-    
-    var listbox = document.getElementById (id + "_list");
-    var exist = false;
-    
-    var nextNode = null;
-    var node = null;
-    if (modify) {
-      var node = listbox.firstChild;
-      while (node) {
-        if (node.nodeName == "listitem") {
-          if (node.selected) {
-            break;
-          }
-        }
-        node = node.nextSibling;
-      }
-    }
-    
-    var node2 = listbox.firstChild;
-    while (node2) {
-      var nextNode2 = node2.nextSibling;
-      
-      if (node2.nodeName == "listitem") {
-        var value2 = this.getItem (node2);
-        if (node2 != node
-            && listInfo.isSame (value, value2)) {
-          exist = true;
-          break;
-        }
-      }
-      node2 = nextNode2;
-    }
-    
-    if (!exist) {
-      this.addItem (id, value, node);
-      
-      if (node == null) {
-        listInfo.onAdd ();
-      }
-    }
-    else {
-      document.getElementById (id + "_illegal").value
-      = "\u540C\u3058\u9805\u76EE\u304C\u3042\u308A\u307E\u3059";
-    }
-  },
-  
-  onMoveUp : function (id) {
-    var listbox = document.getElementById (id + "_list");
-      
-    var node = listbox.firstChild;
-    var nextNode = null;
-    var prevNode = null;
-    var node1 = null;
-    var node2 = null;
-    var tmp = "";
-    while (node) {
-      nextNode = node.nextSibling;
-      if (node.nodeName == "listitem") {
-        if (node.selected) {
-          if (prevNode) {
-            node1 = node.firstChild;
-            node2 = prevNode.firstChild;
-            while (node1 && node2) {
-              tmp = node1.getAttribute ("value");
-              node1.setAttribute ("value",
-                                  node2.getAttribute ("value"));
-              node2.setAttribute ("value", tmp);
-                          
-              if (node1.getAttribute ("class")
-                  == "listcell-iconic") {
-                tmp = node1.getAttribute ("image");
-                node1.setAttribute ("image",
-                                    node2
-                                    .getAttribute ("image"));
-                node2.setAttribute ("image", tmp);
-              }
-              else {
-                tmp = node1.getAttribute ("label");
-                node1.setAttribute ("label",
-                                    node2
-                                    .getAttribute ("label"));
-                node2.setAttribute ("label", tmp);
-              }
-                          
-              node1 = node1.nextSibling;
-              node2 = node2.nextSibling;
-            }
-            listbox.toggleItemSelection (node);
-            listbox.toggleItemSelection (prevNode);
-            prevNode = prevNode;
-          }
-        }
-        else {
-          prevNode = node;
-        }
-      }
-      node = nextNode;
-    }
-  },
-  
-  onMoveDown : function (id) {
-    var listbox = document.getElementById (id + "_list");
-      
-    var node = listbox.lastChild;
-    var nextNode = null;
-    var prevNode = null;
-    var node1 = null;
-    var node2 = null;
-    var tmp = "";
-    while (node) {
-      prevNode = node.previousSibling;
-      if (node.nodeName == "listitem") {
-        if (node.selected) {
-          if (nextNode) {
-            node1 = node.firstChild;
-            node2 = nextNode.firstChild;
-            while (node1 && node2) {
-              tmp = node1.getAttribute ("value");
-              node1.setAttribute ("value",
-                                  node2.getAttribute ("value"));
-              node2.setAttribute ("value", tmp);
-                          
-              if (node1.getAttribute ("class")
-                  == "listcell-iconic") {
-                tmp = node1.getAttribute ("image");
-                node1.setAttribute ("image",
-                                    node2
-                                    .getAttribute ("image"));
-                node2.setAttribute ("image", tmp);
-              }
-              else {
-                tmp = node1.getAttribute ("label");
-                node1.setAttribute ("label",
-                                    node2
-                                    .getAttribute ("label"));
-                node2.setAttribute ("label", tmp);
-              }
-                          
-              node1 = node1.nextSibling;
-              node2 = node2.nextSibling;
-            }
-            listbox.toggleItemSelection (node);
-            listbox.toggleItemSelection (nextNode);
-            nextNode = nextNode;
-          }
-        }
-        else {
-          nextNode = node;
-        }
-      }
-      node = prevNode;
-    }
-  },
-  
-  onDelete : function (id) {
-    var listbox = document.getElementById (id + "_list");
-      
-    var node = listbox.firstChild;
-    while (node) {
-      var nextNode = node.nextSibling;
-      if (node.selected) {
-        listbox.removeChild (node);
-      }
-      node = nextNode;
-    }
-  },
-
-  addItem : function (id, value, listitem) {
-    // move to ListboxTable.addItem
-  },
-  
-  getItem : function (listitem) {
-    var s = unescape (listitem.firstChild.getAttribute ("value"));
-    var v = JSON.parse (s);
-    return v;
-  },
-  
-  onMouseDown : function (id, event) {
-    var listInfo = AkahukuOptions.listList [id];
-    
-    var listitem = event.target;
-    if (listitem.nodeName.toLowerCase () != "listitem") {
-      return;
-    }
-    
-    var value = this.getItem (listitem);
-    
-    var listcell = listitem.firstChild;
-    for (var i = 0; i < listInfo.columns.length; i ++) {
-      if (listInfo.columns [i][0] == "check") {
-        if (event.clientX > listcell.boxObject.x
-            && event.clientX
-            < listcell.boxObject.x + listcell.boxObject.width
-            && event.clientX < listcell.boxObject.x + 16) {
-          listInfo.columns [i][2] (value);
-          break;
-        }
-      }
-      
-      listcell = listcell.nextSibling;
-    }
-    
-    listInfo.onSelect (value);
-    
-    this.addItem (id, value, listitem);
-  }
 };
 
 class ListboxTable {
@@ -457,41 +217,45 @@ class ListboxTable {
     this.node.addEventListener("keydown", (event) => {
       this.onKeyDown(id, event);
     }, false);
-    
-    /* Connect to control buttons
-    id = id.replace(/_list$/, '');
-    let node = document.getElementById (id + "_add");
-    node.addEventListener("command", () => {
-      this.onAdd (id, false);
-    }, false);
 
-    node = document.getElementById (id + "_modify");
-    node.addEventListener("command", () => {
-      this.onAdd (id, true);
-    }, false);
-    
-    node = document.getElementById (id + "_moveup");
-    node.addEventListener("command", () => {
-      this.onMoveUp (id);
-    }, false);
-    
-    node = document.getElementById (id + "_movedown");
-    node.addEventListener("command", () => {
-      this.onMoveDown (id);
-    }, false);
+    this.controls = {};
+    const controls = [
+      {name:'add', id:'Add'},
+      {name:'mod', id:'Modify'},
+      {name:'up',  id:'MoveUp'},
+      {name:'down',id:'MoveDown'},
+      {name:'del', id:'Delete'},
+      {name:'init', id:'Init'},
+    ];
+    for (let c of controls) {
+      let id = this.node.dataset['listboxControl'+c.id];
+      if (id) {
+        let node = document.getElementById(id);
+        const method = 'onControl' + c.id;
+        if (node && method in this) {
+          node.addEventListener('click', (event) => {
+            this[method](event);
+          }, false);
+          this.controls[c.name] = node;
+        }
+      }
+    }
 
-    node = document.getElementById (id + "_delete");
-    node.addEventListener("command", () => {
-      this.onDelete (id);
-    }, false);
-    */
+    this.updateSelection();
   }
 
   clear() {
     let tbody = this.node.querySelector(':scope tbody');
-    while (tbody.firstChild) {
-      tbody.removeChild(tbody.firstChild);
+    let items = [];
+    for (let item of this.listItems()) {
+      items.push(item);
     }
+    for (let item of items) {
+      tbody.removeChild(item);
+    }
+    this.selectedItems.length = 0;
+    this.selectedItem = null;
+    this.updateSelection();
   }
 
   addItem(value, listitem) {
@@ -531,16 +295,79 @@ class ListboxTable {
     return JSON.parse(unescape(listitem.firstChild.dataset.value));
   }
 
-  [Symbol.iterator]() {
+  removeItem(listitem) {
+    let tbody = this.node.querySelector(':scope tbody');
+    tbody.removeChild(listitem);
+  }
+
+  moveItem(listitem, dir) {
+    let tbody = this.node.querySelector(':scope tbody');
+    let items = [];
+    let index = -1;
+    for (let item of this.listItems()) {
+      if (item === listitem)
+        index = items.length;
+      items.push(item);
+    }
+    if (index < 0)
+      throw new Error('No target listitem');
+
+    let dist = index + dir;
+    if (dir > 0)
+      dist += 1;
+    if (dist < 0)
+      dist = 0; // first
+    else if (dist > items.length)
+      dist = items.length;
+
+    if (dist == items.length) {
+      tbody.appendChild(listitem);
+    }
+    else {
+      let ref = items[dist];
+      tbody.insertBefore(listitem, ref);
+    }
+  }
+
+  listItems() {
     let tbody = this.node.querySelector(':scope tbody');
     let item = tbody.firstElementChild;
     return {
+      [Symbol.iterator]: () => {
+        return {
+          next() {
+            let listcell = null;
+            if (item) {
+              listcell = item.firstElementChild;
+              while (!listcell && item) {
+                // skip blank tr
+                item = item.nextElementSibling;
+                listcell = item ? item.firstElementChild : null;
+              }
+            }
+            if (item) {
+              if (listcell) {
+                let currentItem = item;
+                item = item.nextElementSibling;
+                return {done: false, value: currentItem}
+              }
+            }
+            return {done: true}
+          }
+        }
+      }
+    };
+  }
+
+  [Symbol.iterator]() {
+    let itor = this.listItems()[Symbol.iterator]();
+    return {
       next() {
-        if (item) {
-          let listcell = item.firstElementChild;
+        let i = itor.next();
+        if (!i.done) {
+          let listcell = i.value.firstElementChild;
           if (listcell) {
             let s = unescape(listcell.dataset.value);
-            item = item.nextElementSibling;
             return {done: false, value: JSON.parse(s)}
           }
         }
@@ -609,6 +436,7 @@ class ListboxTable {
         selected = [tr];
       }
       this.selectedItems = selected;
+      this.updateSelection();
 
       if (selected.length > 0) {
         let ev = new CustomEvent('select', {
@@ -619,6 +447,19 @@ class ListboxTable {
         table.dispatchEvent(ev);
       }
     }
+  }
+
+  updateSelection() {
+    const selected = this.selectedItems.length > 0;
+    const selectedOne = this.selectedItems.length == 1;
+    if ('del' in this.controls && this.controls.del)
+      this.controls.del.disabled = !selected;
+    if ('up' in this.controls && this.controls.up)
+      this.controls.up.disabled = !selectedOne;
+    if ('down' in this.controls && this.controls.down)
+      this.controls.down.disabled = !selectedOne;
+    if ('mod' in this.controls && this.controls.mod)
+      this.controls.mod.disabled = !selectedOne;
   }
 
   onSelect(event) {
@@ -672,7 +513,144 @@ class ListboxTable {
         console.warn('Unknown type of item definition:', def.type);
       }
     }
-  };
+  }
+
+  getItemFromEdit(json={}, defs=undefined) {
+    if (!defs) {
+      defs = this.listInfo.itemDefinitions;
+    }
+    for (let def of defs) {
+      if (def.type == 'id') {
+        let id = this.listInfo.itemIdPrefix + def.value;
+        let node = document.getElementById(id);
+        if (node) {
+          if (node.type == 'checkbox') {
+            json[def.value] = node.checked;
+          }
+          else if ('value' in node) {
+            json[def.value] = node.value;
+          }
+        }
+        else {
+          console.warn('Node not found:', id);
+        }
+      }
+      else if (def.type == 'radio') {
+        let nodes = document.getElementsByName(def.name);
+        for (let node of nodes) {
+          if (node.type == 'radio' && node.checked) {
+            json[def.value] = node.value;
+            if (def.cases) {
+              for (let key of Object.getOwnPropertyNames(def.cases)) {
+                if (node.value == key || key == '_default') {
+                  this.getItemFromEdit(json, def.cases[key]);
+                  break;
+                }
+              }
+            }
+            break;
+          }
+        }
+      }
+      else {
+        console.warn('Unknown type of item definition:', def.type);
+      }
+    }
+    return json;
+  }
+
+  onControlAdd(event) {
+    if (!('itemDefinitions' in this.listInfo)) {
+      return;
+    }
+    this.warn('');
+    let value = this.getItemFromEdit();
+    if ('checkError' in this.listInfo) {
+      let msg = this.listInfo.checkError(value);
+      if (msg) {
+        this.warn(msg);
+        return;
+      }
+    }
+
+    let exist = false;
+    for (let value2 of this) {
+      let same = true;
+      for (let key of Object.getOwnPropertyNames(value)) {
+        if (value[key] != value2[key]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        exist = true;
+        break;
+      }
+    }
+    if (!exist)
+      this.addItem(value);
+    else
+      this.warn('\u540C\u3058\u9805\u76EE\u304C\u3042\u308A\u307E\u3059');
+  }
+
+  onControlDelete(event) {
+    this.warn('');
+    for (let item of this.selectedItems) {
+      this.removeItem(item);
+    }
+    this.selectedItems.length = 0;
+    this.selectedItem = null;
+    this.updateSelection();
+  }
+
+  onControlModify(event) {
+    if (!this.selectedItem) {
+      return;
+    }
+    this.warn('');
+    let value = this.getItemFromEdit();
+    if ('checkError' in this.listInfo) {
+      let msg = this.listInfo.checkError(value);
+      if (msg) {
+        this.warn(msg);
+        return;
+      }
+    }
+    this.addItem(value, this.selectedItem);
+  }
+
+  onControlMoveUp(event) {
+    this.warn('');
+    if (this.selectedItem)
+      this.moveItem(this.selectedItem, -1);
+  }
+
+  onControlMoveDown(event) {
+    this.warn('');
+    if (this.selectedItem)
+      this.moveItem(this.selectedItem, +1);
+  }
+
+  onControlInit(event) {
+    this.warn('');
+    if ('defaults' in this.listInfo) {
+      this.clear();
+      for (let item of this.listInfo.defaults) {
+        this.addItem(item);
+      }
+    }
+  }
+
+  warn(message) {
+    if (this.node.dataset.listboxWarning) {
+      let id = this.node.dataset.listboxWarning;
+      let node = document.getElementById(id);
+      if (node) {
+        node.textContent = message || '\u00A0';//nbsp
+      }
+    }
+  }
+
 }
 
 
@@ -940,7 +918,26 @@ gListboxManager.register(new ListboxTable('filename_convert_list', {
         return value.to;
       }
       ]
-    ]
+    ],
+
+  defaults: [
+    {from:'\\', to:'\uFFE5'},
+    {from:'/', to:'\uFF0F'},
+    {from:':', to:'\uFF1A'},
+    {from:',', to:'\uFF0C'},
+    {from:';', to:'\uFF1B'},
+    {from:'*', to:'\uFF0A'},
+    {from:'?', to:'\uFF1F'},
+    {from:'"', to:'\u201D'},
+    {from:"'", to:'\u2019'},
+    {from:'<', to:'\uFF1C'},
+    {from:'>', to:'\uFF1E'},
+    {from:'|', to:'\uFF5C'},
+    {from:'\t', to:''},
+    {from:'\r', to:''},
+    {from:'\n', to:''},
+    {from:' ', to:'_'}
+  ],
 }));
 
 
