@@ -20,7 +20,8 @@ AkahukuFileUtil.createFromFileName = async function (filename) {
  * @return String native file/directory path
  */
 AkahukuFileUtil.getNativePathFromURLSpec = function (url) {
-  throw new Error('NotYetImplemented');
+  Akahuku.debug.error('NotYetImplemented');
+  return '';
 };
 
 /**
@@ -29,7 +30,8 @@ AkahukuFileUtil.getNativePathFromURLSpec = function (url) {
  * @return String url
  */
 AkahukuFileUtil.getURLSpecFromNativePath = function (path) {
-  throw new Error('NotYetImplemented');
+  Akahuku.debug.error('NotYetImplemented');
+  return '';
 };
 
 /**
@@ -38,7 +40,8 @@ AkahukuFileUtil.getURLSpecFromNativePath = function (path) {
  * @return String url ending with "/"
  */
 AkahukuFileUtil.getURLSpecFromNativeDirPath = function (path) {
-  throw new Error('NotYetImplemented');
+  Akahuku.debug.error('NotYetImplemented');
+  return '';
 };
 
 /**
