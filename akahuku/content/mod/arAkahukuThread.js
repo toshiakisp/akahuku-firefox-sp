@@ -3137,7 +3137,7 @@ var arAkahukuThread = {
     if (arAkahukuThread.enableSearchNewTab) {
       var searchfm = targetDocument.getElementById("searchfm");
       if (searchfm) {
-        if (info.reply || info.isCatalog || info.isNormal) {
+        if (info.isReply || info.isCatalog || info.isNormal) {
           searchfm.target = "_blank";
           for (i = 0; searchfm.length; i ++) {
             if (searchfm.elements[i].type == "submit") {
