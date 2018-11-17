@@ -1585,7 +1585,7 @@ btn_import.addEventListener('click', (event) => {
               prefs[key] = (prefs[key] == 'true');
               break;
             case "number":
-              prefs[key] = Number(prefs[key] == 'true');
+              prefs[key] = Number(prefs[key]);
               break;
           }
         }
