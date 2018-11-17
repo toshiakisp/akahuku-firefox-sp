@@ -920,6 +920,8 @@ var arAkahukuMHT = {
       "div",    "akahuku_thread_operator",
       "small",  "akahuku_postform_opener_appendix_up",
       "link",   "akahuku_thread_favicon",
+      "span",   "contres",//futaba側リロードボタン等
+      "form",   "searchfm",//futaba側全文検索フォーム
       ];
     
     for (i = 0; i < remove_element.length; i += 2) {
@@ -936,6 +938,7 @@ var arAkahukuMHT = {
       // arAkahukuThread
       "span",   "akahuku_thread_catalog_new",
       "span",   "akahuku_thread_back_new",
+      "div",    "delform2", // futaba側削除フォーム(2018/11/09レイアウト)
       ];
     for (i = 0; i < remove_elements_class.length; i += 2) {
       nodes = arAkahukuDOM.getElementsByNames (targetDocument,
