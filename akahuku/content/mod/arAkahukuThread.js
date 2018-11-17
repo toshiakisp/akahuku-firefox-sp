@@ -3016,7 +3016,8 @@ var arAkahukuThread = {
         
     var backLink = null;
     var catalogLink = null;
-    if ((info.isReply && arAkahukuThread.enableCatalogOnBottom)
+    if (((info.isReply || info.isSearchResponse)
+          && arAkahukuThread.enableCatalogOnBottom)
         || arAkahukuThread.enableCatalogNew
         || arAkahukuThread.enableBackNew) {
       catalogLink = param.links.catalogAnchors [0];
@@ -3060,11 +3061,11 @@ var arAkahukuThread = {
       }
     }
         
-    if (info.isReply
+    if ((info.isReply || info.isSearchResponse)
         && (arAkahukuThread.enableBackOnBottom
             || (arAkahukuThread.enableCatalogOnBottom && catalogLink))) {
       nodes = targetDocument.getElementsByTagName ("hr");
-      if (nodes.length > 0) {
+      if (nodes.length > 1) {
         node = nodes [nodes.length - 1];
                 
         var div = targetDocument.createElement ("div");
