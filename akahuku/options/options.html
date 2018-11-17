@@ -200,12 +200,12 @@
   </div>
 
   <div id="tab_banner" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-vertical ext_doesnotwork">
+    <div class="groupbox box-orient-vertical">
       <div class=caption>
         <label><input type=checkbox name="delbanner"
         >広告を隠す</label>
       </div>
-      <div class="groupbox box-orient-vertical">
+      <div class="groupbox box-orient-vertical ext_doesnotwork">
         <div class=caption>
           <label>外部サイトをブロック</label>
         </div>
@@ -258,7 +258,7 @@
       </div>
       <label><input type=checkbox name="delbanner.text"
         >テキスト広告</label>
-      <div class="group box-orient-vertical">
+      <div class="group box-orient-vertical ext_doesnotwork">
         <label><input type=checkbox name="delbanner.movetailad"
           >末尾の広告を横に置く (ある程度の横幅が必要です)</label>
         <label class="sp tooltip"><input type=checkbox name="delbanner.movetailad.all"
@@ -1288,18 +1288,18 @@
   </div>
 
   <div id="tab_res" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-vertical ext_doesnotwork">
+    <div class="groupbox box-orient-vertical">
       <div class=caption>
         <label><input type=checkbox name="cutefont"
           >フォント変更</label>
       </div>
-      <label id="cutefont_family_example">&nbsp;</label>
+      <label id="cutefont_family_example">例: "ことりふぉんと", "あくあフォント"</label>
       <div class="box-orient-horizontal">
         <input type=text name="cutefont.family" class="flex">
-        <input type=button name="cutefont.family.init" value="初期化">
+        <input type=button id="cutefont_family_init" value="初期化" disabled=true class="disable">
       </div>
     </div>
-    <div class="box-orient-horizontal align-center tooltip ext_doesnotwork sp">
+    <div class="box-orient-horizontal align-center tooltip sp">
       <span class=tooltiptext>(デフォルト：無効) 基準となるbody要素の文字サイズを設定する。適用後リロード無しで設定反映。</span>
       <label><input type=checkbox name="style.body_font"
         >基準となる文字サイズを</label>
@@ -1653,7 +1653,7 @@
     </div>
     <div class="box-orient-horizontal">
       <div class="box-orient-vertical">
-        <div class="groupbox box-orient-vertical ext_doesnotwork">
+        <div class="groupbox box-orient-vertical">
           <div class=caption>
             <label class="sp tooltip"><input type=checkbox name="catalog.cellwidth.enable"
               ><span class=tooltiptext>(デフォルト: 無効) カタログでスレの幅を制限し、指定幅より大きいサムネや本文を幅に収める。このグループの設定変更はOK/適用すると既存タブにも即反映。</span
