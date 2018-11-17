@@ -2,10 +2,15 @@
 
 arAkahukuStyle.addUserStyleSheetHandler(
   (style) => {
-    const cattable = ':-moz-any(table.akahuku_markup_catalog_table, table#cattable)';
+    const cattable = 'table.akahuku_markup_catalog_table';
     const catcell = cattable + '[border="1"] td';
     const catimganchor = catcell + ' > a:nth-of-type(1)';
     const catimg = catimganchor + ' > img';
+    const cattable0 = 'table#cattable:not(.akahuku_markup_catalog_table)';
+    const catcell0 = cattable0 + '[border="1"] td';
+    const catimganchor0 = catcell0 + ' > a:nth-of-type(1)';
+    const catimg0 = catimganchor0 + ' > img';
+    const catimg_all = catimg + ',' + catimg0;
 
     if (Prefs.getItem('catalog.cellwidth.enable')) {
       let cellWidthNum = parseFloat(Prefs.getItem('catalog.cellwidth.num'));
@@ -15,9 +20,10 @@ arAkahukuStyle.addUserStyleSheetHandler(
       }
       let w = cellWidthNum + cellWidthUnit;
       style
-      .addRule (catcell,
+      .addRule (catcell + ',' + catcell0,
                 "width: " + w + ";")
-      .addRule (catcell + " .akahuku_native_comment",
+      .addRule (catcell + " .akahuku_native_comment"
+                + "," + catcell0 + " small",
                 "display: inline-block;"
                 + "max-width: " + w + ";"
                 + "word-break: break-all;")
@@ -26,21 +32,14 @@ arAkahukuStyle.addUserStyleSheetHandler(
                 + "word-break: break-all;"
                 + "font-size: 8pt;"
                 + "overflow: hidden;")
-      .addRule ('table#cattable:not(.akahuku_markup_catalog_table)[border="1"] td small',
-                "display: inline-block;"
-                + "max-width: " + w + ";"
-                + "word-break: break-all;")
 
       const lines = parseFloat(Prefs.getItem('catalog.cellwidth.max-lines'));
       if (lines >= 0) {
         const lineHeight = 1.1;
         // akahuku_comment は字数制限が別にあるので行数制限をしない
         style
-        .addRule (catcell + " .akahuku_native_comment",
-                  "line-height: " + lineHeight + ";"
-                  + "max-height: " + (lineHeight*lines) + "em;"
-                  + "overflow-y: auto;")
-        .addRule ('table#cattable:not(.akahuku_markup_catalog_table)[border="1"] td > small',
+        .addRule (catcell + " .akahuku_native_comment"
+                  + "," + catcell0 + " small",
                   "line-height: " + lineHeight + ";"
                   + "max-height: " + (lineHeight*lines) + "em;"
                   + "overflow-y: auto;")
@@ -48,7 +47,7 @@ arAkahukuStyle.addUserStyleSheetHandler(
 
       // 大きいサムネを縮小
       style
-      .addRule (catimg,
+      .addRule (catimg_all,
                 "max-width: " + w + ";"
                 + "max-height: " + w + ";"
                 + "height: auto !important;"
@@ -56,7 +55,7 @@ arAkahukuStyle.addUserStyleSheetHandler(
 
       if (Prefs.getItem('catalog.cellwidth.scale-thumb')) {
         style
-        .addRule (catimg,
+        .addRule (catimg_all,
                   "object-fit: contain;"
                   + "object-position: center center;"
                   + "height: " + w + " !important;"
