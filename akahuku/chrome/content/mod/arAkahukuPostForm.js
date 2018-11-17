@@ -4250,6 +4250,12 @@ var arAkahukuPostForm = {
             && nodes [i].method.toLowerCase () == "post"
             && nodes [i].enctype.toLowerCase ()
             == "multipart/form-data") {
+          if (info.isFutaba) {
+            // Skip a search form since 2018/11/15
+            if (nodes [i].id == "searchfm") {
+              continue;
+            }
+          }
           form = nodes [i];
           break;
         }
