@@ -38,6 +38,7 @@ arAkahukuLocationInfo.prototype = {
   isNormal : false,             /* Boolean  通常表示かどうか */
   isCatalog : false,            /* Boolean  カタログかどうか */
   isReply : false,              /* Boolean  レス送信モードかどうか */
+  isSearchResponse : false,     /* Boolean  検索モードかどうか */
   isFutasuke : false,           /* Boolean  双助かどうか
                                  *   リンク先の変更、差分読み込みの回避 */
   isTsumanne : false,           /* Boolean  サッチーかどうか */
@@ -406,6 +407,19 @@ arAkahukuLocationInfo.prototype = {
       }
       else {
         this.mode = "";
+      }
+    }
+    else if (this.isFutaba && path.match(/futaba\.php\?guid=on$/)) {
+      if (targetDocument.getElementById("searchResult")) {
+        // 全文検索
+        this.isSearchResponse = true;
+
+        this.mode = "\u691C\u7D22"; // "検索"
+        nodes = targetDocument.getElementsByTagName("h4");
+        if (nodes && nodes[0]
+          && nodes[0].textContent.match(/^[^[]*\[([^\]]+)\][^\]]*$/)) {
+          this.mode += " " + RegExp.$1;
+        }
       }
     }
         
