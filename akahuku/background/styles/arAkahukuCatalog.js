@@ -2,7 +2,7 @@
 
 arAkahukuStyle.addUserStyleSheetHandler(
   (style) => {
-    const cattable = 'table.akahuku_markup_catalog_table';
+    const cattable = ':-moz-any(table.akahuku_markup_catalog_table, table#cattable)';
     const catcell = cattable + '[border="1"] td';
     const catimganchor = catcell + ' > a:nth-of-type(1)';
     const catimg = catimganchor + ' > img';
@@ -26,6 +26,10 @@ arAkahukuStyle.addUserStyleSheetHandler(
                 + "word-break: break-all;"
                 + "font-size: 8pt;"
                 + "overflow: hidden;")
+      .addRule ('table#cattable:not(.akahuku_markup_catalog_table)[border="1"] td small',
+                "display: inline-block;"
+                + "max-width: " + w + ";"
+                + "word-break: break-all;")
 
       const lines = parseFloat(Prefs.getItem('catalog.cellwidth.max-lines'));
       if (lines >= 0) {
@@ -33,6 +37,10 @@ arAkahukuStyle.addUserStyleSheetHandler(
         // akahuku_comment は字数制限が別にあるので行数制限をしない
         style
         .addRule (catcell + " .akahuku_native_comment",
+                  "line-height: " + lineHeight + ";"
+                  + "max-height: " + (lineHeight*lines) + "em;"
+                  + "overflow-y: auto;")
+        .addRule ('table#cattable:not(.akahuku_markup_catalog_table)[border="1"] td > small',
                   "line-height: " + lineHeight + ";"
                   + "max-height: " + (lineHeight*lines) + "em;"
                   + "overflow-y: auto;")
