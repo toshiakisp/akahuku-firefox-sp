@@ -1151,6 +1151,8 @@
                         label="移動" />
               <checkbox id="thread_operator_show_thumbnail" checked="false"
                         label="サムネ固定のチェックボックス" />
+              <checkbox id="thread_operator_show_search" checked="false"
+                        label="全文検索フォーム" />
               <checkbox id="thread_operator_show_reload" checked="false"
                         label="続きを読む" />
               <checkbox id="thread_operator_show_savemht" checked="false"

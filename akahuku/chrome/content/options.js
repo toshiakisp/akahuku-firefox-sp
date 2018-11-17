@@ -734,6 +734,7 @@ var AkahukuOptions = {
       ["bool", "thread_operator", false],
       ["bool", "thread_operator.show.move", true],
       ["bool", "thread_operator.show.thumbnail", true],
+      ["bool", "thread_operator.show.search", true],
       ["bool", "thread_operator.show.reload", true],
       ["bool", "thread_operator.show.savemht", true],
       ["int",  "thread_operator.position.x", 0],
@@ -3806,6 +3807,7 @@ var AkahukuOptions = {
     = document.getElementById ("thread_operator_show_label").disabled
     = document.getElementById ("thread_operator_show_move").disabled
     = document.getElementById ("thread_operator_show_thumbnail").disabled
+    = document.getElementById ("thread_operator_show_search").disabled
     = document.getElementById ("thread_operator_show_reload").disabled
     = document.getElementById ("thread_operator_show_savemht").disabled
         
