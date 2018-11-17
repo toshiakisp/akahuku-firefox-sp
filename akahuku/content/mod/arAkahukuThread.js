@@ -188,6 +188,7 @@ var arAkahukuThread = {
   enableDelInline : false,          /* Boolean  del フォームを
                                      *   インラインで開く */
   enableDelNewTab : false,          /* Boolean  del を新しいタブで開く */
+  enableSearchNewTab : false,
   enableBackOnBottom : false,       /* Boolean  ページの末尾に [掲示板に戻る]
                                      *   を付ける */
   enableBackNew : false,            /* Boolean  [掲示板に戻る] リンクを
@@ -506,6 +507,9 @@ var arAkahukuThread = {
     arAkahukuThread.enableDelInline
     = arAkahukuConfig
     .initPref ("bool", "akahuku.del.inline", false);
+    arAkahukuThread.enableSearchNewTab
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.search.newtab", true);
     
     if (arAkahukuThread.enableDelInline) {
       arAkahukuThread.enableDelNewTab = true;
@@ -3127,6 +3131,21 @@ var arAkahukuThread = {
     
     if (arAkahukuThread.enableDelInline) {
       arAkahukuThread.applyInlineDel (targetDocument, targetDocument);
+    }
+
+    if (arAkahukuThread.enableSearchNewTab) {
+      var searchfm = targetDocument.getElementById("searchfm");
+      if (searchfm) {
+        if (info.reply || info.isCatalog || info.isNormal) {
+          searchfm.target = "_blank";
+          for (i = 0; searchfm.length; i ++) {
+            if (searchfm.elements[i].type == "submit") {
+              searchfm.elements[i].value += "*";
+              break;
+            }
+          }
+        }
+      }
     }
 
     if (info.isReply || info.isNormal || info.isCatalog) {

@@ -99,6 +99,7 @@ pref("cutefont", false);
 pref("cutefont.family", "%22%u3053%u3068%u308A%u3075%u3049%u3093%u3068%22%2C%20%22%u3042%u304F%u3042%u30D5%u30A9%u30F3%u30C8%22");
 pref("del.inline", true);
 pref("del.newtab", false);
+pref("search.newtab", true);
 pref("delbanner", false);
 pref("delbanner.flash", false);
 pref("delbanner.image", false);
