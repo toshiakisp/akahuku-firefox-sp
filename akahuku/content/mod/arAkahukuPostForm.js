@@ -615,22 +615,6 @@ var arAkahukuPostForm = {
   },
     
   /**
-   * スタイルファイルのスタイルを設定する
-   *
-   * @param  arAkahukuStyleData style
-   *         スタイル
-   */
-  setStyleFile : function (style) {
-    if ((arAkahukuPostForm.enableNormalHide
-         && arAkahukuPostForm.enableReplyHide)
-        || arAkahukuPostForm.enableFloat) {
-      style
-      .addRule ("center > form[enctype=\"multipart/form-data\"]",
-                "display: none;");
-    }
-  },
-    
-  /**
    * スタイルファイルのスタイルを解除する
    *
    * @param  arAkahukuStyleData style

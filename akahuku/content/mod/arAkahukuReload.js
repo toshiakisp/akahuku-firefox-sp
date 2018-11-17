@@ -1023,23 +1023,6 @@ var arAkahukuReload = {
   },
     
   /**
-   * スタイルファイルのスタイルを設定する
-   *
-   * @param  arAkahukuStyleData style
-   *         スタイル
-   */
-  setStyleFile : function (style) {
-    if (arAkahukuReload.enableRuleZeroHeight) {
-      style
-      .addRule ("img",
-                "position: relative; z-index: 99;");
-      /* -moz-hidden-unscrollable を設定すると
-       *  z-index が img より上になってクリックできなくなるので
-       * スレ画像の img の z-index をさらに上にする */
-    }
-  },
-    
-  /**
    * 設定を読み込む
    */
   getConfig : function () {

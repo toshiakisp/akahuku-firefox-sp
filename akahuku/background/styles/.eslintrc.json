@@ -1,0 +1,8 @@
+{
+    "globals": {
+        "Prefs": true,
+        "AkahukuCSSInjector": true,
+        "arAkahukuStyle": true
+    }
+}
+
