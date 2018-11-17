@@ -142,13 +142,14 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF may",
     "\u8679\u88CF may",
     "\u4E8C\u6B21\u5143\u88CF",
-    50000, true
+    60000, true,
+    {preserveMin: 60},
     ],
   "img:b" : [ /* 二次元裏 img */
     "\u4E8C\u6B21\u5143\u88CF img",
     "\u8679\u88CF img",
     "\u4E8C\u6B21\u5143\u88CF",
-    10000, true,
+    12000, true,
     {preserveMin: 60},
     ],
   "dat:b" : [ /* 二次元裏 dat */
@@ -411,6 +412,12 @@ var arAkahukuServerData = {
     "\u30D5\u30A3\u30AE\u30E5\u30A2",
     "\u30D5\u30A3\u30AE\u30E5\u30A2",
     4000, true
+    ],
+  "dec:73" : [ /* VTuber */
+    "VTuber",
+    "VTuber",
+    "VTuber",
+    20000, true
     ],
   "dat:22" : [ /* 人形 */
     "\u4EBA\u5F62",
