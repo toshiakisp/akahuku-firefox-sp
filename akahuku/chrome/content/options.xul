@@ -1229,6 +1229,8 @@
                     label="カタログ" />
           <checkbox id="del_newtab" checked="false"
                     label="del" />
+          <checkbox id="search_newtab" checked="false"
+                    label="検索ボタン (検索モード以外)" />
         </groupbox>
         <groupbox orient="vertical">
           <caption label="ページ末尾に追加" />

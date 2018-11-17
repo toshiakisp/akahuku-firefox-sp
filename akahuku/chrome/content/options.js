@@ -759,6 +759,7 @@ var AkahukuOptions = {
       ["bool", "thread.back_new", false],
       ["bool", "thread.catalog_new", false],
       ["bool", "del.newtab", false],
+      ["bool", "search.newtab", true],
       ["bool", "thread.back_on_bottom", false],
       ["bool", "thread.catalog_on_bottom", false],
       ["bool", "reload_on_bottom", false],
