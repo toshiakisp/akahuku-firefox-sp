@@ -1579,6 +1579,18 @@ btn_import.addEventListener('click', (event) => {
 
       let livePrefs = JSON.parse(JSON.stringify(basePrefs));
       for (let key of Object.getOwnPropertyNames(prefs)) {
+        if (key in livePrefs) {
+          switch (typeof livePrefs[key]) {
+            case "boolean":
+              prefs[key] = (prefs[key] == 'true');
+              break;
+            case "number":
+              prefs[key] = Number(prefs[key] == 'true');
+              break;
+          }
+        }
+      }
+      for (let key of Object.getOwnPropertyNames(prefs)) {
         if (key in livePrefs && livePrefs[key] != prefs[key]) {
           livePrefs[key] = prefs[key];
         }
