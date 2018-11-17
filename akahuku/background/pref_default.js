@@ -396,6 +396,7 @@ pref("thread_operator.show.move", true);
 pref("thread_operator.show.reload", true);
 pref("thread_operator.show.savemht", true);
 pref("thread_operator.show.thumbnail", true);
+pref("thread_operator.show.search", true);
 pref("thread_operator.threadtime", false);
 pref("thread_operator.thumbnail", false);
 pref("thread_operator.thumbnail.alpha", false);

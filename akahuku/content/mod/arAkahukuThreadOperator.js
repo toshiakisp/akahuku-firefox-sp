@@ -476,6 +476,7 @@ var arAkahukuThreadOperator = {
   enableShowThumbnail : false,     /* Boolean  サムネ固定のチェックボックス */
   enableShowReload : false,        /* Boolean  続きを読む */
   enableShowSaveMHT : false,       /* Boolean  MHT で保存 */
+  enableShowSearchForm : true,
     
   /**
    * ドキュメントのスタイルを設定する
@@ -686,6 +687,9 @@ var arAkahukuThreadOperator = {
         = arAkahukuConfig
         .initPref ("bool", "akahuku.thread_operator.show.thumbnail",
                    true);
+      arAkahukuThreadOperator.enableShowSearchForm
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.thread_operator.show.search", true);
       arAkahukuThreadOperator.enableShowReload
         = arAkahukuConfig
         .initPref ("bool", "akahuku.thread_operator.show.reload", true);
@@ -746,6 +750,7 @@ var arAkahukuThreadOperator = {
         
     if (!arAkahukuThreadOperator.enableShowMove
         && !arAkahukuThreadOperator.enableShowThumbnail
+        && !arAkahukuThreadOperator.enableShowSearchForm
         && !arAkahukuThreadOperator.enableShowReload
         && !arAkahukuThreadOperator.enableShowSaveMHT) {
       return;
@@ -767,6 +772,7 @@ var arAkahukuThreadOperator = {
         
     if (!arAkahukuThreadOperator.enableShowMove
         && !arAkahukuThreadOperator.enableShowThumbnail
+        && !arAkahukuThreadOperator.enableShowSearchForm
         && !arAkahukuThreadOperator.enableShowReload
         && !arAkahukuThreadOperator.enableShowSaveMHT) {
       return;
@@ -794,6 +800,7 @@ var arAkahukuThreadOperator = {
         
     if (!arAkahukuThreadOperator.enableShowMove
         && !arAkahukuThreadOperator.enableShowThumbnail
+        && !arAkahukuThreadOperator.enableShowSearchForm
         && !arAkahukuThreadOperator.enableShowReload
         && !arAkahukuThreadOperator.enableShowSaveMHT) {
       return;
@@ -829,6 +836,7 @@ var arAkahukuThreadOperator = {
         
     if (!arAkahukuThreadOperator.enableShowMove
         && !arAkahukuThreadOperator.enableShowThumbnail
+        && !arAkahukuThreadOperator.enableShowSearchForm
         && !arAkahukuThreadOperator.enableShowReload
         && !arAkahukuThreadOperator.enableShowSaveMHT) {
       return;
@@ -1455,6 +1463,40 @@ var arAkahukuThreadOperator = {
                            ("\u30B5\u30E0\u30CD\u56FA\u5B9A"));
         itemdiv.appendChild (label);
             
+        menudiv.appendChild (itemdiv.parentNode);
+      }
+            
+      var searchfm = targetDocument.getElementById("searchfm");
+      if (searchfm && arAkahukuThreadOperator.enableShowSearchForm) {
+        itemdiv = targetDocument.createElement ("div");
+        itemdiv.appendChild (targetDocument.createElement ("div"));
+        itemdiv = itemdiv.firstChild;
+        label = targetDocument.createElement ("form");
+        label.id = "akahuku_throp_searchfm";
+        label.action = "#";
+        label.addEventListener
+        ("submit",
+         function (event) {
+           event.preventDefault();
+           var targetDocument = event.target.ownerDocument;
+           var fm = targetDocument.getElementById("searchfm");
+           var kw = event.target.elements["akahuku_throp_searchfm_keyword"];
+           fm.elements["keyword"].value = kw.value;
+           fm.submit();
+        }, false);
+        input = targetDocument.createElement ("input");
+        input.name = "akahuku_throp_searchfm_keyword";
+        input.type = "text";
+        input.size = 8;
+        label.appendChild (input);
+        input = targetDocument.createElement ("input");
+        input.type = "submit";
+        input.value = "\u691C\u7D22"; //"検索"
+        if (arAkahukuThread.enableSearchNewTab) {
+          input.value += "*";
+        }
+        label.appendChild (input);
+        itemdiv.appendChild (label);
         menudiv.appendChild (itemdiv.parentNode);
       }
             
