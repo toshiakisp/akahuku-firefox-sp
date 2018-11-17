@@ -105,6 +105,8 @@ var arAkahukuBoard = {
     if (!this.observed) {
       ObserverService.addObserver(this,
         "arakahuku-board-newest-num-updated");
+      ObserverService.addObserver(this,
+        "arakahuku-board-lifetime-updated");
       this.observed = true;
     }
   },
@@ -116,6 +118,8 @@ var arAkahukuBoard = {
     if (this.observed) {
       ObserverService.removeObserver(this,
         "arakahuku-board-newest-num-updated");
+      ObserverService.removeObserver(this,
+        "arakahuku-board-lifetime-updated");
       this.observed = false;
     }
   },
@@ -182,6 +186,10 @@ var arAkahukuBoard = {
         var decodedData = JSON.parse (subject.data);
         this.onNotifiedThreadNewestNumber (decodedData, data);
       }
+      else if (topic == "arakahuku-board-lifetime-updated") {
+        var decodedData = JSON.parse (subject.data);
+        this.onNotifiedBoardLifeTime (decodedData, data);
+      }
     }
     catch (e) {
       Akahuku.debug.exception (e);
@@ -193,6 +201,20 @@ var arAkahukuBoard = {
   onNotifiedThreadNewestNumber : function (newestNum, data) {
     // e10s-multi: 他プロセスからの新情報は通知せず反映
     this.updateNewestNum (newestNum.name, newestNum.value, true);
+  },
+  /**
+   * 板の保持数の更新通知イベント
+   */
+  onNotifiedBoardLifeTime : function (prop, data) {
+    // 他からの新情報は通知せず反映
+    switch (prop.property) {
+      case "maxNum":
+        this.setMaxNum (prop.name, prop.value, true);
+        break;
+      case "preserveMin":
+        this.setPreserveMin (prop.name, prop.value, true);
+        break;
+    }
   },
     
   /**
@@ -240,6 +262,42 @@ var arAkahukuBoard = {
     ("akahuku.board_external", true);
   },
 
+  updatePropertyNum : function (idOrInfo, name, num, dontNotify) {
+    var updated = false;
+    var notifyName = "";
+    if (!this.boardList.contains (idOrInfo)) {
+      this.boardList.addBoardInfo (idOrInfo);
+    }
+    var id = this.boardList.getBoardProperty (idOrInfo, "id");
+    var oldNum = this.boardList.getBoardProperty (id, name);
+    switch (name) {
+      case "newestNum":
+        updated = (num > 0 && num > oldNum);
+        notifyName = "newest-num-updated";
+        break;
+      case "maxNum":
+      case "preserveMin":
+        updated = (num != oldNum);
+        notifyName = "lifetime-updated";
+        break;
+    }
+    if (updated) {
+      this.boardList.setBoardProperty (id, name, num);
+    }
+    if (updated && !dontNotify) {
+      var subject = {};
+      subject.data = JSON.stringify ({
+        name: id,
+        property: name,
+        value: num,
+      });
+      this.observePaused = true;
+      ObserverService.notifyObservers
+        (subject, "arakahuku-board-" + notifyName, null);
+      this.observePaused = false;
+    }
+  },
+
   /**
    * 板全体の最新のレスを更新する
    *
@@ -251,33 +309,7 @@ var arAkahukuBoard = {
    *         通知をせずに更新するか
    */
   updateNewestNum : function (idOrInfo, num, dontNotify) {
-    if (!(num > 0)) {
-      return;
-    }
-    var updated = false;
-    if (!this.boardList.contains (idOrInfo)) {
-      this.boardList.addBoardInfo (idOrInfo);
-    }
-    var id = this.boardList.getBoardProperty (idOrInfo, "id");
-    var oldNum = this.boardList.getBoardProperty (id, "newestNum");
-    if (num > oldNum) {
-      this.boardList.setBoardProperty (id, "newestNum", num);
-      updated = true;
-    }
-    else {
-      num = oldNum;
-    }
-    if (updated && !dontNotify) {
-      var subject = {};
-      subject.data = JSON.stringify ({
-        name: id,
-        value: num,
-      });
-      this.observePaused = true;
-      ObserverService.notifyObservers
-        (subject, "arakahuku-board-newest-num-updated", null);
-      this.observePaused = false;
-    }
+    this.updatePropertyNum (idOrInfo, "newestNum", num, dontNotify);
   },
   getNewestNum : function (idOrInfo) {
     return this.boardList.getBoardProperty (idOrInfo, "newestNum");
@@ -292,8 +324,8 @@ var arAkahukuBoard = {
   getMaxNum : function (idOrInfo) {
     return this.boardList.getBoardProperty (idOrInfo, "maxNum");
   },
-  setMaxNum : function (idOrInfo, value) {
-    this.boardList.setBoardProperty (idOrInfo, "maxNum", value);
+  setMaxNum : function (idOrInfo, value, dontNotify) {
+    this.updatePropertyNum (idOrInfo, "maxNum", value, dontNotify);
   },
   getServerName : function (idOrInfo, optType) {
     if (optType === "true") {
@@ -311,8 +343,8 @@ var arAkahukuBoard = {
   getPreserveMin : function (idOrInfo) {
     return this.boardList.getBoardProperty (idOrInfo, "preserveMin");
   },
-  setPreserveMin : function (idOrInfo, value) {
-    this.boardList.setBoardProperty (idOrInfo, "preserveMin", value);
+  setPreserveMin : function (idOrInfo, value, dontNotify) {
+    this.updatePropertyNum (idOrInfo, "preserveMin", value, dontNotify);
   },
 
   getBoardIDs : function (optType) {
