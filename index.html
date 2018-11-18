@@ -20,15 +20,34 @@
 
         <p class="view"><a href="https://github.com/toshiakisp/akahuku-firefox-sp">View the Project on GitHub <small>toshiakisp/akahuku-firefox-sp</small></a></p>
 
-
+	<h3>WebExtension (「Extended 版」)</h3>
+	<p style="margin-bottom: 0">6.0a4, 2018/11/17
+	<a href="updateinfo-ext.xhtml">更新情報</a> (<a href="update_history-ext.xhtml">履歴</a>)
+	</p>
         <ul>
           <li style="background: linear-gradient(#84C63C, #489615) repeat scroll 0% 0% #489615;"><a
-            href="https://toshiakisp.github.com/akahuku-firefox-sp/akahuku-5.2.90.sp_rev.53.xpi"
+            href="https://toshiakisp.github.com/akahuku-firefox-sp/akahuku-ext-6.0a4.xpi"
+            style="color: white; text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);">Install <strong style="color: white;">Add-on</strong></a></li>
+          <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/zipball/extended">Download <strong>Source</strong></a></li>
+          <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/tree/extended">View On <strong>GitHub</strong></a></li>
+        </ul>
+	<p style="margin: 0; margin-bottom: 1ex;">※下のレガシー版とはバージョン違いのため同時利用不可。設定の自動移行不可（インポートは可）。レガシー版からの自動更新無し。</p>
+	<p>※<strong style="color: red;">アルファテスト中</strong>。詳細は本文参照。</p>
+
+	<h3>旧式(レガシー拡張機能)</h3>
+	<p style="margin-bottom: 0">sp_rev.54, 2018/11/18
+	<a href="updateinfo.xhtml">更新情報</a> (<a href="update_history.xhtml">履歴</a>)
+	</p>
+        <ul>
+          <li style="background: linear-gradient(#84C63C, #489615) repeat scroll 0% 0% #489615;"><a
+            href="https://toshiakisp.github.com/akahuku-firefox-sp/akahuku-5.2.90.sp_rev.54-nosign.xpi"
             style="color: white; text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);">Install <strong style="color: white;">Add-on</strong></a></li>
           <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/zipball/master">Download <strong>Source</strong></a></li>
           <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp">View On <strong>GitHub</strong></a></li>
         </ul>
+	<p style="margin-top: 1em; margin-bottom: 1ex;">※拡張機能への署名がMozillaから貰えなくなったためsp_rev.54以降は<strong style="color: red;">無署名</strong>。</p>
         <p style="margin-top: 1em">※旧版: sp_rev.
+		<a href="akahuku-5.2.90.sp_rev.53.xpi">53</a>,
 		<del><a href="akahuku-5.2.90.sp_rev.52.xpi">52</a></del>,
 		<del><a href="akahuku-5.2.90.sp_rev.51.xpi">51</a></del>,
 		<a href="akahuku-5.2.90.sp_rev.50.xpi">50</a>,
@@ -52,7 +71,6 @@
 		<a href="akahuku-5.2.90.sp_rev.32.xpi">32</a>,
 		<a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/master/akahuku.xpi">older</a>
 		</p>
-		<p style="margin-top: 1em">※バグ等まとめ先: <a href="https://github.com/toshiakisp/akahuku-firefox-sp/issues">Issuesページ</a> (報告歓迎)</p>
 		<p style="margin-top: 3em">※「<strong>合間合間に</strong>」等は<a href="#others">こちら</a></p>
       </header>
       <section>
@@ -78,17 +96,15 @@
   "><strong style="color:red">注意: 移植途中の機能が多々あり、設定によっては全体が機能しなくなったりします</strong>。
 特にファイル保存,タブ操作,サイドバー,スタイル変更,ショートカットキー...は全体的に未実装です。
 P2Pは削除予定です。
-また、従来の拡張機能とは同じIDのため<strong style="color:red">上書きインストールになりますが、現状では設定の自動移行はできません</strong>。以前にエクスポートしておいたものがあるならインポートは出来るはずです。また、現状では設定画面未実装のためにインポートは出来ても編集できない項目があります。
-GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/extended">このブランチ</a>で作業中。
-</p>
-<p style="text-align: center"><a href="akahuku-ext-6.0a4.xpi">非公式 Extended版 6.0a4 2018/11/17 (署名済)</a>
-<br><span class="install_button"><a href="akahuku-ext-6.0a4.xpi">Install <strong>Add-on</strong></a></span>
+また、従来の拡張機能とは同じIDのため<strong style="color:red">上書きインストールになりますが、設定の自動移行はできません</strong>。以前にエクスポートしておいたものがあるならインポートは出来るはずです。また、現状では設定画面未実装のためにインポートは出来ても編集できない項目があります。
+GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/tree/extended">このブランチ</a>で作業中。
 </p>
 
 <ul>
-<li><a href="updateinfo-ext.xhtml">Update info</a>。</li>
 <li>自動更新に対応していますが、拡張を(自動&amp;手動で)更新した後は、
-現状、スレ等のページはリロードしない限り機能停止したままとなります。</li>
+現状、スレ等のページはリロードしない限り機能停止したままとなります。
+現時点ではFirefoxを再起動するのが良さそう。</li>
+<li>フレームで開いたページへの適用は未実装です。</li>
 </ul>
 </div>
 
@@ -109,13 +125,12 @@ GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/ex
 <p>古い Firefox (3.6系も)では不具合が生じる可能性があります。(一応できるだけ互換を考慮してはいるけれど、ほとんどテストしてないため)</p>
 
 <h2>最新版の更新情報</h2>
-<iframe src="updateinfo.xhtml" width="100%" height="300px"></iframe>
-<p>(<a href="update_history.xhtml">以前の履歴</a>)</p>
-
-<p>Github の <a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/master/">履歴</a>
-の方が情報は速いかもしれません。
-特に、<a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/develop/">開発用チャネル</a>ではリリース前に変更が確認できることもあります。
+<iframe src="updateinfo-ext.xhtml" width="100%" height="300px"></iframe>
+<p>(<a href="update_history-ext.xhtml">以前の履歴</a>)</p>
+<p>Github の <a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/extended/">コミット履歴</a>
+でリリース前の更新情報が見れることもあります。
 </p>
+<p>リリース告知などは<a href="https://twitter.com/toshiakisp/">Twitter</a>のほうでも確認できます。</p>
 
 <h2>他のリソース</h2>
 
@@ -128,14 +143,9 @@ GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/commits/ex
 <dd>(2012-08-20のsp64983時点+少しの変更点まで。github管理に移行後からの変更点は反映されていません。新機能・変更された仕様などは別ページにまとめなおす予定です。)</dd>
 </dl>
 
-<h2>リリースなどの告知</h2>
-<a class="twitter-timeline"  href="https://twitter.com/toshiakisp/favorites"  data-widget-id="348087347360956417">@toshiakisp のお気に入りに登録されたツイート</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-<p>(twitter embedded timeline; Favorites)</p>
-
 <hr>
 <h1><a name="others"></a>関連アドオンについて</h1>
-<h2>「合間合間に」(改変版)
+<h2>「合間合間に」(改変版) ※レガシー
   <span class="install_button" style="float:right;"><a href="https://toshiakisp.github.com/akahuku-firefox-sp/aima_aimani-3.3.57.sp_rev.3.xpi">Install <strong>Add-on</strong></a></span>
 </h2>
 

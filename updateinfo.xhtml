@@ -1,41 +1,15 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"> 
-<h4>sp_rev.53 (2017-08-11)</h4>
+<h4>sp_rev.54 (2018-11-18)</h4>
 <ul>
-  <li>sp_rev.51からの諸問題を修正</li>
+  <li>ふたばの全文検索対応による変更へ少し対応 (Extended 6.0a4からバックポート)</li>
   <ul>
-    <li>修正: マルチプロセス有効時にコンテキストメニューからのコマンド(イメぐぐる等)が機能しない問題</li>
-    <li>修正: 一部のツールバーアイコンのタイトルが"undefined"な件</li>
-    <li>修正: オートリンク画像の[保存]で保存終了後もボタン等の表示が変わらない問題</li>
-    <li>ツールバーアイコンをクリックして設定を開く等が動作しないらしい状況に対処できてるかも？</li>
-    <li>https経由での「」ッチー等でも機能するように</li>
+    <li>有効な板で「フォーム固定」を有効時に異常動作する問題</li>
+    <li>設定の「リンク」／「リンクを新しいタブで開く」に「検索ボタン」を追加(既定で有効)</li>
+    <li>設定の「スレ操作パネル」に表示するものとして「全文検索フォーム」を追加(既定で有効)</li>
   </ul>
-  <li>調整</li>
-  <ul>
-    <li>https経由での「」ッチー等でも機能するように</li>
-  </ul>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/a919bf4...1850c86">All changes from previous release on github</a> (7 commits, 12 files changed)</li>
-</ul>
-<h4>sp_rev.52 (2017-08-11)</h4>
-<ul>
-  <li>sp_rev.51での諸問題を修正</li>
-  <ul>
-    <li>修正: 他拡張機能のコンテキストメニューが表示されなくなる等のXUL UI初期化に関する不具合</li>
-	<li>修正: Firefox 52-54で画像を保存ボタンやMHT保存などが機能しない問題</li>
-	<li>修正: Firefox 24-28でファイル保存等が出来ない問題</li>
-  </ul>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/2c64f29...a919bf4">All changes from previous release on github</a> (9 commits, 15 files changed)</li>
-</ul>
-<h4>sp_rev.51 (2017-08-08)</h4>
-<ul>
-  <li>修正・調整</li>
-  <ul>
-	<li>Firefox 55+: ページを拡大縮小している場合にページ末尾でのホイールによる更新等が機能しない場合がある問題に対処</li>
-	<li>Firefox 52-53: フォームへの添付ファイル貼り付けやクリアが機能しない問題を修正</li>
-	<li>古いFirefox(3.6,4-16)との互換性の向上</li>
-	<li>Firefox 56+: Content process sandbox level=3への対応(暫定)</li>
-  </ul>
-  <li>WebExtensions化を目指しての内部構造の大きな変更(ページ内動作は変わらないはずだが複数ウィンドウ等で挙動変化あるかも)</li>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/7e30c23...7e0f61f">All changes from previous release on github</a> (61 commits, 74 files changed)</li>
+  <li>板情報の更新</li>
+  <li>レガシー拡張機能へのAMO署名サービス停止のため無署名配布に</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/a919bf4...1850c86">All changes from previous release on github</a> (8 commits, 14 files changed)</li>
 </ul>
 </html>
