@@ -25,6 +25,7 @@
   "permissions": [
     "storage",
     "webRequest",
+    "webNavigation",
     "history",
     "clipboardRead",
     "clipboardWrite",
@@ -67,6 +68,15 @@
       "background/browser-action.js"
     ]
   },
+
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "all_frames": true,
+      "run_at": "document_start",
+      "js": ["content/loading_init.js"]
+    }
+  ],
 
   "web_accessible_resources": [
     "content/images/*"

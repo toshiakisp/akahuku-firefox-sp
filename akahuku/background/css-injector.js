@@ -14,12 +14,6 @@ var AkahukuCSSInjector = (() => {
       this.styleText = code;
     }
 
-    get matchPattern() {
-      if (this.domain)
-        return '*://*.' + this.domain + '/*';
-      return '<all_urls>';
-    }
-
     match(url) {
       try {
         let u = new URL(url);
@@ -30,21 +24,27 @@ var AkahukuCSSInjector = (() => {
       }
     }
 
-    async insertForTab(tabId, url=undefined) {
+    async insertForFrame(tabId, frameId, url=undefined) {
       let records = _insertedEntryRecords.get(this);
       if (!records) {
         records = new Map();
         _insertedEntryRecords.set(this, records);
       }
-      let rec = records.get(tabId);
+      let tabrecords = records.get(tabId);
+      if (!tabrecords) {
+        tabrecords = new Map();
+        records.set(tabId, tabrecords);
+      }
+      let rec = tabrecords.get(frameId);
       if (!rec) {
         rec = {promising: Promise.resolve()};
-        records.set(tabId, rec);
+        tabrecords.set(frameId, rec);
       }
       rec.url = url;
       rec.details = {
         cssOrigin: 'user',
         runAt: 'document_start',
+        frameId: frameId,
         code: this.styleText,
       };
       await rec.promising;
@@ -52,24 +52,36 @@ var AkahukuCSSInjector = (() => {
       return rec.promising;
     }
 
-    async insertToMatchedTabs() {
+    async insertToMatchedFrames() {
       const promises = [];
-      const tabs = await browser.tabs.query({url: this.matchPattern});
+      const tabs = await browser.tabs.query({});
       for (let tab of tabs) {
-        promises.push(this.insertForTab(tab.id, tab.url));
+        let getting = browser.webNavigation.getAllFrames({tabId:tab.id})
+          .then((allframes) => {
+            const promises = [];
+            for (let frame of allframes) {
+              if (this.match(frame.url)) {
+                promises.push(this.insertForFrame(tab.id, frame.frameId, frame.url));
+              }
+            }
+            return Promise.all(promises);
+          });
+        promises.push(getting);
       }
       return Promise.all(promises);
     }
 
-    async removeFromInsertedTabs() {
+    async removeFromInsertedFrames() {
       const promises = [];
       const records = _insertedEntryRecords.get(this);
       if (records) {
-        for (let [tabId, info] of records) {
-          info.promising = info.promising.then(() => {
-            return browser.tabs.removeCSS(tabId, info.details);
-          });
-          promises.push(info.promising);
+        for (let [tabId, tabrecords] of records) {
+          for (let [frameId, info] of tabrecords) {
+            info.promising = info.promising.then(() => {
+              return browser.tabs.removeCSS(tabId, info.details);
+            });
+            promises.push(info.promising);
+          }
         }
       }
       return Promise.all(promises);
@@ -85,31 +97,21 @@ var AkahukuCSSInjector = (() => {
       this.styleText = newStyleText;
       const records = _insertedEntryRecords.get(this);
       if (records) {
-        for (let [tabId, info] of records) {
-          info.promising = info.promising.then(() => {
-            return browser.tabs.removeCSS(tabId, info.details);
-          })
-          .then(() => {
-            this.insertForTab(tabId, info.url);
-          });
-          promises.push(info.promising);
+        for (let [tabId, tabrecords] of records) {
+          for (let [frameId, info] of tabrecords) {
+            info.promising = info.promising.then(() => {
+              return browser.tabs.removeCSS(tabId, info.details);
+            })
+            .then(() => {
+              this.insertForFrame(tabId, frameId, info.url);
+            });
+            promises.push(info.promising);
+          }
         }
       }
       return Promise.all(promises);
     }
   }
-
-  let onTabsUpdated = (tabId, changeInfo, tab) => {
-    if (changeInfo.status == 'loading' && changeInfo.url) {
-      // a Tab starts loading a url...
-      for (let entry of _entries.values()) {
-        if (entry.match(changeInfo.url)) {
-          entry.insertForTab(tabId, changeInfo.url);
-        }
-      }
-    }
-  };
-  browser.tabs.onUpdated.addListener(onTabsUpdated);
 
   let onTabsRemoved = (tabId, removeInfo) => {
     for (let entry of _entries.values()) {
@@ -134,7 +136,7 @@ var AkahukuCSSInjector = (() => {
       else {
         entry = new StyleSheetEntry(id, rule, code);
         _entries.set(id, entry);
-        return entry.insertToMatchedTabs();
+        return entry.insertToMatchedFrames();
       }
     },
 
@@ -142,7 +144,7 @@ var AkahukuCSSInjector = (() => {
       let removing;
       const entry = _entries.get(id);
       if (entry) {
-        removing = entry.removeFromInsertedTabs();
+        removing = entry.removeFromInsertedFrames();
         _insertedEntryRecords.delete(entry);
       }
       _entries.delete(id);
@@ -152,10 +154,20 @@ var AkahukuCSSInjector = (() => {
     unregisterAll: async function () {
       const promises = [];
       for (let entry of _entries.values()) {
-        promises.push(entry.removeFromInsertedTabs());
+        promises.push(entry.removeFromInsertedFrames());
       }
       _insertedEntryRecords.clear();
       _entries.clear();
+      return Promise.all(promises);
+    },
+
+    injectIfMatched: async function (tabId, frameId, url) {
+      const promises = [];
+      for (let entry of _entries.values()) {
+        if (entry.match(url)) {
+          promises.push(entry.insertForFrame(tabId, frameId, url));
+        }
+      }
       return Promise.all(promises);
     },
   });

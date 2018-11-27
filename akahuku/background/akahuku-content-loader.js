@@ -1,23 +1,30 @@
 'use strict';
+/* global AkahukuCSSInjector */
 
 // require: tabs permission
 
 const AkahukuContentLoader = {
-  injectToTab: async function (tabId) {
+  injectToFrame: async function (tabId, frameId, abortSignal) {
     // Inject multiple scripts in specified order
     let executeScripts = async (tabId, files) => {
       for (let f of files) {
+        if (abortSignal && abortSignal.aborted) {
+          console.warn('akahuku-content-loader: Abort loading before', f);
+          break;
+        }
         try {
           if (!f.startsWith('/')) {
             f = '/content/' + f;
           }
           await browser.tabs.executeScript(tabId, {
             file: f,
+            frameId: frameId,
             runAt: 'document_start'
           });
         } catch (e) {
           throw new Error('Error in executeScript: '
-            + f + ' (' + String(e) + ')')
+            + f + ' for tab:' + tabId + ' frame:' + frameId
+            + ' (' + String(e) + ')')
         }
       }
     };
@@ -88,16 +95,23 @@ const AkahukuContentLoader = {
   },
 };
 
+browser.runtime.onConnect.addListener((port) => {
+  if (port.name !== 'content-loader') {
+    return;
+  }
+  let tabId = port.sender.tab.id;
+  let frameId = port.sender.frameId || 0;
+  let url = port.sender.url;
 
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // ignore a prior event with 'loading' with no url
-  if (changeInfo.status == 'loading' && changeInfo.url) {
-    if (!arAkahukuURLUtil.getNeedApply(tab.url)) {
-      return;
-    }
-    AkahukuContentLoader.injectToTab(tabId);
+  AkahukuCSSInjector.injectIfMatched(tabId, frameId, url);
+
+  if (!arAkahukuURLUtil.getNeedApply(url)) {
+    return;
   }
-  else {
-    //console.log(tabId, changeInfo)
-  }
-})
+  let abortSignal = {aborted: false};
+  port.onDisconnect.addListener((p) => {
+    abortSignal.aborted = true;
+  });
+  AkahukuContentLoader.injectToFrame(tabId, frameId, abortSignal);
+});
+
