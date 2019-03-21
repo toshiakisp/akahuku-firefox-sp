@@ -23,6 +23,7 @@
   },
 
   "permissions": [
+    "downloads",
     "storage",
     "webRequest",
     "history",
@@ -64,6 +65,7 @@
       "background/context-menu.js",
       "background/akahuku-content-loader.js",
       "background/tabs.js",
+      "background/downloads.js",
       "background/browser-action.js"
     ]
   },

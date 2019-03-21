@@ -37,6 +37,7 @@ const AkahukuContentLoader = {
       'pref-content.js',
       'akahuku-central-content.js',
       'tabs-content.js',
+      'downloads-content.js',
       '/common/text-encoding/encoding-indexes.js',
       '/common/text-encoding/encoding.js',
       '/common/arAkahukuURLUtil.js',

@@ -56,6 +56,7 @@
         "PortObserverHandler": true,
         "Prefs": true,
         "Tabs": true,
+        "Downloads": true,
         "Loader": true
     }
 }
