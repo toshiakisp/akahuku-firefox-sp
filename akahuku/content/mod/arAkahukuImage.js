@@ -488,7 +488,9 @@ var arAkahukuImage = {
       
       arAkahukuImage.onSave
       (target, false,
-       "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
+        //"保存先のディレクトリ設定が異常です"
+        "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059",
+        normal);
       return;
     }
     else {
@@ -623,7 +625,8 @@ var arAkahukuImage = {
         
     arAkahukuImage.onSave
     (target, false,
-     "\u4E2D\u65AD\u3057\u307E\u3057\u305F", "", normal);
+      //"中断しました"
+      "\u4E2D\u65AD\u3057\u307E\u3057\u305F", normal);
     return;
   },
     
@@ -660,124 +663,46 @@ var arAkahukuImage = {
       ext = RegExp.$1;
     }
         
-    var dirPath = arAkahukuImage.baseList [targetDirIndex].dir;
+    let dirPref = arAkahukuImage.baseList [targetDirIndex];
+    var dirPath = dirPref.dir;
     if (!dirPath) {
-      /* ベースのディレクトリが不正 */
+      // "保存先のディレクトリ設定が異常です"
       arAkahukuImage.onSave
       (target, false,
-       "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", "", normal);
+       "\u4FDD\u5B58\u5148\u306E\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u8A2D\u5B9A\u304C\u7570\u5E38\u3067\u3059", normal);
       return;
     }
-    if (arAkahukuImage.baseList [targetDirIndex].dialog) {
-      var browser
-        = arAkahukuWindow.getBrowserForWindow
-        (target.ownerDocument.defaultView);
-      arAkahukuImage.asyncOpenSaveImageFilePicker
-        (browser, leafName, dirPath, function (ret, filePath, dirPath) {
 
-        if (ret != 'returnOK'
-            && ret != 'returnReplace') {
-          /* 中断 */
-          arAkahukuImage.onSave
-          (target, false,
-           "\u4E2D\u65AD\u3057\u307E\u3057\u305F", "", normal);
-          return;
-        }
-                
-        if (arAkahukuImage.baseList [targetDirIndex].dialog_keep) {
-          var newBase = dirPath;
-                    
-          arAkahukuImage.baseList [targetDirIndex].dir = newBase;
-                    
-          arAkahukuImage.saveBaseList ();
-        }
-                
-        var path = filePath;
-        var leafName = AkahukuFileUtil.Path.basename (filePath);
-        if (leafName.indexOf (ext)
-            != leafName.length - ext.length) {
-          path = filePath + ext;
-        }
-        arAkahukuImage.saveImageCore (target, path, href, leafName, normal);
-      });
+    let subdir = arAkahukuImage.createSubdirName (dirPref, info, href);
+    if (subdir == null) {
+      arAkahukuImage.onSave (target, false,
+        // "スレ番号はレス送信モードでしか使えません"
+        "\u30B9\u30EC\u756A\u53F7\u306F\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u3057\u304B\u4F7F\u3048\u307E\u305B\u3093", normal);
+      return;
     }
-    else {
-      arAkahukuFile.createDirectory (dirPath);
-            
-      ; /* インデント用 */
-      var dir
-      = arAkahukuImage.createSubdirName
-      (arAkahukuImage.baseList [targetDirIndex], info, href);
-      if (dir == null) {
-        /* ベースのディレクトリが不正 */
-        arAkahukuImage.onSave
-          (target, false,
-           "\u30B9\u30EC\u756A\u53F7\u306F\u30EC\u30B9\u9001\u4FE1\u30E2\u30FC\u30C9\u3067\u3057\u304B\u4F7F\u3048\u307E\u305B\u3093", "", normal);
-        return;
-      }
-      var dirUrl = AkahukuFileUtil.getURLSpecFromNativeDirPath (dirPath);
-      if (dir) {
-        dirUrl += dir + "/";
-        dirPath = AkahukuFileUtil.getNativePathFromURLSpec (dirUrl);
-        arAkahukuFile.createDirectory (dirPath);
-      }
-            
-      var fileUrl = dirUrl + leafName;
-      var filePath = AkahukuFileUtil.getNativePathFromURLSpec (fileUrl);
-      arAkahukuImage.saveImageCore (target, filePath, href, leafName, normal);
+    if (subdir) {
+      dirPath = AkahukuFileUtil.Path.join(dirPath, subdir);
     }
-  },
-  /**
-   * 保存先のファイルを選ぶ
-   */
-  asyncOpenSaveImageFilePicker : function (browser, leafName, dirname, callback) {
-    Akahuku.debug.error('NotYetImplemented');
-    window.setTimeout(()=>{
-      callback.apply (null, [-1, null, null]);
-    },10);
-    /*
-    var contentWindow = browser.ownerGlobal;
-    arAkahukuIPC.sendAsyncCommand
-      ("Image/asyncOpenSaveImageFilePicker",
-       [null, filename, dirname, callback],
-       contentWindow);
-    */
+    let filePath = AkahukuFileUtil.Path.join(dirPath, leafName);
+    arAkahukuImage.saveImageCore (target, filePath, href, normal, targetDirIndex);
   },
 
   saveRedirectImage : function (target, targetDirIndex, href, leafName, normal) {
-    var filename
-      = "." + new Date ().getTime ()
-      + "_" + Math.floor (Math.random () * 1000);
-    filename = AkahukuFileUtil.Path
-      .join (arAkahukuFile.systemDirectory, filename);
-
     var targetDocument = target.ownerDocument;
-    var isPrivate = false; //TODO
-
-    var onFileSaved = function (success, savedFile, storage, msg) {
-      var newHref = null;
-      var wait = 0;
-      var promise;
-      if (savedFile) {
-        promise = storage.getPromisedFile (savedFile.name)
-        .then (function (pfile) {
-          var fh = pfile.open ("readonly");
-          return fh.readAsText (-1, 0)
-          .then (function (data) {
-            fh.close ();
-            storage.remove (savedFile.name);
-            return data;
-          }).catch (function (e) {
-            fh.close ();
-            Akahuku.debug.warn (e);
-            return "";
-          });
-        });
-      }
-      else {
-        promise = Promise.resolve ("");
-      }
-      promise.then (function (text) {
+    window.fetch(href, {
+      redirect: 'follow',
+    })
+      .then((resp) => resp.blob())
+      .then((blob) => {
+        return new Promise((resolve, reject) => {
+          let reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsBinaryString(blob,
+            {type: 'application/octet-stream'});
+        })
+      })
+      .then((text) => {
         var result = Akahuku.getSrcURL (text, href);
         if (result [0]) {
           return result;
@@ -789,10 +714,14 @@ var arAkahukuImage = {
         }
         else {
           arAkahukuImage.onSave
-            (target, false, msg, "", normal);
+            (target, false,
+              // "元画像アドレス取得失敗"
+              "\u5143\u753B\u50CF\u30A2\u30C9\u30EC\u30B9\u53D6\u5F97\u5931\u6557",
+              normal);
           return Promise.reject (0);
         }
-      }).then (function (result) {
+      })
+      .then ((result) => {
         var newHref = result [0];
         var wait = result [1];
         targetDocument.defaultView
@@ -800,10 +729,10 @@ var arAkahukuImage = {
           arAkahukuImage.saveImage
             (target, targetDirIndex, newHref, leafName, normal);
         }, wait)
+      })
+      .catch((err) => {
+        Akahuku.debug.exception(err);
       });
-    };
-    arAkahukuImage.asyncSaveImageToFile
-      (filename, href, isPrivate, onFileSaved);
   },
 
   /**
@@ -812,49 +741,50 @@ var arAkahukuImage = {
    * @param  HTMLElement target ボタン
    * @param  String filePath 保存先のファイルパス
    * @param  String uri 保存するアドレス
-   * @param  String leafName ファイル名
    * @param  Boolean normal 通常のボタンか
+   * @param  Number targetDirIndex
    */
-  saveImageCore : function (target, filePath, uri, leafName, normal) {
-    var targetDocument = target.ownerDocument;
-    var isPrivate = false; //TODO
-    arAkahukuImage.asyncSaveImageToFile (filePath, uri, isPrivate,
-        function (success, savedFile, storage, msg) {
-          if (!success && savedFile) {
-            storage.remove (savedFile.name);
-            if (!msg || msg.length == 0) {
-              // "保存失敗(Content-Type)"
-              msg = "\u4FDD\u5B58\u5931\u6557(Content-Type)";
-            }
+  saveImageCore : function (target, filePath, uri, normal, targetDirIndex) {
+    Downloads.download({
+      url: uri,
+      conflictAction: 'overwrite',
+      filename: filePath,
+      saveAs: arAkahukuImage.baseList [targetDirIndex].dialog,
+    })
+      .then((result) => {
+        try {
+          if (arAkahukuImage.baseList [targetDirIndex].dialog_keep) {
+            var newBase = AkahukuFileUtil.Path.dirname(result.filename);
+            /* FIXME: Change into relative path in the download folder
+            arAkahukuImage.baseList [targetDirIndex].dir = newBase;
+            arAkahukuImage.saveBaseList ();
+            */
           }
           if (target.style.display == "none") {
+            let dirPref = arAkahukuImage.baseList [targetDirIndex]
+            let props = {
+              instantsrc: dirPref.instantsrc,
+              downloadId: result.id,
+              filename: result.filename,
+            };
             arAkahukuImage.onSave
-              (target, success, msg, leafName, normal);
+              (target, result.success, result.state, normal, props);
           }
-          else {
-            if (savedFile) {
-              // 中断されたため削除
-              storage.remove (savedFile.name);
+          else { // Save action was aborted by the stop button
+            if (result.success) {
+              Downloads.removeFile(result.id)
+                .then(() => Downloads.eraseById(result.id));
             }
           }
-        });
-  },
-
-  /**
-   * 画像を保存先に保存する
-   *
-   * @param  String filePath 保存先のファイルパス
-   * @param  String uri 保存するアドレス
-   * @param  Boolean isPrivate プライベートブラウジングか
-   * @param  Function callback 保存終了時のコールバック関数
-   */
-  asyncSaveImageToFile : function (filePath, uri, isPrivate, callback) {
-    Akahuku.debug.error('NotYetImplemented');
-    callback (false, null, null, "NotYetImplemented");
-    /*
-    arAkahukuIPC.sendAsyncCommand
-      ("Image/asyncSaveImageToFile", arguments);
-    */
+        }
+        catch (e) {
+          Akahuku.debug.exception(e);
+        }
+      })
+      .catch((err) => {
+        arAkahukuImage.onSave
+          (target, false, err.message, normal);
+      });
   },
     
   saveBaseList : function () {
@@ -1050,35 +980,25 @@ var arAkahukuImage = {
     if (target.nodeName.toLowerCase () != "a") {
       target = arAkahukuDOM.findParentNode (target, "a");
     }
-    var targetDocument = target.ownerDocument;
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
-    
-    var leafName = target.getAttribute ("dummyleafname");
     var href = target.getAttribute ("dummyhref");
-        
-    arAkahukuImage.asyncCheckImageFileExist (target, leafName)
-      .then (function (result) {
-        var dir = AkahukuFileUtil.Path.dirname (result.path);
-        throw new Error('Deprecated (filesystem)');
-        /*
-        return AkahukuFS.getFileStorage ({name: dir})
-        .then (function (storage) {
-          return [storage, result.file];
+    let id = Number(target.dataset.downloadId);
+    let filename = target.dataset.downloadFilename;
+    if (!Number.isNaN(id)) {
+      Downloads.removeFile(id)
+        .then(() => {
+          arAkahukuImage.updateContainer(target.parentNode, false, false);
+          arAkahukuImage.changeImage(target, false);
+          try {
+            Downloads.eraseById(id);
+          }
+          catch (e) {
+            Akahuku.debug.exception(e);
+          }
+        })
+        .catch((err) => {
+          Akahuku.debug.exception(err);
         });
-        */
-      }, function () {
-        throw new Error ("No file for " +  leafName);
-      }).then (function (args) {
-        var [storage, file] = args;
-        return storage.remove (file.name);
-      }).then (function () {
-        arAkahukuImage.updateContainer (target.parentNode,
-                                        false, false);
-        arAkahukuImage.changeImage (target, false);
-      }).catch (function (e) {
-        Akahuku.debug.exception (e);
-      });
+    }
   },
     
   /**
@@ -1090,13 +1010,11 @@ var arAkahukuImage = {
    *         保存したか
    * @param  String message
    *         表示するメッセージ
-   * @param  String leafName
-   *         保存したファイルの本来のファイル名
    * @param  Boolean normal
    *         通常のボタンか
    *         オートリンクのボタンなら false
    */
-  onSave : function (target, saved, message, leafName, normal) {
+  onSave : function (target, saved, message, normal, savedProps) {
     var messageNode = target;
     var stopNode = null;
     while (messageNode) {
@@ -1119,37 +1037,16 @@ var arAkahukuImage = {
     
     if (saved) {
       if (normal) {
-        arAkahukuImage.asyncCheckImageFileExist (target, leafName)
-          .then (function (result) {
-            // file exists
-            var instantsrc = arAkahukuImage
-              .baseList [result.baseListId].instantsrc;
-            stopNode.style.display = "none";
-            arAkahukuDOM.setText (messageNode, null);
-            arAkahukuImage.updateContainer
-              (target.parentNode, true,
-               instantsrc);
-            if (instantsrc) {
-              arAkahukuImage.changeImage (target, true, result.path);
-            }
-          }, function (values) {
-            // no file exist
-            stopNode.style.display = "none";
-            arAkahukuDOM.setText
-              (messageNode,
-               "\u4FDD\u5B58\u3057\u307E\u3057\u305F");
-            if (normal) {
-              arAkahukuImage.updateContainer
-                (target.parentNode, false, false);
-            }
-            else {
-              target.style.display = "";
-            }
-            targetDocument.defaultView.setTimeout
-              (function (messageNode) {
-                arAkahukuDOM.setText (messageNode, null);
-              }, 5000, messageNode);
-          });
+        var instantsrc = savedProps ? savedProps.instantsrc : false;
+        stopNode.style.display = "none";
+        arAkahukuDOM.setText (messageNode, null);
+        arAkahukuImage.updateContainer
+          (target.parentNode, true,
+           instantsrc, savedProps);
+        if (instantsrc) {
+          let src = target.getAttribute('dummyhref');
+          arAkahukuImage.changeImage (target, true, src);
+        }
       }
       else {
         stopNode.style.display = "none";
@@ -1192,70 +1089,15 @@ var arAkahukuImage = {
   },
 
   /**
-   * 保存ディレクトリのどれかに保存されているか調べる
-   * @param  HTMLAnchorElement target 画像を保存ボタン
-   * @param  String leafName ファイル名(だけ)
-   * @return Promise
-   */
-  asyncCheckImageFileExist : function (target, leafName) {
-    var targetDocument = target.ownerDocument;
-    var info = Akahuku.getDocumentParam (targetDocument).location_info;
-    var href = target.getAttribute ("dummyhref");
-
-    var dirCandidates = [];
-    var promises = [];
-    for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-      var pathParts = [];
-      var filename = arAkahukuImage.baseList [i].dir;
-      dirCandidates.push (String (filename));
-      pathParts.push (filename);
-      var dir
-        = arAkahukuImage.createSubdirName
-        (arAkahukuImage.baseList [i], info, href);
-      if (dir == null) {
-        continue;
-      }
-      if (dir) {
-        pathParts.push (dir);
-      }
-      dirCandidates [i] = AkahukuFileUtil.Path.join.apply (null, pathParts);
-      filename = AkahukuFileUtil.Path.join (dirCandidates [i], leafName);
-      let index = i;
-      var promise = AkahukuFileUtil
-        .createFromFileName (filename)
-        .then (function (file) {
-          return Promise.reject ({i: index, file: file});
-        }, function (reason) {
-          return Promise.resolve (true);
-        });
-      promises.push (promise);
-    }
-    return Promise.all (promises)
-    .then (function (values) {
-      return Promise.reject ("no file exist");
-    }, function (result) {
-      // file exists
-      var dir = dirCandidates [result.i];
-      var value = {
-        baseListId: result.i,
-        basedir: dir,
-        path: AkahukuFileUtil.Path.join (dir, leafName),
-        file: result.file,
-      };
-      return Promise.resolve (value);
-    });
-  },
-    
-  /**
    * サムネ／元画像を入れ替える
    *
    * @param  HTMLAnchorElement target
    *         サムネ／元画像 ボタン
    * @param  Boolean isSrc
    *         元画像か
-   * @param  String optFilePath ファイル名(既知の場合)
+   * @param  String optSrcUrl 元画像URL
    */
-  changeImage : function (target, isSrc, optFilePath) {
+  changeImage : function (target, isSrc, optSrcUrl) {
     var href = target.getAttribute ("dummyhref");
     var leafName = target.getAttribute ("dummyleafname");
         
@@ -1452,20 +1294,11 @@ var arAkahukuImage = {
           + "/" + uinfo.leafNameExt;
         url = arAkahukuP2P.enP2P (url);
       }
-      else if (optFilePath) {
-        url = AkahukuFileUtil.getURLSpecFromNativePath (optFilePath);
-        url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
+      else if (optSrcUrl) {
+        url = optSrcUrl;
       }
       else {
-        url = null;
-        arAkahukuImage.asyncCheckImageFileExist (target, leafName)
-          .then (function (result) {
-            var url = AkahukuFileUtil.getURLSpecFromNativePath (result.path);
-            url = Akahuku.protocolHandler.enAkahukuURI ("local", url);
-            srcImage.src = url;
-          }, function () {
-            Akahuku.debug.warn ("no file exist for: " + leafName);
-          });
+        url = href;
       }
             
       srcImage.addEventListener
@@ -1636,18 +1469,6 @@ var arAkahukuImage = {
       }
             
       arAkahukuImage.updateContainer (container, false, false);
-            
-      arAkahukuImage.asyncCheckImageFileExist (srcButton, leafName)
-        .then (function (result) {
-          var base = arAkahukuImage.baseList [result.baseListId];
-          arAkahukuImage.updateContainer (container, true, false);
-          if (base.instantsrc && base.instantsrc_always) {
-            arAkahukuImage.changeImage (srcButton, true, result.path);
-            arAkahukuImage.updateContainer (container, true, true);
-          }
-        }, function () {
-          // no file, no reaction
-        });
     }
   },
     
@@ -1661,7 +1482,7 @@ var arAkahukuImage = {
    * @param  Boolean src
    *         元画像を表示しているか
    */
-  updateContainer : function (container, exists, src) {
+  updateContainer : function (container, exists, src, optSavedProps) {
     var node = container.firstChild;
         
     while (node) {
@@ -1674,6 +1495,12 @@ var arAkahukuImage = {
         }
         else if (node.className == "akahuku_deleteimage_button") {
           node.style.display = exists ? "" : "none";
+          if (optSavedProps) {
+            if (optSavedProps.downloadId)
+              node.dataset.downloadId = optSavedProps.downloadId;
+            if (optSavedProps.filename)
+              node.dataset.downloadFilename = optSavedProps.filename;
+          }
         }
         else if (node.className == "akahuku_thumbimage_button") {
           node.style.display = (exists && src) ? "" : "none";
