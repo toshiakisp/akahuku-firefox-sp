@@ -70,6 +70,15 @@
     ]
   },
 
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "all_frames": true,
+      "run_at": "document_start",
+      "js": ["content/loading_init.js"]
+    }
+  ],
+
   "web_accessible_resources": [
     "content/images/*"
   ],
