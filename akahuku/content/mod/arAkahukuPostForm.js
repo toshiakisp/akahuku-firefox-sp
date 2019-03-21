@@ -4256,6 +4256,9 @@ var arAkahukuPostForm = {
               case "WEBM":
                 param.attachableExt.push ('webm');
                 break;
+              case "MP4":
+                param.attachableExt.push ('mp4');
+                break;
               default:
                 Akahuku.debug.warn ("Unknwon format for attach: " + attachable_ext [i]);
                 param.attachableExt.push (attachable_ext [i].toLowerCase ());
