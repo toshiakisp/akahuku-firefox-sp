@@ -514,6 +514,36 @@ var arAkahukuDOM = {
     return list;
   },
   
+  /**
+   * 対象ノードの子供のText nodeの中から座標の位置を含むノードを得る
+   * (MouseEvent の explicitOriginalTarget が
+   * text node を返さなくなったことに対応して、
+   * 同等のnodeを調査するための関数)
+   */
+  guessTargetTextNodeOfEvent: function (event) {
+    let target = event.target;
+    if (target && target.nodeType == 3) {
+      return target;
+    }
+    let v = target.ownerDocument.defaultView;
+    let clientX = event.pageX - v.scrollX;
+    let clientY = event.pageY - v.scrollY;
+
+    let r = target.ownerDocument.createRange();
+    for (let child of target.childNodes) {
+      if (child.nodeType == 3) {
+        r.selectNode(child);
+        let rect = r.getBoundingClientRect();
+        if (rect.top <= clientY && clientY <= rect.bottom
+            && rect.left <= clientX && clientX <= rect.right) {
+          target = child;
+          break;
+        }
+      }
+    }
+    r.detach();
+    return target;
+  }
 };
 
 /**

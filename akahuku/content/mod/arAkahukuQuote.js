@@ -589,6 +589,9 @@ var arAkahukuQuote = {
     var targetDocument = event.target.ownerDocument;
         
     var target = event.explicitOriginalTarget;
+    if (!target || target.nodeType !== 3) {
+      target = arAkahukuDOM.guessTargetTextNodeOfEvent(event);
+    }
         
     var num = -1;
     if (target

@@ -1843,12 +1843,11 @@ var arAkahukuLink = {
       if (target) {
         if (target.nodeName.toLowerCase () != "span") {
           target = arAkahukuDOM.findParentNode (target, "span");
-                    
-          if (target
-              && "className" in target
-              && target.className == "akahuku_preview_button") {
-            arAkahukuLink.onPreviewLinkClick (target);
-          }
+        }
+        if (target
+            && "className" in target
+            && target.className == "akahuku_preview_button") {
+          arAkahukuLink.onPreviewLinkClick (target);
         }
       }
     }
