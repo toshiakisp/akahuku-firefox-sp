@@ -4,7 +4,7 @@
       "updates": [
         { "version": "6.0a5",
           "update_link": "https://toshiakisp.github.io/akahuku-firefox-sp/akahuku-ext-6.0a5.xpi",
-          "update_info_url": "https://toshiakisp.github.io/akahuku-firefox-sp/updateinfo-ext.html",
+          "update_info_url": "https://toshiakisp.github.io/akahuku-firefox-sp/updateinfo-ext.xhtml",
           "applications": {
             "gecko": {
               "strict_min_version": "60.0a1"
