@@ -138,11 +138,17 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF",
     8000, true
     ],
+  "jun:jun" : [ /* 二次元裏 jun */
+    "\u4E8C\u6B21\u5143\u88CF jun",
+    "\u8679\u88CF jun",
+    "\u4E8C\u6B21\u5143\u88CF",
+    8000, true
+    ],
   "may:b" : [ /* 二次元裏 may */
     "\u4E8C\u6B21\u5143\u88CF may",
     "\u8679\u88CF may",
     "\u4E8C\u6B21\u5143\u88CF",
-    60000, true,
+    50000, true,
     {preserveMin: 60},
     ],
   "img:b" : [ /* 二次元裏 img */
