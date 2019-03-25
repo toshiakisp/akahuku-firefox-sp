@@ -1190,8 +1190,7 @@ var arAkahukuImage = {
       blockquote.parentNode.insertBefore (anchor, blockquote);
     }
     
-    if ("className" in image
-        && image.className == "akahuku_saveimage_src") {
+    if (arAkahukuDOM.hasClassName (image, "akahuku_saveimage_src")) {
       /* 元画像が表示中 */
       if (isSrc) {
         return;

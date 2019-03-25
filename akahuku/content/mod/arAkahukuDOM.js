@@ -162,7 +162,7 @@ var arAkahukuDOM = {
       return false;
     }
     if (node.hasAttribute ("class")) {
-      if (node.classlist) {
+      if (node.classList) {
         // requires Gecko 1.9.2 (Firefox 3.6) or above
         return node.classList.contains (className);
       }
