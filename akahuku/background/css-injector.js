@@ -104,6 +104,11 @@ var AkahukuCSSInjector = (() => {
             })
             .then(() => {
               this.insertForFrame(tabId, frameId, info.url);
+            })
+            .catch((err) => {
+              tabrecords.delete(frameId);
+              console.warn(err.message,
+                'tabId='+tabId, 'frameId='+frameId, info.url);
             });
             promises.push(info.promising);
           }
