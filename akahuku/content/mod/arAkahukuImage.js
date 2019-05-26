@@ -1337,15 +1337,15 @@ var arAkahukuImage = {
         node = node.lastChild;
       }
       if (node.nodeName.toLowerCase () == "a"
-          && (node.href.match (/\/[^\/]+\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/)
+          && (node.href.match (/\/[^\/]+\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z0-9]+)$/)
               || (node.hasAttribute ("__unmht_href")
-                  && node.getAttribute ("__unmht_href").match (/\/[^\/]+\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/)))) {
+                  && node.getAttribute ("__unmht_href").match (/\/[^\/]+\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z0-9]+)$/)))) {
         linkNode = node;
         linkNodes.push (node);
                 
         var text = arAkahukuDOM.getInnerText (node);
         if (text.match
-            (/^([0-9]+)\.([a-z]+)$/)) {
+            (/^([0-9]+)\.([a-z0-9]+)$/)) {
           leafName = RegExp.$1;
           ext = RegExp.$2;
         }
