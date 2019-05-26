@@ -4039,8 +4039,30 @@ var arAkahukuPostForm = {
       if (form) {
         form.id = "akahuku_postform";
         if (form.getElementsByTagName ("table") [0]) {
-          form.getElementsByTagName ("table") [0].id
-            = "akahuku_posttable";
+          let ftbl = form.getElementsByTagName ("table") [0];
+          if (info.isFutaba && ftbl.id == "ftbl") {
+            // Cancel works by base4's reszk()
+            if (ftbl.hasAttribute ("style")) {
+              // Revert styles for "display form below" by base4 reszu()
+              ftbl.removeAttribute ("style");
+              let oufm = targetDocument.getElementById ("ufm");
+              if (oufm) {
+                oufm.innerHTML = "";
+                oufm.removeAttribute ("style");
+              }
+            }
+            // Omitt フォーム位置切替
+            let reszb = targetDocument.getElementById ("reszb");
+            if (reszb) {
+              reszb.innerHTML = "";
+            }
+            if (arAkahukuReload.enable) {
+              // Omitt [リロード] if unnecessary
+              let contres = targetDocument.getElementById ("contres");
+              contres.parentNode.removeChild (contres);
+            }
+          }
+          ftbl.id = "akahuku_posttable";
         }
         
         if (hidePostForm) {
