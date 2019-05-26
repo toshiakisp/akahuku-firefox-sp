@@ -2,8 +2,8 @@
   "addons": {
     "akahuku.fx.sp@toshiakisp.github.io": {
       "updates": [
-        { "version": "6.0a5",
-          "update_link": "https://toshiakisp.github.io/akahuku-firefox-sp/akahuku-ext-6.0a5.xpi",
+        { "version": "6.0a6",
+          "update_link": "https://toshiakisp.github.io/akahuku-firefox-sp/akahuku-ext-6.0a6.xpi",
           "update_info_url": "https://toshiakisp.github.io/akahuku-firefox-sp/updateinfo-ext.xhtml",
           "applications": {
             "gecko": {
