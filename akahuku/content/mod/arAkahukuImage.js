@@ -780,7 +780,11 @@ var arAkahukuImage = {
         
     let dirPref = arAkahukuImage.baseList [targetDirIndex];
     var dirPath = dirPref.dir;
-    if (!dirPath) {
+    if (/^\.[\\\/]?$/.test(dirPath)) {
+      dirPath = "";
+    }
+    if (AkahukuFileUtil.Path.split (dirPath).absolute
+      || (dirPath.length > 0 && dirPath [0] == ".")) {
       // "保存先のディレクトリ設定が異常です"
       arAkahukuImage.onSave
       (target, false,

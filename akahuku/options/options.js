@@ -690,7 +690,12 @@ gListboxManager.register(new ListboxTable('saveimage_base_list', {
   
   checkError : function (value) {
     if (value.dir == "") {
-      return "\u30C7\u30A3\u30EC\u30AF\u30C8\u30EA\u304C\u7A7A\u3067\u3059";
+      // "フォルダが空です"
+      return "\u30D5\u30A9\u30EB\u30C0\u304C\u7A7A\u3067\u3059";
+    }
+    else if (/^(\/|[a-zA-Z]:\\?|\.\.|\.[\\\/].)/.test (value.dir)) {
+      // "フォルダが正しい相対パスではありません"
+      return  "\u30D5\u30A9\u30EB\u30C0\u304C\u6B63\u3057\u3044\u76F8\u5BFE\u30D1\u30B9\u3067\u306F\u3042\u308A\u307E\u305B\u3093";
     }
     
     return "";

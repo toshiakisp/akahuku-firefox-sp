@@ -575,7 +575,7 @@
   </div>
 
   <div id="tab_saveimage1" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-vertical flex ext_doesnotwork">
+    <div class="groupbox box-orient-vertical flex">
       <div class=caption>
         <label><input type=checkbox name="saveimage"
           >画像を保存ボタン</label>
@@ -615,7 +615,7 @@
   <div id="tab_saveimage2" class="box-orient-vertical tab_content">
     <div class="groupbox box-orient-vertical flex">
       <div class=caption>
-        <label>保存先のディレクトリ</label>
+        <label>保存先のディレクトリ(フォルダ)</label>
       </div>
       <div class="box-orient-horizontal">
         <div class="box-orient-vertical flex">
@@ -623,10 +623,12 @@
             <label for="saveimage_base_name">表示名</label>
             <input type=text id="saveimage_base_name" class="flex">
           </div>
-          <div class="box-orient-horizontal align-center">
-            <label for="saveimage_base_dir">ディレクトリ</label>
-            <input type=text id="saveimage_base_dir" class="flex">
-            <input type=button id="saveimage_base_dir_select" value="変更">
+          <div class="box-orient-horizontal align-top">
+            <label for="saveimage_base_dir">フォルダ</label>
+            <div class="box-orient-vertical flex">
+              <input type=text id="saveimage_base_dir" class="flex" placeholder="テキスト入力してください...">
+              <p class="warning">※WebExtensionの制限により、ブラウザのダウンロードフォルダ下のみを相対パスで指定できます。ダウンロードフォルダ直下とするには特別に . (ピリオドのみ)と設定します。</p>
+            </div>
           </div>
           <div class="box-orient-horizontal align-center">
             <label>サブディレクトリ:</label>
@@ -659,7 +661,7 @@
               <div class="group box-orient-vertical">
                 <label><input type=checkbox id="saveimage_base_dialog"
                   >ダイアログを表示する</label>
-                <label><input type=checkbox id="saveimage_base_dialog_keep"
+                <label class="ext_doesnotwork"><input type=checkbox id="saveimage_base_dialog_keep"
                   >前回使用したディレクトリを保持する</label>
               </div>
               <div class="box-orient-horizontal align-center">
@@ -671,7 +673,7 @@
               <div class="group box-orient-vertical">
                 <label><input type=checkbox id="saveimage_base_instantsrc"
                   >保存すると元画像を表示する</label>
-                <label><input type=checkbox id="saveimage_base_instantsrc_always"
+                <label class="ext_doesnotwork"><input type=checkbox id="saveimage_base_instantsrc_always"
                   >元画像があればロード時に表示する</label>
               </div>
             </div>
@@ -697,7 +699,7 @@
         <thead>
           <tr>
             <td data-listitem-name="name" style="width: 30%; min-width: 6em;">表示名</td>
-            <td data-listitem-name="dir" style="width: 70%; min-width: 6em;">ディレクトリ</td>
+            <td data-listitem-name="dir" style="width: 70%; min-width: 6em;">フォルダ</td>
             <td data-listitem-name="subdir" style="width: 6em">サブ</td>
             <td data-listitem-name="dialog" style="width: 6em">ダイアログ</td>
             <td data-listitem-name="dialog_keep" style="width: 4em">保持</td>

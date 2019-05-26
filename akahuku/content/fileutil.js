@@ -172,6 +172,21 @@ OS.Path.join = function () {
   }
   return OS.Windows ? paths.join ("\\") : paths.join ("/");
 };
+OS.Path.split = function (path) {
+  var isAbsolute = function (path) {
+    if (OS.Windows) {
+      let index = path.indexOf (":");
+      return path.length > index + 1 && path [index + 1] == "\\";
+    }
+    else {
+      return path.length > 0 && path [0] == "/";
+    }
+  };
+  return {
+    absolute: isAbsolute (path),
+    components: OS.Windows ? path.split ("\\") : path.split("/")
+  };
+};
 
 AkahukuFileUtil.Path = OS.Path;
 
