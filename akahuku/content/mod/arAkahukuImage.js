@@ -249,7 +249,34 @@ var arAkahukuImage = {
         .addRule ("a.akahuku_srcimage_button",
                   "font-size: " + arAkahukuImage.buttonSize + ";")
         .addRule ("a.akahuku_deleteimage_button",
-                  "font-size: " + arAkahukuImage.buttonSize + ";");
+                  "font-size: " + arAkahukuImage.buttonSize + ";")
+        .addRule ("#akahuku_saveimage_menu",
+                  "display: flex; "
+                  + "position: absolute; "
+                  + "flex-direction: column; "
+                  + "flex-wrap: nowrap;"
+                  + "z-index: 999;"
+                  + "border: solid 1px gray;"
+                  + "box-shadow: 2px 2px 4px gray;"
+                  + "font-size: " + arAkahukuImage.buttonSize + ";"
+                  + "color: #800000;"
+                  + "background-color: #ffffee;")
+        .addRule ("#akahuku_saveimage_menu > label",
+                  "cursor: pointer; "
+                  + "padding: 2px 1ex;"
+                  + "color: #800000;")
+        .addRule ("#akahuku_saveimage_menu > input[type='radio']",
+                  "position: absolute;"
+                  + "width: 1px;"
+                  + "height: 1px;"
+                  + "border: 0;"
+                  + "padding: 0;"
+                  + "overflow: hidden;"
+                  + "clip: rect(0,0,0,0);")
+        .addRule ("#akahuku_saveimage_menu input[type='radio']:checked + label",
+                  "background-color: #f0e0d6;"
+                  + "color: #800000;")
+        ;
       }
     }
   },
@@ -509,20 +536,7 @@ var arAkahukuImage = {
         arAkahukuImage.currentTarget = target;
         arAkahukuImage.currentNormal = normal;
 
-        var rect = target.getBoundingClientRect ();
-        // 要素のスクリーン座標をデバイスピクセル単位で得る
-        var view = target.ownerDocument.defaultView;
-        rect.x = rect.x + view.mozInnerScreenX;
-        rect.y = rect.y + view.mozInnerScreenY;
-        if (view.devicePixelRatio > 1 || view.devicePixelRatio < 1) {
-          let scale = view.devicePixelRatio;
-          rect.x = Math.round (rect.x * scale);
-          rect.y = Math.round (rect.y * scale);
-          rect.width = Math.round (rect.width * scale);
-          rect.height = Math.round (rect.height * scale);
-        }
-        arAkahukuImage.openXULSaveImagePopup
-          (target, rect, event.screenX, event.screenY);
+        arAkahukuImage.openSaveImagePopup (target);
         return;
       }
     }
@@ -576,22 +590,123 @@ var arAkahukuImage = {
     }
   },
 
-  openXULSaveImagePopup : function (targetContentNode, rect, screenX, screenY, window) {
-    var recto = {x: rect.x, y: rect.y,
-      width: rect.width, height: rect.height,
-      top: rect.top, left: rect.left,
-    };
-    Akahuku.debug.error('NotYetImplemented');
-    /*
-    arAkahukuIPC.sendAsyncCommand
-      ("Image/openXULSaveImagePopup", [null, recto, x, y],
-       node.ownerDocument.defaultView);
-    */
-  },
+  openSaveImagePopup : function (target) {
+    var targetDocument = target.ownerDocument;
+    var menuId = "akahuku_saveimage_menu";
+    var menu = targetDocument.getElementById (menuId);
+    if (!menu) {
+      menu = targetDocument.createElement ("form");
+      menu.id = menuId;
+      menu.action = "";
+      menu.style.display = "none";
+      targetDocument.body.appendChild (menu);
+      menu.addEventListener ("keydown", (event) => {
+        let v = -1;
+        if (event.keyCode == KeyboardEvent.DOM_VK_RETURN) {
+          for (let r of menu.elements ["akahuku_saveimage_menuitem"]) {
+            if (r.checked) {
+              v = Number (r.value);
+              break;
+            }
+          }
+        }
+        else if (event.keyCode == KeyboardEvent.DOM_VK_ESCAPE) {
+          event.target.blur ();
+          menu.style.display = "none";
+          return;
+        }
+        else if (event.keyCode == KeyboardEvent.DOM_VK_UP
+          ||event.keyCode == KeyboardEvent.DOM_VK_DOWN) {
+          // don't prevent default
+          return;
+        }
+        else {
+          for (let r of menu.elements ["akahuku_saveimage_menuitem"]) {
+            if (event.keyCode == r.getAttribute ("__accesskeycode")) {
+              v = Number (r.value);
+              break;
+            }
+          }
+        }
+        event.preventDefault ();
+        event.stopPropagation ();
+        if (v >= 0) {
+          event.target.blur ();
+          menu.style.display = "none";
+          arAkahukuImage.onSaveImageClick (null, v, undefined, false);
+        }
+      }, false);
 
-  selectSaveImageDirFromXUL : function (targetDirIndex, linkmenu, browser) {
-    arAkahukuImage.onSaveImageClick
-      (null, targetDirIndex, undefined, linkmenu);
+      let mouseDowning = false;
+      menu.addEventListener ("focusout", (event) => {
+        if ((event.relatedTarget && !menu.contains (event.relatedTarget))
+          || (!event.relatedTarget && !mouseDowning) ) {
+          menu.style.display = "none";
+        }
+      }, false);
+      menu.addEventListener ("mousedown", (event) => {
+        mouseDowning = true;
+        event.preventDefault ();
+      }, false);
+      menu.addEventListener ("mouseup", (event) => {
+        mouseDowning = false;
+      }, false);
+      menu.addEventListener ("mouseleave", (event) => {
+        mouseDowning = false;
+      }, false);
+
+      // dummy input element for none-selected state
+      let input = targetDocument.createElement ("input");
+      input.type = "radio";
+      input.name = "akahuku_saveimage_menuitem";
+      input.value = -1;
+      input.id = "akahuku_saveimage_menuitem_dummy";
+      menu.appendChild (input);
+
+      for (let i = 0; i < arAkahukuImage.baseList.length; i ++) {
+        let label = arAkahukuImage.baseList [i].dir;
+        if (arAkahukuImage.baseList [i].name) {
+          label = arAkahukuImage.baseList [i].name;
+        }
+        let input = targetDocument.createElement ("input");
+        input.type = "radio";
+        input.name = "akahuku_saveimage_menuitem";
+        input.value = i;
+        input.id = "akahuku_saveimage_menuitem_" + i;
+        let key = arAkahukuImage.baseList [i].key;
+        if (key) {
+          input.setAttribute ("accesskey", key);
+          let code = KeyboardEvent ["DOM_VK_"+key.toUpperCase ()];
+          if (code > 0) {
+            input.setAttribute ("__accesskeycode", code);
+          }
+          label += " (" + key.toUpperCase () + ")";
+        }
+        menu.appendChild (input);
+        let menuitem = targetDocument.createElement ("label");
+        menuitem.for = "akahuku_saveimage_menuitem_" + i;
+        menuitem.appendChild (targetDocument.createTextNode (label));
+        menu.appendChild (menuitem);
+        menuitem.addEventListener ("click", (event) => {
+          menu.style.display = "none";
+          event.target.ownerDocument.activeElement.blur ();
+          arAkahukuImage.onSaveImageClick (null, i, undefined, false);
+        }, false);
+        menuitem.addEventListener ("mouseenter", (event) => {
+          input.checked = true;
+        }, false);
+        menuitem.addEventListener ("mouseleave", (event) => {
+          input.checked = false;
+        }, false);
+      }
+    }
+    var rect = target.getBoundingClientRect();
+    menu.style.left = (rect.left + targetDocument.defaultView.scrollX) + "px";
+    menu.style.top = (rect.top + rect.height + targetDocument.defaultView.scrollY) + "px";
+    menu.style.display = "";
+    // start from dummy radio button on the top
+    menu.firstChild.checked = true;
+    menu.firstChild.focus ();
   },
 
   /**
@@ -895,46 +1010,6 @@ var arAkahukuImage = {
     }
     
     return dir;
-  },
-  
-  /**
-   * ポップアップメニューの内容を設定する
-   */
-  setPopup : function (event) {
-    var popup = event.target;
-    var document = event.currentTarget.ownerDocument;
-    var browser = document.commandDispatcher.focusedElement;
-    var w = null;
-        
-    var label, menuitem;
-        
-    while (popup.firstChild) {
-      popup.removeChild (popup.firstChild);
-    }
-        
-    for (var i = 0; i < arAkahukuImage.baseList.length; i ++) {
-      if (arAkahukuImage.baseList [i].name) {
-        label = arAkahukuImage.baseList [i].name;
-      }
-      else {
-        label = arAkahukuImage.baseList [i].dir;
-      }
-      menuitem = document.createElement ("menuitem");
-      if (arAkahukuImage.baseList [i].key) {
-        menuitem.setAttribute ("accesskey",
-                               arAkahukuImage.baseList [i].key);
-        if (!Akahuku.isRunningOnWindows) {
-          label += " (" + arAkahukuImage.baseList [i].key + ")";
-        }
-      }
-      menuitem.setAttribute ("label", label);
-      menuitem.addEventListener ("command", (function (i) {
-        return function () {
-          arAkahukuImage.selectSaveImageDirFromXUL (i, false, browser);
-        }
-      })(i), false);
-      popup.appendChild (menuitem);
-    }
   },
     
   /**
