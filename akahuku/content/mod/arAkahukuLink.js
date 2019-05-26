@@ -2224,6 +2224,7 @@ var arAkahukuLink = {
             
       if (arAkahukuLink.enableAutoLinkPreview
           && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
+            ||url.match (/^https?:\/\/(www\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp|webm|mp4)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
@@ -2255,6 +2256,8 @@ var arAkahukuLink = {
             (/^(https?:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
             (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
+            && !url.match
+            (/^https?:\/\/(www\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
             && !url.match (/\.(jpe?g|gif|png|bmp|webm|mp4)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
@@ -2597,6 +2600,23 @@ var arAkahukuLink = {
       /* (Gecko 10.0+) moz HTML5 Fullscreen */
       image.setAttribute ("mozallowfullscreen", "true");
       // Gecko 18.0+
+      image.setAttribute ("allowfullscreen", "true");
+    }
+    else if (uri.match (/^https?:\/\/(?:www\.nicovideo\.jp\/watch\/|nico\.ms\/)([^&?#]+)/i)) {
+      var nicovideoUrl = "https://embed.nicovideo.jp/watch/" + RegExp.$1;
+      var t = 0;
+      if (uri.match (/[?&]from=([0-9]+)?/)) {
+        t = parseInt (RegExp.$1);
+      }
+      if (t > 0) {
+        nicovideoUrl += "?from=" + t;
+      }
+      image = targetDocument.createElement ("iframe");
+      image.width = Math.max (320, arAkahukuLink.autoLinkPreviewSWFWidth);
+      image.height = Math.max (180, arAkahukuLink.autoLinkPreviewSWFHeight);
+      image.src = nicovideoUrl;
+      image.referrerPolicy = "no-referrer";
+      image.setAttribute ("frameborder", "0");
       image.setAttribute ("allowfullscreen", "true");
     }
     else {
