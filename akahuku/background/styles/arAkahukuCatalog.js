@@ -42,7 +42,7 @@ arAkahukuStyle.addUserStyleSheetHandler(
                   + "," + catcell0 + " small",
                   "line-height: " + lineHeight + ";"
                   + "max-height: " + (lineHeight*lines) + "em;"
-                  + "overflow-y: auto;")
+                  + "overflow-y: auto; overflow-x: hidden;")
       }
 
       // 大きいサムネを縮小
