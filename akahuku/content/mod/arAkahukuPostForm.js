@@ -4059,7 +4059,9 @@ var arAkahukuPostForm = {
             if (arAkahukuReload.enable) {
               // Omitt [リロード] if unnecessary
               let contres = targetDocument.getElementById ("contres");
-              contres.parentNode.removeChild (contres);
+              if (contres) {
+                contres.parentNode.removeChild (contres);
+              }
             }
           }
           ftbl.id = "akahuku_posttable";
