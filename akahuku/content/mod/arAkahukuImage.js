@@ -612,7 +612,7 @@ var arAkahukuImage = {
         }
         else if (event.keyCode == KeyboardEvent.DOM_VK_ESCAPE) {
           event.target.blur ();
-          menu.style.display = "none";
+          menu.parentNode && menu.parentNode.removeChild (menu);
           return;
         }
         else if (event.keyCode == KeyboardEvent.DOM_VK_UP
@@ -632,8 +632,8 @@ var arAkahukuImage = {
         event.stopPropagation ();
         if (v >= 0) {
           event.target.blur ();
-          menu.style.display = "none";
           arAkahukuImage.onSaveImageClick (null, v, undefined, false);
+          menu.parentNode && menu.parentNode.removeChild (menu);
         }
       }, false);
 
@@ -641,7 +641,7 @@ var arAkahukuImage = {
       menu.addEventListener ("focusout", (event) => {
         if ((event.relatedTarget && !menu.contains (event.relatedTarget))
           || (!event.relatedTarget && !mouseDowning) ) {
-          menu.style.display = "none";
+          menu.parentNode.removeChild (menu);
         }
       }, false);
       menu.addEventListener ("mousedown", (event) => {
@@ -688,9 +688,9 @@ var arAkahukuImage = {
         menuitem.appendChild (targetDocument.createTextNode (label));
         menu.appendChild (menuitem);
         menuitem.addEventListener ("click", (event) => {
-          menu.style.display = "none";
           event.target.ownerDocument.activeElement.blur ();
           arAkahukuImage.onSaveImageClick (null, i, undefined, false);
+          menu.parentNode && menu.parentNode.removeChild (menu);
         }, false);
         menuitem.addEventListener ("mouseenter", (event) => {
           input.checked = true;
