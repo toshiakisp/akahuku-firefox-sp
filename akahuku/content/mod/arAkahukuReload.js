@@ -1246,6 +1246,11 @@ var arAkahukuReload = {
         
     var expireTime = "";
     if (responseText.match
+        (/<span\b[^>]* class="cntd"[^>]*>((?:[0-9]+\x93\xFA)?[0-9]+:[0-9]+|[0-9]+\x94\x4E[0-9]+\x8C\x8E|[0-9]+\x8C\x8E[0-9]+\x93\xFA)\x8D\xA0\x8F\xC1\x82\xA6\x82\xDC\x82\xB7<\/span>/)) {
+      /* /<span class="cntd">((?:[0-9]+日)?[0-9]+:[0-9]+|[0-9]+年[0-9]+月|[0-9]+月[0-9]+日)頃消えます</span>/ (Shift_JIS) */
+      expireTime = RegExp.$1;
+    }
+    else if (responseText.match
         (/<small>((?:[0-9]+\x93\xFA)?[0-9]+:[0-9]+|[0-9]+\x94\x4E[0-9]+\x8C\x8E|[0-9]+\x8C\x8E[0-9]+\x93\xFA)\x8D\xA0\x8F\xC1\x82\xA6\x82\xDC\x82\xB7<\/small>/)) {
       /* /<small>((?:[0-9]+日)?[0-9]+:[0-9]+|[0-9]+年[0-9]+月|[0-9]+月[0-9]+日)頃消えます</small>/ (Shift_JIS) */
       expireTime = RegExp.$1;
@@ -1281,6 +1286,9 @@ var arAkahukuReload = {
           (node,
            expireTime + "\u9803\u6D88\u3048\u307E\u3059");
       }
+    }
+    else {
+      Akahuku.debug.warn ("No expire time found in", targetDocument.location.href);
     }
   },
     
