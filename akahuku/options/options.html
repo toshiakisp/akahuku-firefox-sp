@@ -137,7 +137,6 @@
         <label><input type="radio" name="title.type" value="simple">簡易設定</label>
         <label><input type="radio" name="title.type" value="expert" checked>詳細設定</label>
         <div class=spacer-flex></div>
-        <input type=button id="title_format_init" value="初期化">
       </div>
       <div class="deck" id="title_type_deck" data-deck-selector="title.type">
         <div data-deck-name="simple" class="box-orient-vertical">
@@ -148,9 +147,14 @@
             class="sp" ><span class="tooltiptext">(デフォルト：無効) 新着レス数をタイトルの頭に (1) の用に付ける。新着レス数は他タブでのカタログやスレ等の観覧により判定されリアルタイムで更新される。</span
             >スレの新着レス数</label>
         </div>
-        <div data-deck-name="expert" class="box-orient-vertical">
-          <textarea name="title.format" rows="3"></textarea>
-          <input type=text id="title_format_sample" disabled="true" class="disable">
+        <div data-deck-name="expert" class="box-orient-horizontal">
+          <div class="box-orient-vertical flex">
+            <textarea name="title.format" id="title_format" rows="3"></textarea>
+            <input type=text id="title_format_sample" disabled="true" class="disable">
+          </div>
+          <div class="box-orient-vertical">
+            <input type=button id="title_format_init" value="初期化">
+          </div>
         </div>
       </div>
     </div>
@@ -479,12 +483,16 @@
         <label><input type=radio name="savemht.default.type" value="simple" checked>簡易設定</label>
         <label><input type=radio name="savemht.default.type" value="expert">詳細設定</label>
         <div class="spacer-flex"></div>
-        <input type=button id="savemht_default_format_init" value="初期化" disabled class="disable">
       </div>
       <div class=deck data-deck-selector="savemht.default.type">
-        <div class="box-orient-vertical flex" data-deck-name="expert"> 
-          <textarea name="savemht.default.format" rows="3"></textarea>
-          <input type=text name="savemht.default.format.sample" value="" disabled="true" class="disable">
+        <div class="box-orient-horizontal flex" data-deck-name="expert">
+          <div class="box-orient-vertical flex">
+            <textarea name="savemht.default.format" id="savemht_default_format" rows="3"></textarea>
+            <input type=text id="savemht_default_format_sample" value="" disabled="true" class="disable">
+          </div>
+          <div class="box-orient-vertical">
+            <input type=button id="savemht_default_format_init" value="初期化">
+          </div>
         </div>
         <div class="box-orient-vertical flex" data-deck-name="simple">
           <label><input type=checkbox name="savemht.default.server"
@@ -2388,6 +2396,10 @@
   </div>
 </form>
 
+<script src="../content/fileutil.js"></script>
+<script src="../content/mod/arAkahukuFileName.js"></script>
+<script src="../content/mod/arAkahukuConverter.js"></script>
+<script src="../content/mod/arAkahukuLocationInfo.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

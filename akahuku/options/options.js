@@ -1,3 +1,4 @@
+/* global arAkahukuLocationInfo arAkahukuFileName AkahukuFileUtil */
 'use strict';
 
 function warn(...args) {
@@ -483,7 +484,14 @@ class ListboxTable {
             node.dispatchEvent(new Event('change'));
           }
           else if ('value' in node) {
-            node.value = json[def.value];
+            if (def.value in json) {
+              node.value = json[def.value];
+              node.dispatchEvent(new Event('change'));
+            }
+            else if ('initial' in def) {
+              node.value = def.initial;
+              node.dispatchEvent(new Event('change'));
+            }
           }
         }
         else {
@@ -520,6 +528,9 @@ class ListboxTable {
       defs = this.listInfo.itemDefinitions;
     }
     for (let def of defs) {
+      if ('noget' in def && def.noget) {
+        continue;
+      }
       if (def.type == 'id') {
         let id = this.listInfo.itemIdPrefix + def.value;
         let node = document.getElementById(id);
@@ -668,6 +679,12 @@ gListboxManager.register(new ListboxTable('saveimage_base_list', {
       cases: {
         'expert': [
           {type: 'id', value: 'subdir_format'},
+          {type: 'id', value: 'subdir_url', initial: false, noget: true},
+          {type: 'id', value: 'subdir_board', initial: false, noget: true},
+          {type: 'id', value: 'subdir_server', initial: false, noget: true},
+          {type: 'id', value: 'subdir_dir', initial: false, noget: true},
+          {type: 'id', value: 'subdir_thread', initial: false, noget: true},
+          {type: 'id', value: 'subdir_msg8b', initial: false, noget: true},
         ],
         '_default': [
           {type: 'id', value: 'subdir_url'},
@@ -676,6 +693,7 @@ gListboxManager.register(new ListboxTable('saveimage_base_list', {
           {type: 'id', value: 'subdir_dir'},
           {type: 'id', value: 'subdir_thread'},
           {type: 'id', value: 'subdir_msg8b'},
+          {type: 'id', value: 'subdir_format', initial: '', noget: true},
         ],
       },
     },
@@ -1312,6 +1330,110 @@ function initDeck() {
 }
 
 
+function initObservers() {
+  // Dummy info for displaying formated results
+  let info = new arAkahukuLocationInfo (null, false);
+  info.isOnline = true;
+  info.isFutaba = true;
+  info.isMonaca = true;
+  info.isMht = false;
+  info.isNijiura = true;
+  info.isNormal = false;
+  info.isCatalog = false;
+  info.isReply = true;
+  info.isFutasuke = false;
+  info.isNotFound = false;
+  info.normalPageNumber = 0;
+  info.threadNumber = 45296860;
+  info.replyCount = 1;
+  info.nijiuraServer = 'img';
+  info.replyPrefix = '\u2026';
+  info.server = 'img';
+  info.dir = 'b';
+  info.isOld = true;
+  info.board = '\u8679\u88CF img';
+  info.board2 = '\u8679\u88CF';
+  info.board3 = '\u4E8C\u6B21\u5143\u88CF';
+  info.message = '\u304A\u3063\u3071\u3044\u301C\u3093';
+  info.message2 = '\u304A\u3063\u3071\u3044\u301C\u3093';
+  info.message8byte = '\u304A\u3063\u3071\u3044';
+  info.entiremessage = '\u304A\u3063\u3071\u3044\u301C\u3093';
+  info.name = '\u3068\u3057\u3042\u304D';
+  info.mail = 'sage';
+  info.subject = '\u7121\u5FF5';
+  info.ip = '127.0.0.1';
+  info.id = 'XXXXXXXX';
+  info.mode = '\u8FD4\u4FE1';
+  info.viewer = '100';
+  info.expire = '02:25';
+  info.expireWarning = '\u3053\u306E\u30B9\u30EC\u306F\u53E4\u3044\u306E\u3067\u3001\u3082\u3046\u3059\u3050\u6D88\u3048\u307E\u3059\u3002\u000A';
+  info.year = '06';
+  info.month = '07';
+  info.day = '28';
+  info.week = '\u91D1';
+  info.hour = '01';
+  info.min = '25';
+  info.sec = '43';
+
+  let register_expert_format_updater = (updater, id_format, id_sample) => {
+    let format = document.getElementById(id_format);
+    let sample = document.getElementById(id_sample);
+    let handler = (event) => {
+      let text = updater(info.format(format.value));
+      sample.value = '\u4F8B: ' + text;
+    };
+    format.addEventListener('input', handler);
+    format.addEventListener('change', handler);
+    new window.MutationObserver((mutations) => {
+      let text = updater(info.format(format.value));
+      sample.value = '\u4F8B: ' + text;
+    }).observe(format, {attributes: true});
+  };
+
+  // Expert format for Title
+  register_expert_format_updater((text) => text,
+    'title_format','title_format_sample');
+  // Expert filename format for Save MHT
+  register_expert_format_updater((text) => {
+    arAkahukuFileName.getConfig();
+    let tmp = info.escapeForFilename(text, true);
+    return (tmp[0] ? AkahukuFileUtil.Path.join(tmp[0], tmp[1]) : tmp[1]);
+  }, 'savemht_default_format','savemht_default_format_sample');
+  // Expert directory format for Save image
+  register_expert_format_updater((text) => {
+    text = text.replace(/<url ?\/>/, 'img.2chan.net<separator />b<separator />src');
+    arAkahukuFileName.getConfig();
+    return info.escapeForFilename(text + '<separator />', true)[0];
+  }, 'saveimage_base_subdir_format','saveimage_base_subdir_format_sample');
+
+
+  let format_init_button = (id_init, name_types, id_format, value) => {
+    let btn = document.getElementById(id_init);
+    btn.addEventListener('click', (event) => {
+      let types = document.getElementsByName(name_types);
+      for (let type of types) {
+        if (type.value == 'expert' && type.checked) {
+          let format = document.getElementById(id_format);
+          format.value = value;
+          format.name = format.name;// trigger updater
+          break;
+        }
+      }
+    });
+  };
+  // Handler of init button for Save MHT
+  format_init_button('savemht_default_format_init',
+    'savemht.default.type',
+    'savemht_default_format',
+    '&server;_&thread;_&YY;\uff0f&MM;\uff0f&DD;_&hh;\uff1a&mm;\uff1a&ss;_&message;');
+  // Handler of init button for Title
+  format_init_button('title_format_init',
+    'title.type',
+    'title_format',
+    '<old>\u53e4 </old><nijiura>&server;</nijiura><_nijiura>&board;</_nijiura>\n<message> &message;</message><page> &page;</page><catalog> \u30ab\u30bf\u30ed\u30b0</catalog>\n<expire> (&expire;)</expire>');
+}
+
+
 // Pre-process after restoring from storage
 function preprocess(prefs) {
   preprocessTabSortOrder(prefs);
@@ -1619,12 +1741,23 @@ let btn_cancel = document.getElementById('cancel-button');
 
 let form = document.getElementById('prefs');
 
+let basePrefs = null;
+
+// Shim for subsystems
+let arAkahukuConfig = {
+  initPref : function (type, name, value) {
+    if (name.startsWith('akahuku.'))
+      name = name.substring('akahuku.'.length);
+    if (basePrefs)
+      return basePrefs[name];
+    return value;
+  }
+};
+
 initKeycodeMenu();
 initGroupHandler();
 initDeck();
-
-
-let basePrefs = null;
+initObservers();
 
 // initialize after receiving prefs respons from background
 let transaction = browser.runtime.sendMessage(prefGetMsg)
