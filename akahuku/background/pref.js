@@ -143,6 +143,22 @@ var Prefs = {
       return;
     }
     var dv = this._defaultData.get(name);
+    if (typeof value != typeof dv) {
+      console.info('Convert type of set value', value,
+        'from ' + typeof(value) + ' to ' + typeof(dv)
+        + ' for pref: ' + name);
+      switch (typeof dv) {
+        case 'boolean':
+          value = Boolean(value);
+          break;
+        case 'number':
+          value = Number(value);
+          break;
+        case 'string':
+          value = String(value);
+          break;
+      }
+    }
     if (dv == value) {
       this._userData.delete(name);
       browser.storage.local.remove(name);
