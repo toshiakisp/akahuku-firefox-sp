@@ -4,6 +4,11 @@
 // require: tabs permission
 
 const AkahukuContentLoader = {
+  injectToTab: async function (tabId, abortSignal) {
+    let url = 'http://www.2chan.net/b/fake/futaba.htm';// to inject forcely
+    AkahukuCSSInjector.injectIfMatched(tabId, 0, url);
+    return await this.injectToFrame(tabId, 0, abortSignal);
+  },
   injectToFrame: async function (tabId, frameId, abortSignal) {
     // Inject multiple scripts in specified order
     let executeScripts = async (tabId, files) => {
