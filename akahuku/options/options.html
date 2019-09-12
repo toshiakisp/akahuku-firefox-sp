@@ -517,10 +517,10 @@
             <label><input type=checkbox name="savemht.auto.saveas"
               >別名で保存ボタン</label>
           </div>
-          <div class="box-orient-horizontal align-center">
-            <label><input type=checkbox name="savemht.nolimit"
+          <div class="box-orient-horizontal align-center ext_obsolete">
+            <label><input type=checkbox name="savemht.nolimit" class="disable" disabled
               >保存中はスクリプトの制限時間を</label>
-            <label><input type=number name="savemht.nolimit.time" value="" min=0
+            <label><input type=number name="savemht.nolimit.time" value="" min=0 class="disable" disabled
               >秒にする</label>
           </div>
           <label><input type=checkbox name="savemht.close_nocachelist"
@@ -1064,9 +1064,9 @@
         <label><input type=checkbox name="reload.timestamp"
           >更新時刻を表示する</label>
         <div class="box-orient-horizontal align-center ext_obsolete">
-          <label><input type=checkbox name="reload.nolimit"
+          <label><input type=checkbox name="reload.nolimit" class="disable" disabled
             >更新中はスクリプトの制限時間を</label>
-          <label><input type=number name="reload.nolimit.time" value="" min=0
+          <label><input type=number name="reload.nolimit.time" value="" min=0 class="disable" disabled
             >秒にする</label>
         </div>
         <label><input type=checkbox name="reload.status_no_count"
