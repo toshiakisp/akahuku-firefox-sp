@@ -4,6 +4,7 @@
 const Downloads = (()=>{
   let methods = [
     'download',
+    'downloadBlob',
     'removeFile',
     'eraseById',
   ];

@@ -473,10 +473,12 @@
           >[MHT で保存] ボタン</label>
       </div>
       <label class="warning">UnMHT の mht で保存とは全く別のものです</label>
-      <div class="box-orient-horizontal align-center ext_doesnotwork">
-        <label>保存先のディレクトリ</label>
-        <input type=text name="savemht.base" class="flex">
-        <input type=button id="savemht_base_select" value="変更" disabled class="disable">
+      <div class="box-orient-horizontal">
+        <label>保存先のフォルダ</label>
+        <div class="box-orient-vertical flex">
+          <input type=text name="savemht.base" class="flex" placeholder="テキスト入力してください...">
+          <p class="warning">※WebExtensionの制限により、ブラウザのダウンロードフォルダ下のみを相対パスで指定できます(例: futaba/MHT)。何も設定しないとダウンロードフォルダ直下となります。</p>
+        </div>
       </div>
       <div class="box-orient-horizontal align-center">
         <label>デフォルトのファイル名: </label>
@@ -507,7 +509,7 @@
       </div>
       <div class="box-orient-horizontal">
         <div class="box-orient-vertical flex">
-          <div class="group box-orient-vertical ext_doesnotwork">
+          <div class="group box-orient-vertical">
             <label><input type=checkbox name="savemht.auto"
               >ファイル選択を省く</label>
             <label><input type=checkbox name="savemht.auto.unique"

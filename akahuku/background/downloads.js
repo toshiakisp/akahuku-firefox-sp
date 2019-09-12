@@ -6,7 +6,7 @@ const Downloads = (function () {
   // public methods of module
   let exports = Object.freeze({
     download: async function (props) {
-      let ret = {success: false, id: null, state:'', filename:''};
+      let ret = {success: false, id: null, state:'', canceled: false, filename:''};
       try {
         ret.id = await browser.downloads.download(props);
       }
@@ -14,6 +14,7 @@ const Downloads = (function () {
         if (e.message == 'Download canceled by the user') {
           // 中断しました
           ret.state = '\u4E2D\u65AD\u3057\u307E\u3057\u305F';
+          ret.canceled = true;
         }
         else {
           ret.state = 'Error: ' + e.message;
@@ -47,6 +48,13 @@ const Downloads = (function () {
       if (results.length > 0) {
         ret.filename = results[0].filename;
       }
+      return ret;
+    },
+    downloadBlob: async function (blob, props) {
+      let blobURL = window.URL.createObjectURL(blob);
+      props.url = blobURL;
+      let ret = await this.download(props);
+      window.URL.revokeObjectURL(blobURL);
       return ret;
     },
     removeFile: async function (id) {

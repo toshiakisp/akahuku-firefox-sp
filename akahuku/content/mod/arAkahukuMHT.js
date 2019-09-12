@@ -2456,7 +2456,7 @@ var arAkahukuMHT = {
    * @param  arAkahukuMHTParam param
    *         mht ファイル作成管理データ
    */
-  createMHTFile : function (param) {
+  createMHTFile : async function (param) {
     var error = false;
         
     try {
@@ -2555,32 +2555,25 @@ var arAkahukuMHT = {
       data = "--" + boundary + "--\r\n";
       blobParts.push(data);
 
-      if (param.openDialog) {
-        let tmpBlob = new Blob(blobParts, {type: 'message/rfc822'});
-        let blobURL = targetWindow.URL.createObjectURL(tmpBlob);
-        let anchor = targetDocument.createElement('a');
-        anchor.style.display = 'none';
-        anchor.download = param.filename;
-        anchor.href = blobURL;
-        targetDocument.body.appendChild(anchor);
-        anchor.click();
-        targetDocument.body.removeChild(anchor);
-        targetWindow.setTimeout(() => {
-          targetWindow.URL.revokeObjectURL(blobURL);
-        }, 100);
-      }
-      else {
-        // TODO: Command to background script for not opening dialog
-        // to do like download.download({
-        //   filename: param.filename,
-        //   conflictAction: (param.overwrite ? 'overwrite' : 'uniquify'),
-        // })
-        throw new Error('NotYetImplemented');
+      var tmpBlob = new Blob(blobParts, {type: 'message/rfc822'});
+      var result = await Downloads.downloadBlob(tmpBlob, {
+        conflictAction: (param.overwrite ? 'overwrite' : 'uniquify'),
+        filename: param.filename,
+        saveAs: param.openDialog,
+      });
+      tmpBlob = null;
+      if (!result.success && !result.canceled) {
+        throw new Error(result.state);
       }
       param.lastFilename = param.filename;
             
       /* 完了のメッセージを表示する */
+      // "保存に成功しました"
       var text = "\u4FDD\u5B58\u306B\u6210\u529F\u3057\u307E\u3057\u305F";
+      if (result.canceled) {
+        // "保存を中断しました"
+        text = "\u4FDD\u5B58\u3092\u4E2D\u65AD\u3057\u307E\u3057\u305F";
+      }
       text += "(\u30D5\u30A1\u30A4\u30EB\u6570: " + (ok - 1);
       if (ng > 0) {
         text += " + " + ng;
@@ -2931,12 +2924,13 @@ var arAkahukuMHT = {
         
     filename = filename_base + ".mht";
         
+    var base = arAkahukuMHT.base.replace(/^(\.+[\\\/]*)*/,'');
     if (dirname_base) {
       dirname_base
-        = AkahukuFileUtil.Path.join (arAkahukuMHT.base, dirname_base);
+        = AkahukuFileUtil.Path.join (base, dirname_base);
     }
     else {
-      dirname_base = arAkahukuMHT.base;
+      dirname_base = base;
     }
     
     // "保存中...ドキュメントの整形中..."
