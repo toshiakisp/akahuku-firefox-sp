@@ -69,6 +69,8 @@ var Akahuku = {
     Akahuku.latestParam = documentParam;
 
     let cleanParam = JSON.parse(JSON.stringify(documentParam));
+    cleanParam.tabId = -1;
+    cleanParam.frameId = -1;
     AkahukuCentral.register('param', cleanParam)
       .then((res) => {
         documentParam.id = res.id;

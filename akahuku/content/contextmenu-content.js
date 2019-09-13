@@ -167,6 +167,21 @@
             });
             break;
           }
+          case 'runCommand': { // for shortcut keys
+            switch (msg.args[0]) {
+              case 'focus-comment':
+                arAkahukuPostForm.focusCommentbox(document);
+                break;
+              case 'toggle-sage':
+                arAkahukuPostForm.toggleSageButton(document);
+                break;
+              case 'save-MHT':
+                if (document.getElementById('akahuku_savemht_button'))
+                  arAkahukuMHT.saveMHT(document);
+                break;
+            }
+            break;
+          }
           default:
             Akahuku.debug.warn('Unknown method;', msg);
         }

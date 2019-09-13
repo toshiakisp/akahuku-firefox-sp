@@ -17,5 +17,21 @@
   "browserActionTitle": {
     "message": "Preference of Akahuku",
     "description": "tooltip for browser_action"
+  },
+
+  "commandFocusComment": {
+    "message": "Focus the comment textarea of form"
+  },
+
+  "commandToggleSage": {
+    "message": "Toggle 'sage' button for the mail form"
+  },
+
+  "commandSaveMHT": {
+    "message": "Performe Save MHT (only for thread reply pages)"
+  },
+
+  "commandOpenBloomer": {
+    "message": "Open the bloomer landlady"
   }
 }

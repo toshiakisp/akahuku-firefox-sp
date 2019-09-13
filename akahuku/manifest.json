@@ -67,6 +67,7 @@
       "background/akahuku-content-loader.js",
       "background/tabs.js",
       "background/downloads.js",
+      "background/commands.js",
       "background/browser-action.js"
     ]
   },
@@ -97,6 +98,21 @@
       "96": "content/images/icon_96.png"
     },
     "default_title": "__MSG_browserActionTitle__"
+  },
+
+  "commands": {
+    "focus-comment": {
+      "description": "__MSG_commandFocusComment__"
+    },
+    "toggle-sage": {
+      "description": "__MSG_commandToggleSage__"
+    },
+    "save-MHT": {
+      "description": "__MSG_commandSaveMHT__"
+    },
+    "open-bloomer": {
+      "description": "__MSG_commandOpenBloomer__"
+    }
   }
 }
 

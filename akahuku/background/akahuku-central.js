@@ -101,6 +101,8 @@ const AkahukuCentral = (function () {
             selectors.push({type: 'name', value: arg.name});
           else if ('url' in arg)
             selectors.push({type: 'url', value: new URL(arg.url)});
+          else if ('tabId' in arg)
+            selectors.push({type: 'tabId', value: arg.tabId});
           else {
             throw new TypeError('Unexpected argument object');
           }
@@ -121,6 +123,13 @@ const AkahukuCentral = (function () {
               return true; // id must be unique
             }
             return false;
+          };
+        }
+        else if (sel.type == 'tabId') {
+          test = (v) => {
+            if (v.tabId == sel.value) {
+              ret.push(v);
+            }
           };
         }
         else if (sel.type == 'name') {
@@ -206,6 +215,15 @@ const AkahukuCentral = (function () {
     if ("target" in msg && msg.target === "akahuku-central.js") {
       let methods = Object.getOwnPropertyNames(exports);
       if (methods.indexOf(msg.command) != -1) {
+        if (msg.command == 'register'
+          && msg.args.length > 1
+          && typeof(msg.args[1]) == 'object') {
+          // Special props in value
+          if ('tabId' in msg.args[1] && sender.tab)
+            msg.args[1].tabId = sender.tab.id;
+          if ('frameId' in msg.args[1] && sender.frameId >= 0)
+            msg.args[1].frameId = sender.frameId;
+        }
         return exports[msg.command](...msg.args);
       }
       else {

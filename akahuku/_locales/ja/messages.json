@@ -17,5 +17,21 @@
   "browserActionTitle": {
     "message": "赤福 設定",
     "description": "tooltip for browser_action"
+  },
+
+  "commandFocusComment": {
+    "message": "コメント欄をフォーカス"
+  },
+
+  "commandToggleSage": {
+    "message": "メール欄 sage ボタン"
+  },
+
+  "commandSaveMHT": {
+    "message": "MHTで保存 (スレッド返信モードのみ)"
+  },
+
+  "commandOpenBloomer": {
+    "message": "ブルマ女将"
   }
 }
