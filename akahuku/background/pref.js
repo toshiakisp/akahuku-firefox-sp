@@ -255,7 +255,7 @@ function prefEndDeclare() {
   browser.storage.local.get(null).then (function (localPrefs) {
     for (var prop in localPrefs) {
       if (!Prefs.hasItem(prop)) {
-        // browser.storage.local.remove(prop);
+        browser.storage.local.remove(prop);
         console.log('remove invalid pref: "' + prop + '"');
         delete localPrefs[prop];
       }
