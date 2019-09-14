@@ -668,7 +668,7 @@ var arAkahukuPostForm = {
       arAkahukuPostForm.floatPositionY
         = arAkahukuConfig
         .initPref ("int",  "akahuku.floatpostform.position.y", 0);
-      value
+      var value
         = arAkahukuConfig
         .initPref ("char", "akahuku.floatpostform.width", "50%");
       arAkahukuPostForm.floatWidth
