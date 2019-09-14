@@ -2307,7 +2307,7 @@ var arAkahukuPostForm = {
    * @param  Event event
    *         対象のイベント
    */
-  onCommentKeyPress : function (event) {
+  onCommentKeyDown : function (event) {
     var ke = KeyboardEvent;
     if (arAkahukuPostForm.enableCommentboxSubmitShortcut) {
       if (event.keyCode == ke.DOM_VK_RETURN && event.shiftKey) {
@@ -4417,9 +4417,9 @@ var arAkahukuPostForm = {
           && (arAkahukuPostForm.enableCommentboxScroll
             || arAkahukuPostForm.enableCommentboxSubmitShortcut)) {
         commentbox.addEventListener
-        ("keypress",
+        ("keydown",
          function () {
-          arAkahukuPostForm.onCommentKeyPress (arguments [0]);
+          arAkahukuPostForm.onCommentKeyDown (arguments [0]);
         }, false);
       }
 
