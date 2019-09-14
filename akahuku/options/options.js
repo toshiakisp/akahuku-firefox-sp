@@ -1431,6 +1431,27 @@ function initObservers() {
     'title.type',
     'title_format',
     '<old>\u53e4 </old><nijiura>&server;</nijiura><_nijiura>&board;</_nijiura>\n<message> &message;</message><page> &page;</page><catalog> \u30ab\u30bf\u30ed\u30b0</catalog>\n<expire> (&expire;)</expire>');
+
+  [// Handlers of init buttons for keyboard shortcut commands
+    ['focus-comment','commentbox_shortcut_keycombo_init','commentbox.shortcut.keycombo'],
+    ['toggle-sage','mailbox_sagebutton_key_keycombo_init', 'mailbox.sagebutton.key.keycombo'],
+    ['save-MHT', 'savemht_shortcut_keycombo_init', 'savemht.shortcut.keycombo'],
+    ['open-bloomer','bloomer_keycombo_init','bloomer.keycombo'],
+  ].forEach((args) => {
+    let [command_name, btn_id, keycombo_name] = args;
+    let btn = document.getElementById(btn_id)
+    btn.addEventListener('click', (event) => {
+      let input = document.getElementsByName(keycombo_name)[0];
+      let msg = {...prefGetMsg};
+      msg.command = 'getDefault';
+      msg.args = [keycombo_name];
+      transaction = browser.runtime.sendMessage(msg)
+        .then((prefs) => {
+          input.value = prefs[keycombo_name];
+          input.dispatchEvent(new Event('change'));
+        });
+    });
+  });
 }
 
 

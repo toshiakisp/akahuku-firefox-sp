@@ -288,6 +288,10 @@ input[type=radio][data-pref-checked="false"]:checked {
   box-shadow: 0 0 0 3px cyan;
 }
 
+input[type=text][readonly] {
+  color: #888;
+}
+
 a[href], a[href]:visited {
   color: #0000FF;
 }

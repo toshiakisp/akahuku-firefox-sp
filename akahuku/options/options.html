@@ -527,30 +527,17 @@
             >キャッシュに無かったファイルのリストを閉じる</label>
           <label><input type=checkbox name="savemht.usenetwork"
             >ネットワークからも取得する (元画像以外)</label>
-          <div class="group box-orient-vertical ext_doesnotwork">
+          <div class="group box-orient-vertical">
             <label><input type=checkbox name="savemht.shortcut"
-              >ショートカットキー</label>
+              >ショートカットキー (MHTで保存)</label>
             <div class="box-orient-horizontal align-top">
-              <input type=text id="savemht_shortcut_input" placeholder="ここで入力">
-              <select name="savemht.shortcut.keycode"
-                      class="keycode_menu"
-                      data-keycode-input="savemht_shortcut_input"
-                      data-keycode-input-alt="savemht_shortcut_modifiers_alt"
-                      data-keycode-input-ctrl="savemht_shortcut_modifiers_ctrl"
-                      data-keycode-input-meta="savemht_shortcut_modifiers_meta"
-                      data-keycode-input-shift="savemht_shortcut_modifiers_shift">
-              </select>
+              <input type=text name="savemht.shortcut.keycombo" readonly>
+              <input type=button id="savemht_shortcut_keycombo_init" value="初期化">
             </div>
-            <div class="box-orient-horizontal align-top">
-              <label><input type=checkbox name="savemht.shortcut.modifiers.alt" id="savemht_shortcut_modifiers_alt"
-                >Alt</label>
-              <label><input type=checkbox name="savemht.shortcut.modifiers.ctrl" id="savemht_shortcut_modifiers_ctrl"
-                >Ctrl</label>
-              <label><input type=checkbox name="savemht.shortcut.modifiers.meta" id="savemht_shortcut_modifiers_meta"
-                >Meta</label>
-              <label><input type=checkbox name="savemht.shortcut.modifiers.shift" id="savemht_shortcut_modifiers_shift"
-                >Shift</label>
-            </div>
+            <label>キーの変更はアドオン設定ページのギヤアイコンの<br>
+              「拡張機能のショートカットキーの管理」から。
+              <a href="https://support.mozilla.org/kb/manage-extension-shortcuts-firefox" target="_blank" title="ヘルプ">❔</a>
+            </label>
           </div>
         </div>
         <div class="box-orient-vertical flex">
@@ -733,31 +720,20 @@
         <div class=caption>
           <label>メール欄</label>
         </div>
-        <label><input type=checkbox name="mailbox.sagebutton"
-          >sage ボタン</label>
-        <div class="group box-orient-vertical ext_doesnotwork">
-          <label><input type=checkbox name="mailbox.sagebutton.key"
-            >ショートカットキー</label>
-          <div class="box-orient-horizontal align-center">
-            <input type=text id="mailbox_sagebutton_key_input" placeholder="ここで入力" size="8">
-            <select name="mailbox.sagebutton.key.keycode"
-                    class="keycode_menu"
-                    data-keycode-input="mailbox_sagebutton_key_input"
-                    data-keycode-input-alt="mailbox_sagebutton_key_modifiers_alt"
-                    data-keycode-input-ctrl="mailbox_sagebutton_key_modifiers_ctrl"
-                    data-keycode-input-meta="mailbox_sagebutton_key_modifiers_meta"
-                    data-keycode-input-shift="mailbox_sagebutton_key_modifiers_shift">
-            </select>
-          </div>
-          <div class="box-orient-horizontal align-top">
-            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.alt" id="mailbox_sagebutton_key_modifiers_alt"
-              >Alt</label>
-            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.ctrl" id="mailbox_sagebutton_key_modifiers_ctrl"
-              >Ctrl</label>
-            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.meta" id="mailbox_sagebutton_key_modifiers_meta"
-              >Meta</label>
-            <label><input type=checkbox name="mailbox.sagebutton.key.modifiers.shift" id="mailbox_sagebutton_key_modifiers_shift"
-              >Shift</label>
+        <div class="group box-orient-vertical">
+          <label><input type=checkbox name="mailbox.sagebutton"
+            >sage ボタン</label>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="mailbox.sagebutton.key"
+              >ショートカットキー</label>
+            <div class="box-orient-horizontal align-center">
+              <input type=text name="mailbox.sagebutton.key.keycombo" readonly>
+              <input type=button id="mailbox_sagebutton_key_keycombo_init" value="初期化">
+            </div>
+            <label>キーの変更はアドオン設定ページのギヤアイコンの<br>
+              「拡張機能のショートカットキーの管理」から。
+              <a href="https://support.mozilla.org/kb/manage-extension-shortcuts-firefox" target="_blank" title="ヘルプ">❔</a>
+            </label>
           </div>
         </div>
         <label><input type=checkbox name="mailbox.extend"
@@ -816,30 +792,17 @@
           <input type=number name="commentbox.preview.size" min=0>
           px</label>
         </div>
-        <div class="group box-orient-vertical ext_doesnotwork">
+        <div class="group box-orient-vertical">
           <label><input type=checkbox name="commentbox.shortcut"
-            >ショートカット</label>
+            >ショートカット (コメント欄をフォーカス)</label>
           <div class="box-orient-horizontal align-center">
-            <input type=text id="commentbox_shortcut_input" placeholder="ここで入力" size="8">
-            <select name="commentbox.shortcut.keycode"
-                    class="keycode_menu"
-                    data-keycode-input="commentbox_shortcut_input"
-                    data-keycode-input-alt="commentbox_shortcut_modifiers_alt"
-                    data-keycode-input-ctrl="commentbox_shortcut_modifiers_ctrl"
-                    data-keycode-input-meta="commentbox_shortcut_modifiers_meta"
-                    data-keycode-input-shift="commentbox_shortcut_modifiers_shift">
-            </select>
+            <input type=text name="commentbox.shortcut.keycombo" readonly>
+            <input type=button id="commentbox_shortcut_keycombo_init" value="初期化">
           </div>
-          <div class="box-orient-horizontal align-top">
-            <label><input type=checkbox name="commentbox.shortcut.modifiers.alt" id="commentbox_shortcut_modifiers_alt"
-              >Alt</label>
-            <label><input type=checkbox name="commentbox.shortcut.modifiers.ctrl" id="commentbox_shortcut_modifiers_ctrl"
-              >Ctrl</label>
-            <label><input type=checkbox name="commentbox.shortcut.modifiers.meta" id="commentbox_shortcut_modifiers_meta"
-              >Meta</label>
-            <label><input type=checkbox name="commentbox.shortcut.modifiers.shift" id="commentbox_shortcut_modifiers_shift"
-              >Shift</label>
-          </div>
+          <label>キーの変更はアドオン設定ページのギヤアイコンの<br>
+            「拡張機能のショートカットキーの管理」から。
+            <a href="https://support.mozilla.org/kb/manage-extension-shortcuts-firefox" target="_blank" title="ヘルプ">❔</a>
+          </label>
         </div>
         <label class="sp tooltip"><input type=checkbox name="commentbox.submit_shortcut"
           ><span class="tooltiptext">(デフォルト：無効) コメント欄内からショートカットキーShift-Enterでレスを送信する</span
@@ -2074,7 +2037,7 @@
   </div>
 
   <div id="tab_bloomer" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-vertical ext_doesnotwork">
+    <div class="groupbox box-orient-vertical">
       <div class=caption>
         <label><input type=checkbox name="bloomer"
           >ブルマ女将</label>
@@ -2082,26 +2045,13 @@
       <label>ショートカットキー</label>
       <div class="sub box-orient-vertical">
         <div class="box-orient-horizontal align-top">
-          <input type=text id="bloomer_input" placeholder="ここで入力">
-          <select name="bloomer.keycode"
-                  class="keycode_menu"
-                  data-keycode-input="bloomer_input"
-                  data-keycode-input-alt="bloomer_modifiers_alt"
-                  data-keycode-input-ctrl="bloomer_modifiers_ctrl"
-                  data-keycode-input-meta="bloomer_modifiers_meta"
-                  data-keycode-input-shift="bloomer_modifiers_shift">
-          </select>
+          <input type=text name="bloomer.keycombo" readonly>
+          <input type=button id="bloomer_keycombo_init" value="初期化">
         </div>
-        <div class="box-orient-horizontal align-top">
-          <label><input type=checkbox name="bloomer.modifiers.alt" id="bloomer_modifiers_alt"
-            >Alt</label>
-          <label><input type=checkbox name="bloomer.modifiers.ctrl" id="bloomer_modifiers_ctrl"
-            >Ctrl</label>
-          <label><input type=checkbox name="bloomer.modifiers.meta" id="bloomer_modifiers_meta"
-            >Meta</label>
-          <label><input type=checkbox name="bloomer.modifiers.shift" id="bloomer_modifiers_shift"
-            >Shift</label>
-        </div>
+        <label>キーの変更はアドオン設定ページのギヤアイコンの<br>
+          「拡張機能のショートカットキーの管理」から。
+          <a href="https://support.mozilla.org/kb/manage-extension-shortcuts-firefox" target="_blank" title="ヘルプ">❔</a>
+        </label>
       </div>
       <div class="box-orient-horizontal align-center">
         <label>ブルマ女将の場所</label>

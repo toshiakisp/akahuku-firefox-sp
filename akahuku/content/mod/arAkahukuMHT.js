@@ -391,13 +391,6 @@ var arAkahukuMHT = {
     
   enableCleanup : false,            /* Boolean  [保存用に整形] ボタン */
     
-  enableShortcut : false,           /* Boolean  ショートカット */
-  shortcutKeycode : 0,              /* Number  ショートカットキーのキーコード */
-  shortcutModifiersAlt : false,     /* Boolean  ショートカットキーの Alt */
-  shortcutModifiersCtrl : false,    /* Boolean  ショートカットキーの Ctrl */
-  shortcutModifiersMeta : false,    /* Boolean  ショートカットキーの Meta */
-  shortcutModifiersShift : false,   /* Boolean  ショートカットキーの Shift */
-    
   /**
    * arAkahukuMHTFileData.status の値
    *
@@ -538,31 +531,6 @@ var arAkahukuMHT = {
   },
     
   /**
-   * キーが押されたイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onKeyDown : function (event) {
-    if (Akahuku.enableAll
-        && arAkahukuMHT.enable
-        && arAkahukuMHT.enableShortcut) {
-      if (arAkahukuMHT.shortcutKeycode == event.keyCode
-          && arAkahukuMHT.shortcutModifiersAlt == event.altKey
-          && arAkahukuMHT.shortcutModifiersCtrl == event.ctrlKey
-          && arAkahukuMHT.shortcutModifiersMeta == event.metaKey
-          && arAkahukuMHT.shortcutModifiersShift == event.shiftKey) {
-        var document = event.currentTarget.document;
-        var browser = document.getElementById ("content").selectedBrowser;
-        if (Akahuku.getDocumentParamForBrowser (browser)) {
-          arAkahukuMHT.saveMHTForBrowser (browser);
-          event.preventDefault ();
-        }
-      }
-    }
-  },
-    
-  /**
    * 設定を読み込む
    */
   getConfig : function () {
@@ -670,41 +638,6 @@ var arAkahukuMHT = {
       arAkahukuMHT.enableUse8bit
       = arAkahukuConfig
       .initPref ("bool", "akahuku.savemht.use8bit", false);
-            
-      arAkahukuMHT.enableShortcut
-      = arAkahukuConfig
-      .initPref ("bool", "akahuku.savemht.shortcut", false);
-      if (arAkahukuMHT.enableShortcut) {
-        var value
-          = arAkahukuConfig
-          .initPref ("char", "akahuku.savemht.shortcut.keycode",
-                     "VK_S");
-        value
-          = unescape (value);
-        arAkahukuMHT.shortcutKeycode
-          = KeyboardEvent["DOM_" + value];
-                
-        arAkahukuMHT.shortcutModifiersAlt
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.savemht.shortcut.modifiers.alt",
-                     false);
-        arAkahukuMHT.shortcutModifiersCtrl
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.savemht.shortcut.modifiers.ctrl",
-                     false);
-        arAkahukuMHT.shortcutModifiersMeta
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.savemht.shortcut.modifiers.meta",
-                     true);
-        arAkahukuMHT.shortcutModifiersShift
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.savemht.shortcut.modifiers.shift",
-                     true);
-      }
     }
         
     arAkahukuMHT.enableCleanup

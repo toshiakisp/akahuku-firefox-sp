@@ -93,17 +93,6 @@ arAkahukuPostFormParam.prototype = {
  */
 var arAkahukuPostForm = {
   enableMailboxSageButton : false,    /* Boolean  sage ボタン */
-  enableMailboxSageButtonKey : false, /* Boolean  ショートカットキー */
-  mailboxSageButtonKeyKeycode : 0,            /* Number  ショートカットキー
-                                               *   のキーコード */
-  mailboxSageButtonKeyModifiersAlt : false,   /* Boolean  ショートカットキー
-                                               *   の Alt */
-  mailboxSageButtonKeyModifiersCtrl : false,  /* Boolean  ショートカットキー
-                                               *   の Ctrl */
-  mailboxSageButtonKeyModifiersMeta : false,  /* Boolean  ショートカットキー
-                                               *   の Meta */
-  mailboxSageButtonKeyModifiersShift : false, /* Boolean  ショートカットキー
-                                               *   の Shift */
   enableMailboxExtend : false,        /* Boolean  メール欄の幅を 1.5 倍 */
   enableMailboxMemory : false,        /* Boolean  通常の送信で内容を保持する */
   enableMailboxClear : false,         /* Boolean  連携の送信で内容を消す */
@@ -125,18 +114,6 @@ var arAkahukuPostForm = {
   enableCommentboxPreview : false,     /* Boolean  画像をプレビュー */
   commentboxPreviewSize : 64,          /* Number  サイズ */
     
-  enableCommentboxShortcut : false,         /* Boolean  コメント欄
-                                             *   のショートカット */
-  commentboxShortcutKeycode : 0,            /* Number  ショートカットキー
-                                             *   のキーコード */
-  commentboxShortcutModifiersAlt : false,   /* Boolean  ショートカットキー
-                                             *   の Alt */
-  commentboxShortcutModifiersCtrl : false,  /* Boolean  ショートカットキー
-                                             *   の Ctrl */
-  commentboxShortcutModifiersMeta : false,  /* Boolean  ショートカットキー
-                                             *   の Meta */
-  commentboxShortcutModifiersShift : false, /* Boolean  ショートカットキー
-                                             *   の Shift */
   enableCommentboxSubmitShortcut : false,   /* Boolean  コメント欄内から
                                              *   Shift-Enterで送信 */
     
@@ -220,61 +197,6 @@ var arAkahukuPostForm = {
     }
   },
     
-  /**
-   * キーが押されたイベント [XUL]
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onKeyDown : function (event) {
-    var document = event.currentTarget.document;
-    if (arAkahukuPostForm.enableCommentboxShortcut) {
-      if (arAkahukuPostForm.commentboxShortcutKeycode
-          == event.keyCode
-          && arAkahukuPostForm.commentboxShortcutModifiersAlt
-          == event.altKey
-          && arAkahukuPostForm.commentboxShortcutModifiersCtrl
-          == event.ctrlKey
-          && arAkahukuPostForm.commentboxShortcutModifiersMeta
-          == event.metaKey
-          && arAkahukuPostForm.commentboxShortcutModifiersShift
-          == event.shiftKey) {
-        var browser = document.getElementById ("content").selectedBrowser;
-        if (Akahuku.getDocumentParamForBrowser (browser)) {
-          browser.focus ();
-          arAkahukuPostForm.focusCommentboxForBrowser (browser);
-          event.preventDefault ();
-        }
-        else {
-          Akahuku.debug.log ("no AkahukuDocumentParam on", browser);
-        }
-        return;
-      }
-    }
-    if (arAkahukuPostForm.enableMailboxSageButtonKey) {
-      if (arAkahukuPostForm.mailboxSageButtonKeyKeycode
-          == event.keyCode
-          && arAkahukuPostForm.mailboxSageButtonKeyModifiersAlt
-          == event.altKey
-          && arAkahukuPostForm.mailboxSageButtonKeyModifiersCtrl
-          == event.ctrlKey
-          && arAkahukuPostForm.mailboxSageButtonKeyModifiersMeta
-          == event.metaKey
-          && arAkahukuPostForm.mailboxSageButtonKeyModifiersShift
-          == event.shiftKey) {
-        var browser = document.getElementById ("content").selectedBrowser;
-        if (Akahuku.getDocumentParamForBrowser (browser)) {
-          arAkahukuPostForm.toggleSageButtonForBrowser (browser);
-          event.preventDefault ();
-        }
-        else {
-          Akahuku.debug.log ("no AkahukuDocumentParam on", browser);
-        }
-        return;
-      }
-    }
-  },
-
   focusCommentboxForBrowser : function (browser) {
     // non-e10s
     if (!browser.contentDocument) {
@@ -637,58 +559,6 @@ var arAkahukuPostForm = {
     arAkahukuPostForm.enableMailboxSageButton
     = arAkahukuConfig
     .initPref ("bool", "akahuku.mailbox.sagebutton", true);
-    if (arAkahukuPostForm.enableMailboxSageButton) {
-      arAkahukuPostForm.enableMailboxSageButtonKey
-        = arAkahukuConfig
-        .initPref ("bool", "akahuku.mailbox.sagebutton.key", true);
-      if (arAkahukuPostForm.enableMailboxSageButtonKey) {
-        var value
-          = arAkahukuConfig
-          .initPref ("char", "akahuku.mailbox.sagebutton.key.keycode",
-                     "VK_S");
-        value
-          = unescape (value);
-        arAkahukuPostForm.mailboxSageButtonKeyKeycode
-          = KeyboardEvent["DOM_" + value];
-                
-        var defAlt, defCtrl, defMeta, defShift;
-        defAlt = false;
-        defCtrl = false;
-        defMeta = false;
-        defShift = false;
-        if (Akahuku.isRunningOnMac) {
-          defCtrl = true;
-        }
-        else if (Akahuku.isRunningOnWindows) {
-          defAlt = true;
-          defShift = true;
-        }
-        else {
-          defCtrl = true;
-          defShift = true;
-        }
-        arAkahukuPostForm.mailboxSageButtonKeyModifiersAlt
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.mailbox.sagebutton.key.modifiers.alt",
-                     defAlt);
-        arAkahukuPostForm.mailboxSageButtonKeyModifiersCtrl
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.mailbox.sagebutton.key.modifiers.ctrl",
-                     defCtrl);
-        arAkahukuPostForm.mailboxSageButtonKeyModifiersMeta
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.mailbox.sagebutton.key.modifiers.meta",
-                     defMeta);
-        arAkahukuPostForm.mailboxSageButtonKeyModifiersShift
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.mailbox.sagebutton.key.modifiers.shift",
-                     defShift);
-      }
-    }
     arAkahukuPostForm.enableMailboxExtend
     = arAkahukuConfig
     .initPref ("bool", "akahuku.mailbox.extend", false);
@@ -744,40 +614,6 @@ var arAkahukuPostForm = {
     = arAkahukuConfig
     .initPref ("int", "akahuku.commentbox.preview.size", 64);
         
-    arAkahukuPostForm.enableCommentboxShortcut
-    = arAkahukuConfig
-    .initPref ("bool", "akahuku.commentbox.shortcut", false);
-    if (arAkahukuPostForm.enableCommentboxShortcut) {
-      var value
-        = arAkahukuConfig
-        .initPref ("char", "akahuku.commentbox.shortcut.keycode",
-                   "VK_C");
-      value
-        = unescape (value);
-      arAkahukuPostForm.commentboxShortcutKeycode
-        = KeyboardEvent["DOM_" + value];
-                
-      arAkahukuPostForm.commentboxShortcutModifiersAlt
-        = arAkahukuConfig
-        .initPref ("bool",
-                   "akahuku.commentbox.shortcut.modifiers.alt",
-                   false);
-      arAkahukuPostForm.commentboxShortcutModifiersCtrl
-        = arAkahukuConfig
-        .initPref ("bool",
-                   "akahuku.commentbox.shortcut.modifiers.ctrl",
-                   false);
-      arAkahukuPostForm.commentboxShortcutModifiersMeta
-        = arAkahukuConfig
-        .initPref ("bool",
-                   "akahuku.commentbox.shortcut.modifiers.meta",
-                   true);
-      arAkahukuPostForm.commentboxShortcutModifiersShift
-        = arAkahukuConfig
-        .initPref ("bool",
-                   "akahuku.commentbox.shortcut.modifiers.shift",
-                   true);
-    }
     arAkahukuPostForm.enableCommentboxSubmitShortcut
     = arAkahukuConfig
     .initPref ("bool", "akahuku.commentbox.submit_shortcut", false);
