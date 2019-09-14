@@ -4,9 +4,11 @@ let updating_commands = false;
 
 browser.commands.onCommand.addListener((command) => {
   switch (command) {
+    case 'save-MHT':
+      if (!Prefs.getItem('all'))
+        break;
     case 'toggle-sage':
     case 'focus-comment':
-    case 'save-MHT':
       browser.tabs.query({active: true, currentWindow: true})
         .then((tabs) => {
           return AkahukuCentral.get('param', {tabId: tabs[0].id});
@@ -24,6 +26,8 @@ browser.commands.onCommand.addListener((command) => {
         });
       break;
     case 'open-bloomer': {
+      if (!Prefs.getItem('all'))
+        break;
       let target = unescape(Prefs.getItem('bloomer.file')).trim();
       let props = {active:true};
       try {
