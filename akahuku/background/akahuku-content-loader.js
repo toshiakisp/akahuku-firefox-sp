@@ -81,7 +81,6 @@ const AkahukuContentLoader = {
       'mod/arAkahukuReload.js',
       'mod/arAkahukuWheel.js',
       'mod/arAkahukuMHT.js',
-      'mod/arAkahukuBloomer.js',
       'mod/arAkahukuJPEG.js',
       'mod/arAkahukuTab.js',
       'mod/arAkahukuSidebar.js',

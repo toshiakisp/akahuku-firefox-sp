@@ -20,7 +20,6 @@ var arAkahukuConfig = {
       arAkahukuSidebar.getConfig ();
       arAkahukuSound.getConfig ();
       arAkahukuP2P.getConfig ();
-      arAkahukuBloomer.getConfig ();
       arAkahukuBoard.getConfig ();
       arAkahukuFileName.getConfig ();
       arAkahukuTitle.getConfig ();
@@ -151,7 +150,6 @@ var arAkahukuConfig = {
       arAkahukuSidebar.getConfig ();
       arAkahukuSound.getConfig ();
       arAkahukuP2P.getConfig ();
-      arAkahukuBloomer.getConfig ();
       arAkahukuBoard.getConfig ();
       arAkahukuFileName.getConfig ();
       arAkahukuTitle.getConfig ();
