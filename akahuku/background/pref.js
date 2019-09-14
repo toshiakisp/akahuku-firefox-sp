@@ -53,7 +53,7 @@ var Prefs = {
         newValue: keys[prop],
       };
       this.setItem(prop, keys[prop]);
-      if (!updated && ret[prop].oldValue != ret[prop].newValue) {
+      if (ret[prop].oldValue != ret[prop].newValue) {
         updated = true;
         updates[prop] = keys[prop];
       }
