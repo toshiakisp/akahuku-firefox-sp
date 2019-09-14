@@ -183,7 +183,37 @@ Akahuku.Cache = new function () {
       }
       source = source.url;// simplify for tranfering
     }
-    Akahuku.debug.error('NotYetImplemented');
+    let stat = new CacheStatus(source);
+    let controller = new contextWindow.AbortController();
+    let fetchInit = {
+      // Search cache(fresh or stale) in same origin, or error
+      redirect: 'follow',
+      cache: 'only-if-cached',
+      mode: 'same-origin',
+      credentials: 'same-origin',
+      signal: controller.signal,
+    };
+    contextWindow.fetch(source, fetchInit)
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error();
+        }
+        try {
+          stat.isExist = true;
+          stat.httpStatusCode = String(resp.status);
+          stat.httpStatusText = resp.statusText;
+          let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
+          stat.lastModified = resLastMod ? resLastMod.value : 0;
+          stat.dataSize = parseInt(resp.headers.get('Content-Length')) || 0;
+        }
+        catch (e) {
+        }
+        callback(stat);
+      })
+      .catch((err) => {
+        stat.isExist = false;
+        callback(stat);
+      });
     return;
   };
 
