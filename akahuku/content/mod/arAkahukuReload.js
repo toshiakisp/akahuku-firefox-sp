@@ -59,10 +59,16 @@ arAkahukuReloadCacheWriter.prototype = {
       start_pos = 0;
     }
         
-    // /<small>((?:[0-9]+日)?[0-9]+:[0-9]+|[0-9]+年[0-9]+月|[0-9]+月[0-9]+日)頃消えます</small>/
+    // /<span\b[^>]* class="cntd"[^>]*>((?:[0-9]+日)?[0-9]+:[0-9]+|[0-9]+年[0-9]+月|[0-9]+月[0-9]+日)頃消えます</span>/
     end_pos = text.search
-    (/<small>((?:[0-9]+\x93\xFA)?[0-9]+:[0-9]+|[0-9]+\x94\x4E[0-9]+\x8C\x8E|[0-9]+\x8C\x8E[0-9]+\x93\xFA)\x8D\xA0\x8F\xC1\x82\xA6\x82\xDC\x82\xB7<\/small>/,
+    (/<span\b[^>]* class="cntd"[^>]*>((?:[0-9]+\x93\xFA)?[0-9]+:[0-9]+|[0-9]+\x94\x4E[0-9]+\x8C\x8E|[0-9]+\x8C\x8E[0-9]+\x93\xFA)\x8D\xA0\x8F\xC1\x82\xA6\x82\xDC\x82\xB7<\/span>/,
      start_pos);
+    if (end_pos < 0) {
+      // older format
+      end_pos = text.search
+      (/<small>((?:[0-9]+\x93\xFA)?[0-9]+:[0-9]+|[0-9]+\x94\x4E[0-9]+\x8C\x8E|[0-9]+\x8C\x8E[0-9]+\x93\xFA)\x8D\xA0\x8F\xC1\x82\xA6\x82\xDC\x82\xB7<\/small>/,
+       start_pos);
+    }
     if (end_pos != -1) {
       end_pos += 7;
       this.head2 = text.substr (start_pos, end_pos - start_pos);
