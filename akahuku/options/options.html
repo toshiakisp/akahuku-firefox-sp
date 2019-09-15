@@ -2053,10 +2053,13 @@
           <a href="https://support.mozilla.org/kb/manage-extension-shortcuts-firefox" target="_blank" title="ヘルプ">❔</a>
         </label>
       </div>
-      <div class="box-orient-horizontal align-center">
+      <div class="box-orient-horizontal align-top">
         <label>ブルマ女将の場所</label>
-        <input type=text name="bloomer.file" class="flex">
-        <input type=button id="bloomer_file_select" value="変更">
+        <div class="box-orient-vertical flex">
+          <input type=text name="bloomer.file" class="flex" placeholder="URLをテキスト入力してください...">
+          <label>WebExtensionの制限によりWeb上のURLかabout:blankのみ指定可能</label>
+          空欄の場合は新しいタブのページ(about:newtab)を開きます</label>
+        </div>
       </div>
     </div>
   </div>
