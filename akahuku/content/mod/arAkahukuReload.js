@@ -3152,28 +3152,17 @@ var arAkahukuReload = {
     // スレ情報の更新を通知 (連携)
     info.notifyUpdate ("thread-updated");
         
-    var updateCache = false;
-        
-    if (param.writer == null) {
-      param.writer = new arAkahukuReloadCacheWriter ();
-      /* 避難所 patch */
-      if (info.isMonaca) {
-        param.writer.setText = param.writer.setTextMonaca;
+    if (arAkahukuReload.enableExtCache && param.location) {
+      if (param.writer == null) {
+        param.writer = new arAkahukuReloadCacheWriter ();
+        /* 避難所 patch */
+        if (info.isMonaca) {
+          param.writer.setText = param.writer.setTextMonaca;
+        }
       }
-    }
-        
-    if (param.writer.setText (responseText, responseCharset)) {
-      param.writer.responseHead = param.responseHead;
-      param.writer.charset = responseCharset;
-      updateCache = !param.useRange && param.location;
-    }
-        
-    if (updateCache) {
-      Akahuku.Cache.asyncOpenCacheToWrite
-        ({url: param.location, triggeringNode: targetDocument},
-         param.writer);
-      if (arAkahukuReload.enableExtCache) {
-        /* バックアップキャッシュを更新 */
+      if (param.writer.setText (responseText, responseCharset)) {
+        param.writer.responseHead = param.responseHead;
+        param.writer.charset = responseCharset;
         if (arAkahukuReload.enableExtCacheFile) {
           param.writer.createFile (param.location);
         }
