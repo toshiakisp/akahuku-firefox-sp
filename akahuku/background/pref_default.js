@@ -268,7 +268,7 @@ pref("savemht.nolimit.time", 0);
 pref("savemht.preview", true);
 pref("savemht.preview.count", false);
 pref("savemht.shortcut", false);
-pref("savemht.shortcut.keycombo", "Alt+Shift+S");
+pref("savemht.shortcut.keycombo", "Alt+Shift+M");
 pref("savemht.use8bit", false);
 pref("savemht.usenetwork", true);
 pref("savemht.usep2p", false);
