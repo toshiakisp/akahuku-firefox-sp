@@ -475,7 +475,39 @@ var arAkahukuPopupQuote = {
             continue;
           }
           else if (nodeName == "span") {
-            continue;
+            if (arAkahukuDOM.hasClassName (node, "csb")) {
+              // Comment title
+              newNode = node.cloneNode (true);
+            }
+            else if (arAkahukuDOM.hasClassName (node, "cnm")) {
+              // Name
+              newNode = node.cloneNode (true);
+            }
+            else if (arAkahukuDOM.hasClassName (node, "cnw")) {
+              // datetime
+              newNode = node.cloneNode (true);
+            }
+            else if (arAkahukuDOM.hasClassName (node, "cno")) {
+              // Comment number (No.)
+              if (node.textContent.match (/No\.([0-9]+)/)) {
+                let num = RegExp.$1;
+                newNode = targetDocument.createElement ("a");
+                newNode.className = "akahuku_popup_content_button";
+                newNode.setAttribute ("name", "No." + num);
+                newNode.addEventListener
+                  ("click",
+                   function (ev) {
+                    arAkahukuPopupQuote.onNumberClick (ev);
+                  }, false);
+                arAkahukuDOM.setText (newNode, "No." + num);
+              }
+              else {
+                newNode = targetDocument.createTextNode (node.textContent);
+              }
+            }
+            else {
+              continue;
+            }
           }
           else if (nodeName == "div"
                    && arAkahukuDOM.hasClassName

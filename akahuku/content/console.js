@@ -35,7 +35,7 @@ AkahukuConsole.prototype = {
     var err_str = String(error);
     var str = this.prefix + this._prefixSep;
     str += 'Exception: ' + err_str;
-    if ('stack' in error && typeof(error.stack) === 'string') {
+    if (typeof(error) === 'object' && 'stack' in error && typeof(error.stack) === 'string') {
       let traces = error.stack.split(/\r\n|\r|\n/);
       if (traces.length > 0) {
         let ext_match = traces[0].match(/@moz-extension:\/\/[^\/]+/);

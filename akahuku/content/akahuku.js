@@ -665,6 +665,18 @@ var Akahuku = {
    */
   getMessageNum : function (targetNode) {
     var node = targetNode;
+    while (node) {
+      if (node.matches ("span.cno")) {
+        if (node.textContent.match (/No\.([0-9]+)/)) {
+          return parseInt (RegExp.$1);
+        }
+        break;
+      }
+      node = node.previousElementSibling;
+    }
+
+    // old layout(-2019/11/18)
+    node = targetNode;
     var lastText = "";
     while (node) {
       if (node.nodeName.toLowerCase () == "#text") {

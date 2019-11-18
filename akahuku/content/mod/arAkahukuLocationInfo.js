@@ -446,20 +446,23 @@ arAkahukuLocationInfo.prototype = {
       this.replyCount = nodes.length - 1;
       if (nodes.length != 0) {
         var node = nodes [0].previousSibling;
+        var nodeName = node ? node.nodeName.toLowerCase () : "";
                 
         var text = "";
         while (node
-               && node.nodeName.toLowerCase () != "hr"
-               && node.nodeName.toLowerCase () != "input") {
-          if (node.nodeName.toLowerCase () == "a"
-              || node.nodeName.toLowerCase () == "font") {
+               && nodeName != "hr"
+               && nodeName != "input") {
+          if (nodeName == "a"
+              || nodeName == "font"
+              || nodeName == "span") {
             text = arAkahukuDOM.getInnerText (node) + text;
           }
-          else if (node.nodeName.toLowerCase () == "#text") {
+          else if (nodeName == "#text") {
             text = node.nodeValue + text;
           }
                     
           node = node.previousSibling;
+          nodeName = node ? node.nodeName.toLowerCase () : "";
         }
         if (text.match (/([0-9]+)\/([0-9]+)\/([0-9]+)\(([^\)]+)\)([0-9]+):([0-9]+)(:([0-9]+))?/)) {
           this.year = RegExp.$1;
