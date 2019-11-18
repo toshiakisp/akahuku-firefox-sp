@@ -2429,12 +2429,14 @@ var arAkahukuReload = {
     if (!param.replyPattern) {
       // 解析パターンの初期化
       param.replyPattern = {
+        threadStart : "<form ", // スレ全体のコンテナの開始
         startTag : "<td bgcolor=", // レスのコンテナの開始文字列
         endTag : "</td>", // レスのコンテナの終端文字列(1)
         endTag2 : null, // 終端文字列(1)の後にある真の終端文字列
         tagStop : ">", //　レスコンテナのタグの終端文字列
         checkBGColor : true, // コンテナの bgcolor の値まで判定するかどうか
-        inputTagAttrForNum : "name=", // スレ文&レス固有のinput要素を特定する属性のパターン
+        // スレ文&レス固有の要素を特定する属性のパターン
+        startPatternForNum : "<input\\s[^>]*name=[\"']?([0-9]+:)?",
         containerIsTable : true, // レスのコンテナの親が TABLE かどうか
 
         prefixNodeAttrs : {
@@ -2456,7 +2458,7 @@ var arAkahukuReload = {
       param.replyPattern.startTag  = arAkahukuReload._convertFromEUCJP ("<th>\xa1\xc4</th><td", responseCharset);
       /* <th>…</th><td (EUC-JP) */
       param.replyPattern.tagStop = "<td>";
-      param.replyPattern.inputTagAttrForNum = "name=\"edit\\[\\]\" value=";
+      param.replyPattern.startPatternForNum = "<input\\s[^>]*name=\"edit\\[\\]\" value=[\"']?([0-9]+:)?",
       param.replyPattern.prefixNodeAttrs = {};
       param.replyPattern.mainNodeAttrs = {};
       param.replyPattern.containerNodeAttrs = {};
@@ -2488,6 +2490,14 @@ var arAkahukuReload = {
       else {
         Akahuku.debug.warn ("proper parsing rule was not found!");
       }
+    }
+
+    var patternStart = (new RegExp (param.replyPattern.startPatternForNum + "[0-9]+","i"));
+    if (!info.isMonaca &&
+        responseText.lastIndexOf (patternStart, maxByteForTestSearch) == -1) {
+      // New layout 2019/11/18~ (no input for messages)
+      param.replyPattern.startPatternForNum = "<span id=\"delcheck";
+      param.replyPattern.threadStart = "<div class=\"thre\"";
     }
 
     var patternBGColor = null;
@@ -2664,13 +2674,13 @@ var arAkahukuReload = {
       try {
         startPosition 
           = responseText.search
-          (new RegExp ("<input\\s[^>]*" + param.replyPattern.inputTagAttrForNum + "[\"']?[0-9]+","i"));
-        if (startPosition < 0) throw "no pattrn \"" + param.replyPattern.inputTagAttrForNum + "\"";
+          (new RegExp (param.replyPattern.startPatternForNum + "[0-9]+","i"));
+        if (startPosition < 0) throw "no pattrn startPatternForNum=\"" + param.replyPattern.startPatternForNum + "\"";
         startPosition
           = responseText.lastIndexOf ("<", startPosition);
         if (startPosition < 0) throw "no pattrn last \"<\"";
         var threadStartPos
-          = responseText.lastIndexOf ("<form ", startPosition);
+          = responseText.lastIndexOf (param.replyPattern.threadStart, startPosition);
         if (threadStartPos < 0) throw "no pattrn '<form '";
         threadStartPos
           = responseText.indexOf (">", threadStartPos);
@@ -2737,7 +2747,7 @@ var arAkahukuReload = {
     else {
       startPosition
       = responseText
-      .search (new RegExp (param.replyPattern.inputTagAttrForNum + "[\"']?([0-9]+:)?" + lastReply.num + "[\"']?"));
+      .search (new RegExp (param.replyPattern.startPatternForNum + lastReply.num + "[\"']?"));
     }
     for (startPosition
            = responseText.indexOf (param.replyPattern.startTag, startPosition);
