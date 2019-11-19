@@ -4099,7 +4099,8 @@ var arAkahukuPostForm = {
         var attachable = "";
         for (i = 0; i < nodes2.length; i ++) {
           if (nodes2 [i].innerHTML.match
-              (/^\u6DFB\u4ED8\u53EF\u80FD\uFF1A(.*)$/)) { // "添付可能："
+              (/^\u6DFB\u4ED8\u53EF\u80FD[:\uFF1A](.*)$/)) {
+            // "添付可能[：:]"
             attachable = RegExp.$1;
             break;
           }
