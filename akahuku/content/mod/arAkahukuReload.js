@@ -38,7 +38,7 @@ arAkahukuReloadCacheWriter.prototype = {
     end_pos = 0;
     
     // "<li>現在123人" || "<li>現在???人" (Shift_JIS)
-    end_pos = text.search (/<li>\x8C\xBB\x8D\xDD(?:[0-9]+|\?+)\x90\x6C/i,
+    end_pos = text.search (/<li>(?:|[^<]*\.\s*)\x8C\xBB\x8D\xDD(?:[0-9]+|\?+)\x90\x6C/i,
                            start_pos);
     if (end_pos != -1) {
       end_pos += 8;
@@ -1132,7 +1132,7 @@ var arAkahukuReload = {
         
     var viewersNumber = "";
     if (responseText.match
-        (new RegExp (arAkahukuReload._convertFromSJIS ("<li>\x8c\xbb\x8d\xdd([0-9]+|\\?+)\x90\x6c"),"i"))) {
+        (new RegExp (arAkahukuReload._convertFromSJIS ("<li>(?:|[^<]*\\.\\s*)\x8c\xbb\x8d\xdd([0-9]+|\\?+)\x90\x6c"),"i"))) {
       /* <li>現在(xx)人 (Shift_JIS) */
       viewersNumber = RegExp.$1;
     }
@@ -1194,8 +1194,9 @@ var arAkahukuReload = {
             
       var nodes = targetDocument.getElementsByTagName ("li");
       for (var i = 0; i < nodes.length; i ++) {
+        // (現在(?:[0-9]+|?+)人)
         if (nodes [i].innerHTML
-            .match (/^(<small>)?(\u73FE\u5728(?:[0-9]+|\?+)\u4EBA)/)) {
+            .match (/^(<small>|.*\.\s*)?(\u73FE\u5728(?:[0-9]+|\?+)\u4EBA)/)) {
           var startNode = nodes [i];
           node = nodes [i].firstChild;
           while (node) {
@@ -1232,6 +1233,9 @@ var arAkahukuReload = {
           break;
         }
       }
+    }
+    else {
+      Akahuku.debug.warn ("updateViewersNumber(): pattern not found");
     }
   },
     
