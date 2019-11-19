@@ -3929,6 +3929,10 @@ var arAkahukuPostForm = {
       if (form && arAkahukuPostForm.enableBottom
           && !arAkahukuPostForm.enableBottomFormOnly) {
         var delTable = arAkahukuPostForm.findUsrDelTable (targetDocument);
+        if (!delTable) {
+          // New layout 2019/11/18~ (no usrdel)
+          delTable = targetDocument.getElementById ("ufm");
+        }
         if (delTable) {
           var marker = targetDocument.createElement ("div");
           marker.id = "akahuku_postform_bottom_marker";
