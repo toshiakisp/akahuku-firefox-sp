@@ -3148,7 +3148,18 @@ var arAkahukuThread = {
               break;
             }
             
-            if (nodeName == "small"
+            if (!(threadNumber > 0) && nodeName == "span"
+              && arAkahukuDOM.hasClassName (node, "cno")) {
+              // New layout 2019/11/18-
+              if (node.textContent.match (/No\.([0-9]+)/)) {
+                threadNumber = parseInt (RegExp.$1);
+                if (!info.isNormal
+                    || !arAkahukuThread.enableMoveButton) {
+                  break;
+                }
+              }
+            }
+            else if (nodeName == "small"
                 /* 避難所 patch */
                 || nodeName == "span") {
               if (node.innerHTML.match
