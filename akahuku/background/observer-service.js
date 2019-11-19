@@ -41,7 +41,11 @@ const ObserverService = (function () {
         throw new TypeError('observer must have observe method')
       }
 
-      let obs = (localObservers.get(topic) || new Set());
+      let obs = localObservers.get(topic);
+      if (!obs) {
+        obs = new Set();
+        localObservers.set(topic, obs);
+      }
       obs.add(observer);
     },
 
@@ -64,7 +68,7 @@ const ObserverService = (function () {
           }
           catch (e) {
             console.error('Error occured while observe() with topic =',
-              topic, 'for', o);
+              topic, 'for', o, String(e));
           }
         }
       }

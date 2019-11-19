@@ -16,6 +16,7 @@ const ObserverService = (function () {
       let handler = registry.get(topic);
       if (!handler) {
         handler = new PortObserverHandler('observer-service.js', topic);
+        registry.set(topic, handler);
       }
       handler.add(observer);
     },
