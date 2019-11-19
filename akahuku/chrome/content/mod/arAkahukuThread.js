@@ -3344,37 +3344,28 @@ var arAkahukuThread = {
     
     if (info.isNormal
         && arAkahukuThread.enableReloadOnBottom) {
-      /* 削除フォームを探す */
-      var nodes = targetDocument.getElementsByTagName ("input");
-      for (var i = 0; i < nodes.length; i ++) {
-        if (nodes [i].type == "hidden"
-            && nodes [i].name == "mode"
-            && nodes [i].value == "usrdel") {
-          var table
-            = arAkahukuDOM.findParentNode (nodes [i], "table");
-          if (!table) {
-            table
-              = arAkahukuDOM.findParentNode (nodes [i], "div");
-          }
-          if (table) {
-            var div = targetDocument.createElement ("div");
-            div.id = "akahuku_links_on_bottom";
-            div.style.clear = "left";
-            div.style.paddingTop = "4px";
-                
-            div.appendChild (targetDocument.createTextNode ("["));
-                    
-            a = targetDocument.createElement ("a");
-            a.href = targetDocument.location.href;
-                    
-            a.appendChild (targetDocument.createTextNode
-                           ("\u30EA\u30ED\u30FC\u30C9"));
-            div.appendChild (a);
-                    
-            div.appendChild (targetDocument.createTextNode ("]"));
-                
-            table.parentNode.insertBefore (div, table.nextSibling);
-          }
+      var nodes;
+      var div = targetDocument.createElement ("div");
+      div.id = "akahuku_links_on_bottom";
+      div.style.clear = "left";
+      div.style.paddingTop = "4px";
+      div.appendChild (targetDocument.createTextNode ("["));
+      a = targetDocument.createElement ("a");
+      a.href = targetDocument.location.href;
+      a.appendChild (targetDocument.createTextNode
+                     ("\u30EA\u30ED\u30FC\u30C9"));
+      div.appendChild (a);
+      div.appendChild (targetDocument.createTextNode ("]"));
+      var table = arAkahukuPostForm.findUsrDelTable (targetDocument);
+      if (table) {
+        table.parentNode.insertBefore (div, table.nextSibling);
+      }
+      else {
+        // New layout 2019/11/18~ (before table.psen, page selector table)
+        nodes = arAkahukuDOM.getElementsByNames (targetDocument, "table", "psen");
+        table = nodes [nodes.length-1]; // last one
+        if (table) {
+          table.parentNode.insertBefore (div, table);
         }
       }
     }
