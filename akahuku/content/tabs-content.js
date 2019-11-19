@@ -10,7 +10,7 @@ const Tabs = (()=>{
   let module = {};
   for (let m of methods) {
     module[m] = async (...args) => {
-      return browser.runtime.sendMessage({
+      return await browser.runtime.sendMessage({
         'target': 'tabs.js',
         'command': m,
         'args': [...args],

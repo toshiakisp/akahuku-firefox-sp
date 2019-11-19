@@ -31,7 +31,7 @@ const HistoryService = (function () {
   ];
   for (let m of methods) {
     module[m] = async (...args) => {
-      return browser.runtime.sendMessage({
+      return await browser.runtime.sendMessage({
         'target': 'history-service.js',
         'command': m,
         'args': [...args],
