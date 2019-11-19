@@ -46,7 +46,7 @@ const AkahukuCentral = (function () {
 
       value.id = this._idFactory.create();
       this._values.push(value);
-      this._urlMap.set(value, new URL(value.url));
+      this._urlMap.set(value, new URL(value.url || 'about:blank'));
       return {id: value.id};
     }
 
@@ -108,7 +108,7 @@ const AkahukuCentral = (function () {
           }
         }
         else {
-          throw new TypeError('Unsupported argument type');
+          throw new TypeError('Unsupported argument type: '+typeof(arg));
         }
       }
       parseArg(arg);
@@ -171,6 +171,7 @@ const AkahukuCentral = (function () {
 
   let registories = new Map([
     ['param', new Registory()],
+    ['board', new Registory()],
   ]);
 
   // public methods of module
