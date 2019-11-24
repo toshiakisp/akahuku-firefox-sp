@@ -995,9 +995,12 @@ var arAkahukuQuote = {
     }
   },
 
-  quoteMessageByNum : function (targetDocument, num, target) {
+  quoteMessageByNum : function (targetDocument, num, target, type) {
+    if (!(type >= 0)) {
+      type = arAkahukuQuote.numberType;
+    }
       var text = "";
-      switch (arAkahukuQuote.numberType) {
+      switch (type) {
         case 0:
           text = num;
           break;
