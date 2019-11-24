@@ -1,6 +1,6 @@
 
 BASE_VERSION = 5.2.90
-PATCH_VERSION = sp_rev.54
+PATCH_VERSION = sp_rev.55
 FX_MAX_VERSION = 56.*
 EXTENSION_ID = akahuku.fx.sp@toshiakisp.github.io
 
