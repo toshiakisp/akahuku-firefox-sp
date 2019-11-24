@@ -248,6 +248,18 @@ var arAkahukuCompat = new function () {
     };
   };
 
+  this.HTMLElement = {
+    matches : function (element, selector) {
+      if ("matches" in element) { // Firefox 34
+        return element.matches (selector);
+      }
+      else if ("mozMatchesSelector" in element) {
+        return element.mozMatchesSelector (selector);
+      }
+      return false;
+    },
+  };
+
   this.HTMLInputElement = {
     /**
      * Wrap mozSetFileArray since Firefox 38 [Bug 1068838]

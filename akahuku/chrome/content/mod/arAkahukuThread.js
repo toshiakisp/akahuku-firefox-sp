@@ -78,6 +78,7 @@ function arAkahukuThreadParam (targetDocument) {
 arAkahukuThreadParam.prototype = {
   stylesSaved : null, /* String mht で保存する際に復帰させるスタイル */
   targetDocument : null,
+  isPopdownMenuLayout : false, // For new layout 2019/11/18-
 
   saveStyle : function (styleNode)
   {
@@ -2016,6 +2017,10 @@ var arAkahukuThread = {
    *         対象のノード
    */
   applyInlineDel : function (targetDocument, targetNode) {
+    var param = Akahuku.getDocumentParam (targetDocument);
+    if (param.thread_param.isPopdownMenuLayout) {
+      return;
+    }
     var nodes, i;
         
     nodes = targetNode.getElementsByTagName ("a");
@@ -2023,72 +2028,92 @@ var arAkahukuThread = {
     for (i = 0; i < nodes.length; i ++) {
       if ("className" in nodes [i]
           && nodes [i].className == "del") {
-        var state = {opened: false};
-        
-        nodes [i].addEventListener
-          ("click",
-           (function (node, state) {
-             return function (event) {
-               if (state.opened) {
-                 state.div.parentNode.removeChild (state.div);
-                 state.opened = false;
-                 state.iframe = null;
-                 state.div = null;
-               }
-               else {
-                 var div = targetDocument.createElement ("div");
-                 div.className = "__akahuku_delframe";
-                 div.style.display = "inline";
-                 div.style.position = "absolute";
-                 div.style.width = "1px";
-                 div.style.height = "1px";
-                 targetDocument.body.appendChild (div);
-                 var rect = node.getBoundingClientRect ();
-                 div.style.left
-                   = (rect.left + rect.width
-                      + targetDocument.body.scrollLeft
-                      + targetDocument.documentElement.scrollLeft) + "px";
-                 div.style.top
-                   = (rect.top + rect.height
-                      + targetDocument.body.scrollTop
-                      + targetDocument.documentElement.scrollTop) + "px";
-                 var iframe = targetDocument.createElement ("iframe");
-                 iframe.src = node.getAttribute ("dummyhref") || node.href; 
-                 iframe.style.position = "absolute";
-                 iframe.style.zIndex = "200";
-                 iframe.style.right = "0px";
-                 iframe.style.top = "0px";
-                 iframe.style.width = "320px";
-                 iframe.style.height = "600px";
-                 iframe.style.backgroundColor = "#ffffff";
-                 div.appendChild (iframe);
-                 iframe.addEventListener
-                   ("load",
-                    function () {
-                     var href = iframe.contentDocument.location.href;
-                     if (href.match (/del\.php(\?guid=on)?$/)) {
-                       targetDocument.defaultView.setTimeout
-                         (function () {
-                           state.div.parentNode.removeChild (state.div);
-                           state.opened = false;
-                           state.iframe = null;
-                           state.div = null;
-                         }, 500);
-                     }
-                   }, false);
-                 
-                 state.div = div;
-                 state.iframe = iframe;
-                 state.opened = true;
-               }
-               event.preventDefault ();
-               event.stopPropagation ();
-             };
-             })(nodes [i], state), true);
+        var inline = arAkahukuThread.createInlineDelHandler (nodes [i]);
+        nodes [i].addEventListener ("click", inline.toggle,  true);
       }
     }
   },
   
+  createInlineDelHandler : function (node) {
+    var inline = {
+      opened: false,
+      element: null,
+      base: node,
+      href: null,
+      toggle: null,
+      callbackBeforeClose: null,
+      close: function () {
+        if (this.opened) {
+          if (this.callbackBeforeClose) {
+            try {
+              this.callbackBeforeClose.call (null, [this]);
+            }
+            catch (e) {
+              Akahuku.debug.exception (e);
+            }
+          }
+          this.opened = false;
+          if (this.element && this.element.parentNode)
+            this.element.parentNode.removeChild (this.element);
+          this.element = null;
+          this.toggle = null;
+        }
+      },
+    };
+    var targetDocument = node.ownerDocument;
+    inline.toggle = function (event) {
+      if (inline.opened) {
+        inline.close ();
+      }
+      else {
+        var div = targetDocument.createElement ("div");
+        div.className = "__akahuku_delframe";
+        div.style.display = "inline";
+        div.style.position = "absolute";
+        div.style.width = "1px";
+        div.style.height = "1px";
+        targetDocument.body.appendChild (div);
+        var rect = node.getBoundingClientRect ();
+        div.style.left
+          = (rect.left + rect.width
+             + targetDocument.body.scrollLeft
+             + targetDocument.documentElement.scrollLeft) + "px";
+        div.style.top
+          = (rect.top + rect.height
+             + targetDocument.body.scrollTop
+             + targetDocument.documentElement.scrollTop) + "px";
+        var iframe = targetDocument.createElement ("iframe");
+        iframe.src = inline.href || node.getAttribute ("dummyhref") || node.href;
+        iframe.style.position = "absolute";
+        iframe.style.zIndex = "200";
+        iframe.style.right = "0px";
+        iframe.style.top = "0px";
+        iframe.style.width = "320px";
+        iframe.style.height = "600px";
+        iframe.style.backgroundColor = "#ffffff";
+        div.appendChild (iframe);
+        iframe.addEventListener
+          ("load",
+           function () {
+            var href = iframe.contentDocument.location.href;
+            if (href.match (/del\.php(\?guid=on)?$/)) {
+              targetDocument.defaultView.setTimeout
+                (function () {
+                  inline.close ();
+                }, 500);
+            }
+          }, false);
+        inline.element = div;
+        inline.opened = true;
+      }
+      if (event) {
+        event.preventDefault ();
+        event.stopPropagation ();
+      }
+    };
+    return inline;
+  },
+
   /**
    * 題名のバグ, Firefox3 の改行バグを修正する
    *
@@ -2285,8 +2310,11 @@ var arAkahukuThread = {
    *         対象のノード
    */
   applyDelNewTab : function (targetDocument, targetNode) {
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var param = Akahuku.getDocumentParam (targetDocument);
+    var info = param.location_info;
+    if (param.thread_param.isPopdownMenuLayout) {
+      return;
+    }
     
     var nodes = targetNode.getElementsByTagName ("a");
     var i;
@@ -2886,6 +2914,68 @@ var arAkahukuThread = {
     a.target = "_blank";
   },
     
+  onClickToInterceptPdms : function (event) {
+    var t = event.target;
+    var d = t.ownerDocument;
+    if (!arAkahukuCompat.HTMLElement.matches (t, "div.pdms")) {
+      return;
+    }
+    var param = Akahuku.getDocumentParam (d);
+    var info = param.location_info;
+
+    // Detect No. of target message from usrdel form
+    var no = t.parentNode.querySelector ('form input[value="delete"][name]').name;
+    if (!no) {
+      Akahuku.debug.warn ("No No. detected from pdm");
+      return;
+    }
+    var stop = false;
+    var a, node;
+
+    if ((arAkahukuThread.enableDelInline
+      || arAkahukuThread.enableDelNewTab)
+      && /\(del\)/.test (t.textContent)) {
+      // 削除依頼(del)
+      a = d.createElement ("a");
+      a.href = "/del.php?b=" + info.dir + "&d=" + no;
+      if (arAkahukuThread.enableDelInline) {
+        node = d.getElementById ("delcheck"+no);
+        node = node.parentNode.querySelector (".cno");
+        var inline = arAkahukuThread.createInlineDelHandler (node);
+        inline.href = a.href;
+        inline.toggle ();
+        node.addEventListener ("click", inline.toggle, true);
+        inline.callbackBeforeClose = function (state) {
+          node.removeEventListener ("click", inline.toggle, true);
+        };
+        stop = true;
+      }
+      else if (arAkahukuThread.enableDelNewTab) {
+        window.open (a.href, "_blank");
+        stop = true;
+      }
+    }
+    else if (info.isReply
+      && arAkahukuQuote.enable
+      && arAkahukuQuote.enableNumber
+      && /^\u5F15\u7528/.test (t.textContent)) {
+      // /^引用/ (引用して書込み)
+      node = d.getElementById ("delcheck"+no);
+      node = Akahuku.getMessageBQ (node.parentNode)[0];
+      arAkahukuQuote.quoteMessageByNum (d, no, node);
+      stop = true;
+    }
+
+    if (stop) {
+      event.stopPropagation ();
+      var pdmenu = d.getElementById ("pdm");
+      if (pdmenu) {
+        // close the pulldown menu
+        pdmenu.parentNode.removeChild (pdmenu);
+      }
+    }
+  },
+
   /**
    * レス番号を振る、スレの消滅情報を追加する、[続きを読む] ボタンを追加する
    * ページの末尾に [掲示板に戻る] を追加する
@@ -2910,6 +3000,18 @@ var arAkahukuThread = {
       param.thread_param.registerObserver ();
     }
     
+    if (info.isFutaba && (info.isNormal || info.isReply)) {
+      if (arAkahukuDOM.getFirstElementByNames (targetDocument, "span", "cno")) {
+        // New layout 2019/11/18- (No., no del)
+        param.thread_param.isPopdownMenuLayout = true;
+
+        // Capture click events for pdms menus before futaba's script
+        targetDocument.addEventListener ("click", function (event) {
+          arAkahukuThread.onClickToInterceptPdms (event);
+        }, true);
+      }
+    }
+
     if ((info.isNormal || info.isReply)) {
       if (arAkahukuThread.enableDelNewTab) {
         arAkahukuThread.applyDelNewTab (targetDocument, targetDocument);
