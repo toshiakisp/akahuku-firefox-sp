@@ -2178,9 +2178,9 @@ var arAkahukuReload = {
       }
     }
 
-    var patternStart = (new RegExp (param.replyPattern.startPatternForNum + "[0-9]+","i"));
-    if (!info.isMonaca &&
-        responseText.lastIndexOf (patternStart, maxByteForTestSearch) == -1) {
+    if (!info.isMonaca
+      && responseText.lastIndexOf (" value=delete id=delcheck", maxByteForTestSearch) == -1
+      && responseText.lastIndexOf ("<span id=\"delcheck", maxByteForTestSearch) >= 0) {
       // New layout 2019/11/18~ (no input for messages)
       param.replyPattern.startPatternForNum = "<span id=\"delcheck";
       param.replyPattern.threadStart = "<div class=\"thre\"";
