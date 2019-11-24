@@ -1309,5 +1309,15 @@ var arAkahukuPopupQuote = {
         arAkahukuPopupQuote.onBodyMouseUp (arguments [0]);
       }, false);
     }
+
+    if (arAkahukuPopupQuote.enable
+      && info.isFutaba && (info.isReply || info.isNormal)) {
+      // Disable Futaba-native quotation popup 2019/11
+      var disableCode = "openqtpop = function () {};";
+      var s = targetDocument.createElement ("script");
+      s.className = "akahuku_generated";
+      s.appendChild (targetDocument.createTextNode (disableCode));
+      targetDocument.body.appendChild (s);
+    }
   }
 };
