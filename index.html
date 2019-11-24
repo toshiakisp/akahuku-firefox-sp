@@ -90,8 +90,9 @@
     rgba(0, 0, 0, 0.1) 20px
   );
   "><strong style="color:red">注意: 移植途中の機能が多々あり、設定によっては全体が機能しなくなったりします</strong>。
-特にファイル保存,タブ操作,サイドバー,スタイル変更,ショートカットキー...は全体的に未実装です。
+特にタブ操作,サイドバー...は全体的に未実装です。
 P2Pは削除予定です。
+ファイル保存は大きな仕様変更があります。
 また、従来の拡張機能とは同じIDのため<strong style="color:red">上書きインストールになりますが、設定の自動移行はできません</strong>。以前にエクスポートしておいたものがあるならインポートは出来るはずです。また、現状では設定画面未実装のためにインポートは出来ても編集できない項目があります。
 GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/tree/extended">このブランチ</a>で作業中。
 </p>
@@ -100,7 +101,6 @@ GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/tree/exten
 <li>自動更新に対応していますが、拡張を(自動&amp;手動で)更新した後は、
 現状、スレ等のページはリロードしない限り機能停止したままとなります。
 現時点ではFirefoxを再起動するのが良さそう。</li>
-<li>フレームで開いたページへの適用は未実装です。</li>
 </ul>
 </div>
 
@@ -108,7 +108,7 @@ GitHubでは<a href="https://github.com/toshiakisp/akahuku-firefox-sp/tree/exten
 <ul>
 <li>最新の Firefox リリース、最新のふたば環境への対応</li>
   <ul>
-    <li>アドオンの署名</li>
+    <li>アドオンの署名 (WebExtension版のみ)</li>
     <li>マルチプロセスFirefox(E10s)互換性</li>
     <li>(2016/12~) WebExtensions化(アルファテスト)</li>
   </ul>
