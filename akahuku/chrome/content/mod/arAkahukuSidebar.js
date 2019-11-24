@@ -979,7 +979,15 @@ var arAkahukuSidebar = {
           while (node) {
             nodeName = node.nodeName.toLowerCase ();
                         
-            if (nodeName == "#text") {
+            if (nodeName == "span"
+              && arAkahukuDOM.hasClassName (node, "cno")) {
+              // New layout: 2019/11/18-
+              if (node.textContent.match (/No\.([0-9]+)/)) {
+                thread.lastNum = parseInt (RegExp.$1);
+                break;
+              }
+            }
+            else if (nodeName == "#text") {
               if (node.nodeValue.indexOf ("No.") != -1
                   && node.nodeValue.match (/No\.([0-9]+)/)) {
                 /* レス番号の場合 */
@@ -1019,7 +1027,14 @@ var arAkahukuSidebar = {
             break;
           }
                     
-          if (nodeName == "#text") {
+          if (nodeName == "span"
+            && arAkahukuDOM.hasClassName (node, "cno")) {
+            // New layout: 2019/11/18-
+            if (node.textContent.match (/No\.([0-9]+)/)) {
+              num = parseInt (RegExp.$1);
+            }
+          }
+          else if (nodeName == "#text") {
             if (num == 0
                 && node.nodeValue.indexOf ("No.") != -1
                 && node.nodeValue.match (/No\.([0-9]+)/)) {
@@ -1158,7 +1173,14 @@ var arAkahukuSidebar = {
       while (node) {
         nodeName = node.nodeName.toLowerCase ();
                 
-        if (nodeName == "#text") {
+        if (nodeName == "span"
+          && arAkahukuDOM.hasClassName (node, "cno")) {
+          // New layout: 2019/11/18-
+          if (node.textContent.match (/No\.([0-9]+)/)) {
+            thread.lastNum = parseInt (RegExp.$1);
+          }
+        }
+        else if (nodeName == "#text") {
           if (node.nodeValue.indexOf ("No.") != -1
               && node.nodeValue.match (/No\.([0-9]+)/)) {
             /* レス番号の場合 */
