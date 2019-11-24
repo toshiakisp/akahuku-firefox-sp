@@ -2639,13 +2639,27 @@ var arAkahukuThread = {
     }
     else if (info.isReply
       && arAkahukuQuote.enable
-      && arAkahukuQuote.enableNumber
-      && /^\u5F15\u7528/.test (t.textContent)) {
-      // /^引用/ (引用して書込み)
-      node = d.getElementById ("delcheck"+no);
-      node = Akahuku.getMessageBQ (node.parentNode)[0];
-      arAkahukuQuote.quoteMessageByNum (d, no, node);
-      stop = true;
+      && arAkahukuQuote.enableNumber) {
+      var quoteType = -1; // by setting
+      if (/^\s*\u5F15\u7528\u3057\u3066\u66F8\u8FBC\u307F/.test (t.textContent)) {
+        // 引用して書込み
+        stop = true;
+      }
+      else if (/^\s*\u672C\u6587\u3092\u5F15\u7528/.test (t.textContent)) {
+        // "本文を引用"
+        stop = true;
+        quoteType = 2;
+      }
+      else if (/^\s*\u767A\u8A00No.\u3092\u5F15\u7528/.test (t.textContent)) {
+        // "発言No.を引用"
+        stop = true;
+        quoteType = 1;
+      }
+      if (stop) {
+        node = d.getElementById ("delcheck"+no);
+        node = Akahuku.getMessageBQ (node.parentNode)[0];
+        arAkahukuQuote.quoteMessageByNum (d, no, node, quoteType);
+      }
     }
 
     if (stop) {
