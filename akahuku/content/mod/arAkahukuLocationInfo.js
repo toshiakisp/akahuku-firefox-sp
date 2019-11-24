@@ -147,6 +147,12 @@ arAkahukuLocationInfo.prototype = {
       this.dir = RegExp.$5;
       path = RegExp.$6;
             
+      if (this.server == "jun" && sdir == "jun/") {
+        // Special case: jun.2chan.net/jun/futaba.htm
+        path = this.dir + "/" + path;
+        this.dir = "jun";
+        sdir = "";
+      }
       if (sdir) {
         sdir = sdir.replace (/\//, "");
         this.dir = sdir + "-" + this.dir;
@@ -326,7 +332,8 @@ arAkahukuLocationInfo.prototype = {
       }
     }
         
-    if (this.dir == "b") {
+    if (this.dir == "b"
+      || (this.server == "jun" && this.dir == "jun")) {
       this.isNijiura = true;
             
       this.board = "\u8679\u88CF " + this.server;
