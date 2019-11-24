@@ -1,5 +1,5 @@
 
-VERSION = 6.0a8
+VERSION = 6.0a9
 FX_MIN_VERSION = 60.0a1
 FX_MAX_VERSION = 
 EXTENSION_ID = akahuku.fx.sp@toshiakisp.github.io
