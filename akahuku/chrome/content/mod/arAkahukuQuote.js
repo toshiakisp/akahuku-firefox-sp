@@ -28,6 +28,7 @@ var arAkahukuQuote = {
   enableNumberClear : false,       /* Boolean  引用する時にコメント欄をクリア */
   enableNumberNoComment : false,   /* Boolean  本文なしの場合に番号にする */
   enableNumberOnlyQuote : false,   /* Boolean  メッセージが引用のみの場合に番号にする */
+  enableNumberNoMenu : false,
   enableClear : false,             /* Boolean  メニューから引用する時に
                                     *   コメント欄をクリア */
   enableUntroll : false,           /* Boolean  芝刈りを解除する */
@@ -97,6 +98,9 @@ var arAkahukuQuote = {
           .initPref ("bool", "akahuku.quickquote.number.onlyquote",
                      false);
       }
+      arAkahukuQuote.enableNumberNoMenu
+        = arAkahukuConfig
+        .initPref ("bool", "akahuku.quickquote.number.nomenu", false);
       arAkahukuQuote.enableClear
         = arAkahukuConfig
         .initPref ("bool", "akahuku.quickquote.clear", false);
@@ -976,6 +980,14 @@ var arAkahukuQuote = {
             )) {
       arAkahukuQuote.quoteMessageByNum (targetDocument, num, target);
       event.preventDefault ();
+    }
+    else if (num != -1 && arAkahukuCompat.HTMLElement.matches (event.target, "span.cno")) {
+      // New layout: 2019/11/18- (tagged No.)
+      var noModifier = !(event.shiftKey || event.altKey || event.ctrlKey || event.metaKey);
+      if (arAkahukuQuote.enableNumberNoMenu ? noModifier : !noModifier) {
+        arAkahukuQuote.quoteMessageByNum (targetDocument, num, event.target);
+        event.stopPropagation ();
+      }
     }
     else if (num != -1) {
       Akahuku.debug.warn ("arAkahukuQuote.onBodyClick: No." + num

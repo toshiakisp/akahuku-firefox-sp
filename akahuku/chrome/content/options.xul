@@ -420,7 +420,7 @@
           </box>
           <box orient="vertical" flex="1">
             <checkbox id="quickquote_number" checked="false"
-                      label="番号をクリックで引用"
+                      label="番号をクリックで引用/「引用して書込み」のカスタマイズ"
                       oncommand="AkahukuOptions.checkQuickQuoteNumber ();" />
             <box class="sub" orient="vertical">
               <menulist id="quickquote_number_type">
@@ -439,6 +439,12 @@
               <checkbox id="quickquote_number_onlyquote" checked="false"
                         class="sp" tooptiptext="(デフォルト：無効) メッセージ本文が引用文のみの場合にNo.+番号を引用する"
                         label="メッセージが引用のみの場合に番号にする" />
+              <checkbox id="quickquote_number_nomenu" checked="false"
+                        class="sp" tooptiptext="(デフォルト：無効) ふたばの引用・削除メニュー(2019/11月~)を表示させずに即座に引用する。ただしクリック時にAltキーShiftキー等を押しているとメニューが表示される。"
+                        label="通常クリック時に引用・削除メニューを表示させずに引用" />
+              <box class="sub" orient="vertical">
+                <label value="※Alt,Shift等の修飾キー押し下げ時は逆の挙動になります" class="warning" />
+              </box>
             </box>
             <checkbox id="quickquote_clear" checked="false"
                       label="メニューから引用する時にコメント欄をクリア" />

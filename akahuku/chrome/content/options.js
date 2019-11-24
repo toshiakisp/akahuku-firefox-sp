@@ -436,6 +436,7 @@ var AkahukuOptions = {
       ["bool", "quickquote.number.clear", false],
       ["bool", "quickquote.number.nocomment", false],
       ["bool", "quickquote.number.onlyquote", false],
+      ["bool", "quickquote.number.nomenu", false],
       ["bool", "quickquote.clear", false],
       ["bool", "quickquote.untroll", false],
       ["bool", "quickquote.focus", false],
@@ -3435,6 +3436,7 @@ var AkahukuOptions = {
     = document.getElementById ("quickquote_number_clear").disabled
     = document.getElementById ("quickquote_number_nocomment").disabled
     = document.getElementById ("quickquote_number_onlyquote").disabled
+    = document.getElementById ("quickquote_number_nomenu").disabled
     = !document.getElementById ("quickquote").checked
     || !document.getElementById ("quickquote_number").checked;
   },
