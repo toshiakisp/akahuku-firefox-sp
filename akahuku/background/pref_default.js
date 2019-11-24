@@ -203,6 +203,7 @@ pref("quickquote.number.clear", false);
 pref("quickquote.number.nocomment", true);
 pref("quickquote.number.onlyquote", false);
 pref("quickquote.number.type", 2);
+pref("quickquote.number.nomenu", false);
 pref("quickquote.untroll", true);
 pref("reload", true);
 pref("reload.extcache", false);

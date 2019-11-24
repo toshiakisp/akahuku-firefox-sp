@@ -432,7 +432,7 @@
       <div class="box-orient-vertical flex">
         <div class="group box-orient-vertical">
           <label><input type=checkbox name="quickquote.number"
-            >番号をクリックで引用</label>
+            >番号をクリックで引用/「引用して書込み」のカスタマイズ</label>
           <select name="quickquote.number.type" data-pref-type="int">
               <option value="0">番号</option>
               <option value="1">No. + 番号</option>
@@ -447,6 +447,12 @@
           <label class="sp tooltip"><input type=checkbox name="quickquote.number.onlyquote"
             ><span class=tooltiptext>(デフォルト：無効) メッセージ本文が引用文のみの場合にNo.+番号を引用する</span
             >メッセージが引用のみの場合に番号にする</label>
+          <label class="sp tooltip"><input type=checkbox name="quickquote.number.nomenu"
+            ><span class=tooltiptext>(デフォルト：無効) ふたばの引用・削除メニュー(2019/11月~)を表示させずに即座に引用する。ただしクリック時にAltキーShiftキー等を押しているとメニューが表示される。</span
+            >通常クリック時に引用・削除メニューを表示させずに引用</label>
+          <div class="group box-orient-vertical">
+            <p class="warning">※Alt,Shift等の修飾キー押し下げ時は逆の挙動になります</p>
+          </div>
         </div>
         <label><input type=checkbox name="quickquote.clear"
           >メニューから引用する時にコメント欄をクリア</label>
