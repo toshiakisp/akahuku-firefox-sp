@@ -1,15 +1,22 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"> 
-<h4>sp_rev.54 (2018-11-18)</h4>
+<h4>sp_rev.55 (2018-11-24)</h4>
 <ul>
-  <li>ふたばの全文検索対応による変更へ少し対応 (Extended 6.0a4からバックポート)</li>
+  <li>ふたば新レイアウトのスレッドへ対応 (Extended 6.0a8, a9からバックポート)</li>
   <ul>
-    <li>有効な板で「フォーム固定」を有効時に異常動作する問題</li>
-    <li>設定の「リンク」／「リンクを新しいタブで開く」に「検索ボタン」を追加(既定で有効)</li>
-    <li>設定の「スレ操作パネル」に表示するものとして「全文検索フォーム」を追加(既定で有効)</li>
+    <li>スレNo.,レスNo.の検出に失敗しないように</li>
+    <li>No.メニューからでも赤福の引用機能が働くように</li>
+    <li>No.メニューの削除依頼(del)にdelフォームを「新しいタブで開く」「インラインで開く」設定が反映されるように</li>
+    <li>No.クリック時の修飾キーの有無でNo.メニューを開くか直接引用するかを切替え</li>
+    <li>メニュー／引用に「通常クリック時に引用・削除メニューを表示させずに引用」設定を追加(上の項目の挙動の反転)</li>
+    <li>スレの残り寿命(レス数)が正しく表示されるように</li>
+    <li>添付可能なファイル形式を正しく認識するように</li>
+    <li>フォームを「ページ末尾に置く」が機能するように</li>
+    <li>「リロードボタン（通常モード）」をページ末尾に追加が機能するように</li>
+    <li>「引用のポップアップ」有効時にふたばの引用ポップアップを無効化するように</li>
   </ul>
-  <li>板情報の更新</li>
-  <li>レガシー拡張機能へのAMO署名サービス停止のため無署名配布に</li>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/a919bf4...1850c86">All changes from previous release on github</a> (8 commits, 14 files changed)</li>
+  <li>虹裏junで正しく動くように (Extended 6.0a9からバックポート)</li>
+  <li>画像を保存ボタンがmp4にも付くように</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/0428ec0...1c48c8b">All changes from previous release on github</a> (16 commits, 16 files changed)</li>
 </ul>
 </html>
