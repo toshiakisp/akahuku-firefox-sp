@@ -635,7 +635,16 @@ var arAkahukuQuote = {
             || target.parentNode.nodeName.toLowerCase () == "form"
             // form#text (スレ本文(~2016/05/31))
             )) {
-      
+      arAkahukuQuote.quoteMessageByNum (targetDocument, num, target);
+      event.preventDefault ();
+    }
+    else if (num != -1) {
+      Akahuku.debug.warn ("arAkahukuQuote.onBodyClick: No." + num
+          + " is clicked but in an unsupported node.");
+    }
+  },
+
+  quoteMessageByNum : function (targetDocument, num, target) {
       var text = "";
       switch (arAkahukuQuote.numberType) {
         case 0:
@@ -720,13 +729,6 @@ var arAkahukuQuote = {
       target.focus ();
             
       arAkahukuPostForm.focus (targetDocument, target);
-            
-      event.preventDefault ();
-    }
-    else if (num != -1) {
-      Akahuku.debug.warn ("arAkahukuQuote.onBodyClick: No." + num
-          + " is clicked but in an unsupported node.");
-    }
   },
     
   /**
