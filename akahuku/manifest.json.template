@@ -45,6 +45,7 @@
       "background/clipboard-polyfill.js",
       "background/akahuku-central.js",
       "background/observer-service.js",
+      "background/akahuku-central-board.js",
       "background/history-service.js",
       "background/css-injector.js",
       "background/pref.js",
