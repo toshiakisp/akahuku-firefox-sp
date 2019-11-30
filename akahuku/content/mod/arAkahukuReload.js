@@ -2046,6 +2046,11 @@ var arAkahukuReload = {
    *         レス番号
    */
   applyNumbering : function (targetDocument, element, number) {
+    // Check new layout 2019/11/29- (native res numbering)
+    var rsc = Akahuku.getMessageReplyNumber (element, true);
+    if (rsc) { // already numbered
+      return;
+    }
     if (number <= arAkahukuThread.numberingMax) {
       var span = targetDocument.createElement ("span");
       span.className = "akahuku_replynumber";
@@ -2284,12 +2289,9 @@ var arAkahukuReload = {
       /* 最後のレスの通し番号の取得 */
       if (arAkahukuThread.enableNumbering
           && lastReply.container) {
-        var nodes2 = lastReply.container.main.getElementsByTagName ("span");
-        for (var i = 0; i < nodes2.length; i ++) {
-          if (nodes2 [i].className == "akahuku_replynumber") {
-            lastReplyNumber = parseInt (nodes2 [i].innerHTML);
-            break;
-          }
+        var rsc = Akahuku.getMessageReplyNumber (lastReply.container.main, true);
+        if (rsc) {
+          lastReplyNumber = parseInt (rsc.textContent);
         }
       }
     }
@@ -2561,12 +2563,11 @@ var arAkahukuReload = {
                 if (arAkahukuThread.enableNumbering
                     && skippedReplies + deletedReplies
                     + nodeletedReplies) {
-                  /* レス番号がズレている時 */
-                  if ("className" in container.main.firstChild
-                      && container.main.firstChild.className
-                      == "akahuku_replynumber") {
+                  // レス番号がズレている時
+                  rsc = Akahuku.getMessageReplyNumber (container.main, true);
+                  if (rsc) {
                     arAkahukuDOM.setText
-                      (container.main.firstChild,
+                      (rsc,
                        nodesIndex
                        + skippedReplies
                        - deletedReplies + 1);
@@ -2586,12 +2587,11 @@ var arAkahukuReload = {
                   if (arAkahukuThread.enableNumbering
                       && skippedReplies + deletedReplies
                       + nodeletedReplies) {
-                    /* レス番号がズレている時 */
-                    if ("className" in container.main.firstChild
-                        && container.main.firstChild.className
-                        == "akahuku_replynumber") {
+                    // レス番号がズレている時
+                    rsc = Akahuku.getMessageReplyNumber (container.main, true);
+                    if (rsc) {
                       arAkahukuDOM.setText
-                        (container.main.firstChild,
+                        (rsc,
                          nodesIndex
                          + skippedReplies
                          - deletedReplies
@@ -2749,14 +2749,14 @@ var arAkahukuReload = {
           
           if (arAkahukuThread.enableNumbering
               && skippedReplies + deletedReplies + nodeletedReplies) {
-            /* レス番号がズレている時 */
-            if ("className" in container.main.firstChild
-                && container.main.firstChild.className
-                == "akahuku_replynumber") {
-              arAkahukuDOM.setText (container.main.firstChild,
-                                    nodesIndex
-                                    + skippedReplies
-                                    - deletedReplies + 1);
+            // レス番号がズレている時
+            rsc = Akahuku.getMessageReplyNumber (container.main, true);
+            if (rsc) {
+              arAkahukuDOM.setText
+                (rsc,
+                 nodesIndex
+                 + skippedReplies
+                 - deletedReplies + 1);
             }
           }
         }

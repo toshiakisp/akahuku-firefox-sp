@@ -884,6 +884,49 @@ var Akahuku = {
      return this.getMessageIPID (targetNode, true);
   },
     
+  getMessageReplyNumber : function (targetNode, optIsContainer) {
+    var c = targetNode;
+    if (!optIsContainer) {
+      c = Akahuku.getMessageContainer (targetNode);
+      if (!c)
+        throw Error ("Invalid node: not child nod of message container");
+      c = c.main;
+    }
+
+    var param = Akahuku.getDocumentParam (targetNode.ownerDocument);
+    if (!param
+      || param.layoutReplyNumber == 1
+      || param.layoutReplyNumber < 0) {
+      // native res numbering: new layout 2019/11/19-
+      try {
+        // Fx 32- (:scope)
+        var rsc = c.querySelector (":scope>span.rsc[id^='delcheck']");
+      }
+      catch (e) {
+      }
+      if (!rsc)
+        rsc = c.querySelector ("span.rsc[id^='delcheck']");
+      if (rsc) {
+        if (param && param.layoutReplyNumber < 0) {
+          param.layoutReplyNumber = 1;
+        }
+        return rsc;
+      }
+    }
+    if (!param
+      || param.layoutReplyNumber == 0
+      || param.layoutReplyNumber < 0) {
+      rsc = c.firstChild;
+      if (arAkahukuDOM.hasClassName (rsc, "akahuku_replynumber")) {
+        if (param && param.layoutReplyNumber < 0) {
+          param.layoutReplyNumber = 0;
+        }
+        return rsc;
+      }
+    }
+    return null;
+  },
+
   /**
    * 合間合間に が完了したイベント
    *

@@ -28,6 +28,7 @@ arAkahukuDocumentParam.prototype = {
   threadoperator_param : null,
   
   layout : false,
+  layoutReplyNumber : -1,
 
   links : null,
   flags : {}, // used in XUL process

@@ -1169,9 +1169,18 @@ var arAkahukuPopupQuote = {
             
             copyPopup (quoteOriginal.node, td, true);
             td.style.backgroundColor = "#f0e0d6";
-            if (arAkahukuThread.enableNumbering) {
+            var rsc = Akahuku.getMessageReplyNumber (container2.main, true);
+            if (rsc) {
               var b = targetDocument.createElement ("b");
-              arAkahukuDOM.setText (b, quoteOriginal.index + " ");
+              if (arAkahukuThread.enableNumbering) {
+                arAkahukuDOM.setText (b, quoteOriginal.index + " ");
+              }
+              else {
+                // native style
+                b.style.fontWeight = "normal";
+                b.style.fontSize = "small";
+                arAkahukuDOM.setText (b, quoteOriginal.index);
+              }
               if (td.firstChild) {
                 td.insertBefore (b, td.firstChild);
               }

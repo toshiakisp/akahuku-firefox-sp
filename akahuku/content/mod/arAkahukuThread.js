@@ -2842,6 +2842,7 @@ var arAkahukuThread = {
       var lastReply = null;
       var expire = "", expireWarning = "";
       var lastNode = null;
+      var doNumbering = arAkahukuThread.enableNumbering;
       var i;
             
       for (i = 0; i < nodes.length; i ++) {
@@ -2850,7 +2851,7 @@ var arAkahukuThread = {
           /* レスの場合 */
           arAkahukuThread.updateReplyPrefix (container, info);
           
-          if (info.isReply && (!arAkahukuThread.enableNumbering
+          if (info.isReply && (!doNumbering
                || replyNumber > arAkahukuThread.numberingMax)) {
             /* 返信モードでは全てをスキャンする必要は無い */
             replyNumber = nodes.length - 1;
@@ -2864,7 +2865,7 @@ var arAkahukuThread = {
                     
           lastReply = nodes [i];
                     
-          if (arAkahukuThread.enableNumbering
+          if (doNumbering
               && (info.isNormal
                   || replyNumber <= arAkahukuThread.numberingMax)) {
             var numbered = false;
@@ -2890,6 +2891,15 @@ var arAkahukuThread = {
                        .toLowerCase () == "span") {
                 /* Ver.1.1.0 以降の番号付け + レイアウト板 */
                 numbered = true;
+              }
+            }
+
+            if (!numbered
+              && Akahuku.getMessageReplyNumber (container.main, true)) {
+              // New layout: 2019/11/29 (native reply numbering)
+              numbered = true;
+              if (info.isReply) {
+                doNumbering = false;//no more check for this thread
               }
             }
             
