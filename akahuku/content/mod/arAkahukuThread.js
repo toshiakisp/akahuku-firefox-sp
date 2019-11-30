@@ -2672,6 +2672,43 @@ var arAkahukuThread = {
     }
   },
 
+  onClickToInterceptSlp : function (event) {
+    // Intercept clicks on selection menu of futaba
+    var t = event.target;
+    if (!(t.parentNode && t.parentNode.matches ("div#slp"))) {
+      return;
+    }
+    var d = t.ownerDocument;
+    var stop = false;
+
+    if (/^\s*\u5F15\u7528\u3059\u308B/.test (t.textContent)) {
+      // /^\s*引用する/
+      arAkahukuQuote.quoteSelection (d, {
+        prefix: true, focus: true, clear: false});
+      stop = true;
+    }
+
+    if (stop) {
+      event.stopPropagation ();
+      var menu = d.getElementById ("slp");
+      if (menu) {
+        // close the pulldown menu
+        menu.parentNode.removeChild (menu);
+      }
+      else {
+        Akahuku.debug.log ("no slp menu");
+      }
+    }
+  },
+
+  onMouseDownToInterceptSlp : function (event) {
+    var t = event.target;
+    if (t.parentNode && t.parentNode.matches ("div#slp")) {
+      event.preventDefault (); // to preserve current selection
+      return;
+    }
+  },
+
   /**
    * レス番号を振る、スレの消滅情報を追加する、[続きを読む] ボタンを追加する
    * ページの末尾に [掲示板に戻る] を追加する
@@ -2704,6 +2741,10 @@ var arAkahukuThread = {
         // Capture click events for pdms menus before futaba's script
         targetDocument.addEventListener ("click", function (event) {
           arAkahukuThread.onClickToInterceptPdms (event);
+          arAkahukuThread.onClickToInterceptSlp (event);
+        }, true);
+        targetDocument.addEventListener ("mousedown", function (event) {
+          arAkahukuThread.onMouseDownToInterceptSlp (event);
         }, true);
       }
     }

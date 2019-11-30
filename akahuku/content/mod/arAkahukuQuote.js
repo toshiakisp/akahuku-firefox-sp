@@ -436,6 +436,26 @@ var arAkahukuQuote = {
    */
   quote : function (addQuotePrefix, focusTextArea, originNode) {
     var targetDocument = originNode.ownerDocument;
+    var opt = {
+      prefix: addQuotePrefix,
+      focus: focusTextArea,
+      clear: arAkahukuQuote.enableClear,
+    };
+    arAkahukuQuote.quoteSelection (targetDocument, opt);
+  },
+
+  quoteSelection : function (targetDocument, optProps) {
+    var props = {
+      prefix: true,
+      focus: true,
+      clear: false,
+    };
+    if (optProps) {
+      for (var k in props) {
+        if (k in optProps)
+          props [k] = Boolean(optProps [k]);
+      }
+    }
     var targetWindow = targetDocument.defaultView;
     var selection = arAkahukuQuote.getSelectedString (targetWindow);
         
@@ -445,7 +465,7 @@ var arAkahukuQuote = {
     }
     target = target [0];
         
-    if (arAkahukuQuote.enableClear) {
+    if (props.clear) {
       target.value = "";
     }
         
@@ -455,7 +475,7 @@ var arAkahukuQuote = {
     }
     var s
     = arAkahukuQuote.addPrefix (selection,
-                                addQuotePrefix ? ">" : "");
+                                props.prefix ? ">" : "");
     if (target.value == "") {
       target.value = s.replace (/[\r\n]$/, "");
     }
@@ -465,7 +485,7 @@ var arAkahukuQuote = {
         
     target.value += "\n";
         
-    if (focusTextArea) {
+    if (props.focus) {
       target.setSelectionRange (target.value.length, target.value.length);
       target.focus ();
       
