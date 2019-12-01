@@ -26,23 +26,6 @@ var arAkahukuScroll = {
    *         アドレス情報
    */
   setStyle : function (style, targetDocument, info) {
-    if (info.isNormal || info.isReply) {
-      /* 通常モード、レス送信モード共通 */
-      if (!info.isFutaba || info.isLogch || info.isFutasuke) {
-        /* ユーザースタイルシートが効かないので指定しなおす */
-                
-        if (arAkahukuScroll.enableGoCurrentRuleZeroHeight) {
-          style
-          .addRule ("img",
-                    "position: relative; "
-                    + "z-index: 99;");
-          /* -moz-hidden-unscrollable を設定すると
-           *  z-index が img より上になってクリックできなくなるので
-           * スレ画像の img の z-index をさらに上にする */
-        }
-      }
-    }
-        
     if (info.isReply) {
       /* レス送信モード */
             
