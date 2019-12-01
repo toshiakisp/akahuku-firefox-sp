@@ -403,26 +403,22 @@ var arAkahukuThread = {
                       "display: block; "
                       + "overflow: -moz-hidden-unscrollable;");
           }
-          else {
+          else if (!info.isFutaba) {
             style
-            .addRule ("body > form > blockquote",
-                      "overflow: -moz-hidden-unscrollable;")
-            .addRule ("body > form > div.t",
-                      "overflow: -moz-hidden-unscrollable;")
-            .addRule ("body > form > table",
-                      "display: block; "
-                      + "overflow: -moz-hidden-unscrollable;")
-            .addRule ("body > form > div.r",
-                      "overflow: -moz-hidden-unscrollable;")
+            .addRule ("body > form > div.thre"
+                      + ", body > div.thre"
+                      , "margin-right: inherit ! important;"
+                      + "overflow-x: hidden;")
+            .addRule ("body > form > blockquote"
+                      + ",body > form > div.thre > blockquote"
+                      + ",body > div.thre > blockquote"
+                      + ",body > form > div.thre > table blockquote"
+                      + ",body > div.thre > table blockquote"
+                      , "overflow-x: hidden;"
+                      + "white-space: nowrap;"
+                      + "text-overflow: clip;"
+                      + "max-width: inherit ! important;")
           }
-          
-          style
-          .addRule ("img",
-                    "position: relative; "
-                    + "z-index: 99;");
-          /* -moz-hidden-unscrollable を設定すると
-           *  z-index が img より上になってクリックできなくなるので
-           * スレ画像の img の z-index をさらに上にする */
         }
       }
     }
