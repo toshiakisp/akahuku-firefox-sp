@@ -2655,6 +2655,11 @@ var arAkahukuThread = {
         stop = true;
         quoteType = 1;
       }
+      else if (/^\s*\u753B\u50CF\u30D5\u30A1\u30A4\u30EB\u540D\u3092\u5F15\u7528/.test (t.textContent)) {
+        // "画像ファイル名を引用"
+        stop = true;
+        quoteType = 4;
+      }
       if (stop) {
         node = d.getElementById ("delcheck"+no);
         node = Akahuku.getMessageBQ (node.parentNode)[0];

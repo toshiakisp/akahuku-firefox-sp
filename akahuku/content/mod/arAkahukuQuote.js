@@ -680,6 +680,8 @@ var arAkahukuQuote = {
     if (!(type >= 0)) {
       type = arAkahukuQuote.numberType;
     }
+    var param = Akahuku.getDocumentParam (targetDocument);
+    var info = param.location_info;
       var text = "";
       switch (type) {
         case 0:
@@ -721,16 +723,46 @@ var arAkahukuQuote = {
             node = node.nextSibling;
           }
           break;
+        case 4: // 画像ファイル名
+        case 5: // 画像ファイル名, 無ければNo.
+          var patFilename = /\/[^\/]+\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z0-9]+)/;
+          node = (Akahuku.isMessageBQ (target)
+            ? target
+            : Akahuku.getMessageBQ (target) [0]);
+          while (node) {
+            if (node.nodeName.toLowerCase () == "hr")
+              break;
+            if (info.isMonaca && node.matches ("span.s10")) {
+              node = node.lastElementChild || node;
+            }
+            if (node.nodeName.toLowerCase () == "a" && node.textContent) {
+              var href = node.href;
+              if (info.isMht)
+                href = node.getAttribute ("__unmht_href");
+              if (patFilename.test (href)) {
+                text = node.textContent;
+                break;
+              }
+            }
+            node = node.previousElementSibling;
+          }
+          if (!text) { // no image filename
+            if (type == 4)
+              return;
+            text = "No." + num;
+          }
+          break;
       }
       if (arAkahukuQuote.enableNumberNoComment
+          && (type == 2 || type == 3)
           && (text.match (/^\uFF77\uFF80\u2501\u2501\u2501\u2501\u2501\u2501\(\uFF9F\u2200\uFF9F\)\u2501\u2501\u2501\u2501\u2501\u2501 !!!!![ \r\n]*$/)
               || text.match (/^\uFF77\uFF80\u2501\u2501\u2501\(\uFF9F\u2200\uFF9F\)\u2501\u2501\u2501!![ \r\n]*$/)
               || text.match (/^\u672C\u6587\u7121\u3057[ \r\n]*$/))) {
         text = "No." + num;
       }
       else if (arAkahukuQuote.enableNumberOnlyQuote
-          && ((arAkahukuQuote.numberType == 3 && text.length == 0)
-            ||(arAkahukuQuote.numberType == 2
+          && ((type == 3 && text.length == 0)
+            ||(type == 2
               && /^>[^\r\n]*(\r?\n>[^\r\n]*)*$/.test (text))
             )) {
         text = "No." + num;
