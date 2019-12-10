@@ -3957,10 +3957,35 @@ var arAkahukuReload = {
   },
 
   _insertMessageID : function (bqnode, id) {
+    var node = bqnode.previousElementSibling;
+    while (node) {
+      if (node.matches ("span.cnw")) {
+        var cnw = node;
+        // insert to the last text-node child
+        node = node.lastChild;
+        while (node) {
+          if (node.nodeType === node.TEXT_NODE) {
+            var t = node.textContent;
+            t = t.replace (/(?: ID:[A-Za-z0-9.\/]{8}| ?$)/, " ID:" + id);
+            if (node.textContent != t) {
+              node.textContent = t;
+              return true;
+            }
+            break;
+          }
+          node = node.previousSibling;
+        }
+        // create if no text-node child exists
+        cnw.appendChild (cnw.ownerDocument.createTextNode (" ID:" + id));
+        return true;
+      }
+      node = node.previousElementSibling;
+    }
+    // old layout(-2019/11/18)
     var regexpTimeNum = /^(.*[0-9]+\/[0-9]+\/[0-9]+\([^\)]+\)[0-9]+:[0-9]+(?::[0-9]+)?) (No\.[1-9][0-9]*.*)$/;
     var nextToNum = false;
     var lastText = "";
-    var node = bqnode.previousSibling;
+    node = bqnode.previousSibling;
     while (node) {
       var text = "";
       if (node.nodeType === node.TEXT_NODE) {
@@ -4001,7 +4026,31 @@ var arAkahukuReload = {
       optId = optId.replace (/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
       pattern = new RegExp ("^(.*)(\\bID:" + optId + ") ?(.*)$");
     }
-    var node = bqnode.previousSibling;
+    var node = bqnode.previousElementSibling;
+    while (node) {
+      if (node.matches ("span.cnw")) {
+        node = node.lastChild;
+        while (node) {
+          if (node.nodeType === node.TEXT_NODE) {
+            if (node.nodeValue.match (pattern)) {
+              var t = RegExp.$1 + RegExp.$3;
+              if (/^\s*$/.test (t)) {
+                node.parentNode.removeChild (node);
+              }
+              else {
+                node.nodeValue = RegExp.$1 + RegExp.$3;
+              }
+              return true;
+            }
+          }
+          node = node.previousSibling;
+        }
+        return false;
+      }
+      node = node.previousElementSibling;
+    }
+    // old layout(-2019/11/18)
+    node = bqnode.previousSibling;
     while (node) {
       if (node.nodeType === node.TEXT_NODE) {
         if (node.nodeValue.match (pattern)) {

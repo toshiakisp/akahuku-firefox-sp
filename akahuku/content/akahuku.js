@@ -838,6 +838,16 @@ var Akahuku = {
     var patternID = /\bID:([A-Za-z0-9.\/]{8})/;
     var pattern = (isId ? patternID : patternIP);
     while (node) {
+      if (node.matches ("span.cnw")) {
+        if (node.textContent.match (pattern)) {
+          return RegExp.$1;
+        }
+        break;
+      }
+      node = node.previousElementSibling;
+    }
+    // old layout(-2019/11/18)
+    while (node) {
       if (node.nodeName.toLowerCase () == "#text") {
         if ((node.nodeValue + lastText).match (pattern)) {
           return RegExp.$1;
