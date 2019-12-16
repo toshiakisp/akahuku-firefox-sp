@@ -1200,7 +1200,7 @@ var arAkahukuImage = {
     }
 
     var attr_href2 = "__akahuku_saveimage_href";
-    var pattern = /\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/;
+    var pattern = /\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z0-9]+)$/;
     
     var image = null;
     var blockquote = null
@@ -1210,7 +1210,7 @@ var arAkahukuImage = {
           && (pattern.test (node.href)
               || pattern.test (node.getAttribute (attr_href2))
               || (node.hasAttribute ("__unmht_href")
-                  && node.getAttribute ("__unmht_href").match (/\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z]+)$/)))) {
+                  && node.getAttribute ("__unmht_href").match (/\/[^\/]+\/(red|src|d)\/([A-Za-z0-9]+)\.([a-z0-9]+)$/)))) {
         var nodes = node.querySelectorAll ("img, .akahuku_saveimage_src");
         if (nodes.length > 0) {
           if (image == null) {
