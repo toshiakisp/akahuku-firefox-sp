@@ -2186,6 +2186,7 @@ var arAkahukuReload = {
     var deletedReplies = 0;
     var nodeletedReplies = 0;
     var redDeletedReplies = 0;
+    var redHiddenReplies = 0;
     var deletedThumbnails = 0;
     var startPosition = 0;
     var endPosition = 0;
@@ -2358,6 +2359,9 @@ var arAkahukuReload = {
             if (syncdata.redType === "deleted") {
               redDeletedReplies ++;
             }
+            else if (syncdata.redType === "hidden") {
+              redHiddenReplies ++;
+            }
             else {
               redReplies ++;
             }
@@ -2515,6 +2519,9 @@ var arAkahukuReload = {
                   }
                   if (syncdata.redType === "deleted") {
                     redDeletedReplies ++;
+                  }
+                  else if (syncdata.redType === "hidden") {
+                    redHiddenReplies ++;
                   }
                   else {
                     redReplies ++;
@@ -2755,9 +2762,9 @@ var arAkahukuReload = {
     arAkahukuReload.updateDDel (targetDocument);
     
     skippedReplies -= noSkippedReplies;
-    nodeletedReplies += redDeletedReplies;
         
     if (newReplies + skippedReplies + nodeletedReplies + deletedReplies
+      + redDeletedReplies + redHiddenReplies
         > 0) {
       /* レス数の表示 */
       arAkahukuThread.updateReplyNumber (targetDocument);
@@ -2786,7 +2793,7 @@ var arAkahukuReload = {
     return new Array (newReplies, skippedReplies,
                       nodeletedReplies + deletedReplies,
                       newNodes, addNodes, redReplies, deletedThumbnails,
-                      idSyncResults);
+                      idSyncResults, redDeletedReplies, redHiddenReplies);
   },
     
   /**
@@ -2959,6 +2966,8 @@ var arAkahukuReload = {
       var redReplies = array [5];
       var deletedThumbnails = array [6];
       var idSyncResults = array [7];
+      var redDeletedReplies = array [8];
+      var redHiddenReplies = array [9];
             
       /* 避難所 patch */
       if (info.isMonaca) {
@@ -3057,9 +3066,14 @@ var arAkahukuReload = {
           s += ", \u672A\u53D6\u5F97: " + skippedReplies;
           parm = true;
         }
-        if (deletedReplies > 0) {
+        if (deletedReplies + redDeletedReplies > 0) {
           /* 削除されたレスがあった場合 */
-          s += ", \u524A\u9664: " + deletedReplies;
+          s += ", \u524A\u9664: " + (deletedReplies + redDeletedReplies);
+          parm = true;
+        }
+        if (redHiddenReplies > 0) {
+          // 隔離
+          s += ", \u9694\u96E2: " + redHiddenReplies;
           parm = true;
         }
         if (deletedThumbnails > 0) {
@@ -3926,6 +3940,12 @@ var arAkahukuReload = {
           // "削除されました"
           ("\u524A\u9664\u3055\u308C\u307E\u3057\u305F") >= 0) {
         ret.redType = "deleted";
+        ret.deleted = true;
+      }
+      else if (redsS [0].text.lastIndexOf
+          // (削除依頼によって) "隔離されました"
+          ("\u9694\u96E2\u3055\u308C\u307E\u3057\u305F") >= 0) {
+        ret.redType = "hidden";
         ret.deleted = true;
       }
       else if (redsS [0].text == "\u306A\u30FC") { //なー"
