@@ -1481,7 +1481,7 @@ var arAkahukuLink = {
       prefix
         = prefix.replace
         (/([\(\)\[\]\{\}\\\^\$\+\*\?\|\-])/g, "\\$1");
-      var targetPattern = "(" + prefix + "[0-9]+\\.[a-z]+)";
+      var targetPattern = "(" + prefix + "[0-9]+\\.[A-Za-z0-9]+)";
       var targetUrl = base + "$1";
             
       var exists = false;
