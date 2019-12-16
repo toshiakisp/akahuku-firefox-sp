@@ -1960,7 +1960,7 @@ var arAkahukuPostForm = {
             continue;
           }
           var url = nodes [i].getAttribute ("dummyhref");
-          if (url.match (/\.(jpe?g|gif|png|bmp)(\?.*)?$/i)) {
+          if (url.match (/\.(jpe?g|gif|png|bmp|webp)(\?.*)?$/i)) {
             var text = arAkahukuDOM.getInnerText (nodes [i]);
             urls.push (new Array (url, text));
           }
@@ -2007,7 +2007,7 @@ var arAkahukuPostForm = {
                    (/^http:\/\/www\.(nijibox)5\.com\/futabafiles\/(tubu)\/(src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
             src = arAkahukuP2P.enP2P (src);
           }
-          else if (src.match (/\.(jpe?g|gif|png|bmp)$/i)) {
+          else if (src.match (/\.(jpe?g|gif|png|bmp|webp)$/i)) {
             src
               = Akahuku.protocolHandler.enAkahukuURI
               ("preview", src);
@@ -3119,6 +3119,9 @@ var arAkahukuPostForm = {
       }
       else if (filename.match (/\.png/i)) {
         mimeType = "image/png";
+      }
+      else if (filename.match (/\.webp$/i)) {
+        mimeType = "image/webp";
       }
       else if (filename.match (/\.webm$/i)) {
         mimeType = "video/webm";

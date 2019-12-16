@@ -2225,7 +2225,7 @@ var arAkahukuLink = {
       if (arAkahukuLink.enableAutoLinkPreview
           && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
             ||url.match (/^https?:\/\/(www\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
-            ||url.match (/\.(jpe?g|gif|png|swf|bmp|webm|mp4)(\?.*)?$/i))) {
+            ||url.match (/\.(jpe?g|gif|png|swf|bmp|web[mp]|mp4)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
         
@@ -2258,7 +2258,7 @@ var arAkahukuLink = {
             (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
             && !url.match
             (/^https?:\/\/(www\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
-            && !url.match (/\.(jpe?g|gif|png|bmp|webm|mp4)(\?.*)?$/i)
+            && !url.match (/\.(jpe?g|gif|png|bmp|web[mp]|mp4)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
           button.appendChild (targetDocument.createTextNode
@@ -2285,7 +2285,7 @@ var arAkahukuLink = {
         
       if (arAkahukuImage.enable
           && arAkahukuImage.enableAutoLinkPreview) {
-        if (url.match (/\.(jpe?g|gif|png|swf|bmp|webm|mp4)(\?.*)?$/i)) {
+        if (url.match (/\.(jpe?g|gif|png|swf|bmp|web[mp]|mp4)(\?.*)?$/i)) {
           arAkahukuImage.createSaveImageButton (targetDocument,
                                                 button, url,
                                                 linkNode);
@@ -2527,7 +2527,7 @@ var arAkahukuLink = {
     var srcByFetch = null;
     var scheme = targetDocument.location.protocol.replace (/:$/, "");
         
-    if (uri.match (/\.(jpe?g|gif|png|bmp)$/i)) {
+    if (uri.match (/\.(jpe?g|gif|png|bmp|webp)$/i)) {
       image = targetDocument.createElement ("img");
       image.style.maxWidth = "250px";
       image.style.maxHeight = "250px";
@@ -2895,7 +2895,7 @@ var arAkahukuLink = {
          targetDocument);
       var uri = target.getAttribute ("dummyhref");
             
-      if (uri.match (/\.(jpe?g|gif|png|bmp)$/i)) {
+      if (uri.match (/\.(jpe?g|gif|png|bmp|webp)$/i)) {
         var anchor
            = arAkahukuLink.createAutolinkAnchor(
              targetDocument, uri);
