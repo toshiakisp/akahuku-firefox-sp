@@ -2475,8 +2475,7 @@ var arAkahukuReload = {
           var currentContainerText
           = responseText.substr (lastEndPosition, endPosition-lastEndPosition-currentReplyTextTmp.length);
           if (param.replyPattern.containerIsTable
-            && /^<table [^>]*class=[\'\"]?deleted[\'\"]?/.test (currentContainerText)
-            && ) {
+            && /^<table [^>]*class=[\'\"]?deleted[\'\"]?/.test (currentContainerText)) {
             isDeleted = true;
           }
         }
