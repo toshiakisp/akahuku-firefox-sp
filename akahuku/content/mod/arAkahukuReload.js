@@ -2462,6 +2462,25 @@ var arAkahukuReload = {
           = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
           lastReplyNumber = 0;
         }
+
+        // Parse & check container tag for deleted reply class
+        var lastEndPosition = (endPosition == 0 ? startPosition - 64 : endPosition);
+        if (param.replyPattern.containerIsTable) {
+          lastEndPosition = responseText.lastIndexOf ("<table", lastEndPosition);
+        }
+        else { // div
+          lastEndPosition = startPosition;
+        }
+        if (lastEndPosition >= 0) {
+          var currentContainerText
+          = responseText.substr (lastEndPosition, endPosition-lastEndPosition-currentReplyTextTmp.length);
+          if (param.replyPattern.containerIsTable
+            && /^<table [^>]*class=[\'\"]?deleted[\'\"]?/.test (currentContainerText)
+            && ) {
+            isDeleted = true;
+          }
+        }
+
         
         var currentContainer
         = Akahuku.cloneMessageContainer
