@@ -1566,6 +1566,7 @@ arAkahukuCatalogParam.prototype = {
   reloadController : null,
     
   addedLastCells : false, /* Boolean  最後のセルを追加したか */
+  hasPDMC : -1,
 
   updateAgeTimerID : null,    /* Number  __age 属性更新のデバウンス用タイマ */
   hideEntireThreadDispatched : false,
@@ -2640,7 +2641,7 @@ var arAkahukuCatalog = {
         Akahuku.debug.error ("TD should be created before; " +
             "threadId=" + mergedItems [i].threadId);
         // fail safe (カスタムイベント発行無し)
-        td = arAkahukuCatalog.createCell (mergedItems [i], targetDocument, info);
+        td = arAkahukuCatalog.createCell (mergedItems [i], targetDocument, info, param);
       }
             
       try {
@@ -2865,7 +2866,7 @@ var arAkahukuCatalog = {
         // td 要素が新たに必要になる場合
         tdCreated = true;
         td = arAkahukuCatalog.createCell
-        (mergedItems [i], targetDocument, info);
+        (mergedItems [i], targetDocument, info, param.catalog_param);
         mergedItems [i].td = td;
       }
 
@@ -2964,7 +2965,7 @@ var arAkahukuCatalog = {
    * @param  arAkahukuLocationInfo info
    *         アドレスの情報
    */
-  createCell : function (mergedItem, targetDocument, info) {
+  createCell : function (mergedItem, targetDocument, info, param) {
     if (mergedItem.td) {
       return mergedItem.td;
     }
@@ -2973,6 +2974,14 @@ var arAkahukuCatalog = {
     /* mergedItem.innerHTML には HTML が含まれるので
      * innerHTML を使用する */
     td.innerHTML = mergedItem.innerHTML;
+
+    if (param.hasPDMC == 1) {
+      // Pull-down menu 2019/12/23-
+      var pdmc = targetDocument.createElement ("div");
+      pdmc.className = "pdmc";
+      pdmc.setAttribute ("data-no", mergedItem.threadId);
+      td.appendChild (pdmc);
+    }
 
     if (mergedItem.className
         && mergedItem.className != "undefined"
@@ -4605,9 +4614,23 @@ var arAkahukuCatalog = {
         
     var nodes;
         
+    var td0;
     for (i = 0, nodes = oldTable.getElementsByTagName ("td");
          i < nodes.length; i ++) {
       oldCells [nodes [i].getAttribute ("__thread_id")] = nodes [i];
+      if (td0 === undefined && nodes [i].hasAttribute("__thread_id")) {
+        td0 = nodes [i];
+      }
+    }
+
+    if (info.isFutaba && td0 && param.hasPDMC == -1) {
+      // Pulldown menu 2019/12/23-
+      if (td0.querySelector ("div.pdmc")) {
+        param.hasPDMC = 1;
+      }
+      else {
+        param.hasPDMC = 0;
+      }
     }
         
     for (beginPos = responseText.indexOf (beginTag, beginPos);
