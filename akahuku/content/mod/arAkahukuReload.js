@@ -2434,7 +2434,11 @@ var arAkahukuReload = {
       = arAkahukuConverter.convert (currentReplyTextTmp, responseCharset);
             
       var num = 0;
-      if (currentReplyText.match (/name=['"]?([0-9]+:)?([0-9]+)['"]?/)) {
+      if (currentReplyText.match (/<span\b[^>]* id=['"]?delcheck([0-9]+)/)) {
+        // New layout 2019/11/18~ (no input for messages)
+        num = parseInt (RegExp.$1);
+      }
+      else if (currentReplyText.match (/name=['"]?([0-9]+:)?([0-9]+)['"]?/)) {
         num = parseInt (RegExp.$2);
       }
       /* 避難所 patch */
