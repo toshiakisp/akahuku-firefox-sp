@@ -1210,6 +1210,9 @@ var arAkahukuReload = {
         = arAkahukuConfig
         .initPref ("bool", "akahuku.reload.extcache.images", false);
     }
+    arAkahukuReload.enableJson
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.reload.use_futaba_json", true);
   },
     
   /**
@@ -1569,7 +1572,7 @@ var arAkahukuReload = {
     }
   },
 
-  showDeletedMessageElement : function (targetDocument) {
+  showDeletedMessage : function (targetDocument) {
     var ddel = targetDocument.getElementById ("ddel");
     if (!ddel) {
       ddel = targetDocument.createElement ("span");
@@ -3209,8 +3212,8 @@ var arAkahukuReload = {
       bl.style.marginLeft = (resd.w + 40)+"px";
     }
     if (resd.del == 'del' || resd.del == 'del2') {
-      var t9 = document.createElement('span');
-      t9.style.color = "#ff0000";
+      var t9 = document.createElement('font');
+      t9.setAttribute('color', '#ff0000');
       if (resd.del == 'del') {
         //"スレッドを立てた人によって削除されました"
         t9.appendChild(document.createTextNode("\u30B9\u30EC\u30C3\u30C9\u3092\u7ACB\u3066\u305F\u4EBA\u306B\u3088\u3063\u3066\u524A\u9664\u3055\u308C\u307E\u3057\u305F"));

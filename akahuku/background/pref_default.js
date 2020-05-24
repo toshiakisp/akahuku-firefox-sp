@@ -231,6 +231,7 @@ pref("reload.status.hold", false);
 pref("reload.status.random", true);
 pref("reload.status_no_count", false);
 pref("reload.timestamp", false);
+pref("reload.use_futaba_json", true);
 pref("reload_on_bottom", false);
 pref("reply.avoidwrap", false);
 pref("reply.limitwidth", false);
