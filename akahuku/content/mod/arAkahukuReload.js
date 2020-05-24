@@ -377,6 +377,7 @@ arAkahukuReloadParam.prototype = {
   responseHead : "",           /* String  応答のヘッダ */
   responseText : "",           /* String  応答のデータ */
   responseCharset : "",        /* String  応答の文字コード */
+  responseJson : null,
     
   location : "",               /* リロード中のアドレス */
     
@@ -728,6 +729,68 @@ arAkahukuReloadParam.prototype = {
     }
   },
 
+  onHttpResponseJson : function (httpStatus, statusText='') {
+    let param = Akahuku.getDocumentParam (this.targetDocument);
+    if (param == null) {
+      Akahuku.debug.warning ('no param');
+      return;
+    }
+    let info = param.location_info;
+    if (!this.reloadRequestInit) {
+      Akahuku.debug.warning ('reloadRequestInit is false');
+      return;
+    }
+    if (!this.responseJson) {
+      Akahuku.debug.warning ('no json response');
+      return;
+    }
+
+    //"更新中"
+    arAkahukuReload.setStatus ("\u66F4\u65B0\u4E2D",
+      false, this.targetDocument);
+
+    if (!this.responseJson.res) {
+      // 区切りの削除
+      let newReplyHeader
+        = this.targetDocument
+        .getElementById ("akahuku_new_reply_header");
+      if (newReplyHeader) {
+        newReplyHeader.parentNode.removeChild (newReplyHeader);
+      }
+      arAkahukuReload.setStatus
+        ("\u65B0\u7740\u306A\u3057", //"新着なし"
+         false, this.targetDocument);
+      arAkahukuReload.updateExpireDiffNum (this.targetDocument);
+      if (arAkahukuReload.enableTimeStamp) {
+        arAkahukuReload.setTimeStamp (this.targetDocument);
+      }
+    }
+    else {
+      this.targetDocument.defaultView
+        .setTimeout (function (targetDocument, replied) {
+          arAkahukuReload.updateJson (targetDocument, replied);
+        }, 10, this.targetDocument, this.replied);
+      return;
+    }
+
+    if (arAkahukuReload.enableNolimit) {
+      arAkahukuConfig.restoreTime ();
+    }
+    this.reloadRequestInit = null;
+    this.reloadRequestController = null;
+    this.responseText = "";
+    this.responseCharset = "";
+    this.responseJson = null;
+
+    // HTML が正しく取得できなかった場合の音
+    if (!this.replied) {
+      arAkahukuSound.playReplyReload ();
+    }
+    else {
+      arAkahukuSound.playReply ();
+    }
+  },
+
   /**
    * リロードのリクエストを送る
    */
@@ -770,6 +833,7 @@ arAkahukuReloadParam.prototype = {
     arAkahukuReload.setStatus('\u30ED\u30FC\u30C9\u4E2D (\u30D8\u30C3\u30C0)',
       true, this.targetDocument);
 
+    let isJson = false;
     let promise = fetch(this.location, this.reloadRequestInit)
       .then((resp) => {
         if (this.reloadRequestInit.method == 'GET') {
@@ -795,6 +859,36 @@ arAkahukuReloadParam.prototype = {
           || this.lastModified == resLastMod) {
           // Maybe 304
           throw new NotModified();
+        }
+        else if (this.requestMode == 2) { //HEAD-GET(json)
+          //"ロード中 (差分)"
+          arAkahukuReload.setStatus("\u30ED\u30FC\u30C9\u4E2D (\u5DEE\u5206)",
+            true, this.targetDocument);
+          this.lastModified = resLastMod;
+          this.lastEtag = etag;
+          this.reloadRequestInit.method = 'GET';
+          let lastReply = arAkahukuThread.getLastReply (this.targetDocument);
+          let info = Akahuku.getDocumentParam (this.targetDocument).location_info;
+          let jsonloc = this.location.replace (/\/([^\/]+)\/res\/.*/,
+            "/$1/futaba.php?mode=json")
+            + "&res=" + info.threadNumber
+            + "&start=" + (lastReply.num+1);
+          isJson = true;
+          let p = fetch(jsonloc, this.reloadRequestInit)
+            .then((resp) => {
+              if (resp.ok) {
+                return resp;
+              }
+              // fallback to html
+              Akahuku.debug.warn ("arAkahukuReloadParam: no more JSON requests for " + this.location);
+              this.requestMode = 0;
+              isJson = false;
+              return fetch(this.location, this.reloadRequestInit);
+            })
+            .catch((e) => {
+              throw new ConnectionError(e.message);
+            });
+          return p;
         }
         else {
           this.reloadRequestInit.method = 'GET';
@@ -824,15 +918,17 @@ arAkahukuReloadParam.prototype = {
         }
         this.responseHead = headText;
 
-        let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
-        let etag = resp.headers.get('Etag');
-        if (this.lastEtag == etag
-          || (resLastMod && this.lastModified == resLastMod)) {
-          // Raw response may be 304 Not Modified
-          throw new NotModified();
+        if (resp.url == this.location) {
+          let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
+          let etag = resp.headers.get('Etag');
+          if (this.lastEtag == etag
+            || (resLastMod && this.lastModified == resLastMod)) {
+            // Raw response may be 304 Not Modified
+            throw new NotModified();
+          }
+          this.lastModified = resLastMod;
+          this.lastEtag = etag;
         }
-        this.lastModified = resLastMod;
-        this.lastEtag = etag;
         let re
           = (resp.headers.get('Content-Type') || '')
           .match(/^[^;]*;\s*charset=([\-A-Za-z0-9_]+)/m);
@@ -853,8 +949,25 @@ arAkahukuReloadParam.prototype = {
       .then((buffer) =>
         arAkahukuConverter.asyncConvertArrayBufToBinStr(buffer))
       .then((binstr) => {
-        this.responseText = binstr;
-        this.onHttpResponse(200);
+        if (isJson) {
+          binstr = arAkahukuConverter.convert (binstr, this.responseCharset);
+          try {
+            this.responseJson = window.JSON.parse(binstr);
+          }
+          catch (e) { Akahuku.debug.exception (e);
+            // fallback to html request for next fetch
+            this.requestMode = 0;//HEAD-GET
+            this.lastEtag = '';
+            this.lastModified = NaN;
+            Akahuku.debug.warn ("Invalid JSON response:", binstr);
+            throw new Error ("Invalid JSON response");
+          }
+          this.onHttpResponseJson(200);
+        }
+        else {
+          this.responseText = binstr;
+          this.onHttpResponse(200);
+        }
       })
       .catch((err) => {
         if (err instanceof NotModified) {
@@ -926,6 +1039,7 @@ var arAkahukuReload = {
   imageMargin : 400, /* Number  スレ消滅情報が出た時にスレ画像が消える板で
                       *       該当部分のソース消滅による差分位置のマージン
                       *   (実際の測定結果は 300 程度) */
+  enableJson : true,
     
   /**
    * ドキュメントのスタイルを設定する
@@ -1110,8 +1224,6 @@ var arAkahukuReload = {
    */
   updateViewersNumber : function (responseText, targetDocument, optCharset) {
     var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
         
     var viewersNumber = "";
     if (responseText.match
@@ -1119,10 +1231,25 @@ var arAkahukuReload = {
       /* <li>現在(xx)人 (Shift_JIS) */
       viewersNumber = RegExp.$1;
     }
-        
+    arAkahukuReload.updateViewersNumberCore (targetDocument, viewersNumber);
+  },
+
+  updateViewersNumberJson : function (responseJson, targetDocument) {
+    // 現状mode=jsonの応答から取得できない
+    arAkahukuReload.updateViewersNumberCore (targetDocument, "");
+  },
+
+  updateViewersNumberCore : function (targetDocument, viewersNumber) {
+    var info
+    = Akahuku.getDocumentParam (targetDocument).location_info;
     if (viewersNumber) {
       info.viewer = viewersNumber;
+    }
+    else if (parseInt(info.viewer) >= 0) {
+      viewersNumber = info.viewer + "?";
+    }
             
+    if (viewersNumber) {
       var node
       = targetDocument
       .getElementById ("akahuku_postform_opener_appendix");
@@ -1259,6 +1386,18 @@ var arAkahukuReload = {
         
     if (expireTime) {
       expireTime = arAkahukuConverter.convert (expireTime, responseCharset);
+    }
+    arAkahukuReload.updateExpireTimeCore (targetDocument, expireTime);
+  },
+
+  updateExpireTimeJson : function (responseJson, targetDocument) {
+    arAkahukuReload.updateExpireTimeCore (targetDocument, responseJson.die);
+  },
+
+  updateExpireTimeCore : function (targetDocument, expireTime) {
+    var info
+    = Akahuku.getDocumentParam (targetDocument).location_info;
+    if (expireTime) {
       info.expire = expireTime;
             
       var node
@@ -1415,6 +1554,24 @@ var arAkahukuReload = {
     }
     
     if (responseText.match (/<span id=[\"\']?ddel[\"\']?>/)) {
+      arAkahukuReload.showDeletedMessage (targetDocument);
+    }
+  },
+
+  updateDeletedMessageJson : function (responseJson, targetDocument) {
+    if (responseJson.res) {
+      for (let [num, dat] of Object.entries(responseJson.res)) {
+        if (dat.del) {
+          arAkahukuReload.showDeletedMessage (targetDocument);
+          return;
+        }
+      }
+    }
+  },
+
+  showDeletedMessageElement : function (targetDocument) {
+    var ddel = targetDocument.getElementById ("ddel");
+    if (!ddel) {
       ddel = targetDocument.createElement ("span");
       ddel.id = "ddel";
       ddel.style.display = "inline";
@@ -1508,6 +1665,35 @@ var arAkahukuReload = {
     if (expireWarning) {
       expireWarning
       = arAkahukuConverter.convert (expireWarning, responseCharset);
+    }
+
+    var delWarning = "";
+    if (responseText.match
+        (/<font color=['"]?#f00000['"]?>(\x82\xb1\x82\xcc\x83\x58\x83\x8c\x82\xc9\x91\xce\x82\xb7\x82\xe9\x8d\xed\x8f\x9c\x88\xcb\x97\x8a.+)<\/font>/)) {
+      /* <font color="?#f00000"?>(このスレに対する削除依頼.+)</font>
+         (Shift_JIS) */
+      delWarning = RegExp.$1;
+      delWarning = arAkahukuConverter.convertFromSJIS (delWarning, "");
+    }
+
+    arAkahukuReload.updateExpireWarningCore (targetDocument, expireWarning, delWarning);
+  },
+
+  updateExpireWarningJson : function (responseJson, targetDocument) {
+    var expireWarning = "";
+    var delWarning = "";
+    if (responseJson.old > 0) {
+      // "このスレは古いので、もうすぐ消えます。"
+      expireWarning = "\u3053\u306E\u30B9\u30EC\u306F\u53E4\u3044\u306E\u3067\u3001\u3082\u3046\u3059\u3050\u6D88\u3048\u307E\u3059\u3002";
+    }
+    arAkahukuReload.updateExpireWarningCore (targetDocument, expireWarning, delWarning);
+  },
+
+  updateExpireWarningCore : function (targetDocument, expireWarning, delWarning) {
+    var info
+    = Akahuku.getDocumentParam (targetDocument).location_info;
+
+    if (expireWarning) {
       info.expireWarning = expireWarning;
       info.isOld = true;
             
@@ -1545,17 +1731,8 @@ var arAkahukuReload = {
       }
     }
     
-    var delWarning = "";
-    if (responseText.match
-        (/<font color=['"]?#f00000['"]?>(\x82\xb1\x82\xcc\x83\x58\x83\x8c\x82\xc9\x91\xce\x82\xb7\x82\xe9\x8d\xed\x8f\x9c\x88\xcb\x97\x8a.+)<\/font>/)) {
-      /* <font color="?#f00000"?>(このスレに対する削除依頼.+)</font>
-         (Shift_JIS) */
-      delWarning = RegExp.$1;
-      delWarning = arAkahukuConverter.convertFromSJIS (delWarning, "");
-      info.isDel = RegExp.$1;
-    }
-    
     if (delWarning) {
+      info.isDel = arAkahukuConverter.convertToSJIS (delWarning, "");
       node = targetDocument.getElementById ("akahuku_bottom_status_delcount");
       if (node) {
         arAkahukuDOM.setText (node, "del");
@@ -2161,7 +2338,7 @@ var arAkahukuReload = {
     var endPosition = 0;
     var data = {
       thread: {ext:"",com:"",id:""},
-      res: [], sd: {}, sync: sync};
+      res: [], sd: {}, sync: sync, updatesd: false};
     /* レスの追加 */
     if (sync) {
       startPosition = 0;
@@ -2526,7 +2703,6 @@ var arAkahukuReload = {
             var ret = arAkahukuReload._syncMessageID (data.thread.id.replace(/^ID:/,''), bqT);
             countSyncIDResult (idSyncResults, ret);
           }
-          arAkahukuReload._syncMessageSod (data.sd[info.threadNumber] || "", bqT);
         }
       }
       catch (e) { Akahuku.debug.exception (e);
@@ -2830,6 +3006,22 @@ var arAkahukuReload = {
       }
     }
     
+    if (!sync && data.sd && data.updatesd) {
+      //update sod counters
+      for (let sonum in data.sd) {
+        let sodd = document.getElementById ("sd"+sonum);
+        if (sodd) {
+          if (data.sd[sonum] > 0) {
+            //"そうだねx"
+            sodd.textContent = "\u305D\u3046\u3060\u306Dx" + data.sd[sonum];
+          }
+          else {
+            sodd.textContent = "+";
+          }
+        }
+      }
+    }
+
     arAkahukuReload.updateDDel (targetDocument);
     
     skippedReplies -= noSkippedReplies;
@@ -2865,6 +3057,210 @@ var arAkahukuReload = {
                       nodeletedReplies + deletedReplies,
                       newNodes, addNodes, redReplies, deletedThumbnails,
                       idSyncResults, redDeletedReplies, redHiddenReplies);
+  },
+
+  appendNewRepliesJson : function (json, terminator, sync, targetDocument, retNode) {
+    const data = {res: [], sd: json.sd, sync: sync, updatesd: true};
+    const documentParam = Akahuku.getDocumentParam (targetDocument);
+    const info = documentParam.location_info;
+    if (sync && json._thread) {
+      // スレ文
+      // Note: jsonモード応答では現状スレ文は取得できない
+      data.thread = {};
+      data.thread.com = json._thread.com;
+      data.thread.id = json._thread.id;
+      data.sd[info.threadNumber] = json.sd[info.threadNumber] || "";
+    }
+
+    const lastReply = arAkahukuThread.getLastReply (targetDocument);
+    let jsonResNums = Object.keys(json.res).map(n => parseInt(n));
+    jsonResNums.sort();
+    for (let num of jsonResNums) {
+      if (sync || num > lastReply.num) {
+        let cont = arAkahukuReload.createResJson(targetDocument, json, num);
+        cont.num = num;
+        cont.isDeleted = false;
+        if (json.res[num].del) {
+          // "del"(スレを立てた人), "selfdel"(書き込みをした人),
+          // "del2"(削除依頼), "admindel"(なー)
+          cont.isDeleted = true;
+        }
+        data.res.push(cont);
+      }
+    }
+
+    return arAkahukuReload.appendNewRepliesCore (data, terminator, targetDocument, retNode);
+  },
+
+  createResJson: function (document, json, no) {
+    // based on makeArticle()
+
+    var fragmentFromString = function (document, strHTML) {
+      var frag = document.createDocumentFragment();
+      var tmp = document.createElement('body');
+      tmp.innerHTML = strHTML;
+      while (tmp.firstChild) {
+        frag.appendChild(tmp.firstChild);
+      }
+      return frag;
+    };
+
+    var resd = json.res[no];
+    var t = document.createElement('table');
+    t.border = 0;
+    if (resd.del == 'del' || resd.del == 'del2'
+      || resd.del == 'selfdel' || resd.del == 'admindel') {
+      t.className = "deleted";
+    }
+    var tb = document.createElement('tbody');
+    var tr = document.createElement('tr');
+    var rts = document.createElement('td');
+    rts.className = "rts";
+    rts.appendChild(document.createTextNode("\u2026"));//"…"
+    var rtd = document.createElement('td');
+    rtd.className = "rtd";
+
+    var inp = document.createElement('span');
+    inp.id = "delcheck"+no;
+    inp.className = "rsc";
+    inp.innerHTML = resd.rsc;
+
+    var t1,t2,t3,t12,a5;
+    var t11 = '';
+    if (resd.id != ''){
+      t11 = ' '+resd.id;
+    }
+    t12 = document.createElement('span');
+    t12.className = "cnw";
+    if (json.dispname > 0) {
+      t1 = document.createElement('span');
+      t1.innerHTML += resd.sub;
+      t1.className = "csb";
+      t2 = document.createTextNode('Name');
+      t3 = document.createElement('span');
+      if (resd.email != '') {
+        a5 = document.createElement('a');
+        a5.href = "mailto:"+(arAkahukuConverter.unescapeEntity(resd.email));
+        a5.innerHTML += resd.name;
+        t3.appendChild(a5);
+      }
+      else {
+        t3.innerHTML += resd.name;
+      }
+      t3.className = "cnm";
+      t12.appendChild(fragmentFromString(document, resd.now + t11));
+    }
+    else {
+      if (resd.email != ''){
+        var t12a = document.createElement('a');
+        t12a.innerHTML += resd.now;
+        t12a.href = "mailto:"+(arAkahukuConverter.unescapeEntity(resd.email));
+        t12.appendChild(t12a);
+        t12.appendChild(document.createTextNode(t11));
+      }
+      else {
+        t12.innerHTML += (resd.now + t11);
+      }
+    }
+
+    var t4a = document.createElement('span');
+    t4a.className = "cno";
+    t4a.innerHTML = "No." + no;
+
+    var a2;
+    if (json.dispsod > 0) {
+      a2 = document.createElement('a');
+      a2.appendChild(document.createTextNode("+"));
+      a2.className = "sod";
+      a2.id = "sd"+no;
+      a2.href = "javascript:void(0)";
+      a2.onclick = new Function("sd("+no+");return(false);");
+    }
+
+    if (resd.ext != '') {
+      // 添付ファイル
+      var b1 = document.createElement('br');
+      var t5 = document.createTextNode(" \u00A0 \u00A0 ");
+      var a3 = document.createElement('a');
+      a3.appendChild(document.createTextNode(resd.tim + resd.ext));
+      a3.href = resd.src;
+      a3.target = "_blank";
+      var t6 = document.createTextNode('-('+resd.fsize+' B) ');
+      var t7 = document.createElement('span');
+      //"サムネ表示"
+      t7.appendChild(document.createTextNode("\u30B5\u30E0\u30CD\u8868\u793A"));
+      t7.style.fontSize = "small";
+      var b2 = document.createElement('br');
+      var a4 = document.createElement('a');
+      a4.href = resd.src;
+      a4.target = "_blank";
+      var i1 = document.createElement('img');
+      i1.src = resd.thumb;
+      i1.border = 0;
+      i1.align = "left";
+      i1.width = resd.w;
+      i1.height = resd.h;
+      i1.hspace = 20;
+      i1.alt = resd.fsize + " B";
+    }
+
+    var bl = document.createElement('blockquote');
+    if (resd.w > 0) {
+      bl.style.marginLeft = (resd.w + 40)+"px";
+    }
+    if (resd.del == 'del' || resd.del == 'del2') {
+      var t9 = document.createElement('span');
+      t9.style.color = "#ff0000";
+      if (resd.del == 'del') {
+        //"スレッドを立てた人によって削除されました"
+        t9.appendChild(document.createTextNode("\u30B9\u30EC\u30C3\u30C9\u3092\u7ACB\u3066\u305F\u4EBA\u306B\u3088\u3063\u3066\u524A\u9664\u3055\u308C\u307E\u3057\u305F"));
+      }
+      else {
+        //'削除依頼によって隔離されました'
+        t9.appendChild(document.createTextNode("\u524A\u9664\u4F9D\u983C\u306B\u3088\u3063\u3066\u9694\u96E2\u3055\u308C\u307E\u3057\u305F"));
+      }
+      bl.appendChild(t9);
+      bl.appendChild(document.createElement('br'));
+    }
+    if (resd.host != '') {
+      bl.appendChild(document.createTextNode('['));
+      var t10 = document.createElement('span');
+      t10.style.color = "#ff0000";
+      t10.appendChild(document.createTextNode(resd.host));
+      bl.appendChild(t10);
+      bl.appendChild(document.createTextNode(']'));
+      bl.appendChild(document.createElement('br'));
+    }
+    bl.innerHTML += resd.com;
+
+    rtd.appendChild(inp);
+    if (json.dispname > 0) {
+      rtd.appendChild(t1);
+      rtd.appendChild(t2);
+      rtd.appendChild(t3);
+    }
+    rtd.appendChild(t12);
+    rtd.appendChild(t4a);//No
+    if (json.dispsod > 0) {
+      rtd.appendChild(a2);
+    }
+    if (resd.ext != '') {
+      rtd.appendChild(b1);
+      rtd.appendChild(t5);
+      rtd.appendChild(a3);
+      rtd.appendChild(t6);
+      rtd.appendChild(t7);
+      rtd.appendChild(b2);
+      a4.appendChild(i1);
+      rtd.appendChild(a4);
+    }
+    rtd.appendChild(bl);
+    tr.appendChild(rts);
+    tr.appendChild(rtd);
+    tb.appendChild(tr);
+    t.appendChild(tb);
+
+    return {nodes:[t], main: rtd};
   },
     
   /**
@@ -2994,16 +3390,16 @@ var arAkahukuReload = {
     var documentParam = Akahuku.getDocumentParam (targetDocument);
     var param = documentParam.reload_param;
     var info = documentParam.location_info;
-        
-    var newNodes = new Array (), addNodes = new Array ();
+    var stats = {
+      updated: false, counts: [],
+      info: info, param: param,
+      die: false,
+    };
         
     /* 応答を解析する */
     var responseText = param.responseText;
     var responseCharset = param.responseCharset || targetDocument.characterSet || "Shift_JIS";
     
-    var newReplies = 0;
-    
-    var responseTextBeginPosition = 0;
     if (!info.isMonaca
         && param.sync
         && (responseText.search (/<html/i) == -1
@@ -3029,6 +3425,54 @@ var arAkahukuReload = {
       arAkahukuReload.updateAd (responseText,
                                 targetDocument, responseCharset);
             
+      /* スレ消滅情報に反映する */
+      arAkahukuReload.updateViewersNumber (responseText,
+                                           targetDocument, responseCharset);
+      arAkahukuReload.updateDeletedMessage (responseText,
+                                           targetDocument);
+      arAkahukuReload.updateExpireWarning (responseText,
+                                           targetDocument, responseCharset);
+      arAkahukuReload.updateExpireTime (responseText,
+                                        targetDocument, responseCharset);
+
+      stats.updated = true;
+      stats.counts = array;
+    }
+
+    if (arAkahukuReload.enableExtCache && param.location) {
+      if (param.writer == null) {
+        param.writer = new arAkahukuReloadCacheWriter ();
+        /* 避難所 patch */
+        if (info.isMonaca) {
+          param.writer.setText = param.writer.setTextMonaca;
+        }
+      }
+      if (param.writer.setText (responseText, responseCharset)) {
+        param.writer.responseHead = param.responseHead;
+        param.writer.charset = responseCharset;
+        if (arAkahukuReload.enableExtCacheFile) {
+          param.writer.createFile (param.location);
+        }
+        else {
+          Akahuku.Cache.asyncOpenCacheToWrite
+            ({url: param.location  + ".backup",
+              triggeringNode: targetDocument},
+             param.writer);
+        }
+      }
+    }
+
+    arAkahukuReload.updatePostprocess (targetDocument, stats);
+  },
+
+  updatePostprocess : function (targetDocument, stats) {
+    var info = stats.info;
+    var param = stats.param;
+    var newReplies = 0;
+    var newNodes = new Array (), addNodes = new Array ();
+
+    if (stats.updated) {
+      var array = stats.counts;
       newReplies = array [0];
       var skippedReplies = array [1];
       var deletedReplies = array [2];
@@ -3096,16 +3540,6 @@ var arAkahukuReload = {
           arAkahukuDOM.setText (node, newReplies);
         }
       }
-            
-      /* スレ消滅情報に反映する */
-      arAkahukuReload.updateViewersNumber (responseText,
-                                           targetDocument, responseCharset);
-      arAkahukuReload.updateDeletedMessage (responseText,
-                                           targetDocument);
-      arAkahukuReload.updateExpireWarning (responseText,
-                                           targetDocument, responseCharset);
-      arAkahukuReload.updateExpireTime (responseText,
-                                        targetDocument, responseCharset);
       
       arAkahukuReload.updateExpireDiffNum (targetDocument);
       if (arAkahukuThread.enableBottomStatus
@@ -3234,29 +3668,6 @@ var arAkahukuReload = {
     // スレ情報の更新を通知 (連携)
     info.notifyUpdate ("thread-updated");
         
-    if (arAkahukuReload.enableExtCache && param.location) {
-      if (param.writer == null) {
-        param.writer = new arAkahukuReloadCacheWriter ();
-        /* 避難所 patch */
-        if (info.isMonaca) {
-          param.writer.setText = param.writer.setTextMonaca;
-        }
-      }
-      if (param.writer.setText (responseText, responseCharset)) {
-        param.writer.responseHead = param.responseHead;
-        param.writer.charset = responseCharset;
-        if (arAkahukuReload.enableExtCacheFile) {
-          param.writer.createFile (param.location);
-        }
-        else {
-          Akahuku.Cache.asyncOpenCacheToWrite
-            ({url: param.location  + ".backup",
-              triggeringNode: targetDocument},
-             param.writer);
-        }
-      }
-    }
-        
     if (arAkahukuReload.enableNolimit) {
       arAkahukuConfig.restoreTime ();
     }
@@ -3289,6 +3700,51 @@ var arAkahukuReload = {
     }
   },
     
+  /**
+   * レスを更新する(json)
+   *
+   * @param  HTMLDocument targetDocument
+   *         対象のドキュメント
+   */
+  updateJson : function (targetDocument) {
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
+    var info = documentParam.location_info;
+    var stats = {
+      updated: false, counts: [],
+      info: info, param: param,
+      die: false,
+    };
+
+    const json = param.responseJson;
+    if (json) {
+      var container
+      = targetDocument.getElementById ("akahuku_bottom_container");
+      var retNode = (arAkahukuReload.listeners.length > 0);
+
+      // レスに反映する
+      var array
+        = arAkahukuReload.appendNewRepliesJson (json,
+                                                container,
+                                                param.sync,
+                                                targetDocument,
+                                                retNode);
+
+      // 広告に反映する
+      arAkahukuReload.updateAd ("", targetDocument, "");
+
+      // スレ消滅情報に反映する
+      arAkahukuReload.updateViewersNumberJson (json, targetDocument);
+      arAkahukuReload.updateDeletedMessageJson (json, targetDocument);
+      arAkahukuReload.updateExpireWarningJson (json, targetDocument);
+      arAkahukuReload.updateExpireTimeJson (json, targetDocument);
+
+      stats.updated = true;
+      stats.counts = array;
+    }
+    arAkahukuReload.updatePostprocess (targetDocument, stats);
+  },
+
   /**
    * 続きを読む
    *
@@ -3403,7 +3859,8 @@ var arAkahukuReload = {
     }
         
     let method = 'GET';
-    if (param.requestMode == 0 //HEAD-GET
+    if ((param.requestMode == 0 //HEAD-GET
+      || param.requestMode == 2) //HEAD-GET(json)
         && !param.sync && !info.isMonaca
         && !/\.php\?/.test (location)) {
       method = 'HEAD';
@@ -3719,6 +4176,9 @@ var arAkahukuReload = {
       Akahuku.getDocumentParam (targetDocument).reload_param = param;
       param.targetDocument = targetDocument;
       param.lastModified = Date.parse (targetDocument.lastModified);
+      if (info.isFutaba && arAkahukuReload.enableJson) {
+        param.requestMode = 2; //HEAD-GET(json)
+      }
             
       // TODO: hook reload
             
