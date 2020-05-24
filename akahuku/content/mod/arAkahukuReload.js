@@ -2072,33 +2072,11 @@ var arAkahukuReload = {
   appendNewReplies : function (responseText, terminator, sync,
                                targetDocument, retNode, optCharset) {
     var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
-    var newNodes = new Array ();
-    var addNodes = new Array ();
     var documentParam = Akahuku.getDocumentParam (targetDocument);
     var param = documentParam.reload_param;
     var info = documentParam.location_info;
-    var isUpdated = false;
         
     var lastReply = arAkahukuThread.getLastReply (targetDocument);
-    
-    var dispdel = -1;
-    try {
-      var ddbut = targetDocument.getElementById ("ddbut");
-      if (ddbut) {
-        if (ddbut.innerHTML == "\u898B\u308B") { // "見る"
-          dispdel = 0;
-        }
-        else if (ddbut.innerHTML == "\u96A0\u3059") { // "隠す"
-          dispdel = 1;
-        }
-      }
-      if (dispdel == -1) {
-        dispdel = (arAkahukuReload.enableSyncButtonNoDelete ? 1 : 0);
-        targetDocument.defaultView.wrappedJSObject.dispdel = dispdel;
-      }
-    }
-    catch (e) { Akahuku.debug.exception (e);
-    }
     
     if (!param.replyPattern) {
       // 解析パターンの初期化
@@ -2179,131 +2157,17 @@ var arAkahukuReload = {
       patternBGColor = new RegExp ("^[^>]*\\sbgcolor=[\"']?" + param.replyPattern.mainNodeAttrs.bgColor,"i");
     }
     
-    var lastReplyNumber = 0;
-    var newReplies = 0;
-    var skippedReplies = 0;
-    var noSkippedReplies = 0;
-    var deletedReplies = 0;
-    var nodeletedReplies = 0;
-    var redDeletedReplies = 0;
-    var redHiddenReplies = 0;
-    var deletedThumbnails = 0;
     var startPosition = 0;
     var endPosition = 0;
-    var redReplies = 0;
-
-    var idSyncResults = {
-      removed: 0,
-      appended: 0,
-      removedIDs: [],
-      appendedIDs: [],
-      removedIDsText: "",
-      appendedIDsText: "",
-    };
-    var countSyncIDResult = function (results, ret) {
-      var ids = null;
-      if (ret.op > 0) {
-        results.appended ++;
-        ids = results.appendedIDs;
-      }
-      else if (ret.op < 0) {
-        results.removed ++;
-        ids = results.removedIDs;
-      }
-      if (ids) {
-        for (var nId = 0; ids && nId < ids.length; nId ++) {
-          if (ids [nId] === ret.id) {
-            return;
-          }
-        }
-        ids.push (ret.id);
-        var s = (ids.length > 1 ? " ID:" : "ID:") + ret.id;
-        if (ret.op > 0) {
-          results.appendedIDsText += s;
-        }
-        else {
-          results.removedIDsText += s;
-        }
-      }
-    };
-
-    var replyPrefix
-    = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
-        
-    var showMailHandler
-    = (arAkahukuLink.enableShowMail
-       || arAkahukuLink.enableShowMailPopup) ?
-    arAkahukuLink.applyShowMail : function () {};
-        
-    var autoLinkHandler
-    = (arAkahukuLink.enableAutoLink
-       || arAkahukuLink.enableHideTrolls) ?
-    arAkahukuLink.applyAutoLink : function () {};
-        
-    var alertGIFHandler
-    = arAkahukuThread.enableAlertGIF ?
-    arAkahukuThread.applyAlertGIF : function () {};
-
-    var delInlineHandler
-    = arAkahukuThread.enableDelInline ?
-    arAkahukuThread.applyInlineDel : function () {};
-        
-    var P2PHandler
-    = arAkahukuP2P.enable ?
-    arAkahukuP2P.applyP2P : function () {};
-        
-    var numberingHandler
-    = (arAkahukuThread.enableNumbering) ?
-    arAkahukuReload.applyNumbering : function () {};
-        
-    var saveImageHandler
-    = arAkahukuImage.enable ?
-    arAkahukuImage.applySaveImage : function () {};
-        
-    var quickQuoteNumberHandler
-    = (arAkahukuQuote.enable && arAkahukuQuote.enableNumber) ?
-    arAkahukuQuote.applyQuickQuoteNumber : function () {};
-        
-    var delNewTabHandler
-    = arAkahukuThread.enableDelNewTab ?
-    arAkahukuThread.applyDelNewTab : function () {};
-        
-    if (!sync) {
-      lastReplyNumber = arAkahukuThread.numberingMax + 1;
-      /* 最後のレスの通し番号の取得 */
-      if (arAkahukuThread.enableNumbering
-          && lastReply.container) {
-        var rsc = Akahuku.getMessageReplyNumber (lastReply.container.main, true);
-        if (rsc) {
-          lastReplyNumber = parseInt (rsc.textContent);
-        }
-      }
-    }
-    else {
-      lastReplyNumber = 0;
-    }
-        
-    /* 区切りの削除 */
-    var newReplyHeader
-    = targetDocument.getElementById ("akahuku_new_reply_header");
-    if (newReplyHeader) {
-      newReplyHeader.parentNode.removeChild (newReplyHeader);
-    }
-        
-    var tmp = Akahuku.getMessageBQ (targetDocument);
-    var nodes = new Array ();
-    for (var i = 1; i < tmp.length; i ++) {
-      nodes.push (tmp [i]);
-    }
-    tmp = null;
-    var nodesIndex = 0;
-    
+    var data = {
+      thread: {ext:"",com:"",id:""},
+      res: [], sd: {}, sync: sync};
     /* レスの追加 */
     if (sync) {
       startPosition = 0;
       // スレ文の同期
       try {
-        startPosition 
+        startPosition
           = responseText.search
           (new RegExp (param.replyPattern.startPatternForNum + "[0-9]+","i"));
         if (startPosition < 0) throw "no pattrn startPatternForNum=\"" + param.replyPattern.startPatternForNum + "\"";
@@ -2319,19 +2183,9 @@ var arAkahukuReload = {
         var threadHeaderText
           = responseText.substring (threadStartPos, startPosition);
 
-        var imgTagExp = /<img\b[^>]*\bsrc=["']?(?:[^>"']+)["']?[^>]*>/i;
-        var thumbnail = targetDocument.getElementById ("akahuku_thumbnail");
-        if (thumbnail && !imgTagExp.test (threadHeaderText)) {
-          // サムネ画像が消えている場合
-          if (!arAkahukuDOM.hasClassName
-              (thumbnail, "akahuku_deleted_reply2")) {
-            deletedThumbnails ++;
-            arAkahukuDOM.addClassName
-            (thumbnail, "akahuku_deleted_reply2");
-            if (arAkahukuReload.enableExtCacheImages) {
-              Akahuku.Cache.enCacheURIContextIfCached (thumbnail);
-            }
-          }
+        var imgTagExp = /<img\b[^>]*\bsrc=["']?(?:[^>"']+)\.([^.>"'\/]+)["']?[^>]*>/i;
+        if (imgTagExp.test (threadHeaderText)) {
+          data.thread.ext = RegExp.$1;
         }
 
         var threadEndPos
@@ -2344,34 +2198,20 @@ var arAkahukuReload = {
         threadBodyText
         = arAkahukuConverter.convert (threadBodyText, responseCharset);
 
-        var bqs = Akahuku.getMessageBQ (targetDocument);
-        var bqT = (bqs && bqs.length > 0 ? bqs [0] : null);
         var div = targetDocument.createElement ("div");
         div.innerHTML = threadBodyText;
         bqs = Akahuku.getMessageBQ (div);
         var bqS = (bqs && bqs.length > 0 ? bqs [0] : null);
-
-        if (bqS && bqT) {
-          // 赤字の同期
-          var syncdata
-            = arAkahukuReload._syncMessageBQ (bqS, bqT);
-          if (syncdata.red) {
-            if (syncdata.redType === "deleted") {
-              redDeletedReplies ++;
-            }
-            else if (syncdata.redType === "hidden") {
-              redHiddenReplies ++;
-            }
-            else {
-              redReplies ++;
-            }
+        if (bqS) {
+          data.thread.com = bqS.innerHTML;
+          let idtext = Akahuku.getMessageID (bqS);
+          if (idtext) {
+            data.thread.id = "ID:"+idtext;
           }
-          // ID同期
-          if (arAkahukuReload.enableSyncMessageID) {
-            var ret = arAkahukuReload._syncMessageID (bqS, bqT);
-            countSyncIDResult (idSyncResults, ret);
+          let sodS = arAkahukuReload._getMessageSod (bqS.previousSibling);
+          if (sodS.elm) {
+            data.sd[info.threadNumber] = sodS.num;
           }
-          arAkahukuReload._syncMessageSod (bqS, bqT);
         }
       }
       catch (e) { Akahuku.debug.exception (e);
@@ -2449,22 +2289,12 @@ var arAkahukuReload = {
         num = parseInt (RegExp.$1);
       }
       if (sync || num > lastReply.num) {
-        /* レスの追加 */
-        if (!isUpdated) {
-          isUpdated = true;
-          /* MessageBQ cache があればここで消す */
-          Akahuku._setMessageBQCache (documentParam, null);
-        }
         if (!lastReply.container) {
-          /* レスが無い時 */
           lastReply.container
           = arAkahukuReload.createContainer (responseText,
                                              targetDocument,
                                              !param.replyPattern.containerIsTable,
                                              responseCharset);
-          replyPrefix
-          = arAkahukuConverter.convertToSJIS (info.replyPrefix, "");
-          lastReplyNumber = 0;
         }
 
         // Parse & check container tag for deleted reply class
@@ -2484,7 +2314,6 @@ var arAkahukuReload = {
           }
         }
 
-        
         var currentContainer
         = Akahuku.cloneMessageContainer
         (lastReply.container, {skipMainInner: true});
@@ -2494,9 +2323,229 @@ var arAkahukuReload = {
         (currentContainer.main, "akahuku_deleted_reply");
         arAkahukuDOM.removeClassName
         (currentContainer.main, "akahuku_deleted_reply2");
-        
+
         /* HTML のソースから構築するので innerHTML を使用する  */
         currentContainer.main.innerHTML = currentReplyText;
+
+        var bqs = Akahuku.getMessageBQ (currentContainer.main);
+        var bqS = (bqs.length ? bqs [0] : null);
+        if (bqS) {
+          let sodS = arAkahukuReload._getMessageSod (bqS.previousSibling);
+          if (sodS.elm) {
+            data.sd[num] = sodS.num;
+          }
+        }
+        currentContainer.isDeleted = isDeleted;
+        currentContainer.num = num;
+        data.res.push(currentContainer);
+      }
+    }
+
+    return arAkahukuReload.appendNewRepliesCore (data, terminator, targetDocument, retNode);
+  },
+
+  appendNewRepliesCore : function (data, terminator, targetDocument, retNode) {
+    var sync = data.sync;
+    var newNodes = new Array ();
+    var addNodes = new Array ();
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
+    var info = documentParam.location_info;
+    var isUpdated = false;
+
+    var lastReply = arAkahukuThread.getLastReply (targetDocument);
+
+    var dispdel = -1;
+    try {
+      var ddbut = targetDocument.getElementById ("ddbut");
+      if (ddbut) {
+        if (ddbut.innerHTML == "\u898B\u308B") { // "見る"
+          dispdel = 0;
+        }
+        else if (ddbut.innerHTML == "\u96A0\u3059") { // "隠す"
+          dispdel = 1;
+        }
+      }
+      if (dispdel == -1) {
+        dispdel = (arAkahukuReload.enableSyncButtonNoDelete ? 1 : 0);
+        targetDocument.defaultView.wrappedJSObject.dispdel = dispdel;
+      }
+    }
+    catch (e) { Akahuku.debug.exception (e);
+    }
+
+    var lastReplyNumber = 0;
+    var newReplies = 0;
+    var skippedReplies = 0;
+    var noSkippedReplies = 0;
+    var deletedReplies = 0;
+    var nodeletedReplies = 0;
+    var redDeletedReplies = 0;
+    var redHiddenReplies = 0;
+    var deletedThumbnails = 0;
+    var redReplies = 0;
+
+    var idSyncResults = {
+      removed: 0,
+      appended: 0,
+      removedIDs: [],
+      appendedIDs: [],
+      removedIDsText: "",
+      appendedIDsText: "",
+    };
+    var countSyncIDResult = function (results, ret) {
+      var ids = null;
+      if (ret.op > 0) {
+        results.appended ++;
+        ids = results.appendedIDs;
+      }
+      else if (ret.op < 0) {
+        results.removed ++;
+        ids = results.removedIDs;
+      }
+      if (ids) {
+        for (var nId = 0; ids && nId < ids.length; nId ++) {
+          if (ids [nId] === ret.id) {
+            return;
+          }
+        }
+        ids.push (ret.id);
+        var s = (ids.length > 1 ? " ID:" : "ID:") + ret.id;
+        if (ret.op > 0) {
+          results.appendedIDsText += s;
+        }
+        else {
+          results.removedIDsText += s;
+        }
+      }
+    };
+        
+    var showMailHandler
+    = (arAkahukuLink.enableShowMail
+       || arAkahukuLink.enableShowMailPopup) ?
+    arAkahukuLink.applyShowMail : function () {};
+        
+    var autoLinkHandler
+    = (arAkahukuLink.enableAutoLink
+       || arAkahukuLink.enableHideTrolls) ?
+    arAkahukuLink.applyAutoLink : function () {};
+        
+    var alertGIFHandler
+    = arAkahukuThread.enableAlertGIF ?
+    arAkahukuThread.applyAlertGIF : function () {};
+
+    var delInlineHandler
+    = arAkahukuThread.enableDelInline ?
+    arAkahukuThread.applyInlineDel : function () {};
+        
+    var P2PHandler
+    = arAkahukuP2P.enable ?
+    arAkahukuP2P.applyP2P : function () {};
+        
+    var numberingHandler
+    = (arAkahukuThread.enableNumbering) ?
+    arAkahukuReload.applyNumbering : function () {};
+        
+    var saveImageHandler
+    = arAkahukuImage.enable ?
+    arAkahukuImage.applySaveImage : function () {};
+        
+    var quickQuoteNumberHandler
+    = (arAkahukuQuote.enable && arAkahukuQuote.enableNumber) ?
+    arAkahukuQuote.applyQuickQuoteNumber : function () {};
+        
+    var delNewTabHandler
+    = arAkahukuThread.enableDelNewTab ?
+    arAkahukuThread.applyDelNewTab : function () {};
+        
+    if (!sync) {
+      lastReplyNumber = arAkahukuThread.numberingMax + 1;
+      /* 最後のレスの通し番号の取得 */
+      if (arAkahukuThread.enableNumbering
+          && lastReply.container) {
+        var rsc = Akahuku.getMessageReplyNumber (lastReply.container.main, true);
+        if (rsc) {
+          lastReplyNumber = parseInt (rsc.textContent);
+        }
+      }
+    }
+    else {
+      lastReplyNumber = 0;
+    }
+        
+    /* 区切りの削除 */
+    var newReplyHeader
+    = targetDocument.getElementById ("akahuku_new_reply_header");
+    if (newReplyHeader) {
+      newReplyHeader.parentNode.removeChild (newReplyHeader);
+    }
+        
+    var nodes = Akahuku.getMessageBQ (targetDocument).slice (1);
+    var nodesIndex = 0;
+    
+    /* レスの追加 */
+    if (sync) {
+      // スレ文の同期
+      try {
+        var thumbnail = targetDocument.getElementById ("akahuku_thumbnail");
+        if (thumbnail && data.thread.ext == "") {
+          // サムネ画像が消えている場合
+          if (!arAkahukuDOM.hasClassName
+              (thumbnail, "akahuku_deleted_reply2")) {
+            deletedThumbnails ++;
+            arAkahukuDOM.addClassName
+            (thumbnail, "akahuku_deleted_reply2");
+            if (arAkahukuReload.enableExtCacheImages) {
+              Akahuku.Cache.enCacheURIContextIfCached (thumbnail);
+            }
+          }
+        }
+
+        var bqs = Akahuku.getMessageBQ (targetDocument);
+        var bqT = (bqs && bqs.length > 0 ? bqs [0] : null);
+        var bqS = targetDocument.createElement ("blockquote");
+        bqs.innerHTML = data.thread.com;
+
+        if (bqS && bqT) {
+          // 赤字の同期
+          var syncdata
+            = arAkahukuReload._syncMessageBQ (bqS, bqT);
+          if (syncdata.red) {
+            if (syncdata.redType === "deleted") {
+              redDeletedReplies ++;
+            }
+            else if (syncdata.redType === "hidden") {
+              redHiddenReplies ++;
+            }
+            else {
+              redReplies ++;
+            }
+          }
+          // ID同期
+          if (arAkahukuReload.enableSyncMessageID) {
+            var ret = arAkahukuReload._syncMessageID (data.thread.id.replace(/^ID:/,''), bqT);
+            countSyncIDResult (idSyncResults, ret);
+          }
+          arAkahukuReload._syncMessageSod (data.sd[info.threadNumber] || "", bqT);
+        }
+      }
+      catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+    for (let currentContainer of data.res) {
+      let num = currentContainer.num;
+      let isDeleted = currentContainer.isDeleted;
+      if (sync || num > lastReply.num) {
+        /* レスの追加 */
+        if (!isUpdated) {
+          isUpdated = true;
+          /* MessageBQ cache があればここで消す */
+          Akahuku._setMessageBQCache (documentParam, null);
+        }
+        if (!lastReply.container) {
+          /* レスが無い時 */
+          lastReplyNumber = 0;
+        }
         
         var appendPosition = null;
         var append = true;
@@ -2566,7 +2615,7 @@ var arAkahukuReload = {
                   }
 
                   if (arAkahukuReload.enableSyncMessageID) {
-                    var ret = arAkahukuReload._syncMessageID (bqS, bqT);
+                    var ret = arAkahukuReload._syncMessageID (Akahuku.getMessageID (bqS), bqT);
                     countSyncIDResult (idSyncResults, ret);
                   }
                   arAkahukuReload._syncMessageSod (bqS, bqT);
@@ -3978,9 +4027,8 @@ var arAkahukuReload = {
     return ret;
   },
 
-  _syncMessageID : function (bqS, bqT)
+  _syncMessageID : function (idS, bqT)
   {
-    var idS = Akahuku.getMessageID (bqS);
     var idT = Akahuku.getMessageID (bqT);
     var ret = {id: idT, op: 0, err:false};
     if (idS == idT) {
@@ -4105,30 +4153,41 @@ var arAkahukuReload = {
     return false;
   },
 
-  _syncMessageSod : function (bqS, bqT) {
-    var getSod = function (elm) {
-      var ret = {elem:null, text:"", num:0};
-      while (elm) {
-        if ("className" in elm && elm.className == "sod") {
-          ret.elem = elm;
-          var t = arAkahukuDOM.getInnerText (elm);
-          var re = t.match (/\d+$/);
-          if (re) {
-            ret.num = parseInt (re [0]) || 0;
-            ret.text = t.substr (0, t.length - re [0].length);
-          }
-          else {
-            ret.text = t
-          }
-          return ret;
+  _getMessageSod : function (elm) {
+    var ret = {elem:null, text:"", num:0};
+    while (elm) {
+      if ("className" in elm && elm.className == "sod") {
+        ret.elem = elm;
+        var t = arAkahukuDOM.getInnerText (elm);
+        var re = t.match (/\d+$/);
+        if (re) {
+          ret.num = parseInt (re [0]) || 0;
+          ret.text = t.substr (0, t.length - re [0].length);
         }
-        elm = elm.previousSibling;
+        else {
+          ret.text = t
+        }
+        return ret;
       }
-      return ret;
-    };
+      elm = elm.previousSibling;
+    }
+    return ret;
+  },
 
-    var sodS = getSod (bqS.previousSibling);
-    var sodT = getSod (bqT.previousSibling);
+  _syncMessageSod : function (bqS, bqT) {
+    var sodT = arAkahukuReload._getMessageSod (bqT.previousSibling);
+    var sodS;
+    if (typeof bqS == "string") {// for json
+      sodS = {elem: null, text: "", num: parseInt(bqS)};
+      sodS.elem = bqT.ownerDocument.createElement("span");
+      if (bqS) {
+        sodS.text = "\u305D\u3046\u3060\u306Dx"; //"そうだねx"
+        sodS.elem.textContent = sodS.text + bqS;
+      }
+    }
+    else {
+      sodS = arAkahukuReload._getMessageSod (bqS.previousSibling);
+    }
     if (sodS.elem && sodT.elem) {
       if (sodS.text != sodT.text
           || sodS.num > sodT.num) {
