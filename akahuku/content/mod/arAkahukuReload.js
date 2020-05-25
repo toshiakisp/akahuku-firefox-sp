@@ -2339,6 +2339,7 @@ var arAkahukuReload = {
     
     var startPosition = 0;
     var endPosition = 0;
+    var newReplies = 0;
     var data = {
       thread: {ext:"",com:"",id:""},
       res: [], sd: {}, sync: sync, updatesd: false};
@@ -2518,6 +2519,15 @@ var arAkahukuReload = {
         currentContainer.isDeleted = isDeleted;
         currentContainer.num = num;
         data.res.push(currentContainer);
+
+        if (num > lastReply.num) {
+          newReplies ++;
+        }
+        if (newReplies == 1) {
+          /* 最初の新規レス */
+          arAkahukuThread.updateReplyPrefix
+          (lastReply.container, info);
+        }
       }
     }
 
@@ -2902,8 +2912,6 @@ var arAkahukuReload = {
             terminator.parentNode
             .insertBefore (newReplyHeader, terminator);
           }
-          arAkahukuThread.updateReplyPrefix
-          (lastReply.container, info);
         }
         
         if (append) {
@@ -3075,6 +3083,7 @@ var arAkahukuReload = {
       data.sd[info.threadNumber] = json.sd[info.threadNumber] || "";
     }
 
+    let newReplies = 0;
     const lastReply = arAkahukuThread.getLastReply (targetDocument);
     let jsonResNums = Object.keys(json.res).map(n => parseInt(n));
     jsonResNums.sort();
@@ -3089,6 +3098,13 @@ var arAkahukuReload = {
           cont.isDeleted = true;
         }
         data.res.push(cont);
+        if (num > lastReply.num) {
+          newReplies ++;
+        }
+        if (newReplies == 1) {
+          // 最初の新規レス
+          arAkahukuThread.updateReplyPrefix (cont, info);
+        }
       }
     }
 
