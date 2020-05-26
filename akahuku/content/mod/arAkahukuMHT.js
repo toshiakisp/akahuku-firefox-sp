@@ -2203,6 +2203,10 @@ var arAkahukuMHT = {
                 fileData.type
                   = arAkahukuMHT.FILE_TYPE_ANCHOR;
                 fileData.setLocations (url);
+                if (nodes [i].hasAttribute ("data-download-cache-key")) {
+                  fileData.currentLocation = nodes [i].getAttribute ("data-download-cache-key");
+                  nodes [i].removeAttribute ("data-download-cache-key");
+                }
                 fileData.node = nodes [i];
                 fileData.ownerDocument = targetDocument;
                 fileData.useNetwork = false;

@@ -195,6 +195,7 @@ var arAkahukuImage = {
   currentTarget : null,    /* HTMLAnchorElement  保存先選択中のボタン */
   currentNormal : false,   /* Boolean  保存先選択中のボタンが通常のボタンか */
   lastTargetDirIndex : -1, /* Number  最後に保存したディレクトリのインデックス */
+  bypassCfPolish : false,
 
   /**
    * ドキュメントのスタイルを設定する
@@ -336,6 +337,9 @@ var arAkahukuImage = {
       = arAkahukuConfig
       .initPref ("bool", "akahuku.saveimage.linkmenu", false);
     }
+    arAkahukuImage.bypassCfPolish
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.saveimage.bypass_cf_polish", false);
   },
     
   getContextMenuContentData : function (targetNode) {
@@ -581,12 +585,12 @@ var arAkahukuImage = {
     if (isRedirect) {
       arAkahukuImage.saveRedirectImage
       (target, targetDirIndex,
-       href, leafName, normal);
+       href, leafName, normal, event.isTrusted);
     }
     else {
       arAkahukuImage.saveImage
       (target, targetDirIndex,
-       href, leafName, normal);
+       href, leafName, normal, event.isTrusted);
     }
   },
 
@@ -632,7 +636,7 @@ var arAkahukuImage = {
         event.stopPropagation ();
         if (v >= 0) {
           event.target.blur ();
-          arAkahukuImage.onSaveImageClick (null, v, undefined, false);
+          arAkahukuImage.onSaveImageClick (event, v, undefined, false);
           menu.parentNode && menu.parentNode.removeChild (menu);
         }
       }, false);
@@ -689,7 +693,7 @@ var arAkahukuImage = {
         menu.appendChild (menuitem);
         menuitem.addEventListener ("click", (event) => {
           event.target.ownerDocument.activeElement.blur ();
-          arAkahukuImage.onSaveImageClick (null, i, undefined, false);
+          arAkahukuImage.onSaveImageClick (event, i, undefined, false);
           menu.parentNode && menu.parentNode.removeChild (menu);
         }, false);
         menuitem.addEventListener ("mouseenter", (event) => {
@@ -762,7 +766,7 @@ var arAkahukuImage = {
    *         targetDirIndex が -1 でなければ無視される
    */
   saveImage : function (target, targetDirIndex,
-                        href, leafName, normal) {
+                        href, leafName, normal, trusted) {
     href = arAkahukuP2P.tryEnP2P (href);
         
     if (targetDirIndex == -1) {
@@ -803,10 +807,10 @@ var arAkahukuImage = {
       dirPath = AkahukuFileUtil.Path.join(dirPath, subdir);
     }
     let filePath = AkahukuFileUtil.Path.join(dirPath, leafName);
-    arAkahukuImage.saveImageCore (target, filePath, href, normal, targetDirIndex);
+    arAkahukuImage.saveImageCore (target, filePath, href, normal, targetDirIndex, trusted);
   },
 
-  saveRedirectImage : function (target, targetDirIndex, href, leafName, normal) {
+  saveRedirectImage : function (target, targetDirIndex, href, leafName, normal, trusted) {
     var targetDocument = target.ownerDocument;
     window.fetch(href, {
       redirect: 'follow',
@@ -846,7 +850,7 @@ var arAkahukuImage = {
         targetDocument.defaultView
         .setTimeout (function () {
           arAkahukuImage.saveImage
-            (target, targetDirIndex, newHref, leafName, normal);
+            (target, targetDirIndex, newHref, leafName, normal, trusted);
         }, wait)
       })
       .catch((err) => {
@@ -863,13 +867,66 @@ var arAkahukuImage = {
    * @param  Boolean normal 通常のボタンか
    * @param  Number targetDirIndex
    */
-  saveImageCore : function (target, filePath, uri, normal, targetDirIndex) {
-    Downloads.download({
-      url: uri,
-      conflictAction: 'overwrite',
-      filename: filePath,
-      saveAs: arAkahukuImage.baseList [targetDirIndex].dialog,
+  saveImageCore : function (target, filePath, uri, normal, targetDirIndex, trusted) {
+    let serverinfo = '';
+    new Promise((resolve, reject) => {
+      if (!trusted || !arAkahukuImage.bypassCfPolish
+        || !/https?:\/\/[^.]*\.2chan\.net\/./.test (uri)) {
+        resolve(uri);
+        return;
+      }
+      // bypassCfPolish == true:
+      window.fetch(uri, {method: 'HEAD',
+        credentials: 'include',
+      })
+        .then(resp => {
+          let polished = resp.headers.get('cf-polished');
+          if (polished && !/^status=not_(needed|compressed)/.test(polished)) {
+            let query = Math.floor(Math.random()*(2**32));
+            uri = uri.replace(/(\?\d+)?$/,'?'+query);
+            serverinfo = '\u518D\u5727\u7E2E\u56DE\u907F'; //再圧縮回避
+          }
+          resolve(uri);
+        })
+        .catch(e => {
+          Akahuku.debug.exception (e);
+          resolve(uri);
+        });
     })
+      .then(url => {
+        return window.fetch(url, {method: 'GET',
+          credentials: 'include',
+          cache: 'force-cache',//no cache validate
+        })
+          .then(resp => {
+            if (!resp.ok) {
+              throw new Error (resp.statusText);
+            }
+            let polished = resp.headers.get('cf-polished');
+            if (polished && !/^status=not_(needed|compressed)/.test(polished)) {
+              serverinfo = '\u518D\u5727\u7E2E'; //再圧縮
+              if (polished.match(/origSize=(\d+)/)) {
+                let origSize = parseInt(RegExp.$1);
+                let size = parseInt(resp.headers.get('content-length'));
+                if (size > 0 && origSize > 0) {
+                  serverinfo += ' ' + (Math.floor(100*size/origSize) +'%');
+                }
+              }
+            }
+            return resp.blob();
+          })
+          .then(blob => {
+            return {blob: blob, url: url};
+          });
+      })
+      .then(fetched => {
+        return Downloads.downloadBlob(fetched.blob, {
+          url: fetched.url,
+          conflictAction: 'overwrite',
+          filename: filePath,
+          saveAs: arAkahukuImage.baseList [targetDirIndex].dialog,
+        });
+      })
       .then((result) => {
         try {
           if (arAkahukuImage.baseList [targetDirIndex].dialog_keep) {
@@ -885,7 +942,14 @@ var arAkahukuImage = {
               instantsrc: dirPref.instantsrc,
               downloadId: result.id,
               filename: result.filename,
+              fileSize: result.fileSize,
+              url: result.url,
+              //"B 保存しました"
+              message: (result.fileSize + " B \u4FDD\u5B58\u3057\u307E\u3057\u305F"),
             };
+            if (serverinfo) {
+              props.message += '(' + serverinfo + ')';
+            }
             arAkahukuImage.onSave
               (target, result.success, result.state, normal, props);
           }
@@ -1122,16 +1186,50 @@ var arAkahukuImage = {
         arAkahukuImage.updateContainer
           (target.parentNode, true,
            instantsrc, savedProps);
+        // preserve cache key for save mht
+        let leafname = target.getAttribute('dummyleafname');
+        let node = target.parentNode.nextElementSibling;
+        while (node) {
+          if (node.nodeName.toLowerCase () == "a"
+            && node.href && node.href.endsWith(leafname)) {
+            node.dataset.downloadCacheKey = savedProps.url;
+            break;
+          }
+          node = node.nextElementSibling;
+        }
         if (instantsrc) {
           let src = target.getAttribute('dummyhref');
           arAkahukuImage.changeImage (target, true, src);
         }
       }
       else {
+        let node = target.parentNode.firstElementChild;
+        while (node) {
+          if (node.className == "akahuku_saveimage_button2"
+            || node.className == "akahuku_preview_button") {
+            if (node.getAttribute ("dummyhref") != savedProps.url) {
+              node.setAttribute ("dummyhref", savedProps.url);
+            }
+          }
+          node = node.nextElementSibling;
+        }
+        // preserve cache key for save mht
+        node = target.parentNode.previousElementSibling;
+        while (node) {
+          if (node.className == "akahuku_generated_link") {
+            if (node.href != savedProps.url) {
+              node.dataset.downloadCacheKey = savedProps.url;
+            }
+            break;
+          }
+          node = node.previousElementSibling;
+        }
         stopNode.style.display = "none";
-        arAkahukuDOM.setText
-          (messageNode,
-           "\u4FDD\u5B58\u3057\u307E\u3057\u305F");
+        let message = "\u4FDD\u5B58\u3057\u307E\u3057\u305F";
+        if (savedProps.message) {
+          message = savedProps.message;
+        }
+        arAkahukuDOM.setText (messageNode, message);
         target.style.display = "";
         targetDocument.defaultView.setTimeout
           (function (messageNode) {
@@ -1585,6 +1683,17 @@ var arAkahukuImage = {
         }
         else if (node.className == "akahuku_srcimage_button") {
           node.style.display = (exists && !src) ? "" : "none";
+        }
+        if (optSavedProps
+          && (node.className == "akahuku_thumbimage_button"
+            || node.className == "akahuku_srcimage_button")) {
+          if (optSavedProps.message) {
+            node.title = optSavedProps.message;
+          }
+        }
+        if (optSavedProps && optSavedProps.url
+          && node.getAttribute ("dummyhref") != optSavedProps.url) {
+          node.setAttribute ("dummyhref", optSavedProps.url);
         }
       }
             

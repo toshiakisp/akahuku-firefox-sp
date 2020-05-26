@@ -70,7 +70,7 @@ var arAkahukuImage = {
   onClickSaveImageMenu: function (info, tab, targetDirIndex, linkmenu) {
     let msg = {
       name: 'arAkahukuImage', method: 'onSaveImageClick',
-      args: [null, targetDirIndex, undefined, linkmenu],
+      args: [{isTrusted: true}, targetDirIndex, undefined, linkmenu],
     };
     browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
   },

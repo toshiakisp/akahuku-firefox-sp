@@ -6,7 +6,7 @@ const Downloads = (function () {
   // public methods of module
   let exports = Object.freeze({
     download: async function (props) {
-      let ret = {success: false, id: null, state:'', canceled: false, filename:''};
+      let ret = {success: false, id: null, state:'', canceled: false, filename:'', url:'', fileSize:-1};
       try {
         ret.id = await browser.downloads.download(props);
       }
@@ -23,6 +23,7 @@ const Downloads = (function () {
       }
       await new Promise((resolve, reject) => {
         ret.filename = props.filename;
+        ret.url = props.url;
         let listener = (delta) => {
           if (delta.id != ret.id)
             return;
@@ -47,14 +48,18 @@ const Downloads = (function () {
       let results = await browser.downloads.search({id: ret.id});
       if (results.length > 0) {
         ret.filename = results[0].filename;
+        ret.fileSize = results[0].fileSize;
+        ret.url = results[0].url;
       }
       return ret;
     },
     downloadBlob: async function (blob, props) {
       let blobURL = window.URL.createObjectURL(blob);
+      let origurl = props.url || "";
       props.url = blobURL;
       let ret = await this.download(props);
       window.URL.revokeObjectURL(blobURL);
+      ret.url = origurl;//no expose blob url
       return ret;
     },
     removeFile: async function (id) {

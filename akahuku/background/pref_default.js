@@ -248,6 +248,7 @@ pref("saveimage.limit.height", 1024);
 pref("saveimage.limit.unit", "px");
 pref("saveimage.limit.width", 1024);
 pref("saveimage.linkmenu", false);
+pref("saveimage.bypass_cf_polish", false);
 pref("savemht", true);
 pref("savemht.aima.hide_entire_res", false);
 pref("savemht.aima.show_res", false);

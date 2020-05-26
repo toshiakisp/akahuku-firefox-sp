@@ -2527,7 +2527,7 @@ var arAkahukuLink = {
     var srcByFetch = null;
     var scheme = targetDocument.location.protocol.replace (/:$/, "");
         
-    if (uri.match (/\.(jpe?g|gif|png|bmp|webp)$/i)) {
+    if (uri.match (/\.(jpe?g|gif|png|bmp|webp)(\?.*)?$/i)) {
       image = targetDocument.createElement ("img");
       image.style.maxWidth = "250px";
       image.style.maxHeight = "250px";
@@ -2895,7 +2895,7 @@ var arAkahukuLink = {
          targetDocument);
       var uri = target.getAttribute ("dummyhref");
             
-      if (uri.match (/\.(jpe?g|gif|png|bmp|webp)$/i)) {
+      if (uri.match (/\.(jpe?g|gif|png|bmp|webp)(\?.*)?$/i)) {
         var anchor
            = arAkahukuLink.createAutolinkAnchor(
              targetDocument, uri);
