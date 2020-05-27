@@ -148,14 +148,14 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF may",
     "\u8679\u88CF may",
     "\u4E8C\u6B21\u5143\u88CF",
-    50000, true,
+    25000, true,
     {preserveMin: 60},
     ],
   "img:b" : [ /* 二次元裏 img */
     "\u4E8C\u6B21\u5143\u88CF img",
     "\u8679\u88CF img",
     "\u4E8C\u6B21\u5143\u88CF",
-    12000, true,
+    8000, true,
     {preserveMin: 60},
     ],
   "dat:b" : [ /* 二次元裏 dat */
@@ -218,6 +218,24 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u696D\u754C",
     "\u4E8C\u6B21\u5143\u696D\u754C",
     2000, true
+    ],
+  "dec:74" : [ /* FGO */
+    "FGO",
+    "FGO",
+    "FGO",
+    20000, true
+    ],
+  "dec:75" : [ /* アイマス */
+    "\u30A2\u30A4\u30DE\u30B9",
+    "\u30A2\u30A4\u30DE\u30B9",
+    "\u30A2\u30A4\u30C9\u30EB\u30DE\u30B9\u30BF\u30FC",
+    20000, true
+    ],
+  "dec:78" : [ /* ウメハラ総合 */
+    "\u30A6\u30E1\u30CF\u30E9\u7DCF\u5408",
+    "\u30A6\u30E1\u30CF\u30E9\u7DCF\u5408",
+    "\u30A6\u30E1\u30CF\u30E9\u7DCF\u5408",
+    20000, true
     ],
   "jun:31" : [ /* ゲーム */
     "\u30B2\u30FC\u30E0",
@@ -290,6 +308,12 @@ var arAkahukuServerData = {
     "\u305D\u3046\u3060\u306D",
     "\u305D\u3046\u3060\u306D",
     2000, true
+    ],
+  "dec:82" : [ /* 任天堂 */
+    "\u4EFB\u5929\u5802",
+    "\u4EFB\u5929\u5802",
+    "\u4EFB\u5929\u5802",
+    20000, true
     ],
   "dec:61" : [ /* ソニー */
     "\u30BD\u30CB\u30FC",
@@ -425,6 +449,12 @@ var arAkahukuServerData = {
     "VTuber",
     20000, true
     ],
+  "dec:81" : [ /* 合成音声 */
+    "\u5408\u6210\u97F3\u58F0",
+    "\u5408\u6210\u97F3\u58F0",
+    "\u5408\u6210\u97F3\u58F0",
+    20000, true
+    ],
   "dat:22" : [ /* 人形 */
     "\u4EBA\u5F62",
     "\u4EBA\u5F62",
@@ -450,23 +480,29 @@ var arAkahukuServerData = {
     "\u7D4C\u6E08",
     3000, true
     ],
+  "dec:79" : [ /* 宗教 */
+    "\u5B97\u6559",
+    "\u5B97\u6559",
+    "\u5B97\u6559",
+    20000, true
+    ],
+  "dat:38" : [ /* 文在寅 (韓国経済) */
+    "\u6587\u5728\u5BC5",
+    "\u6587\u5728\u5BC5",
+    "\u6587\u5728\u5BC5",
+    20000, true
+    ],
+  "dec:80" : [ /* 安倍晋三 */
+    "\u5B89\u500D\u664B\u4E09",
+    "\u5B89\u500D\u664B\u4E09",
+    "\u5B89\u500D\u664B\u4E09",
+    20000, true
+    ],
   "dec:50" : [ /* 三次実況 */
     "\u4E09\u6B21\u5B9F\u6CC1",
     "\u4E09\u6B21\u5B9F\u6CC1",
     "\u4E09\u6B21\u5B9F\u6CC1",
     12000, true
-    ],
-  "dat:38" : [ /* 韓国経済 */
-    "\u97D3\u56FD\u7D4C\u6E08",
-    "\u97D3\u56FD\u7D4C\u6E08",
-    "\u97D3\u56FD\u7D4C\u6E08",
-    2000, true
-    ],
-  "dec:57" : [ /* 韓国フェリー沈没事故 */
-    "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
-    "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
-    "\u97D3\u56FD\u30D5\u30A7\u30EA\u30FC\u6C88\u6CA1\u4E8B\u6545",
-    0, true
     ],
   "cgi:f" : [ /* 軍 */
     "\u8ECD",
@@ -553,17 +589,35 @@ var arAkahukuServerData = {
     "\u30CB\u30E5\u30FC\u30B9\u8868",
     5000, false
     ],
+  "dec:76" : [ /* 昭和 */
+    "\u662D\u548C",
+    "\u662D\u548C",
+    "\u662D\u548C",
+    20000, true
+    ],
+  "dec:77" : [ /* 平成 */
+    "\u5E73\u6210",
+    "\u5E73\u6210",
+    "\u5E73\u6210",
+    20000, true
+    ],
   "dec:53" : [ /* 発電 */
     "\u767A\u96FB",
     "\u767A\u96FB",
     "\u767A\u96FB",
     300, true
     ],
-  "dec:52" : [ /* 地震 */
-    "\u5730\u9707",
-    "\u5730\u9707",
-    "\u5730\u9707",
-    3000, true
+  "dec:52" : [ /* 自然災害 (地震) */
+    "\u81EA\u7136\u707D\u5BB3",
+    "\u81EA\u7136\u707D\u5BB3",
+    "\u81EA\u7136\u707D\u5BB3",
+    5000, true
+    ],
+  "dec:83" : [ /* コロナ */
+    "\u30B3\u30ED\u30CA",
+    "\u30B3\u30ED\u30CA",
+    "\u30B3\u30ED\u30CA",
+    20000, true
     ],
   "img:9" : [ /* 雑談 */
     "\u96D1\u8AC7",
