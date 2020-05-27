@@ -1,14 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
-<h4>6.0a11 (2019-12-16)</h4>
+<h4>6.0a12 (2020-05-27)</h4>
 <ul>
-  <li>問題のあった機能の改善</li>
-  <ul>
-    <li>「続きを読む」の[同期]で「IDも同期する」有効でも同期されない問題を修正</li>
-    <li>mp4添付の[保存]において[元画像]/[サムネ]ボタンによる切り替えが正しく機能するように</li>
-  </ul>
-  <li>隔離されたレス: 「続きを読む」の[同期]時に、削除されたレスと同様に非表示にし、レス数を"赤字変化: X"(なー等)ではなく"隔離: X"と表示するように</li>
-  <li>.webpファイルも画像として扱うように(プレビュー等)</li>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/370af67...3adaea2">All changes from previous release on github</a> (6 commits, 10 files changed)</li>
+  <li>カタログを最新に更新した時にプルダウンメニューが追加されるように</li>
+  <li>[続きを読む]がJSONモードの差分読み込みに対応 (転送量削除)</li>
+  <li>2chan.net上の画像のCDN再圧縮(Cloudflare Polish)を検知して診断メッセージを表示(レス＝[保存]ボタンのツールチップ、オートリンク＝ボタンの後ろのテキスト)</li>
+  <li>オプションを追加(既定では無効): 画像を保存1／画像を保存ボタン／再圧縮されている場合にオリジナルの保存を試みる</li>
+  <li>オートリンクのプレビューで[見る][保存]できるパターンを追加(pbs.twimg.com, sp.nicovideo.jp)</li>
+  <li>修正:[続きを読む]で新しく削除・隔離されたレスがある場合に隠れた状態になるように</li>
+  <li>修正:[同期]時に特定のURLが書かれたレスで間違って削除されたレスと判定していた問題</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/3adaea2...6d21f9a">All changes from previous release on github</a> (12 commits, 13 files changed)</li>
 </ul>
 </html>
