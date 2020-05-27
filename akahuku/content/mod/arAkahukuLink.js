@@ -2222,9 +2222,19 @@ var arAkahukuLink = {
       button.setAttribute ("__akahuku_autolink_button", "1");
       var target = null;
             
+      if (url.match (/^(https?:\/\/pbs\.twimg\.com\/media\/[^?/:]+)(:[a-z]+)?(?:\?(?:([^&]+)&)?format=([a-z0-9]+)(?:&(.*))?)?$/i)) {
+        // 拡張子のある形式へ変換
+        url = RegExp.$1
+          + (RegExp.$4 ? "." +  RegExp.$4 : "");
+        if (RegExp.$3 || RegExp.$5 || RegExp.$2) {
+          url += "?" + [RegExp.$3 || RegExp.$5
+            || (RegExp.$2 ? "name="+RegExp.$2 : "")]
+            .filter(s=>s).join("&");
+        }
+      }
       if (arAkahukuLink.enableAutoLinkPreview
           && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
-            ||url.match (/^https?:\/\/(www\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
+            ||url.match (/^https?:\/\/((www|sp)\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp|web[mp]|mp4)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
                             ("["));
@@ -2257,7 +2267,8 @@ var arAkahukuLink = {
             && !url.match
             (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
             && !url.match
-            (/^https?:\/\/(www\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
+            (/^https?:\/\/((www|sp)\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
+            && !url.match (/^https?:\/\/pbs\.twimg\.com\/media\/[^&]+/i)
             && !url.match (/\.(jpe?g|gif|png|bmp|web[mp]|mp4)(\?.*)?$/i)
             && url.match (/\/[^\/]+\.[^\/]+$/i)
             && !url.match (/:\/\/([^\/]+)$/)) {
@@ -2602,7 +2613,7 @@ var arAkahukuLink = {
       // Gecko 18.0+
       image.setAttribute ("allowfullscreen", "true");
     }
-    else if (uri.match (/^https?:\/\/(?:www\.nicovideo\.jp\/watch\/|nico\.ms\/)([^&?#]+)/i)) {
+    else if (uri.match (/^https?:\/\/(?:(?:www|sp)\.nicovideo\.jp\/watch\/|nico\.ms\/)([^&?#]+)/i)) {
       var nicovideoUrl = "https://embed.nicovideo.jp/watch/" + RegExp.$1;
       var t = 0;
       if (uri.match (/[?&]from=([0-9]+)?/)) {

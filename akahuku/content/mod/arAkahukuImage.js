@@ -385,7 +385,7 @@ var arAkahukuImage = {
    */
   createSaveImageButton : function (targetDocument, button, url, linkNode) {
     var leafName = "";
-    if (url.match (/\/([^\/]+)$/)) {
+    if (url.match (/\/([^\/\?]+)(\?.*)?$/)) {
       leafName = RegExp.$1;
     }
     else {
