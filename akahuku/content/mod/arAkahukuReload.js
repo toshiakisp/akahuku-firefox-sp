@@ -3193,7 +3193,7 @@ var arAkahukuReload = {
       a2.className = "sod";
       a2.id = "sd"+no;
       a2.href = "javascript:void(0)";
-      a2.onclick = new Function("sd("+no+");return(false);");
+      a2.setAttribute("onclick", "sd("+no+");return(false);");
     }
 
     if (resd.ext != '') {
