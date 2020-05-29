@@ -367,6 +367,8 @@ arAkahukuReloadParam.prototype = {
   targetDocument : null,       /* HTMLDocument  対象のドキュメント */
   lastModified : NaN,          /* Number  ドキュメントの更新日時 */
   lastEtag : '',
+  lastModifiedSync : NaN,
+  lastEtagSync : '',
   reloadRequestInit : null,
   reloadRequestController : null,
     
@@ -921,13 +923,19 @@ arAkahukuReloadParam.prototype = {
         if (resp.url == this.location) {
           let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
           let etag = resp.headers.get('Etag');
-          if (this.lastEtag == etag
-            || (resLastMod && this.lastModified == resLastMod)) {
+          if ((!this.sync && (this.lastEtag == etag
+            || (resLastMod && this.lastModified == resLastMod)))
+            || (this.sync && (this.lastEtagSync == etag
+            || (resLastMod && this.lastModifiedSync == resLastMod)))) {
             // Raw response may be 304 Not Modified
             throw new NotModified();
           }
           this.lastModified = resLastMod;
           this.lastEtag = etag;
+          if (this.sync) {
+            this.lastModifiedSync = resLastMod;
+            this.lastEtagSync = etag;
+          }
         }
         let re
           = (resp.headers.get('Content-Type') || '')
@@ -4201,6 +4209,7 @@ var arAkahukuReload = {
       Akahuku.getDocumentParam (targetDocument).reload_param = param;
       param.targetDocument = targetDocument;
       param.lastModified = Date.parse (targetDocument.lastModified);
+      param.lastModifiedSync = param.lastModified;
       if (info.isFutaba && arAkahukuReload.enableJson) {
         param.requestMode = 2; //HEAD-GET(json)
       }
