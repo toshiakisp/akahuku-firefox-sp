@@ -999,7 +999,7 @@ var arAkahukuPopupQuote = {
         if (type == 0 || type == 1 || isQuotedInsideBQ) {
           /* メール欄かレス文中のノードの場合に IP か ID を探す */
           if (!quotedIP && info.ip) {
-            if (innerText.match (/\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:[0-9]+\.){0,2}\*\([^\(\)]+\))/)) {
+            if (innerText.match (/\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:(?:[0-9]+\.){0,2}|[0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{0,4}){1,3}\.)\*\([^\(\)]+\))/)) {
               quotedIP = RegExp.$1;
             }
           }

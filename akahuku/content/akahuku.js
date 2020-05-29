@@ -834,13 +834,32 @@ var Akahuku = {
   getMessageIPID : function (targetNode, isId) {
     var node = targetNode;
     var lastText = "";
-    var patternIP = /\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:[0-9]+\.){0,2}\*\([^\(\)]+\))/;
+    var patternIP = /\bIP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:(?:[0-9]+\.){0,3}|[0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{0,4}){1,3}\.)\*\([^\(\)]+\))/;
     var patternID = /\bID:([A-Za-z0-9.\/]{8})/;
-    var pattern = (isId ? patternID : patternIP);
+    var patterns = [];
+    if (isId == null) {
+      patterns = [patternID, patternIP];
+    }
+    else if (isId) {
+      patterns = [patternID];
+    }
+    else {
+      patterns = [patternIP];
+    }
+    var matchPatterns = function (text) {
+      for (let pattern of patterns) {
+        let m = text.match (pattern);
+        if (m) {
+          return (patterns.length == 1 ? m [1] : m [0]);
+        }
+      }
+      return null
+    };
     while (node) {
       if (node.matches ("span.cnw")) {
-        if (node.textContent.match (pattern)) {
-          return RegExp.$1;
+        let ret = matchPatterns (node.textContent);
+        if (ret) {
+          return ret;
         }
         break;
       }
@@ -849,8 +868,9 @@ var Akahuku = {
     // old layout(-2019/11/18)
     while (node) {
       if (node.nodeName.toLowerCase () == "#text") {
-        if ((node.nodeValue + lastText).match (pattern)) {
-          return RegExp.$1;
+        let ret = matchPatterns (node.nodeValue + lastText);
+        if (ret) {
+          return ret;
         }
         lastText = node.nodeValue + lastText;
       }
@@ -858,10 +878,12 @@ var Akahuku = {
         lastText = "";
       }
             
-      if ((node.nodeName.toLowerCase () == "font"
-           || node.nodeName.toLowerCase () == "a")
-          && arAkahukuDOM.getInnerText (node).match (pattern)) {
-        return RegExp.$1;
+      if (node.nodeName.toLowerCase () == "font"
+        || node.nodeName.toLowerCase () == "a") {
+        let ret = matchPatterns (arAkahukuDOM.getInnerText (node));
+        if (ret) {
+          return ret;
+        }
       }
             
       node = node.previousSibling;

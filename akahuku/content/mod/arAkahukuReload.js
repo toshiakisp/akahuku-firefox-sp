@@ -2389,6 +2389,12 @@ var arAkahukuReload = {
           if (idtext) {
             data.thread.id = "ID:"+idtext;
           }
+          else {
+            let iptext = Akahuku.getMessageIP (bqS);
+            if (iptext) {
+              data.thread.id = "IP:"+iptext;
+            }
+          }
           let sodS = arAkahukuReload._getMessageSod (bqS.previousSibling);
           if (sodS.elm) {
             data.sd[info.threadNumber] = sodS.num;
@@ -2600,7 +2606,7 @@ var arAkahukuReload = {
           }
         }
         ids.push (ret.id);
-        var s = (ids.length > 1 ? " ID:" : "ID:") + ret.id;
+        var s = (ids.length > 1 ? " " : "") + ret.id;
         if (ret.op > 0) {
           results.appendedIDsText += s;
         }
@@ -2713,7 +2719,7 @@ var arAkahukuReload = {
           }
           // ID同期
           if (arAkahukuReload.enableSyncMessageID) {
-            var ret = arAkahukuReload._syncMessageID (data.thread.id.replace(/^ID:/,''), bqT);
+            var ret = arAkahukuReload._syncMessageID (data.thread.id, bqT);
             countSyncIDResult (idSyncResults, ret);
           }
         }
@@ -2804,7 +2810,7 @@ var arAkahukuReload = {
                   }
 
                   if (arAkahukuReload.enableSyncMessageID) {
-                    var ret = arAkahukuReload._syncMessageID (Akahuku.getMessageID (bqS), bqT);
+                    var ret = arAkahukuReload._syncMessageID (Akahuku.getMessageIPID (bqS), bqT);
                     countSyncIDResult (idSyncResults, ret);
                   }
                   arAkahukuReload._syncMessageSod (bqS, bqT);
@@ -4508,7 +4514,7 @@ var arAkahukuReload = {
 
   _syncMessageID : function (idS, bqT)
   {
-    var idT = Akahuku.getMessageID (bqT);
+    var idT = Akahuku.getMessageIPID (bqT);
     var ret = {id: idT, op: 0, err:false};
     if (idS == idT) {
       return ret;
@@ -4522,10 +4528,22 @@ var arAkahukuReload = {
       ret.err = !arAkahukuReload._removeMessageID (bqT, idT);
       ret.op = -1;
     }
+    else { //ID変化
+      ret.err = !arAkahukuReload._removeMessageID (bqT, idT);
+      if (!ret.err) {
+        ret.op = -1;
+        ret.err = !arAkahukuReload._insertMessageID (bqT, idS);
+        if (!ret.err) {
+          ret.op = +1;
+          ret.id = idS;
+        }
+      }
+    }
     return ret;
   },
 
   _insertMessageID : function (bqnode, id) {
+    var isIP = id.startsWith("IP:");
     var node = bqnode.previousElementSibling;
     while (node) {
       if (node.matches ("span.cnw")) {
@@ -4535,7 +4553,12 @@ var arAkahukuReload = {
         while (node) {
           if (node.nodeType === node.TEXT_NODE) {
             var t = node.textContent;
-            t = t.replace (/(?: ID:[A-Za-z0-9.\/]{8}| ?$)/, " ID:" + id);
+            if (isIP) {
+              t = t.replace (/(?: IP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:(?:[0-9]+\.){0,3}|[0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{0,4}){1,3}\.)\*\([^\(\)]+\))| ?$)/, " " + id);
+            }
+            else {
+              t = t.replace (/(?: ID:[A-Za-z0-9.\/]{8}| ?$)/, " " + id);
+            }
             if (node.textContent != t) {
               node.textContent = t;
               return true;
@@ -4545,7 +4568,7 @@ var arAkahukuReload = {
           node = node.previousSibling;
         }
         // create if no text-node child exists
-        cnw.appendChild (cnw.ownerDocument.createTextNode (" ID:" + id));
+        cnw.appendChild (cnw.ownerDocument.createTextNode (" " + id));
         return true;
       }
       node = node.previousElementSibling;
@@ -4561,12 +4584,12 @@ var arAkahukuReload = {
         text = node.nodeValue;
         if (nextToNum) { //No.を含むノードの前のテキストノード末尾に
           node.nodeValue = text.replace
-            (/ ?$/, " ID:" + id + (/^ /.test (lastText) ? "" : " "));
+            (/ ?$/, " " + id + (/^ /.test (lastText) ? "" : " "));
           return true;
         }
         if (node.nodeValue.match (regexpTimeNum)) {
           // 日付もNo.も含むテキストノード (標準)
-          node.nodeValue = RegExp.$1 + " ID:" + id + " " + RegExp.$2;
+          node.nodeValue = RegExp.$1 + " " + id + " " + RegExp.$2;
           return true;
         }
       }
@@ -4590,10 +4613,10 @@ var arAkahukuReload = {
     return false;
   },
   _removeMessageID : function (bqnode, optId) {
-    var pattern = /^(.*)(\bID:[A-Za-z0-9.\/]{8}) ?(No\.[0-9]*)?$/;
+    var pattern = /^(.*)(\b(?:ID:[A-Za-z0-9.\/]{8}|IP:([0-9]+\.[0-9]+\.[0-9]+\.|(?:(?:[0-9]+\.){0,3}|(?:[0-9a-fA-F]+:){0,2}[0-9a-fA-F]+\.)\*\([^\(\)]+\)))) ?(No\.[0-9]*)?$/;
     if (optId) {
       optId = optId.replace (/([.*+?^=!:${}()|[\]\/\\])/g, "\\$1");
-      pattern = new RegExp ("^(.*)(\\bID:" + optId + ") ?(.*)$");
+      pattern = new RegExp ("^(.*)(\\b" + optId + ") ?(.*)$");
     }
     var node = bqnode.previousElementSibling;
     while (node) {
