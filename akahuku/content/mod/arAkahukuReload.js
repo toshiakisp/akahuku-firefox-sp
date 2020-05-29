@@ -380,6 +380,7 @@ arAkahukuReloadParam.prototype = {
   responseText : "",           /* String  応答のデータ */
   responseCharset : "",        /* String  応答の文字コード */
   responseJson : null,
+  responseJsonOrigStatus : 0,
     
   location : "",               /* リロード中のアドレス */
     
@@ -721,6 +722,7 @@ arAkahukuReloadParam.prototype = {
         
     this.responseText = "";
     this.responseCharset = "";
+    this.responseJson = null;
     
     /* HTML が正しく取得できなかった場合の音 */
     if (!this.replied) {
@@ -752,6 +754,10 @@ arAkahukuReloadParam.prototype = {
       false, this.targetDocument);
 
     if (!this.responseJson.res) {
+      if (this.responseJsonOrigStatus > 299) {
+        this.onHttpResponse (this.responseJsonOrigStatus);
+        return;
+      }
       // 区切りの削除
       let newReplyHeader
         = this.targetDocument
@@ -768,6 +774,18 @@ arAkahukuReloadParam.prototype = {
       }
     }
     else {
+      if (this.responseJsonOrigStatus > 299) {
+        //404後に値が不正になるプロパティを削除
+        this.responseJson.die = "";
+        this.responseJson.dielong = "";
+        let rsc = info.replyCount;
+        for (let [num, dat] of Object.entries(this.responseJson.res)) {
+          rsc ++;
+          if (dat.rsc) {
+            dat.rsc = rsc;
+          }
+        }
+      }
       this.targetDocument.defaultView
         .setTimeout (function (targetDocument, replied) {
           arAkahukuReload.updateJson (targetDocument, replied);
@@ -842,7 +860,7 @@ arAkahukuReloadParam.prototype = {
           return resp;
         }
         // HEAD response
-        if (!resp.ok) {
+        if (!(resp.ok || (this.requestMode == 2 && resp.status == 404))) {
           throw new HttpStatusError(resp);
         }
         let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
@@ -859,6 +877,9 @@ arAkahukuReloadParam.prototype = {
         }
         if (this.lastEtag == etag
           || this.lastModified == resLastMod) {
+          if (this.requestMode == 2 && resp.status == 404) {
+            throw new HttpStatusError(resp);
+          }
           // Maybe 304
           throw new NotModified();
         }
@@ -868,6 +889,7 @@ arAkahukuReloadParam.prototype = {
             true, this.targetDocument);
           this.lastModified = resLastMod;
           this.lastEtag = etag;
+          this.responseJsonOrigStatus = resp.status;
           this.reloadRequestInit.method = 'GET';
           let lastReply = arAkahukuThread.getLastReply (this.targetDocument);
           let info = Akahuku.getDocumentParam (this.targetDocument).location_info;
@@ -970,7 +992,7 @@ arAkahukuReloadParam.prototype = {
             Akahuku.debug.warn ("Invalid JSON response:", binstr);
             throw new Error ("Invalid JSON response");
           }
-          this.onHttpResponseJson(200);
+          this.onHttpResponseJson(this.responseJsonOrigStatus);
         }
         else {
           this.responseText = binstr;
@@ -3590,6 +3612,9 @@ var arAkahukuReload = {
       var s = "";
       var parm = false;
             
+      if (stats.die) {
+        s = "Not Found. ";
+      }
       if (!arAkahukuReload.enableStatusNoCount) {
         if (newReplies > 0) {
           var parm = true;
@@ -3691,10 +3716,31 @@ var arAkahukuReload = {
                                              expire,
                                              warning,
                                              lastNum);
+            if (stats.die) {
+              arAkahukuSidebar.onThreadExpired (name, info.threadNumber);
+            }
           }
         }
       }
       catch (e) { Akahuku.debug.exception (e);
+      }
+    }
+
+    if (stats.die) {
+      var expireBox
+        = targetDocument.getElementById ("akahuku_throp_expire_box");
+      if (expireBox) {
+        expireBox.style.display = "none";
+      }
+      var expireBox2
+        = targetDocument.getElementById ("akahuku_throp_expire_box2");
+      if (expireBox2) {
+        expireBox2.style.removeProperty ("display");
+      }
+      info.isNotFound = true;
+      if (arAkahukuReload.enableExtCacheImages) {
+        // 消滅後は全画像をキャッシュにして保護する
+        Akahuku.Cache.enCacheURIForImages (targetDocument);
       }
     }
 
@@ -3774,6 +3820,7 @@ var arAkahukuReload = {
 
       stats.updated = true;
       stats.counts = array;
+      stats.die = (param.responseJsonOrigStatus == 404);
     }
     arAkahukuReload.updatePostprocess (targetDocument, stats);
   },
