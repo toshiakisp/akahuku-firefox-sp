@@ -26,9 +26,11 @@ arAkahukuStyle.addUserStyleSheetHandler(
                 + "," + catcell0 + " small",
                 "display: inline-block;"
                 + "max-width: " + w + ";"
+                + "line-break: anywhere;"
                 + "word-break: break-all;")
       .addRule (catcell + " div.akahuku_comment",
                 "max-width: " + w + ";"
+                + "line-break: anywhere;"
                 + "word-break: break-all;"
                 + "font-size: 8pt;"
                 + "overflow: hidden;")
