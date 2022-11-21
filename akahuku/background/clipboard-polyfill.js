@@ -32,6 +32,8 @@ browser.runtime.onMessage.addListener((msg, sender) => {
             node.id = id;
             node.contentEditable = true;
             document.body.appendChild(node);
+            // Explicit collapse (for Fx107 [Bug 1797948])
+            window.getSelection().collapse(node);
           }
 
           // add one-time listener for current scope
