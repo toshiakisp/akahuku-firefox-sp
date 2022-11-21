@@ -9,7 +9,7 @@ var Akahuku = {
       if (type == 'local') {
         if (uri.startsWith('chrome://akahuku/content/')) {
           // Convert to web_accessible_resource (moz-extension://)
-          return browser.extension.getURL(uri.substring(17));
+          return browser.runtime.getURL(uri.substring(17));
         }
       }
       return uri;
