@@ -132,6 +132,12 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF",
     10000, true
     ],
+  "dec:dec" : [ /* 二次元裏 dec */
+    "\u4E8C\u6B21\u5143\u88CF dec",
+    "\u8679\u88CF dec",
+    "\u4E8C\u6B21\u5143\u88CF",
+    10000, true
+    ],
   "jun:b" : [ /* 二次元裏 jun */
     "\u4E8C\u6B21\u5143\u88CF jun",
     "\u8679\u88CF jun",
@@ -148,14 +154,14 @@ var arAkahukuServerData = {
     "\u4E8C\u6B21\u5143\u88CF may",
     "\u8679\u88CF may",
     "\u4E8C\u6B21\u5143\u88CF",
-    25000, true,
+    80000, true,
     {preserveMin: 60},
     ],
   "img:b" : [ /* 二次元裏 img */
     "\u4E8C\u6B21\u5143\u88CF img",
     "\u8679\u88CF img",
     "\u4E8C\u6B21\u5143\u88CF",
-    8000, true,
+    30000, true,
     {preserveMin: 60},
     ],
   "dat:b" : [ /* 二次元裏 dat */
@@ -265,7 +271,7 @@ var arAkahukuServerData = {
     "\u30E2\u30A2\u30A4",
     "\u30E2\u30A2\u30A4",
     "\u30E2\u30A2\u30A4",
-    10000, true
+    3000, true
     ],
   "dec:65" : [ /* 刀剣乱舞 */
     "\u5200\u5263\u4E71\u821E",
@@ -449,6 +455,12 @@ var arAkahukuServerData = {
     "VTuber",
     20000, true
     ],
+  "dec:84" : [ /* ホロライブ */
+    "\u30DB\u30ED\u30E9\u30A4\u30D6",
+    "\u30DB\u30ED\u30E9\u30A4\u30D6",
+    "\u30DB\u30ED\u30E9\u30A4\u30D6",
+    50000, true
+    ],
   "dec:81" : [ /* 合成音声 */
     "\u5408\u6210\u97F3\u58F0",
     "\u5408\u6210\u97F3\u58F0",
@@ -472,7 +484,7 @@ var arAkahukuServerData = {
     "\u653F\u6CBB",
     "\u653F\u6CBB",
     "\u653F\u6CBB",
-    8000, true
+    50000, true
     ],
   "nov:36" : [ /* 経済 */
     "\u7D4C\u6E08",
@@ -486,16 +498,16 @@ var arAkahukuServerData = {
     "\u5B97\u6559",
     20000, true
     ],
-  "dat:38" : [ /* 文在寅 (韓国経済) */
-    "\u6587\u5728\u5BC5",
-    "\u6587\u5728\u5BC5",
-    "\u6587\u5728\u5BC5",
+  "dat:38" : [ /* 尹錫悦 (韓国経済) */
+    "\u5C39\u932B\u60A6",
+    "\u5C39\u932B\u60A6",
+    "\u5C39\u932B\u60A6",
     20000, true
     ],
-  "dec:80" : [ /* 安倍晋三 */
-    "\u5B89\u500D\u664B\u4E09",
-    "\u5B89\u500D\u664B\u4E09",
-    "\u5B89\u500D\u664B\u4E09",
+  "dec:80" : [ /* 岸田文雄 */
+    "\u5CB8\u7530\u6587\u96C4",
+    "\u5CB8\u7530\u6587\u96C4",
+    "\u5CB8\u7530\u6587\u96C4",
     20000, true
     ],
   "dec:50" : [ /* 三次実況 */
@@ -532,7 +544,7 @@ var arAkahukuServerData = {
     "\u58C1\u7D19",
     "\u58C1\u7D19",
     "\u58C1\u7D19",
-    2000, true
+    500, true
     ],
   "dat:l" : [ /* 壁紙二 */
     "\u58C1\u7D19\u4E8C",
@@ -655,7 +667,7 @@ var arAkahukuServerData = {
     "\u907F\u96E3\u6240",
     "\u907F\u96E3\u6240",
     "\u907F\u96E3\u6240",
-    10000, true,
+    1000, true,
     ],
 };
 
