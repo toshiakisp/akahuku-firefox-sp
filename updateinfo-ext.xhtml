@@ -1,22 +1,12 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html lang="en-US" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
-<h4>6.0a13 (2020-05-29)</h4>
+<h4>6.0.14 (2022-11-22)</h4>
 <ul>
-  <li>修正:スレの[続きを読む]で追加されたレスでそうだねが押せない問題(JSON差分読み込み)</li>
-  <li>JSON差分の[続きを読む]ではスレが落ちた後も可能な限り新着レスを読み込めるように</li>
-  <li>新着レスが無い場合にスレの[同期]が行われない問題を改善</li>
-  <li>カタログでスレの幅を固定している場合で本文が変に改行される場合がある問題を改善</li>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/6d21f9a...c20c8a6">All changes from previous release on github</a> (6 commits, 7 files changed)</li>
-</ul>
-<h4>6.0a12 (2020-05-27)</h4>
-<ul>
-  <li>カタログを最新に更新した時にプルダウンメニューが追加されるように</li>
-  <li>[続きを読む]がJSONモードの差分読み込みに対応 (転送量削除)</li>
-  <li>2chan.net上の画像のCDN再圧縮(Cloudflare Polish)を検知して診断メッセージを表示(レス＝[保存]ボタンのツールチップ、オートリンク＝ボタンの後ろのテキスト)</li>
-  <li>オプションを追加(既定では無効): 画像を保存1／画像を保存ボタン／再圧縮されている場合にオリジナルの保存を試みる</li>
-  <li>オートリンクのプレビューで[見る][保存]できるパターンを追加(pbs.twimg.com, sp.nicovideo.jp)</li>
-  <li>修正:[続きを読む]で新しく削除・隔離されたレスがある場合に隠れた状態になるように</li>
-  <li>修正:[同期]時に特定のURLが書かれたレスで間違って削除されたレスと判定していた問題</li>
-  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/3adaea2...6d21f9a">All changes from previous release on github</a> (12 commits, 13 files changed)</li>
+  <li>Firefox 107から画像をクリップボードから貼り付けられなくなった問題に対処</li>
+  <li>スレの[続きを読む](JSONモード)でEmail欄の絵文字等がデコードされるように</li>
+  <li>スレの[続きを読む](JSONモード)でも「満員です」が表示されるように</li>
+  <li>板情報の更新</li>
+  <li>将来的な互換性のための調整少し</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/c20c8a6...f5be972">All changes from previous release on github</a> (7 commits, 9 files changed)</li>
 </ul>
 </html>

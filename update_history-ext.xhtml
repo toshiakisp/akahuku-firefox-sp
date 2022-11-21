@@ -4,6 +4,25 @@
 <title>赤福:非公式 Extended 版 過去のリリースノート</title>
 </head>
 <body>
+<h4>6.0a13 (2020-05-29)</h4>
+<ul>
+  <li>修正:スレの[続きを読む]で追加されたレスでそうだねが押せない問題(JSON差分読み込み)</li>
+  <li>JSON差分の[続きを読む]ではスレが落ちた後も可能な限り新着レスを読み込めるように</li>
+  <li>新着レスが無い場合にスレの[同期]が行われない問題を改善</li>
+  <li>カタログでスレの幅を固定している場合で本文が変に改行される場合がある問題を改善</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/6d21f9a...c20c8a6">All changes from previous release on github</a> (6 commits, 7 files changed)</li>
+</ul>
+<h4>6.0a12 (2020-05-27)</h4>
+<ul>
+  <li>カタログを最新に更新した時にプルダウンメニューが追加されるように</li>
+  <li>[続きを読む]がJSONモードの差分読み込みに対応 (転送量削除)</li>
+  <li>2chan.net上の画像のCDN再圧縮(Cloudflare Polish)を検知して診断メッセージを表示(レス＝[保存]ボタンのツールチップ、オートリンク＝ボタンの後ろのテキスト)</li>
+  <li>オプションを追加(既定では無効): 画像を保存1／画像を保存ボタン／再圧縮されている場合にオリジナルの保存を試みる</li>
+  <li>オートリンクのプレビューで[見る][保存]できるパターンを追加(pbs.twimg.com, sp.nicovideo.jp)</li>
+  <li>修正:[続きを読む]で新しく削除・隔離されたレスがある場合に隠れた状態になるように</li>
+  <li>修正:[同期]時に特定のURLが書かれたレスで間違って削除されたレスと判定していた問題</li>
+  <li><a href="https://github.com/toshiakisp/akahuku-firefox-sp/compare/3adaea2...6d21f9a">All changes from previous release on github</a> (12 commits, 13 files changed)</li>
+</ul>
 <h4>6.0a11 (2019-12-16)</h4>
 <ul>
   <li>問題のあった機能の改善</li>
