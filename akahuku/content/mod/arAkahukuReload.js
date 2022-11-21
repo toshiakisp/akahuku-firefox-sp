@@ -3159,6 +3159,14 @@ var arAkahukuReload = {
       }
       return frag;
     };
+    var _unescapeHTML = function (str) {
+      var div = document.createElement('div');
+      div.innerHTML = str.replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/\r/g, "&#13;")
+        .replace(/\n/g, "&#10;");
+      return div.textContent || div.innerText;
+    };
 
     var resd = json.res[no];
     var t = document.createElement('table');
@@ -3195,7 +3203,7 @@ var arAkahukuReload = {
       t3 = document.createElement('span');
       if (resd.email != '') {
         a5 = document.createElement('a');
-        a5.href = "mailto:"+(arAkahukuConverter.unescapeEntity(resd.email));
+        a5.href = "mailto:"+(_unescapeHTML(resd.email));
         a5.innerHTML += resd.name;
         t3.appendChild(a5);
       }
@@ -3209,7 +3217,7 @@ var arAkahukuReload = {
       if (resd.email != ''){
         var t12a = document.createElement('a');
         t12a.innerHTML += resd.now;
-        t12a.href = "mailto:"+(arAkahukuConverter.unescapeEntity(resd.email));
+        t12a.href = "mailto:"+(_unescapeHTML(resd.email));
         t12.appendChild(t12a);
         t12.appendChild(document.createTextNode(t11));
       }
