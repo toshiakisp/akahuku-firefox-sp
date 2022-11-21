@@ -985,6 +985,10 @@ arAkahukuReloadParam.prototype = {
             this.responseJson = window.JSON.parse(binstr);
           }
           catch (e) { Akahuku.debug.exception (e);
+            if (binstr == "\u6E80\u54E1\u3067\u3059\u3002\u3061\u3087\u3063\u3068\u307E\u3063\u3066\u306D\u3002") {
+              // "満員です。ちょっとまってね。"
+              throw new Error ("\u6E80\u54E1\u3067\u3059"); //"満員です"
+            }
             // fallback to html request for next fetch
             this.requestMode = 0;//HEAD-GET
             this.lastEtag = '';
