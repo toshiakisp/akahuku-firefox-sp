@@ -157,6 +157,7 @@ var arAkahukuPostForm = {
     
   enableBottom : false,      /* Boolean  ページ末尾に置く */
   enableBottomFormOnly : false,      /* Boolean  ページ末尾にフォームだけを置く */
+  useAjaxResponse : false,
     
   /**
    * フォームにスクロールする
@@ -711,6 +712,9 @@ var arAkahukuPostForm = {
       = arAkahukuConfig
       .initPref ("bool", "akahuku.postform.bottom_formonly", false);
     }
+    arAkahukuPostForm.useAjaxResponse
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.postform.use_ajax_response", true);
   },
     
   /**
@@ -861,6 +865,18 @@ var arAkahukuPostForm = {
             
       targetDocument.body.insertBefore (iframe,
                                         targetDocument.body.firstChild);
+      if (info.isFutaba && arAkahukuPostForm.useAjaxResponse) {
+        var responsemode
+          = targetDocument.getElementById ("akahuku_response_mode");
+        if (!responsemode) {
+          responsemode = targetDocument.createElement ("input");
+          responsemode.id = "akahuku_response_mode";
+          responsemode.type = "hidden";
+          responsemode.name = "responsemode";
+          responsemode.value = "ajax";
+          formElement.appendChild (responsemode);
+        }
+      }
             
       if (arAkahukuReload.enableReplyScroll) {
         /* [続きを読む] のアンカーの位置にスクロール */
@@ -1009,6 +1025,25 @@ var arAkahukuPostForm = {
             result = "OK";
           }
           break;
+        }
+      }
+      if (nodes.length == 0) { // responsemode=ajax 対応
+        if (iframe.contentDocument.body.innerHTML
+          .match (/^\s*(\{.*\})\s*$/)) {
+          try {
+            var resp = window.JSON.parse (iframe.contentDocument.body.innerHTML);
+            if (resp.status == 'ok') {
+              result = "OK";
+            } else {
+              Akahuku.debug.log ("onIFrameLoad (ajax response): status="+resp.status);
+              result = resp.status;
+            }
+            // .jumpto と.restoはスレ本文、.bbscode は"b"とか
+            // .thisno は自分の書き込みのNo.
+          }
+          catch (e) {
+            Akahuku.debug.exception (e);
+          }
         }
       }
     }
