@@ -1,4 +1,7 @@
-if (document.readyState != 'complete') {
+if (document.readyState != 'complete'
+  && !(window.frameElement
+    && window.frameElement.id == 'akahuku_reply_target_frame')
+) {
   // Request futher injection
   browser.runtime.connect({name:'content-loader'});
 }

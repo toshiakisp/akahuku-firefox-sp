@@ -27,6 +27,10 @@ const AkahukuContentLoader = {
             runAt: 'document_start'
           });
         } catch (e) {
+          if (abortSignal && abortSignal.aborted) {
+            console.warn('akahuku-content-loader: Abort loading in executing', f);
+            break;
+          }
           throw new Error('Error in executeScript: '
             + f + ' for tab:' + tabId + ' frame:' + frameId
             + ' (' + String(e) + ')')
