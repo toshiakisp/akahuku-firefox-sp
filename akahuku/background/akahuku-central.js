@@ -172,6 +172,7 @@ const AkahukuCentral = (function () {
   let registories = new Map([
     ['param', new Registory()],
     ['board', new Registory()],
+    ['thread', new Registory()],
   ]);
 
   // public methods of module

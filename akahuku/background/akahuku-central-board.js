@@ -1,15 +1,43 @@
-
 'strict mode';
+/* global arAkahukuServerData */
 
 (() => {
   let createBoardEntry = (name) => {
     return {
       name: String(name),
+      stdName: '',
+      shortName: '',
+      trueName: '',
       newestNum: 0,
       maxNum: -1,
       preserveMin: -1,
+      hasCatalog: false,
+      isInternal: false,
     };
   };
+
+  if (arAkahukuServerData) {
+    for (let id in arAkahukuServerData) {
+      let board = createBoardEntry(id);
+      board.isInternal = true;
+      board.stdName = arAkahukuServerData [id][0];
+      board.shortName = arAkahukuServerData [id][1];
+      board.trueName = arAkahukuServerData [id][2];
+      if (arAkahukuServerData [id][3] != -1) {
+        board.maxNum = arAkahukuServerData [id][3];
+      }
+      if (arAkahukuServerData [id][4]) {
+        board.hasCatalog = (arAkahukuServerData [id][4] == true);
+      }
+      if (arAkahukuServerData [id].length > 5) {
+        var extra = arAkahukuServerData [id][5];
+        for (var prop in extra) {
+          board [prop] = extra [prop];
+        }
+      }
+      AkahukuCentral.register('board', board);
+    }
+  }
 
   let listener = {
     observe: (subject, topic, dataNoUse) => {
