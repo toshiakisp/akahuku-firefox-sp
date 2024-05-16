@@ -2233,7 +2233,7 @@ var arAkahukuLink = {
         }
       }
       if (arAkahukuLink.enableAutoLinkPreview
-          && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)[^&]+/i)
+          && (url.match (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/|live\/|shorts\/)|youtu\.be\/)[^&]+/i)
             ||url.match (/^https?:\/\/((www|sp)\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
             ||url.match (/\.(jpe?g|gif|png|swf|bmp|web[mp]|mp4)(\?.*)?$/i))) {
         button.appendChild (targetDocument.createTextNode
@@ -2265,7 +2265,7 @@ var arAkahukuLink = {
             && !url.match
             (/^(https?:\/\/[^.]+\.wikipedia.org\/wiki\/)([^<>]*)/)
             && !url.match
-            (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/)|youtu\.be\/)/)
+            (/^https?:\/\/((www\.|m\.)?youtube\.com\/(?:watch\?|embed\/|live\/|shorts\/)|youtu\.be\/)/)
             && !url.match
             (/^https?:\/\/((www|sp)\.nicovideo\.jp\/watch\/|nico\.ms\/)[^&]+/i)
             && !url.match (/^https?:\/\/pbs\.twimg\.com\/media\/[^&]+/i)
@@ -2584,7 +2584,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowFullScreen", "true");
       image.setAttribute ("allowScriptAccess", "never");
     }
-    else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/)|youtu\.be\/)([^&?#]+)/i)) {
+    else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/|live\/|shorts\/)|youtu\.be\/)([^&?#]+)/i)) {
       var youtubeUrl = "https://www.youtube.com/embed/" + RegExp.$1
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
