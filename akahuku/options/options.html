@@ -1002,6 +1002,18 @@
             >レス送信と連携</label>
           <label><input type=checkbox name="reload.reply.scroll"
             >最新位置にスクロール</label>
+          <div class="group">
+            <label class="sp tooltip"><input type=checkbox name="reload.mark_my_post"
+              ><span class="tooltiptext">(デフォルト:無効) 自分の書き込みのNo.が確定していたらマークする。JSON応答の要求が必要(「その他／高速化」)。</span
+              >自分の返信をマークする</label>
+            <select name="reload.mark_my_post.style" data-pref-type="int">
+              <option value="0">スタイルなし</option>
+              <option value="1">ドッグイヤー</option>
+              <option value="2">背景色(常時)</option>
+              <option value="3">背景色(ホバー)</option>
+              <option value="4">鉛筆文字 ✎</option>
+            </select>
+          </div>
         </div>
         <div class="group box-orient-vertical ext_doesnotwork">
           <label><input type=checkbox name="reload.hook"
@@ -2206,6 +2218,9 @@
       <label class="sp tooltip"><input type=checkbox name="reload.use_futaba_json"><span
         class="tooltiptext">(デフォルト：有効) スレのhtm全文ではなくfutaba.phpのmode=jsonを使った差分読み込みを試みて高速化、低転送量化。</span
         >返信モードの[続きを読む]でJSON差分読み込みを試みる</label>
+      <label class="sp tooltip"><input type=checkbox name="postform.use_ajax_response"><span
+        class="tooltiptext">(デフォルト：有効) レス送信をふたばの新方式(responsemode=ajax)と同様にしてJSON応答を要求する。若干の高速応答、低転送量。さらに自分のレスが何番になったか確定する。</span
+        >返信モードの返信時にJSON応答を要求する</label>
     </div>
     <div class="groupbox box-orient-vertical">
       <div class=caption>

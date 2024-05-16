@@ -395,6 +395,8 @@ arAkahukuReloadParam.prototype = {
   dispdelDisplayStyleValue : "table", // "削除されたレスを*する"を表示するための値
   showMessageInPanel : false, // ステータスパネルでもメッセージ表示するか
 
+  postedReplyNo : [], // 自分の書き込んだレスNo.
+
   /**
    * データを開放する
    */
@@ -1074,6 +1076,8 @@ var arAkahukuReload = {
                       *       該当部分のソース消滅による差分位置のマージン
                       *   (実際の測定結果は 300 程度) */
   enableJson : true,
+  enableMarkMyPost : true,
+  markMyPostStyle : 1,
     
   /**
    * ドキュメントのスタイルを設定する
@@ -1154,6 +1158,37 @@ var arAkahukuReload = {
             .addRule ("#akahuku_new_reply_header_number",
                       "font-size: 10pt; "
                       + "vertical-align: text-bottom;");
+        }
+
+        if (arAkahukuReload.enableMarkMyPost) {
+          if (arAkahukuReload.markMyPostStyle == 1) {
+            style
+            .addRule (".akahuku_my_reply",
+                      "position: relative;")
+            .addRule (".akahuku_my_reply::after",
+                      "content: \"\\270E\";"
+                      + "overflow: clip;"
+                      + "position: absolute; top: 0; right: 0;"
+                      + "box-sizing: border-box;"
+                      + "width: 16px; height: 16px;"
+                      + "border: 8px solid #ea8;"
+                      + "border-left-color: #ffe;"
+                      + "border-bottom-color: #ffe;");
+          } else if (arAkahukuReload.markMyPostStyle == 2) {
+            style
+            .addRule (".akahuku_my_reply",
+                      "background-color: #fdb;");
+          } else if (arAkahukuReload.markMyPostStyle == 3) {
+            style
+            .addRule (".akahuku_my_reply:hover",
+                      "background-color: #fdb;");
+          } else if (arAkahukuReload.markMyPostStyle == 4) {
+            style
+            .addRule (".akahuku_my_reply > .cno::after",
+                      "content: \"\\270E\";"
+                      + "display: inline-block;"
+                      + "margin-left: 0.5ex;");
+          }
         }
       }
     }
@@ -1247,6 +1282,12 @@ var arAkahukuReload = {
     arAkahukuReload.enableJson
       = arAkahukuConfig
       .initPref ("bool", "akahuku.reload.use_futaba_json", true);
+    arAkahukuReload.enableMarkMyPost
+      = arAkahukuConfig
+      .initPref ("bool", "akahuku.reload.mark_my_post", false);
+    arAkahukuReload.markMyPostStyle
+      = arAkahukuConfig
+      .initPref ("int", "akahuku.reload.mark_my_post.style", 1);
   },
     
   /**
@@ -2983,6 +3024,17 @@ var arAkahukuReload = {
             }
           }
           
+          if (param.postedReplyNo.length > 0) {
+            if (arAkahukuReload.enableMarkMyPost
+                && num == param.postedReplyNo [0]) {
+              arAkahukuDOM.addClassName
+              (currentContainer.main, "akahuku_my_reply");
+            }
+            if (num >= param.postedReplyNo [0]) {
+              param.postedReplyNo.shift ();
+            }
+          }
+
           for (var i = 0; i < currentContainer.nodes.length; i ++) {
             arAkahukuDOM.removeClassName
             (currentContainer.nodes [i], "deleted");
@@ -4392,6 +4444,27 @@ var arAkahukuReload = {
         .addEventListener ("visibilitychange", function (event) {
           arAkahukuReload.onDocumentVisibilityChange (event);
         }, false);
+      }
+
+      if (arAkahukuReload.enableMarkMyPost) {
+        AkahukuCentral.get ("thread", {
+          name: info.server + ":" + info.dir + ":" + info.threadNumber
+        }).then ((resp) => {
+          if (resp.length == 0) return;
+          for (let num of resp[0].posts) {
+            let node = targetDocument.getElementById ("delcheck" + num);
+            if (!node) continue;
+            let container = Akahuku.getMessageContainer (node.parentNode);
+            if (!container) continue;
+            if (num != info.threadNumber) {
+              arAkahukuDOM.addClassName (container.main, "akahuku_my_reply");
+            } else {
+              // 自己ポストしたスレのマークは未対応
+            }
+          }
+        }).catch((e) => {
+          Akahuku.debug.exception(e);
+        });
       }
     }
   },

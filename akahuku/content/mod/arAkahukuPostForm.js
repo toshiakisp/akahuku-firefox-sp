@@ -767,6 +767,19 @@ var arAkahukuPostForm = {
       /* ドキュメントが閉じられた場合など */
     }
   },
+
+  notifyPosted : function (info, postedNum) {
+    var subject = {
+      data: JSON.stringify ({
+        posted: parseInt (postedNum),
+        server: info.server,
+        dir: info.dir,
+        thread: info.threadNumber,
+      }),
+    };
+    ObserverService.notifyObservers(subject,
+      "arakahuku-thread-posted", null);
+  },
     
   /**
    * フォームを送信する
@@ -963,8 +976,10 @@ var arAkahukuPostForm = {
     }
         
     var window = targetDocument.defaultView;
-    var param
-    = Akahuku.getDocumentParam (targetDocument).postform_param;
+    var documentParam
+    = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.postform_param;
+    var info = documentParam.location_info;
     
     var baseform = targetDocument.getElementById ("baseform");
     if (baseform) {
@@ -1040,6 +1055,10 @@ var arAkahukuPostForm = {
             }
             // .jumpto と.restoはスレ本文、.bbscode は"b"とか
             // .thisno は自分の書き込みのNo.
+            if (param && resp.thisno) {
+              param.postedReplyNo.push (parseInt (resp.thisno));
+              arAkahukuPostForm.notifyPosted (info, resp.thisno);
+            }
           }
           catch (e) {
             Akahuku.debug.exception (e);
