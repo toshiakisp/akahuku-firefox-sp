@@ -33,7 +33,7 @@ var arAkahukuCompat = new function () {
       var privacyContext = _getArg (args, 'privacyContext', null);
 
       var usePrivacyAware = false;
-      if (privacyContext == null && args.hasOwnProperty ("isPrivate")) {
+      if (privacyContext == null && Object.prototype.hasOwnProperty.call (args, "isPrivate")) {
         var isPrivate = _getArg (args, 'isPrivate', false);
         var usePrivacyAware = true;
       }

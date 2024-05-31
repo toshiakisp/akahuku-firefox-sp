@@ -5349,10 +5349,6 @@ var arAkahukuCatalog = {
           }
         }
       }
-      else if (img && img.nodeName.toLowerCase () == "a"
-               && img.className == "akahuku_popup_area") {
-        /* 保持エリアではそのまま */
-      }
       else {
         param.lastPopupKey = "";
         arAkahukuPopup.removeActivePopups (param);

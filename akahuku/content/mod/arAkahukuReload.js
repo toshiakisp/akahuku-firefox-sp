@@ -431,12 +431,7 @@ arAkahukuReloadParam.prototype = {
    */
   onCacheEntryAvailable : function (descriptor, isNew, appCache, status) {
     if (descriptor && Akahuku.Cache.isSuccessCode(status)) {
-      try {
-        var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
-      }
-      catch (e) {
-        throw e;
-      }
+      var charset = descriptor.getMetaDataElement ("charset") || "Shift_JIS";
       var responseHead = "";
       try {
         // バックアップ用には最低限だけ記録

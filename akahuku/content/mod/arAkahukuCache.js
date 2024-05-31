@@ -540,7 +540,7 @@ Akahuku.Cache = new function () {
     },
     register : function (descriptor)
     {
-      if (!this.originalExpireTimes.hasOwnProperty (descriptor.key)
+      if (!Object.prototype.hasOwnProperty.call(this.originalExpireTimes, descriptor.key)
           && descriptor.expirationTime != 0xFFFFFFFF) {
         this.keys.push (descriptor.key);
         this.originalExpireTimes [descriptor.key]

@@ -623,7 +623,7 @@ arAkahukuLocationInfo.prototype = {
           else if (this.isMonaca && node.nodeName.toLowerCase () == "span") {
             var className = "className" in node ? node.className : "";
             var propMap = {s1:"subject", s2:"name"};
-            if (className && propMap.hasOwnProperty (className)) {
+            if (className && Object.prototype.hasOwnProperty.call (propMap, className)) {
               var nodeText = arAkahukuDOM.getInnerText (node);
               nodeText = nodeText.replace (/ $/, "");
               nodeText = arAkahukuConverter.normalize (nodeText);
