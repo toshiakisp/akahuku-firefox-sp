@@ -2,6 +2,7 @@
   "name": "akahuku-firefox-sp",
   "version": "0.0.1",
   "description": "dummy package.json for eslint",
+  "type": "module",
   "main": "akahuku/bootstrap.js",
   "scripts": {
     "lint": "eslint akahuku"
@@ -17,8 +18,9 @@
   },
   "homepage": "https://toshiakisp.github.io/akahuku-firefox-sp/",
   "devDependencies": {
-    "eslint": "^5.5.0",
-    "eslint-plugin-mozilla": "^0.16.0",
-    "eslint-plugin-no-unsanitized": "^3.0.2"
+    "web-ext": "^8.0.0",
+    "eslint": "^9.3.0",
+    "eslint-plugin-mozilla": "^3.7.4",
+    "eslint-plugin-no-unsanitized": "^4.0.2"
   }
 }
