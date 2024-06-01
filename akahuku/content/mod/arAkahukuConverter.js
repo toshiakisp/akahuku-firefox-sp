@@ -22,7 +22,21 @@ var arAkahukuConverter = {
   _convertFromUnicodeTo : function (text, charset) {
     let encoder = new PolyFillTextEncoder(charset,
       {NONSTANDARD_allowLegacyEncoding: true });
-    let uint8array = encoder.encode(text);
+    let uint8array;
+    do {
+      try {
+        uint8array = encoder.encode(text);
+      } catch (e) {
+        if (e instanceof TypeError && e.message.match(/^The code point ([\d]+)/)) {
+          let err_char = String.fromCodePoint(parseInt(RegExp.$1));
+          let new_text = text.replaceAll(err_char, '?');
+          if (new_text == text) throw e;
+          text = new_text;
+        } else {
+          throw e;
+        }
+      }
+    } while (uint8array === undefined);
     let binstr = Array.prototype.map.call(uint8array,
       (c) => String.fromCharCode(c)
     ).join('');
