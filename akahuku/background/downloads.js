@@ -72,6 +72,41 @@ const Downloads = (function () {
       }
       return id;
     },
+    fetch: async function (url, options) {
+      let ret = {
+        ok: false,
+        status: 0,
+        statusText: '',
+        url: url,
+        blob: null,
+        headers: [],
+      };
+      const respkeys = [// CORS-safelisted response-header names
+        'Cache-Control', 'Content-Language',
+        'Content-Length', 'Content-Type',
+         'Expires', 'Last-Modified', 'Pragma'];
+      return await fetch(url, options)
+        .then((resp) => {
+          ret.ok = resp.ok;
+          ret.status = resp.status;
+          ret.statusText = resp.statusText;
+          for (let key of respkeys) {
+            if (resp.headers.has(key)) {
+              ret.headers.push([key, resp.headers.get(key)]);
+            }
+          }
+          return (ret.ok ? resp.blob() : null);
+        })
+        .then((blob) => {
+          ret.blob = blob;
+          return ret;
+        })
+        .catch((err) => {
+          ret.status = -1;
+          ret.statusText =  err.toString();
+          return ret;
+        });
+    },
   });
 
   // Listen for message from content scripts
