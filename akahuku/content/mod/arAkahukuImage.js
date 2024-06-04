@@ -812,8 +812,9 @@ var arAkahukuImage = {
 
   saveRedirectImage : function (target, targetDirIndex, href, leafName, normal, trusted) {
     var targetDocument = target.ownerDocument;
-    window.fetch(href, {
+    arAkahukuCompat.fetch(href, {
       redirect: 'follow',
+      referrerPolicy: 'no-referrer',
     })
       .then((resp) => resp.blob())
       .then((blob) => {
@@ -876,8 +877,9 @@ var arAkahukuImage = {
         return;
       }
       // bypassCfPolish == true:
-      window.fetch(uri, {method: 'HEAD',
-        credentials: 'include',
+      arAkahukuCompat.fetch(uri, {method: 'HEAD',
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
       })
         .then(resp => {
           let polished = resp.headers.get('cf-polished');
@@ -894,8 +896,9 @@ var arAkahukuImage = {
         });
     })
       .then(url => {
-        return window.fetch(url, {method: 'GET',
-          credentials: 'include',
+        return arAkahukuCompat.fetch(url, {method: 'GET',
+          credentials: 'omit',
+          referrerPolicy: 'no-referrer',
           cache: 'force-cache',//no cache validate
         })
           .then(resp => {

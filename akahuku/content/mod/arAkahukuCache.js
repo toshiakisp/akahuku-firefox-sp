@@ -193,7 +193,7 @@ Akahuku.Cache = new function () {
       credentials: 'same-origin',
       signal: controller.signal,
     };
-    contextWindow.fetch(source, fetchInit)
+    arAkahukuCompat.fetch(source, fetchInit, contextWindow)
       .then((resp) => {
         if (!resp.ok) {
           throw new Error();

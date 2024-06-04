@@ -288,5 +288,44 @@ var arAkahukuCompat = new function () {
       window.toggleSidebar (commandID, forceOpen);
     }
   };
+
+  function isWhitelistedFetch(resourceURL, contextURL) {
+    try {
+      if (contextURL.hostname.endsWith('2chan.net')) {
+        if (resourceURL.hostname.endsWith('2chan.net')) {
+          // ふたばサブドメイン間リクエストは権限不要 (MV2)
+          return true;
+        }
+      }
+    }
+    catch (e) {
+    }
+    return false;
+  }
+
+  this.fetch = async function (resource, options={}, context=window) {
+    const resourceURL = new context.URL(resource.url || resource.toString());
+    const contextURL = new context.URL(context.location.href);
+    const fetchInContent = (context == window && content && content.fetch
+      ? content.fetch : context.fetch);
+    const fetchExtension = (content ? context.fetch : undefined);
+    if (context.origin == resourceURL.origin) {
+      // same-origin => use content.fetch() same-origin
+      return await fetchInContent(resource, options)
+        .catch((err) => {
+          // Negotiate non-unwrappable rejection value [Bug 1871516]
+          throw new context.Error(err.toString());
+        });
+    } else if (fetchExtension &&
+      isWhitelistedFetch(resourceURL, contextURL, options)) {
+      // cross-originだけど特権的に大丈夫なもの(パフォーマンス)
+      Akahuku.debug.log('Use extension-scope fetch()', resourceURL.toString());
+      return await fetchExtension(resource, options);
+    } else {
+      // cross-origin => privileged fetch()
+      Akahuku.debug.log('Use privileged fetch()', resourceURL.toString());
+      return await Downloads.fetch(resourceURL.toString(), options);
+    }
+  };
 };
 

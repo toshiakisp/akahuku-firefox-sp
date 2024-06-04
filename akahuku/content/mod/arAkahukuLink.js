@@ -227,7 +227,7 @@ arAkahukuLinkExtListener.prototype = {
 
   asyncResolveExt: function (url) {
     return new Promise((resolve, reject) => {
-      window.fetch(url, {
+      arAkahukuCompat.fetch(url, {
         credentials: 'omit',
         redirect: 'follow',
         referrerPolicy: 'no-referrer',
@@ -2467,6 +2467,15 @@ var arAkahukuLink = {
      statusText = image.getAttribute (attr);
      image.removeAttribute (attr);
     }
+
+    if (event.type == 'error' && status == 0
+      && /^https?:/.test(image.src)) {
+      // img.src での読み込み失敗:
+      // CORS/Content Protectionブロックかもなので強権 fetch を試行
+      image.setAttribute ('__akahuku_preview_error_status', '-1');
+      arAkahukuLink.fetchAsBlob (image, image.src);
+      return;
+    }
         
     if (!image.parentNode.hasAttribute
         ("__akahuku_preview_error")) {
@@ -2545,6 +2554,7 @@ var arAkahukuLink = {
       image.style.borderWidth = "0px";
       image.title = uri;
       image.referrerPolicy = 'no-referrer';
+      image.crossOrigin = 'anonymous';
       image.addEventListener
         ("load",
          function () {
@@ -2555,6 +2565,7 @@ var arAkahukuLink = {
          function () {
           arAkahukuLink.onImageError (arguments [0]);
         }, false);
+      image.setAttribute ("__akahuku_onload", "true");
     }
     else if (/\.(webm|mp4)(\?.*)?$/i.test (uri)) {
       image = targetDocument.createElement ("video");
@@ -2695,46 +2706,53 @@ var arAkahukuLink = {
         
     if (srcByFetch) {
       // Fetch (for no-referrer access)
-      let fetchInit = {
-        referrerPolicy: 'no-referrer',
-        credentials: 'same-origin',
-        redirect: 'follow',
-        cors: 'no-cors',
-      };
-      fetch(srcByFetch, fetchInit)
-        .then((res) => {
-          if (res.ok)
-            return res.blob();
-          let err = new Error('HTTPError')
-          err.name = 'HTTPError';
-          err.status = res.status;
-          err.statusText = res.statusText;
-          throw err;
-        })
-        .then((blob) => {
-          image.src = URL.createObjectURL(blob);
-          arAkahukuLink.onImageLoad({currentTarget: image});
-        })
-        .catch((e) => {
-          Akahuku.debug.exception(e);
-          let status = -1;
-          let statusText = e.message;
-          if (e.name == 'HTTPError') {
-            status = e.status;
-            statusText = e.statusText;
-          }
-          image.setAttribute
-            ("__akahuku_preview_error_status", status);
-          image.setAttribute
-            ("__akahuku_preview_error_status_text", statusText);
-          arAkahukuLink.onImageError({currentTarget: image});
-        });
+      arAkahukuLink.fetchAsBlob (image, srcByFetch);
     }
     else if (!image.src) {
       image.src = src;
     }
         
     return image;
+  },
+
+  fetchAsBlob : function (image, src) {
+    let contentWindow = image.ownerDocument.defaultView;
+    let fetchInit = {
+      referrerPolicy: 'no-referrer',
+      credentials: 'omit',
+      redirect: 'follow',
+      mode: 'no-cors',//for no Origin
+    };
+    arAkahukuCompat.fetch(src, fetchInit, contentWindow)
+      .then((res) => {
+        if (res.ok)
+          return res.blob();
+        let err = new contentWindow.Error('HTTPError')
+        err.name = 'HTTPError';
+        err.status = res.status;
+        err.statusText = res.statusText;
+        throw err;
+      })
+      .then((blob) => {
+        image.src = contentWindow.URL.createObjectURL(blob);
+        if (!image.hasAttribute ("__akahuku_onload")) {
+          arAkahukuLink.onImageLoad({currentTarget: image});
+        }
+      })
+      .catch((e) => {
+        Akahuku.debug.exception(e);
+        let status = -1;
+        let statusText = e.message;
+        if (e.name == 'HTTPError') {
+          status = e.status;
+          statusText = e.statusText;
+        }
+        image.setAttribute
+          ("__akahuku_preview_error_status", status);
+        image.setAttribute
+          ("__akahuku_preview_error_status_text", statusText);
+        arAkahukuLink.onImageError({currentTarget: image});
+      });
   },
 
   /**

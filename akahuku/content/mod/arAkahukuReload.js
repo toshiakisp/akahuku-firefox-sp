@@ -851,7 +851,7 @@ arAkahukuReloadParam.prototype = {
       true, this.targetDocument);
 
     let isJson = false;
-    let promise = fetch(this.location, this.reloadRequestInit)
+    let promise = arAkahukuCompat.fetch(this.location, this.reloadRequestInit)
       .then((resp) => {
         if (this.reloadRequestInit.method == 'GET') {
           return resp;
@@ -895,7 +895,7 @@ arAkahukuReloadParam.prototype = {
             + "&res=" + info.threadNumber
             + "&start=" + (lastReply.num+1);
           isJson = true;
-          let p = fetch(jsonloc, this.reloadRequestInit)
+          let p = arAkahukuCompat.fetch(jsonloc, this.reloadRequestInit)
             .then((resp) => {
               if (resp.ok) {
                 return resp;
@@ -904,7 +904,7 @@ arAkahukuReloadParam.prototype = {
               Akahuku.debug.warn ("arAkahukuReloadParam: no more JSON requests for " + this.location);
               this.requestMode = 0;
               isJson = false;
-              return fetch(this.location, this.reloadRequestInit);
+              return arAkahukuCompat.fetch(this.location, this.reloadRequestInit);
             })
             .catch((e) => {
               throw new ConnectionError(e.message);
@@ -913,7 +913,7 @@ arAkahukuReloadParam.prototype = {
         }
         else {
           this.reloadRequestInit.method = 'GET';
-          return fetch(this.location, this.reloadRequestInit)
+          return arAkahukuCompat.fetch(this.location, this.reloadRequestInit)
             .then((resp) => resp)
             .catch((e) => {
               throw new ConnectionError(e.message);

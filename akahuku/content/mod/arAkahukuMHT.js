@@ -145,7 +145,7 @@ arAkahukuMHTFileData.prototype = {
 
     let retryFetch = new Error('break promise chain to retry');
 
-    return window.fetch(location, fetchInit)
+    return arAkahukuCompat.fetch(location, fetchInit)
       .then((resp) => {
         this.originalContent = "";
         this.content = "";

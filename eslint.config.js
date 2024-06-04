@@ -94,6 +94,7 @@ export default [
     files: ["akahuku/content/**/*.js"],
     languageOptions: {
       globals: {
+        content: "readonly",
         Akahuku: "readonly",
 
         arAkahukuBoard: "readonly",

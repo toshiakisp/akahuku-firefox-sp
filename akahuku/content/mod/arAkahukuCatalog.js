@@ -5026,7 +5026,8 @@ var arAkahukuCatalog = {
         
     param.reloadController = new AbortController();
     let fetchInit = {
-      credentials: 'include',
+      mode: 'same-origin',
+      credentials: 'same-origin',
       cache: 'reload',
       redirect: 'follow',
       signal: param.reloadController.signal,
@@ -5034,7 +5035,7 @@ var arAkahukuCatalog = {
     if (!arAkahukuCatalog.enableReloadUpdateCache) {
       fetchInit.cache = 'no-store';
     }
-    fetch(targetDocument.location.href, fetchInit)
+    arAkahukuCompat.fetch(targetDocument.location.href, fetchInit)
       .then((resp) => {
         if (resp.ok) {
           // "ロード中 (ボディ)"
