@@ -41,6 +41,10 @@ arAkahukuPostFormParam.prototype = {
   attachableExtRegExp : null,     /* Regexp 添付可能拡張子かどうかの正規表現  */
   attachableByteMax: Number.MAX_SAFE_INTEGER,
 
+  keepFormElementIds: false,
+  formId: "akahuku_postform",
+  formTableId: "akahuku_posttable",
+
   /**
    * データを開放する
    */
@@ -158,6 +162,7 @@ var arAkahukuPostForm = {
   enableBottom : false,      /* Boolean  ページ末尾に置く */
   enableBottomFormOnly : false,      /* Boolean  ページ末尾にフォームだけを置く */
   useAjaxResponse : false,
+  keepFormElementIds : false,
     
   /**
    * フォームにスクロールする
@@ -183,12 +188,12 @@ var arAkahukuPostForm = {
     }
     else if (!targetDocument
         .getElementById ("akahuku_floatpostform_container")) {
-      if (arAkahukuPostForm.enableBottom) {
+      if (arAkahukuPostForm.enableBottom && param && param.postform_param) {
         var postform
-        = targetDocument.getElementById ("akahuku_postform");
+        = targetDocument.getElementById (param.postform_param.formId);
         if (arAkahukuPostForm.enableBottomFormOnly) {
           postform
-          = targetDocument.getElementById ("akahuku_posttable");
+          = targetDocument.getElementById (param.postform_param.formTableId);
         }
         postform.scrollIntoView (false);
       }
@@ -466,7 +471,8 @@ var arAkahukuPostForm = {
                      + "z-index: 300; ",
                      arAkahukuPostForm.floatPositionX,
                      arAkahukuPostForm.floatPositionY))
-          .addRule ("#akahuku_floatpostform_container #akahuku_postform",
+          .addRule ("#akahuku_floatpostform_container #akahuku_postform,"
+                    + "#akahuku_floatpostform_container .akahuku_postform",
                     "margin: 0; "
                     + "padding: 4px; "
                     + "border: none; "
@@ -513,22 +519,22 @@ var arAkahukuPostForm = {
       /* 避難所 patch */
       if (info.isMonaca) {
         style
-        .addRule ("#akahuku_postform",
+        .addRule ("#akahuku_postform, .akahuku_postform",
                   "text-align:center; ")
-        .addRule ("#akahuku_posttable",
+        .addRule ("#akahuku_posttable, .akahuku_posttable",
                   "border:none; "
                   + "border-collapse: separate; "
                   + "margin: 1em auto 0em auto; "
                   + "text-align: left; "
                   + "color: #800000;")
-        .addRule ("#akahuku_posttable th",
+        .addRule ("#akahuku_posttable th, .akahuku_posttable th",
                   "background-color: #eeaa88; "
                   + "border:none; "
                   + "text-align: left; "
                   + "font-weight: bold; "
                   + "padding: 3px; "
                   + "color: #800000;")
-        .addRule ("#akahuku_posttable td",
+        .addRule ("#akahuku_posttable td, .akahuku_posttable td",
                   "border:none; "
                   + "text-align: left; "
                   + "padding: 0px; " // ふたばと同じスタイルに
@@ -715,6 +721,9 @@ var arAkahukuPostForm = {
     arAkahukuPostForm.useAjaxResponse
     = arAkahukuConfig
     .initPref ("bool", "akahuku.postform.use_ajax_response", true);
+    arAkahukuPostForm.keepFormElementIds
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.postform.keep_ids", false);
   },
     
   /**
@@ -725,7 +734,10 @@ var arAkahukuPostForm = {
    */
   ensureDispPostForm : function (targetDocument) {
     try {
-      var postform = targetDocument.getElementById ("akahuku_postform");
+      var param
+        = Akahuku.getDocumentParam (targetDocument)
+        .postform_param;
+      var postform = targetDocument.getElementById (param.formId);
       if (postform) {
         var opener
           = targetDocument.getElementById ("akahuku_postform_opener");
@@ -753,9 +765,6 @@ var arAkahukuPostForm = {
           arAkahukuPostForm.changeFloatPostFormStatus
             (targetDocument, 1, 1, 0);
           if (waitForFocus) {
-            var param
-              = Akahuku.getDocumentParam (targetDocument)
-              .postform_param;
             param.waitForFocus = waitForFocus;
           }
                 
@@ -1008,11 +1017,9 @@ var arAkahukuPostForm = {
       div.parentNode.removeChild (div);
     }
         
-    param
-    = Akahuku.getDocumentParam (targetDocument).reload_param;
     /* [続きを読む] をロック解除する */
-    if (param) {
-      param.replying = false;
+    if (documentParam.reload_param) {
+      documentParam.reload_param.replying = false;
     }
         
     /* リフレッシュを解除する */
@@ -1055,8 +1062,8 @@ var arAkahukuPostForm = {
             }
             // .jumpto と.restoはスレ本文、.bbscode は"b"とか
             // .thisno は自分の書き込みのNo.
-            if (param && resp.thisno) {
-              param.postedReplyNo.push (parseInt (resp.thisno));
+            if (documentParam.reload_param && resp.thisno) {
+              documentParam.reload_param.postedReplyNo.push (parseInt (resp.thisno));
               arAkahukuPostForm.notifyPosted (info, resp.thisno);
             }
           }
@@ -1095,7 +1102,7 @@ var arAkahukuPostForm = {
             
       div = targetDocument.createElement ("div");
       div.id = "akahuku_reply_status";
-      var form = targetDocument.getElementById ("akahuku_postform");
+      var form = targetDocument.getElementById (param.formId);
       var reply_status_container
       = targetDocument.getElementById ("akahuku_reply_status_container");
       if (reply_status_container) {
@@ -1297,14 +1304,14 @@ var arAkahukuPostForm = {
       }
     }
         
-    var info
-    = Akahuku.getDocumentParam (targetDocument).location_info;
+    var docParam = Akahuku.getDocumentParam (targetDocument);
+    var param = docParam.postform_param;
         
     /* 固定したフォームを閉じる */
     if (arAkahukuPostForm.enableReplySendClose) {
       if (targetDocument.getElementById
           ("akahuku_floatpostform_container")
-          && targetDocument.getElementById ("akahuku_postform")
+          && targetDocument.getElementById (param.formId)
           && arAkahukuPostForm.enableFloatClickOpen) {
         var ok = true;
         var clipper
@@ -1437,7 +1444,7 @@ var arAkahukuPostForm = {
     if (type == 1) {
       var div = targetDocument.createElement ("div");
       div.id = "akahuku_reply_status2";
-      var form = targetDocument.getElementById ("akahuku_postform");
+      var form = targetDocument.getElementById (param.formId);
       var reply_status_container
       = targetDocument.getElementById ("akahuku_reply_status_container");
       if (reply_status_container) {
@@ -1637,11 +1644,13 @@ var arAkahukuPostForm = {
    */
   onPostModeClickCore : function (target) {
     var targetDocument = target.ownerDocument;
+    var param
+    = Akahuku.getDocumentParam (targetDocument).postform_param;
     arAkahukuPostForm.ensureDispPostForm (targetDocument);
         
     var row = targetDocument.getElementById ("akahuku_post_file_row");
-    var form = targetDocument.getElementById ("akahuku_postform");
-    var table = targetDocument.getElementById ("akahuku_posttable");
+    var form = targetDocument.getElementById (param.formId);
+    var table = targetDocument.getElementById (param.formTableId);
     var header
     = targetDocument.getElementById ("akahuku_floatpostform_header");
     var header2
@@ -1710,7 +1719,7 @@ var arAkahukuPostForm = {
     var param
     = Akahuku.getDocumentParam (targetDocument).postform_param;
     
-    var postform = targetDocument.getElementById ("akahuku_postform");
+    var postform = targetDocument.getElementById (param.formId);
     if (!postform) {
       return;
     }
@@ -2151,7 +2160,7 @@ var arAkahukuPostForm = {
             }
             container
               = targetDocument
-              .getElementById ("akahuku_posttable");
+              .getElementById (param.formTableId);
             if (container) {
               maxHeight
                 -= container.offsetHeight
@@ -2727,7 +2736,7 @@ var arAkahukuPostForm = {
     var form = arAkahukuDOM.findParentNode (focusedElement, "form");
     if (form
         && "id" in form
-        && form.id == "akahuku_postform") {
+        && form.id == param.formId) {
       commentFocused = true;
     }
         
@@ -2766,7 +2775,7 @@ var arAkahukuPostForm = {
       return;
     }
         
-    var postform = targetDocument.getElementById ("akahuku_postform");
+    var postform = targetDocument.getElementById (param.formId);
     if (postform) {
       if (show == 1 && !param.formHidden) {
         return;
@@ -2930,7 +2939,7 @@ var arAkahukuPostForm = {
           param.cursorWasInForm = false;
                     
           var form
-          = targetDocument.getElementById ("akahuku_postform");
+          = targetDocument.getElementById (param.formId);
           if (form) {
             if (arAkahukuPostForm.enableFloatClickOpen) {
               /* クリックで閉じるので、閉じない */
@@ -3052,7 +3061,7 @@ var arAkahukuPostForm = {
         if (!param.clickInForm) {
           /* 外でボタンを押して外で離した場合 */
           var form
-          = targetDocument.getElementById ("akahuku_postform");
+          = targetDocument.getElementById (param.formId);
           if (form) {
             if (arAkahukuPostForm.enableFloatClickOpen
                 && !arAkahukuPostForm.enableFloatClickClose) {
@@ -3930,7 +3939,14 @@ var arAkahukuPostForm = {
       }
             
       if (form) {
-        form.id = "akahuku_postform";
+        if (info.isFutaba && form.id && arAkahukuPostForm.keepFormElementIds) {
+          // 元のIDを保持する(元の返信&更新ロジックptfk()が全部動く)
+          arAkahukuDOM.addClassName (form, param.formId);
+          param.formId = form.id;
+          param.keepFormElementIds = true;
+        } else {
+          form.id = param.formId;
+        }
         if (form.getElementsByTagName ("table") [0]) {
           let ftbl = form.getElementsByTagName ("table") [0];
           if (info.isFutaba && ftbl.id == "ftbl") {
@@ -3957,7 +3973,12 @@ var arAkahukuPostForm = {
               }
             }
           }
-          ftbl.id = "akahuku_posttable";
+          if (param.keepFormElementIds) {
+            arAkahukuDOM.addClassName (ftbl, param.formTableId);
+            param.formTableId = ftbl.id;
+          } else {
+            ftbl.id = param.formTableId;
+          }
         }
         
         if (hidePostForm) {
@@ -4034,7 +4055,7 @@ var arAkahukuPostForm = {
           }
         }
         var table
-          = targetDocument.getElementById ("akahuku_posttable");
+          = targetDocument.getElementById (param.formTableId);
         if (ufm && table && param) {
           table.style.visibility = "hidden";
           table.style.position = "absolute";
@@ -4690,7 +4711,7 @@ var arAkahukuPostForm = {
                         
             var table
               = targetDocument
-              .getElementById ("akahuku_posttable");
+              .getElementById (param.formTableId);
             if (table
                 && targetDocument.getElementsByName ("upfile")
                 .length == 0) {
@@ -5087,7 +5108,7 @@ var arAkahukuPostForm = {
         var postformHeader
         = targetDocument.getElementById ("akahuku_postform_header");
         var table
-        = targetDocument.getElementById ("akahuku_posttable");
+        = targetDocument.getElementById (param.formTableId);
         if (postmodeContainer && postformHeader && table) {
           var postmodeIndicator
             = targetDocument.createElement ("font");

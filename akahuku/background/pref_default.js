@@ -120,6 +120,7 @@ pref("floatpostform.position.x", 0);
 pref("floatpostform.position.y", 0);
 pref("floatpostform.width", "480px");
 pref("postform.use_ajax_response", true);
+pref("postform.keep_ids", false);
 pref("hidetrolls", true);
 pref("hidetrolls.mode", "normal");
 pref("hidetrolls.nocat", false);
