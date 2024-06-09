@@ -721,6 +721,13 @@ var arAkahukuThread = {
       var element = targetDocument.getElementById (elements [i]);
       if (element) {
         arAkahukuDOM.setText (element, info.replyCount);
+        if (info.isMaxRes) {
+          element.style.color = "#ff0000";
+          element.style.fontWeight = "bold";
+        } else if (element.style.fontWeight) {
+          element.style.color = "";
+          element.style.fontWeight = "";
+        }
       }
     }
   },
@@ -929,6 +936,8 @@ var arAkahukuThread = {
    *         消滅情報
    * @param  Boolean isDel
    *         del (スレに対する削除依頼が出ているかどうか)
+   * @param  Boolean isMaxRes
+   *         レス上限に達しているか
    * @param  Boolean id
    *         id を付けるかどうか
    * @return HTMLDivElement
@@ -937,7 +946,7 @@ var arAkahukuThread = {
   createThreadStatus : function (targetDocument, threadNumber,
                                  lastReplyNumber,
                                  number, expire, expireWarning,
-                                 isDel, id) {
+                                 isDel, isMaxRes, id) {
     if (number == -1) {
       var nodes = Akahuku.getMessageBQ (targetDocument);
       number = nodes.length - 1;
@@ -966,6 +975,10 @@ var arAkahukuThread = {
     span.className = "akahuku_bottom_status_number";
     span.appendChild (targetDocument.createTextNode (number));
     div.appendChild (span);
+    if (isMaxRes) {
+      span.style.color = "#ff0000";
+      span.style.fontWeight = "bold";
+    }
         
     if (id && arAkahukuThread.enableBottomStatusHidden) {
       span = targetDocument.createElement ("span");
@@ -2847,7 +2860,7 @@ var arAkahukuThread = {
                              replyNumber,
                              expire,
                              expireWarning,
-                             isDel,
+                             isDel, info.isMaxRes,
                              info.isReply));
           }
 
@@ -2868,7 +2881,7 @@ var arAkahukuThread = {
                              replyNumber,
                              expire,
                              expireWarning,
-                             isDel,
+                             isDel, info.isMaxRes,
                              info.isReply));
           }
         }
@@ -3111,6 +3124,14 @@ var arAkahukuThread = {
               if (node.innerHTML.match
                   (/\u30EC\u30B9([0-9]+)\u4EF6\u7701\u7565/)) {
                 replyNumber = parseInt (RegExp.$1);
+              }
+              else if (arAkahukuDOM.hasClassName (node, "maxres")) {
+                if (info.isReply) {
+                  info.maxresWarning = node.innerText.trim ();
+                  if (info.maxresWarning.length > 0) {
+                    info.isMaxRes = true;
+                  }
+                }
               }
               else if (node.innerHTML.match
                        (/(<b>)?(\u3053\u306E\u30B9\u30EC\u306F[^<]+)(<\/b>)?/i)) {

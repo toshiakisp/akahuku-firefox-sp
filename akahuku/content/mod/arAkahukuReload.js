@@ -1663,12 +1663,30 @@ var arAkahukuReload = {
       + (dispdel ? "\u96A0\u3059" : "\u898B\u308B") + "</span><br>";
       var bq
         = targetDocument.getElementById ("akahuku_thread_text");
-      if (bq.nextSibling
-          && "id" in bq.nextSibling
-          && bq.nextSibling.id == "akahuku_preview_container") {
+      if (bq.nextElementSibling
+          && bq.nextElementSibling.id == "akahuku_preview_container") {
         // 直後にプレビューコンテナがある場合
         // 後ろへ挿入位置をずらさないとプレビューを消せなくなる
-        bq = bq.nextSibling;
+        bq = bq.nextElementSibling;
+      }
+      // 順序: (#akahuku_thread_warning + br) + (#akahuku_thread_delcount + br) + .maxres + (#ddel)
+      if (bq.nextElementSibling
+        && bq.nextElementSibling.id == "akahuku_thread_warning") {
+        bq = bq.nextElementSibling;
+        if (bq.nodeName.toLowerCase () == "br") {
+          bq = bq.nextElementSibling;
+        }
+      }
+      if (bq.nextElementSibling
+        && bq.nextElementSibling.id == "akahuku_thread_delcount") {
+        bq = bq.nextElementSibling;
+        if (bq.nodeName.toLowerCase () == "br") {
+          bq = bq.nextElementSibling;
+        }
+      }
+      if (bq.nextElementSibling
+        && arAkahukuDOM.hasClassName (bq.nextElementSibling, "maxres")) {
+        bq = bq.nextElementSibling;
       }
       if (bq.nextSibling) {
         bq.parentNode.insertBefore (ddel, bq.nextSibling);
@@ -1869,6 +1887,56 @@ var arAkahukuReload = {
           ("akahuku_bottom_status_delcount_sep");
         arAkahukuDOM.setText (node, null);
       }
+    }
+  },
+
+  updateMaxres : function (responseText, targetDocument, optCharset) {
+    var responseCharset = optCharset || targetDocument.characterSet || "Shift_JIS";
+    var maxres = "";
+    var t = responseText;
+    if (t.length > 16*1024) {
+      t = responseText.substring (0, 16*1024);
+    }
+    // "上限1000レスに達しました"を取得する(対象に"<"=0x3Cはないはず)
+    if (t.match (/<span[^>]* class="maxres"[^>]*>([^<]*)<br><\/span>/)) {
+      maxres = arAkahukuConverter.convert (RegExp.$1, responseCharset);
+    }
+    arAkahukuReload.updateMaxresCore (targetDocument, maxres);
+  },
+
+  updateMaxresJson : function (responseJson, targetDocument) {
+    arAkahukuReload.updateMaxresCore (targetDocument, responseJson.maxres);
+  },
+
+  updateMaxresCore : function (targetDocument, maxresText) {
+    if (!maxresText) {
+      maxresText = "";
+    } else {
+      maxresText = maxresText.toString().trim();
+    }
+
+    let info = Akahuku.getDocumentParam (targetDocument).location_info;
+    info.maxresWarning = maxresText;
+    info.isMaxRes = (maxresText ? true : false);
+    if (info.isMaxRes) {
+      arAkahukuThread.displayReplyNumber (targetDocument);
+    }
+
+    let maxres = targetDocument.getElementsByClassName ("maxres");
+    for (let elem of maxres) {
+      if (elem.innerText.trim() != maxresText) {
+        while (elem.firstChild) {
+          elem.removeChild (elem.firstChild);
+        }
+        if (maxresText) {
+          elem.append (maxresText, targetDocument.createElement ("br"));
+        }
+      }
+    }
+
+    let node = targetDocument.getElementById ("akahuku_bottom_status_alert");
+    if (node && node.innerText.length == 0) {
+      arAkahukuDOM.setText (node, maxresText);
     }
   },
     
@@ -3146,7 +3214,7 @@ var arAkahukuReload = {
                             -1,
                             "",
                             "",
-                            false,
+                            false, false,
                             true),
                            td.firstChild);
         }
@@ -3575,6 +3643,7 @@ var arAkahukuReload = {
                                            targetDocument, responseCharset);
       arAkahukuReload.updateExpireTime (responseText,
                                         targetDocument, responseCharset);
+      arAkahukuReload.updateMaxres (responseText, targetDocument, responseCharset);
 
       stats.updated = true;
       stats.counts = array;
@@ -3903,6 +3972,7 @@ var arAkahukuReload = {
       arAkahukuReload.updateDeletedMessageJson (json, targetDocument);
       arAkahukuReload.updateExpireWarningJson (json, targetDocument);
       arAkahukuReload.updateExpireTimeJson (json, targetDocument);
+      arAkahukuReload.updateMaxresJson (json, targetDocument);
 
       stats.updated = true;
       stats.counts = array;
@@ -3947,6 +4017,7 @@ var arAkahukuReload = {
         expireTime = RegExp.$1;
       }
       arAkahukuReload.updateExpireTimeCore (targetDocument, expireTime);
+      //updateMaxres: 更新不要
 
       // スレッドがありません
       stats.die = (contd.innerText == "\u30b9\u30ec\u30c3\u30c9\u304c\u3042\u308a\u307e\u305b\u3093");

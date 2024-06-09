@@ -1167,6 +1167,10 @@ var arAkahukuThreadOperator = {
       span.id = "akahuku_throp_number";
       span.appendChild (targetDocument.createTextNode (info.replyCount));
       div.appendChild (span);
+      if (info.isMaxRes) {
+        span.style.color = "#ff0000";
+        span.style.fontWeight = "bold";
+      }
             
       if (arAkahukuThread.enableBottomStatusHidden) {
         span = targetDocument.createElement ("span");

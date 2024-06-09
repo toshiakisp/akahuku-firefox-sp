@@ -69,6 +69,8 @@ arAkahukuLocationInfo.prototype = {
   viewer : "",                  /* String  人数 */
   expire : "",                  /* String  消滅時刻 */
   expireWarning : "",           /* String  消滅情報 */
+  isMaxRes : false,             /* Boolean  レス上限に達しているか */
+  maxresWarning : "",           /* String  上限レス情報 */
     
   year : "",                    /* String  スレ立ての年 */
   month : "",                   /* String  スレ立ての月 */
@@ -713,6 +715,7 @@ arAkahukuLocationInfo.prototype = {
       case "warning":
       case "old":
       case "online":
+      case "maxres":
       case "mht":
       case "nijiura":
       case "futasuke":
@@ -1072,6 +1075,7 @@ arAkahukuLocationInfo.prototype = {
           + "<viewer>" + this.viewer + "</viewer>"
           + "<expire>" + this.expire + "</expire>"
           + "<warning>" + this.expireWarning + "</warning>"
+          + "<maxres>" + this.maxresWarning + "</maxres>"
           
           + "<space> </space>"
           
@@ -1113,6 +1117,7 @@ arAkahukuLocationInfo.prototype = {
           + (this.isCatalog ? "<check_catalog />" : "") 
           + (this.isOld ? "<check_old />" : "") 
           + (this.isOnline ? "<check_online />" : "") 
+          + (this.isMaxRes ? "<check_maxres />" : "")
           + (this.isMht ? "<check_mht />" : "") 
           + (this.isNijiura ? "<check_nijiura />" : "") 
           + (this.isFutasuke ? "<check_futasuke />" : "") 

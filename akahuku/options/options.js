@@ -1367,6 +1367,8 @@ function initObservers() {
   info.viewer = '100';
   info.expire = '02:25';
   info.expireWarning = '\u3053\u306E\u30B9\u30EC\u306F\u53E4\u3044\u306E\u3067\u3001\u3082\u3046\u3059\u3050\u6D88\u3048\u307E\u3059\u3002\u000A';
+  info.isMaxRes = true;
+  info.maxresWarning = '\u4e0a\u96501000\u30ec\u30b9\u306b\u9054\u3057\u307e\u3057\u305f';
   info.year = '06';
   info.month = '07';
   info.day = '28';

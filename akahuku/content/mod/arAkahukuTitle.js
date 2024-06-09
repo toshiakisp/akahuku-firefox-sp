@@ -310,8 +310,12 @@ var arAkahukuTitle = {
     }
         
     if (arAkahukuTitle.type == "simple") {
-      if (arAkahukuTitle.enableThreadInfo && info.isOld) {
-        text += "[\u53E4] ";
+      if (arAkahukuTitle.enableThreadInfo) {
+        if (info.isOld) {
+          text += "[\u53E4] "; //[古]
+        } else if (info.isMaxRes) {
+          text += "[\u5b8c] "; //[完]
+        }
       }
 
       if (arAkahukuTitle.enableIncomingReply && info.isReply &&
