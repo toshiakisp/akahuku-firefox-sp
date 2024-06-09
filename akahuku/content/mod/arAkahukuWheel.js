@@ -254,7 +254,20 @@ var arAkahukuWheel = {
                arAkahukuWheel.enableReloadReplySync, false);
           }
           else {
-            targetWindow.location.reload();
+            let reloadButton;
+            let contres = targetDocument.getElementById ("contres");
+            if (contres) {
+              let nodes = contres.getElementsByTagName ("a");
+              if (nodes.length > 0) {
+                reloadButton = nodes [0];
+              }
+            }
+            if (reloadButton) {
+              reloadButton.click();
+            }
+            else {
+              targetWindow.location.reload();
+            }
           }
         }
         else if (info.isCatalog) {

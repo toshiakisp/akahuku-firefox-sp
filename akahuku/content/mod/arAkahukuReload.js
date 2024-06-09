@@ -390,6 +390,7 @@ arAkahukuReloadParam.prototype = {
   partialNodes : null,         /* Array  部分表示の時のボタン用の要素 */
     
   statusTimerID : null,        /* Number ステータスを消すタイマーID */
+  mutationTimerID : null,
 
   replyPattern : null,  // リロード後のレス書式解析パターン (appendNewRepliesで初期化)
   dispdelDisplayStyleValue : "table", // "削除されたレスを*する"を表示するための値
@@ -415,6 +416,8 @@ arAkahukuReloadParam.prototype = {
     }
     this.targetDocument.defaultView.clearTimeout (this.statusTimerID);
     this.statusTimerID = null;
+    this.targetDocument.defaultView.clearTimeout (this.mutationTimerID);
+    this.mutationTimerID = null;
     this.targetDocument = null;
   },
     
@@ -3376,6 +3379,30 @@ var arAkahukuReload = {
 
     return {nodes:[t], main: rtd};
   },
+
+  importRepliesAfterTerminator : function (terminator, targetDocument, retNode) {
+    let data = {res: [], sd: {}, sync: false, updatesd: false};
+    let elem = terminator.nextElementSibling;
+    while (elem) {
+      let bqs = Akahuku.getMessageBQ (elem);
+      if (bqs.length > 0) {
+        data.res.push ({
+          nodes: [elem],
+          main: bqs[0].parentNode,
+          num: Akahuku.getMessageNum (bqs[0]),
+          isDeleted: arAkahukuDOM.hasClassName (elem, "deleted"),
+        });
+      }
+      elem = elem.nextElementSibling;
+    }
+    if (data.res.length > 0) {
+      for (let c of data.res) {
+        c.nodes[0].parentNode.removeChild (c.nodes[0]);
+      }
+      return arAkahukuReload.appendNewRepliesCore (data, terminator, targetDocument, retNode);
+    }
+    return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  },
     
   /**
    * 広告を更新する
@@ -3884,6 +3911,50 @@ var arAkahukuReload = {
     arAkahukuReload.updatePostprocess (targetDocument, stats);
   },
 
+  updateAfterPtfkReload : function (targetDocument) {
+    var documentParam = Akahuku.getDocumentParam (targetDocument);
+    var param = documentParam.reload_param;
+    var info = documentParam.location_info;
+    var stats = {
+      updated: false, counts: [],
+      info: info, param: param,
+      die: false,
+    };
+
+    var term = targetDocument.getElementById ("akahuku_bottom_container");
+    var retNode = (arAkahukuReload.listeners.length > 0);
+    var array = arAkahukuReload.importRepliesAfterTerminator (term, targetDocument, retNode);
+
+    arAkahukuReload.updateAd ("", targetDocument, "");
+    stats.updated = true;
+    stats.counts = array;
+    let contd = targetDocument.getElementById ("contdisp");
+    if (contd) {
+      //updateViewersNumber: 情報なし
+      arAkahukuReload.updateViewersNumberCore (targetDocument, "");
+      //updateDeletedMessage: 判定不能
+      //updateExpireWarning:
+      let expireWarning = "";
+      if (contd.style.color == "rgb(255, 0, 0)") {
+        // "このスレは古いので、もうすぐ消えます。"
+        expireWarning = "\u3053\u306E\u30B9\u30EC\u306F\u53E4\u3044\u306E\u3067\u3001\u3082\u3046\u3059\u3050\u6D88\u3048\u307E\u3059\u3002";
+      }
+      arAkahukuReload.updateExpireWarningCore (targetDocument, expireWarning, "");
+      //updateExpireTime:
+      let expireTime = "";
+      // /((?:[0-9]+日)?[0-9]+:[0-9]+|[0-9]+年[0-9]+月|[0-9]+月[0-9]+日)頃消えます/
+      if (contd.innerHTML.match (/((?:[0-9]+\u65e5)?[0-9]+:[0-9]+|[0-9]+\u5e74[0-9]+\u6708|[0-9]+\u6708[0-9]+\u65e5)\u9803\u6d88\u3048\u307e\u3059/)) {
+        expireTime = RegExp.$1;
+      }
+      arAkahukuReload.updateExpireTimeCore (targetDocument, expireTime);
+
+      // スレッドがありません
+      stats.die = (contd.innerText == "\u30b9\u30ec\u30c3\u30c9\u304c\u3042\u308a\u307e\u305b\u3093");
+    }
+    arAkahukuReload.updatePostprocess (targetDocument, stats);
+  },
+
+
   /**
    * 続きを読む
    *
@@ -3945,8 +4016,16 @@ var arAkahukuReload = {
       return;
     }
         
-    if (!targetDocument.getElementById ("akahuku_bottom_container")) {
+    var container
+    = targetDocument.getElementById ("akahuku_bottom_container");
+    if (!container) {
       return;
+    }
+
+    if (info.isFutaba) {
+      targetDocument.defaultView.clearTimeout (param.mutationTimerID);
+      param.mutationTimerID = null;
+      arAkahukuReload.importRepliesAfterTerminator (container, targetDocument, false);
     }
 
     // この時点でステータス表示要素が無い or 非表示 or 見えないなら
@@ -4309,7 +4388,6 @@ var arAkahukuReload = {
     }
         
     if (info.isReply && info.isOnline
-        && arAkahukuReload.enable
         && !info.isTsumanne) {
       var param = new arAkahukuReloadParam ();
       Akahuku.getDocumentParam (targetDocument).reload_param = param;
@@ -4319,6 +4397,72 @@ var arAkahukuReload = {
       if (info.isFutaba && arAkahukuReload.enableJson) {
         param.requestMode = 2; //HEAD-GET(json)
       }
+
+      if (info.isFutaba) {
+        // ふたばネイティブの[リロード]によるレス追加を検知する
+        let observer = arAkahukuDOM.createMutationObserver((records) => {
+          let term = targetDocument.getElementById ("akahuku_bottom_container");
+          if (!term) return;
+          let added = false;
+          for (let rec of records) {
+            for (let node of rec.addedNodes) {
+              if (term.compareDocumentPosition (node)
+                & node.DOCUMENT_POSITION_FOLLOWING) {
+                added = true;
+                break;
+              }
+            }
+            if (added) {
+              break;
+            }
+          }
+          if (added) {
+            let w = targetDocument.defaultView;
+            w.clearTimeout (param.mutationTimerID);
+            param.mutationTimerID = w.setTimeout (() => {
+              arAkahukuReload.updateAfterPtfkReload (targetDocument);
+            }, 10);
+          }
+        }, targetDocument);
+        let term = targetDocument.getElementById ("akahuku_bottom_container");
+        if (term) {
+          observer.observe (term.parentNode, {childList: true});
+        }
+        let observer2_state = 0;
+        let observer2 = arAkahukuDOM.createMutationObserver((records) => {
+          let contres = targetDocument.getElementById ("contres");
+          let contd = targetDocument.getElementById ("contdisp");
+          if (!contd || !contres) return;
+          let retrieving = (contd.innerText == "\u30fb\u30fb\u30fb") // "・・・"
+          if (observer2_state == 0) {
+            if (retrieving) { // リロード始まり
+              observer2_state = 1;
+              return;
+            }
+          } else {//observer2_state == 1
+            if (!retrieving) { // リロード状態変化あり
+              observer2_state = 0;
+              let w = targetDocument.defaultView;
+              w.clearTimeout (param.mutationTimerID);
+              param.mutationTimerID = w.setTimeout (() => {
+                arAkahukuReload.updateAfterPtfkReload (targetDocument);
+              }, 10);
+              return;
+            }
+          }
+        }, targetDocument);
+        let contres = targetDocument.getElementById ("contres");
+        if (contres) {
+          observer2.observe (contres, {
+            characterData: true, childList: true, subtree: true,
+          });
+        }
+      }
+    }
+
+    if (info.isReply && info.isOnline
+        && arAkahukuReload.enable
+        && !info.isTsumanne) {
             
       // TODO: hook reload
             

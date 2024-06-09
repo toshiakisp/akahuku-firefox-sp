@@ -3969,7 +3969,16 @@ var arAkahukuPostForm = {
               // Omitt [リロード] if unnecessary
               let contres = targetDocument.getElementById ("contres");
               if (contres) {
-                contres.parentNode.removeChild (contres);
+                if (arAkahukuPostForm.keepFormElementIds) {
+                  // contres.offsetTop が使えるような不可視化
+                  contres.style.visibility = "hidden";
+                  contres.style.display = "block";
+                  contres.style.height = "0";
+                  contres.style.width = "0";
+                  contres.style.wordBreak = "keep-all";
+                } else {
+                  contres.parentNode.removeChild (contres);
+                }
               }
             }
           }
