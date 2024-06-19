@@ -1335,10 +1335,10 @@ var arAkahukuReload = {
         while (node) {
           if (node.nodeName.toLowerCase () == "#text") {
             if (node.nodeValue.match
-                (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/)) {
+                (/\u73FE\u5728(?:[0-9]+\??|\?+)\u4EBA/)) {
               node.nodeValue
                 = node.nodeValue
-                .replace (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/,
+                .replace (/\u73FE\u5728(?:[0-9]+\??|\?+)\u4EBA/,
                           "\u73FE\u5728" + viewersNumber
                           + "\u4EBA");
               break;
@@ -1380,18 +1380,18 @@ var arAkahukuReload = {
             
       var nodes = targetDocument.getElementsByTagName ("li");
       for (var i = 0; i < nodes.length; i ++) {
-        // (現在(?:[0-9]+|?+)人)
+        // (現在(?:[0-9]+\??|?+)人)
         if (nodes [i].innerHTML
-            .match (/^(<small>|.*\.\s*)?(\u73FE\u5728(?:[0-9]+|\?+)\u4EBA)/)) {
+            .match (/^(<small>|.*\.\s*)?(\u73FE\u5728(?:[0-9]+\??|\?+)\u4EBA)/)) {
           var startNode = nodes [i];
           node = nodes [i].firstChild;
           while (node) {
             if (node.nodeName.toLowerCase () == "#text") {
               if (node.nodeValue.match
-                  (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/)) {
+                  (/\u73FE\u5728(?:[0-9]+\??|\?+)\u4EBA/)) {
                 node.nodeValue
                   = node.nodeValue
-                  .replace (/\u73FE\u5728(?:[0-9]+|\?+)\u4EBA/,
+                  .replace (/\u73FE\u5728(?:[0-9]+\??|\?+)\u4EBA/,
                             "\u73FE\u5728" + viewersNumber
                             + "\u4EBA");
                 break;
