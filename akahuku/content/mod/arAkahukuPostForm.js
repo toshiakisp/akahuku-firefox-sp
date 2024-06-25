@@ -2058,6 +2058,8 @@ var arAkahukuPostForm = {
           imgNode.style.maxHeight
             = arAkahukuPostForm.commentboxPreviewSize + "px";
           imgNode.style.verticalAlign = "middle";
+          imgNode.referrerPolicy = "no-referrer";
+          imgNode.crossOrigin = "anonymous";
                     
           var src = urls [i][0];
                     
@@ -2069,11 +2071,6 @@ var arAkahukuPostForm = {
                    && src.match
                    (/^http:\/\/www\.(nijibox)5\.com\/futabafiles\/(tubu)\/(src)\/([A-Za-z0-9]+)\.(jpg|png|gif)(\?.*)?$/)) {
             src = arAkahukuP2P.enP2P (src);
-          }
-          else if (src.match (/\.(jpe?g|gif|png|bmp|webp)$/i)) {
-            src
-              = Akahuku.protocolHandler.enAkahukuURI
-              ("preview", src);
           }
                     
           imgNode.src = src;

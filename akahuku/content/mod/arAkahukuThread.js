@@ -2302,7 +2302,7 @@ var arAkahukuThread = {
     button.style.height = "16px";
     button.src
     = Akahuku.protocolHandler.enAkahukuURI
-    ("preview", "chrome://akahuku/content/images/check_x.png");
+    ("local", "chrome://akahuku/content/images/check_x.png");
     header.appendChild (button);
     
     content = targetDocument.createElement ("div");

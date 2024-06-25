@@ -884,7 +884,7 @@ var arAkahukuP2P = {
     var node = targetDocument.createElement ("img");
     node.src
     = Akahuku.protocolHandler.enAkahukuURI
-    ("preview", "chrome://akahuku/content/images/p2p_title.png");
+    ("local", "chrome://akahuku/content/images/p2p_title.png");
     node.style.marginLeft = "8px";
     node.style.marginTop = "8px";
     status.appendChild (node);
@@ -899,7 +899,7 @@ var arAkahukuP2P = {
     var url = arAkahukuP2P.getImageURL (original, index);
         
     node.src = Akahuku.protocolHandler.enAkahukuURI
-    ("preview", url);
+    ("local", url);
     node.style.marginLeft = "160px";
     status.appendChild (node);
         

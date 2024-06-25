@@ -461,10 +461,10 @@ var arAkahukuMHT = {
       if (arAkahukuMHT.enable) {
         var x_uri
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", "chrome://akahuku/content/images/check_x.png");
+        ("local", "chrome://akahuku/content/images/check_x.png");
         var o_uri
         = Akahuku.protocolHandler.enAkahukuURI
-        ("preview", "chrome://akahuku/content/images/check_o.png");
+        ("local", "chrome://akahuku/content/images/check_o.png");
                 
         style
         .addRule ("#akahuku_savemht_button",
@@ -3369,7 +3369,7 @@ var arAkahukuMHT = {
           img.style.height = "16px";
           img.src
             = Akahuku.protocolHandler.enAkahukuURI
-            ("preview", "chrome://akahuku/content/images/check_o.png");
+            ("local", "chrome://akahuku/content/images/check_o.png");
           container.appendChild (img);
 
           radio = targetDocument.createElement ("input");
@@ -3382,7 +3382,7 @@ var arAkahukuMHT = {
           img.style.height = "16px";
           img.src
             = Akahuku.protocolHandler.enAkahukuURI
-            ("preview", "chrome://akahuku/content/images/check_x.png");
+            ("local", "chrome://akahuku/content/images/check_x.png");
           container.appendChild (img);
                     
           container.appendChild (targetDocument.createTextNode (")"));
