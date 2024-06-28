@@ -1363,10 +1363,14 @@ function arAkahukuMergeItem (td, innerHTML, index, threadId, currentReplyNumber,
   this.isSticky = !!flags.isSticky;
   this.overflowed = !!flags.overflowed;
   this.className = className;
+  if ("href" in flags) {
+    this.href = flags.href;
+  }
 }
 arAkahukuMergeItem.prototype = {
   td : null,              /* HTMLTableCellElement  古いテーブルの td 要素 */
   innerHTML : "",         /* String  新しいテーブルの内容 */
+  href : "",
   index : 0,              /* Number  更新順の順番 */
   threadId : 0,           /* Number  スレ番号 */
   currentReplyNumber : 0, /* Number  現在のレス数 */
@@ -1788,6 +1792,7 @@ var arAkahukuCatalog = {
   enableVisited : false,   /* Boolean  一度見たスレをマーク */
   enableRed : false,       /* Boolean  古いスレを赤くする */
   enableLeft : false,      /* Boolean  カタログを左寄せ */
+  replacePhpResServers : [],
     
   lastCells : new Object (), /* Object  閉じる前のセル
                               *   <String server:dir, [Object セル情報]> */
@@ -2333,6 +2338,11 @@ var arAkahukuCatalog = {
     arAkahukuCatalog.enableLeft
     = arAkahukuConfig
     .initPref ("bool", "akahuku.catalog.left", false);
+    let servers
+    = arAkahukuConfig
+    .initPref ("char", "akahuku.catalog.replace-php-res.servers", "");
+    arAkahukuCatalog.replacePhpResServers
+    = servers.split(/\s*,\s*/g);
   },
 
   /**
@@ -2861,6 +2871,16 @@ var arAkahukuCatalog = {
           td.removeAttribute ("__is_new");
         }
         td.setAttribute ("__original_index", mergedItems [i].index);
+        if (mergedItems [i].href) {
+          // リンク先の書式が変更されていれば更新
+          let anchors = td.getElementsByTagName ("a");
+          for (let j = 0; j < anchors.length; j ++) {
+            if (anchors [j].href != mergedItems [i].href
+              && anchors [j].href.match (/(?:res[\/=]|2\/|b\/)([0-9]+)/)) {
+              anchors [j].href = mergedItems [i].href;
+            }
+          }
+        }
       }
       else {
         // td 要素が新たに必要になる場合
@@ -3525,7 +3545,7 @@ var arAkahukuCatalog = {
         
     if (anchor) {
       if (info.isFutaba
-          && info.server != "cgi") {
+          && arAkahukuCatalog.replacePhpResServers.includes (info.server)) {
         if (anchor.href.match (/futaba\.php\?res=([0-9]+)$/)) {
           /* php を呼び出すアドレスを変更する */
           anchor.href
@@ -4189,10 +4209,11 @@ var arAkahukuCatalog = {
              isSticky: isSticky,
             }));
 
-        if (arAkahukuCatalog.enableReorderVisited) {
-          let anchor
-            = arAkahukuDOM.getFirstElementByNames(oldCells[i], "a");
-          if (anchor && anchor.href) {
+        let anchor
+          = arAkahukuDOM.getFirstElementByNames(oldCells[i], "a");
+        if (anchor && anchor.href) {
+          mergedItems[mergedItems.length-1].href = anchor.href;
+          if (arAkahukuCatalog.enableReorderVisited) {
             let callback
               = param.historyCallbacks
               .createVisitedCallback(mergedItems[mergedItems.length-1]);
@@ -4690,10 +4711,19 @@ var arAkahukuCatalog = {
       }
             
       var threadId = 0;
-      if (currentTdText.match (/res[\/=]([0-9]+)/)
-          || currentTdText.match (/2\/([0-9]+)/)
-          || currentTdText.match (/b\/([0-9]+)/)) {
+      let url = null;
+      let matchesHref = /href=['"]?([^\s'"]+)/.exec (currentTdText);
+      let hrefText = (matchesHref ? matchesHref [1] : currentTdText);
+      if (hrefText.match (/(?:res[\/=]|2\/|b\/)([0-9]+)/)) {
         threadId = RegExp.$1;
+      }
+      if (matchesHref) {
+        try {
+          url = new URL (hrefText, targetDocument.baseURI).href;
+        }
+        catch (e) {
+          Akahuku.debug.exception (e);
+        }
       }
       if (threadId == 0) {
         continue;
@@ -4731,16 +4761,14 @@ var arAkahukuCatalog = {
             {visited: visited, opened: opened,
              isNew: false, overflowed: false,
              isSticky: isSticky,
+             href: url,
             }));
                 
         if (arAkahukuCatalog.enableReorderVisited) {
-          let anchor
-            = arAkahukuDOM.getFirstElementByNames(oldCells[threadId], "a");
-          if (anchor && anchor.href) {
+          if (url) {
             let callback
               = param.historyCallbacks
               .createVisitedCallback(mergedItems[mergedItems.length-1]);
-            let url = anchor.href;
             HistoryService.isVisited(url)
               .then((visited) => callback.isVisited(url, visited))
               .catch((e) => Akahuku.debug.exception(e));
@@ -4753,16 +4781,6 @@ var arAkahukuCatalog = {
         nums [parseInt (threadId)] = true;
         if (newestId < parseInt (threadId)) {
           newestId = parseInt (threadId);
-        }
-        
-        let url = null;
-        if (arAkahukuCatalog.enableReorderVisited
-            || arAkahukuCatalog.enableVisited
-            || arAkahukuCatalog.enableObserveOpened) {
-          let href = /href=['"]?([^\s'"]+)/.exec (currentTdText) [1];
-          let anchor = targetDocument.createElement ("a");
-          anchor.setAttribute('href', href);
-          url = anchor.href;
         }
 
         mergedItems.push

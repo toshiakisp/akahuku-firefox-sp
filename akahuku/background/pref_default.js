@@ -69,6 +69,7 @@ pref("catalog.zoom.delay", 10);
 pref("catalog.zoom.noanim", false);
 pref("catalog.zoom.size", 96);
 pref("catalog.zoom.sizetype", 0);
+pref("catalog.replace-php-res.servers", "");
 pref("cleanup", false);
 pref("comment.fixup", true);
 pref("commentbox.bg", true);
