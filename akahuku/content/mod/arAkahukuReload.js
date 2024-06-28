@@ -945,7 +945,10 @@ arAkahukuReloadParam.prototype = {
         if (resp.url == this.location) {
           let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
           let etag = resp.headers.get('Etag');
-          if ((!this.sync && (this.lastEtag == etag
+          if (isNaN(resLastMod) && !etag) {
+            // no info (futaba.php?res=...)
+          }
+          else if ((!this.sync && (this.lastEtag == etag
             || (resLastMod && this.lastModified == resLastMod)))
             || (this.sync && (this.lastEtagSync == etag
             || (resLastMod && this.lastModifiedSync == resLastMod)))) {
