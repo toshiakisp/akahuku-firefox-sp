@@ -860,7 +860,8 @@ arAkahukuReloadParam.prototype = {
           return resp;
         }
         // HEAD response
-        if (!(resp.ok || (this.requestMode == 2 && resp.status == 404))) {
+        let isJsonMode404 = (this.requestMode == 2 && resp.status == 404);
+        if (!(resp.ok || isJsonMode404)) {
           throw new HttpStatusError(resp);
         }
         let resLastMod = Date.parse(resp.headers.get('Last-Modified'));
@@ -870,6 +871,15 @@ arAkahukuReloadParam.prototype = {
           this.requestMode = -1; //GET(no-more-HEAD)
           Akahuku.debug.log
             ("arAkahukuReloadParam: no more HEAD requests for " + this.location);
+        }
+        else if (isJsonMode404) {
+          if (/\.php\?res=/.test (this.targetDocument.location.href)) {
+            // .phpからjsonチャレンジするも.htmが無い => 元URLのGETに切替
+            this.requestMode = 0; //HEAD-GET
+            this.location = this.targetDocument.location.href;
+          } else {
+            // スレ落ちで.htmは404 => jsonロード続行
+          }
         }
         // 以降HEADリクエストを省略できるか判定
         if (this.requestMode == 0 && etag){ //HEAD-GET
@@ -4150,6 +4160,12 @@ var arAkahukuReload = {
         + "&res=" + info.threadNumber
         + "&offset=" + param.nextPosition;
       param.useRange = true;
+    }
+    // .php?res=123からも123.htmへ挑戦
+    if (!param.sync && info.isFutaba
+      && /\.php\?res=/.test (location)
+      && param.requestMode == 2) {//HEAD-GET(json)
+      location = location.replace (/\/[^\/]+\.php\?res=(\d+)/, "/res/$1.htm");
     }
         
     let method = 'GET';
