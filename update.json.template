@@ -7,7 +7,7 @@
           "update_info_url": "https://toshiakisp.github.io/akahuku-firefox-sp/updateinfo-ext.xhtml",
           "applications": {
             "gecko": {
-              "strict_min_version": "60.0a1"
+              "strict_min_version": "__FX_MIN_VERSION__"
             }
           }
         }

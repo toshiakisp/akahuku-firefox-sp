@@ -8,10 +8,9 @@ export default [
   js.configs.recommended,
   {
     languageOptions: {
-      ecmaVersion: 2018,
+      ecmaVersion: 2022,
       globals: {
         ...globals.browser,
-        ...globals.es6,
         ...globals.webextensions,
       }
     },

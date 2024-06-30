@@ -11,7 +11,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "akahuku.fx.sp@toshiakisp.github.io",
-      "strict_min_version": "60.0a1",
+      "strict_min_version": "93.0a1",
       "update_url": "https://toshiakisp.github.io/akahuku-firefox-sp/update.json"
     }
   },
