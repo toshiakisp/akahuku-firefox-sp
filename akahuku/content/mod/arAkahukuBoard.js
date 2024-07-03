@@ -134,17 +134,16 @@ var arAkahukuBoard = {
     if (arAkahukuBoard.enableSelect) {
       var value
         = arAkahukuConfig
-        .initPref ("char", "akahuku.board_select.ex_list", "");
+        .initPref ("char", "akahuku.board_select.ex_list2", "");
       arAkahukuBoard.selectExList = new Object ();
-            
-      if (value) {
-        /* 値を解析するだけなので代入はしない */
-        value.replace
-          (/([^,]+),?/g,
-           function (matched, part1) {
-            arAkahukuBoard.selectExList [unescape (part1)] = true;
-            return "";
-          });
+      let boards = [];
+      try {
+        boards = JSON.parse(unescape(value));
+      } catch (e) {
+        Akahuku.debug.exception(e);
+      }
+      for (let {board} of boards) {
+        arAkahukuBoard.selectExList [board] = true;
       }
     }
         

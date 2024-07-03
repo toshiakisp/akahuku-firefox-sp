@@ -1937,33 +1937,55 @@
           <label>表示する板</label>
         </div>
         <div class="box-orient-vertical flex">
-          <label>表示する</label>
-          <table name="sidebar.list" id="autolink_user_list" class="listbox flex" style="height:14em"
-            data-listbox-seltype="multiple">
-            <tbody>
-              <tr>
-              </tr>
-            </tbody>
-            <tfoot><tr><td colspan="8"></td></tr></tfoot>
-          </table>
+          <div class="scroll-y-table" style="height:14lh;">
+            <table name="sidebar.list2" id="sidebar_list" class="listbox flex" style="height:14lh"
+              data-listbox-seltype="multiple"
+              data-listbox-reserve-table="sidebar_list_ex"
+              data-listbox-control-add="sidebar_board_edit_add"
+              data-listbox-control-move-up="sidebar_board_moveup"
+              data-listbox-control-move-down="sidebar_board_movedown"
+              data-listbox-control-move-to-reserve="sidebar_board_select_delete"
+              data-listbox-control-move-from-reserve="sidebar_board_select_add">
+              <thead>
+                <tr>
+                  <td data-listitem-name="board">表示する</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                </tr>
+              </tbody>
+              <tfoot><tr><td></td></tr></tfoot>
+            </table>
+          </div>
+          <div class="box-orient-horizontal flex" style="display:none;">
+            <label for="sidebar_board_board">板指定</label>
+            <input type=text id="sidebar_board_board" class="flex" size="8">
+            <input type=button id="sidebar_board_edit_add" value="追加">
+          </div>
         </div>
         <div class="box-orient-horizontal align-center">
-          <div class="box-orient-vertical">
+          <div class="box-orient-vertical align-center">
             <input type=button id="sidebar_board_select_add" value="←">
             <input type=button id="sidebar_board_select_delete" value="→">
+            <label><br>表示する<br>板の順番を</label>
             <input type=button id="sidebar_board_moveup" value="上に">
             <input type=button id="sidebar_board_movedown" value="下に">
           </div>
         </div>
-        <div class="box-orient-vertical flex">
-          <label>表示しない</label>
-          <table name="sidebar.board.select_ex" id="autolink_user_list" class="listbox flex" style="height:14em"
+        <div class="box-orient-vertical flex scroll-y-table" style="height:14lh;">
+          <table name="sidebar.board.select_ex" id="sidebar_list_ex" class="listbox flex" style="height:14lh"
             data-listbox-seltype="multiple">
+            <thead>
+              <tr>
+                <td data-listitem-name="board">表示しない</td>
+              </tr>
+            </thead>
             <tbody>
               <tr>
               </tr>
             </tbody>
-            <tfoot><tr><td colspan="8"></td></tr></tfoot>
+            <tfoot><tr><td></td></tr></tfoot>
           </table>
         </div>
       </div>
@@ -1971,18 +1993,17 @@
   </div>
 
   <div id="tab_board" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-horizontal flex ext_doesnotwork">
+    <div class="groupbox box-orient-horizontal flex">
       <div class=caption>
         <label><input type=checkbox name="board_select"
           >動作する板を指定する</label>
       </div>
-      <div class="box-orient-vertical flex">
-        <label>動作する</label>
-        <table name="board_select.in_list" id="board_select_in_list" class="listbox flex" style="height:14em"
+      <div class="box-orient-vertical flex scroll-y-table" style="height:80vh">
+        <table name="board_select.in_list" id="board_select_in_list" class="listbox flex" style="height:80vh"
           data-listbox-seltype="multiple">
           <thead>
             <tr>
-              <td>板</td>
+              <td data-listitem-name="board">板</td>
             </tr>
           </thead>
           <tbody>
@@ -1992,27 +2013,37 @@
           <tfoot><tr><td></td></tr></tfoot>
         </table>
       </div>
-      <div class="box-orient-horizontal align-center">
+      <div class="box-orient-horizontal align-top">
         <div class="box-orient-vertical">
-          <input type=button id="board_select_add" value="←">
+          <input type=button id="board_select_add" value="←" style="margin-top:2lh;">
           <input type=button id="board_select_delete" value="→">
         </div>
       </div>
       <div class="box-orient-vertical flex">
-        <label>動作しない</label>
-        <table name="board_select.ex_list" id="board_select_ex_list" class="listbox flex" style="height:14em"
-          data-listbox-seltype="multiple">
-          <thead>
-            <tr>
-              <td>板</td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-            </tr>
-          </tbody>
-          <tfoot><tr><td></td></tr></tfoot>
-        </table>
+        <div class="box-orient-vertical flex scroll-y-table" style="height:80vh;">
+          <table name="board_select.ex_list2" id="board_select_ex_list" class="listbox flex" style="height:80vh"
+            data-listbox-seltype="multiple"
+            data-listbox-reserve-table="board_select_in_list"
+            data-listbox-control-add="board_select_edit_add"
+            data-listbox-control-move-to-reserve="board_select_add"
+            data-listbox-control-move-from-reserve="board_select_delete">
+            <thead>
+              <tr>
+                <td data-listitem-name="board">動作しない</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+              </tr>
+            </tbody>
+            <tfoot><tr><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div class="box-orient-horizontal flex" style="display:none;">
+          <label for="board_select_board">板指定</label>
+          <input type=text id="board_select_board" class="flex" size="8">
+          <input type=button id="board_select_edit_add" value="追加">
+        </div>
       </div>
     </div>
   </div>
@@ -2399,6 +2430,7 @@
 <script src="../content/mod/arAkahukuFileName.js"></script>
 <script src="../content/mod/arAkahukuConverter.js"></script>
 <script src="../content/mod/arAkahukuLocationInfo.js"></script>
+<script src="../common/arAkahukuServerName.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

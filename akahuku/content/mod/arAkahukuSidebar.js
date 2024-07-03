@@ -598,17 +598,18 @@ var arAkahukuSidebar = {
       .initPref ("bool", "akahuku.sidebar.save", false);
       var value
       = arAkahukuConfig
-      .initPref ("char", "akahuku.sidebar.list", "");
+      .initPref ("char", "akahuku.sidebar.list2", "");
       arAkahukuSidebar.list = new Array ();
-            
-      if (value) {
-        /* 値を解析するだけなので代入はしない */
-        value.replace
-          (/([^,]+),?/g,
-           function (matched, part1) {
-            arAkahukuSidebar.list.push (unescape (part1));
-            return "";
-          });
+      let board_list = []
+      try {
+        if (value) {
+          board_list = JSON.parse(unescape(value));
+        }
+      } catch (e) {
+        Akahuku.debug.exception(e);
+      }
+      for (let item of board_list) {
+        arAkahukuSidebar.list.push (item.board);
       }
 
       arAkahukuSidebar.afterThreadClick

@@ -220,7 +220,8 @@ input[type=button] {
 }
 
 table.listbox {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid gray;
   table-layout: fixed;
   width: 100%;
@@ -229,6 +230,7 @@ table.listbox.flex {
   flex: 1 1 auto;
 }
 table.listbox td {
+  margin: 0;
   padding: 3px;
   height: 1em;
 }
@@ -281,6 +283,22 @@ table.listbox tbody td.listcell-iconic:not([data-checked="true"]) {
   background-image: url(../content/images/check_x.png);
 }
 
+.scroll-y-table {
+  border-width: 1px 1px 1px 0;
+  border-style: solid;
+  border-color: gray;
+  overflow-y: scroll;
+  height: 10lh;
+}
+.scroll-y-table>table{
+  margin: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
+}
+.scroll-y-table>table>thead{
+  position: sticky;
+  top: 0;
+}
 
 input[type=checkbox][data-pref-checked="false"]:checked,
 input[type=checkbox][data-pref-checked="true"]:not(:checked),

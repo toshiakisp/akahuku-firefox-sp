@@ -1,4 +1,4 @@
-/* global arAkahukuLocationInfo arAkahukuFileName AkahukuFileUtil */
+/* global arAkahukuLocationInfo arAkahukuFileName AkahukuFileUtil arAkahukuServerName */
 'use strict';
 
 function warn(...args) {
@@ -188,6 +188,7 @@ let gListboxManager = {
     for (var i = 0; i < values.length; i ++) {
       list.addItem(values [i], null);
     }
+    list.updateSelection();
   },
   
 };
@@ -204,10 +205,23 @@ class ListboxTable {
 
     this.selectedItem = null;
     this.selectedItems = [];
+    this.selectedItemRes = null;
+    this.selectedItemsRes = [];
 
     this.node.addEventListener('click', (event) => {
       this.onClick(event);
     }, false);
+
+    this.reserve = null;
+    const idRes = this.node.dataset.listboxReserveTable;
+    if (idRes) {
+      this.reserve = document.getElementById(idRes);
+    }
+    if (this.reserve) {
+      this.reserve.addEventListener('click', (event) => {
+        this.onClick(event);
+      }, false);
+    }
 
     if (this.listInfo.itemDefinitions) {
       this.node.addEventListener('select', (event) => {
@@ -227,6 +241,8 @@ class ListboxTable {
       {name:'down',id:'MoveDown'},
       {name:'del', id:'Delete'},
       {name:'init', id:'Init'},
+      {name:'moveto',  id:'MoveToReserve'},
+      {name:'movefrom',id:'MoveFromReserve'},
     ];
     for (let c of controls) {
       let id = this.node.dataset['listboxControl'+c.id];
@@ -245,8 +261,8 @@ class ListboxTable {
     this.updateSelection();
   }
 
-  clear() {
-    let tbody = this.node.querySelector(':scope tbody');
+  clear(container=this.node) {
+    let tbody = container.querySelector(':scope tbody');
     let items = [];
     for (let item of this.listItems()) {
       items.push(item);
@@ -254,12 +270,18 @@ class ListboxTable {
     for (let item of items) {
       tbody.removeChild(item);
     }
-    this.selectedItems.length = 0;
-    this.selectedItem = null;
-    this.updateSelection();
+    if (container == this.node && this.reserve) {
+      this.clear(this.reserve);
+    }
+    if (container == this.node) {
+      if (this.listInfo.onCleared) {
+        this.listInfo.onCleared(this);
+      }
+      this.clearSelection();
+    }
   }
 
-  addItem(value, listitem) {
+  addItem(value, listitem, container=this.node) {
     var append = false;
     if (!listitem) {
       append = true;
@@ -280,6 +302,9 @@ class ListboxTable {
         listcell.setAttribute ("class", "listcell-iconic");
         listcell.dataset.checked = !!v;
       }
+      else if (this.listInfo.columns [i][0] == "html") {
+        listcell.innerHTML = v;
+      }
       else {
         listcell.innerText = v;
       }
@@ -287,8 +312,16 @@ class ListboxTable {
     }
     
     if (append) {
-      let tbody = this.node.querySelector(':scope tbody');
+      let tbody = container.querySelector(':scope tbody');
       tbody.appendChild (listitem);
+    }
+
+    if (container == this.node && this.reserve) {
+      let reserveItems = this.listItems(this.reserve);
+      let item = this.getFirstSameItem(value, reserveItems);
+      if (item) {
+        this.removeItem(item, this.reserve);
+      }
     }
   }
 
@@ -296,8 +329,8 @@ class ListboxTable {
     return JSON.parse(unescape(listitem.firstChild.dataset.value));
   }
 
-  removeItem(listitem) {
-    let tbody = this.node.querySelector(':scope tbody');
+  removeItem(listitem, container=this.node) {
+    let tbody = container.querySelector(':scope tbody');
     tbody.removeChild(listitem);
   }
 
@@ -330,8 +363,8 @@ class ListboxTable {
     }
   }
 
-  listItems() {
-    let tbody = this.node.querySelector(':scope tbody');
+  listItems(container=this.node) {
+    let tbody = container.querySelector(':scope tbody');
     let item = tbody.firstElementChild;
     return {
       [Symbol.iterator]: () => {
@@ -385,9 +418,20 @@ class ListboxTable {
     let td = event.target;
     if (td.parentNode.tagName != 'TR')
       return;
+    const isReserve = (this.reserve && table == this.reserve);
+    const selectedItem  = isReserve ? 'selectedItemRes'  : 'selectedItem';
+    const selectedItems = isReserve ? 'selectedItemsRes' : 'selectedItems';
+    const selectedItemOther = isReserve ? 'selectedItem'  : 'selectedItemRes';
+    const selectedItemsOther = isReserve ? 'selectedItems'  : 'selectedItemsRes';
+
     let tr = td.parentNode;
     if (tr.parentNode.tagName == 'TBODY') {
       let items = tr.parentNode.querySelectorAll(':scope tr');
+      let itemsOther = [];
+      if (this.reserve) {
+        let node = (isReserve ? this.node : this.reserve);
+        itemsOther = node.querySelectorAll(':scope tbody tr');
+      }
       let selected = [];
       if (this.seltypeMultiple && event.ctrlKey) {
         // Add/remove from selection
@@ -399,10 +443,10 @@ class ListboxTable {
       }
       else if (this.seltypeMultiple && event.shiftKey) {
         // Select range
-        if (!this.selectedItem) {
-          this.selectedItem = (items.length > 0 ? items[0] : null);
+        if (!this[selectedItem]) {
+          this[selectedItem] = (items.length > 0 ? items[0] : null);
         }
-        if (tr === this.selectedItem) {
+        if (tr === this[selectedItem]) {
           for (let i=0; i < items.length; i++) {
             items[i].dataset.selected = 'false';
           }
@@ -410,7 +454,7 @@ class ListboxTable {
           selected = [tr];
         }
         else {
-          let range = [tr, this.selectedItem];
+          let range = [tr, this[selectedItem]];
           let selecting = false;
           for (let i=0; i < items.length; i++) {
             let item = items[i];
@@ -433,10 +477,15 @@ class ListboxTable {
           items[i].dataset.selected = 'false';
         }
         tr.dataset.selected = 'true';
-        this.selectedItem = tr;
+        this[selectedItem] = tr;
         selected = [tr];
       }
-      this.selectedItems = selected;
+      for (let i=0; i < itemsOther.length; i++) {
+        itemsOther[i].dataset.selected = 'false';
+      }
+      this[selectedItems] = selected;
+      this[selectedItemsOther].length = 0;
+      this[selectedItemOther] = null;
       this.updateSelection();
 
       if (selected.length > 0) {
@@ -450,6 +499,13 @@ class ListboxTable {
     }
   }
 
+  clearSelection() {
+    this.selectedItems.length = 0;
+    this.selectedItem = null;
+    this.selectedItemsRes.length = 0;
+    this.selectedItemRes = null;
+  }
+
   updateSelection() {
     const selected = this.selectedItems.length > 0;
     const selectedOne = this.selectedItems.length == 1;
@@ -461,6 +517,11 @@ class ListboxTable {
       this.controls.down.disabled = !selectedOne;
     if ('mod' in this.controls && this.controls.mod)
       this.controls.mod.disabled = !selectedOne;
+    if ('moveto' in this.controls && this.controls.moveto)
+      this.controls.moveto.disabled = !selected;
+    if ('movefrom' in this.controls && this.controls.movefrom) {
+      this.controls.movefrom.disabled = !(this.selectedItemsRes.length > 0);
+    }
   }
 
   onSelect(event) {
@@ -584,20 +645,7 @@ class ListboxTable {
       }
     }
 
-    let exist = false;
-    for (let value2 of this) {
-      let same = true;
-      for (let key of Object.getOwnPropertyNames(value)) {
-        if (value[key] != value2[key]) {
-          same = false;
-          break;
-        }
-      }
-      if (same) {
-        exist = true;
-        break;
-      }
-    }
+    let exist = this.getFirstSameItem(value, this.listItems());
     if (!exist)
       this.addItem(value);
     else
@@ -609,8 +657,7 @@ class ListboxTable {
     for (let item of this.selectedItems) {
       this.removeItem(item);
     }
-    this.selectedItems.length = 0;
-    this.selectedItem = null;
+    this.clearSelection();
     this.updateSelection();
   }
 
@@ -650,6 +697,57 @@ class ListboxTable {
         this.addItem(item);
       }
     }
+  }
+
+  removeItemFromReserve(item) {
+    if (this.reserve) {
+      this.removeItem(item, this.reserve);
+    }
+  }
+  addItemToReserve(item) {
+    if (this.reserve) {
+      let value = this.getItem(item);
+      this.addItem(value, null, this.reserve);
+    }
+  }
+
+  getFirstSameItem(value, items) {
+    for (let item of items) {
+      let value2 = this.getItem(item);
+      let same = true;
+      for (let key of Object.getOwnPropertyNames(value)) {
+        if (value[key] != value2[key]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  onControlMoveFromReserve(event) {
+    this.warn('');
+    let items = this.selectedItemsRes;
+    for (let item of items) {
+      this.removeItemFromReserve(item);
+      let value = this.getItem(item);
+      let exist = this.getFirstSameItem(value, this.listItems());
+      if (!exist)
+        this.addItem(value);
+    }
+  }
+
+  onControlMoveToReserve(event) {
+    this.warn('');
+    for (let item of this.selectedItems) {
+      this.addItemToReserve(item);
+      this.removeItem(item);
+    }
+    this.clearSelection();
+    this.updateSelection();
   }
 
   warn(message) {
@@ -962,6 +1060,70 @@ gListboxManager.register(new ListboxTable('filename_convert_list', {
     {from:' ', to:'_'}
   ],
 }));
+
+gListboxManager.register(new ListboxTable('sidebar_list', {
+  itemIdPrefix: 'sidebar_board_',
+  itemDefinitions: [
+    {type: 'id', value: 'board'},
+  ],
+  editControls: [
+    {type: 'add', id: 'edit_add'},
+    {type: 'moveUp', id: 'moveup'},
+    {type: 'moveDown', id: 'movedown'},
+  ],
+
+  isEnabled: function () {
+    return document.getElementById ("sidebar").checked;
+  },
+
+  columns: [
+    ["text", (value) => {
+      if (Object.hasOwn(arAkahukuServerName, value.board)) {
+        return `${arAkahukuServerName [value.board]} (${value.board})`;
+      }
+      return `UNKNOWN (${value.board})`;
+    }],
+  ],
+
+  onCleared: (listbox) => {
+    for (let board in arAkahukuServerName) {
+      listbox.addItem({board: board}, null, listbox.reserve);
+    }
+  },
+}));
+
+gListboxManager.register(new ListboxTable('board_select_ex_list', {
+  itemIdPrefix: 'board_select_',
+  itemDefinitions: [
+    {type: 'id', value: 'board'},
+  ],
+  editControls: [
+    {type: 'add', id: 'edit_add'},
+  ],
+
+  isEnabled: function () {
+    return document.getElementById ("sidebar").checked;
+  },
+
+  columns: [
+    ["html", (value) => {
+      if (Object.hasOwn(arAkahukuServerName, value.board)) {
+        let [server, dir] = value.board.split(':');
+        let url = `https://${server}.2chan.net/${dir}/`;
+        let n = arAkahukuServerName [value.board];
+        return `${n} (<a href="${url}" target="_blank" style="text-decoration-line:none">${value.board}</a>)`;
+      }
+      return `UNKNOWN (${value.board})`;
+    }],
+  ],
+
+  onCleared: (listbox) => {
+    for (let board in arAkahukuServerName) {
+      listbox.addItem({board: board}, null, listbox.reserve);
+    }
+  },
+}));
+
 
 
 /* Automatical dependency check mechanism for grouped inputs */
