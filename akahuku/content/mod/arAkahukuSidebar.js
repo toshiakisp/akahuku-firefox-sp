@@ -441,47 +441,9 @@ var arAkahukuSidebar = {
     }
 
     arAkahukuSidebar.addSidebarParam (window);
-    window.addEventListener
-    ("keydown", arAkahukuSidebar.onKeyDown, true);
   },
   dettachFromWindow : function (window) {
     arAkahukuSidebar.deleteSidebarParam (window);
-    window.removeEventListener
-    ("keydown", arAkahukuSidebar.onKeyDown, true);
-
-    var ids = [
-      "viewAkahukuP2PSidebar-menuitem",
-      "viewAkahukuSidebar-menuitem",
-      "viewAkahukuP2PSidebar",
-      "viewAkahukuSidebar"];
-    for (var i = 0; i < ids.length; i ++) {
-      var elem = window.document.getElementById (ids [i]);
-      if (elem) {
-        elem.parentNode.removeChild (elem);
-      }
-    }
-  },
-
-  /**
-   * キーが押されたイベント
-   *
-   * @param  Event event
-   *         対象のイベント
-   */
-  onKeyDown : function (event) {
-    if (Akahuku.enableAll
-        && arAkahukuSidebar.enable
-        && arAkahukuSidebar.enableShortcut) {
-      if (arAkahukuSidebar.shortcutKeycode == event.keyCode
-          && arAkahukuSidebar.shortcutModifiersAlt == event.altKey
-          && arAkahukuSidebar.shortcutModifiersCtrl == event.ctrlKey
-          && arAkahukuSidebar.shortcutModifiersMeta == event.metaKey
-          && arAkahukuSidebar.shortcutModifiersShift == event.shiftKey) {
-        var window = event.currentTarget;
-        arAkahukuCompat.toggleSidebar ("viewAkahukuSidebar", false, window);
-        event.preventDefault ();
-      }
-    }
   },
     
   /**
@@ -619,37 +581,6 @@ var arAkahukuSidebar = {
       arAkahukuSidebar.enableShortcut
       = arAkahukuConfig
       .initPref ("bool", "akahuku.sidebar.shortcut", false);
-      if (arAkahukuSidebar.enableShortcut) {
-        var value
-          = arAkahukuConfig
-          .initPref ("char", "akahuku.sidebar.shortcut.keycode",
-                     "VK_S");
-        value
-          = unescape (value);
-        arAkahukuSidebar.shortcutKeycode
-          = KeyboardEvent["DOM_" + value];
-                
-        arAkahukuSidebar.shortcutModifiersAlt
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.sidebar.shortcut.modifiers.alt",
-                     false);
-        arAkahukuSidebar.shortcutModifiersCtrl
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.sidebar.shortcut.modifiers.ctrl",
-                     false);
-        arAkahukuSidebar.shortcutModifiersMeta
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.sidebar.shortcut.modifiers.meta",
-                     true);
-        arAkahukuSidebar.shortcutModifiersShift
-          = arAkahukuConfig
-          .initPref ("bool",
-                     "akahuku.sidebar.shortcut.modifiers.shift",
-                     true);
-      }
     }
 
     // 設定変更をその場で反映する

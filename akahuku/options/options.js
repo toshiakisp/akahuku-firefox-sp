@@ -1600,6 +1600,7 @@ function initObservers() {
     ['focus-comment','commentbox_shortcut_keycombo_init','commentbox.shortcut.keycombo'],
     ['toggle-sage','mailbox_sagebutton_key_keycombo_init', 'mailbox.sagebutton.key.keycombo'],
     ['save-MHT', 'savemht_shortcut_keycombo_init', 'savemht.shortcut.keycombo'],
+    ['_execute_sidebar_action','sidebar_shortcut_keycombo_init', 'sidebar.shortcut.keycombo'],
     ['open-bloomer','bloomer_keycombo_init','bloomer.keycombo'],
   ].forEach((args) => {
     let [command_name, btn_id, keycombo_name] = args;

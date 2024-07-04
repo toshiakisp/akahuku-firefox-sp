@@ -81,6 +81,8 @@ var arAkahukuBrowserAction = {
       // 赤福サイドバー
       title : "\u8D64\u798F\u30B5\u30A4\u30C9\u30D0\u30FC",
       enabled: false,
+      type: "checkbox",
+      checked: false,
       command: '_execute_sidebar_action',
     });
 
@@ -112,6 +114,10 @@ var arAkahukuBrowserAction = {
     browser.menus.update('akahuku-browser-action-popup-all', {
       // 全機能を {OFF,ON}
       title: "\u5168\u6A5F\u80FD\u3092 " + (enabled ? 'OFF' : 'ON'),
+    });
+    browser.menus.update('akahuku-browser-action-popup-sidebar', {
+      enabled: enabled && Prefs.getItem('sidebar'),
+      checked: c.isSidebarOpened,
     });
 
     browser.menus.update('akahuku-browser-action-popup-respanel', {

@@ -81,9 +81,13 @@
     lastMenuInstanceId = menuInstanceId;
 
     lastMenuContexts = [...info.contexts];
+    let sbopened;
 
     if (info.contexts.includes('browser_action')) {
       // Request special contentData
+      browser.sidebarAction.isOpen({}).then(v => {
+        sbopened = v;
+      });
       let msg = {
         name: 'contextmenu-content.js',
         method: 'getContentDataForBrowserAction',
@@ -104,6 +108,9 @@
 
     let updated = false;
     if (contentData) {
+      if (menuInstanceId !== lastMenuInstanceId) {
+        throw new Error('menu instance id is different');
+      }
       updated = updateAllContextMenus(info, tab, contentData);
       if (updated)
         browser.menus.refresh();
@@ -126,6 +133,7 @@
               return;
             }
             contentDataWatcher = null;
+            contentData.browser_action.isSidebarOpened = sbopened;
             updated = updateAllContextMenus(info, tab, contentData);
             if (updated)
               browser.menus.refresh();

@@ -1908,26 +1908,15 @@
             <label><input type=checkbox name="sidebar.shortcut"
               >ショートカットキー</label>
             <div class="box-orient-horizontal align-top">
-              <input type=text id="sidebar_shortcut_input" placeholder="ここで入力" size="16">
-              <select name="sidebar.shortcut.keycode"
-                      class="keycode_menu"
-                      data-keycode-input="sidebar_shortcut_input"
-                      data-keycode-input-alt="sidebar_shortcut_modifiers_alt"
-                      data-keycode-input-ctrl="sidebar_shortcut_modifiers_ctrl"
-                      data-keycode-input-meta="sidebar_shortcut_modifiers_meta"
-                      data-keycode-input-shift="sidebar_shortcut_modifiers_shift">
-              </select>
+              <input type=text name="sidebar.shortcut.keycombo" placeholder="テキスト入力...">
+              <input type=button id="sidebar_shortcut_keycombo_init" value="初期化">
             </div>
-            <div class="box-orient-horizontal align-top">
-              <label><input type=checkbox name="sidebar.shortcut.modifiers.alt" id="sidebar_shortcut_modifiers_alt"
-                >Alt</label>
-              <label><input type=checkbox name="sidebar.shortcut.modifiers.ctrl" id="sidebar_shortcut_modifiers_ctrl"
-                >Ctrl</label>
-              <label><input type=checkbox name="sidebar.shortcut.modifiers.meta" id="sidebar_shortcut_modifiers_meta"
-                >Meta</label>
-              <label><input type=checkbox name="sidebar.shortcut.modifiers.shift" id="sidebar_shortcut_modifiers_shift"
-                >Shift</label>
-            </div>
+            <label>キーの変更はアドオン設定ページのギヤアイコンの<br>
+              「拡張機能のショートカットキーの管理」からを推奨
+              <a href="https://support.mozilla.org/kb/manage-extension-shortcuts-firefox" target="_blank" title="ヘルプ">❔</a><br>
+              （テキスト入力での設定例は
+              <a href="https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/commands#Shortcut_values" target="_blank">仕様</a>を参照）
+            </label>
           </div>
         </div>
       </div>

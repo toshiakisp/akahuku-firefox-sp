@@ -103,6 +103,18 @@
     "default_title": "__MSG_browserActionTitle__"
   },
 
+  "sidebar_action": {
+    "default_title": "__MSG_sidebarDefaultTitle__",
+    "default_icon": {
+      "32": "content/images/icon.png",
+      "48": "content/images/icon_48.png",
+      "96": "content/images/icon_96.png"
+    },
+    "browser_style": false,
+    "open_at_install": false,
+    "default_panel": "sidebar/sidebar.html"
+  },
+
   "commands": {
     "focus-comment": {
       "description": "__MSG_commandFocusComment__"
@@ -112,6 +124,9 @@
     },
     "save-MHT": {
       "description": "__MSG_commandSaveMHT__"
+    },
+    "_execute_sidebar_action": {
+      "description": "__MSG_commandToggleSidebar__"
     },
     "open-bloomer": {
       "description": "__MSG_commandOpenBloomer__"

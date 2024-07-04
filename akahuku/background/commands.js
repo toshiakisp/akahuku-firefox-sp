@@ -81,6 +81,11 @@ browser.commands.onCommand.addListener((command) => {
             case 'open-bloomer':
               pref_name = 'bloomer';
               break;
+            case '_execute_sidebar_action':
+              // onCommandは発火しないが設定は取得できる
+              pref_name = 'sidebar.shortcut';
+              break;
+            default:
           }
           if (pref_name) {
             setting[pref_name] = Boolean(c.shortcut);
@@ -107,6 +112,7 @@ Prefs.onChanged.addListener((updates) => {
     ['focus-comment','commentbox.shortcut'],
     ['toggle-sage','mailbox.sagebutton.key'],
     ['open-bloomer','bloomer'],
+    ['_execute_sidebar_action','sidebar.shortcut'],
     ['save-MHT','savemht.shortcut'],
   ].forEach((args) => {
     let [command_name, enable_pref] = args;
