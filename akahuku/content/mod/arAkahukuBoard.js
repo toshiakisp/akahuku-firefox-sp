@@ -283,12 +283,20 @@ var arAkahukuBoard = {
     if (updated) {
       this.boardList.setBoardProperty (id, name, num);
     }
+    let infoText = '';
+    if (typeof idOrInfo == 'object'
+      && idOrInfo !== null
+      && idOrInfo.server //arAkahukuLocationInfo
+      ) {
+      infoText = JSON.stringify (idOrInfo);
+    }
     if (updated && !dontNotify) {
       var subject = {};
       subject.data = JSON.stringify ({
         name: id,
         property: name,
         value: num,
+        info: infoText,
       });
       this.observePaused = true;
       ObserverService.notifyObservers

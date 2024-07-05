@@ -4140,7 +4140,9 @@ var arAkahukuPostForm = {
           if (nodes2 [i].innerHTML.match
               (/\u3053\u306E\u677F\u306E\u4FDD\u5B58\u6570\u306F([0-9]+)\u4EF6\u3067\u3059/)) {
             var name = info.server + ":" + info.dir;
+            let idOrInfo = name;
             if (!arAkahukuBoard.knows (name)) {
+              idOrInfo = info;//send with full info
               Akahuku.debug.log
                 ("Unknown server (" + name 
                  + ") \u306E\u4FDD\u5B58\u6570" + RegExp.$1);
@@ -4152,7 +4154,7 @@ var arAkahukuPostForm = {
                  + "\u306E\u4FDD\u5B58\u6570 "
                  + arAkahukuBoard.getMaxNum (name) + " => " + RegExp.$1);
             }
-            arAkahukuBoard.setMaxNum (name, parseInt (RegExp.$1));
+            arAkahukuBoard.setMaxNum (idOrInfo, parseInt (RegExp.$1));
             break;
           }
         }

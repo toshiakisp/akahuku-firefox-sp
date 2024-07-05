@@ -13,6 +13,7 @@
       preserveMin: -1,
       hasCatalog: false,
       isInternal: false,
+      isFutaba: false,
     };
   };
 
@@ -20,6 +21,7 @@
     for (let id in arAkahukuServerData) {
       let board = createBoardEntry(id);
       board.isInternal = true;
+      board.isFutaba = true;
       board.stdName = arAkahukuServerData [id][0];
       board.shortName = arAkahukuServerData [id][1];
       board.trueName = arAkahukuServerData [id][2];
@@ -65,6 +67,22 @@
             }
           }
 
+          let info;
+          if (data.info && !props.isInternal) {
+            // 未定義の板は板名の情報を更新する
+            try {
+              info = JSON.parse(data.info);
+            } catch (e) {
+            }
+            if (props.stdName != info.board && info.board)
+              props.stdName = info.board;
+            if (props.shortName != info.board2 && info.board2)
+              props.shortName = info.board2;
+            if (props.trueName != info.board3 && info.board3)
+              props.trueName = info.board3;
+            if (!props.isFutaba && info.isFutaba)
+              props.isFutaba = info.isFutaba;
+          }
           if (!props.id) {
             AkahukuCentral.register('board', props);
           }
