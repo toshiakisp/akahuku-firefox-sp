@@ -27,8 +27,29 @@ const Loader = {
     this.url = doc.URL;
     //console.log('loader: initialized for', this.url);
 
-    this.updateState(doc.readyState);
-    if (this.state != this.STATES.COMPLETE) {
+    let state = this.getStateValue(doc.readyState);
+    if (pending) {
+      // emulate missed state changes
+      let missed = ['loading','interactive','complete'];
+      switch (state) {
+        case this.STATES.COMPLETE:
+          break;
+        case this.STATES.INTERACTIVE:
+          missed.length = 2;
+          break;
+        case this.STATES.LOADING:
+          missed.length = 1;
+          break;
+        default:
+          missed.length = 0;
+      }
+      for (let s of missed) {
+        this._pendingStates.push(s);
+      }
+    } else {
+      this.updateState(doc.readyState);
+    }
+    if (state != this.STATES.COMPLETE) {
       this._handler = (event) => {
         this.readyStateChanged(event);
       };
