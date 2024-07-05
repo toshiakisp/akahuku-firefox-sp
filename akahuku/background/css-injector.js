@@ -37,7 +37,10 @@ var AkahukuCSSInjector = (() => {
       }
       let rec = tabrecords.get(frameId);
       if (!rec) {
-        rec = {promising: Promise.resolve()};
+        rec = {
+          promising: Promise.resolve(),
+          inserted: false,
+        };
         tabrecords.set(frameId, rec);
       }
       rec.url = url;
@@ -47,8 +50,18 @@ var AkahukuCSSInjector = (() => {
         frameId: frameId,
         code: this.styleText,
       };
-      await rec.promising;
-      rec.promising = browser.tabs.insertCSS(tabId, rec.details);
+      // 先行した処理があった場合にそれが rejected で終了していても
+      // 処理が済んで settled になるまで待ちさえすればいい
+      // (await rec.promising だとrejectedの場合に例外が発生する)
+      await Promise.allSettled([rec.promising]);
+      rec.promising = browser.tabs.insertCSS(tabId, rec.details)
+        .then(() => {
+          rec.inserted = true;
+        })
+        .catch((err) => {
+          tabrecords.delete(frameId);
+          console.warn(err, `(tab:${tabId},frame:${frameId})`, url);
+        });
       return rec.promising;
     }
 
@@ -77,8 +90,11 @@ var AkahukuCSSInjector = (() => {
       if (records) {
         for (let [tabId, tabrecords] of records) {
           for (let [frameId, info] of tabrecords) {
-            info.promising = info.promising.then(() => {
-              return browser.tabs.removeCSS(tabId, info.details);
+            info.promising = Promise.allSettled([info.promising]).then(() => {
+              if (info.inserted) {
+                info.inserted = false;
+                return browser.tabs.removeCSS(tabId, info.details);
+              }
             });
             promises.push(info.promising);
           }
@@ -99,18 +115,13 @@ var AkahukuCSSInjector = (() => {
       if (records) {
         for (let [tabId, tabrecords] of records) {
           for (let [frameId, info] of tabrecords) {
-            info.promising = info.promising.then(() => {
-              return browser.tabs.removeCSS(tabId, info.details);
-            })
-            .then(() => {
-              this.insertForFrame(tabId, frameId, info.url);
-            })
-            .catch((err) => {
-              tabrecords.delete(frameId);
-              console.warn(err.message,
-                'tabId='+tabId, 'frameId='+frameId, info.url);
-            });
-            promises.push(info.promising);
+            await Promise.allSettled([info.promising]);
+            if (info.inserted) {
+              info.inserted = false;
+              // 削除を挿入前に済ますことを予約
+              info.promising = browser.tabs.removeCSS(tabId, info.details);
+            }
+            promises.push(this.insertForFrame(tabId, frameId, info.url));
           }
         }
       }
