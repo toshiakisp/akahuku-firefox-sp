@@ -1494,7 +1494,7 @@ function initDeck() {
 
 function initObservers() {
   // Dummy info for displaying formated results
-  let info = new arAkahukuLocationInfo (null, false);
+  let info = new arAkahukuLocationInfoBase ();
   info.isOnline = true;
   info.isFutaba = true;
   info.isMonaca = true;
