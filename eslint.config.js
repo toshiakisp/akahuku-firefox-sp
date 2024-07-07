@@ -41,11 +41,15 @@ export default [
       "sort-imports": ["warn", {
         "allowSeparatedGroups": true,
       }],
+      "strict": ["error"],
       "no-caller": "error",
     }
   },
   {
     files: ["akahuku/background/**/*.js"],
+    rules: {
+      "strict": "off",
+    },
     languageOptions: {
       globals: {
           AkahukuCentral: "readonly",

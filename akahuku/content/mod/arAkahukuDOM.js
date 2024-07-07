@@ -557,7 +557,6 @@ var arAkahukuDOM = {
  * (Node.style プロパティの有無にかかわらず)
  */
 arAkahukuDOM.Style = new function () {
-  "use strict";
 
   this.setProperty = function (node, propertyName, value) {
     var styles = new StyleDeclaration ();

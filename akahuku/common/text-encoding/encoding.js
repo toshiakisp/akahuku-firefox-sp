@@ -14,7 +14,6 @@ let PolyFillTextEncoder, PolyFillTextDecoder;
  * @suppress {globalThis}
  */
 (function(global) {
-  'use strict';
 
   global["encoding-indexes"] = EncodingIndexes;
 
