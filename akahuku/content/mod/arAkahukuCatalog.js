@@ -1,3 +1,32 @@
+export {arAkahukuCatalog, arAkahukuCatalogParam, arAkahukuMergeItem, arAkahukuMergeItemCallbackList,
+  arAkahukuMergeItemVisitedCallback, arAkahukuMergeItemOpenedCallback,
+  arAkahukuCatalogPopupData, arAkahukuCatalogCommentPopupData,
+};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuCentral} from '/content/akahuku-central-content.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {HistoryService} from '/content/history-service-content.js';
+import {ObserverService} from '/content/observer-service-content.js';
+import {Tabs} from '/content/tabs-content.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuFile} from '/content/mod/arAkahukuFile.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuPopup} from '/content/mod/arAkahukuPopup.js';
+import {arAkahukuPopupParam} from '/content/mod/arAkahukuPopup.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuSidebar} from '/content/mod/arAkahukuSidebar.js';
+import {arAkahukuSound} from '/content/mod/arAkahukuSound.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+import {arAkahukuWindow} from '/content/mod/arAkahukuWindow.js';
+
 /**
  * カタログのポップアップデータ
  *   Inherits From: arAkahukuPopupData

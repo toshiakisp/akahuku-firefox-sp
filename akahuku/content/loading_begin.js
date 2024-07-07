@@ -1,6 +1,7 @@
 /**
  * To be injected while 'loading' status
  */
+export {Loader};
 
 const Loader = {
   STATES : {
@@ -129,6 +130,9 @@ const Loader = {
       this._pending = true;
     }
   },
+  pumpEvents: function () {
+    this.setPending(false);
+  },
 
   addEventListener: function (type, handler) {
     function addHandlers(list, handler) {
@@ -165,6 +169,4 @@ const Loader = {
     this._notifyToListeners(this._listenersL, 'load');
   },
 };
-
-Loader.initialize(document);
 

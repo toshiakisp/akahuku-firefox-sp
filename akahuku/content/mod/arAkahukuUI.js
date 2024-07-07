@@ -1,3 +1,8 @@
+export {arAkahukuUI};
+
+import {Akahuku} from '/content/akahuku.js';
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuURLUtil} from '/common/arAkahukuURLUtil.js';
 
 /**
  * UI 管理
@@ -12,6 +17,11 @@ var arAkahukuUI = {
    * 設定を読み込む
    */
   getConfig : function () {
+  },
+
+  onPrefChanged : function () {
+    arAkahukuUI.showPanel ();
+    arAkahukuUI.setPanelStatus ();
   },
     
   /**

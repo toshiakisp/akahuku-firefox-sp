@@ -1,3 +1,6 @@
+export {arAkahukuFileName};
+
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
 
 var arAkahukuFileName = {
   defaultConvertList : [

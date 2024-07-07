@@ -1,3 +1,6 @@
+export {arAkahukuConverter};
+
+import {TextEncoder as PolyFillTextEncoder, TextDecoder} from '/common/text-encoding/encoding.js';
 
 /**
  * 文字コード変換器 (TextDecoder/TextEncoder版)

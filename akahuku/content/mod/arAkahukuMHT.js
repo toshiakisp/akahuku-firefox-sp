@@ -1,3 +1,19 @@
+export {arAkahukuMHT, arAkahukuMHTParam, arAkahukuMHTFileData};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {Downloads} from '/content/downloads-content.js';
+
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuDelBanner} from '/content/mod/arAkahukuDelBanner.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuSound} from '/content/mod/arAkahukuSound.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
 
 /**
  * mht ファイルデータ

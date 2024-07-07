@@ -1,3 +1,16 @@
+export {arAkahukuP2P};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuFile} from '/content/mod/arAkahukuFile.js';
+import {arAkahukuImageURL} from '/content/mod/arAkahukuLocationInfo.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+
+var AkahukuVersion = arAkahukuConfig.getCharPref('akahuku.version');
 
 /**
  * P2P
@@ -237,6 +250,10 @@ var arAkahukuP2P = {
         }
       }
     }
+  },
+
+  onPrefChanged : function () {
+    arAkahukuP2P.update ();
   },
     
   /**

@@ -1,3 +1,25 @@
+export {arAkahukuPostForm, arAkahukuPostFormParam};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {ObserverService} from '/content/observer-service-content.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuClipboard} from '/content/mod/arAkahukuClipboard.js';
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuFile} from '/content/mod/arAkahukuFile.js';
+import {arAkahukuImageURL} from '/content/mod/arAkahukuLocationInfo.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuScroll} from '/content/mod/arAkahukuScroll.js';
+import {arAkahukuSound} from '/content/mod/arAkahukuSound.js';
+import {arAkahukuStyle} from '/content/mod/arAkahukuStyle.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuUI} from '/content/mod/arAkahukuUI.js';
 
 /**
  * 送信フォーム管理のデータ

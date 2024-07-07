@@ -1,3 +1,11 @@
+export {arAkahukuScroll};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuWheel} from '/content/mod/arAkahukuWheel.js';
 
 /**
  * スクロール管理

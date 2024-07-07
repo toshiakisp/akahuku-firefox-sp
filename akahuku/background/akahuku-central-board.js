@@ -1,5 +1,4 @@
 'strict mode';
-/* global arAkahukuServerData */
 
 (() => {
   let createBoardEntry = (name) => {
@@ -17,7 +16,9 @@
     };
   };
 
-  if (arAkahukuServerData) {
+  let preparingBoard = import('/common/arAkahukuServerName.js')
+  .then(m => {
+    let {arAkahukuServerData} = m;
     for (let id in arAkahukuServerData) {
       let board = createBoardEntry(id);
       board.isInternal = true;
@@ -39,7 +40,7 @@
       }
       AkahukuCentral.register('board', board);
     }
-  }
+  });
 
   let listener = {
     observe: (subject, topic, dataNoUse) => {
@@ -93,8 +94,10 @@
     },
   };
 
-  ObserverService.addObserver(listener, "arakahuku-board-newest-num-updated");
-  ObserverService.addObserver(listener, "arakahuku-board-lifetime-updated");
+  preparingBoard.then(() => {
+    ObserverService.addObserver(listener, "arakahuku-board-newest-num-updated");
+    ObserverService.addObserver(listener, "arakahuku-board-lifetime-updated");
+  });
 
 })();
 

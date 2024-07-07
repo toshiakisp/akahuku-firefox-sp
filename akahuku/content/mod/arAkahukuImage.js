@@ -1,3 +1,16 @@
+export {arAkahukuImage, arAkahukuImageListener};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {Downloads} from '/content/downloads-content.js';
+
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuImageURL} from '/content/mod/arAkahukuLocationInfo.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuSound} from '/content/mod/arAkahukuSound.js';
 
 /**
  * 画像の保存のリスナ

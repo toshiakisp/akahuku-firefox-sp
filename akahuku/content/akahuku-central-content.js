@@ -1,7 +1,5 @@
 
-'strict mode';
-
-const AkahukuCentral = (()=>{
+export const AkahukuCentral = (()=>{
   let methods = [
     'register',
     'unregister',

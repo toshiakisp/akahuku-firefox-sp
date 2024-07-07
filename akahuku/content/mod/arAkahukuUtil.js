@@ -1,3 +1,4 @@
+export {arAkahukuUtil};
 
 /**
  * XPCOM周りの頻出処理を簡単にするモジュール

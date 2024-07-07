@@ -1,3 +1,10 @@
+export {arAkahukuTab, arAkahukuTabData};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuLocationInfo} from '/content/mod/arAkahukuLocationInfo.js';
 
 /**
  * ソート用のタブのデータ

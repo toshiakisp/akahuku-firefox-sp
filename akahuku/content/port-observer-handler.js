@@ -1,4 +1,4 @@
-'strict mode';
+export {PortObserverHandler};
 
 class PortObserverHandler {
   constructor(name, topic) {

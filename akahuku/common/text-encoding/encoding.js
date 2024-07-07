@@ -1,6 +1,14 @@
 // This is free and unencumbered software released into the public domain.
 // See LICENSE.md for more information.
 
+import EncodingIndexes from './encoding-indexes.js';
+export {
+  EncodingIndexes,
+  PolyFillTextEncoder as TextEncoder,
+  PolyFillTextDecoder as TextDecoder,
+};
+let PolyFillTextEncoder, PolyFillTextDecoder;
+
 /**
  * @fileoverview Global |this| required for resolving indexes in node.
  * @suppress {globalThis}
@@ -8,12 +16,7 @@
 (function(global) {
   'use strict';
 
-  // If we're in node require encoding-indexes and attach it to the global.
-  if (typeof module !== "undefined" && module.exports &&
-    !global["encoding-indexes"]) {
-    global["encoding-indexes"] =
-      require("./encoding-indexes.js")["encoding-indexes"];
-  }
+  global["encoding-indexes"] = EncodingIndexes;
 
   //
   // Utilities
@@ -3295,22 +3298,9 @@
     return new XUserDefinedDecoder(options);
   };
 
-  if (!global['TextEncoder'])
-    global['TextEncoder'] = TextEncoder;
-  else
-    global['PolyFillTextEncoder'] = TextEncoder;
-  if (!global['TextDecoder'])
-    global['TextDecoder'] = TextDecoder;
-  else
-    global['PolyFillTextDecoder'] = TextDecoder;
-
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports = {
-      TextEncoder: global['TextEncoder'],
-      TextDecoder: global['TextDecoder'],
-      EncodingIndexes: global["encoding-indexes"]
-    };
-  }
+  // ESM exports
+  PolyFillTextEncoder = TextEncoder;
+  PolyFillTextDecoder = TextDecoder;
 
 // For strict environments where `this` inside the global scope
 // is `undefined`, take a pure object instead

@@ -1,3 +1,9 @@
+export {arAkahukuDOM};
+
+import {default as _console} from '/content/console.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+
+var Akahuku = {debug: _console};
 
 /**
  * DOM 拡張

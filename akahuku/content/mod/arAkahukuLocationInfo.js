@@ -1,4 +1,15 @@
-/* global arAkahukuLocationInfoBase */
+export {arAkahukuLocationInfo, arAkahukuImageURLInfo, arAkahukuImageURL};
+
+import {Akahuku} from '/content/akahuku.js';
+import {ObserverService} from '/content/observer-service-content.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuLocationInfoBase} from '/content/mod/arAkahukuLocationInfoBase.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuTitle} from '/content/mod/arAkahukuTitle.js';
 
 /**
  * アドレス、スレの情報 (拡張)

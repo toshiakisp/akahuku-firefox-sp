@@ -1,3 +1,14 @@
+export {arAkahukuSidebar, arAkahukuSidebarParam, arAkahukuSidebarBoard, arAkahukuSidebarThread};
+
+import {Akahuku} from '/content/akahuku.js';
+import {HistoryService} from '/content/history-service-content.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuMergeItemCallbackList} from '/content/mod/arAkahukuCatalog.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuWindow} from '/content/mod/arAkahukuWindow.js';
 
 /**
  * サイドバーのスレ情報

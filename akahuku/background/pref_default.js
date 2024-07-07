@@ -1,4 +1,9 @@
-/* global pref, prefEndDeclare */
+export let defaultPrefs = new Map();
+
+function pref(name, v) {
+  defaultPrefs.set(name, v);
+}
+
 pref("version", browser.runtime.getManifest().version);
 pref("savepref", "0");
 
@@ -409,4 +414,4 @@ pref("wheel.reload.loop", false);
 pref("wheel.reload.reply", true);
 pref("wheel.reload.reply.sync", false);
 pref("wheel.reload.threshold", 3);
-prefEndDeclare();
+

@@ -1,3 +1,7 @@
+export {arAkahukuJPEG};
+
+import {Akahuku} from '/content/akahuku.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
 
 /**
  * JPEG のサムネ管理

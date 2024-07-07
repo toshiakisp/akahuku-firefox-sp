@@ -1,4 +1,5 @@
-'use strict';
+
+export {Prefs};
 
 const PrefsStorage = {
 
@@ -184,6 +185,7 @@ const Prefs = {
       })
       .then(() => {
         //console.log('pref-content.js: successfully initialized');
+        return this;
       })
       .catch((e) => {
         console.error("pref-content.js: initialize failed!", e);
@@ -192,5 +194,5 @@ const Prefs = {
   },
 };
 
-
+await Prefs.initialize();
 

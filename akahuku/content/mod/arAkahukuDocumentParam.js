@@ -1,3 +1,4 @@
+export {arAkahukuDocumentParam};
 
 /**
  * ドキュメントごとの情報

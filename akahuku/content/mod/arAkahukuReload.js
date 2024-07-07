@@ -1,3 +1,26 @@
+export {arAkahukuReload, arAkahukuReloadParam, arAkahukuReloadCacheWriter};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuCentral} from '/content/akahuku-central-content.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuFile} from '/content/mod/arAkahukuFile.js';
+import {arAkahukuImage} from '/content/mod/arAkahukuImage.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuQuote} from '/content/mod/arAkahukuQuote.js';
+import {arAkahukuSidebar} from '/content/mod/arAkahukuSidebar.js';
+import {arAkahukuSound} from '/content/mod/arAkahukuSound.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuTitle} from '/content/mod/arAkahukuTitle.js';
+import {arAkahukuUI} from '/content/mod/arAkahukuUI.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+import {arAkahukuWindow} from '/content/mod/arAkahukuWindow.js';
 
 /**
  * [続きを読む] のキャッシュ書き込み

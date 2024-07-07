@@ -1,6 +1,6 @@
 'use strict';
 
-(() => {
+(async () => {
 
   const targets = [
     {module: arAkahukuP2P},
@@ -34,6 +34,7 @@
     return updated;
   };
 
+  await Prefs.preparing;
   initAllContextMenus();
 
   Prefs.onChanged.addListener((bag) => {

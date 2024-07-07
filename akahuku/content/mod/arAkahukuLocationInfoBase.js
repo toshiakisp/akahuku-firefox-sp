@@ -1,3 +1,8 @@
+export {arAkahukuLocationInfoBase};
+
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuFileName} from '/content/mod/arAkahukuFileName.js';
 
 /**
  * アドレス、スレの情報 (基底)

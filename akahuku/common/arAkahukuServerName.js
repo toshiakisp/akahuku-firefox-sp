@@ -1,3 +1,5 @@
+export {arAkahukuServerData,
+  arAkahukuServerName, arAkahukuServerShortName, arAkahukuServerTrueName, arAkahukuMaxNum, arAkahukuCatalogBoards};
 
 /**
  * 板情報

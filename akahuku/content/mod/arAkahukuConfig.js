@@ -1,53 +1,29 @@
+export {arAkahukuConfig};
+
+import {Prefs} from '/content/pref-content.js';
+import {default as _console} from '/content/console.js';
+
+var Akahuku = {debug: _console};
+
 /**
  * 設定管理
- *   Inherits From: nsIObserver
  */
 var arAkahukuConfig = {
   isObserving : false,   /* boolean 監視しているかどうか */
+  modules : [], /* 管理モジュールリスト: getConfig()/onPrefChanged()を呼ぶ対象 */
     
   /**
    * 初期化処理
    */
-  init : function () {
-    arAkahukuConfig.loadPrefBranch ();
-        
-      /* 設定を取得する */
-      Akahuku.getConfig ();
-      arAkahukuTab.getConfig ();
-      arAkahukuQuote.getConfig ();
-      arAkahukuJPEG.getConfig ();
-      arAkahukuImage.getConfig ();
-      arAkahukuSidebar.getConfig ();
-      arAkahukuSound.getConfig ();
-      arAkahukuP2P.getConfig ();
-      arAkahukuBoard.getConfig ();
-      arAkahukuFileName.getConfig ();
-      arAkahukuTitle.getConfig ();
-      arAkahukuScroll.getConfig ();
-      arAkahukuDelBanner.getConfig ();
-      arAkahukuWheel.getConfig ();
-      arAkahukuMHT.getConfig ();
-      arAkahukuPostForm.getConfig ();
-      arAkahukuReload.getConfig ();
-      arAkahukuThreadOperator.getConfig ();
-      arAkahukuThread.getConfig ();
-      arAkahukuLink.getConfig ();
-      arAkahukuPopupQuote.getConfig ();
-      arAkahukuCatalog.getConfig ();
-      arAkahukuUI.getConfig ();
-            
-    this._listener = (bag) => {
-      arAkahukuConfig.observe(null, "nsPref:changed", null);
-    };
-    Prefs.onChanged.addListener(this._listener);
-    arAkahukuConfig.isObserving = true;
-  },
-    
-  /**
-   * prefBranch を設定し直す
-   */
-  loadPrefBranch : function () {
-    // no need for Pref
+  init : function (scope=null) {
+    this.callForSubmodules('getConfig', {scope: scope});
+    if (!arAkahukuConfig.isObserving) {
+      this._listener = (bag) => {
+        arAkahukuConfig.observe(null, "nsPref:changed", null);
+      };
+      Prefs.onChanged.addListener(this._listener);
+      arAkahukuConfig.isObserving = true;
+    }
   },
     
   /**
@@ -58,6 +34,36 @@ var arAkahukuConfig = {
       Prefs.onChanged.removeListener(this._listener);
       this._listener = null;
       arAkahukuConfig.isObserving = false;
+    }
+  },
+
+  /**
+   * name の関数をサブモジュール全てに対して呼び出す
+   */
+  callForSubmodules : function (name, opts={scope:null, keepOnFail:false}) {
+    for (const [k, m] of this.modules.entries()) {
+      let mod = null;
+      if (typeof m == 'object' && m !== null) {
+        mod = m;
+      } else if (opts?.scope) {// lazy resolve
+        try {
+          mod = opts.scope[m];
+        } catch (e) { Akahuku.debug.exception(e);
+        }
+        if (!(typeof mod == 'object' && mod !== null)) {
+          Akahuku.debug.error(`Invalid object: "${m}" in ${opts.scope} is`, mod);
+          mod = null;
+        }
+        this.modules[k] = mod;
+      }
+      try {
+        if (mod && name in mod)
+          mod[name].call(mod);
+      } catch (e) {
+        Akahuku.debug.exception(e);
+        if (!opts?.keepOnFail)
+          this.modules[k] = null;
+      }
     }
   },
     
@@ -140,37 +146,8 @@ var arAkahukuConfig = {
   observe : function (subject, topic, data){
     if (topic == "nsPref:changed"){
       /* 設定の変更の場合 */
-            
-      /* 設定を取得する */
-      Akahuku.getConfig ();
-      arAkahukuTab.getConfig ();
-      arAkahukuQuote.getConfig ();
-      arAkahukuJPEG.getConfig ();
-      arAkahukuImage.getConfig ();
-      arAkahukuSidebar.getConfig ();
-      arAkahukuSound.getConfig ();
-      arAkahukuP2P.getConfig ();
-      arAkahukuBoard.getConfig ();
-      arAkahukuFileName.getConfig ();
-      arAkahukuTitle.getConfig ();
-      arAkahukuScroll.getConfig ();
-      arAkahukuDelBanner.getConfig ();
-      arAkahukuWheel.getConfig ();
-      arAkahukuMHT.getConfig ();
-      arAkahukuPostForm.getConfig ();
-      arAkahukuReload.getConfig ();
-      arAkahukuThreadOperator.getConfig ();
-      arAkahukuThread.getConfig ();
-      arAkahukuLink.getConfig ();
-      arAkahukuPopupQuote.getConfig ();
-      arAkahukuCatalog.getConfig ();
-      arAkahukuUI.getConfig ();
-      arAkahukuUI.showPanel ();
-      arAkahukuUI.setPanelStatus ();
-            
-      arAkahukuStyle.onPrefChanged ();
-            
-      arAkahukuP2P.update ();
+      this.callForSubmodules('getConfig');
+      this.callForSubmodules('onPrefChanged', {keepOnFail: true});
     }
   },
   

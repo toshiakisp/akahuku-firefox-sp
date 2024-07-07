@@ -1,3 +1,7 @@
+export {arAkahukuWindow};
+
+import {default as _console} from '/content/console.js';
+var Akahuku = {debug: _console};
 
 /**
  * ウィンドウ管理

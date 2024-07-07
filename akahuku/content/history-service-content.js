@@ -1,4 +1,6 @@
-'strict mode';
+export {HistoryService};
+
+import {PortObserverHandler} from '/content/port-observer-handler.js';
 
 const HistoryService = (function () {
 

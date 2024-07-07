@@ -1,3 +1,11 @@
+export {arAkahukuCompat};
+
+import {Downloads} from '/content/downloads-content.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+
+import {default as _console} from '/content/console.js';
+var Akahuku = {debug: _console};
+
 /**
  * Firefox/Gecko バージョン間の差異を吸収する
  */

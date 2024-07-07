@@ -1,3 +1,4 @@
+export {arAkahukuPopup, arAkahukuPopupParam, arAkahukuPopupData, arAkahukuCacheImageData};
 
 /**
  * ポップアップ画像のキャッシュデータ

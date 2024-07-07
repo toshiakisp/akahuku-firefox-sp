@@ -107,6 +107,7 @@ browser.commands.onCommand.addListener((command) => {
 });
 
 // Monitor Prefs to make shortcuts disable/enable via options UI
+Prefs.preparing.then(() => {
 Prefs.onChanged.addListener((updates) => {
   [
     ['focus-comment','commentbox.shortcut'],
@@ -133,5 +134,6 @@ Prefs.onChanged.addListener((updates) => {
         shortcut: updates[keycombo_pref]});
     }
   });
+});
 });
 

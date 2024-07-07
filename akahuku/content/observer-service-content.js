@@ -1,4 +1,6 @@
-'strict mode';
+export {ObserverService};
+
+import {PortObserverHandler} from '/content/port-observer-handler.js';
 
 const ObserverService = (function () {
   var registry = new Map();

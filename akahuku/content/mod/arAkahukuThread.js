@@ -1,3 +1,19 @@
+export {arAkahukuThread, arAkahukuThreadParam, arAkahukuLastReplyInfo, arAkahukuResPanelParam};
+
+import {Akahuku} from '/content/akahuku.js';
+import {ObserverService} from '/content/observer-service-content.js';
+
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuImageURL} from '/content/mod/arAkahukuLocationInfo.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuPostForm} from '/content/mod/arAkahukuPostForm.js';
+import {arAkahukuQuote} from '/content/mod/arAkahukuQuote.js';
+import {arAkahukuTitle} from '/content/mod/arAkahukuTitle.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
 
 /**
  * レスパネル管理データ

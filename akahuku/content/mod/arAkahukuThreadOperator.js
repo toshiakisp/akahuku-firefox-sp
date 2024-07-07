@@ -1,3 +1,15 @@
+export {arAkahukuThreadOperator, arAkahukuThreadOperatorParam, arAkahukuThumbnailPopupData};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuMHT} from '/content/mod/arAkahukuMHT.js';
+import {arAkahukuPopup} from '/content/mod/arAkahukuPopup.js';
+import {arAkahukuPopupParam} from '/content/mod/arAkahukuPopup.js';
+import {arAkahukuPostForm} from '/content/mod/arAkahukuPostForm.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuStyle} from '/content/mod/arAkahukuStyle.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
 
 /**
  * サムネのポップアップデータ

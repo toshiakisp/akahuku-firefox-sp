@@ -1,3 +1,13 @@
+export {arAkahukuQuote};
+
+import {Akahuku} from '/content/akahuku.js';
+import {Tabs} from '/content/tabs-content.js';
+
+import {arAkahukuClipboard} from '/content/mod/arAkahukuClipboard.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuPostForm} from '/content/mod/arAkahukuPostForm.js';
 
 /**
  * 引用管理

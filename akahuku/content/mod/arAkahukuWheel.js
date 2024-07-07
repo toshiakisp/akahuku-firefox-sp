@@ -1,3 +1,11 @@
+export {arAkahukuWheel};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuCatalog} from '/content/mod/arAkahukuCatalog.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuUI} from '/content/mod/arAkahukuUI.js';
 
 /**
  * ホイール管理
@@ -20,8 +28,6 @@ var arAkahukuWheel = {
   count : 0,           /* Number  ホイールの操作回数 */
   timeoutID : null,       /* Number  最新のタイムアウトの ID */
     
-  withYASSExt : -1, /* Nmber  YASS拡張の存在フラグ (-1:未調査,0:無し,1:有り)*/
-
   /**
    * 設定を読み込む
    */
@@ -58,19 +64,6 @@ var arAkahukuWheel = {
         = arAkahukuConfig
         .initPref ("bool", "akahuku.wheel.reload.catalog.up", false);
     }
-
-    if (arAkahukuWheel.withYASSExt == -1) {
-      arAkahukuCompat.AddonManager.getAddonByID
-        ("yetanothersmoothscrolling@kataho", function (addon) {
-          if (addon && addon.isActive) {
-            arAkahukuWheel.withYASSExt = 1;
-            Akahuku.debug.log ("enable special support for YASS extension");
-          }
-          else {
-            arAkahukuWheel.withYASSExt = 0;
-          }
-        });
-    }
   },
 
   /**
@@ -97,19 +90,6 @@ var arAkahukuWheel = {
       var scrollY = targetWindow.scrollY;
       var ok = true;
       var up = false;
-            
-      if (arAkahukuWheel.withYASSExt > 0) {
-        // Yet Another Smooth Scrolling 拡張の
-        // 画面端での跳ね返り機能に対する特別対処
-        var yass = targetDocument.getElementById ("yass_bottom_edge");
-        if (yass && yass.offsetHeight > 0) {
-          scrollY += yass.offsetHeight;
-        }
-        yass = targetDocument.getElementById ("yass_top_edge");
-        if (yass && yass.offsetHeight > 0) {
-          scrollY -= yass.offsetHeight;
-        }
-      }
 
       if (wheelDelta < 0
           || scrollY <= targetWindow.scrollMaxY - 1) {

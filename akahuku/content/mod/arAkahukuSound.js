@@ -1,3 +1,10 @@
+export {arAkahukuSound};
+
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+
+import {default as _console} from '/content/console.js';
+var Akahuku = {debug: _console};
 
 /**
  * 音管理

@@ -55,10 +55,13 @@ arAkahukuStyleData.prototype = {
  * スタイル管理
  */
 var arAkahukuStyle = {
+  initialized: false,
   /**
    * 初期化処理
    */
-  init : function () {
+  init : async function () {
+    await Prefs.preparing;
+    this.initialized = true;
     if (Prefs.getItem('all')) {
       this.modifyStyleFile(true);
     }
@@ -66,8 +69,10 @@ var arAkahukuStyle = {
   },
 
   term : function () {
-    Prefs.onChanged.removeListener(this.onPrefChanged);
-    this.modifyStyleFile(false);
+    if (this.initialized) {
+      Prefs.onChanged.removeListener(this.onPrefChanged);
+      this.modifyStyleFile(false);
+    }
     this._handlers.clear();
   },
 
@@ -86,6 +91,9 @@ var arAkahukuStyle = {
 
   addUserStyleSheetHandler: function (handler) {
     this._handlers.push(handler);
+    if (!this.initialized) {
+      return;
+    }
 
     // debouncing
     window.clearTimeout(this._timer);

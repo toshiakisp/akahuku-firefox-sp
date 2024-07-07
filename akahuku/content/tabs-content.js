@@ -1,5 +1,5 @@
 
-'strict mode';
+export {Tabs};
 
 const Tabs = (()=>{
   let methods = [

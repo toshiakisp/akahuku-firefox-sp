@@ -1,5 +1,10 @@
-/* global arAkahukuLocationInfo arAkahukuFileName AkahukuFileUtil arAkahukuServerName */
-'use strict';
+
+import {AkahukuCentral} from '/content/akahuku-central-content.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuFileName} from '/content/mod/arAkahukuFileName.js';
+import {arAkahukuLocationInfoBase} from '/content/mod/arAkahukuLocationInfoBase.js';
+import {arAkahukuServerName} from '/common/arAkahukuServerName.js';
 
 function warn(...args) {
   console.warn('akahuku-ext/options:',...args);
@@ -1929,21 +1934,9 @@ let form = document.getElementById('prefs');
 
 let basePrefs = null;
 
-// Shim for subsystems
-let arAkahukuConfig = {
-  initPref : function (type, name, value) {
-    if (name.startsWith('akahuku.'))
-      name = name.substring('akahuku.'.length);
-    if (basePrefs)
-      return basePrefs[name];
-    return value;
-  }
-};
-
 initKeycodeMenu();
 initGroupHandler();
 initDeck();
-initObservers();
 
 // initialize after receiving prefs respons from background
 let transaction = browser.runtime.sendMessage(prefGetMsg)
@@ -1953,6 +1946,13 @@ let transaction = browser.runtime.sendMessage(prefGetMsg)
       error('No response for pref.js/get message!');
       return;
     }
+
+    initObservers();
+
+    arAkahukuConfig.modules = [
+      arAkahukuFileName,
+    ];
+    arAkahukuConfig.init();
 
     // Activate buttons for ready
     btn_init.disabled = false;

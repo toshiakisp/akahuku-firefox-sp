@@ -1,5 +1,19 @@
+export {arAkahukuURLUtil};
 
-/* global Prefs */
+// Dynamic conditional import (run in background script, or not)
+let Prefs, pref_path, inBackground = false;
+try {
+  inBackground = (browser.extension.getBackgroundPage() == window);
+} catch (e) {
+}
+if (inBackground) {
+  pref_path = '/background/pref.js';
+} else {
+  pref_path = '/content/pref-content.js';
+}
+await import(pref_path).then(m => {
+  Prefs = m.Prefs;
+});
 
 var arAkahukuURLUtil = {
   protocolHandler : {

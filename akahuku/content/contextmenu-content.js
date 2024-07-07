@@ -1,6 +1,18 @@
-'strict mode';
 
-(function () {
+import {Akahuku} from '/content/akahuku.js';
+import {ObserverService} from '/content/observer-service-content.js';
+
+import {arAkahukuImage} from '/content/mod/arAkahukuImage.js';
+import {arAkahukuJPEG} from '/content/mod/arAkahukuJPEG.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuMHT} from '/content/mod/arAkahukuMHT.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuPostForm} from '/content/mod/arAkahukuPostForm.js';
+import {arAkahukuQuote} from '/content/mod/arAkahukuQuote.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuUI} from '/content/mod/arAkahukuUI.js';
+
+export default function initContextMenuContent () {
 
   // Capture target of context menu
   let lastTarget;
@@ -189,5 +201,5 @@
     }
     return;
   });
-})();
+};
 

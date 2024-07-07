@@ -1,3 +1,10 @@
+export {arAkahukuTitle};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
 
 /**
  * タイトル管理

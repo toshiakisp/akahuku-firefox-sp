@@ -1,8 +1,8 @@
+export {AkahukuConsole};
+
 /**
  * For debug
  */
-'strict mode';
-
 function AkahukuConsole(optPrefix) {
   this.enabled = true;
   this.prefix = optPrefix || "Akahuku";
@@ -161,4 +161,6 @@ AkahukuConsole.prototype = {
     return "(0x" + code.toString(16) + ")";
   },
 };
+
+export default new AkahukuConsole();
 

@@ -1,3 +1,11 @@
+export {arAkahukuDelBanner};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuImageURL} from '/content/mod/arAkahukuLocationInfo.js';
+
 /**
  * 広告削除管理
  *   [広告を隠す]

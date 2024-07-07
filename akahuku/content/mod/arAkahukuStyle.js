@@ -1,3 +1,19 @@
+export {arAkahukuStyle, arAkahukuStyleData};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuCatalog} from '/content/mod/arAkahukuCatalog.js';
+import {arAkahukuDelBanner} from '/content/mod/arAkahukuDelBanner.js';
+import {arAkahukuImage} from '/content/mod/arAkahukuImage.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuMHT} from '/content/mod/arAkahukuMHT.js';
+import {arAkahukuPopupQuote} from '/content/mod/arAkahukuPopupQuote.js';
+import {arAkahukuPostForm} from '/content/mod/arAkahukuPostForm.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuScroll} from '/content/mod/arAkahukuScroll.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuThreadOperator} from '/content/mod/arAkahukuThreadOperator.js';
+import {arAkahukuTitle} from '/content/mod/arAkahukuTitle.js';
 
 /**
  * スタイルデータ

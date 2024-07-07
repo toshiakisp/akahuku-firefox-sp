@@ -1,12 +1,10 @@
 /**
  * Extension preference background script
  *
- * DependsOn: Map, for...of, Map.prototype.keys (Firefox 20)
- * DependsOn: browser.runtime.onMessage (Firefox 45)
  * Permissions: storage
  */
 
-"use strict";
+export {Prefs};
 
 var Prefs = {
   _defaultData: new Map(),
@@ -216,51 +214,4 @@ var Prefs = {
     }
   },
 };
-
-
-/**
- * Message handler from content scripts to this background script
- */
-browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if ("target" in msg && msg.target === "pref.js") {
-    switch (msg.command) {
-      case "get":
-        sendResponse(Prefs.get (msg.args [0]));
-        break;
-      case "set":
-        sendResponse(Prefs.set (msg.args [0]));
-        break;
-      case "getDefault":
-        sendResponse(Prefs.getDefault (msg.args [0]));
-        break;
-      case "getUser":
-        sendResponse(Prefs.getUser (msg.args [0]));
-        break;
-    }
-  }
-});
-
-browser.runtime.onConnect.addListener((port) => {
-  Prefs.onConnect(port);
-});
-
-/**
- * declare pref entry with a default value
- */
-function pref(name, defaultValue) {
-  Prefs.setDefault(name, defaultValue);
-}
-
-function prefEndDeclare() {
-  browser.storage.local.get(null).then (function (localPrefs) {
-    for (var prop in localPrefs) {
-      if (!Prefs.hasItem(prop)) {
-        browser.storage.local.remove(prop);
-        console.log('remove invalid pref: "' + prop + '"');
-        delete localPrefs[prop];
-      }
-    }
-    Prefs.set (localPrefs);
-  });
-}
 

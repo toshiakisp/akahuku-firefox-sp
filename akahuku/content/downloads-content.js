@@ -1,5 +1,5 @@
 
-'strict mode';
+export {Downloads};
 
 const Downloads = (()=>{
   let methods = [

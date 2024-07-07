@@ -1,3 +1,11 @@
+export {arAkahukuBoard, arAkahukuBoardInfo};
+
+import {AkahukuCentral} from '/content/akahuku-central-content.js';
+import {ObserverService} from '/content/observer-service-content.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+
+import {default as _console} from '/content/console.js';
+var Akahuku = {debug: _console};
 
 function arAkahukuBoardInfo (id) {
   this.id = id;
@@ -41,6 +49,11 @@ arAkahukuBoardList.prototype = {
   removeBoardInfo : function (idOrInfo) {
     var id = this._getBoardId (idOrInfo);
     delete this._boards [id];
+  },
+  clear : function () {
+    for (let id in this._boards) {
+      delete this._boards [id];
+    }
   },
 
   getBoardProperty : function (idOrInfo, prop) {
@@ -93,22 +106,42 @@ var arAkahukuBoard = {
   externalList : new Array (), /* Array  外部の板のリスト */
 
   boardList : new arAkahukuBoardList (),
-  internalList: new Array (),  /* Array  内部の板のリスト */
-  
+
   observed : false,
   observePaused : false,
 
   /**
    * 初期化処理
    */
-  init : function () {
+  init : async function () {
     if (!this.observed) {
+      await AkahukuCentral.get('board', null)
+        .then((boards) => {
+          this.boardList.clear ();
+          for (let b of boards) {
+            let board = new arAkahukuBoardInfo (b.name);
+            board.name = b.stdName;
+            board.shortName = b.shortName;
+            board.trueName = b.trueName;
+            board.maxNum = b.maxNum;
+            board.isInternal = b.isInternal;
+            board.hasCatalog = b.hasCatalog;
+            board.newestNum = b.newestNum;
+            board.preserveMin = b.preserveMin;
+            this.boardList.addBoardInfo (b.name, board);
+          }
+          Akahuku.debug.log('arAkahukuBoard: getting board from central is successfully done.');
+        }).catch((e) => {
+          Akahuku.debug.exception(e);
+        });
+
       ObserverService.addObserver(this,
         "arakahuku-board-newest-num-updated");
       ObserverService.addObserver(this,
         "arakahuku-board-lifetime-updated");
       this.observed = true;
     }
+    return this;
   },
   
   /**
@@ -116,6 +149,7 @@ var arAkahukuBoard = {
    */
   term : function () {
     if (this.observed) {
+      this.boardList.clear ();
       ObserverService.removeObserver(this,
         "arakahuku-board-newest-num-updated");
       ObserverService.removeObserver(this,
@@ -360,29 +394,5 @@ var arAkahukuBoard = {
 
 };
 
-(function () {
-  var scope = {};
-  scope.arAkahukuServerData = arAkahukuServerData;
-
-  for (var id in scope.arAkahukuServerData) {
-    var board = new arAkahukuBoardInfo (id);
-    board.isInternal = true;
-    board.name = scope.arAkahukuServerData [id][0];
-    board.shortName = scope.arAkahukuServerData [id][1];
-    board.trueName = scope.arAkahukuServerData [id][2];
-    if (scope.arAkahukuServerData [id][3] != -1) {
-      board.maxNum = scope.arAkahukuServerData [id][3];
-    }
-    if (scope.arAkahukuServerData [id][4]) {
-      board.hasCatalog = (scope.arAkahukuServerData [id][4] == true);
-    }
-    if (scope.arAkahukuServerData [id].length > 5) {
-      var extra = scope.arAkahukuServerData [id][5];
-      for (var prop in extra) {
-        board [prop] = extra [prop];
-      }
-    }
-    arAkahukuBoard.boardList.addBoardInfo (id, board);
-  }
-})();
+await arAkahukuBoard.init();
 

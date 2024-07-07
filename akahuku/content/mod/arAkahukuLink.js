@@ -1,3 +1,21 @@
+export {arAkahukuLink, arAkahukuLinkParam,
+  arAkahukuLinkExtListener, arAkahukuLinkifyResult,
+  arAkahukuMatchPattern, arAkahukuUserMatchPattern};
+
+import {Akahuku} from '/content/akahuku.js';
+
+import {arAkahukuClipboard} from '/content/mod/arAkahukuClipboard.js';
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuImage} from '/content/mod/arAkahukuImage.js';
+import {arAkahukuMHT} from '/content/mod/arAkahukuMHT.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuUI} from '/content/mod/arAkahukuUI.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+import {arAkahukuWindow} from '/content/mod/arAkahukuWindow.js';
 
 /**
  * リンク変換器

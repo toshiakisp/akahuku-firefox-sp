@@ -1,8 +1,17 @@
+export {Cache};
+
+import {Akahuku} from '/content/akahuku.js';
+import {AkahukuFileUtil} from '/content/fileutil.js';
+
+import {arAkahukuCompat} from '/content/mod/arAkahukuCompat.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+import {arAkahukuWindow} from '/content/mod/arAkahukuWindow.js';
+
 /**
  * キャッシュ制御モジュール
  */
-Akahuku.Cache = new function () {
-  "use strict";
+let Cache = new function () {
 
   /**
    * 初期化処理
@@ -94,7 +103,7 @@ Akahuku.Cache = new function () {
     }
 
     if (info.isCache && info.isReply) {
-      Akahuku.Cache.asyncGetStatus
+      Cache.asyncGetStatus
         ({url: targetDocument.location.href,
           triggeringNode: targetDocument},
          function (cacheStatus) {
@@ -119,7 +128,7 @@ Akahuku.Cache = new function () {
     var browser
       = arAkahukuWindow.getBrowserForWindow
       (targetDocument.defaultView);
-    Akahuku.Cache.showCacheNotification (browser, text);
+    Cache.showCacheNotification (browser, text);
   };
 
   this.showCacheNotification = function (browser, text) {
@@ -156,7 +165,7 @@ Akahuku.Cache = new function () {
               && /\d+\.htm$/.test (url)) {
             source.url = candidates.shift ();
             if (source.url) {
-              Akahuku.Cache.asyncGetHttpCacheStatus
+              Cache.asyncGetHttpCacheStatus
                 (source, false, callbackHttpCacheStatus);
               return;
             }
@@ -164,11 +173,11 @@ Akahuku.Cache = new function () {
           callback.apply (null, [status]);
         };
       source.url = candidates.shift ();
-      Akahuku.Cache.asyncGetHttpCacheStatus
+      Cache.asyncGetHttpCacheStatus
         (source, false, callbackHttpCacheStatus);
     }
     else {
-      Akahuku.Cache.asyncGetHttpCacheStatus (source, false, callback);
+      Cache.asyncGetHttpCacheStatus (source, false, callback);
     }
   };
   this.asyncGetHttpCacheStatus = function (source, noRedirect, callback) {
@@ -285,7 +294,7 @@ Akahuku.Cache = new function () {
       = Akahuku.protocolHandler
       .enAkahukuURI ("cache", contentLocation);
 
-    // Akahuku.Cache によって制御されているページでは
+    // Cache によって制御されているページでは
     // ロード成功したキャッシュは保持リストに送る
     var param = Akahuku.getDocumentParam (context.ownerDocument);
     if (param && "cachedimages" in param) {
@@ -322,7 +331,7 @@ Akahuku.Cache = new function () {
       // キャッシュされてると期待できない状態
       return;
     }
-    Akahuku.Cache.asyncGetStatus
+    Cache.asyncGetStatus
       ({url: status.requestURI.spec, triggeringNode: context},
        function (cacheStatus) {
          if (!cacheStatus.isExist) {
@@ -340,7 +349,7 @@ Akahuku.Cache = new function () {
            return;
          }
          if (!arAkahukuCompat.isDeadWrapper (context)) {
-           Akahuku.Cache.enCacheURIContext (context, cacheStatus.key);
+           Cache.enCacheURIContext (context, cacheStatus.key);
          }
        });
   };
@@ -348,7 +357,7 @@ Akahuku.Cache = new function () {
   this.enCacheURIForImages = function (rootElement) {
     var nodes = rootElement.getElementsByTagName ("img");
     for (var i = 0; i < nodes.length; i ++) {
-      Akahuku.Cache.enCacheURIContextIfCached (nodes [i]);
+      Cache.enCacheURIContextIfCached (nodes [i]);
     }
   };
 
@@ -385,7 +394,7 @@ Akahuku.Cache = new function () {
       this._lastEntry = null;
       this._isPending = true;
       var source = {url: key, contextWindow: this._contextWindow};
-      Akahuku.Cache.asyncOpenCache (source, this.openFlag, this);
+      Cache.asyncOpenCache (source, this.openFlag, this);
     },
     // nsICacheEntryOpenCallback
     mainThreadOnly : true,
@@ -421,7 +430,7 @@ Akahuku.Cache = new function () {
         var dest = this._resolveRedirection (entry);
         if (dest) {
           var source = {url: dest, contextWindow: this._contextWindow};
-          Akahuku.Cache.asyncOpenCache (source, this.openFlag, this);
+          Cache.asyncOpenCache (source, this.openFlag, this);
           return; // dest の onCacheEntryAvailable を待つ
         }
       }
@@ -507,7 +516,7 @@ Akahuku.Cache = new function () {
         var listener = new CacheEtimeRestorer (t);
         try {
           source.url = this.keys [i];
-          Akahuku.Cache.asyncOpenCacheToRead (source, listener);
+          Cache.asyncOpenCacheToRead (source, listener);
         }
         catch (e) { Akahuku.debug.exception (e);
         }
@@ -522,7 +531,7 @@ Akahuku.Cache = new function () {
       var that = this;
       return function (event) {
         if (event.target.src != src) return;
-        var finder = new Akahuku.Cache.RedirectedCacheFinder ();
+        var finder = new Cache.RedirectedCacheFinder ();
         finder.init (that.contextWindow);
         finder.asyncOpen
           (originalSrc,

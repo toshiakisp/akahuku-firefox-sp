@@ -1,3 +1,9 @@
+export {AkahukuFileUtil, OS};
+
+import {default as _console} from '/content/console.js';
+
+var Akahuku = {debug: _console};
+
 /**
  * Utilities for DOM File operations
  */

@@ -1,8 +1,50 @@
+export {Akahuku};
+
+import {AkahukuCentral} from '/content/akahuku-central-content.js';
+import {default as _console} from '/content/console.js';
+
+import {Cache} from '/content/mod/arAkahukuCache.js';
+import {arAkahukuBoard} from '/content/mod/arAkahukuBoard.js';
+import {arAkahukuCatalog} from '/content/mod/arAkahukuCatalog.js';
+import {arAkahukuConfig} from '/content/mod/arAkahukuConfig.js';
+import {arAkahukuConverter} from '/content/mod/arAkahukuConverter.js';
+import {arAkahukuDOM} from '/content/mod/arAkahukuDOM.js';
+import {arAkahukuDelBanner} from '/content/mod/arAkahukuDelBanner.js';
+import {arAkahukuDocumentParam} from '/content/mod/arAkahukuDocumentParam.js';
+import {arAkahukuFile} from '/content/mod/arAkahukuFile.js';
+import {arAkahukuFileName} from '/content/mod/arAkahukuFileName.js';
+import {arAkahukuImage} from '/content/mod/arAkahukuImage.js';
+import {arAkahukuJPEG} from '/content/mod/arAkahukuJPEG.js';
+import {arAkahukuLink} from '/content/mod/arAkahukuLink.js';
+import {arAkahukuLocationInfo} from '/content/mod/arAkahukuLocationInfo.js';
+import {arAkahukuMHT} from '/content/mod/arAkahukuMHT.js';
+import {arAkahukuP2P} from '/content/mod/arAkahukuP2P.js';
+import {arAkahukuPopupQuote} from '/content/mod/arAkahukuPopupQuote.js';
+import {arAkahukuPostForm} from '/content/mod/arAkahukuPostForm.js';
+import {arAkahukuQuote} from '/content/mod/arAkahukuQuote.js';
+import {arAkahukuReload} from '/content/mod/arAkahukuReload.js';
+import {arAkahukuScroll} from '/content/mod/arAkahukuScroll.js';
+import {arAkahukuSidebar} from '/content/mod/arAkahukuSidebar.js';
+import {arAkahukuSound} from '/content/mod/arAkahukuSound.js';
+import {arAkahukuStyle} from '/content/mod/arAkahukuStyle.js';
+import {arAkahukuTab} from '/content/mod/arAkahukuTab.js';
+import {arAkahukuThread} from '/content/mod/arAkahukuThread.js';
+import {arAkahukuThreadOperator} from '/content/mod/arAkahukuThreadOperator.js';
+import {arAkahukuTitle} from '/content/mod/arAkahukuTitle.js';
+import {arAkahukuUI} from '/content/mod/arAkahukuUI.js';
+import {arAkahukuUtil} from '/content/mod/arAkahukuUtil.js';
+import {arAkahukuWheel} from '/content/mod/arAkahukuWheel.js';
+
+import {default as initContextMenuContent} from '/content/contextmenu-content.js';
+
+_console.prefix = 'Akahuku debug(content)';
 
 /**
  * 本体 (Content)
  */
 var Akahuku = {
+  debug : _console,
+  Cache : Cache,
   protocolHandler : {
     // Dummy definitions
     enAkahukuURI: function (type, uri) {
@@ -233,6 +275,7 @@ var Akahuku = {
     arAkahukuSidebar.init ();
 
     Akahuku.initContextMenus ();
+    initContextMenuContent ();
 
     this.initialized = true;
   },
@@ -1017,8 +1060,11 @@ var Akahuku = {
     var wait = 0;
     if (text.match (/URL=([^\"]+)\"/)) {
       srcLocation = RegExp.$1;
-      var baseDir = arAkahukuUtil.newURIViaNode (location, null);
-      srcLocation = baseDir.resolve (srcLocation);
+      try {
+        let url = new URL(srcLocation, location);
+        srcLocation = url.href;
+      } catch (e) {
+      }
     }
     else if (text.match (/<script[ \t\r\n]+(language[ \t\r\n]*=[ \t\r\n]*[\"\']?JavaScript[\"\']?)>[ \t\r\n]*(<!--)?[ \t\r\n]*(.+)[ \t\r\n]*(\/\/-->)?[ \t\r\n]*<\/script>/)) {
       var code = RegExp.$3;
@@ -1796,4 +1842,31 @@ var Akahuku = {
     }
   },
 };
+
+arAkahukuConfig.modules = [
+  Akahuku,
+  arAkahukuTab,
+  arAkahukuQuote,
+  arAkahukuJPEG,
+  arAkahukuImage,
+  arAkahukuSidebar,
+  arAkahukuSound,
+  arAkahukuP2P,
+  arAkahukuBoard,
+  arAkahukuFileName,
+  arAkahukuTitle,
+  arAkahukuScroll,
+  arAkahukuDelBanner,
+  arAkahukuWheel,
+  arAkahukuMHT,
+  arAkahukuPostForm,
+  arAkahukuReload,
+  arAkahukuThreadOperator,
+  arAkahukuThread,
+  arAkahukuLink,
+  arAkahukuPopupQuote,
+  arAkahukuCatalog,
+  arAkahukuUI,
+  arAkahukuStyle,
+];
 
