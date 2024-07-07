@@ -1939,12 +1939,22 @@ initGroupHandler();
 initDeck();
 
 // initialize after receiving prefs respons from background
-let transaction = browser.runtime.sendMessage(prefGetMsg)
-  .then((initPrefs) => {
+let transaction;
+Promise.all([
+  transaction = browser.runtime.sendMessage(prefGetMsg),
+  AkahukuCentral.get('board', null),
+])
+  .then(([initPrefs, boards]) => {
     // on success
     if (!initPrefs) {
       error('No response for pref.js/get message!');
       return;
+    }
+    for (let b of boards) {
+      if (!b.isInternal && b.isFutaba) {
+        // 訪問済みの[未定義]の板もリストに
+        arAkahukuServerName [b.name] = '[\u672a\u5b9a\u7fa9] ' + (b.stdName || b.trueName);
+      }
     }
 
     initObservers();
