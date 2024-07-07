@@ -41,6 +41,7 @@ export default [
       "sort-imports": ["warn", {
         "allowSeparatedGroups": true,
       }],
+      "no-caller": "error",
     }
   },
   {

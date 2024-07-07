@@ -1593,7 +1593,7 @@ var arAkahukuMHT = {
       node = formDelform ? formDelform.nextSibling : null;
       while (node) {
         var canBeRemoved
-          = (function (node) {
+          = (function checkCanBeRemoved (node) {
             var numChildElements = 0;
             if (node.childNodes && node.childNodes.length > 0) {
               // 先に子孫を再帰チェック
@@ -1608,7 +1608,7 @@ var arAkahukuMHT = {
               }
               var numChildElements = elems.length;
               for (var i = 0; i < elems.length; i ++) {
-                if (arguments.callee.call (null, elems [i])) {
+                if (checkCanBeRemoved (elems [i])) {
                   // 子孫が空だったら
                   node.removeChild (elems [i]);
                   numChildElements --;

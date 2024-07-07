@@ -670,8 +670,8 @@ arAkahukuCatalogPopupData.prototype =  {
         + "cubic-bezier(0.333,-1,0.667,2)";
 
       var self = this;
-      this.popup.addEventListener ("transitionend", function (event) {
-        self.popup.removeEventListener (event.type, arguments.callee);
+      this.popup.addEventListener ("transitionend", function onTransitionEnd(event) {
+        self.popup.removeEventListener (event.type, onTransitionEnd);
         if (self.state != zoomState) {
           return;
         }

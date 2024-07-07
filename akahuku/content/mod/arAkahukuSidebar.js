@@ -266,6 +266,8 @@ var arAkahukuSidebar = {
   shortcutModifiersMeta : false,    /* Boolean  ショートカットキーの Meta */
   shortcutModifiersShift : false,   /* Boolean  ショートカットキーの Shift */
 
+  _timerSetPref : null,
+
   params : [],
   lastSidebarParam : null,
 
@@ -2462,11 +2464,12 @@ var arAkahukuSidebar = {
       if (presize != arAkahukuSidebar.thumbnailSize) {
         arAkahukuSidebar.setIframeHtmlStyle (targetDocument);
         // 設定に保存(デバウンス)
-        if (typeof arguments.callee._timerId !== "undefined") {
+        if (arAkahukuSidebar._timerSetPref) {
           targetDocument.defaultView
-            .clearTimeout (arguments.callee._timerId);
+            .clearTimeout (arAkahukuSidebar._timerSetPref);
+          arAkahukuSidebar._timerSetPref = null;
         }
-        arguments.callee._timerId
+        arAkahukuSidebar._timerSetPref
           = targetDocument.defaultView
           .setTimeout (function () {
             arAkahukuConfig.setIntPref
