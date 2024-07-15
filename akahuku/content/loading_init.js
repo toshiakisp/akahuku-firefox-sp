@@ -1,4 +1,5 @@
 if (document.readyState != 'complete'
+  && document.contentType == 'text/html'
   && !(window.frameElement
     && window.frameElement.id == 'akahuku_reply_target_frame')
 ) {
