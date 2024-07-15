@@ -314,9 +314,9 @@ var arAkahukuCompat = new function () {
   this.fetch = async function (resource, options={}, context=window) {
     const resourceURL = new context.URL(resource.url || resource.toString());
     const contextURL = new context.URL(context.location.href);
-    const fetchInContent = (context == window && content && content.fetch
-      ? content.fetch : context.fetch);
-    const fetchExtension = (content ? context.fetch : undefined);
+    const fetchInContent = (context == window && globalThis.content?.fetch
+      ? globalThis.content.fetch : context.fetch);
+    const fetchExtension = (globalThis.content ? context.fetch : undefined);
     if (context.origin == resourceURL.origin) {
       // same-origin => use content.fetch() same-origin
       return await fetchInContent(resource, options)
