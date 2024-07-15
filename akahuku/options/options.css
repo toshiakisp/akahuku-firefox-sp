@@ -1,3 +1,32 @@
+:root {
+  color-scheme: light dark;
+  --bg-color: #f9f9fa;
+  --main-color: black;
+  --select-bg-color: lightblue;
+  --select-color: white;
+  --unselect-color: gray;
+  --unselect-bg-color: white;
+  --link-color: blue;
+  --selected-item-bg-color: #d9d9d9;
+  --selected-hover-item-bg-color: #cde8ff;
+  --doesnotwork-color1: #faf7e1;
+  --doesnotwork-color2: #e0e0e1;
+}
+@supports (color: light-dark(black, white)) {
+  :root {
+    --bg-color: light-dark(#f9f9fa, #1c1b22);
+    --main-color: light-dark(black, white);
+    --select-color: light-dark(white, #b7b7b7);
+    --select-bg-color: light-dark(lightblue, #3f638b);
+    --unselect-color: light-dark(gray, #757575);
+    --unselect-bg-color: light-dark(white, #2b2a33);
+    --link-color: light-dark(blue, #2f79ff);
+    --selected-item-bg-color: light-dark(#d9d9d9, #353c48);
+    --selected-hover-item-bg-color: light-dark(#cde8ff, #3f638b);
+    --doesnotwork-color1: light-dark(#faf7e1, #423718);
+    --doesnotwork-color2: light-dark(#e0e0e1, #2b2a33);
+  }
+}
 
 body {
   -moz-user-select: none;
@@ -53,6 +82,10 @@ body {
   margin-left: 1ex;
   margin-right: 1ex;
 }
+.box-orient-horizontal>label:nth-child(1),
+.box-orient-horizontal>.tooltiptext:nth-child(1)+label {
+  margin-left: unset;
+}
 
 .box-orient-horizontal > .box-orient-horizontal.flex,
 .box-orient-vertical > .box-orient-horizontal.flex,
@@ -73,11 +106,11 @@ body {
 .tooltip .tooltiptext {
   visibility: hidden;
   max-width: 50vw;
-  background-color: white;
-  color: black;
+  background-color: var(--bg-color);
+  color: var(--main-color);
   text-align: left;
   padding: 2px 5px;
-  border: 1px solid black;
+  border: 1px solid var(--main-color);
   font-size: 9pt;
 
   position: absolute;
@@ -108,7 +141,7 @@ body {
   padding-right: 5px;
   top: -0.8em;
   left: 5px;
-  background-color: var(--bg-color, white);
+  background-color: var(--bg-color);
 }
 
 /* Grouping by indent, without border */
@@ -178,23 +211,23 @@ input[type=button] {
   margin-right: auto;
   width: 11em;
   padding: 0 0 0 5px;
-  background-color: white;
+  background-color: var(--unselect-bg-color);
   border-style: solid;
-  border-color: white;
-  border-right-color: gray;
+  border-color: var(--unselect-bg-color);
+  border-right-color: var(--unselect-color);
   border-width: 0 1px 1px 1px;
-  color: gray;
+  color: var(--unselect-color);
 }
 .tab_container> input[type=radio]:checked + label {
   background-color: var(--bg-color);
   border-right-color: var(--bg-color);
-  border-bottom-color: gray;
-  border-left-color: white;
-  color: black;
+  border-bottom-color: var(--unselect-color);
+  border-left-color: var(--unselect-bg-color);
+  color: var(--main-color);
 }
 .tab_container> input[type=radio]:not(:checked) + label:hover {
-  background-color: lightblue;
-  color: white;
+  background-color: var(--select-bg-color);
+  color: var(--select-color);
 }
 .tab_container > .tab_content_area {
   grid-column-start: 2;
@@ -247,17 +280,18 @@ table.listbox thead td:last-child {
   border-right-width: 0;
 }
 table.listbox tbody tr {
-  background-color: white;
+  background-color: var(--unselect-bg-color);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: transparent;
 }
 table.listbox:hover tbody tr[data-selected="true"] {
-  background-color: #cde8ff;
+  background-color: var(--selected-hover-item-bg-color);
   border-bottom-color: #a5d6ff;
 }
 table.listbox:not(:hover) tbody tr[data-selected="true"] {
-  background-color: #d9d9d9;
+  color: var(--main-color);
+  background-color: var(--selected-item-bg-color);
   border-bottom-color: #cccccc;
 }
 table.listbox tbody td {
@@ -267,7 +301,7 @@ table.listbox tbody td {
   text-overflow: ellipsis;
 }
 table.listbox tfoot td{
-  background-color: white;
+  background-color: var(--unselect-bg-color);
   height: auto;
   margin-top: auto;
 }
@@ -311,12 +345,12 @@ input[type=text][readonly] {
 }
 
 a[href], a[href]:visited {
-  color: #0000FF;
+  color: var(--link-color);
 }
 
 .sp:after {
   content: ".sp";
-  color: blue;
+  color: var(--link-color);
   font-size: smaller;
 }
 .warning {
@@ -331,10 +365,10 @@ a[href], a[href]:visited {
   height: 200px;
   background: repeating-linear-gradient(
     45deg,
-    rgba(255, 226, 0, 0.1),
-    rgba(255, 226, 0, 0.1) 10px,
-    rgba(0, 0, 0, 0.1) 10px,
-    rgba(0, 0, 0, 0.1) 20px
+    var(--doesnotwork-color1),
+    var(--doesnotwork-color1) 10px,
+    var(--doesnotwork-color2) 10px,
+    var(--doesnotwork-color2) 20px
   );
 }
 
@@ -347,10 +381,10 @@ a[href], a[href]:visited {
 .ext_doesnotwork {
   background: repeating-linear-gradient(
     45deg,
-    rgba(255, 226, 0, 0.1),
-    rgba(255, 226, 0, 0.1) 10px,
-    rgba(0, 0, 0, 0.1) 10px,
-    rgba(0, 0, 0, 0.1) 20px
+    var(--doesnotwork-color1),
+    var(--doesnotwork-color1) 10px,
+    var(--doesnotwork-color2) 10px,
+    var(--doesnotwork-color2) 20px
   );
 }
 .ext_doesnotwork .ext_doesnotwork {
