@@ -6198,9 +6198,11 @@ var arAkahukuCatalog = {
         lastRule.parentNode.insertBefore (div, lastRule);
 
         // 拡張間連携のための不可視の一時挿入場所
-        div = targetDocument.createElement ("div");
-        div.id = "akahuku_appending_container";
-        targetDocument.body.appendChild (div);
+        if (!targetDocument.getElementById ("akahuku_appending_container")) {
+          div = targetDocument.createElement ("div");
+          div.id = "akahuku_appending_container";
+          targetDocument.body.appendChild (div);
+        }
       }
 
       // スレッドの更新通知を待ち受ける
