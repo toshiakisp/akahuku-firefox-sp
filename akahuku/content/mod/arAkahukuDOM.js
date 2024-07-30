@@ -427,9 +427,100 @@ var arAkahukuDOM = {
       targetElement.removeChild (targetElement.lastChild);
     }
 
-    Akahuku.debug.error('NotYetImplemented');
-    // TODO: sanitize to fragment and targetElement.appendChild(fragment)
-    return;
+    try {
+      let parser = new DOMParser();
+      let re = htmlText.match(/^[\s\r\n\t ]+/);
+      const ws = re && re[0];
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      if (ws) {
+        // preserve whitespace
+        doc.body.insertBefore(document.createTextNode(ws),
+          doc.body.childNodes[0] || null);
+      }
+
+      // subset only for limited usecases
+      const validTags = new Set(['a', 'address', 'area', 'audio', 'b', 'big',
+        'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption',
+        'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist',
+        'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em',
+        'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head',
+        'header', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'li',
+        'main', 'map', 'mark', 'menu', 'menuitem', 'nobr', 'ol', 'p', 'pre', 'q',
+        'rp', 'rt', 'ruby', 's', 'select', 'small', 'source', 'spacer', 'span',
+        'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody',
+        'td', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'tt', 'u', 'ul',
+        'var', 'video', 'wbr', '#text']);
+      const validAttr = new Set(['align', 'alt', 'background', 'bgcolor', 'border',
+        'cellpadding', 'cellspacing', 'checked', 'cite', 'class', 'clear', 'color',
+        'cols', 'colspan', 'coords', 'crossorigin', 'datetime', 'decoding', 'dir',
+        'disabled', 'download', 'draggable', 'enctype', 'for', 'headers', 'height',
+        'hidden', 'high', 'href', 'hreflang', 'id', 'ismap', 'lang', 'loading',
+        'media', 'multiple', 'name', 'nowrap', 'rel', 'reversed', 'role',
+        'rowspan', 'scope', 'selected', 'shape', 'size', 'sizes', 'slot', 'span',
+        'start', 'sondbox', 'src', 'srcset', 'style', 'summary', 'tabindex',
+        'title', 'translate', 'type', 'usemap', 'valign', 'value', 'width']);
+      const safeAttr = new Set(['alt','class','for','label','placeholer','style',
+        'summary','title','value']);
+      let whatToCheck = NodeFilter.SHOW_ELEMENT|
+        NodeFilter.SHOW_COMMENT|
+        NodeFilter.SHOW_TEXT|
+        NodeFilter.SHOW_CDATA_SECTION;
+      const itor = doc.createNodeIterator(doc.body, whatToCheck, null);
+      let node;
+      while ((node = itor.nextNode())) {
+        // sanitize elements
+        let tagName = node.nodeName?.toLowerCase();
+        if (node instanceof HTMLFormElement ||
+          node instanceof HTMLInputElement ||
+          node instanceof HTMLMediaElement) {
+          // drop forms/media
+          node.parentNode.removeChild(node);
+        } else if (tagName && !validTags.has(tagName)) {
+          node.parentNode.removeChild(node);
+        }
+        if (node.content instanceof DocumentFragment) {
+          // drop shadow dom
+          node.parentNode.removeChild(node);
+        }
+
+        // sanitize attributes
+        const {attrs} = node;
+        if (attrs) {
+          let k = attrs.length;
+          while (k--) {
+            const attr = attrs[k];
+            const name = attr.name.toLowerCase();
+            if (name == 'id' || name == 'name') {
+              node.removeAttribute(name);
+              continue;
+            } else if (!validAttr.has(name)) {
+              node.removeAttribute(name);
+              continue;
+            }
+            if (!safeAttr.has(name)) {
+              //check value as safe uri
+              let value = attr.value.replace(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g,'');
+              if (/^(?:(?:https?|ftps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i.test(value)) {
+                continue;
+              } else {
+                node.removeAttribute(name);
+              }
+            }
+          }
+        }
+      }
+
+      const fragment = doc.createDocumentFragment();
+      while (doc.body.firstChild) {
+        fragment.appendChild(doc.body.firstChild);
+      }
+
+      targetElement.appendChild(fragment);
+    } catch (e) { Akahuku.debug.exception (e);
+      // 最悪でもテキストとしてセットしてあげる
+      var text = targetElement.ownerDocument.createTextNode (htmlText);
+      targetElement.appendChild (text);
+    }
   },
 
   /**
