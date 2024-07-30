@@ -203,11 +203,32 @@ const AkahukuCentral = (function () {
     // Utilities
 
     getParamsByURL: async function (url) {
-      return registories.get('param').get({url: url});
+      const ret = [], invalids = [];
+      const reg = registories.get('param');
+      for (const param of reg.get({url: url})) {
+        try {
+          const tabinfo = await browser.tabs.get(param.tabId);
+          if (param.url == tabinfo.url) {// permission: tabs
+            ret.push(param);
+          } else {
+            console.warn('AkahukuCentral.getParamsByURL(): unmatch url param', param);
+            invalids.push(param);
+          }
+        }
+        catch (e) {
+          // may be an error: Invalid tab ID
+          console.warn('AkahukuCentral.getParamsByURL(): invalid-tab param', param);
+          invalids.push(param);
+        }
+      }
+      for (const param of invalids) {
+        reg.delete(param);
+      }
+      return ret;
     },
 
     isURLOpened: async function (url) {
-      let params = registories.get('param').get({url: url});
+      const params = await AkahukuCentral.getParamsByURL(url);
       return (params.length > 0);
     },
   });
