@@ -22,11 +22,18 @@ const Downloads = (()=>{
         if (ret.status < 0) {
           throw new Error(ret.statusText);
         }
+        const resp = ret;
         ret = new Response(ret.blob, {
           status: ret.status,
           statusText: ret.statusText,
           headers: new Headers(ret.headers),
         });
+        // store props from privileged fetch
+        ret._privileged = {
+          type: resp.type,
+          url: resp.url,// expose redirects
+          redirected: resp.redirected,
+        };
       }
       return ret;
     };

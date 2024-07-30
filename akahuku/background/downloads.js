@@ -74,10 +74,12 @@ const Downloads = (function () {
     },
     fetch: async function (url, options) {
       let ret = {
+        type: '',
         ok: false,
         status: 0,
         statusText: '',
         url: url,
+        redirected: false,
         blob: null,
         headers: [],
       };
@@ -87,14 +89,18 @@ const Downloads = (function () {
          'Expires', 'Last-Modified', 'Pragma'];
       return await fetch(url, options)
         .then((resp) => {
+          ret.type = resp.type;
           ret.ok = resp.ok;
           ret.status = resp.status;
           ret.statusText = resp.statusText;
+          ret.url = resp.url;
+          ret.redirected = resp.redirected;
           for (let key of respkeys) {
             if (resp.headers.has(key)) {
               ret.headers.push([key, resp.headers.get(key)]);
             }
           }
+          if (options._no_blob) return null;
           return (ret.ok ? resp.blob() : null);
         })
         .then((blob) => {
