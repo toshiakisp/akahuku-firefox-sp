@@ -93,6 +93,15 @@ var arAkahukuLink = {
       title: '\u62E1\u5F35\u5B50\u3092\u6307\u5B9A - \u624B\u5165\u529B',
       onclick: arAkahukuLink.onClickSetExtManual,
     });
+    createIf(true, {
+      id: 'akahuku-menuitem-content-autolink-test-anon',
+      type: 'normal',
+      contexts: ['link'],
+      enabled: false,
+      // リンク先を調査
+      title: '\u30EA\u30F3\u30AF\u5148\u3092\u8ABF\u67FB',
+      onclick: arAkahukuLink.onClickTestLinkAnon,
+    });
   },
 
   updateContextMenus: function (info, tab, c) {
@@ -123,6 +132,8 @@ var arAkahukuLink = {
         update: {enabled: c.isNoExtAutolink}},
       {id:'akahuku-menuitem-content-autolink-ext-input',
         update: {enabled: c.isNoExtAutolink}},
+      {id:'akahuku-menuitem-content-autolink-test-anon',
+        update: {enabled: c.isAutolink}},
     ];
     // Note:'visible' requires Fx63+
 
@@ -157,6 +168,13 @@ var arAkahukuLink = {
   },
   onClickSetExtManual: function (info, tab) {
     arAkahukuLink.onClickSetExt (info, tab, 1, '');
+  },
+  onClickTestLinkAnon: function (info, tab) {
+    let msg = {
+      name: 'arAkahukuLink', method: 'testLinkAnon',
+      args: [],
+    };
+    browser.tabs.sendMessage(tab.id, msg, {frameId: info.frameId});
   },
 
   onClickAddUser: function (info, tab) {

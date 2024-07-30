@@ -104,6 +104,9 @@ export default function initContextMenuContent () {
           case 'openAsAutoLink':
             arAkahukuLink.openAsAutoLink(lastTarget, msg.args[1]);
             break;
+          case 'testLinkAnon':
+            arAkahukuLink.testLinkAnon(lastTarget);
+            break;
           default:
             Akahuku.debug.warn('Unknown method;', msg);
         }

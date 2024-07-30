@@ -1034,7 +1034,7 @@ var arAkahukuLink = {
         style
         .addRule ("font.akahuku_shown_mail",
                   "color: blue; "
-                  + "font-weight: " + weight)
+                  + "font-weight: " + weight + ";")
         .addRule ("small.akahuku_p2p_nodename",
                   "color: #0040ee; "
                   + "font-size: 8pt;");
@@ -1905,6 +1905,94 @@ var arAkahukuLink = {
         arAkahukuLink.openAutoLink (nodes [i], to, focus);
       }
     }
+  },
+
+  /**
+   * オートリンクを匿名で取得テストする
+   */
+  testLinkAnon : function (target) {
+    const isPrivate = arAkahukuWindow.isContentWindowPrivate
+      (target.ownerDocument.defaultView);
+    const href = target.getAttribute ("dummyhref");
+
+    //リダイレクトしていたら条件によって元URLを書き換える
+    const handleRedirect = (url) => {
+      const replacers = [
+        {re:/^(https?:\/\/www\.amazon\.co\.jp\/dp\/[^\?]+).*$/, format:'$1', fin:1},
+      ];
+      let new_url = url, do_replace = false;
+      for (let cond of replacers) {
+        let matched = false;
+        if (cond.format) {
+          let replaced = new_url.replace(cond.re, cond.format);
+          matched = (replaced != new_url)
+          if (matched) new_url = replaced;
+        } else if (cond.re.test(new_url)) {
+          matched = true;
+        }
+        do_replace ||= matched;
+        if (matched && cond.fin) {
+          break;
+        }
+      };
+      if (do_replace) {
+        // パターンにマッチして書き換えが行われた場合のみ
+        target.setAttribute("dummyhref", new_url);
+        target.href = new_url;
+        if (!target.hasAttribute ("__akahuku_troll")) {
+          target.setAttribute ("__akahuku_troll", "1");
+          target.setAttribute ("__akahuku_troll_text",
+            btoa (escape (target.textContent)));
+        }
+        target.textContent = new_url;
+      }
+    };
+
+    let contentWindow = target.ownerDocument.defaultView;
+    let options = {
+      method: 'HEAD',
+      mode: 'no-cors',//for no Origin
+      referrerPolicy: 'no-referrer',
+      credentials: 'omit',//Cookie等を送らないし受け取らない
+      cache: 'no-store',//キャッシュを調べないし更新しない
+      _no_blob: true,
+    };
+    arAkahukuCompat.fetch(href, options, contentWindow)
+      .then((res) => {
+        // 404,405時は念のためGETでリトライ
+        if (res.status == 404 || res.status == 405) {
+          options.method = 'GET';
+          return arAkahukuCompat.fetch(href, options, contentWindow);
+        }
+        let msg = `${options.method} => HTTP ${res.status} ${res.statusText}
+        Content-Length: ${res.headers.get('content-length') || ''}
+        Content-Type: ${res.headers.get('content-type') || ''}
+        `;
+        if (res._privileged?.redirected) {
+          msg += `Redirected to\n${res._privileged?.url}`;
+          handleRedirect(res._privileged?.url);
+        }
+        return msg;
+      })
+      .then((res) => {
+        let msg = res;
+        if (typeof res != 'string') {
+          msg = `${options.method} => HTTP ${res.status} ${res.statusText}
+          Content-Length: ${res.headers.get('content-length') || ''}
+          Content-Type: ${res.headers.get('content-type') || ''}
+          `;
+          if (res._privileged?.redirected) {
+            msg += `Redirected to\n${res._privileged?.url}`;
+            if (res._privileged?.url) {
+              handleRedirect(res._privileged?.url);
+            }
+          }
+        }
+        target.ownerDocument.defaultView.alert(msg);
+      })
+      .catch((e) => {
+        Akahuku.debug.exception(e);
+      });
   },
     
   /**

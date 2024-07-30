@@ -195,6 +195,18 @@ var arAkahukuQuote = {
         
     var lastText;      /* Text  選択範囲の終点 */
     var ignoreNode;    /* HTMLElement  無視する要素の始点 */
+
+    var createLastRangeBefore = (range, lastText, node) => {
+      const lastRange = range.cloneRange ();
+      lastRange.setEnd (lastText, lastText.nodeValue.length);
+      const pre = node?.previousSibling;
+      if (pre?.nodeType != Node.TEXT_NODE) {
+        // 前が#textではなく、#textを子孫にも持たない場合(<br>)に
+        // 取りこぼさないように範囲を設定する
+        lastRange.setEnd (pre, pre.childNodes.length);
+      }
+      return lastRange
+    };
         
     for (i = 0; i < selection.rangeCount; i ++) {
       range = selection.getRangeAt (i).cloneRange ();
@@ -250,10 +262,7 @@ var arAkahukuQuote = {
               modified = true;
                             
               /* 選択範囲を複製して終点を設定する */
-              lastRange = range;
-              range = lastRange.cloneRange ();
-              lastRange.setEnd (lastText,
-                                lastText.nodeValue.length);
+              lastRange = createLastRangeBefore (range, lastText, node);
                             
               /* 選択範囲に追加 */
               modifiedRanges.push (new Array (0, lastRange));
@@ -277,10 +286,7 @@ var arAkahukuQuote = {
               modified = true;
                             
               /* 選択範囲を複製して終点を設定する */
-              lastRange = range;
-              range = lastRange.cloneRange ();
-              lastRange.setEnd (lastText,
-                                lastText.nodeValue.length);
+              lastRange = createLastRangeBefore (range, lastText, node);
                             
               /* 選択範囲に追加 */
               modifiedRanges.push (new Array (0, lastRange));
@@ -310,10 +316,7 @@ var arAkahukuQuote = {
               modified = true;
                             
               /* 選択範囲を複製して終点を設定する */
-              lastRange = range;
-              range = lastRange.cloneRange ();
-              lastRange.setEnd (lastText,
-                                lastText.nodeValue.length);
+              lastRange = createLastRangeBefore (range, lastText, node);
                             
               /* 選択範囲に追加 */
               modifiedRanges.push (new Array (0, lastRange));
@@ -704,7 +707,7 @@ var arAkahukuQuote = {
           var node = target;
           while (node) {
             if (Akahuku.isMessageBQ (node)) {
-              text = arAkahukuDOM.getInnerText (node);
+              text = arAkahukuDOM.getInnerText2 (node);
               text = arAkahukuConverter.unescapeEntity (text);
               break;
             }
@@ -715,7 +718,7 @@ var arAkahukuQuote = {
           var node = target;
           while (node) {
             if (Akahuku.isMessageBQ (node)) {
-              text = arAkahukuDOM.getInnerText (node);
+              text = arAkahukuDOM.getInnerText2 (node);
               text = arAkahukuConverter.unescapeEntity (text);
               var lines = text.split (/[\r\n]+/);
               text = "";
