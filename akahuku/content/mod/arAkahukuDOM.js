@@ -290,21 +290,46 @@ var arAkahukuDOM = {
    * @return String
    *         要素の中の文字列
    */
-  getInnerText : function (element) {
+  getInnerText : function (element, opt={}) {
     if ("className" in element
         && (element.className == "akahuku_generated"
             || element.className == "aima_aimani_generated")) {
       return "";
     }
         
-    if (element.nodeName.toLowerCase () == "br") {
+    if (opt?.restoreTrolls
+        && "hasAttribute" in element
+        && element.hasAttribute ("__akahuku_troll")) {
+      if (element.hasAttribute ("__akahuku_troll_text")) {
+        return unescape(atob(element.getAttribute("__akahuku_troll_text")));
+      }
+      return element.title;
+    }
+    else if (element.nodeName.toLowerCase () == "br") {
       return "\n";
     }
     else if (element.firstChild) {
       var text = "";
       var node = element.firstChild;
       while (node) {
-        text += arAkahukuDOM.getInnerText (node);
+        let nodeText = arAkahukuDOM.getInnerText (node, opt);
+        if (!opt?.noTrim && node.nodeType == Node.TEXT_NODE) {
+          // テキストノードの前後の空白文字は適宜削除する
+          if (!node.previousSibling || node.previousSibling.nodeType != Node.TEXT_NODE) {
+            if (!node.nextSibling || node.nextSibling.nodeType != Node.TEXT_NODE) {
+              nodeText = nodeText.trim();
+            } else { // 連続テキストノードの先頭の場合
+              nodeText = nodeText.trimStart();
+            }
+          } else {//連続テキストノードの先頭以外
+            if (!node.nextSibling || node.nextSibling.nodeType != Node.TEXT_NODE) {
+              nodeText = nodeText.trimEnd();
+            } else {
+              // 連続テキストノードの途中では空白文字もキープ
+            }
+          }
+        }
+        text += nodeText;
         node = node.nextSibling;
       }
       return text;
@@ -330,36 +355,7 @@ var arAkahukuDOM = {
    *         要素の中の文字列
    */
   getInnerText2 : function (element) {
-    if ("className" in element
-        && (element.className == "akahuku_generated"
-            || element.className == "aima_aimani_generated")) {
-      return "";
-    }
-        
-    if ("hasAttribute" in element
-        && element.hasAttribute ("__akahuku_troll")) {
-      return element.title;
-    }
-    else if (element.nodeName.toLowerCase () == "br") {
-      return "\n";
-    }
-    else if (element.firstChild) {
-      var text = "";
-      var node = element.firstChild;
-      while (node) {
-        text += arAkahukuDOM.getInnerText2 (node);
-        node = node.nextSibling;
-      }
-      return text;
-    }
-    else if (element.nodeName.toLowerCase () == "#text") {
-      return arAkahukuConverter.escapeEntity (element.nodeValue);
-    }
-    else if (element.alt) {
-      return element.alt;
-    }
-        
-    return "";
+    return arAkahukuDOM.getInnerText (element, {restoreTrolls: true});
   },
     
   /**
