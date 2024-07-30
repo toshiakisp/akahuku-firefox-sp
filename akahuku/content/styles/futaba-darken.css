@@ -1,0 +1,162 @@
+/**
+ * Light-Dark color scheme enabler for futaba
+ */
+
+@supports (color: light-dark(black, white)) {
+  /* light-dark()で作っている他との整合のため */
+
+  :root {
+    color-scheme: light dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    /* ふたばの元スタイルを上書き */
+    body[text="#800000"] {
+      color: #e0d6d6 ! important;/* #800000 */
+    }
+    body[bgcolor="#FFFFEE"] {
+      background-color: #1c1b22 ! important;/* #ffffee */
+    }
+    a:link, a:visited {
+      color: #2f79ff ! important;/* #0000ee */
+    }
+    th[bgcolor="#e04000"] {
+      background-color: #b23300 !important;/* #e04000 */
+      font[color="#FFFFFF"] {
+        color: #d4d4d4 ! important;/* #ffffff */
+      }
+    }
+    th[bgcolor="#0040e0"] {
+      background-color: #0033b2 ! important;/*#0040e0*/
+      font[color="#FFFFFF"] {
+        color: #d4d4d4 ! important;/*#ffffff*/
+      }
+    }
+
+    /* overwrite futaba's style4.css */
+    a.del, .sod, a.sod[href]:link {
+      color: #e0d6d6 ! important;/*#800000*/
+    }
+    a:hover {
+      color: #ee0000 ! important;/*#DD0000*/
+    }
+    #catnext span, .qtjmp {
+      color: blue ! important;/* blue */
+    }
+    .maxres, .dice, #catnext span:hover, .cno:hover, .pdms:hover, .qtjmp:hover, .qsd:hover, .pdds:hover, pdmsc:hover, .slp1:hover {
+      color: #e61a1a ! important;/* red */
+    }
+    .csb {
+      color: #b82219 ! important;/*#cc1105*/
+    }
+    .cnm {
+      color: #169b57 ! important;/*#117743*/
+    }
+    .pdmshide:hover {/*silver*/
+      color: #555555 ! important;/*silver,#c0c0c0*/
+    }
+    .rtd, .qtd {
+      background-color: rgb(240 224 214 / 0.125) ! important;/*#f0e0d6*/
+    }
+    .ftdc {
+      background-color: #6d2f10 ! important;/*ea8*/
+    }
+    .pdmm, .pdd, .pddtip, .pdmmc, .pddtipc, .slp {
+      background-color: #1c1b22 ! important;/*#ffe*/
+    }
+    .pdmc:hover {
+      background-color: #756666 ! important;/*#e9cccc*/
+    }
+    .cancel:before, .cancel:after {
+      background-color: #800 ! important;/*#800*/
+    }
+    .cancelbk:hover > .cancel:before,
+    .cancelbk:hover > .cancel:after {
+      background-color: #f00 ! important;/*#f00*/
+    }
+    .pdmc {
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNC41MyA4LjA3Ij48cGF0aCBkPSJNNy4yNyw4LjA3YS44LjgsMCwwLDEtLjU3LS4yNEwuMjMsMS4zN0EuODEuODEsMCwwLDEsLjIzLjIzYS44MS44MSwwLDAsMSwxLjE0LDBsNS45LDUuOSw1LjktNS45YS44LjgsMCwwLDEsMS4xMywwLC44MS44MSwwLDAsMSwwLDEuMTRMNy44Myw3LjgzQS43Ny43NywwLDAsMSw3LjI3LDguMDdaIiBzdHlsZT0iZmlsbDojZTBkNmQ2Ii8+PC9zdmc+Cg==") !important;
+    }
+  }
+
+
+  /* Force overwrites for akahuku inline styles */
+
+  #akahuku_reload_container,
+  #akahuku_throp_header_container,
+  #akahuku_throp_menu,
+  #akahuku_floatpostform_container,
+  div.akahuku_reply_popup,
+  #akahuku_respanel {
+    background-color: light-dark(#ffffee, #1c1b22) !important;
+  }
+  #akahuku_respanel_header {
+    background-color: light-dark(#ea8, #6d2f10) !important;
+  }
+  .akahuku_markup_catalog_table {
+    td a font {
+      color: light-dark(#800000, #e0d6d6) !important;
+    }
+    td a.akahuku_visited font, td a:visited font, td[__opened] a font {
+      background-color: light-dark(#eeaa88, #6d2f10) !important;
+    }
+  }
+  #akahuku_throp_menu > div:hover,
+  div.akahuku_reply_popup td[style] {
+    background-color: light-dark(#f0e0d6, #56504d) !important;
+  }
+  #akahuku_floatpostform_container,
+  #akahuku_throp_header_container {
+    border-color: light-dark(#ea8,  #6d2f10) !important;
+  }
+  span.akahuku_status_suffix {
+    color: light-dark(#a05050, #ddd3d3) !important;
+  }
+  #akahuku_new_reply_header>div>span {
+    color: light-dark(#800000, #e0d6d6) !important;
+    background-color: light-dark(#ffe, #1c1b22) !important;
+    border-color: light-dark(#eeaa88, #6d2f10) !important;
+  }
+  #akahuku_new_reply_header>div {
+    border-top-color: light-dark(#ea8, #6d2f10) !important;
+  }
+  #akahuku_throp_menu {
+    border-color: light-dark(#800000, #e0d6d6) !important;
+  }
+  div.akahuku_reply_popup {
+    border-color: light-dark(#eeaa88, #6d2f10) !important;
+  }
+  #akahuku_floatpostform_container #akahuku_postform, #akahuku_floatpostform_container .akahuku_postform {
+    border-bottom-color: light-dark(#eeaa88, #6d2f10) !important;
+  }
+  blockquote > small.akahuku_generated,
+  a.akahuku_saveimage_button, a.akahuku_saveimage_button2,
+  #akahuku_sagebutton,
+  #akahuku_throp_reload_syncbutton,
+  #akahuku_throp_reload_button,
+  #akahuku_savemht_button {
+    color: light-dark(#0040ee, #2c71ee) !important;
+  }
+  span.akahuku_saveimage_message {
+    color: light-dark(#800000, #e0d6d6) !important;
+  }
+  font > small.akahuku_generated {
+    color: light-dark(#409999, #5aa0a0) !important;
+  }
+  font.akahuku_shown_mail {
+    color: light-dark(blue, #2f79ff) !important;
+  }
+  blockquote > a.akahuku_generated_link:visited {
+    color: light-dark(#8040ee, #a073ee) !important;
+  }
+  font > a.akahuku_generated_link:visited {
+    color: light-dark(#806099, #554066)) !important;
+  }
+  .akahuku_my_reply::after {
+    border-top-color: light-dark(#ea8, #34211c) !important;
+    border-right-color: light-dark(#ea8, #34211c) !important;
+    border-left-color: light-dark(#ffe, #1c1b22) !important;
+    border-bottom-color: light-dark(#ffe, #1c1b22) !important;
+  }
+
+}

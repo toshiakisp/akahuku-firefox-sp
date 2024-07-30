@@ -5,10 +5,12 @@
  */
 function arAkahukuStyleData () {
   this.rules = new Object ();
+  this._imports = new Set();
 }
 arAkahukuStyleData.prototype = {
   rules : null,          /* Object  スタイルルール
                           *   <String セレクタ, String スタイル> */
+  _imports: null,
 
   /**
    * ルールを追加する
@@ -31,6 +33,15 @@ arAkahukuStyleData.prototype = {
     return this;
   },
 
+  addImport : function (path) {
+    if (path?.startsWith('/')) {
+      this._imports.add(browser.runtime.getURL(path));
+    } else if (path) {
+      this._imports.add(path);
+    }
+    return this;
+  },
+
   /**
    * スタイルルールをスタイルシートに変換する
    *
@@ -41,6 +52,9 @@ arAkahukuStyleData.prototype = {
    */
   toString : function (retcode) {
     var s = "";
+    for (let f of this._imports) {
+      s += '@import "' + f + '";' + retcode;
+    }
     for (var selector in this.rules) {
       s
         += selector + " {" + retcode

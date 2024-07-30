@@ -3,6 +3,10 @@
 arAkahukuStyle.addUserStyleSheetHandler(
   (style) => {
     var s;
+    if (Prefs.getItem('style.color-scheme')) {
+      style.addImport('/content/styles/futaba-darken.css');
+    }
+
     if (Prefs.getItem('cutefont')) {
       let font = unescape(Prefs.getItem('cutefont.family'));
       s = "font-family: " + font + ";";

@@ -342,6 +342,7 @@ pref("sound.savemht.error.file", "");
 pref("sound.savemht.file", "");
 pref("style.body_font", false);
 pref("style.body_font.size", 12);
+pref("style.color-scheme", false);
 pref("style.ignore_default", false);
 pref("style.ignore_default.font", false);
 pref("style.ignore_default.font.size", 12);
