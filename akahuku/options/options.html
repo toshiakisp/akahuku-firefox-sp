@@ -1792,7 +1792,7 @@
   </div>
 
   <div id="tab_sidebar" class="box-orient-vertical tab_content">
-    <div class="groupbox box-orient-vertical flex ext_doesnotwork">
+    <div class="groupbox box-orient-vertical flex">
       <div class=caption>
         <label><input type=checkbox name="sidebar"
           >サイドバーを使用する</label>
@@ -1814,7 +1814,7 @@
                 <label><input type=checkbox name="sidebar.check.catalog"
                   >カタログ</label>
               </div>
-              <label><input type=checkbox name="sidebar.background"
+              <label class="ext_doesnotwork"><input type=checkbox name="sidebar.background"
                 >サイドバーが非表示の間も</label>
             </div>
             <label>更新ボタン (0ページ, カタログ)</label>
@@ -1826,21 +1826,31 @@
                   <option value="1">新順</option>
                   <option value="2">古順</option>
                   <option value="3">多順</option>
+                  <option value="6">勢順</option>
                   <option value="4">少順</option>
+                  <option value="8">そ順</option>
+                  <option value="7">見歴</option>
+                  <option value="9">履歴</option>
                 </select>
               </div>
+              <label class="sp tooltip"><input type=checkbox name="sidebar.wheel.refresh"><span
+                class="tooltiptext">(デフォルト:無効)ページ上端からさらに上へのホイールスクロールなどが一定量に達したら、その板で最後に使ったボタンで更新する。</span
+                >ページ端のホイール操作で再更新</label>
             </div>
-            <label><input type=checkbox name="sidebar.save"
+            <label class="ext_doesnotwork"><input type=checkbox name="sidebar.save"
               >終了時にスレ情報を保存する</label>
           </div>
           <div class="groupbox box-orient-vertical">
             <div class=caption>
               <label>スレの表示</label>
             </div>
-            <div class="box-orient-horizontal align-center">
-              <label>サムネのサイズ (px)
-              <input type=number name="sidebar.thumbnail.size" class="size4"
-                       min="8" max="250"></label>
+            <div class="box-orient-horizontal align-center sp tooltip"><span class="tooltiptext"
+              >（デフォルト:リスト) リスト＝スレを縦に並べる(画像クリックでは元画像を開く)、カタログ＝表のように並べる(情報は一部のみ表示、画像クリックでもスレが開く)</span
+              ><label>配置: </label>
+              <label><input type=radio name="sidebar.flow-mode" value="row"
+                >リスト</label>
+              <label><input type=radio name="sidebar.flow-mode" value="catalog"
+                >カタログ</label>
             </div>
             <div class="box-orient-horizontal align-center">
               <label>表示順</label>
@@ -1865,15 +1875,34 @@
               </div>
             </div>
           </div>
+          <div class="groupbox box-orient-vertical">
+            <div class=caption>
+              <label>サムネ</label>
+            </div>
+            <div class="box-orient-horizontal align-center">
+              <label>表示サイズ (px)
+              <input type=number name="sidebar.thumbnail.size" class="size4"
+                       min="8" max="250"></label>
+            </div>
+            <div class="box-orient-horizontal align-center sp tooltip"><span class="tooltiptext"
+              >（デフォルト:収める) 拡大の場合は上下か左右を切り取って領域いっぱいに表示する。</span
+              ><label>表示領域に: </label>
+              <label><input type=radio name="sidebar.thumbnail.fit" value="contain"
+                >収める</label>
+              <label><input type=radio name="sidebar.thumbnail.fit" value="cover"
+                >拡大</label>
+            </div>
+            <label class="sp tooltip"><input type=checkbox name="sidebar.thumbnail.zoom"><span
+              class="tooltiptext">(デフォルト:有効)サムネ画像の上にマウスカーソルが乗ると一定時間でズーム表示する。</span
+              >マウスホバーでズーム</label>
+          </div>
         </div>
         <div class="box-orient-vertical flex">
           <div class="groupbox box-orient-vertical">
             <div class=caption>
-              <label><input type=checkbox name="sidebar.tab.show"
+              <label><input type=checkbox name="sidebar.tab"
                 >板毎のタブの表示</label>
             </div>
-            <label><input type=checkbox name="sidebar.tab.hidden"
-              >タブを表示しない</label>
             <div class="box-orient-horizontal">
               <label><input type=checkbox name="sidebar.tab.vertical"
                 >横に表示(縦並び)</label>
@@ -1889,13 +1918,13 @@
             </div>
             <div class="box-orient-horizontal align-center">
               <label for="sidebar_max_view">表示するスレの数/板</label>
-              <input type=number name="sidebar.max.view" id="sidebar_max_view" class="size3" step="10">
+              <input type=number name="sidebar.max.view" id="sidebar_max_view" class="size4" step="10">
             </div>
             <div class="box-orient-horizontal align-center">
               <label for="sidebar_max_cache">内部で保持する数/板</label>
-              <input type=number name="sidebar.max.cache" id="sidebar_max_cache" class="size3" step="10">
+              <input type=number name="sidebar.max.cache" id="sidebar_max_cache" class="size5" step="100">
             </div>
-            <div class="box-orient-horizontal align-center sp">
+            <div class="box-orient-horizontal align-center sp ext_doesnotwork">
               <label>既存のスレをクリック時</label>
               <select name="sidebar.threadclick.after"
                 title="(デフォルト:タブ切替のみ) タブ切替を行った後にリロード等を行える。一部アクション(*)は「続きを読む」機能の有効化が必要。">
@@ -1906,6 +1935,9 @@
               </select>
             </div>
           </div>
+          <label class="sp tooltip"><input type=checkbox name="sidebar.color-scheme"><span
+            class="tooltiptext">(デフォルト:有効)ブラウザーのテーマに従って、明色・暗色のカラースキームを切り替える。オフにすると明色(ふたばカラー)固定になる。Firefox 120以降で有効。</span
+            >テーマに応じて明色/暗色にする</label>
           <div class="group box-orient-vertical">
             <label><input type=checkbox name="sidebar.shortcut"
               >ショートカットキー</label>
@@ -1928,8 +1960,8 @@
           <label>表示する板</label>
         </div>
         <div class="box-orient-vertical flex">
-          <div class="scroll-y-table" style="height:14lh;">
-            <table name="sidebar.list2" id="sidebar_list" class="listbox flex" style="height:14lh"
+          <div class="scroll-y-table" style="height:10lh;">
+            <table name="sidebar.list2" id="sidebar_list" class="listbox flex" style="height:10lh"
               data-listbox-seltype="multiple"
               data-listbox-reserve-table="sidebar_list_ex"
               data-listbox-control-add="sidebar_board_edit_add"
@@ -1964,8 +1996,8 @@
             <input type=button id="sidebar_board_movedown" value="下に">
           </div>
         </div>
-        <div class="box-orient-vertical flex scroll-y-table" style="height:14lh;">
-          <table name="sidebar.board.select_ex" id="sidebar_list_ex" class="listbox flex" style="height:14lh"
+        <div class="box-orient-vertical flex scroll-y-table" style="height:10lh;">
+          <table name="sidebar.board.select_ex" id="sidebar_list_ex" class="listbox flex" style="height:10lh"
             data-listbox-seltype="multiple">
             <thead>
               <tr>

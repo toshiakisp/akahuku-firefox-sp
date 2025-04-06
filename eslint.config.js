@@ -61,6 +61,7 @@ export default [
           AkahukuContentLoader: "readonly",
 
           arAkahukuBrowserAction: "readonly",
+          arAkahukuSidebarMenus: "readonly",
           arAkahukuImage: "readonly",
           arAkahukuJPEG: "readonly",
           arAkahukuLink: "readonly",

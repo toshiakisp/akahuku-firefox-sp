@@ -1,0 +1,159 @@
+
+@import "../content/styles/futaba-colors.css";
+
+:host {
+  display: flex;
+}
+:host([orient="vertical"]) {
+  flex-direction: column;
+  width: auto;
+  height: 100%;
+}
+
+:host([orient="vertical"][compact]) {
+  flex-shrink: 0 ! important;
+
+  ::slotted(*)  {
+    writing-mode: sideways-lr;
+    padding: 8px 1px ! important;
+    min-width: 1lh ! important;
+    flex-direction: row ! important;
+  }
+  button {
+    min-width: 1lh;
+  }
+  .content {
+    width: 1lh;
+  }
+}
+
+:host {
+  --disabled-button-color: #bb8080;
+  --disabled-button-bg-color: #eeeedd;
+  --button-border-color: #ccccbb;
+  --disabled-button-border-color: #ccccbb;
+}
+@supports (color: light-dark(black, white)) {
+  :host {
+    --disabled-button-color: light-dark(#bb8080, #525252);
+    --disabled-button-bg-color: light-dark(#eeeedd, #2b2a33);
+    --button-border-color: light-dark(#ccccbb, #1f1e25);
+    --disabled-button-border-color: light-dark(#ccccbb, #1f1e25);
+  }
+}
+
+
+.content {
+  display: flex;
+  flex-direction: row;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: transparent;
+}
+
+.scrollbox {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+  scroll-behavior: smooth;
+}
+
+.content.vertical {
+  flex-direction: column;
+  width: auto;
+  height: 100%;
+}
+.content.vertical .scrollbox {
+  flex-direction: column;
+  width: auto;
+  height: 100%;
+}
+
+.content select[name="menubutton"]::after {
+  /* content: "v"; */
+}
+.content button[name=scrollbutton-up]::after {
+  content: "<";
+}
+.content button[name=scrollbutton-down]::after {
+  content: ">";
+}
+.content.vertical :is(button, select) {
+  writing-mode: sideways-rl;
+  min-height: 1.5em;
+  align-self: stretch;
+  min-width: 1em;
+}
+.content.vertical select[name="menubutton"] {
+  writing-mode: sideways-lr;
+}
+
+.content.horizontal {
+  flex-direction: row;
+  width: 100%;
+  height: auto;
+}
+.content.horizontal .scrollbox {
+  flex-direction: row;
+  width: 100%;
+  height: auto;
+}
+
+button.scrollbutton {
+  appearance: none;
+  margin: 0px;
+  padding: 2px;
+  min-width: 1em;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-zoge-lightdark);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--button-border-color);
+  border-bottom-color: var(--futaba-color-anzu-lightdark);
+}
+button.scrollbutton:hover,
+select.menubutton:hover {
+  background-color: var(--futaba-color-almond-lightdark);
+}
+
+button.scrollbutton[disabled="true"] {
+  appearance: none;
+  margin: 0px;
+  padding: 2px;
+  min-width: 1em;
+  color: var(--disabled-button-color);
+  background-color: var(--disabled-button-bg-color);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--disabled-button-border-color);
+  border-bottom-color: var(--futaba-color-anzu-lightdark);
+}
+
+select.menubutton {
+  appearance: auto;
+  margin: 0;
+  padding: 0;
+  width: calc(1em + 6px);
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-zoge-lightdark);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--button-border-color);
+  border-bottom-color: var(--futaba-color-anzu-lightdark);
+}
+
+:host([orient=vertical]) {
+  button.scrollbutton {
+    border-color: var(--button-border-color);
+    border-right-color: var(--futaba-color-anzu-lightdark);
+  }
+  button.scrollbutton[disabled="true"] {
+    border-color: var(--disabled-button-border-color);
+    border-right-color: var(--futaba-color-anzu-lightdark);
+  }
+  select.menubutton {
+    border-color: var(--button-border-color);
+    border-right-color: var(--futaba-color-anzu-lightdark);
+    width: 100%;
+    height: calc(1em + 6px);
+  }
+}

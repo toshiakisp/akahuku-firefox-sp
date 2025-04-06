@@ -1,0 +1,75 @@
+
+/**
+ * Definitions of futaba colors
+ */
+:root {
+  --futaba-color-azuki: #800000;/*文字*/
+  --futaba-color-kaki: #e04000;/*レス送信モード背景*/
+  --futaba-color-anzu: #eeaa88;/*フォームのヘッダー*/
+  --futaba-color-almond: #f0e0d6;/*レス背景*/
+  --futaba-color-zoge: #ffffee;/*ページ背景*/
+
+  --futaba-color-blue: #0000ee;/*リンクテキスト*/
+  --futaba-color-red: #ff0000;/*もうすぐ消えます, ...*/
+  --futaba-color-kokihi: #cc1105;/*無題,無念*/
+  --futaba-color-scarlet: #fb063c;/*トップページふたばちゃんねる文字*/
+  --futaba-color-pink: #fcbccc;/*トップページ背景色*/
+  --futaba-color-beigegreen: #c4fcc3;/*トップページ双葉*/
+  --futaba-color-green: #117743;/*名無し,としあき*/
+  --futaba-color-peagreen: #789922;/*引用テキスト*/
+  --futaba-color-cobaltblue: #0040e0;/*カタログモード*/
+
+
+  /* 補色 (Relative color はFirefx128以降が必要) */
+  --futaba-color-almond-comp:
+    #d6e6f0; /* hsl(from var(--futaba-color-almond) calc(h + 180) s l);*/
+  --futaba-color-anzu-comp:
+    #88ccee; /* hsl(from var(--futaba-color-anzu) calc(h + 180) s l);*/
+
+  /* Light/Dark テーマ対応 */
+  --futaba-color-azuki-lightdark: var(--futaba-color-azuki);
+  --futaba-color-anzu-lightdark: var(--futaba-color-anzu);
+  --futaba-color-anzu-comp-lightdark: var(--futaba-color-anzu-comp);
+  --futaba-color-almond-lightdark: var(--futaba-color-almond);
+  --futaba-color-almond-comp-lightdark: var(--futaba-color-almond-comp);
+  --futaba-color-zoge-lightdark: var(--futaba-color-zoge);
+  --futaba-color-red-lightdark: var(--futaba-color-red);
+  --futaba-color-kokihi-lightdark: var(--futaba-color-kokihi);
+
+  @supports (color: light-dark(black, white)) {
+    /* Firefx 120~ */
+    --futaba-color-azuki-lightdark: light-dark(
+      var(--futaba-color-azuki),
+      #e0d6d6
+    );
+    --futaba-color-zoge-lightdark: light-dark(
+      var(--futaba-color-zoge),
+      #1c1b22
+    );
+    --futaba-color-almond-lightdark: light-dark(
+      var(--futaba-color-almond),
+      #373439 /* alpha 0.125 almond on #1c1b22 */
+    );
+    --futaba-color-almond-comp-lightdark: light-dark(
+      var(--futaba-color-almond-comp),
+      #183242 /* hsl(from var(--futaba-color-almond-comp) h s calc(l / 5)) */
+    );
+    --futaba-color-anzu-lightdark: light-dark(
+      var(--futaba-color-anzu),
+      #6d2f10 /* hsl(from var(--futaba-color-anzu) h s calc(l / 3)) */
+    );
+    --futaba-color-anzu-comp-lightdark: light-dark(
+      var(--futaba-color-anzu-comp),
+      #104e6d /* hsl(from var(--futaba-color-anzu-comp) h s calc(l / 3)) */
+    );
+    --futaba-color-red-lightdark: light-dark(
+      var(--futaba-color-red),
+      #e61a1a /* hsl(from var(--futaba-color-red) h calc(4 * s / 5) l) */
+    );
+    --futaba-color-kokihi-lightdark: light-dark(
+      var(--futaba-color-kokihi),
+      #b82219 /* hsl(from var(--futaba-color-kokihi) h calc(4 * s / 5) l) */
+    );
+  }
+}
+

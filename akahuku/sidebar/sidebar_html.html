@@ -1,14 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html lang="ja" xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
+<!DOCTYPE html>
+<html lang="ja">
   <head>
+	<meta charset="utf-8"/>
     <title>赤福</title>
-    <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" type="text/css"
-          href="chrome://akahuku/content/sidebar_html.css" />
+          href="sidebar_html.css" />
     <style id="headstyle"></style>
   </head>
-  <body>
-  </body>
+  <body><div id="upside_edge"><span>・<br>・・<br>・・・<br>・・・・<br>ホイール操作で更新</span></div>
+    <template id="thread_template">
+      <div class="akahuku_sidebar_thread" __num="">
+        <div class="image_area"></div>
+        <img class="akahuku_sidebar_image" loading="lazy" src="" width="" height="">
+        <span class="akahuku_sidebar_mark"></span>
+        <div class="akahuku_sidebar_comment"></div>
+        <div class="akahuku_sidebar_status">
+          <span class="akahuku_sidebar_reply"></span>
+          <span class="akahuku_sidebar_reply_diff"></span>
+          <span class="akahuku_sidebar_expire2"></span>
+          <span class="akahuku_sidebar_expire"></span>
+          <span class="akahuku_sidebar_aima" name=""> [消]</span>
+        </div>
+      </div>
+    </template>
+  <div id="downside_edge"></div></body>
 </html>

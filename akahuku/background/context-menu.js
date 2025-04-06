@@ -10,6 +10,7 @@
     {module: arAkahukuLink, label: 'link'},
     // TODO arAkahukuTab,
     {module: arAkahukuBrowserAction, label: 'browser_action'},
+    {module: arAkahukuSidebarMenus, label: 'sidebar', view: 'sidebar'},
   ];
 
   let initAllContextMenus = (prefChanged) => {
@@ -20,6 +21,10 @@
   let updateAllContextMenus = (info, tab, contentData) => {
     let updated = false;
     for (let target of targets) {
+      target.view;
+      if (target.view && info.viewType !== target.view) {
+        continue;
+      }
       let data = null;
       if (target.label) {
         data = contentData[target.label];
@@ -27,9 +32,12 @@
       if (!data) {
         data = {};
       }
-      updated
-        = target.module.updateContextMenus(info, tab, data)
-        || updated;
+      try {
+        const x = target.module.updateContextMenus?.(info, tab, data);
+        updated ||= x;
+      } catch (e) {
+        console.trace(e);
+      }
     }
     return updated;
   };

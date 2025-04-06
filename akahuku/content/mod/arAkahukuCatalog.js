@@ -3591,25 +3591,23 @@ var arAkahukuCatalog = {
             
       if (arAkahukuCatalog.enableSidebar
           && arAkahukuCatalog.enableSidebarComment) {
-        var browser = arAkahukuWindow
-          .getBrowserForWindow (targetDocument.defaultView);
-        var thread = arAkahukuSidebar.getThread (name, num, browser);
-        if (thread) {
+        let td = tdElement;
+        let thread = arAkahukuSidebar.asyncGetThread (name, num).then(thread => {
+          if (!thread || !td.ownerDocument) return;
           if (thread.comment) {
-            var node
-              = arAkahukuCatalog.createCommentNode (tdElement);
+            let node = arAkahukuCatalog.createCommentNode (td);
             replaced = true;
-            var text
+            let text
               = arAkahukuCatalog.formatComment (thread.comment);
             node.innerHTML = text;
                         
             if (arAkahukuLink.enableHideTrolls
                 && !arAkahukuLink.enableHideTrollsNoCat) {
-              arAkahukuLink.applyHideTrollsCore (targetDocument,
+              arAkahukuLink.applyHideTrollsCore (td.ownerDocument,
                                                  node);
             }
           }
-        }
+        });
       }
             
       if (!replaced) {
@@ -3689,13 +3687,10 @@ var arAkahukuCatalog = {
     if (arAkahukuCatalog.enableSidebar
         && arAkahukuCatalog.enableSidebarComment) {
       var name = info.server + "_" + info.dir;
-      var browser = arAkahukuWindow
-        .getBrowserForWindow (targetDocument.defaultView);
-      var thread
-        = arAkahukuSidebar.getThread
-        (name, tdElement.getAttribute ("__thread_id"), browser);
-      if (thread) {
-        if (thread.comment) {
+      let id = tdElement.getAttribute ("__thread_id");
+      arAkahukuSidebar.asyncGetThread (name, id)
+        .then(thread => {
+          if (!thread?.comment) return;
           var node = 
             arAkahukuDOM.getFirstElementByNames
             (tdElement, "div", "akahuku_comment");
@@ -3720,8 +3715,7 @@ var arAkahukuCatalog = {
                                                  node);
             }
           }
-        }
-      }
+        });
     }
   },
 
@@ -5301,6 +5295,7 @@ var arAkahukuCatalog = {
           if (tmp) {
             param.lastPopupKey = "";
             arAkahukuPopup.removeActivePopups (param);
+            return;
           }
         }
         else if (img.parentNode
@@ -5315,57 +5310,53 @@ var arAkahukuCatalog = {
               (key,
                param,
                new arAkahukuCatalogPopupData (img));
+            return;
           }
         }
+        return;
       }
       else if (img && img.nodeName.toLowerCase () == "a"
           && img.className == "akahuku_popup_area") {
         // ポップアップ保持エリアではそのまま
+        return;
       }
-      else if (arAkahukuCatalog.enableZoomComment) {
-        var tmp = null;
-                
-        var base = null;
-        if (img.nodeName.toLowerCase () == "div") {
-          base = img;
+      else if (!arAkahukuCatalog.enableZoomComment) {
+        param.lastPopupKey = "";
+        arAkahukuPopup.removeActivePopups (param);
+        return;
+      }
+
+      // 残りは非同期問い合わせの結果次第でポップアップを出す条件
+      if (arAkahukuCatalog.enableZoomComment) {
+        if (!img?.closest) {
+          img = img.parentNode;
         }
-        else {
-          base = arAkahukuDOM.findParentNode (img, "div");
-        }
-        if (base
-            && "className" in base
-            && base.className == "akahuku_comment") {
-          tmp = arAkahukuDOM.findParentNode (base, "td");
-        }
-        if (!tmp) {
-          if (img.nodeName.toLowerCase () == "small") {
-            base = img;
+        let removeIfOutOfCommentPopup = () => {
+          let popup = img?.closest("div.akahuku_popup")
+          if (!popup) {
+            param.lastPopupKey = "";
+            arAkahukuPopup.removeActivePopups (param);
+            return;
           }
-          else {
-            base = arAkahukuDOM.findParentNode (img, "small");
-          }
-          if (base
-              && "className" in base
-              && base.className == "akahuku_native_comment") {
-            tmp = arAkahukuDOM.findParentNode (base, "td");
-          }
+        };
+        let base = img.closest("div.akahuku_comment");
+        let cell = base?.closest("td[__thread_id]");
+        if (!cell) {
+          base = img.closest("small.akahuku_native_comment");
+          cell = base?.closest("td[__thread_id]");
         }
-                
-        var opened = false;
-        if (tmp
-            && tmp.hasAttribute ("__thread_id")) {
-          var num = tmp.getAttribute ("__thread_id");
-          var info
-          = Akahuku.getDocumentParam (targetDocument)
-          .location_info;
-          var name = info.server + "_" + info.dir;
-          var browser
-          = arAkahukuWindow
-          .getBrowserForWindow (targetDocument.defaultView);
-          var thread
-          = arAkahukuSidebar.getThread (name, num, browser);
-          if (thread && thread.comment) { //コメント情報は必須
-            var key = "t" + num;
+        if (!cell) {
+          removeIfOutOfCommentPopup();
+          return;
+        }
+        img.closest("div.akahuku_popup")
+
+        const num = cell.getAttribute("__thread_id");
+        const info = documentParam.location_info;
+        const name = info.server + "_" + info.dir;
+        arAkahukuSidebar.asyncGetThread (name, num).then(thread => {
+          if (thread?.comment) {
+            let key = "t" + num;
             if (key != param.lastPopupKey) {
               param.lastPopupKey = key;
               arAkahukuPopup.addPopup
@@ -5373,33 +5364,11 @@ var arAkahukuCatalog = {
                  param,
                  new arAkahukuCatalogCommentPopupData
                  (thread, base));
+              return;
             }
-            opened = true;
           }
-        }
-                
-        if (!opened) {
-          var base = null;
-          if (img.nodeName.toLowerCase () == "div") {
-            base = img;
-          }
-          else {
-            base = arAkahukuDOM.findParentNode (img, "div");
-          }
-          if (base
-              && "className" in base
-              && base.className == "akahuku_popup") {
-            // none
-          }
-          else {
-            param.lastPopupKey = "";
-            arAkahukuPopup.removeActivePopups (param);
-          }
-        }
-      }
-      else {
-        param.lastPopupKey = "";
-        arAkahukuPopup.removeActivePopups (param);
+          removeIfOutOfCommentPopup();
+        });
       }
     }
     catch (e) { Akahuku.debug.exception (e);

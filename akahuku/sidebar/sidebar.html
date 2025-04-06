@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="sidebar.css"/>
+  <script src="sidebar.js" type="module"></script>
+  <style id="akahuku_sidebar_style">
+  :root { color-scheme: light dark; }
+  </style>
+</head>
+<body data-disabled="">
+  <div id="disabled_warning"></div>
+  <ak-tabcontainer id="akahuku_sidebar_tabcontainer" orient="horizontal">
+  </ak-tabcontainer>
+  <ak-deck id="akahuku_sidebar_deck" class="tabs" flex="1">
+  </ak-deck>
+
+  <template id="akahuku-sidebar-catalog-select">
+    <select name="catsort" title="更新カタログ種類">
+      <option value="0" data-button-label="カタログ">カタログ</option>
+      <option value="1" data-button-label="カタ新順">新順</option>
+      <option value="2" data-button-label="カタ古順">古順</option>
+      <option value="3" data-button-label="カタ多順">多順</option>
+      <option value="6" data-button-label="カタ勢順">勢順</option>
+      <option value="4" data-button-label="カタ少順">少順</option>
+      <option value="8" data-button-label="カタそ順">そ順</option>
+      <option value="7" data-button-label="見歴　　">見歴</option>
+      <option value="9" data-button-label="履歴　　">履歴</option>
+    </select>
+  </template>
+  <template id="akahuku-sidebar-sortorder-select">
+    <select name="sortorder" title="スレの並び替え">
+      <option value="1" title="最終レス番号順にソート">最終レス順</option>
+      <option value="0" title="スレの立った順にソート">スレ新順</option>
+      <option value="2" title="スレの古い順にソート">スレ古順</option>
+      <option value="5" title="カタログでの並び順にソート">カタログ順</option>
+      <option value="3" title="レスの多い順にソート">レス多順</option>
+      <option value="4" title="レスの少ない順にソート">レス少順</option>
+      <option value="6" title="レスの増加数順にソート">レス増順</option>
+    </select>
+  </template>
+</body>
+</html>

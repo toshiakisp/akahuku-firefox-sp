@@ -613,12 +613,10 @@ arAkahukuReloadParam.prototype = {
                 var name;
                 name = info.server + "_" + info.dir;
                                 
-                var browser = arAkahukuWindow
-                  .getBrowserForWindow (this.targetDocument.defaultView);
-                if (arAkahukuSidebar.hasBoard (name, browser)) {
+                if (arAkahukuSidebar.hasBoard (name, null)) {
                   var ok = true;
                   if (!arAkahukuSidebar.enableBackground) {
-                    ok = arAkahukuSidebar.hasTabForBoard (name, browser);
+                    ok = arAkahukuSidebar.hasTabForBoard (name, null);
                   }
                   if (ok) {
                     arAkahukuSidebar.onThreadExpired
@@ -705,13 +703,11 @@ arAkahukuReloadParam.prototype = {
           try {
             var name;
             name = info.server + "_" + info.dir;
-            var browser = arAkahukuWindow
-              .getBrowserForWindow (this.targetDocument.defaultView);
                                 
-            if (arAkahukuSidebar.hasBoard (name, browser)) {
+            if (arAkahukuSidebar.hasBoard (name, null)) {
               var ok = true;
               if (!arAkahukuSidebar.enableBackground) {
-                ok = arAkahukuSidebar.hasTabForBoard (name, browser);
+                ok = arAkahukuSidebar.hasTabForBoard (name, null);
               }
               if (ok) {
                 arAkahukuSidebar.onThreadExpired
@@ -3871,13 +3867,11 @@ var arAkahukuReload = {
         var name, reply, expire, warning, lastNum;
             
         name = info.server + "_" + info.dir;
-        var browser = arAkahukuWindow
-          .getBrowserForWindow (targetDocument.defaultView);
             
-        if (arAkahukuSidebar.hasBoard (name, browser)) {
+        if (arAkahukuSidebar.hasBoard (name, null)) {
           var ok = true;
           if (!arAkahukuSidebar.enableBackground) {
-            ok = arAkahukuSidebar.hasTabForBoard (name, browser);
+            ok = arAkahukuSidebar.hasTabForBoard (name, null);
           }
           if (ok) {
             var nodes = Akahuku.getMessageBQ (targetDocument);
@@ -3885,8 +3879,9 @@ var arAkahukuReload = {
             node
               = targetDocument.getElementById
               ("akahuku_thread_deletetime");
-            if (node) {
-              expire = nodes.innerHTML;
+            if (node?.innerHTML.match (/(([0-9]+\u5E74)?([0-9]+\u6708)?([0-9]+\u65E5)?[0-9]+:[0-9]+)\u9803/)) {
+              // /(([0-9]+年)?([0-9]+月)?([0-9]+日)?[0-9]+:[0-9]+)頃/
+              expire = RegExp.$1;
             }
             else {
               expire = null;
@@ -3903,12 +3898,10 @@ var arAkahukuReload = {
             lastNum
               = Akahuku.getMessageNum (nodes [nodes.length - 1]);
                         
-            arAkahukuSidebar.onThreadChange (name,
-                                             info.threadNumber,
-                                             reply,
-                                             expire,
-                                             warning,
-                                             lastNum);
+            arAkahukuSidebar.onThreadChange (name, info.threadNumber, {
+              reply, expire, warning, lastNum,
+              maxres: info.maxresWarning,
+            });
             if (stats.die) {
               arAkahukuSidebar.onThreadExpired (name, info.threadNumber);
             }

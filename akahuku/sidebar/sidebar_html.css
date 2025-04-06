@@ -1,6 +1,38 @@
+
+@import "../content/styles/futaba-colors.css";
+
+:root {
+  --thread-font-size: 11px;
+  --image-size: 50px;
+  --image-fit: contain;
+
+  /* color definitions */
+  --main-color: var(--futaba-color-azuki-lightdark);
+  --bg-color: var(--futaba-color-zoge-lightdark);
+  --link-color: var(--futaba-color-blue);
+  --select-bg-color: #d4e5f6;
+  --status-bg-color: var(--futaba-color-almond-lightdark);
+  --status-expired-bg-color: var(--futaba-color-almond-comp-lightdark);
+  --status-visited-bg-color: var(--futaba-color-anzu-lightdark);
+  --status-visited-expired-bg-color: from var(--futaba-color-anzu-comp-lightdark);
+  --mark-main-color: var(--futaba-color-red);
+  --mark-bg-color: var(--futaba-color-anzu-lightdark);
+  --warn-color: var(--futaba-color-red-lightdark);
+  --diff-color: var(--futaba-color-kokihi-lightdark);
+  --aima-color: #627f29;
+  --incatalog-comment-color: #aa8888;
+
+  @supports (color: light-dark(black, white)) {
+    /* color-scheme: light dark; */
+    --select-bg-color: light-dark(#d4e5f6, #303134);
+    --mark-main-color: light-dark(var(--futaba-color-red), #ff5555);
+    --incatalog-comment-color: light-dark(#aa8888, #665252);
+  }
+}
+
 html {
-  color: #800000;
-  background-color: #ffffee;
+  color: var(--main-color);
+  background-color: var(--bg-color);
   margin : 0;
   padding : 0;
 }
@@ -8,52 +40,405 @@ html {
 body {
   margin : 0;
   padding : 0;
-  -moz-user-select: none;
+  user-select: none;
+  width: 100%;
+  overflow-x: clip;
 }
 
 .akahuku_sidebar_thread {
+  --status-this-bg-color: var(--status-bg-color);
+  --zoom-status-this-bg-color: var(--link-color);
+
+  min-height: calc(2px + var(--image-size));
+  font-size: var(--thread-font-size);
+
   border-width: 0px 0px 2px;
   border-style: solid;
+  border-color: var(--status-this-bg-color);
   margin-bottom: 2px;
   padding: 0px;
   clear: left;
-  overflow: -moz-hidden-unscrollable;
-  color: #800000;
+  overflow: visible;
+  color: var(--main-color);
   background-color: transparent;
   position: relative;
   cursor: pointer;
 }
+.akahuku_sidebar_thread:hover {
+  background-color: var(--select-bg-color);
+}
+.akahuku_sidebar_thread[data-visited=true] {
+  --status-this-bg-color: var(--status-visited-bg-color);
+  --zoom-status-this-bg-color: var(--futaba-color-kaki);
+}
+.akahuku_sidebar_thread[data-expired=true] {
+  --status-this-bg-color: var(--status-expired-bg-color);
+}
+.akahuku_sidebar_thread[data-visited=true][data-expired=true] {
+  --status-this-bg-color: var(--status-visited-expired-bg-color);
+}
 
 img.akahuku_sidebar_image {
+  width: var(--image-size);
+  height: var(--image-size);
+  object-fit: var(--image-fit);
+  object-position: 50% 50%;
+
   border-width: 1px;
   border-style: solid;
   border-color: transparent;
   float: left;
 }
+img.akahuku_sidebar_image:hover {
+  border-color: var(--link-color);
+}
+.image_area {
+  position: absolute;
+  width: var(--image-size);
+  height: var(--image-size);
+  float: left;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+}
 
 span.akahuku_sidebar_mark {
   font-size: 12px;
   position: absolute;
+  line-height: 100%;
   right: 0px;
-  color: #ff0000;
-  background-color: #eeaa88;
+  color: var(--mark-main-color);
+  background-color: var(--mark-bg-color);
+}
+span.akahuku_sidebar_mark::after {
+  content: "orz";
 }
 
 div.akahuku_sidebar_comment {
-  font-size: 11px;
-  overflow: -moz-hidden-unscrollable;
+  height: calc(var(--image-size) + 2px - 1lh);
+  font-size: var(--thread-font-size);
+
+  line-height: calc(100% + 2px);
+  overflow: clip;
+  word-break: break-all;
 }
 
 div.akahuku_sidebar_status {
-  font-size: 11px;
+  /*height: calc(var(--thread-font-size) + 2px);*/
+  font-size: var(--thread-font-size);
+
+  line-height: calc(100% + 2px);
   text-align: right;
-  overflow: -moz-hidden-unscrollable;
-  color: #800000;
-  height: 12px;
+  overflow: clip;
+  color: var(--main-color);
+  background-color: var(--status-this-bg-color);
+  height: 1lh;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: right;
+  white-space: nowrap;
 }
 
+div.akahuku_sidebar_thread[__image] div.akahuku_sidebar_comment,
+div.akahuku_sidebar_thread[__image] div.akahuku_sidebar_status {
+  margin-left: calc(var(--image-size) + 2px);
+}
 div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_comment,
 div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_status {
   margin-left: 8px;
 }
 
+span.akahuku_sidebar_reply,
+span.akahuku_sidebar_reply_diff,
+span.akahuku_sidebar_expire,
+span.akahuku_sidebar_expire2,
+span.akahuku_sidebar_aima {
+  display: inline-block;
+}
+span.akahuku_sidebar_reply.warn,
+span.akahuku_sidebar_expire.warn {
+  color: var(--warn-color);
+  font-weight: bold;
+}
+span.akahuku_sidebar_reply::after {
+  content: " レス";
+  color: var(--main-color);
+  font-weight: normal;
+}
+
+span.akahuku_sidebar_reply_diff {
+  color: var(--diff-color);
+}
+span.akahuku_sidebar_reply_diff:not(:empty)::before {
+  content: "(";
+}
+span.akahuku_sidebar_reply_diff:not(:empty)::after {
+  content: ")";
+}
+
+.akahuku_sidebar_aima {
+  color: var(--aima-color);
+}
+
+#upside_edge, #downside_edge {
+  width: 100%;
+  height: 0;
+  min-height: min(100px, var(--wheel-acu-delta-px));
+  transition: min-height 500ms;
+}
+#upside_edge {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  overflow: clip;
+}
+#upside_edge > * {
+  height: 80px;
+  font-size: 10px;
+  font-style: italic;
+  text-align: center;
+  border-top: 1px dashed var(--main-color);
+  width: 100%;
+  background: linear-gradient(to top,
+    var(--futaba-color-zoge-lightdark) 33%,
+    var(--futaba-color-almond-lightdark));
+}
+
+/* 画像のポップアップズーム */
+@keyframes zoomthumb {
+  from {
+    width: var(--image-size);
+    height: var(--image-size);
+    left: 0;
+    top: 0;
+  }
+  to {
+    width: var(--zoom-image-width-px);
+    height: var(--zoom-image-height-px);
+    left: var(--zoom-image-left-px);
+    top: var(--zoom-image-top-px);
+    object-fit: fill;
+    border-width: 1px;
+    z-index: 4;
+  }
+}
+@keyframes zoom-status-reply { /* カタログモード用 */
+  100% {
+    position: absolute;
+    background-color: var(--zoom-status-this-bg-color);
+    border: 1px solid var(--zoom-status-this-bg-color);
+    color: white;
+    padding: 2px 4px;
+    top: var(--zoom-image-bottom-px);
+    left: var(--zoom-image-left-px);
+    z-index: 2;
+    width: 4.5ex;
+    height: 1lh;
+    text-align: center;
+  }
+}
+@keyframes zoom-status-expire { /* カタログモード用 */
+  100% {
+    position: absolute;
+    background-color: var(--bg-color);
+    padding: 2px 0;
+    top: calc(var(--zoom-image-bottom-px) + 1px);
+    right: calc(var(--image-size) - var(--zoom-image-width-px) - var(--zoom-image-left-px) - 1px);
+    z-index: 1;
+    width: auto;
+    height: 1lh;
+    text-align: right;
+  }
+}
+@keyframes zoom-comment { /* カタログモード用 */
+  100% {
+    position: absolute;
+    background-color: var(--bg-color);
+    padding: 0px 1px;
+    border: 1px solid var(--bg-color);
+    border-bottom-color: var(--link-color);
+    border-right-color: var(--link-color);
+    top: var(--zoom-image-bottom-px);
+    left: calc(var(--zoom-image-left-px) + 4.5ex + 10px);
+    z-index: 1;
+    width: calc(var(--zoom-image-width-px) + 2px - (4.5ex + 10px) - 4px);
+    line-height: calc(var(--thread-font-size) + 6px);
+    height: calc(var(--thread-font-size) + 6px);
+    text-align: left;
+    text-overflow: clip;
+  }
+}
+
+body[data-thumbnail-zoom=true] {
+  div.akahuku_sidebar_thread:hover {
+    /* 全子孫要素で使うのでズーム画像ジオメトリはここで定義 */
+    --zoom-image-width-px: calc(round(var(--thumb-width-px) * min(1, var(--viewport-width) / var(--thumb-width)), 1px));
+    --zoom-image-height-px: calc(round(var(--thumb-height-px) * min(1, var(--viewport-width) / var(--thumb-width)), 1px));
+    --zoom-image-left-px: clamp(
+        calc(0px - var(--thread-left-px) - 2px),/* ビューポートの左端 (2px border)*/
+        calc(var(--image-size) / 2 - var(--zoom-image-width-px) / 2), 
+        calc(var(--viewport-width-px) - var(--thread-left-px) - var(--zoom-image-width-px) - 4px));/* 右端 */
+    --zoom-image-top-px: clamp(
+      calc(0px - var(--thread-top-px) - 2px),/* 画面の上端 */
+      calc(var(--image-size) / 2 - var(--zoom-image-height-px) / 2),
+      calc(var(--viewport-height-px) - var(--thread-top-px) - var(--zoom-image-height-px) - 4px)/* 下端 */
+    );
+    --zoom-image-bottom-px: calc(var(--zoom-image-top-px) + var(--zoom-image-height-px) + 1px);
+  }
+
+  .image_area:hover {
+    position: relative;
+    z-index: 5;
+  }
+  .image_area:hover + img.akahuku_sidebar_image {
+    animation-name: zoomthumb;
+    animation-duration: 140ms;
+    animation-delay: 500ms;
+    animation-timing-function: cubic-bezier(0.5,0,0.67,1.8);
+    animation-fill-mode: forwards;
+    position: absolute;
+    border-style: solid;
+    border-color: var(--link-color);
+    left: 0;
+    z-index: 3;
+  }
+}
+
+body[data-thumbnail-zoom=true][data-flow-mode=catalog] {
+  /* カタログモードでは情報ヘッダーを追加アニメーション */
+  .image_area:hover ~ div.akahuku_sidebar_status>span.akahuku_sidebar_reply {
+    animation: 100ms 640ms step-start forwards zoom-status-reply;
+  }
+  .image_area:hover ~ div.akahuku_sidebar_status>span.akahuku_sidebar_expire {
+    animation: 100ms 640ms step-start forwards zoom-status-expire;
+    border-left-width: 1em;
+    border-left-style: solid;
+    border-image: linear-gradient(to right, rgba(0, 0, 0, 0), var(--bg-color)) 1 100%;
+    background-clip: padding-box;
+  }
+  .image_area:hover ~ div.akahuku_sidebar_comment {
+    animation: 100ms 640ms step-start forwards zoom-comment;
+  }
+}
+
+
+
+/* カタログモード */
+
+body[data-flow-mode=catalog]::before {
+  content: 'カタログモード';
+  text-align: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: white;
+  background-color: var(--futaba-color-cobaltblue);
+  width: calc(100% - 10px);
+  margin: 2px 5px;
+  flex-shrink: 0;
+}
+body[data-flow-mode=catalog] {
+  --incatalog-comment-color: var(--main-color);
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: start;
+  align-items: start;
+  column-gap: 1px;
+
+  .akahuku_sidebar_thread {
+    width: var(--image-size);
+    flex-grow: 0;
+    border-width: 1px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1px;
+  }
+  img.akahuku_sidebar_image {
+    float: none;
+    border-width: 0;
+  }
+  .image_area {
+    float: none;
+    border-width: 0;
+  }
+  div.akahuku_sidebar_thread[__image] div.akahuku_sidebar_comment,
+  div.akahuku_sidebar_thread[__image] div.akahuku_sidebar_status,
+  div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_comment,
+  div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_status {
+    margin-left: 0;
+  }
+  div.akahuku_sidebar_thread:not([__image]) .akahuku_sidebar_comment {
+    margin-top: var(--image-size);
+  }
+
+  div.akahuku_sidebar_comment {
+    height: 1lh;
+    white-space: nowrap;
+    text-overflow: clip;
+    margin-bottom: 1px;
+  }
+  div.akahuku_sidebar_status {
+    height: 1lh;
+    flex-flow: row wrap;
+    justify-content: start;
+    overflow: hidden;
+  }
+  span.akahuku_sidebar_reply::after {
+    content: " ";
+  }
+  .akahuku_sidebar_reply_diff {
+    width: 0;
+    overflow: visible;
+  }
+  .akahuku_sidebar_expire2 {
+    display: none ! important;
+  }
+  .akahuku_sidebar_expire {
+    width: 100%; /*強制改行して表示領域外へ*/
+  }
+
+  div.akahuku_sidebar_thread[data-warning=true] {
+    border-color: var(--warn-color);
+  }
+
+  div.akahuku_sidebar_thread {
+    border-color: transparent;
+    div.akahuku_sidebar_status {
+      background-color: transparent;
+    }
+  }
+  div.akahuku_sidebar_thread[data-visited=true] {
+    background-color: var(--futaba-color-almond-lightdark);
+    div.akahuku_sidebar_status {
+      background-color: transparent;
+      .akahuku_sidebar_reply {
+        background-color: var(--status-visited-bg-color);
+      }
+    }
+  }
+  div.akahuku_sidebar_thread[data-visited=true]:hover {
+    background-color: var(--select-bg-color);
+  }
+  div.akahuku_sidebar_thread[data-expired=true] {
+    background-color: var(--status-expired-bg-color);
+    div.akahuku_sidebar_status {
+      background-color: transparent;
+    }
+  }
+  div.akahuku_sidebar_thread[data-visited=true][data-expired=true] {
+    background-color: var(--status-visited-expired-bg-color);
+    div.akahuku_sidebar_status {
+      background-color: transparent;
+    }
+  }
+
+  span.akahuku_sidebar_mark {
+    right: -1px;
+    top: -1px;
+    z-index: 3;
+  }
+  span.akahuku_sidebar_mark::after {
+    content: "\03c6";
+  }
+}

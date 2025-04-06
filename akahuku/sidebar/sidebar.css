@@ -1,158 +1,273 @@
-akahukutabcontainer {
-  -moz-binding: url("chrome://akahuku/content/tabcontainer.xml#akahukutabcontainer");
+
+@import "../content/styles/futaba-colors.css";
+
+:root {
+  --active-ui-face-color: #f0d0c0;
+  --active-ui-text-color: var(--futaba-color-red-lightdark);
+  --inactive-ui-face-color: #eeeedd;
+  --inactive-ui-text-color: #bb8080;
+  --spacer-bg-color: #ccccbb;
+  --control-border-color: lightgray;
+}
+@supports (color: light-dark(black, white)) {
+  :root {
+    /* color-scheme: light dark; */
+    --active-ui-face-color: var(--futaba-color-almond-lightdark);
+    --inactive-ui-face-color: light-dark(
+      #eeeedd,
+      #2b2a33
+    );
+    --inactive-ui-text-color: light-dark(
+      #bb8080,
+      #525252
+    );
+    --spacer-bg-color: light-dark(
+      #ccccbb,
+      #1f1e25
+    );
+    --control-border-color: light-dark(
+      #d3d3d3,
+      #464646
+    );
+  }
+}
+
+/* looks like browser-style */
+html, body {
+  background: transparent;
+  box-sizing: border-box;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+body * {
+  box-sizing: border-box;
+  text-align: start;
+}
+
+body > * {
+  min-width: 1px;
+}
+body > ak-tabcontainer {
+  flex-shrink: 1;
+}
+
+/* content/tabcontainer.xml#akahukutabcontainer */
+
+body[data-disabled]
+#disabled_warning {
+	height: 100%;
+	align-content: center;
+	text-align: center;
+}
+body:not([data-disabled])
+#disabled_warning {
+  display: none;
 }
 
 .tabspace {
-  color: #800000;
-  background-color: #ccccbb;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--spacer-bg-color);
   border-width: 0px;
   border-style: solid;
-  border-color: #eeaa88;
+  border-color: var(--futaba-color-anzu-lightdark);
+  flex-grow: 1;
 }
-akahukutabcontainer[orient="horizontal"] .tabspace {
+ak-tabcontainer[orient="horizontal"] .tabspace {
   border-bottom-width: 1px;
 }
-akahukutabcontainer[orient="vertical"] .tabspace {
+ak-tabcontainer[orient="vertical"] .tabspace {
   border-right-width: 1px;
 }
 
 .tabs {
-  color: #800000;
-  background-color: #ffffee;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-zoge-lightdark);
   width: 100%;
 }
 
-.tab {
-  -moz-user-focus: ignore;
+button.tab {
+  user-select: none;
+  display: flex;
+  justify-content: center;
 }
 
-.tab > label {
-  -moz-appearance: none;
+button.tab.align-center  {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.orient-vertical {
+  flex-direction: column;
+}
+.orient-horizontal {
+  flex-direction: row;
+}
+
+.tab > .label {
+  appearance: none;
   margin: 0px;
   padding: 0px 0px 0px 0px;
 }
 
-akahukutabcontainer[orient="horizontal"] > .tab {
-  -moz-appearance: none;
+ak-tabcontainer > .tab {
+  appearance: none;
   margin: 0px;
   padding: 2px 4px 2px 4px;
-  min-width: 1em;
-  color: #bb8080;
-  background-color: #eeeedd;
-  border-width: 1px 1px 0px 1px;
+  flex-shrink: 0;
+  color: var(--inactive-ui-text-color);
+  background-color: var(--inactive-ui-face-color);
+  border-width: 1px;
   border-style: solid;
-  border-color: #eeaa88;
+  border-color: var(--spacer-bg-color);
 }
 
-akahukutabcontainer[orient="horizontal"] > .tab[selected] {
-  color: #800000;
-  background-color: #ffffee;
+ak-tabcontainer > .tab[selected] {
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-zoge-lightdark);
+  border-color: var(--futaba-color-anzu-lightdark);
 }
 
-akahukutabcontainer[orient="vertical"] > .tab {
-  -moz-appearance: none;
-  margin: 0px;
-  padding: 2px 4px 2px 4px;
-  min-width: 1em;
-  color: #bb8080;
-  background-color: #eeeedd;
-  border-width: 1px 0px 1px 1px;
-  border-style: solid;
-  border-color: #eeaa88;
+ak-tabcontainer[orient="horizontal"] > .tab {
+  min-width: calc(2em + 10px);
+  border-bottom-color: var(--futaba-color-anzu-lightdark);
 }
 
-akahukutabcontainer[orient="vertical"] > .tab[selected] {
-  color: #800000;
-  background-color: #ffffee;
+ak-tabcontainer[orient="horizontal"] > .tab[selected] {
+  border-bottom-color: var(--futaba-color-zoge-lightdark);
 }
+
+ak-tabcontainer[orient="vertical"] > .tab {
+  min-height: calc(2lh + 4px);
+  white-space: nowrap;
+  border-right-color: var(--futaba-color-anzu-lightdark);
+}
+
+ak-tabcontainer[orient="vertical"] > .tab[selected] {
+  border-color: var(--futaba-color-anzu-lightdark);
+  border-right-color: var(--futaba-color-zoge-lightdark);
+}
+
+ak-deck  iframe {
+  border: 0px;
+  width: 100%;
+  height: 100%;
+}
+/* div like ZUL-box */
+
+div.box {
+  display: flex;
+}
+
+button {
+  word-break: keep-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: '';
+}
+
+/* */
 
 .buttons {
-  color: #800000;
-  background-color: #ffffee;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-zoge-lightdark);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--control-border-color);
 }
 
 .refresh {
-  -moz-user-focus: ignore;
-  -moz-appearance: none;
-  -moz-border-top-colors: none;
-  -moz-border-bottom-colors: none;
-  -moz-border-right-colors: none;
-  -moz-border-left-colors: none;
+  user-select: none;
+  appearance: none;
+  border-color: none;
   margin: 0;
   padding: 2px;
-  min-width: 1em;
-  color: #800000;
-  background-color: #f8e7d7;
+  min-width: calc(1em + 4px);
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-almond-lightdark);
   border-width: 1px;
   border-style: solid;
-  border-color: #f8e7d7;
+  border-color: var(--futaba-color-almond-lightdark);
 }
 
 .refresh:active {
-  background-color: #f0d0c0;
+  background-color: var(--active-ui-face-color);
 }
 
 .refresh[disabled] {
-  color: #bb8080;
-  background-color: #eeeedd;
-  border-color: #eeeedd;
+  color: var(--inactive-ui-text-color);
+  background-color: var(--inactive-ui-face-color);
+  border-color: var(--inactive-ui-face-color);
+}
+.refresh.last_used[disabled] {
+  color: var(--active-ui-text-color);
 }
 
 .refresh + .refresh,
 .refresh_menu + .refresh {
   margin-left: 4px;
+  flex-shrink: 1;
 }
 .refresh:first-of-type {
   margin-left: 2px;
+  flex-shrink: 2;
 }
 
 .refresh_menu {
-  -moz-user-focus: ignore;
-  -moz-appearance: none;
-  -moz-box-align: center;
-  -moz-box-pack: center;
-  -moz-border-top-colors: none;
-  -moz-border-bottom-colors: none;
-  -moz-border-right-colors: none;
-  -moz-border-left-colors: none;
+  user-select: none;
+  appearance: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   min-width: 1em;
-  width: 1em;
+  width: 1.5em;
   margin: 0;
-  color: #800000;
-  background-color: #f8e7d7;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-almond-lightdark);
   border-width: 1px;
   border-style: solid;
-  border-color: #f8e7d7 #ffffee;
+  border-color: var(--futaba-color-almond-lightdark) var(--futaba-color-zoge-lightdark);
+  padding: 0;
 }
 .refresh_menu:active {
-  background-color: #f0d0c0;
+  background-color: var(--active-ui-face-color);
 }
+.refresh_menu:hover, .refresh:hover {
+  background-color: var(--futaba-color-anzu-lightdark);
+}
+
 .refresh[disabled] + .refresh_menu {
-  color: #bb8080;
-  background-color: #eeeedd;
+  color: var(--inactive-ui-text-color);
+  background-color: var(--inactive-ui-face-color);
 }
 
 .refresh_catalog {
-  width: 4em;
+  min-width: calc(2em + 4px);
   text-align: center;
 }
 
 .sortorder_menu {
-  -moz-appearance: none;
-  -moz-border-top-colors: none;
-  -moz-border-bottom-colors: none;
-  -moz-border-right-colors: none;
-  -moz-border-left-colors: none;
+  appearance: auto;
+  border-style: none;
   margin: 0 0 0 4px;
   padding: 2px 0;
   text-align: left;
   min-width: 5em;
-  color: #800000;
-  background-color: #ffffee;
+  color: var(--futaba-color-azuki-lightdark);
+  background-color: var(--futaba-color-zoge-lightdark);
   border-width: 0;
+}
+.sortorder_menu:hover {
+  background-color: var(--active-ui-face-color);
 }
 
 iframe.akahuku_sidebar_iframe {
-  -moz-user-focus: ignore;
+  user-select: none;
 }
