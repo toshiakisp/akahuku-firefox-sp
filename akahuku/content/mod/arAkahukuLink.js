@@ -612,6 +612,24 @@ var arAkahukuLink = {
                                  (/\u2329/g, "&amp;lang")));
           }
         }
+        else if (url.match (/^([^#]*)(#:~:[^\/]+)$/)) {
+          // Text Fragment URL
+          var parens2 = RegExp.$1.substring (protocol.length);
+          var fragment = RegExp.$2;
+          var word = decodeURIComponent (fragment);
+          if (word.length == fragment.length) {
+            parens2 += fragment;
+            word = null;
+          }
+          anchor.appendChild (targetDocument.createTextNode (parens2));
+          if (word) {
+            var font = targetDocument.createElement ("font");
+            font.className = "akahuku_generated_link_child";
+            font.setAttribute ("__akahuku_link_tmp", btoa (escape (fragment)));
+            font.appendChild (targetDocument.createTextNode (word));
+            anchor.appendChild (font);
+          }
+        }
         else {
           anchor.appendChild (targetDocument.createTextNode
                               (parens [2].replace
