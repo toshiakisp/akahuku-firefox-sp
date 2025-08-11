@@ -50,6 +50,31 @@ const AkahukuCentral = (function () {
       return {id: value.id};
     }
 
+    update(oldValue, newValue) {
+      // delete old value keeping id
+      let target = -1;
+      for (let n = 0; n < this._values.length; n++) {
+        if (this._values[n].id == oldValue.id) {
+          target = n;
+          break;
+        }
+      }
+      if (target < 0) {
+        throw new Error('Unregisterd value');
+      }
+      let v = this._values[target];
+      this._urlMap.delete(v);
+      this._values.splice(target, 1);
+
+      // clone
+      const value = JSON.parse(JSON.stringify(newValue));
+
+      value.id = oldValue.id;
+      this._values.push(value);
+      this._urlMap.set(value, new URL(value.url || 'about:blank'));
+      return {id: value.id};
+    }
+
     delete(value) {
       let target = -1;
       for (let n = 0; n < this._values.length; n++) {
@@ -166,6 +191,14 @@ const AkahukuCentral = (function () {
       }
       return ret;
     }
+
+    getId (args) {
+      const values = this.get(args);
+      const ret = new Array(values.length);
+      for (let i=0; i<values.length; i++) {
+        ret[i] = values[i].id;
+      }
+    }
   }
 
 
@@ -173,31 +206,48 @@ const AkahukuCentral = (function () {
     ['param', new Registory()],
     ['board', new Registory()],
     ['thread', new Registory()],
+    ['storage', new Registory()],
   ]);
+
+  function _getRegOf (type) {
+    let reg = registories.get(type);
+    if (!reg)
+      throw new Error('Undefined type: '+type);
+    return reg;
+  }
 
   // public methods of module
   let exports = Object.freeze({
     register: async function (type, value) {
-      let reg = registories.get(type);
-      if (!reg)
-        throw new Error('Undefined type: '+type);
-      return reg.add(value);
+      return _getRegOf(type).add(value);
     },
 
     unregister: function (type, value) {
       // sync because of no response
-      let reg = registories.get(type);
-      if (!reg)
-        throw new Error('Undefined type: '+type);
-      reg.delete(value);
+      _getRegOf(type).delete(value);
       return;
     },
 
     get: async function (type, arg) {
-      let reg = registories.get(type);
-      if (!reg)
-        throw new Error('Undefined type: '+type);
-      return reg.get(arg);
+      return _getRegOf(type).get(arg);
+    },
+
+    getId: async function (type, arg) {
+      return _getRegOf(type).getId(arg);
+    },
+
+    update: async function (type, arg, newValue) {
+      const reg = _getRegOf(type);
+      const values = reg.get(arg);
+      if (values.length > 0) {
+        const ret = [];
+        for (const v of values) {
+          ret.concat(reg.update(v, newValue));
+        }
+        return ret;
+      } else {
+        return await [this.register(type, newValue)];
+      }
     },
 
     // Utilities

@@ -4,6 +4,8 @@ export const AkahukuCentral = (()=>{
     'register',
     'unregister',
     'get',
+    'getId',
+    'update',
     'getParamsByURL',
     'isURLOpened',
   ];

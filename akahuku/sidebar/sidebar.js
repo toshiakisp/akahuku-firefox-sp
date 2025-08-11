@@ -39,6 +39,9 @@ arAkahukuConfig.modules = [
 arAkahukuConfig.init();
 initContextMenu();
 arAkahukuSidebar.attachToWindow(window);
+window.addEventListener('unload', (event) => {
+  arAkahukuSidebar.dettachFromWindow(window);
+});
 
 Loader.initialize(document),
 Loader.addEventListener('DOMContentLoaded', (event) => {

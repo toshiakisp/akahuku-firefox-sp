@@ -1,6 +1,7 @@
 export {arAkahukuSidebar, arAkahukuSidebarParam, arAkahukuSidebarBoard, arAkahukuSidebarThread};
 
 import {Akahuku} from '/content/akahuku.js';
+import {AkahukuCentral} from '/content/akahuku-central-content.js';
 import {HistoryService} from '/content/history-service-content.js';
 import {Tabs} from '/content/tabs-content.js';
 
@@ -15,9 +16,9 @@ import {arAkahukuWindow} from '/content/mod/arAkahukuWindow.js';
 /**
  * サイドバーのスレ情報
  */
-function arAkahukuSidebarThread () {
+function arAkahukuSidebarThreadData () {
 }
-arAkahukuSidebarThread.prototype = {
+arAkahukuSidebarThreadData.prototype = {
   num : 0,           /* Number  スレ番号 */
   comment : "",      /* String  コメント */
   commentInCatalog : "",/* String  カタログから取得したコメント */
@@ -28,7 +29,6 @@ arAkahukuSidebarThread.prototype = {
   warning : "",      /* String  もうすぐ消えます */
   maxres: "",        /* String  上限 レスに達しました */
   lastNum : 0,       /* Number  最終レス番号*/
-  catalogOrder : 0,  /* Number  カタログ順(保存しない) */
     
   imageSrc : "",     /* String  画像の URI */
   imageSrcType : 0,  /* Number  画像の種類
@@ -52,6 +52,21 @@ arAkahukuSidebarThread.prototype = {
   isVisited : false, /* Boolean  既読フラグ */
   isMarked : false,  /* Boolean  マーク */
   isExpired : false, /* Boolean  消滅フラグ */
+};
+
+function arAkahukuSidebarThread (data=null) {
+  arAkahukuSidebarThreadData.call(this);
+  if (data) {
+    const proto = arAkahukuSidebarThreadData.prototype;
+    for (const [key, value] of Object.entries(data)) {
+      if (Object.hasOwn(proto, key)) {
+        this[key] = value;
+      }
+    }
+  }
+}
+arAkahukuSidebarThread.prototype = {
+  catalogOrder : 0,  /* Number  カタログ順(保存しない) */
   node : null        /* HTMLDivElement  サイドバー上の div 要素 */
   ,
   threadLinkURLObject : null,   /* URL スレの URL */
@@ -156,7 +171,20 @@ arAkahukuSidebarThread.prototype = {
       return false;
     }
   },
+
+  toData : function () {
+    const ret = {};
+    const proto = arAkahukuSidebarThreadData.prototype;
+    for (const [key, value] of Object.entries(this)) {
+      if (Object.hasOwn(proto, key)) {
+        ret[key] = value;
+      }
+    }
+    return ret;
+  },
 };
+Object.setPrototypeOf(arAkahukuSidebarThread.prototype, arAkahukuSidebarThreadData.prototype);
+
 /**
  * サイドバーの板情報
  */
@@ -241,6 +269,7 @@ function arAkahukuSidebarParam (win) {
   this.boards = {};
   // Document  現在対象のサイドバーのドキュメント
   this.currentSidebarDocument = null;
+  this.lastFocusedPanel = '';
 }
 arAkahukuSidebarParam.prototype = {
   getWindowID : function (win) {
@@ -354,81 +383,37 @@ var arAkahukuSidebar = {
         
     arAkahukuSidebar.getConfig ();
     if (arAkahukuSidebar.enableSave) {
-      Akahuku.debug.error('NotYetImplemented (load from sidebar.txt)');
-      /* TODO
-      IDBFiles.getFileStorage({name: 'systemFiles'})
-      .then(async (storage) => {
-        let file = await storage.get('/sidebar.txt');
-        return file.open('readonly').then(async (fh) => {
-          let meta = await fh.getMetadata();
-          return fh.readAsText(meta.size)
-            .finally(() => fh.close());
-        });
-      })
-      .then (function (text) {
-        var currentBoard = "";
-        var parser = function (matched, line) {
-          if (line.indexOf (",") == -1) {
-            currentBoard = line;
-            if (!param.boards [currentBoard]) {
-              // taking care for async file load
-              board = new arAkahukuSidebarBoard ();
-              param.boards [currentBoard] = board;
-            }
+      AkahukuCentral.get('storage', {name: 'sidebar.json'})
+      .then((cond) => {
+        if (cond.length == 0) {
+          Akahuku.debug.log ('no sidebar.json data in storage');
+          return;
+        }
+        const dataObj = cond[0];
+        for (const boardName of Object.keys(dataObj.boards)) {
+          if (!param.boards [boardName]) {
+            // taking care for async file load
+            param.boards[boardName] = new arAkahukuSidebarBoard();
+
           }
-          else {
-            var values = line.split (/,/);
-            var i = 0;
-                        
-            var thread = new arAkahukuSidebarThread ();
-                        
-            thread.num = parseInt (unescape (values [i]));
-            i ++;
-            thread.comment = unescape (values [i]);
-            i ++;
-            thread.reply = parseInt (unescape (values [i]));
-            i ++;
-            thread.lastReply = parseInt (unescape (values [i]));
-            i ++;
-            thread.expire = unescape (values [i]);
-            i ++;
-            thread.warning = unescape (values [i]);
-            i ++;
-            thread.lastNum = parseInt (unescape (values [i]));
-            i ++;
-            thread.imageSrc = unescape (values [i]);
-            i ++;
-            thread.imageSrcType = parseInt (unescape (values [i]));
-            i ++;
-            thread.imageLink = unescape (values [i]);
-            i ++;
-            thread.imageNum = parseInt (unescape (values [i]));
-            i ++;
-            thread.imageWidth = parseInt (unescape (values [i]));
-            i ++;
-            thread.imageHeight = parseInt (unescape (values [i]));
-            i ++;
-            thread.imageBytes = parseInt (unescape (values [i]));
-            i ++;
-            thread.imageExt = unescape (values [i]);
-            i ++;
-            thread.threadLink = unescape (values [i]);
-            i ++;
-            thread.isVisited = unescape (values [i]) == "true";
-            i ++;
-            thread.isMarked = unescape (values [i]) == "true";
-            i ++;
-            thread.isExpired = unescape (values [i]) == "true";
-            i ++;
-            param.boards [currentBoard].addThread (thread);
+          let board = param.boards[boardName];
+          for (const threadData of dataObj.boards[boardName]) {
+            let thread = new arAkahukuSidebarThread(threadData);
+            board.addThread(thread);
           }
-        };
-        text.replace (/([^\n\r]+)[\r\n]+/g, parser);
+        }
         if (arAkahukuSidebar.enableMarked) {
           arAkahukuSidebar.updateMarked (param);
         }
+        if (dataObj.lastBoard) {
+          const tabName = "akahuku_sidebar_tab_" + dataObj.lastBoard;
+          const sidebarDocument = arAkahukuSidebar.getSidebarDocument(window);
+          arAkahukuSidebar.onTabClickCore(sidebarDocument.getElementById(tabName));
+        }
+      })
+      .catch ((e) => {
+        Akahuku.debug.exception (e);
       });
-      */
     }
   },
 
@@ -437,8 +422,13 @@ var arAkahukuSidebar = {
   },
   dettachFromWindow : function (window) {
     let sidebarDocument = arAkahukuSidebar.getSidebarDocument (window);
-    arAkahukuSidebar.onSidebarUnload (sidebarDocument);
-    arAkahukuSidebar.deleteSidebarParam (window);
+    try {
+      arAkahukuSidebar.onSidebarUnload (sidebarDocument);
+      arAkahukuSidebar.deleteSidebarParam (window);
+    }
+    catch (e) {
+      Akahuku.debug.exception(e);
+    }
   },
     
   /**
@@ -449,48 +439,21 @@ var arAkahukuSidebar = {
 
   termSidebarParam : function (param) {
     if (arAkahukuSidebar.enableSave) {
-      var text = "";
-      var name, board, thread;
-            
-      for (name in param.boards) {
-        board = param.boards [name];
-                
-        text += name + "\n";
-        for (var i = 0; i < board.threads.length; i ++) {
-          thread = board.threads [i];
-                    
-          text +=
-            escape (thread.num)
-            + "," + escape (thread.comment)
-            + "," + escape (thread.reply)
-            + "," + escape (thread.lastReply)
-            + "," + escape (thread.expire)
-            + "," + escape (thread.warning)
-            + "," + escape (thread.lastNum)
-            + "," + escape (thread.imageSrc)
-            + "," + escape (thread.imageSrcType)
-            + "," + escape (thread.imageLink)
-            + "," + escape (thread.imageNum)
-            + "," + escape (thread.imageWidth)
-            + "," + escape (thread.imageHeight)
-            + "," + escape (thread.imageBytes)
-            + "," + escape (thread.imageExt)
-            + "," + escape (thread.threadLink)
-            + "," + escape (thread.isVisited)
-            + "," + escape (thread.isMarked)
-            + "," + escape (thread.isExpired)
-            + "\n";
+      const dataObj = {
+        name: 'sidebar.json',
+        boards: {},
+        lastBoard: param.lastFocusedPanel,
+      };
+      for (const [name, board] of Object.entries(param.boards)) {
+        dataObj.boards[name] = new Array(board.threads.length)
+        for (let i = 0; i < board.threads.length; i ++) {
+          dataObj.boards[name][i] = board.threads[i].toData();
         }
       }
-            
-      Akahuku.debug.error('NotYetImplemented (save to lastcells.txt)');
-      /* TODO
-      IDBFiles.getFileStorage({name: 'systemFiles'})
-      .then((sto) => sto.put('/sidebar.txt', new Blob([text])))
+      AkahukuCentral.update('storage', {name:'sidebar.json'}, dataObj)
       .catch (function (e) {
         Akahuku.debug.exception (e);
       });
-      */
     }
   },
     
@@ -3159,6 +3122,7 @@ var arAkahukuSidebar = {
       = sidebarDocument.getElementById ("akahuku_sidebar_iframe_" + name);
       var sidebarWindow = sidebarDocument.defaultView;
       var param = arAkahukuSidebar.getSidebarParam (sidebarWindow);
+      param.lastFocusedPanel = name;
       if (iframe) {
         var targetDocument = iframe.contentDocument;
         if (targetDocument.body.getAttribute ("__sort") != sortSign) {
