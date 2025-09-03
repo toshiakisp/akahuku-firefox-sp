@@ -1096,10 +1096,10 @@ var arAkahukuSidebar = {
                   imageSrc = node2.src;
                   imageSrcType = 1;
                 }
-                if (node2.width)
-                  imageWidth = parseInt(node2.width) || 0;
-                if (node2.height)
-                  imageHeight = parseInt(node2.height) || 0;
+                if (node2.hasAttribute ("width"))
+                  imageWidth = parseInt(node2.getAttribute ("width")) || 0;
+                if (node2.hasAttribute ("height"))
+                  imageHeight = parseInt(node2.getAttribute ("height")) || 0;
               }
               else if (nodeName2 == "small") {
                 comment = node.textContent;
@@ -1148,7 +1148,8 @@ var arAkahukuSidebar = {
         imageSrc: imageSrc,
         imageSrcType: imageSrcType,
         imageNum: imageNum,
-        imageWidth, imageHeight,
+        imageWidth: imageWidth,
+        imageHeight: imageHeight,
         comment: comment,
         lastNum: num,
         catalogOrder: i + 1, // 1...N
