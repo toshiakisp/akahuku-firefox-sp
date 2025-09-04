@@ -1943,8 +1943,9 @@ let transaction;
 Promise.all([
   transaction = browser.runtime.sendMessage(prefGetMsg),
   AkahukuCentral.get('board', null),
+  browser.commands.getAll(),
 ])
-  .then(([initPrefs, boards]) => {
+  .then(([initPrefs, boards, commands]) => {
     // on success
     if (!initPrefs) {
       error('No response for pref.js/get message!');
@@ -1969,8 +1970,52 @@ Promise.all([
     btn_export.disabled = false;
     btn_export2.disabled = false;
 
+    // Overwrite pref by current shortcut key settings
+    commands.forEach((c)=>{
+      let pref_name = '';
+      switch (c.name) {
+        case 'focus-comment':
+          pref_name = 'commentbox.shortcut';
+          break;
+        case 'toggle-sage':
+          pref_name = 'mailbox.sagebutton.key';
+          break;
+        case 'save-MHT':
+          pref_name = 'savemht.shortcut';
+          break;
+        case 'open-bloomer':
+          pref_name = 'bloomer';
+          break;
+        case '_execute_sidebar_action':
+          pref_name = 'sidebar.shortcut';
+          break;
+        default:
+      }
+      if (pref_name) {
+        initPrefs[pref_name] = Boolean(c.shortcut);
+        if (c.shortcut) {
+          initPrefs[pref_name+'.keycombo'] = c.shortcut;
+        }
+      }
+    });
+
     basePrefs = initPrefs;
     onPrefsLoaded(initPrefs);
+
+    document.querySelectorAll('a.open_shortcut_settings_link').forEach((a) => {
+      a.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        if ('openShortcutSettings' in browser.commands) { // Firefox 137-
+          if (window.confirm("設定画面を閉じて管理画面を開きますか？")) {
+            browser.commands.openShortcutSettings().then(()=>{
+              window.close();
+            });
+          }
+        } else {
+          browser.tabs.create({url:'https://support.mozilla.org/kb/manage-extension-shortcuts-firefox'});
+        }
+      });
+    });
 
     let button = document.getElementById('save-button');
     button.disabled = false;
