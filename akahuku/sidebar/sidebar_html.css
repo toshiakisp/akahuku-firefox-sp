@@ -14,7 +14,7 @@
   --status-bg-color: var(--futaba-color-almond-lightdark);
   --status-expired-bg-color: var(--futaba-color-almond-comp-lightdark);
   --status-visited-bg-color: var(--futaba-color-anzu-lightdark);
-  --status-visited-expired-bg-color: from var(--futaba-color-anzu-comp-lightdark);
+  --status-visited-expired-bg-color: var(--futaba-color-anzu-comp-lightdark);
   --mark-main-color: var(--futaba-color-red);
   --mark-bg-color: var(--futaba-color-anzu-lightdark);
   --warn-color: var(--futaba-color-red-lightdark);
