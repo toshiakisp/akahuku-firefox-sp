@@ -56,6 +56,7 @@ const commands = new Set([
   'resetCatalogOrder',
   'asyncGetThread',
   'markThread',
+  'openCatalogSetting',
 ]);
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.target !== "sidebar.js") {

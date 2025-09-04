@@ -76,7 +76,7 @@ export default function initContextMenuSidebar (targetDocument=document) {
         inTabbar: tabcontainer ? true : false,
         isTab: tabcontainer && button ? true : false,
         isTabActive: tabcontainer && button && button.getAttribute('selected') ? true : false,
-        tabId: tabcontainer ? button?.id?.replace(/^akahuku_sidebar_tab_/,'') : '',
+        activeBoardName: tabcontainer ? button?.id?.replace(/^akahuku_sidebar_tab_/,'') : '',
         inDeck: deck ? true : false,
         inDeckControl: false,
         menuType: '',
@@ -102,6 +102,7 @@ export default function initContextMenuSidebar (targetDocument=document) {
       }
       if (deck) {
         data.sidebar.inDeckControl = true;
+        data.sidebar.activeBoardName = deck.selectedPanel?.id?.replace(/^akahuku_sidebar_deck_/,'');
       }
       if (deck && button) {
         data.sidebar.menuId = button.id;
@@ -115,7 +116,7 @@ export default function initContextMenuSidebar (targetDocument=document) {
     } else {//sub document in iframe
       data.sidebar.inDeck = true;
       data.sidebar.inIframe = true;
-      data.sidebar.tabId = cev.target.ownerDocument.location?.hash.substring(1);
+      data.sidebar.activeBoardName = cev.target.ownerDocument.location?.hash.substring(1);
       const thread = cev.target.closest('.akahuku_sidebar_thread');
       if (thread) {
         data.sidebar.onThread = true;

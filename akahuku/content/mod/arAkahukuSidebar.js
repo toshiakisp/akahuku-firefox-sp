@@ -2342,6 +2342,19 @@ var arAkahukuSidebar = {
     }
   },
 
+  openCatalogSetting : function (name) {
+    const [server, dir] = (name || '').split('_');
+    if (server && server != '*' && dir && dir != '*') {
+      const link = `https://${server}.2chan.net/${dir}/futaba.php?mode=catset`;
+      Tabs.focusByURL(link)
+        .then((focused) => {
+          if (!focused) {
+            return Tabs.openNewTab(link, true);
+          }
+        });
+    }
+  },
+
   /**
    * 0ページ/カタログで更新をクリックしたイベント
    *
@@ -2845,9 +2858,15 @@ var arAkahukuSidebar = {
         let template = sidebarDocument.getElementById('akahuku-sidebar-catalog-select');
         button = template.content.firstElementChild.cloneNode(true);
         button.id =  "akahuku_sidebar_refresh_cat_menu_" + name;
+        button.dataset.name = name;
         button.className = "refresh_menu";
         buttons.appendChild (button);
         button.addEventListener("change", (event) => {
+          if (event.target.value == 'open-catset') {
+            arAkahukuSidebar.openCatalogSetting(event.target.dataset.name);
+            event.target.value = arAkahukuSidebar.refreshCatalogType;
+            return;
+          }
           arAkahukuSidebar.onChangeCatalogSelect (event);
         });
       }

@@ -20,7 +20,7 @@ var arAkahukuSidebarMenus = new AkahukuContextMenu({
           'frameId': info.frameId, // Not broadcast all sidebars,
           'target': 'sidebar.js',
           'command': 'markThread',
-          'args': [c.tabId, c.threadNum, true]});
+          'args': [c.activeBoardName, c.threadNum, true]});
       },
       _onUpdate: (info, tab, c) => ({
         visible: c.onThread && !c.isThreadMarked,
@@ -35,7 +35,7 @@ var arAkahukuSidebarMenus = new AkahukuContextMenu({
           'frameId': info.frameId, // Not broadcast all sidebars,
           'target': 'sidebar.js',
           'command': 'markThread',
-          'args': [c.tabId, c.threadNum, false]});
+          'args': [c.activeBoardName, c.threadNum, false]});
       },
       _onUpdate: (info, tab, c) => ({
         visible: c.onThread && c.isThreadMarked,
@@ -109,6 +109,21 @@ var arAkahukuSidebarMenus = new AkahukuContextMenu({
           title: '履歴',
           type: 'radio',
           _pref_select: {name:'sidebar.refresh.catalog.type', value:9},
+        },
+        {
+          id: 'akahuku-sidebar-catalog-popup-separator1',
+          type: 'separator',
+        },
+        {
+          id: 'akahuku-sidebar-catalog-popup-catset',
+          title: '設定...',
+          onclick: (info, tab, c) => {
+            browser.runtime.sendMessage({
+              'frameId': info.frameId,
+              'target': 'sidebar.js',
+              'command': 'openCatalogSetting',
+              'args': [c.activeBoardName]});
+          },
         },
       ],
     },
