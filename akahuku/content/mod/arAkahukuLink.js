@@ -2677,8 +2677,11 @@ var arAkahukuLink = {
       image.style.maxHeight = "250px";
       image.style.borderWidth = "0px";
       image.title = uri;
-      image.referrerPolicy = 'no-referrer';
-      image.crossOrigin = 'anonymous';
+      if (!(targetDocument.location.host.endsWith('.2chan.net')
+        && /^https?:\/\/[^.]+\.2chan\.net\/./.test(uri))) {
+        image.referrerPolicy = 'no-referrer';
+        image.crossOrigin = 'anonymous';
+      }
       image.addEventListener
         ("load",
          function () {
