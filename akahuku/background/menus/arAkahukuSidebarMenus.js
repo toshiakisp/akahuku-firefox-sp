@@ -257,9 +257,11 @@ var arAkahukuSidebarMenus = new AkahukuContextMenu({
 
     {
       id: "akahuku-sidebar-popup-action",
-      title: '赤福',
+      title: '赤福設定...',
       _patterns: ['sidebar/*'],
-      command: '_execute_browser_action',
+      onclick: (info, tab, c) => {
+        browser.runtime.openOptionsPage();
+      },
     },
   ],
 });
