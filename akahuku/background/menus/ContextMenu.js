@@ -8,6 +8,9 @@ function AkahukuContextMenu ({common={}, menus=[], baseUrl='/', commonUpdate=nul
   if (commonUpdate) {
     this.commonUpdate = commonUpdate;
   }
+  this.clickHandlers = new Map();
+  this.updateHandlers = new Map();
+  this.menuSettingById = new Map();
 }
 
 AkahukuContextMenu.prototype = {
@@ -151,8 +154,6 @@ AkahukuContextMenu.prototype = {
     const handler = this.clickHandlers.get(info.menuItemId);
     if (handler) {
       handler(info, tab, this.lastContentData);
-    } else {
-      console.warn('No handler for', info.menuItemId, info);
     }
   },
   _onShown: function (info, tab) {
