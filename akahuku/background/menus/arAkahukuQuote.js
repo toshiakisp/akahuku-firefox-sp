@@ -1,169 +1,171 @@
 'use strict';
 
-var arAkahukuQuote = {
+var arAkahukuQuote = new AkahukuContextMenu({
+  common: {
+    type: 'normal',
+    contexts: ['selection'],
+    enabled: false,
+  },
+  commonUpdate: (info, tab, c) => ({
+    enabled: (Prefs.getItem('all')
+      && Prefs.getItem('quickquote')
+      && Prefs.getItem('quickquote.menu')
+    ),
+  }),
+});
 
-  initContextMenus: function () {
-    let p = (key) => Prefs.getItem(key);
-    let enableMenu
-      =  p('quickquote.menu')
-      && p('quickquote')
-      && p('all');
-
-    let createIf = (condition, createProps) => {
-      browser.menus.remove(createProps.id);
-      if (enableMenu && condition)
-        browser.menus.create(createProps);
-    };
-
-    createIf(p('quickquote.menu.quote'), {
+arAkahukuQuote.menuSettings =
+  [
+    {
       id: "akahuku-menuitem-content-quote",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // 引用
       title: "\u5F15\u7528",
-      onclick: arAkahukuQuote.onClickQuoteWithMark,
-    });
-    createIf(p('quickquote.menu.mail'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteWithMark(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.quote'),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-mail",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // メール欄へ
       title: "\u30E1\u30FC\u30EB\u6B04\u3078",
-      onclick: arAkahukuQuote.onClickQuoteToMailBox,
-    });
-    createIf(p('quickquote.menu.name'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteToMailBox(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.mail'),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-name",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // 名前欄へ
       title: "\u540D\u524D\u6B04\u3078",
-      onclick: arAkahukuQuote.onClickQuoteToNameBox,
-    });
-    createIf(p('quickquote.menu.comment'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteToNameBox(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.name'),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-comment",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // コメントへ
       title: "\u30B3\u30E1\u30F3\u30C8\u3078",
-      onclick: arAkahukuQuote.onClickQuoteAsComment,
-    });
-    createIf(p('quickquote.menu.copy') && p('quickquote.menu.separator'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteAsComment(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.comment'),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-separator2",
       type: "separator",
-      contexts: ['selection'],
-    });
-    createIf(p('quickquote.menu.copy'), {
+      enabled: true,
+      _onUpdate: (info, tab, c) => ({
+        visible: (Prefs.getItem('quickquote.menu.copy')
+          && Prefs.getItem('quickquote.menu.separator')),
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-quote-copy",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // 引用付きコピー
       title: "\u5F15\u7528\u4ED8\u304D\u30B3\u30D4\u30FC",
-      onclick: arAkahukuQuote.onClickCopyToClipboard,
-    });
-    createIf(!p('floatpostform') && p('quickquote.menu.separator') && p('quickquote.menu.cont'), {
+      onclick: (i, t) => arAkahukuQuote.onClickCopyToClipboard(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.copy'),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-separator3",
       type: "separator",
-      contexts: ['selection'],
-    });
-    createIf(!p('floatpostform') && p('quickquote.menu.quote') && p('quickquote.menu.cont'), {
+      enabled: true,
+      _onUpdate: (info, tab, c) => ({
+        visible: (!Prefs.getItem('floatpostform')
+          && Prefs.getItem('quickquote.menu.separator')
+          && Prefs.getItem('quickquote.menu.cont')),
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-quote-cont",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // 引用 - 連続
       title: "\u5F15\u7528 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteWithMarkCont,
-    });
-    createIf(!p('floatpostform') && p('quickquote.menu.mail') && p('quickquote.menu.cont'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteWithMarkCont(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: (!Prefs.getItem('floatpostform')
+          && Prefs.getItem('quickquote.menu.quote')
+          && Prefs.getItem('quickquote.menu.cont')),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-mail-cont",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // メール欄へ - 連続
       title: "\u30E1\u30FC\u30EB\u6B04\u3078 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteToMailBoxCont,
-    });
-    createIf(!p('floatpostform') && p('quickquote.menu.name') && p('quickquote.menu.cont'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteToMailBoxCont(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: (!Prefs.getItem('floatpostform')
+          && Prefs.getItem('quickquote.menu.mail')
+          && Prefs.getItem('quickquote.menu.cont')),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-name-cont",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // 名前欄へ - 連続
       title: "\u540D\u524D\u6B04\u3078 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteToNameBoxCont,
-    });
-    createIf(!p('floatpostform') && p('quickquote.menu.comment') && p('quickquote.menu.cont'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteToNameBoxCont(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: (!Prefs.getItem('floatpostform')
+          && Prefs.getItem('quickquote.menu.name')
+          && Prefs.getItem('quickquote.menu.cont')),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-comment-cont",
-      type: "normal",
-      contexts: ['selection'],
-      enabled: false, //isAkahukuApplied
       // コメントへ - 連続
       title: "\u30B3\u30E1\u30F3\u30C8\u3078 - \u9023\u7D9A",
-      onclick: arAkahukuQuote.onClickQuoteAsCommentCont,
-    });
-    createIf((p('quickquote.menu.google.image') || p('quickquote.menu.wikipedia')) && p('quickquote.menu.separator'), {
+      onclick: (i, t) => arAkahukuQuote.onClickQuoteAsCommentCont(i, t),
+      _onUpdate: (info, tab, c) => ({
+        visible: (!Prefs.getItem('floatpostform')
+          && Prefs.getItem('quickquote.menu.comment')
+          && Prefs.getItem('quickquote.menu.cont')),
+        enabled: c.isAkahukuApplied,
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-separator4",
       type: "separator",
-      contexts: ['selection'],
-    });
-    createIf(p('quickquote.menu.google.image'), {
+      enabled: true,
+      _onUpdate: (info, tab, c) => ({
+        visible: (Prefs.getItem('quickquote.menu.google.image')
+          || Prefs.getItem('quickquote.menu.wikipedia')
+          || Prefs.getItem('quickquote.menu.separator')),
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-google-image",
-      type: "normal",
-      contexts: ['selection'],
       // イメぐぐる
       title: "\u30A4\u30E1\u3050\u3050\u308B",
-      onclick: arAkahukuQuote.onClickGoogleImage,
-    });
-    createIf(p('quickquote.menu.wikipedia'), {
+      onclick: (i, t) => arAkahukuQuote.onClickGoogleImage(i, t),
+      enabled: true,
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.google.image'),
+      }),
+    },
+    {
       id: "akahuku-menuitem-content-wikipedia",
-      type: "normal",
-      contexts: ['selection'],
       // ウィキペドる
       title: "\u30A6\u30A3\u30AD\u30DA\u30C9\u308B",
-      onclick: arAkahukuQuote.onClickWikipedia,
-    });
-  },
+      onclick: (i, t) => arAkahukuQuote.onClickWikipedia(i, t),
+      enabled: true,
+      _onUpdate: (info, tab, c) => ({
+        visible: Prefs.getItem('quickquote.menu.wikipedia'),
+      }),
+    },
+  ];
 
-  updateContextMenus: function (info, tab, c) {
-    if (!info.contexts.includes('selection')) {
-      return false;
-    }
-
-    let rules = [
-      {id: 'akahuku-menuitem-content-quote',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-mail',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-name',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-comment',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-quote-cont',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-mail-cont',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-name-cont',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: 'akahuku-menuitem-content-comment-cont',
-        update: {enabled: c.isAkahukuApplied}},
-      {id: "akahuku-menuitem-content-quote-copy",
-        update: {enabled: c.isAkahukuApplied}},
-    ];
-
-    let updated = false;
-    for (let rule of rules) {
-      if (info.menuIds.includes(rule.id)) {
-        browser.menus.update(rule.id, rule.update);
-        updated = true;
-      }
-    }
-    return updated;
-  },
+Object.assign(arAkahukuQuote, {
 
   onClickQuote: function (info, tab, addQuotePrefix, focusTextArea) {
     let msg = {
@@ -245,5 +247,5 @@ var arAkahukuQuote = {
     });
   },
 
-};
+});
 

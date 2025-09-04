@@ -1,7 +1,5 @@
 'use strict';
 
-/* global AkahukuContextMenu */
-
 var arAkahukuSidebarMenus = new AkahukuContextMenu({
   common: {
     viewTypes: ['sidebar'],
