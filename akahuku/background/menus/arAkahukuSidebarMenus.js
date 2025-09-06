@@ -254,6 +254,22 @@ var arAkahukuSidebarMenus = new AkahukuContextMenu({
     },
 
     {
+      id: 'akahuku-sidebar-popup-clear',
+      title: '板をクリア',
+      _patterns: ['sidebar/sidebar_html.html'],
+      onclick: (info, tab, c) => {
+        browser.runtime.sendMessage({
+          'frameId': info.frameId,
+          'target': 'sidebar.js',
+          'command': 'clearAllThreads',
+          'args': [c.activeBoardName]});
+      },
+      _onUpdate: (info, tab, c) => ({
+        visible: c.inIframe || c.inDeckControl,
+        title: (c.activeBoardTitle || '板') + 'をクリア',
+      }),
+    },
+    {
       id: "akahuku-sidebar-popup-action",
       title: '赤福設定...',
       _patterns: ['sidebar/*'],

@@ -77,6 +77,7 @@ export default function initContextMenuSidebar (targetDocument=document) {
         isTab: tabcontainer && button ? true : false,
         isTabActive: tabcontainer && button && button.getAttribute('selected') ? true : false,
         activeBoardName: tabcontainer ? button?.id?.replace(/^akahuku_sidebar_tab_/,'') : '',
+        activeBoardTitle: '',
         inDeck: deck ? true : false,
         inDeckControl: false,
         menuType: '',
@@ -123,6 +124,11 @@ export default function initContextMenuSidebar (targetDocument=document) {
         data.sidebar.threadNum = parseInt(thread.getAttribute('__num'));
         data.sidebar.isThreadMarked = (thread.dataset.marked == 'true');
       }
+    }
+    if (data.sidebar.activeBoardName) {
+      const tabId = 'akahuku_sidebar_tab_' + data.sidebar.activeBoardName;
+      const tab = sidebarDocument.getElementById(tabId);
+      data.sidebar.activeBoardTitle = tab?.getAttribute('__item_label');
     }
     //data.link = arAkahukuSidebar.getContextMenuContentData(lastTarget);
     // Send context data to update menus

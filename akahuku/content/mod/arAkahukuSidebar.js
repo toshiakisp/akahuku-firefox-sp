@@ -199,6 +199,12 @@ arAkahukuSidebarBoard.prototype = {
   lastSelectedImage : null, /* HTMLDivElement  最後にカーソルが
                              *   載っていた img 要素 */
     
+  clear : function () {
+    this.threads.length = 0;
+    this.lastSelected = null;
+    this.lastSelectedImage = null;
+  },
+
   /**
    * スレを追加する
    *
@@ -3093,6 +3099,43 @@ var arAkahukuSidebar = {
       arAkahukuSidebar.updateMarked (param);
       arAkahukuSidebar.sort ("*_*", param);
       arAkahukuSidebar.update ("*_*", sidebarDocument, param);
+    }
+  },
+
+  clearAllThreads : function (target=null) {
+    const param = arAkahukuSidebar.getSidebarParam (window);
+    const sidebarDocument = arAkahukuSidebar.getSidebarDocument(window);
+    if (target != '*_*') {
+      let clearedAny = false;
+      for (let name in param.boards) {
+        if (target && name != target) {
+          continue;
+        }
+        clearedAny = true;
+        param.boards [name].clear();
+        arAkahukuSidebar.update (name, sidebarDocument, param);
+      }
+      if (arAkahukuSidebar.enableMarked && clearedAny) {
+        arAkahukuSidebar.updateMarked (param);
+        arAkahukuSidebar.update ('*_*', sidebarDocument, param);
+      }
+    }
+    else {// *_* in marked tab, clear all _marks_ of threads in all boards
+      for (let name in param.boards) {
+        let board = param.boards [name];
+        let clearedAny = false;
+        for (var i = 0; i < board.threads.length; i ++) {
+          if (board.threads [i].isMarked) {
+            board.threads [i].isMarked = false;
+            clearedAny = true;
+          }
+        }
+        if (clearedAny) {
+          arAkahukuSidebar.update (name, sidebarDocument, param);
+        }
+      }
+      arAkahukuSidebar.updateMarked (param);
+      arAkahukuSidebar.update ('*_*', sidebarDocument, param);
     }
   },
     

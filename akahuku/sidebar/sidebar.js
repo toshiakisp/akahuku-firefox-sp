@@ -56,6 +56,7 @@ const commands = new Set([
   'resetCatalogOrder',
   'asyncGetThread',
   'markThread',
+  'clearAllThreads',
   'openCatalogSetting',
 ]);
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
