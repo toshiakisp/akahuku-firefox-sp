@@ -538,8 +538,16 @@ var arAkahukuPopupQuote = {
                   }
                 }
                 else if (pv.nodeName.toLowerCase () == "video") {
-                  pv.style.maxWidth = parseFloat (pv.style.maxWidth) / s + "px";
-                  pv.style.maxHeight = parseFloat (pv.style.maxHeight) / s + "px";
+                  if (/([0-9]+)px/.test(pv.style.maxWidth)) {
+                    pv.style.maxWidth = parseFloat (RegExp.$1) / s + "px";
+                  } else {
+                    pv.style.maxWidth = 250 / s + "px";
+                  }
+                  if (/([0-9]+)px/.test(pv.style.maxHeight)) {
+                    pv.style.maxHeight = parseFloat (RegExp.$1) / s + "px";
+                  } else {
+                    pv.style.maxHeight = 250 / s + "px";
+                  }
                   pv.style.margin = "0px 4px";
                   // プレビューでは自動再生はしない
                   pv.autoplay = false;

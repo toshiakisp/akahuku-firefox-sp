@@ -361,6 +361,10 @@ var arAkahukuLink = {
   enableAutoLinkPreviewMulti : false, /* Boolean  複数表示する */
   autoLinkPreviewSWFWidth : 320,      /* Boolean  swf の幅 */
   autoLinkPreviewSWFHeight : 240,     /* Boolean  swf の高さ */
+
+  autoLinkPreviewVideoFutabaVolume : true,
+  autoLinkPreviewVideoMaxWidth : 250,
+  autoLinkPreviewVideoMaxHeight : 250,
   
   enableAutoLinkPreviewAutoOpen : false, /* Boolean  P2P のキャッシュに
                                           *   ある場合自動で開く */
@@ -1065,6 +1069,7 @@ var arAkahukuLink = {
         /* 通常 */
         .addRule ("blockquote > a.akahuku_generated_link",
                   "color: #0040ee; "
+                  + "word-break: break-all; "
                   + "text-decoration: underline;")
         .addRule ("blockquote > a.akahuku_generated_link > "
                   + "font.akahuku_generated_link_child",
@@ -1083,6 +1088,7 @@ var arAkahukuLink = {
         .addRule ("div.akahuku_popup_content_blockquote > "
                   + "a.akahuku_generated_link",
                   "color: #0040ee; "
+                  + "word-break: break-all; "
                   + "text-decoration: underline;")
         .addRule ("div.akahuku_popup_content_blockquote > "
                   + "a.akahuku_generated_link > "
@@ -1091,6 +1097,7 @@ var arAkahukuLink = {
         /* 引用内 */
         .addRule ("font > a.akahuku_generated_link",
                   "color: #409999; "
+                  + "word-break: break-all; "
                   + "text-decoration: underline;")
         .addRule ("font > a.akahuku_generated_link > "
                   + "font.akahuku_generated_link_child",
@@ -1190,6 +1197,13 @@ var arAkahukuLink = {
           .addRule ("iframe.akahuku_preview",
                     "display: block;")
         }
+
+        // 所定より大きいプレビューはfloat解除 (:has() requires Firefox 121+)
+        style
+        .addRule ('.thre div.akahuku_preview_container:has(*[data-over-width="true"])',
+                  'float: unset !important;')
+        .addRule ('.thre div.akahuku_preview_container *[data-over-width="true"]',
+                  'float: unset !important;');
                 
         // タテログのログ patch
         style
@@ -1304,6 +1318,15 @@ var arAkahukuLink = {
           = arAkahukuConfig
           .initPref ("int",  "akahuku.autolink.preview.swf.height",
                      240);
+        arAkahukuLink.autoLinkPreviewVideoFutabaVolume
+          = arAkahukuConfig
+          .initPref ("bool", "akahuku.autolink.preview.video.futaba-volume", true);
+        arAkahukuLink.autoLinkPreviewVideoMaxWidth
+          = arAkahukuConfig
+          .initPref ("int", "akahuku.autolink.preview.video.max-width", 250);
+        arAkahukuLink.autoLinkPreviewVideoMaxHeight
+          = arAkahukuConfig
+          .initPref ("int", "akahuku.autolink.preview.video.max-height", 250);
       }
             
       arAkahukuLink.userPatterns = new Array ();
@@ -2670,6 +2693,11 @@ var arAkahukuLink = {
     var image;
     var srcByFetch = null;
     var scheme = targetDocument.location.protocol.replace (/:$/, "");
+
+    // 本文のレイアウトが狂わない限界幅
+    // blockquote{min-width: 150px}
+    let area = targetDocument.querySelector('.thre') || targetDocument.body;
+    const limitWidth = Math.min(480, area.clientWidth - 150);
         
     if (uri.match (/\.(jpe?g|gif|png|bmp|webp)(\?.*)?$/i)) {
       image = targetDocument.createElement ("img");
@@ -2696,14 +2724,52 @@ var arAkahukuLink = {
     }
     else if (/\.(webm|mp4)(\?.*)?$/i.test (uri)) {
       image = targetDocument.createElement ("video");
-      image.style.maxWidth = "250px";
-      image.style.maxHeight = "250px";
       image.preload = "auto";
-      // インライン再生と同様の設定
-      image.loop = true;
+      if (arAkahukuLink.autoLinkPreviewVideoMaxWidth > 0) {
+        image.style.maxWidth = "min(90vw, " + arAkahukuLink.autoLinkPreviewVideoMaxWidth + "px);";
+      } else {
+        image.style.maxWidth = "90vw";
+      }
+      if (arAkahukuLink.autoLinkPreviewVideoMaxWidth > limitWidth
+        ||arAkahukuLink.autoLinkPreviewVideoMaxWidth <= 0) {
+        image.onloadedmetadata = (ev) => {
+          if (image.clientWidth > limitWidth) {
+            image.dataset.overWidth = 'true';//data-over-width
+          }
+        };
+      }
+      if (arAkahukuLink.autoLinkPreviewVideoMaxHeight > 0) {
+        image.style.maxHeight = arAkahukuLink.autoLinkPreviewVideoMaxHeight + "px";
+      }
+      let vol = 1.0, muted = false, loop = true;
+      if (arAkahukuLink.autoLinkPreviewVideoFutabaVolume) {
+        // Same volume preference mechanism with Futaba's base4esc
+        vol = 0.5;
+        try {
+          let fv = window.localStorage.futabavideo;
+          if (typeof fv == 'undefined') {
+            fv = '0.5,false,true';
+          }
+          const fvs = fv.split(',');
+          const newVol = parseFloat(fvs[0]);
+          if (newVol >= 0 && newVol <= 1.0) {
+            vol = newVol;
+          }
+          muted = (fvs[1] == 'true');
+          loop = (fvs[2] == 'true');
+          image.onvolumechange = (ev) => {
+            window.localStorage.futabavideo
+              = image.volume + ',' + image.muted + ',' + image.loop;
+          };
+        } catch(e) {
+          Akahuku.debug.exception(e);
+        }
+      }
+      image.loop = loop;
+      image.volume = vol;
+      image.muted = muted;
       image.controls = true;
-      // サムネを確認してから再生するべきなので
-      image.autoplay = true;//false;
+      image.autoplay = true;
       srcByFetch = uri; // Use fetch because of no video.referrerPolicy
     }
     else if (uri.match (/\.(swf)(\?.*)?$/i)) {
@@ -2776,6 +2842,9 @@ var arAkahukuLink = {
       return image;
     }
         
+    if (parseInt(image.width) > limitWidth) {
+      image.dataset.overWidth = true;//data-over-width
+    }
     image.style.cssFloat = "left";
     image.style.clear = "left";
     image.className = "akahuku_preview";
