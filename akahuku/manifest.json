@@ -12,6 +12,9 @@
     "gecko": {
       "id": "akahuku.fx.sp@toshiakisp.github.io",
       "strict_min_version": "93.0a1",
+      "data_collection_permissions": {
+        "required": ["none"]
+      },
       "update_url": "https://toshiakisp.github.io/akahuku-firefox-sp/update.json"
     }
   },
