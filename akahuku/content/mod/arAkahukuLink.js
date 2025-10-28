@@ -590,9 +590,7 @@ var arAkahukuLink = {
             catch (e) { Akahuku.debug.exception (e);
             }
                      
-            if (1 || !ie.match (/UTF-8/i)) {
-              word = arAkahukuConverter.convert (word, ie);
-            }
+            word = arAkahukuConverter.convert (word, ie);
                          
             anchor.appendChild (targetDocument.createTextNode
                                 (parens2 + prev));
