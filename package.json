@@ -18,11 +18,11 @@
   },
   "homepage": "https://toshiakisp.github.io/akahuku-firefox-sp/",
   "devDependencies": {
-    "web-ext": "^8.5.0",
-    "eslint": "^9.24.0",
-    "eslint-plugin-mozilla": "^4.2.1",
-    "eslint-plugin-no-unsanitized": "^4.1.2",
-    "@eslint-community/eslint-utils": "^4.5.1",
+    "web-ext": "^9.1.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-mozilla": "^4.3.1",
+    "eslint-plugin-no-unsanitized": "^4.1.4",
+    "@eslint-community/eslint-utils": "^4.9.0",
     "@microsoft/eslint-plugin-sdl": "^1.1.0"
   }
 }
