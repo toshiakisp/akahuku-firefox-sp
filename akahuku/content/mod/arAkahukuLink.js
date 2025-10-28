@@ -2816,7 +2816,7 @@ var arAkahukuLink = {
       image.setAttribute ("allowfullscreen", "true");
       if (arAkahukuLink.autoLinkPreviewYoutubeType == 1
         ||arAkahukuLink.autoLinkPreviewYoutubeType == 2) {
-        // ネイティブiframeプレイヤー
+        // ネイティブiframeプレーヤー
         image.src = youtubeUrl;
         if (arAkahukuLink.autoLinkPreviewYoutubeType == 2) {
           // 注：2025/10~ Referrer無しではエラーとなるようになった
