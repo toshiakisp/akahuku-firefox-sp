@@ -365,6 +365,7 @@ var arAkahukuLink = {
   autoLinkPreviewVideoFutabaVolume : true,
   autoLinkPreviewVideoMaxWidth : 250,
   autoLinkPreviewVideoMaxHeight : 250,
+  autoLinkPreviewYoutubeType : 1,
   
   enableAutoLinkPreviewAutoOpen : false, /* Boolean  P2P のキャッシュに
                                           *   ある場合自動で開く */
@@ -1325,6 +1326,9 @@ var arAkahukuLink = {
         arAkahukuLink.autoLinkPreviewVideoMaxHeight
           = arAkahukuConfig
           .initPref ("int", "akahuku.autolink.preview.video.max-height", 250);
+        arAkahukuLink.autoLinkPreviewYoutubeType
+          = arAkahukuConfig
+          .initPref ("int", "akahuku.autolink.preview.youtube.type", 1);
       }
             
       arAkahukuLink.userPatterns = new Array ();
@@ -2787,7 +2791,8 @@ var arAkahukuLink = {
       image.setAttribute ("allowScriptAccess", "never");
     }
     else if (uri.match (/^https?:\/\/(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^&]*&)*v=|embed\/|live\/|shorts\/)|youtu\.be\/)([^&?#]+)/i)) {
-      var youtubeUrl = "https://www.youtube.com/embed/" + RegExp.$1
+      var ytVideoId = RegExp.$1;
+      var youtubeUrl = "https://www.youtube.com/embed/" + ytVideoId
                      + "?rel=0&border=0&fs=1&showinfo=1";
       var t = 0;
       if (uri.match (/[?&#]t=(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9]+)s?)?/)) {
@@ -2807,13 +2812,33 @@ var arAkahukuLink = {
       image = targetDocument.createElement ("iframe");
       image.width = Math.max (480, arAkahukuLink.autoLinkPreviewSWFWidth);
       image.height = Math.max (385, arAkahukuLink.autoLinkPreviewSWFHeight);
-      image.src = youtubeUrl;
-      image.referrerPolicy = "no-referrer";
       image.setAttribute ("frameborder", "0");
-      /* (Gecko 10.0+) moz HTML5 Fullscreen */
-      image.setAttribute ("mozallowfullscreen", "true");
-      // Gecko 18.0+
       image.setAttribute ("allowfullscreen", "true");
+      if (arAkahukuLink.autoLinkPreviewYoutubeType == 1
+        ||arAkahukuLink.autoLinkPreviewYoutubeType == 2) {
+        // ネイティブiframeプレイヤー
+        image.src = youtubeUrl;
+        if (arAkahukuLink.autoLinkPreviewYoutubeType == 2) {
+          // 注：2025/10~ Referrer無しではエラーとなるようになった
+          image.referrerPolicy = "strict-origin-when-cross-origin";
+        }
+        else {
+          // (過去の方法) Referrer無し
+          image.referrerPolicy = "no-referrer";
+        }
+      }
+      else {
+        // 匿名oEmbed問い合わせでサムネプレビュー
+        var oembedUrl
+          = 'http://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D'
+          + encodeURIComponent(ytVideoId)
+          + `&format=json&maxwidth=${image.width}&maxheight=${image.height}`;
+        image.referrerPolicy = 'no-referrer';
+        image.width = 0;
+        image.height = 0;
+        image.src = 'about:blank';
+        arAkahukuLink.fetchOEmbed(image, oembedUrl);
+      }
     }
     else if (uri.match (/^https?:\/\/(?:(?:www|sp)\.nicovideo\.jp\/watch\/|nico\.ms\/)([^&?#]+)/i)) {
       var nicovideoUrl = "https://embed.nicovideo.jp/watch/" + RegExp.$1;
@@ -2909,7 +2934,7 @@ var arAkahukuLink = {
     return image;
   },
 
-  fetchAsBlob : function (image, src) {
+  _fetchResponse : function (image, src) {
     let contentWindow = image.ownerDocument.defaultView;
     let fetchInit = {
       referrerPolicy: 'no-referrer',
@@ -2917,16 +2942,39 @@ var arAkahukuLink = {
       redirect: 'follow',
       mode: 'no-cors',//for no Origin
     };
-    arAkahukuCompat.fetch(src, fetchInit, contentWindow)
+    return arAkahukuCompat.fetch(src, fetchInit, contentWindow)
       .then((res) => {
         if (res.ok)
-          return res.blob();
+          return res;
         let err = new contentWindow.Error('HTTPError')
         err.name = 'HTTPError';
         err.status = res.status;
         err.statusText = res.statusText;
         throw err;
       })
+      .catch((e) => {
+        arAkahukuLink.handleFetchError(image,e);
+      });
+  },
+  _handleFetchError : function (image, e) {
+    Akahuku.debug.exception(e);
+    let status = -1;
+    let statusText = e.message;
+    if (e.name == 'HTTPError') {
+      status = e.status;
+      statusText = e.statusText;
+    }
+    image.setAttribute
+      ("__akahuku_preview_error_status", status);
+    image.setAttribute
+      ("__akahuku_preview_error_status_text", statusText);
+    arAkahukuLink.onImageError({currentTarget: image});
+  },
+
+  fetchAsBlob : function (image, src) {
+    let contentWindow = image.ownerDocument.defaultView;
+    arAkahukuLink._fetchResponse(image, src)
+      .then((res) => res.blob())
       .then((blob) => {
         image.src = contentWindow.URL.createObjectURL(blob);
         if (!image.hasAttribute ("__akahuku_onload")) {
@@ -2935,17 +2983,78 @@ var arAkahukuLink = {
       })
       .catch((e) => {
         Akahuku.debug.exception(e);
-        let status = -1;
-        let statusText = e.message;
-        if (e.name == 'HTTPError') {
-          status = e.status;
-          statusText = e.statusText;
+        arAkahukuLink._handelFetchError(image, e);
+      });
+  },
+
+  fetchOEmbed : function (iframe, src) {
+    let contentWindow = iframe.ownerDocument.defaultView;
+    arAkahukuLink._fetchResponse(iframe, src)
+      .then((res) => res.json())
+      .then((oembed) => {
+        let doctext = '<head><style>body{margin:0;border:0;overflow:hidden;}'
+        doctext += 'body{color:#800000;background-color:#ffffee;}'
+        doctext += '@media (prefers-color-scheme: dark) {body{color:#e0d6d6;background-color:#1c1b22;}a:link{color:#2f79ff}}';
+        doctext += '.thumb{max-height:100%}';
+        doctext += '.author{font-size:smaller;margin-left:1ex}';
+        if (oembed.type == 'video') {
+          doctext += 'body{color:#fff;background-color:#000}';
+          doctext += 'a{text-decoration:none;}';
+          doctext += '.thumb{width:100%;height:100%}';
+          doctext += '.meta>.title,div.meta>.author{position:absolute; width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}';
+          doctext += '.meta>.title{top:2px;left:2px;}';
+          doctext += '.meta>.author{bottom:2px;left:2px;}';
+          doctext += '.title{font-size:larger}';
+          doctext += '.title,.author,.author>a{color:white;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;}';
+        } else {
+          doctext += 'body{border-width: 1px;}'
+          doctext += `.thumb{float:left; max-width:200px;max-height:200px;}`;
         }
-        image.setAttribute
-          ("__akahuku_preview_error_status", status);
-        image.setAttribute
-          ("__akahuku_preview_error_status_text", statusText);
-        arAkahukuLink.onImageError({currentTarget: image});
+        doctext +='</style><body>';
+
+        if (oembed.thumbnail_url) {
+          doctext += `<a href="${iframe.getAttribute("dummyhref")}" target="_blank" title="Open ${oembed.provider_name}">`;
+          doctext += `<img class=thumb src="${oembed.thumbnail_url}" crossorigin="anonymous" referrerpolicy="no-referrer" `;
+          if (oembed.thumbnail_width && oembed.thumbnail_height) {
+            doctext += ` width="${parseInt(oembed.thumbnail_width)}"`;
+            doctext += ` height="${parseInt(oembed.thumbnail_height)}"`;
+          }
+          doctext +=`></a>`;
+        }
+        doctext += '<div class=meta>';
+        if (oembed.title) {
+          doctext += `<a href="${iframe.getAttribute("dummyhref")}" target="_blank"`
+          doctext += ` title="${oembed.title}" class=title>`
+          doctext += `${oembed.title}</a>`;
+        }
+        if (oembed.author_name && oembed.author_url) {
+          doctext += '<br><span class=author>@'
+          doctext += `<a href="${oembed.author_url}" target="_blank">${oembed.author_name}</a> (${oembed.provider_name})</span>`;
+        } else if (oembed.provider_url) {
+          doctext += '<br><span class=author>'
+          doctext += `<a href="${oembed.provider_url}" target="_blank">${oembed.provider_name}</a></span>`;
+        }
+        doctext +=`</div>`;
+        if (oembed.type == 'video') {
+          if (oembed.thumbnail_width <= oembed.width
+            || oembed.thumbnail_height <= oembed.height) {
+            iframe.width = oembed.thumbnail_width;
+            iframe.height = oembed.thumbnail_height;
+          } else {
+            iframe.width = oembed.width;
+            iframe.height = oembed.height;
+          }
+        } else {
+          iframe.width = oembed.width;
+          iframe.height = 200;
+        }
+        iframe.srcdoc = doctext;
+        if (!iframe.hasAttribute ("__akahuku_onload")) {
+          arAkahukuLink.onImageLoad({currentTarget: iframe});
+        }
+      })
+      .catch((e) => {
+        arAkahukuLink._handelFetchError(iframe, e);
       });
   },
 

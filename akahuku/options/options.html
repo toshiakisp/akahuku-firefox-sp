@@ -1380,12 +1380,19 @@
             px<span class="tooltiptext">（デフォルト:250x250）プレビューの最大サイズをpx単位で指定できる。アスペクト比を保ち収まるようにサイズ調整される。値0は特別で、その方向にはサイズを制限しなくなる(例:0x250→高さだけ制限)。</span></label>
           </div>
           <div class="box-orient-horizontal align-center">
-            <label>swf のサイズ
+            <label>埋込フレームのサイズ
             <input type=number name="autolink.preview.swf.width" min=0>
             px ×
             <input type=number name="autolink.preview.swf.height" min=0>
             px</label>
           </div>
+          <label class="sp tooltip">YouTubeの埋込タイプ:
+            <select name="autolink.preview.youtube.type" data-pref-type="int">
+              <option value="0">サムネプレビュー</option>
+              <option value="1">公式プレイヤー</option>
+              <option value="2">公式プレイヤー (!リファラー付き!)</option>
+            </select><span class="tooltiptext">(デフォルト：公式プレイヤー) YouTube公式の埋込プレイヤーはリファラー(ホスト名:*.2chan.net)を送信しないとエラーになるケースがある。サムネプレビューは匿名oEmbed問合せによりサムネ等を取得して表示。</span>
+          </label>
           <div class="group box-orient-vertical">
             <label><input type=checkbox name="autolink.preview.autoopen"
               >P2P のキャッシュにある場合自動で開く</label>

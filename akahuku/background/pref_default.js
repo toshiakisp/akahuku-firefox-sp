@@ -22,6 +22,7 @@ pref("autolink.preview.video.max-height", 250);
 pref("autolink.preview.video.max-width", 250);
 pref("autolink.preview.swf.height", 240);
 pref("autolink.preview.swf.width", 320);
+pref("autolink.preview.youtube.type", 1);
 pref("autolink.subject_name", false);
 pref("autolink.user", true);
 pref("autolink.user.patterns2", "null");
