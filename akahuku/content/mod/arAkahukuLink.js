@@ -3005,7 +3005,7 @@ var arAkahukuLink = {
           doctext += '.meta>.title{top:2px;left:2px;}';
           doctext += '.meta>.author{bottom:2px;left:2px;}';
           doctext += '.title{font-size:larger}';
-          doctext += '.title,.author,.author>a{color:white;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;}';
+          doctext += '.title,a:link.title,.author,.author>a{color:white;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;}';
         } else {
           doctext += 'body{border-width: 1px;}'
           doctext += `.thumb{float:left; max-width:200px;max-height:200px;}`;
