@@ -2934,7 +2934,7 @@ var arAkahukuLink = {
     return image;
   },
 
-  _fetchResponse : function (image, src) {
+  _fetchRawResponse : function (image, src) {
     let contentWindow = image.ownerDocument.defaultView;
     let fetchInit = {
       referrerPolicy: 'no-referrer',
@@ -2942,7 +2942,11 @@ var arAkahukuLink = {
       redirect: 'follow',
       mode: 'no-cors',//for no Origin
     };
-    return arAkahukuCompat.fetch(src, fetchInit, contentWindow)
+    return arAkahukuCompat.fetch(src, fetchInit, contentWindow);
+  },
+  _fetchResponse : function (image, src) {
+    let contentWindow = image.ownerDocument.defaultView;
+    return arAkahukuLink._fetchRawResponse(image, src)
       .then((res) => {
         if (res.ok)
           return res;
@@ -2953,7 +2957,7 @@ var arAkahukuLink = {
         throw err;
       })
       .catch((e) => {
-        arAkahukuLink.handleFetchError(image,e);
+        arAkahukuLink._handleFetchError(image,e);
       });
   },
   _handleFetchError : function (image, e) {
@@ -2983,14 +2987,26 @@ var arAkahukuLink = {
       })
       .catch((e) => {
         Akahuku.debug.exception(e);
-        arAkahukuLink._handelFetchError(image, e);
+        arAkahukuLink._handleFetchError(image, e);
       });
   },
 
   fetchOEmbed : function (iframe, src) {
     let contentWindow = iframe.ownerDocument.defaultView;
-    arAkahukuLink._fetchResponse(iframe, src)
-      .then((res) => res.json())
+    arAkahukuLink._fetchRawResponse(iframe, src)
+      .then((res) => {
+        if (res.ok)
+          return res.json();
+        // HTTP error -> dummy json
+        return {
+          type: 'video',
+          title: '(！) 元サイトで開く',
+          author_name: 'Error '+res.status,
+          author_url: 'https://developer.mozilla.org/docs/Web/HTTP/Reference/Status/' + res.status,
+          provider_name: 'HTTP',
+          width: 200, height: 200,
+        };
+      })
       .then((oembed) => {
         let doctext = '<head><style>body{margin:0;border:0;overflow:hidden;}'
         doctext += 'body{color:#800000;background-color:#ffffee;}'
@@ -3054,7 +3070,7 @@ var arAkahukuLink = {
         }
       })
       .catch((e) => {
-        arAkahukuLink._handelFetchError(iframe, e);
+        arAkahukuLink._handleFetchError(iframe, e);
       });
   },
 
