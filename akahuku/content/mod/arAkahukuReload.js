@@ -2983,8 +2983,11 @@ var arAkahukuReload = {
                       Akahuku.Cache.enCacheURIContextIfCached (thumbT);
                     }
                   }
+                }
 
-                  if (arAkahukuReload.enableSyncMessageID) {
+                if (bqT && bqS) {
+                  if (arAkahukuReload.enableSyncMessageID && syncdata.redType != "na") {
+                    // IDも削除される「なー」以外では同期
                     var ret = arAkahukuReload._syncMessageID (Akahuku.getMessageIPID (bqS), bqT);
                     countSyncIDResult (idSyncResults, ret);
                   }
