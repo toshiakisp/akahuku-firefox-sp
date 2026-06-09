@@ -127,7 +127,9 @@
     }
   }
   body > div.akahuku_popup {
-    background-color: light-dark(#ffffee, #1c1b22) !important;
+    img {
+      background-color: light-dark(#ffffee, #1c1b22) !important;
+    }
     a.akahuku_zoomedpopup_button {
       color: light-dark(#ffffff, #d4d4d4) !important;
       background-color: light-dark(#0040e0, #0033b2) !important;

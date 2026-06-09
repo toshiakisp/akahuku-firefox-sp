@@ -783,6 +783,8 @@ arAkahukuCatalogPopupData.prototype =  {
     self.popup = targetDocument.createElement ("div");
     self.popup.className = "akahuku_popup";
     self.popup.style.position = "absolute";
+    self.popup.style.lineHeight = "1";
+    self.popup.style.zIndex = "200";
     // サイズ・位置が確定しない間は表示させない
     self.popup.style.display = "none";
         
@@ -810,7 +812,8 @@ arAkahukuCatalogPopupData.prototype =  {
     targetDocument.body.appendChild (self.popupArea);
     self.popupArea.addEventListener
     ("mouseout",
-     function () {
+     function (ev) {
+       if (Akahuku.debug.enabled && ev.shiftKey) return;
        param.lastPopupKey = "";
        arAkahukuPopup.removeActivePopups (param);
      }, false);
@@ -1341,6 +1344,7 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     self.container = targetDocument.createElement ("div");
     self.container.className = "akahuku_popup";
     self.container.style.fontSize = "8pt";
+    self.container.style.whiteSpace = "nowrap";
     self.container.innerHTML = self.thread.comment;
         
     self.popup.appendChild (self.container);
@@ -5285,6 +5289,7 @@ var arAkahukuCatalog = {
       if (!documentParam) {
         return; // document was closed
       }
+      if (Akahuku.debug.enabled && event.shiftKey) return;
       var param = documentParam.catalogpopup_param;
             
       var img = event.explicitOriginalTarget;
