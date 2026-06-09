@@ -146,6 +146,10 @@
       background-color: light-dark(#ffffee, #1c1b22) !important;
     }
   }
+  body > div.akahuku_popup.akahuku_comment_popup {
+    background-color: light-dark(#ffffee, #1c1b22) !important;
+    border-color: light-dark(#eeaa88, #6d2f10) !important;
+  }
   #akahuku_move_button_1,
   #akahuku_move_button_2,
   #akahuku_move_button_3,

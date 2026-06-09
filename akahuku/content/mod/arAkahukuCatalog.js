@@ -1334,9 +1334,7 @@ arAkahukuCatalogCommentPopupData.prototype =  {
         
     self.popup = targetDocument.createElement ("div");
     self.popup.style.position = "absolute";
-    self.popup.className = "akahuku_popup";
-    self.popup.style.border = "1px solid #eeaa88";
-    self.popup.style.backgroundColor = "#ffffee";
+    self.popup.className = "akahuku_popup akahuku_comment_popup";
     self.popup.style.overflow = "hidden";
     self.popup.style.zIndex = 200;
     self.popup.style.padding = "4px";
@@ -2017,6 +2015,9 @@ var arAkahukuCatalog = {
       /* ズーム */
       if (arAkahukuCatalog.enableZoom) {
         style
+        .addRule ("div.akahuku_comment_popup",
+                  "border-style: solid; border-width: 1px;"
+                  + "background-color: #ffffee;")
         .addRule ("a.akahuku_zoomedpopup_button",
                   "z-index: 100; "
                   + "text-decoration: none; "
