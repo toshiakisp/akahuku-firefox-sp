@@ -4186,10 +4186,17 @@ var arAkahukuPostForm = {
         nodes2 = form.getElementsByTagName ("li");
         for (i = 0; i < nodes2.length; i ++) {
           if (nodes2 [i].innerHTML.match
-              (/\u6700\u4f4e([0-9]+)\u6642\u9593\u4fdd\u6301/)) {
-            // /最低([0-9]+)時間保持/
+              (/\u6700\u4f4e([0-9]+)(\u6642\u9593|\u65e5\u9593?|\u9031\u9593)\u4fdd\u6301/)) {
+            // /最低([0-9]+)(時間|日間?|週間)保持/
             var name = info.server + ":" + info.dir;
-            var min = 60*parseInt (RegExp.$1);
+            var min = 60;60*parseInt (RegExp.$1);
+            if (RegExp.$2 == '\u6642\u9593') {//時間
+              min = 60*parseInt (RegExp.$1);
+            } else if (RegExp.$2.startsWith('\u65e5')) {//日間|日
+              min = 60*24*parseInt (RegExp.$1);
+            } else if (RegExp.$2 == '\u9031\u9593') {//週間
+              min = 60*24*7*parseInt (RegExp.$1);
+            }
             var minOld = arAkahukuBoard.getPreserveMin (name);
             if (min != minOld) {
               arAkahukuBoard.setPreserveMin (name, min);

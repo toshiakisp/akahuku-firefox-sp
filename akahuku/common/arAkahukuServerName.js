@@ -455,13 +455,15 @@ var arAkahukuServerData = {
     "VTuber",
     "VTuber",
     "VTuber",
-    20000, true
+    20000, true,
+    {preserveMin: 14*24*60},
     ],
   "dec:84" : [ /* ホロライブ */
     "\u30DB\u30ED\u30E9\u30A4\u30D6",
     "\u30DB\u30ED\u30E9\u30A4\u30D6",
     "\u30DB\u30ED\u30E9\u30A4\u30D6",
-    50000, true
+    50000, true,
+    {preserveMin: 14*24*60},
     ],
   "dec:81" : [ /* 合成音声 */
     "\u5408\u6210\u97F3\u58F0",
