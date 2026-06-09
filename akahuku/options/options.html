@@ -1615,12 +1615,12 @@
             >合間合間に で消した分を詰める</label>
           <div class="group box-orient-vertical">
             <label class="sp tooltip"><input type=checkbox name="catalog.reorder.stick-by-text.enable"
-              ><span class="tooltiptext">(デフォルト:無効) パターンに合致する本文のスレを最上段(φ)に分けて並べる。「～順に指定幅ずつ」でソートする必要あり。</span
-              >本文で分ける</label>
+              ><span class="tooltiptext">(デフォルト:無効) パターンに合致する本文のスレを最上段(φ)に分けて並べる。パターン指定で逆に下げることも可能。「～順に指定幅ずつ」でソートする必要あり。</span
+              >本文で分ける (上にピン留め/下置き)</label>
             <div class="box-orient-horizontal align-center">
               <label class="tooltip">パターン</label>
               <input type=text name="catalog.reorder.stick-by-text.pattern" class="flex"
-                title="部分一致検索のための文字列か正規表現(/.../)をコンマ区切りで入力する。文字列では、半角英数記号は大文字小文字の区別無く全角にもマッチする。コンマ自体は\でエスケープ。 例: firefox, 赤福, a\,b, /^>/m, /\bs[upqz][1-9]/">
+                title="部分一致検索のための文字列か正規表現(/.../)をコンマ区切りで入力する。文字列では、半角英数記号は大文字小文字の区別無く全角にもマッチする。コンマ自体は\でエスケープ。ハイフン(-)から始まると逆に下げる。 例: firefox, 赤福, a\,b, /^>/m, /\bs[upqz][1-9]/, -Sage, -/dame/">
               <label>
             </div>
           </div>

@@ -122,8 +122,12 @@
     td[__age="-1"] {
       border-color: light-dark(#800, #e0d6d6) !important;
     }
-    td[__overflowed="true"] {
+    td[__overflowed="true"]:not([__sticky="__negative__"]) {
       background-color: light-dark(#ddddcc, #40403a) !important;
+    }
+    td[__overflowed="true"][__sticky="__negative__"] {
+      background-color: light-dark(#f0f0e0, #303036) !important;
+      color: light-dark(#906060, #a9a0a0) !important;
     }
   }
   body > div.akahuku_popup {

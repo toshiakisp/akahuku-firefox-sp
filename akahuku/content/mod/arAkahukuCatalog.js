@@ -2077,8 +2077,10 @@ var arAkahukuCatalog = {
       }
       // 更新前を残す
       style
-      .addRule ('td[__overflowed="true"]',
+      .addRule ('td[__overflowed="true"]:not([__sticky="__negative__"])',
                 "background-color: #ddddcc;")
+      .addRule ('td[__overflowed="true"][__sticky="__negative__"]',
+                "background-color: #f0f0e0; color: #600000;")
       // 開かれているスレ
       .addRule (cattable + '[border="1"] td[__opened]',
                 "border-style: outset;"
@@ -2395,7 +2397,16 @@ var arAkahukuCatalog = {
       if (!token) {
         return;
       }
-      var obj = {pattern: null, label: token};
+      var obj = {pattern: null, label: token, negative: false};
+      if (token.match(/^(\\?)-(.*)$/)) {
+        // 頭の"-"はnegative化、"\-word"は"-word"に
+        if (RegExp.$1) {
+          token = "-" + RegExp.$2;
+        } else {
+          obj.negative = true;
+          token = RegExp.$2;
+        }
+      }
       var flags = "";
       var pat;
       try {
@@ -2549,6 +2560,9 @@ var arAkahukuCatalog = {
       else {
         leftNum = parseInt (arAkahukuCatalog.reloadLeftBeforeMoreNum);
       }
+    } else {
+      // [多めに残す]以外でoverflowedとなるものを許容
+      leftNum = Infinity;
     }
         
     for (i = 0; i < mergedItems.length; i ++) {
@@ -2937,6 +2951,9 @@ var arAkahukuCatalog = {
       if ((arAkahukuCatalog.enableReorderStickByText && tdCreated) ||
           checkAll4StickByText) {
         arAkahukuCatalog.checkCell4StickByText (td, checkAll4StickByText);
+      } else if (td.getAttribute ("__sticky") == "__negative__") {
+        // checkCell4StickByTex()による強制 __overflowed 状態を復元
+        td.setAttribute("__overflowed", "true");
       }
 
       // 連携したい他の拡張機能の支援(カスタムイベント)
@@ -2959,6 +2976,7 @@ var arAkahukuCatalog = {
 
       // イベントハンドラによるセルへの変更を内部情報へ反映
       mergedItems [i].isSticky = arAkahukuCatalog.isStickyCell (td);
+      mergedItems [i].overflowed = (td.getAttribute('__overflowed') == 'true');
 
       appending_container.removeChild (td);
     }
@@ -2982,6 +3000,12 @@ var arAkahukuCatalog = {
     var pats = arAkahukuCatalog.patternsToStickByText;
     for (var i = 0; i < pats.length; i ++) {
       if (pats [i].pattern.test (text)) {
+        if (pats [i].negative) {
+          td.setAttribute ("__overflowed", "true");
+          // 更新してもoverflowを継続させるための特別ワードを設定
+          arAkahukuCatalog.setCellSticky (td, true, "__negative__");
+          return;
+        }
         arAkahukuCatalog.setCellSticky (td, true, pats [i].label);
         return;
       }
@@ -3418,6 +3442,7 @@ var arAkahukuCatalog = {
     
   isStickyCell : function (cell) {
     if (arAkahukuCatalog.enableReorderSticky) {
+      if (cell.hasAttribute ("__overflowed")) return false;
       return cell.hasAttribute ("__sticky");
     }
     return false;
