@@ -1568,6 +1568,7 @@ function arAkahukuCatalogParam (targetDocument) {
   this.order = "akahuku_catalog_reorder_default";
   this.targetDocument = targetDocument;
   this.targetWindow = targetDocument.defaultView;
+  this.settled = true;// 非同期な操作待ちではないか
 
   this.historyObserver = {
     observe : function (topic, historyItem) {
@@ -1607,6 +1608,7 @@ arAkahukuCatalogParam.prototype = {
   hideEntireThreadDispatched : false,
     
   historyCallbacks : null,
+  lastHistoryCheck : 0,
 
   ageStickByTextPattern : 0,
 
@@ -4179,6 +4181,7 @@ var arAkahukuCatalog = {
    * @param  arAkahukuCatalogParam param
    *         カタログ管理データ
    *           null の場合 target から取得する
+   * @return Promise
    */
   onReorderClickCore : function (target, param) {
     var targetDocument = target.ownerDocument;
@@ -4186,6 +4189,9 @@ var arAkahukuCatalog = {
       param
         = Akahuku.getDocumentParam (targetDocument)
         .catalog_param;
+    }
+    if (!param.settled) {
+      return Promise.reject('reorder is not available now.');
     }
     var target_id = target.id;
         
@@ -4198,7 +4204,7 @@ var arAkahukuCatalog = {
         .setIntPref ("akahuku.catalog.reorder.save.type", type);
       arAkahukuCatalog.reorderSaveType = type;
       arAkahukuCatalog.updateReorderIndicator (targetDocument, param);
-      return;
+      return Promise.resolve();
     }
 
     target_id = target_id.replace (/\d$/, "");
@@ -4208,6 +4214,7 @@ var arAkahukuCatalog = {
     var opened = false;
     var isSticky = false;
     var nums = Object ();
+    var needHistoryCheck = (Date.now() - param.lastHistoryCheck > 1000);
         
     param.historyCallbacks = new arAkahukuMergeItemCallbackList ();
 
@@ -4266,12 +4273,16 @@ var arAkahukuCatalog = {
           = arAkahukuDOM.getFirstElementByNames(oldCells[i], "a");
         if (anchor && anchor.href) {
           mergedItems[mergedItems.length-1].href = anchor.href;
-          if (arAkahukuCatalog.enableReorderVisited) {
+          if (arAkahukuCatalog.enableReorderVisited && needHistoryCheck) {
+            // 履歴の再チェック(aplly直後等は省略可)
             let callback
               = param.historyCallbacks
               .createVisitedCallback(mergedItems[mergedItems.length-1]);
             HistoryService.isVisited(anchor.href)
-              .then((visited) => callback.isVisited(anchor.href, visited))
+              .then((visited) => {
+                param.lastHistoryCheck = Date.now();
+                callback.isVisited(anchor.href, visited);
+              })
               .catch((e) => Akahuku.debug.exception(e));
           }
         }
@@ -4281,7 +4292,7 @@ var arAkahukuCatalog = {
         
     var oldTable = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!oldTable) {
-      return;
+      return Promise.reject('no table');
     }
         
     var mergedItems = getMergedItems ();
@@ -4350,12 +4361,16 @@ var arAkahukuCatalog = {
         
     if (mergedItems.length > 0) {
       if (param.historyCallbacks.count > 0) {
-        param.historyCallbacks.asyncWaitRequests
-          (function () {
+        param.settled = false;//非同期処理する
+        return new Promise(resolve => {
+          param.historyCallbacks.asyncWaitRequests(() => {
             param.historyCallbacks = null;
+            param.settled = true;
             arAkahukuCatalog._onReorderClickCore2
               (targetDocument, param, oldTable, mergedItems, target_id);
+            resolve();
           });
+        });
       }
       else {
         param.historyCallbacks = null;
@@ -4363,6 +4378,7 @@ var arAkahukuCatalog = {
           (targetDocument, param, oldTable, mergedItems, target_id);
       }
     }
+    return Promise.resolve();
   },
   _onReorderClickCore2 : function (targetDocument, param, oldTable, mergedItems, target_id) {
     if (mergedItems.length > 0) {
@@ -4450,6 +4466,8 @@ var arAkahukuCatalog = {
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @return Promise
+   *         処理完了で解決
    */
   update : function (targetDocument) {
     var param
@@ -4461,7 +4479,7 @@ var arAkahukuCatalog = {
         
     var oldTable = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!oldTable) {
-      return;
+      return Promise.reject("No table found");
     }
         
     /* ポップアップを消す */
@@ -4526,8 +4544,8 @@ var arAkahukuCatalog = {
                 param.historyCallbacks.callback ();
               }, 500);
             }, 5000);
-          param.historyCallbacks.asyncWaitRequests
-            (function () {
+          return new Promise((resolve) => {
+            param.historyCallbacks.asyncWaitRequests(() => {
               targetDocument.defaultView
               .clearTimeout (asyncWaitMonitorTimerID);
               arAkahukuCatalog.setStatus // "更新中"
@@ -4536,20 +4554,28 @@ var arAkahukuCatalog = {
               targetDocument.defaultView.setTimeout(() => {
                 arAkahukuCatalog._update2
                   (targetDocument, oldTable, mergedItems, param);
+                resolve();
               }, 0);
             });
+          }).then(() => {
+            // 表示反映待ちタイマー
+            return new Promise(r => targetDocument.defaultView.setTimeout(r, 100));
+          });
         }
         else {
+          param.responseText = "";
+          param.reloadController = null;
           param.historyCallbacks = null;
           arAkahukuCatalog._update2
             (targetDocument, oldTable, mergedItems, param);
+          // 表示反映待ちタイマー
+          return new Promise(r => targetDocument.defaultView.setTimeout(r, 100));
         }
       }
       else {
         // "満員です"
         arAkahukuCatalog.setStatus ("\u6E80\u54E1\u3067\u3059",
                                     false, targetDocument);
-        arAkahukuSound.playCatalogReload ();
       }
     }
     else {
@@ -4564,6 +4590,7 @@ var arAkahukuCatalog = {
     
     param.responseText = "";
     param.reloadController = null;
+    return Promise.resolve();
   },
     
   _update2 : function (targetDocument, oldTable, mergedItems, param)
@@ -4598,8 +4625,6 @@ var arAkahukuCatalog = {
       = Akahuku.getDocumentParam (targetDocument)
       .location_info;
     arAkahukuSidebar.apply (targetDocument, info);
-
-    arAkahukuSound.playCatalogReload ();
   },
 
   /**
@@ -5021,10 +5046,13 @@ var arAkahukuCatalog = {
    *         対象のドキュメント
    * @param  HTMLElement targetNode
    *         対象のノード
+   * @return Promise
+   *         処理完了で解決
    */
   reloadCore : function (targetDocument, targetNode) {
-    var param
-    = Akahuku.getDocumentParam (targetDocument).catalog_param;
+    const docParam = Akahuku.getDocumentParam(targetDocument);
+    const info = docParam.location_info;
+    const param = docParam.catalog_param;
         
     var nodes, i;
     nodes = targetDocument.getElementsByTagName ("img");
@@ -5049,9 +5077,7 @@ var arAkahukuCatalog = {
     }
         
     /* ポップアップを消す */
-    var param2
-    = Akahuku.getDocumentParam (targetDocument)
-    .catalogpopup_param;
+    const param2 = docParam.catalogpopup_param;
     if (param2) {
       arAkahukuPopup.removeActivePopups (param2);
     }
@@ -5062,11 +5088,15 @@ var arAkahukuCatalog = {
     if (param.reloadController) {
       param.reloadController.abort();
       param.reloadController = null;
+      param.settled = true;
       arAkahukuCatalog.setStatus
       ("\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F",
        // "中断されました"
        false, targetDocument);
-      return;
+      return Promise.reject("Abort current reloading");
+    } else if (!param.settled) {
+      // (別の)非同期処理中
+      return Promise.reject("Can't start reloading (not settled)");
     }
         
     var tmpNode
@@ -5106,7 +5136,8 @@ var arAkahukuCatalog = {
     if (!arAkahukuCatalog.enableReloadUpdateCache) {
       fetchInit.cache = 'no-store';
     }
-    arAkahukuCompat.fetch(targetDocument.location.href, fetchInit)
+    param.settled = false;//非同期処理
+    return arAkahukuCompat.fetch(targetDocument.location.href, fetchInit)
       .then((resp) => {
         if (resp.ok) {
           // "ロード中 (ボディ)"
@@ -5128,7 +5159,7 @@ var arAkahukuCatalog = {
       })
       .then((buffer) =>
         arAkahukuConverter.asyncConvertArrayBufToBinStr(buffer))
-      .then((binstr) => {
+      .then(async (binstr) => {
         param.responseText = binstr;
         if (binstr.length < 100 && binstr.length >= 10
           && binstr.substr (0, 10) == "\x96\x9e\x88\xf5\x82\xc5\x82\xb7\x81\x42") {
@@ -5139,7 +5170,7 @@ var arAkahukuCatalog = {
         else {
           // "更新中"
           this.setStatus("\u66F4\u65B0\u4E2D", true, targetDocument);
-          this.update(targetDocument);
+          await this.update(targetDocument);
         }
         arAkahukuSound.playCatalogReload();
       })
@@ -5148,6 +5179,7 @@ var arAkahukuCatalog = {
       })
       .finally(() => {
         param.reloadController = null;
+        param.settled = true;
       });
   },
     
@@ -5604,48 +5636,70 @@ var arAkahukuCatalog = {
    *         対象のドキュメント
    * @param  Boolean clear
    *         (オプション) 履歴を調べずに未読にするか
+   * @return Promise
+   *         処理完了で解決
    */
   updateVisited : function (targetDocument, clear) {
     if (arAkahukuCatalog.enableVisited) {
       var table = arAkahukuCatalog.getCatalogTable (targetDocument);
       if (!table) {
-        return;
+        return Promise.reject("No table found");
+      }
+      const param = Akahuku.getDocumentParam(targetDocument)?.catalog_param;;
+      if (!param) {
+        return Promise.reject("No param");
       }
       
       var nodes = table.getElementsByTagName ("a");
       
-      var historyCallbacks = new arAkahukuMergeItemCallbackList ();
+      // 連続する同URLをまとめる
+      const urls = [];
+      let lastUrl = '', lastNodes;
       for (var i = 0; i < nodes.length; i ++) {
         if (clear) {
           arAkahukuDOM.removeClassName (nodes [i], "akahuku_visited");
         }
         else {
-          // customize for node operations
-          let callback = historyCallbacks.createVisitedCallback (nodes [i]);
-          callback.isVisitedHandler = function (uri, visited) {
-            if (visited) {
-              arAkahukuDOM.addClassName (this.wrappedObject, "akahuku_visited");
-            }
-            else {
-              arAkahukuDOM.removeClassName (this.wrappedObject, "akahuku_visited");
-            }
-          };
-          let url = nodes[i].href;
-          HistoryService.isVisited(url)
-            .then((visited) => {
-              callback.isVisited(url, visited);
-            })
-            .catch((e) => Akahuku.debug.exception(e));
+          if (!nodes[i].href) continue;
+          if (!lastNodes) {
+            lastNodes = [nodes[i]];
+          } else if (lastUrl != nodes[i].href) {
+            urls.push(lastNodes);
+            lastNodes = [nodes[i]];
+          } else {
+            lastNodes.push(nodes[i]);
+          }
+          lastUrl = nodes[i].href;
         }
       }
-
-      if (historyCallbacks.count > 0) {
-        historyCallbacks.asyncWaitRequests
-          (function () {
-            historyCallbacks = null;
-          });
+      if (lastNodes?.length > 0) {
+        urls.push(lastNodes);
       }
+
+      return Promise.allSettled(urls.map(nodes =>
+        HistoryService.isVisited(nodes[0].href).then(v => [nodes, v])
+      )).then(results => {
+        param.lastHistoryCheck = Date.now();
+        // 問合せ結果が揃ってからまとめてDOM操作
+        let rejected = 0;
+        for (const ret of results) {
+          if (ret.status != 'fulfilled') {
+            rejected += 1;
+            continue;
+          }
+          const [nodes, visited] = ret.value;
+          for (const a of nodes) {
+            if (visited) {
+              arAkahukuDOM.addClassName(a, "akahuku_visited");
+            } else {
+              arAkahukuDOM.removeClassName(a, "akahuku_visited");
+            }
+          }
+        }
+        if (rejected > 0) Akahuku.debug.warn('some isVisited() rejected:',rejected);
+      });
     }
+    return Promise.resolve();
   },
 
   /**
@@ -5653,36 +5707,38 @@ var arAkahukuCatalog = {
    *
    * @param  HTMLDocument targetDocument
    *         対象のドキュメント
+   * @return Promise
+   *         処理完了で解決
    */
   updateOpened : function (targetDocument) {
     if (!arAkahukuCatalog.enableObserveOpened) {
-      return;
+      return Promise.resolve();
     }
     var table = arAkahukuCatalog.getCatalogTable (targetDocument);
     if (!table) {
-      return;
+      return Promise.reject("No table found");
     }
-    var historyCallbacks = new arAkahukuMergeItemCallbackList ();
-    var nodes = table.getElementsByTagName ("td");
-    for (var i = 0; i < nodes.length; i ++) {
-      var a = arAkahukuDOM.getFirstElementByNames (nodes [i], "a");
-      try {
-        var callback = historyCallbacks.createOpenedCallback (nodes [i]);
-        callback.listener = function (uri, opened) {
-          arAkahukuCatalog.setCellOpened (this.wrappedObject, opened);
-        };
-        arAkahukuCatalog.isOpenedAsync (a.href, callback);
-      }
-      catch (e) { Akahuku.debug.exception (e);
-      }
+    const param = Akahuku.getDocumentParam(targetDocument)?.catalog_param;;
+    if (!param) {
+      return Promise.reject("No param");
     }
 
-    if (historyCallbacks.count > 0) {
-      historyCallbacks.asyncWaitRequests
-        (function () {
-          historyCallbacks = null;
-        });
-    }
+    const nodes = table.getElementsByTagName ("td");
+    return Promise.allSettled(Array.from(nodes).map(td => {
+      const uri = td.querySelector('a[href]')?.href;
+      return AkahukuCentral.isURLOpened(uri).then(v => [td, v]);
+    })).then(results => {
+      // 問合せ結果が揃ってからまとめてDOM操作
+      let rejected = 0;
+      for (const ret of results) {
+        if (ret.status == 'fulfilled') {
+          arAkahukuCatalog.setCellOpened(...ret.value);
+        } else {
+          rejected += 1;
+        }
+      }
+      if (rejected > 0) Akahuku.debug.warn('some isURLOpened() rejected:',rejected);
+    }).catch(e => Akahuku.debug.exception(e));
   },
 
   /**
@@ -5816,6 +5872,7 @@ var arAkahukuCatalog = {
       var param = new arAkahukuCatalogParam (targetDocument);
       Akahuku.getDocumentParam (targetDocument)
       .catalog_param = param;
+      var applyPromises = [];
             
       var table = arAkahukuCatalog.getCatalogTable (targetDocument);
       if (!table) {
@@ -5897,8 +5954,11 @@ var arAkahukuCatalog = {
                                          param.latestThread);
       }
       
-      // 既読チェックは reorder 以前に行うこと
-      arAkahukuCatalog.updateVisited (targetDocument);
+      const checkingVisited = arAkahukuCatalog.updateVisited(targetDocument);
+      if (arAkahukuCatalog.enableReorderVisited) {
+        // 既読チェックは apply 最後の reorder 以前に終了させる約束
+        applyPromises.push(checkingVisited);
+      }
       arAkahukuCatalog.updateOpened (targetDocument);
             
       if (arAkahukuCatalog.enableReorder) {
@@ -5995,23 +6055,6 @@ var arAkahukuCatalog = {
             ("click", arAkahukuCatalog.onReorderClick, false);
         }
         table.parentNode.insertBefore (paragraph, table);
-                
-        if (arAkahukuCatalog.enableReorderSave) {
-          var target_id = "";
-          for (var id in arAkahukuCatalog.REORDER_TYPES) {
-            if (arAkahukuCatalog.REORDER_TYPES [id]
-                === arAkahukuCatalog.reorderSaveType) {
-              target_id = id;
-            }
-          }
-                    
-          if (target_id) {
-            arAkahukuCatalog.onReorderClickCore
-              (targetDocument
-               .getElementById (target_id),
-               param);
-          }
-        }
       }
             
       var table = arAkahukuCatalog.getCatalogTable (targetDocument);
@@ -6205,9 +6248,32 @@ var arAkahukuCatalog = {
         }
       }
 
-      // スレッドの更新通知を待ち受ける
-      param.registerObserver ();
+      // 非同期処理が終わるのを待ってから仕上げる
+      param.settled = false;
+      Promise.allSettled(applyPromises).then(results => {
+        for (const ret of results) {
+          if (ret.status == 'rejected') Akahuku.debug.error(ret.reason);
+        }
+        arAkahukuCatalog._applyFinally(targetDocument, info, param);
+      });
     }
+  },
+  _applyFinally : function (targetDocument, info, param) {
+    param.settled = true;
+    if (info.isCatalog && arAkahukuCatalog.enableReorder
+      && arAkahukuCatalog.enableReorderSave) {
+      //記憶した順で並べ直す
+      const target_id = Object.keys(arAkahukuCatalog.REORDER_TYPES).find(id =>
+        arAkahukuCatalog.REORDER_TYPES[id] === arAkahukuCatalog.reorderSaveType
+      );
+      if (target_id) {
+        let btn = targetDocument.getElementById (target_id)
+        arAkahukuCatalog.onReorderClickCore (btn, param);
+      }
+    }
+
+    // スレッドの更新通知を待ち受ける
+    param.registerObserver();
   },
   
   /**
