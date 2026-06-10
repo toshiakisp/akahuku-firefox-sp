@@ -3651,7 +3651,7 @@ var arAkahukuCatalog = {
             
       if (arAkahukuCatalog.enableClickable
           && anchor.innerHTML
-          .match (/^(<small>)?[ \t\u3000\xa0]*(<\/small>)?$/i)) {
+          .match (/^(<small(?:\s[^>]*)?>)?[ \t\u3000\xa0]*(<\/small>)?$/i)) {
         anchor.appendChild (targetDocument.createElement
                             ("br"));
         anchor.appendChild (targetDocument.createTextNode
