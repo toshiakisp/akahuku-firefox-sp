@@ -5430,6 +5430,10 @@ var arAkahukuCatalog = {
           base = img.closest("small.akahuku_native_comment");
           cell = base?.closest("td[__thread_id]");
         }
+        if (!cell && img.matches("td[__thread_id]>a[href]>font, td[__thread_id]>font")) {
+          base = img;
+          cell = base.closest("td[__thread_id]");
+        }
         if (!cell) {
           removeIfOutOfCommentPopup();
           return;
