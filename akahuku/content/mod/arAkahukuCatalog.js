@@ -2080,10 +2080,15 @@ var arAkahukuCatalog = {
       }
       // 更新前を残す
       style
-      .addRule ('td[__overflowed="true"]:not([__sticky="__negative__"])',
+      .addRule (cattable +' td[__overflowed="true"])',
                 "background-color: #ddddcc;")
-      .addRule ('td[__overflowed="true"][__sticky="__negative__"]',
-                "background-color: #f0f0e0; color: #600000;")
+      // negative sticky (目立たなくする)
+      .addRule (cattable +' td[__sticky="__negative__"]',
+                "color: #600000;")
+      .addRule (cattable +' td:not([__overflowed="true"])[__sticky="__negative__"]',
+                "background-color: #f0f0e0;")
+      .addRule (cattable +' td[__sticky="__negative__"]:not(:hover) img',
+                "filter: sepia(100%) contrast(50%) hue-rotate(-30deg);")
       // 開かれているスレ
       .addRule (cattable + '[border="1"] td[__opened]',
                 "border-style: outset;"
@@ -2569,7 +2574,9 @@ var arAkahukuCatalog = {
     }
         
     for (i = 0; i < mergedItems.length; i ++) {
-      if (mergedItems [i].overflowed) {
+      if (mergedItems [i].overflowed
+        && !(mergedItems [i].td?.getAttribute('__overflowed') !== 'true')) {
+        // 真のoverflowed (negative stickyではない)
         overflowedCount --;
         if (visitedState != 0 //既読中は overflowed も追加 
             && overflowedCount < -leftNum) {
@@ -2954,9 +2961,6 @@ var arAkahukuCatalog = {
       if ((arAkahukuCatalog.enableReorderStickByText && tdCreated) ||
           checkAll4StickByText) {
         arAkahukuCatalog.checkCell4StickByText (td, checkAll4StickByText);
-      } else if (td.getAttribute ("__sticky") == "__negative__") {
-        // checkCell4StickByTex()による強制 __overflowed 状態を復元
-        td.setAttribute("__overflowed", "true");
       }
 
       // 連携したい他の拡張機能の支援(カスタムイベント)
@@ -2980,12 +2984,24 @@ var arAkahukuCatalog = {
       // イベントハンドラによるセルへの変更を内部情報へ反映
       mergedItems [i].isSticky = arAkahukuCatalog.isStickyCell (td);
       mergedItems [i].overflowed = (td.getAttribute('__overflowed') == 'true');
+      if (td.getAttribute('__sticky') === '__negative__') {
+        // negativeの並びは overflowed に準ずる
+        mergedItems [i].overflowed = 'true';
+        // 新規に含めない(new等の装飾は付けるようattrは残す)
+        mergedItems [i].isNew = false;
+        // 既読に含めない(既にスタイルは適用済みなので並べ替えだけ)
+        mergedItems [i].visited = false;
+      }
 
       appending_container.removeChild (td);
     }
   },
 
   checkCell4StickByText : function (td, optUnflag) {
+    if (td.getAttribute ("__sticky") === "__negative__") {
+      // (他も含め)既に特別値が設定されていればチェック不要
+      return;
+    }
     if (!arAkahukuCatalog.enableReorderStickByText) {
       if (optUnflag) {
         arAkahukuCatalog.setCellSticky (td, false);
@@ -3004,8 +3020,7 @@ var arAkahukuCatalog = {
     for (var i = 0; i < pats.length; i ++) {
       if (pats [i].pattern.test (text)) {
         if (pats [i].negative) {
-          td.setAttribute ("__overflowed", "true");
-          // 更新してもoverflowを継続させるための特別ワードを設定
+          // overflowedに準ずる位置に下げるための特別ワードを設定
           arAkahukuCatalog.setCellSticky (td, true, "__negative__");
           return;
         }
@@ -3445,7 +3460,7 @@ var arAkahukuCatalog = {
     
   isStickyCell : function (cell) {
     if (arAkahukuCatalog.enableReorderSticky) {
-      if (cell.hasAttribute ("__overflowed")) return false;
+      if (cell.getAttribute ("__sticky") === "__negative__") return false;
       return cell.hasAttribute ("__sticky");
     }
     return false;
@@ -4086,6 +4101,13 @@ var arAkahukuCatalog = {
         return -1;
       }
       else if (x.overflowed && y.overflowed) {
+        // overflowed の中でも本当の __overflowed は後ろへ
+        if (x.td?.hasAttribute('__overflowed') && !y.td?.hasAttribute('__overflowed')) {
+          return +1;
+        }
+        else if (!x.td?.hasAttribute('__overflowed') && y.td?.hasAttribute('__overflowed')) {
+          return -1;
+        }
         // overflowed 同士では
         // 指定されたソート順によらずカタログ(通常)順
         return x.index - y.index;
