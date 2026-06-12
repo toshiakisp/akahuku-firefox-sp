@@ -2568,9 +2568,6 @@ var arAkahukuCatalog = {
       else {
         leftNum = parseInt (arAkahukuCatalog.reloadLeftBeforeMoreNum);
       }
-    } else {
-      // [多めに残す]以外でoverflowedとなるものを許容
-      leftNum = Infinity;
     }
         
     for (i = 0; i < mergedItems.length; i ++) {
