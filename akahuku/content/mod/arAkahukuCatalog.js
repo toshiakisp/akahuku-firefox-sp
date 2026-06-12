@@ -4969,7 +4969,7 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableReorderVisited && url) {
           let callback
             = param.historyCallbacks
-            .createVisitedCallback(mergedItems[mergedItems.length-1]);
+            .createVisitedCallback(overflowedItems[overflowedItems.length-1]);
           HistoryService.isVisited(url)
             .then((visited) => callback.isVisited(url, visited))
             .catch((e) => Akahuku.debug.exception(e));
@@ -4977,7 +4977,7 @@ var arAkahukuCatalog = {
         if (arAkahukuCatalog.enableObserveOpened && url) {
           arAkahukuCatalog.isOpenedAsync
             (url, param.historyCallbacks.createOpenedCallback
-             (mergedItems [mergedItems.length-1]));
+             (overflowedItems[overflowedItems.length-1]));
         }
       }
       // カタログ順になることを保証させる
