@@ -2563,8 +2563,22 @@ var arAkahukuPostForm = {
     }
     param = param.postform_param;
 
-    if ("clipboardData" in event
-        && event.clipboardData.types.length != 0) {
+    if ("clipboardData" in event) {
+      // pasteイベント中にファイルがあれば直接触れる
+      if (event.clipboardData.files?.length > 0) {
+        const file = event.clipboardData.files[0];
+        if (param.testAttachableExt(file.name)) {
+          event.preventDefault();
+          arAkahukuCompat.HTMLInputElement.mozSetFile (filebox, file);
+          if (arAkahukuPostForm.enablePreview) {
+            arAkahukuPostForm.onPreviewChangeCore (targetDocument);
+          }
+        } else {
+          // preventDefault()せずデフォのペースト処理に任せる(ファイル名?)
+          Akahuku.debug.log ("onPasteFromClipboard: file has un-attachable ext");
+        }
+        return;
+      }
       for (var i=0; i < event.clipboardData.types.length; i ++) {
         if (event.clipboardData.types [i] === "text/plain") {
           return; // テキスト貼付け可能時は何もしない
