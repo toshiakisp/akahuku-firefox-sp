@@ -673,6 +673,21 @@ var arAkahukuServerData = {
     "\u907F\u96E3\u6240",
     1000, true,
     ],
+
+  "dec:up" : [ /* あぷ */
+    "\u3042\u3077",
+    "\u3042\u3077",
+    "\u3042\u3077",
+    0, false,
+    ],
+
+  "dec:up2" : [ /* あぷ小 */
+    "\u3042\u3077\u5c0f",
+    "\u3042\u3077\u5c0f",
+    "\u3042\u3077\u5c0f",
+    0, false,
+    ],
+
 };
 
 var arAkahukuServerName = new Object ();

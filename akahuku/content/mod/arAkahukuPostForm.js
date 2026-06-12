@@ -981,6 +981,9 @@ var arAkahukuPostForm = {
         }
                 
         var filebox = targetDocument.getElementsByName ("upfile");
+        if (!(filebox?.length > 0)) { // for up/up2
+          filebox = [targetDocument.querySelector('form[action="up.php"] input[type="file"]')];
+        }
         if (filebox && filebox [0]) {
           filebox [0].value = "";
           arAkahukuPostForm.onPreviewChangeCore (targetDocument);
@@ -2554,6 +2557,9 @@ var arAkahukuPostForm = {
     }
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile")[0];
+    if (!filebox) {// for up/up2
+      filebox = targetDocument.querySelector('form[action="up.php"] input[type="file"]');
+    }
     if (!filebox) {
       return;
     }
@@ -2616,7 +2622,10 @@ var arAkahukuPostForm = {
     if (!param)
       return;
     param = param.postform_param;
-    const filebox = targetDocument.getElementsByName('upfile')[0];
+    let filebox = targetDocument.getElementsByName('upfile')[0];
+    if (!filebox) { // for up/up2
+      filebox = targetDocument.querySelector('form[action="up.php"] input[type="file"]');
+    }
     if (!filebox)
       return;
 
@@ -2640,6 +2649,9 @@ var arAkahukuPostForm = {
   onDropToAttatchFile : function (event) {
     var targetDocument = event.target.ownerDocument;
     var filebox = targetDocument.getElementsByName ("upfile") [0];
+    if (!filebox) {// for up/up2
+      filebox = event.target.closest('form')?.querySelector('input[type="file"]');
+    }
     var file = null;
     var dt = event.dataTransfer;
     try {
@@ -3184,7 +3196,8 @@ var arAkahukuPostForm = {
   onPreviewChangeCore : function (targetDocument) {
     var filebox = targetDocument.getElementsByName ("upfile");
     if (!filebox || !filebox [0]) {
-      filebox = targetDocument.getElementsByName ("up");
+      // for up/up2
+      filebox = [targetDocument.querySelector('form[action="up.php"] input[type="file"]')];
     }
         
     if (filebox && filebox [0]) {
@@ -3223,7 +3236,8 @@ var arAkahukuPostForm = {
         mimeType = "video/webm";
       }
 
-      if (param && !param.testAttachableExt (filename)) {
+      let attachableExt = param.testAttachableExt(filename);
+      if (param && !attachableExt) {
         // 添付可能なファイル以外はプレビュー無し
         mimeType = "";
       }
@@ -3345,8 +3359,10 @@ var arAkahukuPostForm = {
               previewV.style.display = "none";
               previewV.removeAttribute ("src");
 
-              // "添付不可?"
-              arAkahukuDOM.setText (appendix, " \u6DFB\u4ED8\u4E0D\u53EF?");
+              if (!attachableExt) {
+                // "添付不可?"
+                arAkahukuDOM.setText (appendix, " \u6DFB\u4ED8\u4E0D\u53EF?");
+              }
             }
             previewV.load ();
             container.style.display = "";
@@ -3543,7 +3559,8 @@ var arAkahukuPostForm = {
     var window = targetDocument.defaultView;
     var filebox = targetDocument.getElementsByName ("upfile");
     if (!filebox || !filebox [0]) {
-      filebox = targetDocument.getElementsByName ("up");
+      // for up/up2
+      filebox = [targetDocument.querySelector('form[action="up.php"] input[type="file"]')];
     }
     if (filebox && filebox [0]) {
       filebox = filebox [0];
@@ -3681,7 +3698,8 @@ var arAkahukuPostForm = {
   {
     var filebox = targetDocument.getElementsByName ("upfile");
     if (!filebox || !filebox [0]) {
-      filebox = targetDocument.getElementsByName ("up");
+      // for up/up2
+      filebox = [targetDocument.querySelector('form[action="up.php"] input[type="file"]')];
     }
     if (!filebox || !filebox [0]) {
       return;
@@ -3966,9 +3984,12 @@ var arAkahukuPostForm = {
       || (info.isReply && arAkahukuPostForm.enableReplyHide);
       var enableFloat = arAkahukuPostForm.enableFloat;
             
+      var futabaUploader = false;
       if (info.server == "dec"
           && (info.dir == "up"
               || info.dir == "up2")) {
+        // あぷ/あぷ小＠ふたば (isFutaba, isNormal, isOnline)
+        futabaUploader = true;
         hidePostForm = false;
         enableFloat = false;
       }
@@ -4263,6 +4284,25 @@ var arAkahukuPostForm = {
               default:
                 Akahuku.debug.warn ("Unknwon format for attach: " + attachable_ext [i]);
                 param.attachableExt.push (attachable_ext [i].toLowerCase ());
+            }
+          }
+        }
+        if (param.attachableByteMax === Number.MAX_SAFE_INTEGER) {
+          // 添付可能サイズ検知失敗時 (あぷ等はこれでカバー)
+          const value = form.querySelector(':scope>input[name="MAX_FILE_SIZE"]')?.value;
+          if (value) {
+            param.attachableByteMax = parseInt(value);
+          }
+        }
+        if (futabaUploader) {
+          // あぷ/あぷ小の対応拡張子探索
+          const node = targetDocument.querySelector('.allowed-exts');
+          if (node) {
+            const cands = Array.from(node.innerText
+              .matchAll(/[-a-zA-Z0-9_]+/g).map(m => m[0].toLowerCase())
+            );
+            if (cands) {
+              param.attachableExt = cands;
             }
           }
         }
@@ -4575,6 +4615,15 @@ var arAkahukuPostForm = {
       var filebox = targetDocument.getElementsByName ("upfile") [0];
       if (commentbox && filebox) {
         arAkahukuPostForm.addDropEventsListenersTo (commentbox);
+      }
+      else if (futabaUploader) { // for up/up2
+        const text = form.querySelector(':scope>input[name="com"]');
+        if (text) {
+          arAkahukuPostForm.addDropEventsListenersTo (text);
+          text.addEventListener("paste", ev => {
+            arAkahukuPostForm.onPasteFromClipboard(ev);
+          }, false);
+        }
       }
             
       /* コメント欄、メール欄を監視する */
@@ -5211,6 +5260,9 @@ var arAkahukuPostForm = {
            function () {
              var targetDocument = arguments [0].target.ownerDocument;
              var comment = arAkahukuPostForm.findCommentbox (targetDocument);
+             if (futabaUploader && !comment) {
+               comment = targetDocument.querySelector('form[action="up.php"]>input[name="com"]');
+             }
              if (comment) {
                var ev = targetDocument.createEvent ("HTMLEvents")
                ev.initEvent ("paste", false, true);
@@ -5224,6 +5276,9 @@ var arAkahukuPostForm = {
            function () {
              var targetDocument = arguments [0].target.ownerDocument;
              var filebox = targetDocument.getElementsByName ("upfile");
+             if (!(filebox?.length > 0)) {// for up/up2
+               filebox = [targetDocument.querySelector('form[action="up.php"] input[type="file"]')];
+             }
              if (filebox && filebox [0]) {
                filebox [0].value = "";
                if (arAkahukuPostForm.enablePreview) {
