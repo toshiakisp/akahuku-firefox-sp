@@ -3276,6 +3276,13 @@ var arAkahukuPostForm = {
             preview.setAttribute ("__size", readableSize);
                         
             arAkahukuDOM.setText (bytes, readableSize);
+            // File size alert on preview
+            if (file.size <= param.attachableByteMax
+              || file.fileSize <= param.attachableByteMax) {
+              bytes.style.color = '';
+            } else {
+              bytes.style.color = 'red';
+            }
             arAkahukuDOM.setText (appendix, "");
                         
             if (mimeType) {
