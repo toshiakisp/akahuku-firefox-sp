@@ -1082,8 +1082,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
         
     this.baseNodeGeometry.left = x - 1;
     this.baseNodeGeometry.top = y - 1;
-    this.baseNodeGeometry.width = this.baseNode.offsetWidth;
-    this.baseNodeGeometry.height = this.baseNode.offsetHeight;
+    let rect = this.baseNode.getBoundingClientRect();
+    this.baseNodeGeometry.width = Math.ceil(rect.width);
+    this.baseNodeGeometry.height = Math.ceil(rect.height);
     this.baseNodeGeometry.right
     = this.baseNodeGeometry.left + this.baseNodeGeometry.width;
     this.baseNodeGeometry.bottom
@@ -1092,8 +1093,9 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     this.width = this.baseNodeGeometry.width;
     this.height = this.baseNodeGeometry.height;
         
-    this.popupGeometry.width = this.container.offsetWidth + 8;
-    this.popupGeometry.height = this.container.offsetHeight + 8;
+    rect = this.container.getBoundingClientRect();
+    this.popupGeometry.width = Math.ceil(rect.width + 8);
+    this.popupGeometry.height = Math.ceil(rect.height + 8);
         
     if (this.popupGeometry.width < this.baseNodeGeometry.width) {
       this.popupGeometry.width = this.baseNodeGeometry.width;
@@ -1342,7 +1344,7 @@ arAkahukuCatalogCommentPopupData.prototype =  {
     self.container = targetDocument.createElement ("div");
     self.container.className = "akahuku_popup";
     self.container.style.fontSize = "8pt";
-    self.container.style.whiteSpace = "nowrap";
+    self.container.style.maxWidth = "536px";// レス寸法800px@12pt と同比率で
     self.container.innerHTML = self.thread.comment;
         
     self.popup.appendChild (self.container);
