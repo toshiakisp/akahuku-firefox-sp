@@ -1660,10 +1660,11 @@
           <input type=number name="catalog.zoom.cache.count" min=0>
           個</label>
         </div>
+        <hr size="1" width="100%">
         <div class="group box-orient-vertical">
           <label><input type=checkbox name="catalog.zoom.comment"
             >本文を全文表示 (カーソルを本文/レス数の上に)</label>
-          <label class="warning">「サイドバーと連携」が必要</label>
+          <label class="warning">カタログ2の「サイドバーと連携」or「追加情報を取得(mode=json)」が必要</label>
           <label>表示まで
           <input type=number name="catalog.zoom.comment.delay" min=0>
           [ms]</label>
@@ -1777,6 +1778,41 @@
             <label class="sp tooltip ext_doesnotwork"><input type=checkbox name="catalog.observe.opened.reload"
               ><span class=tooltiptext>(デフォルト：有効) スレのタブへフォーカス切り替えと同時にリロードする。「続きを読む」が有効の場合は続きを読む。</span
               >開いているスレに移動後リロード</label>
+          </div>
+        </div>
+        <div class="groupbox box-orient-vertical">
+          <div class=caption>
+            <label class="sp tooltip"><input type=checkbox name="catalog.extra"
+              ><span class=tooltiptext>(デフォルト：無効) 適宜futaba.php?mode=jsonを取得して各スレへ追加情報を反映させる。読み込みは30秒に1回。</span
+              >追加情報を取得(mode=json)</label>
+          </div>
+		  <label>板の全スレの情報(返信は除く)を適宜<b>追加でダウンロード</b>する <label class="warning">※多少重くなります</label><br
+          >(板毎にDL間隔の自主制限時間があり、操作が早いと最新の状態を反映しません)</label>
+          <hr size="1" width="100%">
+          <label>「コメントを全文表示」で取得本文を表示可能に（カタログ1／ズーム）</label>
+          <label>「本文で分ける」時に取得情報も対象に（カタログ1／ソート）</label>
+          <label><input type=checkbox name="catalog.extra.comment"
+            >本文を長めに表示 (「サイドバーと連携」より優先＆同設定)</label>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="catalog.extra.idp-badge"
+              >IP/IDスレにバッジ表示 (メ欄/host/id情報より)</label>
+            <div class="box-orient-horizontal">
+              <label><input type=checkbox name="catalog.extra.idp-badge.ip"
+                >ip表示 <span style="display:inline-block;background-color:blue;color:white;width:14px;height:14px;font-size:10px;text-align:center;">ip</span></label>
+              <label><input type=checkbox name="catalog.extra.idp-badge.ip-self"
+                >・3・<span style="display:inline-block;background-color:blue;color:white;min-width:14px;height:14px;font-size:10px;text-align:center;">･3･</span></label>
+              <label><input type=checkbox name="catalog.extra.idp-badge.id"
+                >id表示 <span style="display:inline-block;background-color:#117744;color:white;width:14px;height:14px;font-size:10px;text-align:center;">id</span></label>
+              <label><input type=checkbox name="catalog.extra.idp-badge.other"
+                >他IP/ID <span style="display:inline-block;background-color:#ffaf00;color:black;width:14px;height:14px;font-size:10px;text-align:center;" title="json内idあり">ID</span> <span style="display:inline-block;background-color:#ffaf00;color:black;width:14px;height:14px;font-size:10px;text-align:center;text-decoration:underline;" title="id表示かつjson内idあり">ID</span> <span style="display:inline-block;background-color:#ffaf00;color:black;width:14px;height:14px;font-size:10px;text-align:center;" title="板に複数存在">2</span></label>
+            </div>
+          </div>
+          <div class="group box-orient-vertical">
+            <label><input type=checkbox name="catalog.extra.idp-overflow"
+              >板内に同<span style="display:inline-block;background-color:#ffaf00;color:black;height:14px;font-size:10px;text-align:center;" title="json内idあり">IP/ID</span>が多いスレを目立たせない/下にソート</label>
+            <label>最大
+            <input type=number name="catalog.extra.idp-overflow.threashold" min=0>
+            スレまでは許容</label>
           </div>
         </div>
         <label><input type=checkbox name="catalog.clickable"

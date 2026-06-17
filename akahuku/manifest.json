@@ -74,6 +74,7 @@
       "background/tabs.js",
       "background/downloads.js",
       "background/commands.js",
+      "background/json-fetch-service.js",
       "background/browser-action.js"
     ]
   },

@@ -7,6 +7,7 @@ import {Akahuku} from '/content/akahuku.js';
 import {AkahukuCentral} from '/content/akahuku-central-content.js';
 import {AkahukuFileUtil} from '/content/fileutil.js';
 import {HistoryService} from '/content/history-service-content.js';
+import {JsonFetchService} from '/content/json-fetch-service-content.js';
 import {ObserverService} from '/content/observer-service-content.js';
 import {Tabs} from '/content/tabs-content.js';
 
@@ -1817,6 +1818,21 @@ var arAkahukuCatalog = {
   enableObserveOpened : false,  /* Boolean  開いているスレをマーク */
   enableObserveOpenedReload : false,  /* Boolean  開いているスレに移動後リロード */
 
+  enableExtraJsonRequest : false, // 追加情報を取得(mode=json)
+  enableExtraIdIpBadge : false, // IP/IDスレにバッジ表示
+  enableExtraIdIpOverflow : false, // 同IP/IDの連投スレを目立たせない
+  enableExtraComment : false, // 本文を長めに表示
+  enableExtraHiddenComment : true, // コメントを非表示で反映
+  threadsExtra : {
+    data : new Map(),
+    latestNum : 0,
+    lastFetched : 0,
+    lastNowtime : 0,
+    IDCounts : new Map(),
+    HostCounts : new Map(),
+    threashold : 0, // (目立たせない) 最大Nスレまでは許容
+  },
+
   enableCellWidth : true,    /* Boolean スレの幅を固定 */
   cellWidthNum : 50,         /* Number  サイズ(値) */
   cellWidthUnit : "px",      /* String  サイズ(単位) */
@@ -2315,15 +2331,13 @@ var arAkahukuCatalog = {
     arAkahukuCatalog.enableSidebar
     = arAkahukuConfig
     .initPref ("bool", "akahuku.catalog.sidebar", false);
-    if (arAkahukuCatalog.enableSidebar) {
-      arAkahukuCatalog.enableSidebarComment
-        = arAkahukuConfig
-        .initPref ("bool", "akahuku.catalog.sidebar.comment", true);
-      arAkahukuCatalog.sidebarCommentLength
-        = arAkahukuConfig
-        .initPref ("int",  "akahuku.catalog.sidebar.comment.length",
-                   12);
-    }
+    arAkahukuCatalog.enableSidebarComment
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.sidebar.comment", true)
+    && arAkahukuCatalog.enableSidebar;
+    arAkahukuCatalog.sidebarCommentLength
+    = arAkahukuConfig
+    .initPref ("int",  "akahuku.catalog.sidebar.comment.length", 12);
 
     arAkahukuCatalog.enableObserve
     = arAkahukuConfig
@@ -2388,6 +2402,24 @@ var arAkahukuCatalog = {
     .initPref ("char", "akahuku.catalog.replace-php-res.servers", "");
     arAkahukuCatalog.replacePhpResServers
     = servers.split(/\s*,\s*/g);
+    arAkahukuCatalog.enableExtraJsonRequest
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.extra", false);
+    arAkahukuCatalog.enableExtraComment
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.extra.comment", false);
+    arAkahukuCatalog.enableExtraHiddenComment
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.extra.hidden-comment", true);
+    arAkahukuCatalog.enableExtraIdIpBadge
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.extra.idp-badge", true);
+    arAkahukuCatalog.enableExtraIdIpOverflow
+    = arAkahukuConfig
+    .initPref ("bool", "akahuku.catalog.extra.idp-overflow", false);
+    arAkahukuCatalog.threadsExtra.threashold
+    = arAkahukuConfig
+    .initPref ("int", "akahuku.catalog.extra.idp-overflow.threashold", 3);
   },
 
   /**
@@ -2957,6 +2989,11 @@ var arAkahukuCatalog = {
             mergedItems [i].currentReplyNumber);
       }
 
+      // スレのピン留め/下げの判定
+      if (arAkahukuCatalog.enableExtraJsonRequest && info.isFutaba) {
+        // json追加情報の反映・更新
+        arAkahukuCatalog.updateCellInfoExtra(td);
+      }
       if ((arAkahukuCatalog.enableReorderStickByText && tdCreated) ||
           checkAll4StickByText) {
         arAkahukuCatalog.checkCell4StickByText (td, checkAll4StickByText);
@@ -3014,6 +3051,27 @@ var arAkahukuCatalog = {
     var text2 = (e2 ? e2.textContent : "");
     // 長い方を検索対象に
     var text = (text1.length > text2.length ? text1 : text2);
+
+    if (arAkahukuCatalog.enableExtraJsonRequest) {
+      // 追加情報も検索対象に
+      const extra = td.getElementsByClassName ("akahuku_extra_comment") [0];
+      if (extra) {
+        const text3 = extra.textContent;
+        if (text3.length >= text.length) { // 念のため長さチェック
+          text = text3;
+        }
+        // メ欄・名前・題名も
+        if (extra.dataset.subtitle) text+= '\n' + extra.dataset.subtitle;
+        if (extra.dataset.name) text+= '\n' + extra.dataset.name;
+        if (extra.dataset.email) text+= '\n' + extra.dataset.email;
+        // ID/IPも
+        const bagElm = arAkahukuCatalog.getExtraBagForCell(td);
+        if (bagElm) {
+          if (bagElm.dataset.id) text += '\n' + bagElm.dataset.id;
+          if (bagElm.dataset.host) text += '\n' + bagElm.dataset.host;
+        }
+      }
+    }
 
     var pats = arAkahukuCatalog.patternsToStickByText;
     for (var i = 0; i < pats.length; i ++) {
@@ -5189,6 +5247,24 @@ var arAkahukuCatalog = {
             false, targetDocument);
         }
         else {
+          if (arAkahukuCatalog.enableExtraJsonRequest && info.isFutaba) {
+            // 更新前にjson取得(threadsExtra更新)/現セルへ反映を済ませる
+            // "ロード中 (mode=json)"
+            this.setStatus("\u30ED\u30FC\u30C9\u4E2D (mode=json)",
+              true, targetDocument);
+            const url = targetDocument.location.origin
+              + targetDocument.location.pathname + '?mode=json';
+            await arAkahukuCatalog.asyncFetchExtraJson(url).then(state => {
+              if (state == JsonFetchService.STATES.FETCHED) {
+                // "更新中 (json)"
+                this.setStatus("\u66F4\u65B0\u4E2D (json)",
+                  true, targetDocument);
+                arAkahukuCatalog.updateExtraAll(targetDocument);
+              }
+            }).catch(e => {
+              Akahuku.debug.exception(e);
+            });
+          }
           // "更新中"
           this.setStatus("\u66F4\u65B0\u4E2D", true, targetDocument);
           await this.update(targetDocument);
@@ -5437,9 +5513,25 @@ var arAkahukuCatalog = {
           removeIfOutOfCommentPopup();
           return;
         }
-        img.closest("div.akahuku_popup")
 
         const num = cell.getAttribute("__thread_id");
+
+        let hidden = cell.querySelector(":scope div.akahuku_extra_comment");
+        if (hidden) {
+          let thread = {comment: hidden.innerHTML};
+          let key = "t" + num;
+          if (key != param.lastPopupKey) {
+            param.lastPopupKey = key;
+            arAkahukuPopup.addPopup
+              (key,
+               param,
+               new arAkahukuCatalogCommentPopupData
+               (thread, base));
+            return;
+          }
+          return;
+        }
+
         const info = documentParam.location_info;
         const name = info.server + "_" + info.dir;
         arAkahukuSidebar.asyncGetThread (name, num).then(thread => {
@@ -5869,6 +5961,275 @@ var arAkahukuCatalog = {
       ("Catalog/asyncFocusByThreadURI", [uri, null, callback]);
     */
   },
+
+  asyncFetchExtraJson : function (jsonUrl) {
+    const elapsed = (Date.now() - this.threadsExtra.lastFetched)/1000;
+    if (elapsed < 3) {
+      // IPCを増やさないため多少経過するまではCACHED
+      return Promise.resolve(JsonFetchService.STATES.CACHED);
+    }
+    this.threadsExtra.lastFetched = Date.now();
+    return JsonFetchService.fetch(jsonUrl).then(async (state) => {
+      if (state === JsonFetchService.STATES.CACHED) {
+        // CACHEDでも別タブが読ませたかもしれないのでFETCHED扱いにする
+        state = JsonFetchService.STATES.FETCHED;
+      } else if (state === JsonFetchService.STATES.FETCHED) {
+        Akahuku.debug.log('fetched', jsonUrl);
+      } else {
+        Akahuku.debug.warn('asyncFetchExtraJson: fetch failed ', state, jsonUrl);
+        return state;
+      }
+
+      let results = await JsonFetchService.getDataFor(jsonUrl);
+      if (!results) {
+        Akahuku.debug.warn('asyncFetchExtraJson: No valid data',jsonUrl);
+        this.threadsExtra.lastFetched = 0;
+        return JsonFetchService.STATES.ERRORED;
+      }
+      if (results.nowtime && this.threadsExtra.lastNowtime === results.nowtime) {
+        // サーバータイムスタンプが同じ
+        return JsonFetchService.STATES.CACHED;
+      }
+      // データリフレッシュ
+      this.threadsExtra.lastNowtime = results.nowtime;
+      this.threadsExtra.data.clear();
+      for (let [num, prop] of Object.entries(results.res)) {
+        try {
+          let extra = {
+            name: '',
+            email: prop.email || '',
+            subtitle: '',
+            time: prop.time || 0,
+            commentSourceUnsafe: '',
+            commentSource: '',
+            commentLimited: '',
+            id: prop.id || '',
+            host: prop.host || '',
+            idAll: false,
+            hostSelf: false,
+            hostAll: false,
+          };
+          if (prop.name && prop.name !== 'としあき') extra.name = prop.name;
+          if (prop.sub && prop.sub !== '無念') extra.subtitle = prop.sub;
+          if (prop.com && (arAkahukuCatalog.enableExtraComment
+            || arAkahukuCatalog.enableExtraHiddenComment)) {
+            // HTML文字参照を全てデコードする(顔文字等に影響)
+            let com = '';
+            if (Document.parseHTML) { // Fx148+ (Sanitizer API)
+              // サニタイズできるなら最初から
+              com = Document.parseHTML(prop.com).body.innerHTML;
+              if (arAkahukuCatalog.enableExtraHiddenComment) {
+                extra.commentSource = com;
+              }
+            } else {
+              const doc = (new DOMParser()).parseFromString(prop.com,"text/html");
+              com = doc.body.innerHTML;
+              if (arAkahukuCatalog.enableExtraHiddenComment) {
+                extra.commentSourceUnsafe = com;
+              }
+            }
+            if (arAkahukuCatalog.enableExtraComment) {
+              // 文字数制限版
+              extra.commentLimited = arAkahukuCatalog.formatComment(com);
+            }
+          }
+          if (extra.email) {
+            if (/^\s*id表示\s*$/i.test(extra.email)) {
+              extra.idAll = true;
+            } else if (/^\s*ip表示\s*$/i.test(extra.email)) {
+              extra.hostAll = true;
+            } else if (extra.email.search('・3・') >= 0) {
+              extra.hostSelf = true;
+            }
+          }
+          this.threadsExtra.data[num] = extra;
+          if (num > this.threadsExtra.latestNum) {
+            this.threadsExtra.latestNum = Number(num);
+          }
+        } catch (e) {
+          Akahuku.debug.exception(e);
+        }
+      }
+      // 個数カウント更新
+      this.threadsExtra.HostCounts.clear();
+      this.threadsExtra.IDCounts.clear();
+      for (const res in this.threadsExtra.data) {
+        const prop = this.threadsExtra.data[res];
+        if (prop.host) {
+          let c = this.threadsExtra.HostCounts.get(prop.host) || 0;
+          this.threadsExtra.HostCounts.set(prop.host, c + 1);
+        } else if (prop.id) {
+          let c = this.threadsExtra.IDCounts.get(prop.id) || 0;
+          this.threadsExtra.IDCounts.set(prop.id, c + 1);
+        }
+      }
+      return state;
+    }).catch(err => {
+      Akahuku.debug.exception(err);
+      return JsonFetchService.STATES.ERRORED;
+    });
+  },
+  updateExtraAll : function (targetDocument) {
+    const table = arAkahukuCatalog.getCatalogTable (targetDocument);
+    if (!table) {
+      return;
+    }
+    let nodes = table.getElementsByTagName ("td");
+    for (const td of nodes) {
+      arAkahukuCatalog.updateCellInfoExtra(td, true);
+    }
+  },
+  getExtraBagForCell : function (td, create=false) {
+    let bag = td.querySelector('div.akahuku_extra');
+    if (!bag) {
+      if (create) {
+        bag = td.ownerDocument.createElement('div');
+        bag.className = 'akahuku_extra';
+        bag.display = 'none';
+        td.prepend(bag);
+      } else {
+        return null;
+      }
+    }
+    return bag;
+  },
+  removeFromExtra : function (td, ...props) {
+    const bag = arAkahukuCatalog.getExtraBagForCell(td,false);
+    if (!bag) return;
+    for (const p of props) {
+      delete bag.dataset[p];
+    }
+  },
+  updateCellInfoExtra : function (td, clean=false) {
+    const targetDocument = td.ownerDocument;
+    const resNum = td.getAttribute('__thread_id');
+    if (!(resNum > 0)) {
+      Akahuku.debug.warn('updateCellInfoExtra: invalid num',resNum);
+      return false;// invalid num
+    }
+    const prop = arAkahukuCatalog.threadsExtra.data[resNum];
+    if (!prop) {
+      if (arAkahukuCatalog.threadsExtra.data.size > 0)
+        Akahuku.debug.warn('updateCellInfoExtra: no extra data for',resNum);
+      return false; // no data
+    }
+
+    // shorthands
+    function getBag (td) {
+      return arAkahukuCatalog.getExtraBagForCell(td,true).dataset;
+    }
+    function delBag (td, ...props) {
+      arAkahukuCatalog.removeFromExtra(td, ...props);
+    }
+    const extra = arAkahukuCatalog.threadsExtra;
+
+    let updated = false;
+    if (prop.id) {
+      const c = extra.IDCounts.get(prop.id);
+      const bag = getBag(td);
+      if (bag.idCount != c) {bag.idCount = c; updated = true;}
+      if (bag.id != prop.id) {bag.id = prop.id; updated = true;}
+    } else if (clean) {
+      delBag(td, 'id', 'idCount');
+    }
+    if (arAkahukuCatalog.enableExtraIdIpOverflow) {
+      let c1 = extra.IDCounts.get(prop.id);
+      let c2 = extra.HostCounts.get(prop.id);
+      if (c1 > extra.threashold || c2 > extra.threashold) {
+        td.setAttribute('__sticky','__negative__');
+        const bag = getBag(td);
+        if (bag.idCountOver != '1') {
+          bag.idCountOver = '1'; updated = true;
+        }
+      } else {
+        // 一度overflowした後は明には解除しない
+      }
+    }
+    if (prop.idAll) {
+      const bag = getBag(td);
+      if (bag.idAll != '1') {bag.idAll = '1'; updated = true;}
+    } else if (clean) {
+      delBag(td, 'idAll');
+    }
+    if (prop.host) {
+      let c = extra.HostCounts.get(prop.host);
+      const bag = getBag(td);
+      if (bag.hostCount != c) {bag.hostCount = c; updated = true;}
+      if (bag.host != prop.host) {bag.host = prop.host; updated = true;}
+    } else if (clean) {
+      delBag(td, 'host', 'hostCount');
+    }
+    if (prop.hostAll) {
+      const bag = getBag(td);
+      if (bag.hostAll != '1') {bag.hostAll = '1'; updated = true;}
+    } else if (clean) {
+      delBag(td, 'hostAll');
+    }
+    if (prop.hostSelf) {
+      const bag = getBag(td);
+      if (bag.hostSelf != '1') {bag.hostSelf = '1'; updated = true;}
+    } else if (clean) {
+      delBag(td, 'hostSelf');
+    }
+
+    if (arAkahukuCatalog.enableExtraComment && prop.commentLimited) {
+      let com = arAkahukuDOM.getFirstElementByNames(td, "div", "akahuku_comment");
+      if (!com) {
+        updated = true;
+        com = arAkahukuCatalog.createCommentNode(td);
+        com.innerHTML = prop.commentLimited;
+        if (arAkahukuLink.enableHideTrolls
+          && !arAkahukuLink.enableHideTrollsNoCat) {
+          arAkahukuLink.applyHideTrollsCore(td.ownerDocument, com);
+        }
+      }
+    }
+    if (arAkahukuCatalog.enableExtraHiddenComment
+      && (prop.commentSourceUnsafe || prop.commentSource)) {
+      let hidden = arAkahukuDOM.getFirstElementByNames(td, "div","akahuku_extra_comment");
+      if (!hidden) {
+        updated = true;
+        hidden = td.ownerDocument.createElement('div');
+        hidden.className = 'akahuku_extra_comment';
+        hidden.style.display = 'none';
+        if (prop.name) hidden.dataset.name = prop.name;
+        if (prop.email) hidden.dataset.email = prop.email;
+        if (prop.subtitle) hidden.dataset.subtitle = prop.subtitle;
+        if (prop.time) hidden.dataset.time = prop.time;
+        if (prop.commentSource) {//already sanitized (Fx148+)
+          hidden.innerHTML = prop.commentSource;
+        } else {
+          // polyfil
+          arAkahukuDOM.setInnerHTMLSafely(hidden, prop.commentSourceUnsafe);
+        }
+        // リンクは解体してテキストに
+        for (const a of hidden.querySelectorAll('a[href]')) {
+          a.after(a.innerText);
+          a.remove();
+        }
+        // 挿入位置の探索
+        let com = arAkahukuDOM.getFirstElementByNames(td, "div", "akahuku_comment");
+        if (!com) {
+          com = arAkahukuDOM.getFirstElementByNames(td, "small");
+          if (com?.nextElementSibling?.tagName == 'BR') com = com.nextElementSibling;
+        }
+        if (!com) {
+          let reply = arAkahukuCatalog.getReplyCountNode(td);
+          if (reply.parentNode?.tagName == 'A') reply = reply.parentNode;
+          com = reply.previousElementSibling;
+        }
+        if (com) {
+          com.after(hidden);
+        } else {// fall back
+          td.appendChild(hidden);
+        }
+        // 情報更新
+        arAkahukuCatalog.checkCell4StickByText(td);
+      }
+    }
+
+    return updated;
+  },
     
   /**
    * カタログを修正する
@@ -5985,6 +6346,19 @@ var arAkahukuCatalog = {
         applyPromises.push(checkingVisited);
       }
       arAkahukuCatalog.updateOpened (targetDocument);
+
+      if (arAkahukuCatalog.enableExtraJsonRequest && info.isFutaba) {
+        const jsonUrl = document.location.origin + document.location.pathname + '?mode=json';
+        const p = arAkahukuCatalog.asyncFetchExtraJson(jsonUrl).then((state) => {
+          if (state != JsonFetchService.STATES.FETCHED) {
+            return;
+          }
+          arAkahukuCatalog.updateExtraAll(document);
+        }).catch(e => {
+          Akahuku.debug.exception(e);
+        });
+        applyPromises.push(p);
+      }
             
       if (arAkahukuCatalog.enableReorder) {
         var nodes = targetDocument.getElementsByTagName ("font");
