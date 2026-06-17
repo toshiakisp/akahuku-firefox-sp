@@ -1994,7 +1994,7 @@ var arAkahukuLink = {
     let contentWindow = target.ownerDocument.defaultView;
     let options = {
       method: 'HEAD',
-      mode: 'no-cors',//for no Origin
+      mode: 'navigate',// for no Origin (backgroundからcors same-originさせるフェイク値)
       referrerPolicy: 'no-referrer',
       credentials: 'omit',//Cookie等を送らないし受け取らない
       cache: 'no-store',//キャッシュを調べないし更新しない
@@ -2016,6 +2016,9 @@ var arAkahukuLink = {
           handleRedirect(res._privileged?.url);
         }
         return msg;
+      })
+      .catch(e => {
+        return e.toString();
       })
       .then((res) => {
         let msg = res;

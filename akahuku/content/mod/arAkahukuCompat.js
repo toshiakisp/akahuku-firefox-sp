@@ -317,14 +317,17 @@ var arAkahukuCompat = new function () {
     const fetchInContent = (context == window && globalThis.content?.fetch
       ? globalThis.content.fetch : context.fetch);
     const fetchExtension = (globalThis.content ? context.fetch : undefined);
-    if (context.origin == resourceURL.origin) {
+    // Originを付けたくないけどmode=no-corsでは困るから敢えてbackgroundからprivileged fetchを使わせたい時
+    const forcePrivileged = (options.mode === 'navigate');
+
+    if (!forcePrivileged && context.origin == resourceURL.origin) {
       // same-origin => use content.fetch() same-origin
       return await fetchInContent(resource, options)
         .catch((err) => {
           // Negotiate non-unwrappable rejection value [Bug 1871516]
           throw new context.Error(err.toString());
         });
-    } else if (fetchExtension &&
+    } else if (fetchExtension && !forcePrivileged &&
       isWhitelistedFetch(resourceURL, contextURL, options)) {
       // cross-originだけど特権的に大丈夫なもの(パフォーマンス)
       Akahuku.debug.log('Use extension-scope fetch()', resourceURL.toString());

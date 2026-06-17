@@ -83,6 +83,11 @@ const Downloads = (function () {
         blob: null,
         headers: [],
       };
+      if (options.mode === 'navigate') {
+        // 拡張に許されていないmode=navigate設定が来たらcorsにする
+        // (backgroundでは元contentとは切り離されsame-originになるはず)
+        options.mode = 'cors';
+      }
       const respkeys = [// CORS-safelisted response-header names
         'Cache-Control', 'Content-Language',
         'Content-Length', 'Content-Type',
