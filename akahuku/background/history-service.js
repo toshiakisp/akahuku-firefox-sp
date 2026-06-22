@@ -74,7 +74,10 @@ const HistoryService = (function () {
   browser.history.onVisitRemoved.addListener((historyItem) => {
     let msg = {
       name: 'observe',
-      args: ['removed', {url: historyItem.url}],
+      args: ['removed', {
+        urls: historyItem.urls,
+        allHistory: historyItem.allHistory,
+      }],
     };
     for (let port of ports.get('removed')) {
       try {

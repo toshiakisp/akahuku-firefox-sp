@@ -1575,8 +1575,23 @@ function arAkahukuCatalogParam (targetDocument) {
 
   this.historyObserver = {
     observe : function (topic, historyItem) {
-      arAkahukuCatalog.onThreadHistoryChanged(
-        targetDocument, historyItem.url, (topic == 'visited'));
+      if (topic === 'visited') {
+        //historyItem == HistoryItem
+        arAkahukuCatalog.onThreadHistoryChanged(targetDocument, historyItem.url, true);
+      } else if (topic == 'removed') {
+        //historyItem == Object
+        if (historyItem.allHistory) {// all history was cleared
+          const catTable = arAkahukuCatalog.getCatalogTable(targetDocument);
+          const nodes = catTable.getElementsByTagName ("td");
+          for (let i = 0; i < nodes.length; i ++) {
+            arAkahukuCatalog.setCellVisited(nodes[i], false);
+          }
+        } else {
+          historyItem.urls.forEach(url => {
+            arAkahukuCatalog.onThreadHistoryChanged(targetDocument, url, false);
+          });
+        }
+      }
     },
   };
   HistoryService.addObserver('visited', this.historyObserver);
