@@ -278,4 +278,25 @@
     }
   }
 
+  /* @document url-prefix("https://dec.2chan.net/up2?/") */
+  form[action="up.php"][enctype="multipart/form-data"] {
+    & ~ table.files {
+      .odd {
+        background-color: light-dark(#f7efea, #000000) !important;
+      }
+      tr:hover {
+        background-color: light-dark(#f0e0d6, #323232) !important;
+      }
+    }
+    & ~ * a:hover {
+      background-color: light-dark(#eecccc, #665555) !important;
+    }
+  }
+  body[bgcolor="#FFFFEE"][text="#800000"] {
+    & > table[width="100%"]:first-child {
+      td[bgcolor="#eeaa88"] {
+        background-color: light-dark(#eeaa88, #6d2f10) !important;
+      }
+    }
+  }
 }
